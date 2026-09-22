@@ -1,0 +1,1560 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/m90b6t0r",
+    "id": "m90b6t0r",
+    "slide": 10,
+    "layoutId": "/ppt/slideLayouts/slideLayout1.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F8FAFC",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "fontScheme": {
+      "name": "Office",
+      "majorFont": {
+        "latinTypeface": "Calibri Light",
+        "eastAsianTypeface": "Calibri Light",
+        "complexScriptTypeface": "Calibri Light"
+      },
+      "minorFont": {
+        "latinTypeface": "Calibri",
+        "eastAsianTypeface": "Calibri",
+        "complexScriptTypeface": "Calibri"
+      }
+    },
+    "typefaces": [
+      "Aptos",
+      "Calibri",
+      "Calibri Light"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout1.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d87uxg3m",
+      "id": "11",
+      "bbox": [
+        0,
+        0,
+        1280,
+        8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#2563EB",
+      "lineColor": "#2563EB",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xc3mho32",
+      "id": "2",
+      "bbox": [
+        42,
+        30,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "PAPARAN TEKNIS CAS",
+      "textPreview": "PAPARAN TEKNIS CAS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PAPARAN TEKNIS CAS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PAPARAN TEKNIS CAS",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Aptos",
+            "color": "#2563EB",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PAPARAN TEKNIS CAS",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#2563EB",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cbu58j2h",
+      "id": "3",
+      "bbox": [
+        42,
+        64,
+        1160,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Mockup CC: kolom inti tetap SP2 Lid, SP3, dan Tahap II",
+      "textPreview": "Mockup CC: kolom inti tetap SP2 Lid, SP3, dan Tahap II",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Mockup CC: kolom inti tetap SP2 Lid, SP3, dan Tahap II"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Mockup CC: kolom inti tetap SP2 Lid, SP3, dan Tahap II",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Aptos",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Mockup CC: kolom inti tetap SP2 Lid, SP3, dan Tahap II",
+              "fontSize": 38,
+              "typeface": "Aptos",
+              "color": "#0F172A",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zelojyl8",
+      "id": "4",
+      "bbox": [
+        42,
+        656,
+        1196,
+        1
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#CBD5E1",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ydcnatkn",
+      "id": "5",
+      "bbox": [
+        42,
+        669,
+        520,
+        20
+      ],
+      "geometry": "rect",
+      "text": "CAS · Big Data Binops · 12 Agustus 2026",
+      "textPreview": "CAS · Big Data Binops · 12 Agustus 2026",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CAS · Big Data Binops · 12 Agustus 2026"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CAS · Big Data Binops · 12 Agustus 2026",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CAS · Big Data Binops · 12 Agustus 2026",
+              "fontSize": 12,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l036l83y",
+      "id": "6",
+      "bbox": [
+        1175,
+        669,
+        63,
+        20
+      ],
+      "geometry": "rect",
+      "text": "10",
+      "textPreview": "10",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "10"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "10",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "10",
+              "fontSize": 12,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kzu5c32t",
+      "id": "7",
+      "bbox": [
+        42,
+        126,
+        1000,
+        26
+      ],
+      "geometry": "rect",
+      "text": "Belum Update tetap disisipkan setelah Total; tidak ada kolom LIDIK/SIDIK CP pada tabel CC.",
+      "textPreview": "Belum Update tetap disisipkan setelah Total; tidak ada kolom LIDIK/SIDIK CP pada tabel CC.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Belum Update tetap disisipkan setelah Total; tidak ada kolom LIDIK/SIDIK CP pada tabel CC."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Belum Update tetap disisipkan setelah Total; tidak ada kolom LIDIK/SIDIK CP pada tabel CC.",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Belum Update tetap disisipkan setelah Total; tidak ada kolom LIDIK/SIDIK CP pada tabel CC.",
+              "fontSize": 16,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/1szy5sfy",
+      "id": "12",
+      "bbox": [
+        90,
+        170,
+        1100,
+        184
+      ],
+      "text": "CC Aktual\nTotal | Belum Update | SP2 LID | SP3 | TAHAP II\n1.000 | 750 | 100 | 80 | 70\n— | — | — | — | —",
+      "textPreview": "CC Aktual | Total | Belum Update | SP2 LID | SP3 | TAHAP II | 1.000 | 750 | 100 | 80 | 70 | — | — | — | — | —",
+      "rows": 4,
+      "cols": 5,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "colSpan": 5,
+          "bbox": [
+            90,
+            170,
+            1100,
+            46
+          ],
+          "text": "CC Aktual",
+          "textPreview": "CC Aktual",
+          "fillColor": "#F2995B",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "CC Aktual",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "CC Aktual",
+                  "fontSize": 18,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            310,
+            170,
+            250,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            560,
+            170,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            770,
+            170,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 5,
+          "bbox": [
+            980,
+            170,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            90,
+            216,
+            220,
+            46
+          ],
+          "text": "Total",
+          "textPreview": "Total",
+          "fillColor": "#FFEDD5",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Total",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Total",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            310,
+            216,
+            250,
+            46
+          ],
+          "text": "Belum Update",
+          "textPreview": "Belum Update",
+          "fillColor": "#F97316",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Belum Update",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Belum Update",
+                  "fontSize": 15,
+                  "color": "#FFFFFF",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            560,
+            216,
+            210,
+            46
+          ],
+          "text": "SP2 LID",
+          "textPreview": "SP2 LID",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SP2 LID",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SP2 LID",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            770,
+            216,
+            210,
+            46
+          ],
+          "text": "SP3",
+          "textPreview": "SP3",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SP3",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SP3",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 5,
+          "bbox": [
+            980,
+            216,
+            210,
+            46
+          ],
+          "text": "TAHAP II",
+          "textPreview": "TAHAP II",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "TAHAP II",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "TAHAP II",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            90,
+            262,
+            220,
+            46
+          ],
+          "text": "1.000",
+          "textPreview": "1.000",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "1.000",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "1.000",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            310,
+            262,
+            250,
+            46
+          ],
+          "text": "750",
+          "textPreview": "750",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "750",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "750",
+                  "fontSize": 16,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            560,
+            262,
+            210,
+            46
+          ],
+          "text": "100",
+          "textPreview": "100",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "100",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "100",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            770,
+            262,
+            210,
+            46
+          ],
+          "text": "80",
+          "textPreview": "80",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "80",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "80",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 3,
+          "column": 5,
+          "bbox": [
+            980,
+            262,
+            210,
+            46
+          ],
+          "text": "70",
+          "textPreview": "70",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "70",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "70",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            90,
+            308,
+            220,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            310,
+            308,
+            250,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            560,
+            308,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            770,
+            308,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 4,
+          "column": 5,
+          "bbox": [
+            980,
+            308,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/0rqhwned",
+      "id": "13",
+      "bbox": [
+        90,
+        410,
+        1100,
+        184
+      ],
+      "text": "CC Tunggakan\nTotal | Belum Update | SP2 LID | SP3 | TAHAP II\n400 | 300 | 40 | 35 | 25\n— | — | — | — | —",
+      "textPreview": "CC Tunggakan | Total | Belum Update | SP2 LID | SP3 | TAHAP II | 400 | 300 | 40 | 35 | 25 | — | — | — | — | —",
+      "rows": 4,
+      "cols": 5,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "colSpan": 5,
+          "bbox": [
+            90,
+            410,
+            1100,
+            46
+          ],
+          "text": "CC Tunggakan",
+          "textPreview": "CC Tunggakan",
+          "fillColor": "#F2995B",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "CC Tunggakan",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "CC Tunggakan",
+                  "fontSize": 18,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            310,
+            410,
+            250,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            560,
+            410,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            770,
+            410,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 5,
+          "bbox": [
+            980,
+            410,
+            210,
+            46
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            90,
+            456,
+            220,
+            46
+          ],
+          "text": "Total",
+          "textPreview": "Total",
+          "fillColor": "#FFEDD5",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Total",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Total",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            310,
+            456,
+            250,
+            46
+          ],
+          "text": "Belum Update",
+          "textPreview": "Belum Update",
+          "fillColor": "#F97316",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Belum Update",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Belum Update",
+                  "fontSize": 15,
+                  "color": "#FFFFFF",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            560,
+            456,
+            210,
+            46
+          ],
+          "text": "SP2 LID",
+          "textPreview": "SP2 LID",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SP2 LID",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SP2 LID",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            770,
+            456,
+            210,
+            46
+          ],
+          "text": "SP3",
+          "textPreview": "SP3",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SP3",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SP3",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 5,
+          "bbox": [
+            980,
+            456,
+            210,
+            46
+          ],
+          "text": "TAHAP II",
+          "textPreview": "TAHAP II",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "TAHAP II",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "TAHAP II",
+                  "fontSize": 15,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            90,
+            502,
+            220,
+            46
+          ],
+          "text": "400",
+          "textPreview": "400",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "400",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "400",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            310,
+            502,
+            250,
+            46
+          ],
+          "text": "300",
+          "textPreview": "300",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "300",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "300",
+                  "fontSize": 16,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            560,
+            502,
+            210,
+            46
+          ],
+          "text": "40",
+          "textPreview": "40",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "40",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "40",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            770,
+            502,
+            210,
+            46
+          ],
+          "text": "35",
+          "textPreview": "35",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "35",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "35",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 3,
+          "column": 5,
+          "bbox": [
+            980,
+            502,
+            210,
+            46
+          ],
+          "text": "25",
+          "textPreview": "25",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "25",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "25",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            90,
+            548,
+            220,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            310,
+            548,
+            250,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            560,
+            548,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            770,
+            548,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 4,
+          "column": 5,
+          "bbox": [
+            980,
+            548,
+            210,
+            46
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 16,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/s7yt4b21",
+      "id": "10",
+      "bbox": [
+        90,
+        612,
+        1080,
+        26
+      ],
+      "geometry": "rect",
+      "text": "Angka CC hanya ilustrasi struktur; aturan jumlah tetap Total = Belum Update + SP2 Lid + SP3 + Tahap II.",
+      "textPreview": "Angka CC hanya ilustrasi struktur; aturan jumlah tetap Total = Belum Update + SP2 Lid + SP3 + Tahap II.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Angka CC hanya ilustrasi struktur; aturan jumlah tetap Total = Belum Update + SP2 Lid + SP3 + Tahap II."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Angka CC hanya ilustrasi struktur; aturan jumlah tetap Total = Belum Update + SP2 Lid + SP3 + Tahap II.",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Aptos",
+            "color": "#9A3412",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Angka CC hanya ilustrasi struktur; aturan jumlah tetap Total = Belum Update + SP2 Lid + SP3 + Tahap II.",
+              "fontSize": 15,
+              "typeface": "Aptos",
+              "color": "#9A3412",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

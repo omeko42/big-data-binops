@@ -1,0 +1,13 @@
+.next/prerender-manifest.json
+.next/app-path-routes-manifest.json
+.next/routes-manifest.json
+.next/build-manifest.json
+.next/server/next-font-manifest.json
+.next/server/server-reference-manifest.json
+.next/server/app-paths-manifest.json
+.next/server/middleware-manifest.json
+.next/server/functions-config-manifest.json
+.next/server/pages-manifest.json
+.next/static/chunks/register-pihak-v5-6478da3b8c2c.js
+1
+1

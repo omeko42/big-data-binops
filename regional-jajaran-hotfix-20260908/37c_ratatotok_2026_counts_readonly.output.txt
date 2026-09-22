@@ -1,0 +1,9 @@
+Pager usage is off.
+BEGIN
+ effective_owner_id | lp_2026 
+--------------------+---------
+              16877 |      67
+              16927 |     133
+(2 rows)
+
+ROLLBACK

@@ -1,0 +1,2142 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/udsvah03",
+    "id": "udsvah03",
+    "slide": 9,
+    "layoutId": "/ppt/slideLayouts/slideLayout1.xml",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F8FAFC",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "fontScheme": {
+      "name": "Office",
+      "majorFont": {
+        "latinTypeface": "Calibri Light",
+        "eastAsianTypeface": "Calibri Light",
+        "complexScriptTypeface": "Calibri Light"
+      },
+      "minorFont": {
+        "latinTypeface": "Calibri",
+        "eastAsianTypeface": "Calibri",
+        "complexScriptTypeface": "Calibri"
+      }
+    },
+    "typefaces": [
+      "Aptos",
+      "Calibri",
+      "Calibri Light"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "/ppt/slideLayouts/slideLayout1.xml",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "/ppt/slideMasters/slideMaster1.xml",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "/ppt/slideMasters/slideMaster1.xml",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p0ji9kf2",
+      "id": "11",
+      "bbox": [
+        0,
+        0,
+        1280,
+        8
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#2563EB",
+      "lineColor": "#2563EB",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1cfmhgne",
+      "id": "2",
+      "bbox": [
+        42,
+        30,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "PAPARAN TEKNIS CAS",
+      "textPreview": "PAPARAN TEKNIS CAS",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PAPARAN TEKNIS CAS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PAPARAN TEKNIS CAS",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "typeface": "Aptos",
+            "color": "#2563EB",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PAPARAN TEKNIS CAS",
+              "fontSize": 14,
+              "typeface": "Aptos",
+              "color": "#2563EB",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0b65obm9",
+      "id": "3",
+      "bbox": [
+        42,
+        64,
+        1160,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Mockup CP: “Belum Update” tepat setelah kolom Total",
+      "textPreview": "Mockup CP: “Belum Update” tepat setelah kolom Total",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 2,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "middle",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Mockup CP: “Belum Update” tepat setelah kolom Total"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Mockup CP: “Belum Update” tepat setelah kolom Total",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Aptos",
+            "color": "#0F172A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Mockup CP: “Belum Update” tepat setelah kolom Total",
+              "fontSize": 38,
+              "typeface": "Aptos",
+              "color": "#0F172A",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nex4jq5k",
+      "id": "4",
+      "bbox": [
+        42,
+        656,
+        1196,
+        1
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#CBD5E1",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mdonql4z",
+      "id": "5",
+      "bbox": [
+        42,
+        669,
+        520,
+        20
+      ],
+      "geometry": "rect",
+      "text": "CAS · Big Data Binops · 12 Agustus 2026",
+      "textPreview": "CAS · Big Data Binops · 12 Agustus 2026",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CAS · Big Data Binops · 12 Agustus 2026"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CAS · Big Data Binops · 12 Agustus 2026",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CAS · Big Data Binops · 12 Agustus 2026",
+              "fontSize": 12,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9gzml0nq",
+      "id": "6",
+      "bbox": [
+        1175,
+        669,
+        63,
+        20
+      ],
+      "geometry": "rect",
+      "text": "09",
+      "textPreview": "09",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "09"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "09",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "09",
+              "fontSize": 12,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ofq5svm5",
+      "id": "7",
+      "bbox": [
+        42,
+        126,
+        900,
+        26
+      ],
+      "geometry": "rect",
+      "text": "Tahapan CP tetap: LIDIK, SIDIK, KIRIM SPDP, THP-1, P-19, dan P-21.",
+      "textPreview": "Tahapan CP tetap: LIDIK, SIDIK, KIRIM SPDP, THP-1, P-19, dan P-21.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tahapan CP tetap: LIDIK, SIDIK, KIRIM SPDP, THP-1, P-19, dan P-21."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tahapan CP tetap: LIDIK, SIDIK, KIRIM SPDP, THP-1, P-19, dan P-21.",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Aptos",
+            "color": "#64748B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tahapan CP tetap: LIDIK, SIDIK, KIRIM SPDP, THP-1, P-19, dan P-21.",
+              "fontSize": 16,
+              "typeface": "Aptos",
+              "color": "#64748B"
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/psnm9or6",
+      "id": "12",
+      "bbox": [
+        42,
+        164,
+        1196,
+        190
+      ],
+      "text": "CP Aktual\nTotal | Belum Update | LIDIK | SIDIK | KIRIM SPDP | THP-1 | P-19 | P-21\n57.249 | 57.166 | 55 | 14 | 12 | 2 | – | –\n86 | 86 | – | – | – | – | – | –",
+      "textPreview": "CP Aktual | Total | Belum Update | LIDIK | SIDIK | KIRIM SPDP | THP-1 | P-19 | P-21 | 57.249 | 57.166 | 55 | 14 | 12 | 2 | – | – | 86 | 8...",
+      "rows": 4,
+      "cols": 8,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "colSpan": 8,
+          "bbox": [
+            42,
+            164,
+            1196,
+            47.5
+          ],
+          "text": "CP Aktual",
+          "textPreview": "CP Aktual",
+          "fillColor": "#F2995B",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "CP Aktual",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "CP Aktual",
+                  "fontSize": 18,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            182,
+            164,
+            180,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            362,
+            164,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            497,
+            164,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 5,
+          "bbox": [
+            632,
+            164,
+            180,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 6,
+          "row": 1,
+          "column": 6,
+          "bbox": [
+            812,
+            164,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 7,
+          "row": 1,
+          "column": 7,
+          "bbox": [
+            947,
+            164,
+            145,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 8,
+          "row": 1,
+          "column": 8,
+          "bbox": [
+            1092,
+            164,
+            146,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            42,
+            211.5,
+            140,
+            47.5
+          ],
+          "text": "Total",
+          "textPreview": "Total",
+          "fillColor": "#FFEDD5",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Total",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Total",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            182,
+            211.5,
+            180,
+            47.5
+          ],
+          "text": "Belum Update",
+          "textPreview": "Belum Update",
+          "fillColor": "#F97316",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Belum Update",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Belum Update",
+                  "fontSize": 14,
+                  "color": "#FFFFFF",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            362,
+            211.5,
+            135,
+            47.5
+          ],
+          "text": "LIDIK",
+          "textPreview": "LIDIK",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "LIDIK",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "LIDIK",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            497,
+            211.5,
+            135,
+            47.5
+          ],
+          "text": "SIDIK",
+          "textPreview": "SIDIK",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SIDIK",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SIDIK",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 2,
+          "column": 5,
+          "bbox": [
+            632,
+            211.5,
+            180,
+            47.5
+          ],
+          "text": "KIRIM SPDP",
+          "textPreview": "KIRIM SPDP",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "KIRIM SPDP",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "KIRIM SPDP",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 2,
+          "column": 6,
+          "bbox": [
+            812,
+            211.5,
+            135,
+            47.5
+          ],
+          "text": "THP-1",
+          "textPreview": "THP-1",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "THP-1",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "THP-1",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 2,
+          "column": 7,
+          "bbox": [
+            947,
+            211.5,
+            145,
+            47.5
+          ],
+          "text": "P-19",
+          "textPreview": "P-19",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "P-19",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "P-19",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 2,
+          "column": 8,
+          "bbox": [
+            1092,
+            211.5,
+            146,
+            47.5
+          ],
+          "text": "P-21",
+          "textPreview": "P-21",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "P-21",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "P-21",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            42,
+            259,
+            140,
+            47.5
+          ],
+          "text": "57.249",
+          "textPreview": "57.249",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "57.249",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "57.249",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            182,
+            259,
+            180,
+            47.5
+          ],
+          "text": "57.166",
+          "textPreview": "57.166",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "57.166",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "57.166",
+                  "fontSize": 15,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            362,
+            259,
+            135,
+            47.5
+          ],
+          "text": "55",
+          "textPreview": "55",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "55",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "55",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            497,
+            259,
+            135,
+            47.5
+          ],
+          "text": "14",
+          "textPreview": "14",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "14",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "14",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "row": 3,
+          "column": 5,
+          "bbox": [
+            632,
+            259,
+            180,
+            47.5
+          ],
+          "text": "12",
+          "textPreview": "12",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "12",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "12",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 22,
+          "row": 3,
+          "column": 6,
+          "bbox": [
+            812,
+            259,
+            135,
+            47.5
+          ],
+          "text": "2",
+          "textPreview": "2",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "2",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "2",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 23,
+          "row": 3,
+          "column": 7,
+          "bbox": [
+            947,
+            259,
+            145,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "row": 3,
+          "column": 8,
+          "bbox": [
+            1092,
+            259,
+            146,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 25,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            42,
+            306.5,
+            140,
+            47.5
+          ],
+          "text": "86",
+          "textPreview": "86",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "86",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "86",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 26,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            182,
+            306.5,
+            180,
+            47.5
+          ],
+          "text": "86",
+          "textPreview": "86",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "86",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "86",
+                  "fontSize": 15,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 27,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            362,
+            306.5,
+            135,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 28,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            497,
+            306.5,
+            135,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 29,
+          "row": 4,
+          "column": 5,
+          "bbox": [
+            632,
+            306.5,
+            180,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 30,
+          "row": 4,
+          "column": 6,
+          "bbox": [
+            812,
+            306.5,
+            135,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 31,
+          "row": 4,
+          "column": 7,
+          "bbox": [
+            947,
+            306.5,
+            145,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 32,
+          "row": 4,
+          "column": 8,
+          "bbox": [
+            1092,
+            306.5,
+            146,
+            47.5
+          ],
+          "text": "–",
+          "textPreview": "–",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "–",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "–",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 9,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/orel03al",
+      "id": "13",
+      "bbox": [
+        42,
+        408,
+        1196,
+        190
+      ],
+      "text": "CP Tunggakan\nTotal | Belum Update | LIDIK | SIDIK | KIRIM SPDP | THP-1 | P-19 | P-21\n— | — | — | — | — | — | — | —\n— | — | — | — | — | — | — | —",
+      "textPreview": "CP Tunggakan | Total | Belum Update | LIDIK | SIDIK | KIRIM SPDP | THP-1 | P-19 | P-21 | — | — | — | — | — | — | — | — | — | — | — | — | ...",
+      "rows": 4,
+      "cols": 8,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "colSpan": 8,
+          "bbox": [
+            42,
+            408,
+            1196,
+            47.5
+          ],
+          "text": "CP Tunggakan",
+          "textPreview": "CP Tunggakan",
+          "fillColor": "#F2995B",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "CP Tunggakan",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "CP Tunggakan",
+                  "fontSize": 18,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            182,
+            408,
+            180,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            362,
+            408,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            497,
+            408,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 5,
+          "row": 1,
+          "column": 5,
+          "bbox": [
+            632,
+            408,
+            180,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 6,
+          "row": 1,
+          "column": 6,
+          "bbox": [
+            812,
+            408,
+            135,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 7,
+          "row": 1,
+          "column": 7,
+          "bbox": [
+            947,
+            408,
+            145,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 8,
+          "row": 1,
+          "column": 8,
+          "bbox": [
+            1092,
+            408,
+            146,
+            47.5
+          ],
+          "fillColor": "#F2995B"
+        },
+        {
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            42,
+            455.5,
+            140,
+            47.5
+          ],
+          "text": "Total",
+          "textPreview": "Total",
+          "fillColor": "#FFEDD5",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Total",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Total",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            182,
+            455.5,
+            180,
+            47.5
+          ],
+          "text": "Belum Update",
+          "textPreview": "Belum Update",
+          "fillColor": "#F97316",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Belum Update",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Belum Update",
+                  "fontSize": 14,
+                  "color": "#FFFFFF",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            362,
+            455.5,
+            135,
+            47.5
+          ],
+          "text": "LIDIK",
+          "textPreview": "LIDIK",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "LIDIK",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "LIDIK",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            497,
+            455.5,
+            135,
+            47.5
+          ],
+          "text": "SIDIK",
+          "textPreview": "SIDIK",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "SIDIK",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "SIDIK",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 2,
+          "column": 5,
+          "bbox": [
+            632,
+            455.5,
+            180,
+            47.5
+          ],
+          "text": "KIRIM SPDP",
+          "textPreview": "KIRIM SPDP",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "KIRIM SPDP",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "KIRIM SPDP",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 2,
+          "column": 6,
+          "bbox": [
+            812,
+            455.5,
+            135,
+            47.5
+          ],
+          "text": "THP-1",
+          "textPreview": "THP-1",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "THP-1",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "THP-1",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 2,
+          "column": 7,
+          "bbox": [
+            947,
+            455.5,
+            145,
+            47.5
+          ],
+          "text": "P-19",
+          "textPreview": "P-19",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "P-19",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "P-19",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 2,
+          "column": 8,
+          "bbox": [
+            1092,
+            455.5,
+            146,
+            47.5
+          ],
+          "text": "P-21",
+          "textPreview": "P-21",
+          "fillColor": "#FDE68A",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "P-21",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "P-21",
+                  "fontSize": 14,
+                  "color": "#0F172A",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            42,
+            503,
+            140,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            182,
+            503,
+            180,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            362,
+            503,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            497,
+            503,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "row": 3,
+          "column": 5,
+          "bbox": [
+            632,
+            503,
+            180,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 22,
+          "row": 3,
+          "column": 6,
+          "bbox": [
+            812,
+            503,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 23,
+          "row": 3,
+          "column": 7,
+          "bbox": [
+            947,
+            503,
+            145,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "row": 3,
+          "column": 8,
+          "bbox": [
+            1092,
+            503,
+            146,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 25,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            42,
+            550.5,
+            140,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 26,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            182,
+            550.5,
+            180,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFF7ED",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#9A3412",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 27,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            362,
+            550.5,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 28,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            497,
+            550.5,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 29,
+          "row": 4,
+          "column": 5,
+          "bbox": [
+            632,
+            550.5,
+            180,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 30,
+          "row": 4,
+          "column": 6,
+          "bbox": [
+            812,
+            550.5,
+            135,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 31,
+          "row": 4,
+          "column": 7,
+          "bbox": [
+            947,
+            550.5,
+            145,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 32,
+          "row": 4,
+          "column": 8,
+          "bbox": [
+            1092,
+            550.5,
+            146,
+            47.5
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "fillColor": "#FFFFFF",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—",
+                  "fontSize": 15,
+                  "color": "#111827"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oza1gfyh",
+      "id": "10",
+      "bbox": [
+        42,
+        612,
+        980,
+        26
+      ],
+      "geometry": "rect",
+      "text": "Contoh baris pertama: 57.249 − (55 + 14 + 12 + 2) = 57.166 Belum Update.",
+      "textPreview": "Contoh baris pertama: 57.249 − (55 + 14 + 12 + 2) = 57.166 Belum Update.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 24,
+        "typeface": "Calibri",
+        "color": "tx1",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Contoh baris pertama: 57.249 − (55 + 14 + 12 + 2) = 57.166 Belum Update."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Contoh baris pertama: 57.249 − (55 + 14 + 12 + 2) = 57.166 Belum Update.",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Aptos",
+            "color": "#9A3412",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Contoh baris pertama: 57.249 − (55 + 14 + 12 + 2) = 57.166 Belum Update.",
+              "fontSize": 15,
+              "typeface": "Aptos",
+              "color": "#9A3412",
+              "bold": true
+            }
+          ],
+          "bulletCharacter": "",
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

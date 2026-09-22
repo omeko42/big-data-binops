@@ -1,0 +1,17 @@
+Connecting to 127.0.0.1:3850 (127.0.0.1:3850)
+  HTTP/1.1 200 OK
+  X-Powered-By: Express
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Credentials: true
+  Content-Type: application/json; charset=utf-8
+  Content-Length: 129
+  ETag: W/"81-RNw0peFc69JVIEGD92dXRdGw1Ss"
+  Vary: Accept-Encoding
+  Date: Tue, 08 Sep 2026 03:20:15 GMT
+  Connection: close
+  
+saving to '/dev/null'
+null                 100% |********************************|   129  0:00:00 ETA
+'/dev/null' saved
+46c912acfa78dc82260cb1fc1089d50dee2517a9a6408fc9defdc3ec8e36d628  src/app_core/auth/user/user.service.ts
+6cd46f489de5f3eb006c7dc5af436cc8730932f35a5e89301859fffef7bdf44e  dist/app_core/auth/user/user.service.js

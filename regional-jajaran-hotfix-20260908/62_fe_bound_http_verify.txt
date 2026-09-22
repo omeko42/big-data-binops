@@ -1,0 +1,21 @@
+PAGE_PROBE
+Connecting to 13b8571bfa34:3000 (172.17.0.2:3000)
+  HTTP/1.1 200 OK
+  Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+  x-nextjs-cache: HIT
+  x-nextjs-prerender: 1
+  x-nextjs-prerender: 1
+  x-nextjs-stale-time: 300
+  X-Powered-By: Next.js
+  Cache-Control: s-maxage=31536000
+  ETag: "d8rejewq1sb6j"
+  Content-Type: text/html; charset=utf-8
+  Content-Length: 14495
+  Date: Tue, 08 Sep 2026 00:26:34 GMT
+  Connection: close
+  
+saving to '/dev/null'
+null                 100% |********************************| 14495  0:00:00 ETA
+'/dev/null' saved
+ASSET_HTTP_SHA256
+1e46fef222d4984ee92153e671266ebf4f586592139ebe004788536bca57a89e  -

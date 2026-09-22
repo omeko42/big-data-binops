@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "kind": "google-docs-trusted-read-context",
+  "target": {
+    "documentId": "1FNX4Yaeir67ah8o3rULFZFbM9V5w5NuKgyWYwfmDRlU",
+    "title": "Handover Teknis CAS v1.3 - Koreksi Scope Akses LP Unit dan Parent Polres",
+    "revisionId": "AIroW377GlUHUFH8H-Q8vTb4QxuuzqWKuBZc2StRaUBaphVXbfJRMi-WCE9ENPQNW4g5ZhAM54jHHYpc43RPnvXEV5aJzXXnrrkATvGR2Bk",
+    "documentUrl": "https://docs.google.com/document/d/1FNX4Yaeir67ah8o3rULFZFbM9V5w5NuKgyWYwfmDRlU",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "derivedControlInventory": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "nativeElementCounts": {
+      "dateElement": 1,
+      "richLink": 3
+    },
+    "tabsScanned": [
+      "t.0"
+    ],
+    "controls": [],
+    "nativeElements": [
+      {
+        "type": "dateElement",
+        "startIndex": 222,
+        "endIndex": 223,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[4]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 196,
+          "endIndex": 224,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "timestamp": "2026-08-11T17:00:00Z",
+          "locale": "en",
+          "dateFormat": "DATE_FORMAT_MONTH_DAY_YEAR_ABBREVIATED",
+          "timeFormat": "TIME_FORMAT_DISABLED",
+          "displayText": "Aug 11, 2026"
+        }
+      },
+      {
+        "type": "richLink",
+        "startIndex": 22343,
+        "endIndex": 22344,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[205]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 22343,
+          "endIndex": 22346,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "title": "Handover Teknis CAS v1.0 - Snapshot sebelum tambahan Admin Unit dan LP Polres (12 Agustus 2026)",
+          "uri": "https://docs.google.com/document/d/1BfWt6CV9KURfHDTKQr4N1lZGnRskj9Dm-5UrFssMBUw/edit",
+          "mimeType": "application/vnd.google-apps.kix"
+        }
+      },
+      {
+        "type": "richLink",
+        "startIndex": 22639,
+        "endIndex": 22640,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[209]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 22596,
+          "endIndex": 22641,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "title": "Handover Teknis CAS v1.1 - Snapshot sebelum koreksi klasifikasi LP tertahan (12 Agustus 2026)",
+          "uri": "https://docs.google.com/document/d/1Gv79hZZ7138zqPCozjwrE_YCGp-uXqLGK-zHqOeVtPA/edit",
+          "mimeType": "application/vnd.google-apps.kix"
+        }
+      },
+      {
+        "type": "richLink",
+        "startIndex": 22814,
+        "endIndex": 22815,
+        "tabId": "t.0",
+        "segmentId": null,
+        "container": {
+          "kind": "paragraph",
+          "path": "root.tabs[0].body.content[211]",
+          "tabId": "t.0",
+          "segmentId": null,
+          "startIndex": 22771,
+          "endIndex": 22816,
+          "namedStyleType": "NORMAL_TEXT",
+          "listId": null,
+          "nestingLevel": null,
+          "table": null
+        },
+        "properties": {
+          "title": "Handover Teknis CAS v1.2 - Snapshot sebelum koreksi scope akses LP unit (12 Agustus 2026)",
+          "uri": "https://docs.google.com/document/d/18-3p2U2aqzt9aGNtdDBjYMHKYpYSxfBrqVCHjrPp7a4/edit",
+          "mimeType": "application/vnd.google-apps.kix"
+        }
+      }
+    ]
+  },
+  "editGuidance": {
+    "advisoryOnly": true,
+    "requiresTargetedPreservation": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope.",
+    "warnings": []
+  }
+}
+

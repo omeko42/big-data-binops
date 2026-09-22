@@ -1,0 +1,16 @@
+Pager usage is off.
+  id   |     name     |        email         |     email_polri      |   username   | login_method | local_password_enabled | failed_login_attempts | locked_until | last_login_method |      last_login_at      | has_password | password_hash_length | status | approval_status 
+-------+--------------+----------------------+----------------------+--------------+--------------+------------------------+-----------------------+--------------+-------------------+-------------------------+--------------+----------------------+--------+-----------------
+ 14503 | YOKIY SUGITO | 87090777@polri.go.id | 87090777@polri.go.id | @bangYokiy33 | HYBRID       | t                      |                     0 |              | LOCAL             | 2026-09-07 01:14:48.818 | t            |                   60 | AKTIF  | APPROVED
+(1 row)
+
+ backup_rows 
+-------------
+           1
+(1 row)
+
+   id    |          action          |   entity   | entity_id | outcome |          created_at           
+---------+--------------------------+------------+-----------+---------+-------------------------------
+ 2138590 | CORRECT_LOGIN_IDENTIFIER | auth_users | 14503     | SUCCESS | 2026-09-08 03:16:39.508503+00
+(1 row)
+

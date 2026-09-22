@@ -1,0 +1,39 @@
+{
+  "_comment": "Pemetaan unit DORS ke kata kunci anak satker. Target hanya dipilih jika tepat satu anak langsung yang cocok.",
+  "polsek_min_lp_id": 404912,
+  "_comment_polsek_cutoff": "LP Polsek dengan id di bawah cutoff adalah backlog dan tidak boleh berubah otomatis saat deploy; penanganannya lewat patch DB ber-backup.",
+  "units": {
+    "SATLANTAS": "LANTAS",
+    "SATRESKRIM": "RESKRIM",
+    "SATRESNARKOBA": "NARKOBA",
+    "SATRESPPADANPPO": "PPA",
+    "SATSAMAPTA": "SABHARA",
+    "SATSABHARA": "SABHARA",
+    "SATPOLAIR": "POLAIR",
+    "SATINTELKAM": "INTELKAM",
+    "SATBINMAS": "BINMAS",
+    "SATTAHTI": "TAHTI",
+    "DITRESKRIMUM": "KRIMUM",
+    "DITRESKRIMSUS": "KRIMSUS",
+    "DITRESNARKOBA": "NARKOBA",
+    "DITRESSIBER": "SIBER",
+    "DITPPADANPPO": "PPA",
+    "DITLANTAS": "LANTAS",
+    "DITPOLAIR": "POLAIR",
+    "DITINTELKAM": "INTELKAM",
+    "DITBINMAS": "BINMAS",
+    "DITSABHARA": "SABHARA",
+    "RESKRIM": "RESKRIM"
+  },
+  "_comment_mabes": "Khusus LP level Mabes; target global harus unik sesuai perilaku existing.",
+  "mabes_units": {
+    "DITTIPIDNARKOBABARESKRIMPOLRI": "TIPIDNARKOBA",
+    "DITTIPIDEKSUSBARESKRIMPOLRI": "TIPIDEKSUS",
+    "DITTIPIDUMBARESKRIMPOLRI": "TIPIDUM",
+    "KORTASTIPIDKORPOLRI": "TIPIDKOR",
+    "DITTIPIDTERBARESKRIMPOLRI": "TIPIDTER",
+    "DITTIPIDSIBERBARESKRIMPOLRI": "TIPIDSIBER",
+    "DITTIPIDKORBARESKRIMPOLRI": "TIPIDKOR",
+    "DENSUS88ATPOLRI": "DENSUS"
+  }
+}

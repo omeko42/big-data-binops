@@ -1,0 +1,18 @@
+bdb-api
+running 2026-09-08T00:21:49.509137086Z
+2026-09-08 07:20:41 [WARN]: GET /api/bdb/pihak-terlibat/ranking?from=2026-01-01&to=2026-12-31&keterlibatan=ALL&limit=5 -> 400 Periode ranking maksimal 1 bulan (31 hari).
+2026-09-08 07:21:06 [ERROR]: GET /api/bdb/operasi-satgas?row=50&page=1&status=AKTIF -> timeout exceeded when trying to connect - Error: timeout exceeded when trying to connect
+    at Timeout._onTimeout (/usr/src/app/node_modules/pg-pool/index.js:224:27)
+    at listOnTimeout (node:internal/timers:594:17)
+    at process.processTimers (node:internal/timers:529:7)
+2026-09-08 07:21:06 [ERROR]: GET /api/bdb/kasus-menonjol?row=50&page=1 -> timeout exceeded when trying to connect - Error: timeout exceeded when trying to connect
+    at Timeout._onTimeout (/usr/src/app/node_modules/pg-pool/index.js:224:27)
+    at listOnTimeout (node:internal/timers:594:17)
+    at process.processTimers (node:internal/timers:529:7)
+2026-09-08 07:21:10 [INFO]: Snapshot kinerja perkara diperbarui (jadwal 30 menit).
+2026-09-08 07:21:11 [INFO]: Snapshot kinerja perkara diperbarui (jadwal 30 menit).
+npm error path /usr/src/app
+npm error command failed
+npm error signal SIGTERM
+npm error command sh -c node dist/main.js
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-09-07T23_48_14_163Z-debug-0.log

@@ -1,0 +1,3981 @@
+{
+  "rowCount": 2298,
+  "groups": [
+    {
+      "owner": "19785",
+      "owner_name": "SAT NARKOBA RESTA PONTIANAK",
+      "raw_unit": {
+        "id": 3,
+        "unit": "SATRESNARKOBA",
+        "level": "polres",
+        "id_emp": "11"
+      },
+      "raw_polres": "POLRESTA PONTIANAK ",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 145,
+      "tahun2026": 73
+    },
+    {
+      "owner": "6373",
+      "owner_name": "UNIT RESKRIM POLSEK PANGANDARAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": " POLRES PANGANDARAN",
+      "raw_polsek": "POLSEK PANGANDARAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 21,
+      "tahun2026": 11
+    },
+    {
+      "owner": "19437",
+      "owner_name": "SAT RESKRIM RES CIAMIS",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": null,
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 93,
+      "tahun2026": 25
+    },
+    {
+      "owner": "15381",
+      "owner_name": "UNIT RESKRIM POLSEK RANTEPAO",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK RANTEPAO",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 15,
+      "tahun2026": 10
+    },
+    {
+      "owner": "15543",
+      "owner_name": "UNIT RESKRIM POLSEK PITUMPANUA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES WAJO",
+      "raw_polsek": "POLSEK URBAN PITUMPANUA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 56,
+      "tahun2026": 39
+    },
+    {
+      "owner": "17093",
+      "owner_name": "SAT RESKRIM RES BONE BOLANGO",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 298,
+      "tahun2026": 131
+    },
+    {
+      "owner": "13766",
+      "owner_name": "SAT RESKRIM RES JEMBRANA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 168,
+      "tahun2026": 100
+    },
+    {
+      "owner": "17104",
+      "owner_name": "UNIT RESKRIM POLSEK KABILA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK KABILA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 31,
+      "tahun2026": 8
+    },
+    {
+      "owner": "12518",
+      "owner_name": "SAT RESKRIM RES HULU SUNGAI UTARA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 76,
+      "tahun2026": 35
+    },
+    {
+      "owner": "6328",
+      "owner_name": "UNIT RESKRIM POLSEK CIAMIS",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK CIAMIS",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 48,
+      "tahun2026": 12
+    },
+    {
+      "owner": "6879",
+      "owner_name": "SAT RESKRIM RES PANGANDARAN",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": " POLRES PANGANDARAN",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 235,
+      "tahun2026": 105
+    },
+    {
+      "owner": "6367",
+      "owner_name": "UNIT RESKRIM POLSEK PADAHERANG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": " POLRES PANGANDARAN",
+      "raw_polsek": "POLSEK PADAHERANG",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 28,
+      "tahun2026": 9
+    },
+    {
+      "owner": "6879",
+      "owner_name": "SAT RESKRIM RES PANGANDARAN",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": " POLRES PANGANDARAN",
+      "raw_polsek": null,
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 55,
+      "tahun2026": 6
+    },
+    {
+      "owner": "19437",
+      "owner_name": "SAT RESKRIM RES CIAMIS",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": null,
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 423,
+      "tahun2026": 163
+    },
+    {
+      "owner": "6334",
+      "owner_name": "UNIT RESKRIM POLSEK CIHAURBEUTI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK CIHAURBEUTI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 23,
+      "tahun2026": 3
+    },
+    {
+      "owner": "6343",
+      "owner_name": "UNIT RESKRIM POLSEK KAWALI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK KAWALI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 29,
+      "tahun2026": 12
+    },
+    {
+      "owner": "17119",
+      "owner_name": "UNIT RESKRIM POLSEK BONERAYA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONE RAYA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 6,
+      "tahun2026": 3
+    },
+    {
+      "owner": "6364",
+      "owner_name": "UNIT RESKRIM POLSEK BANJARSARI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK BANJARSARI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 33,
+      "tahun2026": 14
+    },
+    {
+      "owner": "6337",
+      "owner_name": "UNIT RESKRIM POLSEK PANUMBANGAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK PANUMBANGAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 22,
+      "tahun2026": 9
+    },
+    {
+      "owner": "13766",
+      "owner_name": "SAT RESKRIM RES JEMBRANA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": null,
+      "raw_transfer": "11",
+      "cas_transfer": "11",
+      "total": 2,
+      "tahun2026": 1
+    },
+    {
+      "owner": "20952",
+      "owner_name": "UNIT RESKRIM POLSEK URBAN PITUMPANUA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES WAJO",
+      "raw_polsek": "POLSEK URBAN PITUMPANUA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 39,
+      "tahun2026": 3
+    },
+    {
+      "owner": "6361",
+      "owner_name": "UNIT RESKRIM POLSEK LAKBOK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK LAKBOK",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 45,
+      "tahun2026": 16
+    },
+    {
+      "owner": "13780",
+      "owner_name": "UNIT RESKRIM POLSEK NEGARA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK NEGARA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 15,
+      "tahun2026": 10
+    },
+    {
+      "owner": "17110",
+      "owner_name": "UNIT RESKRIM POLSEK BONEPANTAI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONEPANTAI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 10,
+      "tahun2026": 4
+    },
+    {
+      "owner": "6358",
+      "owner_name": "UNIT RESKRIM POLSEK RANCAH",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK RANCAH",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 9,
+      "tahun2026": 3
+    },
+    {
+      "owner": "6331",
+      "owner_name": "UNIT RESKRIM POLSEK CIKONENG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK CIKONENG",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 15,
+      "tahun2026": 4
+    },
+    {
+      "owner": "17107",
+      "owner_name": "UNIT RESKRIM POLSEK TAPA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK TAPA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 41,
+      "tahun2026": 14
+    },
+    {
+      "owner": "13766",
+      "owner_name": "SAT RESKRIM RES JEMBRANA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": null,
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 6,
+      "tahun2026": 4
+    },
+    {
+      "owner": "12544",
+      "owner_name": "UNIT RESKRIM POLSEK BANJANG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BANJANG",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 8,
+      "tahun2026": 2
+    },
+    {
+      "owner": "17125",
+      "owner_name": "UNIT RESKRIM POLSEK BONE",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 25,
+      "tahun2026": 10
+    },
+    {
+      "owner": "12541",
+      "owner_name": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 10,
+      "tahun2026": 4
+    },
+    {
+      "owner": "12538",
+      "owner_name": "UNIT RESKRIM POLSEK BABIRIK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BABIRIK",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 9,
+      "tahun2026": 2
+    },
+    {
+      "owner": "20950",
+      "owner_name": "UNIT RESKRIM POLSEK LAPPARIAJA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONE",
+      "raw_polsek": "POLSEK LAPPARIAJA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 31,
+      "tahun2026": 11
+    },
+    {
+      "owner": "13774",
+      "owner_name": "UNIT RESKRIM POLSEK PEKUTATAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK PEKUTATAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 8,
+      "tahun2026": 1
+    },
+    {
+      "owner": "15381",
+      "owner_name": "UNIT RESKRIM POLSEK RANTEPAO",
+      "raw_unit": {
+        "id": 127000,
+        "unit": "SAMAPTA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK RANTEPAO",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 3,
+      "tahun2026": 3
+    },
+    {
+      "owner": "15402",
+      "owner_name": "UNIT RESKRIM POLSEK SESEAN",
+      "raw_unit": {
+        "id": 127000,
+        "unit": "SAMAPTA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK SESEAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 1
+    },
+    {
+      "owner": "13786",
+      "owner_name": "UNIT RESKRIM POLSEK KAWASAN GILIMANUK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK KAWASAN PELABUHAN GILIMANUK",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 6,
+      "tahun2026": 4
+    },
+    {
+      "owner": "13777",
+      "owner_name": "UNIT RESKRIM POLSEK MENDOYO",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK MENDOYO",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 8,
+      "tahun2026": 4
+    },
+    {
+      "owner": "17128",
+      "owner_name": "UNIT RESKRIM POLSEK BOLANGO",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BOLANGO",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 11,
+      "tahun2026": 6
+    },
+    {
+      "owner": "6391",
+      "owner_name": "UNIT RESKRIM POLSEK CIJEUNGJING",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK CIJEUNGJING",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 12,
+      "tahun2026": 5
+    },
+    {
+      "owner": "12518",
+      "owner_name": "SAT RESKRIM RES HULU SUNGAI UTARA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": null,
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 3,
+      "tahun2026": 1
+    },
+    {
+      "owner": "15402",
+      "owner_name": "UNIT RESKRIM POLSEK SESEAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK SESEAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 11,
+      "tahun2026": 6
+    },
+    {
+      "owner": "17093",
+      "owner_name": "SAT RESKRIM RES BONE BOLANGO",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": null,
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 17,
+      "tahun2026": 4
+    },
+    {
+      "owner": "17116",
+      "owner_name": "UNIT RESKRIM POLSEK KABILA BONE",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK KABILA BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 9,
+      "tahun2026": 7
+    },
+    {
+      "owner": "13783",
+      "owner_name": "UNIT RESKRIM POLSEK MELAYA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK MELAYA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 13,
+      "tahun2026": 3
+    },
+    {
+      "owner": "12532",
+      "owner_name": "UNIT RESKRIM POLSEK AMUNTAI SELATAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI SELATAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 9,
+      "tahun2026": 5
+    },
+    {
+      "owner": "12535",
+      "owner_name": "UNIT RESKRIM POLSEK ALABIO",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 7,
+      "tahun2026": 3
+    },
+    {
+      "owner": "12529",
+      "owner_name": "UNIT RESKRIM POLSEK AMUNTAI UTARA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI UTARA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 5,
+      "tahun2026": 1
+    },
+    {
+      "owner": "12526",
+      "owner_name": "UNIT RESKRIM POLSEK AMUNTAI TENGAH",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI TENGAH",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 11,
+      "tahun2026": 4
+    },
+    {
+      "owner": "6331",
+      "owner_name": "UNIT RESKRIM POLSEK CIKONENG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK CIKONENG",
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 1,
+      "tahun2026": 1
+    },
+    {
+      "owner": "15552",
+      "owner_name": "UNIT RESKRIM POLSEK PENRANG",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES WAJO",
+      "raw_polsek": "POLSEK PENRANG",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 14,
+      "tahun2026": 8
+    },
+    {
+      "owner": "20917",
+      "owner_name": "UNIT RESKRIM POLSEK KAWASAN PELABUHAN GILIMANUK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK KAWASAN PELABUHAN GILIMANUK",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 6,
+      "tahun2026": 1
+    },
+    {
+      "owner": "6340",
+      "owner_name": "UNIT RESKRIM POLSEK PANJALU",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK PANJALU",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 17,
+      "tahun2026": 0
+    },
+    {
+      "owner": "6385",
+      "owner_name": "UNIT RESKRIM POLSEK PAMARICAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK PAMARICAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 9,
+      "tahun2026": 0
+    },
+    {
+      "owner": "15393",
+      "owner_name": "UNIT RESKRIM POLSEK SANGGALANGI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK SANGGALANGI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 4,
+      "tahun2026": 2
+    },
+    {
+      "owner": "17116",
+      "owner_name": "UNIT RESKRIM POLSEK KABILA BONE",
+      "raw_unit": {
+        "id": 127000,
+        "unit": "SAMAPTA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK KABILA BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 1
+    },
+    {
+      "owner": "20982",
+      "owner_name": "UNIT RESKRIM POLSEK KOTA JEMBRANA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK KOTA JEMBRANA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 6,
+      "tahun2026": 3
+    },
+    {
+      "owner": "13766",
+      "owner_name": "SAT RESKRIM RES JEMBRANA",
+      "raw_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": null,
+      "raw_transfer": "11",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 1
+    },
+    {
+      "owner": "6394",
+      "owner_name": "UNIT RESKRIM POLSEK CIMERAK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": " POLRES PANGANDARAN",
+      "raw_polsek": "POLSEK CIMERAK",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 1
+    },
+    {
+      "owner": "15393",
+      "owner_name": "UNIT RESKRIM POLSEK SANGGALANGI",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES TORAJA UTARA",
+      "raw_polsek": "POLSEK SANGGALANGI",
+      "raw_transfer": "1",
+      "cas_transfer": "1",
+      "total": 1,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17125",
+      "owner_name": "UNIT RESKRIM POLSEK BONE",
+      "raw_unit": {
+        "id": 127000,
+        "unit": "SAMAPTA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 0
+    },
+    {
+      "owner": "6349",
+      "owner_name": "UNIT RESKRIM POLSEK PANAWANGAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK PANAWANGAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 6,
+      "tahun2026": 0
+    },
+    {
+      "owner": "6355",
+      "owner_name": "UNIT RESKRIM POLSEK SUKADANA",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES CIAMIS",
+      "raw_polsek": "POLSEK SUKADANA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 8,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17110",
+      "owner_name": "UNIT RESKRIM POLSEK BONEPANTAI",
+      "raw_unit": {
+        "id": 126000,
+        "unit": "SABHARA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONEPANTAI",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 0
+    },
+    {
+      "owner": "13786",
+      "owner_name": "UNIT RESKRIM POLSEK KAWASAN GILIMANUK",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES JEMBRANA",
+      "raw_polsek": "POLSEK KAWASAN PELABUHAN GILIMANUK",
+      "raw_transfer": "11",
+      "cas_transfer": "11",
+      "total": 1,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17125",
+      "owner_name": "UNIT RESKRIM POLSEK BONE",
+      "raw_unit": {
+        "id": 126000,
+        "unit": "SABHARA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 2,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17116",
+      "owner_name": "UNIT RESKRIM POLSEK KABILA BONE",
+      "raw_unit": {
+        "id": 126000,
+        "unit": "SABHARA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK KABILA BONE",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 4,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17119",
+      "owner_name": "UNIT RESKRIM POLSEK BONERAYA",
+      "raw_unit": {
+        "id": 126000,
+        "unit": "SABHARA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BONE RAYA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 4,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17107",
+      "owner_name": "UNIT RESKRIM POLSEK TAPA",
+      "raw_unit": {
+        "id": 126000,
+        "unit": "SABHARA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK TAPA",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 0
+    },
+    {
+      "owner": "20900",
+      "owner_name": "UNIT RESKRIM POLSEK SUNGAI PANDAN",
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 4,
+      "tahun2026": 0
+    },
+    {
+      "owner": "17128",
+      "owner_name": "UNIT RESKRIM POLSEK BOLANGO",
+      "raw_unit": {
+        "id": 127000,
+        "unit": "SAMAPTA",
+        "level": "polsek",
+        "id_emp": null
+      },
+      "raw_polres": "POLRES BONEBOLANGO",
+      "raw_polsek": "POLSEK BOLANGO",
+      "raw_transfer": "0",
+      "cas_transfer": "0",
+      "total": 1,
+      "tahun2026": 0
+    }
+  ],
+  "changedSourceUnits": [],
+  "huluNarcotics": [
+    {
+      "id": "74777",
+      "no_laporan": "LP/A/1/II/2026/SPKT.UNITRESKRIM/POLSEK DANAU PANGGANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "23-02-2026 12:33:42",
+      "owner_id": "12541",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 11:25:12.315459",
+      "raw_synced": "2026-08-03 11:12:41.711961",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "187133",
+      "no_laporan": "LP/A/1/V/2026/SPKT.UNITRESKRIM/POLSEK AMUNTAI SELATAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "16-05-2026 16:51:14",
+      "owner_id": "12532",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI SELATAN",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:50:38.671056",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI SELATAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "187168",
+      "no_laporan": "LP/A/2/V/2026/SPKT.UNITRESKRIM/POLSEK AMUNTAI SELATAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "16-05-2026 17:57:06",
+      "owner_id": "12532",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI SELATAN",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:50:43.128434",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI SELATAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "188020",
+      "no_laporan": "LP/A/2/V/2026/SPKT.UNITRESKRIM/POLSEK BANJANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "18-05-2026 11:15:24",
+      "owner_id": "12544",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BANJANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:51:58.732478",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BANJANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "189629",
+      "no_laporan": "LP/A/1/V/2026/SPKT.UNITRESKRIM/POLSEK SUNGAI PANDAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "20-05-2026 10:21:30",
+      "owner_id": "12535",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK ALABIO",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:54:22.222515",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "190545",
+      "no_laporan": "LP/A/1/V/2026/SPKT.UNITRESKRIM/POLSEK AMUNTAI UTARA/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "21-05-2026 12:29:57",
+      "owner_id": "12529",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI UTARA",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:55:49.525494",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI UTARA",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)",
+        "Narkotika (Narkoba)",
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "190782",
+      "no_laporan": "LP/A/1/V/2026/SPKT.UNITRESKRIM/POLSEK AMUNTAI TENGAH/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "21-05-2026 17:07:09",
+      "owner_id": "12526",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI TENGAH",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:56:50.255491",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI TENGAH",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "192335",
+      "no_laporan": "LP/A/2/V/2026/SPKT.UNITRESKRIM/POLSEK DANAU PANGGANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "24-05-2026 01:47:50",
+      "owner_id": "12541",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 12:59:59.559991",
+      "raw_synced": "2026-08-03 12:59:22.119315",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "193028",
+      "no_laporan": "LP/A/2/V/2026/SPKT.UNITRESKRIM/POLSEK BABIRIK/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "25-05-2026 11:20:22",
+      "owner_id": "12538",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BABIRIK",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-03 13:00:42.650017",
+      "raw_synced": "2026-08-03 13:00:26.364213",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BABIRIK",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "447611",
+      "no_laporan": "LP/A/4/XII/2025/SPKT.UNITRESKRIM/POLSEK SUNGAI PANDAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "04-12-2025 21:15:33",
+      "owner_id": "12535",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK ALABIO",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 18:44:40.967273",
+      "raw_synced": "2026-08-23 18:22:47.671884",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "454967",
+      "no_laporan": "LP/A/5/XII/2025/SPKT.UNITRESKRIM/POLSEK SUNGAI PANDAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "09-12-2025 15:48:56",
+      "owner_id": "12535",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK ALABIO",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 18:44:40.967273",
+      "raw_synced": "2026-08-23 18:27:06.026871",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "495306",
+      "no_laporan": "LP/A/1/XI/2025/SPKT.UNITRESKRIM/POLSEK BANJANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "05-11-2025 11:09:06",
+      "owner_id": "12544",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BANJANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:29:08.837812",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BANJANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "497919",
+      "no_laporan": "LP/A/3/XI/2025/SPKT.UNITRESKRIM/POLSEK DANAU PANGGANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "06-11-2025 18:03:52",
+      "owner_id": "12541",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:30:33.424595",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "498060",
+      "no_laporan": "LP/A/4/XI/2025/SPKT.UNITRESKRIM/POLSEK DANAU PANGGANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "06-11-2025 19:38:27",
+      "owner_id": "12541",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:30:38.137463",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "504810",
+      "no_laporan": "LP/A/5/XI/2025/SPKT.UNITRESKRIM/POLSEK BABIRIK/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "11-11-2025 10:52:41",
+      "owner_id": "12538",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BABIRIK",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:34:38.704342",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BABIRIK",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "506345",
+      "no_laporan": "LP/A/2/XI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI UTARA/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "11-11-2025 23:32:13",
+      "owner_id": "12529",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI UTARA",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:35:35.685691",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI UTARA",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)",
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "509872",
+      "no_laporan": "LP/A/3/XI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI SELATAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "13-11-2025 23:38:16",
+      "owner_id": "12532",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI SELATAN",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:37:41.479683",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI SELATAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "509900",
+      "no_laporan": "LP/A/4/XI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI TENGAH/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "13-11-2025 23:54:56",
+      "owner_id": "12526",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI TENGAH",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-23 19:50:58.577321",
+      "raw_synced": "2026-08-23 19:37:41.479683",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI TENGAH",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "732429",
+      "no_laporan": "LP/A/1/VII/2025/SPKT.UNITRESKRIM/POLSEK SUNGAI PANDAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "16-07-2025 11:03:08",
+      "owner_id": "20900",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK SUNGAI PANDAN",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 19:32:36.803638",
+      "raw_synced": "2026-08-31 18:55:11.148835",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK SUNGAI PANDAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "794815",
+      "no_laporan": "LP/A/2/VI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI SELATAN/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "27-06-2025 00:07:09",
+      "owner_id": "12532",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI SELATAN",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:48:25.196906",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI SELATAN",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "796762",
+      "no_laporan": "LP/A/2/VI/2025/SPKT.UNITRESKRIM/POLSEK BABIRIK/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "29-06-2025 15:12:00",
+      "owner_id": "12538",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BABIRIK",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:49:58.942185",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BABIRIK",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "796866",
+      "no_laporan": "LP/A/3/VI/2025/SPKT.UNITRESKRIM/POLSEK BABIRIK/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "29-06-2025 15:41:49",
+      "owner_id": "12538",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK BABIRIK",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:50:04.253012",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK BABIRIK",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "798049",
+      "no_laporan": "LP/A/1/VI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI UTARA/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "30-06-2025 16:08:26",
+      "owner_id": "12529",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI UTARA",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:51:01.115779",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI UTARA",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)",
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "798501",
+      "no_laporan": "LP/A/1/VI/2025/SPKT.UNITRESKRIM/POLSEK DANAU PANGGANG/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "30-06-2025 23:03:44",
+      "owner_id": "12541",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK DANAU PANGGANG",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:51:19.874055",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK DANAU PANGGANG",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "798555",
+      "no_laporan": "LP/A/2/VI/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI TENGAH/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "30-06-2025 23:12:22",
+      "owner_id": "12526",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI TENGAH",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-08-31 21:12:44.771907",
+      "raw_synced": "2026-08-31 20:51:24.120825",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI TENGAH",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    },
+    {
+      "id": "827245",
+      "no_laporan": "LP/A/1/V/2025/SPKT.UNITRESKRIM/POLSEK AMUNTAI TENGAH/POLRES HULU SUNGAI UTARA/POLDA KALIMANTAN SELATAN ",
+      "tgl_laporan": "12-05-2025 01:48:27",
+      "owner_id": "12526",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK AMUNTAI TENGAH",
+      "unit_nama": "RESKRIM",
+      "unit_level": "polsek",
+      "sudah_dilimpahkan": false,
+      "dilimpahkan_eksternal": false,
+      "cas_synced": "2026-09-01 16:35:43.681023",
+      "raw_synced": "2026-09-01 15:49:24.201286",
+      "cas_source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "raw_polres": "POLRES HULU SUNGAI UTARA",
+      "raw_polsek": "POLSEK AMUNTAI TENGAH",
+      "cas_transfer": "0",
+      "raw_transfer": "0",
+      "offenseNames": [
+        "Narkotika (Narkoba)"
+      ]
+    }
+  ],
+  "dbPolsekMarkers": [
+    {
+      "operational_role": null,
+      "dors_status": "Aktif",
+      "kinerja_aktif": true,
+      "total": 3274
+    },
+    {
+      "operational_role": null,
+      "dors_status": null,
+      "kinerja_aktif": true,
+      "total": 1805
+    },
+    {
+      "operational_role": null,
+      "dors_status": "Tidak Aktif",
+      "kinerja_aktif": false,
+      "total": 22
+    },
+    {
+      "operational_role": null,
+      "dors_status": "Aktif",
+      "kinerja_aktif": false,
+      "total": 6
+    },
+    {
+      "operational_role": null,
+      "dors_status": null,
+      "kinerja_aktif": false,
+      "total": 5
+    },
+    {
+      "operational_role": null,
+      "dors_status": "Nonaktif",
+      "kinerja_aktif": true,
+      "total": 4
+    },
+    {
+      "operational_role": null,
+      "dors_status": "MERGED_TO_20207",
+      "kinerja_aktif": false,
+      "total": 1
+    }
+  ],
+  "wajoRaw": [
+    {
+      "id": "2531",
+      "dors_lp_id": "3996807",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/1/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "3267",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "4842",
+      "dors_lp_id": "3999941",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/2/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "5305",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "27319",
+      "dors_lp_id": "4026039",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/3/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "22687",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "34275",
+      "dors_lp_id": "4034393",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/4/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "28337",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "42294",
+      "dors_lp_id": "4045258",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/5/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "42212",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "47246",
+      "dors_lp_id": "4054462",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/6/I/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "46820",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "70238",
+      "dors_lp_id": "4075668",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/7/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "68029",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "70964",
+      "dors_lp_id": "4076533",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/8/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "68405",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "87656",
+      "dors_lp_id": "4095539",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/9/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "87089",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "97283",
+      "dors_lp_id": "4107055",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/10/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "91931",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "102872",
+      "dors_lp_id": "4113983",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/11/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "94650",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "112277",
+      "dors_lp_id": "4126860",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/12/II/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "99193",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "142193",
+      "dors_lp_id": "4260612",
+      "model_lp": "lp_model_a",
+      "no_laporan": "LP/A/1/IV/2026/SPKT.UNITRESKRIM/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "153957",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "151097",
+      "dors_lp_id": "4178435",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/13/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "140698",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "151634",
+      "dors_lp_id": "4179021",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/14/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "140968",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "153768",
+      "dors_lp_id": "4181046",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/15/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "141986",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "155361",
+      "dors_lp_id": "4182584",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/16/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "142728",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "166099",
+      "dors_lp_id": "4193881",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/17/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "147899",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "166817",
+      "dors_lp_id": "4195441",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/18/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "167197",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "178778",
+      "dors_lp_id": "4208442",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/19/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "173082",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "179346",
+      "dors_lp_id": "4210623",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/20/III/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "174039",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "189101",
+      "dors_lp_id": "4220636",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/22/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "178587",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "189125",
+      "dors_lp_id": "4220053",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/21/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "178320",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "202168",
+      "dors_lp_id": "4228433",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/23/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "196877",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "214441",
+      "dors_lp_id": "4250217",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/24/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "215120",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "214528",
+      "dors_lp_id": "4250419",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/25/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "215199",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "232350",
+      "dors_lp_id": "4272341",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/26/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "225260",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "232564",
+      "dors_lp_id": "4272548",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/27/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "225325",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "247317",
+      "dors_lp_id": "4287988",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/28/IV/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "232459",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "271154",
+      "dors_lp_id": "4309265",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/29/V/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "264857",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "281355",
+      "dors_lp_id": "4320465",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/1/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "270008",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "281385",
+      "dors_lp_id": "4320619",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/2/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "270084",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "284980",
+      "dors_lp_id": "4324657",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/30/V/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "271854",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "285404",
+      "dors_lp_id": "4325047",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/3/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "272032",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "288828",
+      "dors_lp_id": "4329126",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/31/V/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "288441",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "290177",
+      "dors_lp_id": "4331840",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/32/V/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "289415",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "294251",
+      "dors_lp_id": "4340070",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/4/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "294625",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "299481",
+      "dors_lp_id": "4350819",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/5/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "299551",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "300018",
+      "dors_lp_id": "4351822",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/7/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "300075",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "300042",
+      "dors_lp_id": "4351721",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/6/V/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "300018",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "321244",
+      "dors_lp_id": "4395519",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/33/VI/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "324922",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "331961",
+      "dors_lp_id": "4417290",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/34/VI/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "335406",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "337468",
+      "dors_lp_id": "1936437",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/46/VIII/2023/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "314977",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "338497",
+      "dors_lp_id": "1287866",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/1/I/2023/SPKT/POLSEK PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "312709",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "342772",
+      "dors_lp_id": "4432662",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/35/VI/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "342553",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "343170",
+      "dors_lp_id": "4433580",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/36/VI/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "342951",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "356247",
+      "dors_lp_id": "4461174",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/37/VII/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "356930",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "367290",
+      "dors_lp_id": "4483977",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/38/VII/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "367524",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "368714",
+      "dors_lp_id": "4486732",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/39/VII/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "368864",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "376129",
+      "dors_lp_id": "4504348",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/8/VII/2026/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "375930",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "387755",
+      "dors_lp_id": "4521268",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/40/VIII/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "387833",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "408205",
+      "dors_lp_id": "4546408",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/41/VIII/2026/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "410568",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "428719",
+      "dors_lp_id": "3920985",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/64/XII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "440851",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "439744",
+      "dors_lp_id": "3934804",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/65/XII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "449922",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "469986",
+      "dors_lp_id": "3976536",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/66/XII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "481338",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "471884",
+      "dors_lp_id": "3981083",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/67/XII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "483198",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "473247",
+      "dors_lp_id": "3984149",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/68/XII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "484545",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "511526",
+      "dors_lp_id": "3892550",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/62/XI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "523312",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "517036",
+      "dors_lp_id": "3905550",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/63/XI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "528466",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "526958",
+      "dors_lp_id": "3756637",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/60/X/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "542410",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "530913",
+      "dors_lp_id": "3762300",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/61/X/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "545367",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "587992",
+      "dors_lp_id": "3668932",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/54/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "603370",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "593911",
+      "dors_lp_id": "3678001",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/5/IX/2025/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "608397",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "608519",
+      "dors_lp_id": "3695582",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/55/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "619617",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "609095",
+      "dors_lp_id": "3696259",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/56/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "620077",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "609290",
+      "dors_lp_id": "3696570",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/57/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "620261",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "615283",
+      "dors_lp_id": "3705398",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/58/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "624963",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "630037",
+      "dors_lp_id": "3747720",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/59/IX/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "647880",
+      "unit_satker_id": "15543",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PITUMPANUA"
+    },
+    {
+      "id": "640604",
+      "dors_lp_id": "1642168",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/3/V/2023/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "658655",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "659395",
+      "dors_lp_id": "3612987",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/50/VIII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "677460",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "659521",
+      "dors_lp_id": "3613141",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/51/VIII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "677585",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "687594",
+      "dors_lp_id": "3645912",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/52/VIII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "705510",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "695603",
+      "dors_lp_id": "3660932",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/53/VIII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "713451",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "698580",
+      "dors_lp_id": "3541613",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/46/VII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "716661",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "698742",
+      "dors_lp_id": "3541730",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/47/VII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "716823",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "710598",
+      "dors_lp_id": "3553058",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/48/VII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "728602",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "723485",
+      "dors_lp_id": "3587926",
+      "model_lp": "lp_model_a",
+      "no_laporan": "LP/A/1/VII/2025/SPKT.UNITRESKRIM/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "741413",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "733077",
+      "dors_lp_id": "3575683",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/49/VII/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "750955",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "758092",
+      "dors_lp_id": "3492163",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/38/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "776054",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "758915",
+      "dors_lp_id": "3493011",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/39/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "776876",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "765627",
+      "dors_lp_id": "3499793",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/40/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "783562",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "766793",
+      "dors_lp_id": "3501025",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/41/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "784719",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "785194",
+      "dors_lp_id": "3523830",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/42/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "802994",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "785228",
+      "dors_lp_id": "3523891",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/43/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "803028",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "785297",
+      "dors_lp_id": "3524019",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/44/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "803095",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "789077",
+      "dors_lp_id": "3531309",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/4/VI/2025/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "806844",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "791605",
+      "dors_lp_id": "3536329",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/45/VI/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "809352",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "802293",
+      "dors_lp_id": "3417343",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/31/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "820241",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "803079",
+      "dors_lp_id": "3418026",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/32/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "821021",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "827277",
+      "dors_lp_id": "3444226",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/33/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "845090",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "832999",
+      "dors_lp_id": "3334822",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/20/III/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1,
+        "unit": "SATRESKRIM",
+        "level": "polres",
+        "id_emp": "10"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": null,
+      "cas_id": "850778",
+      "unit_satker_id": "15535",
+      "unit_satker_nama": "SAT RESKRIM RES WAJO"
+    },
+    {
+      "id": "833662",
+      "dors_lp_id": "3452299",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/34/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "851438",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "837457",
+      "dors_lp_id": "3459905",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/36/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "855212",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "837458",
+      "dors_lp_id": "3459844",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/35/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "855213",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "837978",
+      "dors_lp_id": "3461022",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/37/V/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "855729",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "847060",
+      "dors_lp_id": "3478990",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/3/V/2025/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "864736",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "850758",
+      "dors_lp_id": "3360345",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/23/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "868654",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "851178",
+      "dors_lp_id": "3360611",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/24/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "869073",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "851207",
+      "dors_lp_id": "3360656",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/25/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "869102",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "851309",
+      "dors_lp_id": "3360745",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/26/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "869204",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "851899",
+      "dors_lp_id": "3361201",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/27/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "869784",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "860075",
+      "dors_lp_id": "3368286",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/28/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "877889",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "871442",
+      "dors_lp_id": "3378414",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/29/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "889158",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "896167",
+      "dors_lp_id": "3411741",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/30/IV/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "913639",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "913624",
+      "dors_lp_id": "3318890",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/18/III/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "931308",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "915297",
+      "dors_lp_id": "3320668",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/19/III/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "932968",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "925011",
+      "dors_lp_id": "3330346",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/1/III/2025/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "942588",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "936547",
+      "dors_lp_id": "3348323",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/21/III/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "954327",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "937712",
+      "dors_lp_id": "3350192",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/22/III/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": "955467",
+      "unit_satker_id": "20952",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK URBAN PITUMPANUA"
+    },
+    {
+      "id": "939740",
+      "dors_lp_id": "3353452",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/2/III/2025/SPKT/POLSEK PENRANG/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK PENRANG",
+      "cas_id": "957469",
+      "unit_satker_id": "15552",
+      "unit_satker_nama": "UNIT RESKRIM POLSEK PENRANG"
+    },
+    {
+      "id": "946061",
+      "dors_lp_id": "3250007",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/10/II/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": null,
+      "unit_satker_id": null,
+      "unit_satker_nama": null
+    },
+    {
+      "id": "955885",
+      "dors_lp_id": "3258528",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/11/II/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": null,
+      "unit_satker_id": null,
+      "unit_satker_nama": null
+    },
+    {
+      "id": "957383",
+      "dors_lp_id": "3259947",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/12/II/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": null,
+      "unit_satker_id": null,
+      "unit_satker_nama": null
+    },
+    {
+      "id": "966783",
+      "dors_lp_id": "3268112",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/13/II/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": null,
+      "unit_satker_id": null,
+      "unit_satker_nama": null
+    },
+    {
+      "id": "969893",
+      "dors_lp_id": "3270581",
+      "model_lp": "lp_model_b",
+      "no_laporan": "LP/B/14/II/2025/SPKT/POLSEK URBAN PITUMPANUA/POLRES WAJO/POLDA SULAWESI SELATAN ",
+      "source_unit": {
+        "id": 1000,
+        "unit": "RESKRIM",
+        "level": "polsek",
+        "id_emp": "06"
+      },
+      "polres": "POLRES WAJO",
+      "polsek": "POLSEK URBAN PITUMPANUA",
+      "cas_id": null,
+      "unit_satker_id": null,
+      "unit_satker_nama": null
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+import { CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Column, Index } from 'typeorm';
+
+export abstract class Timestamps {
+    @Column({ type: 'bigint', nullable: true })
+    created_by: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    updated_by: number;
+
+    @Column({ type: 'bigint', nullable: true })
+    deleted_by: number;
+
+    @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    created_at: Date;
+
+    @UpdateDateColumn({
+        type: 'timestamp',
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP'
+    })
+    updated_at: Date;
+
+    @DeleteDateColumn({ type: 'timestamp', nullable: true })
+    deleted_at?: Date;
+}

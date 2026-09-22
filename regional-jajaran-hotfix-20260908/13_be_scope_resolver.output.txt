@@ -1,0 +1,19 @@
+c08322d8a5d2bc54cd9ba1b260970ce3be5c60e6a84f3f000afe4a521698829f  src/bdb/common/scope.util.ts
+2c24572a18c7101a8e233542b01d6f5abd862aef27ce97e486ac5d074e3edfee  dist/bdb/common/scope.util.js
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveScope = resolveScope;
+async function resolveScope(ds, userId) {
+    if (!userId)
+        return { all: false, isSuper: false, satkerId: null };
+    const rows = await ds.query('select role_bdb, role_name, scope_satker_id from auth_users where id=$1', [userId]);
+    const u = rows[0];
+    const roleBdb = String(u?.role_bdb || '').toLowerCase();
+    const roleName = String(u?.role_name || '').toLowerCase();
+    const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
+    const isAdmin = roleBdb === 'admin_binops';
+    if (isSuper || isAdmin)
+        return { all: true, isSuper, satkerId: null };
+    return { all: false, isSuper: false, satkerId: u?.scope_satker_id != null ? Number(u.scope_satker_id) : null };
+}
+//# sourceMappingURL=scope.util.js.map

@@ -1,0 +1,82 @@
+# ==========================================
+# CREDENTIALS & SENSITIVE ENVIRONMENT FILES
+# ==========================================
+*.env
+*.env.*
+*.env.local
+CAS_SSH_LOCAL.env
+cas_env_askpass.cmd
+credentials.json
+*.pem
+*.key
+*.id_rsa
+*.id_ed25519
+
+# ==========================================
+# SERVER SCRATCH & TEMPORARY PROBE SCRIPTS
+# ==========================================
+scratch/
+tmp/
+temp/
+outputs/
+output/
+generated/
+.codex/
+.codex-artifact/
+.system_generated/
+.batch8_*
+.verify-*
+.work_*
+.pptx-*
+*.out
+*.err
+*.done
+*.done.*
+*.log
+*.tsv
+*.csv
+
+# ==========================================
+# LARGE BINARIES & DATABASE DUMPS
+# ==========================================
+*.dump
+*.sql
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.rar
+*.bak
+*.bak-*
+*.old
+
+# ==========================================
+# OFFICE & BINARY DOCUMENTS
+# ==========================================
+*.docx
+*.xlsx
+*.pptx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+# ==========================================
+# DEPENDENCIES & BUILD ARTIFACTS
+# ==========================================
+node_modules/
+dist/
+.next/
+build/
+.cache/
+
+# ==========================================
+# OS & EDITOR METADATA
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+{

@@ -1,0 +1,59 @@
+Pager usage is off.
+Null display is "<NULL>".
+=== PREPARE DATA FIXES: RELEVANT FIELDS + AUDIT SCHEMA ===
+BEGIN
+SET
+       kind       |          key          |               value               
+------------------+-----------------------+-----------------------------------
+ template_1203180 | dilimpahkan_eksternal | false
+ wrong_380025     | dilimpahkan_eksternal | false
+ template_1203180 | penanganan_level      | Polsek
+ wrong_380025     | penanganan_level      | Polres
+ template_1203180 | satker_id             | 16875
+ wrong_380025     | satker_id             | 16926
+ template_1203180 | satker_nama           | POLSEK RATATOTOK
+ wrong_380025     | satker_nama           | POLRES MINAHASA TENGGARA
+ template_1203180 | sudah_dilimpahkan     | false
+ wrong_380025     | sudah_dilimpahkan     | false
+ template_1203180 | unit_level            | polsek
+ wrong_380025     | unit_level            | polres
+ template_1203180 | unit_nama             | RESKRIM
+ wrong_380025     | unit_nama             | SATRESKRIM
+ template_1203180 | unit_satker_id        | 16877
+ wrong_380025     | unit_satker_id        | 16927
+ template_1203180 | unit_satker_kode      | 060.01.28.15.14.06
+ wrong_380025     | unit_satker_kode      | 060.01.28.15.00.10
+ template_1203180 | unit_satker_nama      | UNIT RESKRIM POLSEK RATATOTOK
+ wrong_380025     | unit_satker_nama      | SAT RESKRIM RES MINAHASA TENGGARA
+(20 rows)
+
+            key             |           value            
+----------------------------+----------------------------
+ requested_scope_satker_id  | 3673
+ requested_scope_satker_key | 060.01.08.04.01.06
+ scope_satker_id            | 3673
+ scope_satker_key           | 060.01.08.04.01.06
+ updated_at                 | 2026-09-06T11:12:15.491029
+ updated_by                 | <NULL>
+(6 rows)
+
+ column_name |        data_type         | is_nullable |              column_default               
+-------------+--------------------------+-------------+-------------------------------------------
+ id          | bigint                   | NO          | nextval('bdb_audit_log_id_seq'::regclass)
+ user_id     | bigint                   | YES         | <NULL>
+ user_nama   | text                     | YES         | <NULL>
+ action      | text                     | NO          | <NULL>
+ entity      | text                     | YES         | <NULL>
+ entity_id   | text                     | YES         | <NULL>
+ meta        | jsonb                    | YES         | <NULL>
+ ip          | text                     | YES         | <NULL>
+ created_at  | timestamp with time zone | NO          | now()
+ outcome     | text                     | YES         | <NULL>
+(10 rows)
+
+      conname       |    definition    
+--------------------+------------------
+ bdb_audit_log_pkey | PRIMARY KEY (id)
+(1 row)
+
+ROLLBACK

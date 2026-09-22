@@ -1,0 +1,12 @@
+'use strict';
+const fs = require('fs');
+const assert = require('node:assert/strict');
+const file = process.argv[2] || `${__dirname}/candidate/kinerja-external-20260904.js`;
+const code = fs.readFileSync(file, 'utf8');
+assert.equal((code.match(/header:"LIMPAH EKSTERNAL"/g) || []).length, 1);
+assert.equal((code.match(/"limpah-eksternal"/g) || []).length, 1);
+assert.ok(code.indexOf('header:"BELUM UPDATE"') < code.indexOf('header:"LIMPAH EKSTERNAL"'));
+assert.ok(code.indexOf('header:"LIMPAH EKSTERNAL"') < code.indexOf('header:"CP (CRIME PROCESSED)"'));
+assert.match(code, /e\.data\.limpah_eksternal\?\?0/);
+assert.match(code, /\$\{80\+46\*!!ee\}rem/);
+console.log(JSON.stringify({ uiVerified: true, field: 'limpah_eksternal', placement: 'after_belum_update' }));

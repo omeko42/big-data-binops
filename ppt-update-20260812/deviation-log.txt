@@ -1,0 +1,7 @@
+Slide 1: subtitle and handover version updated to reflect active V4.1 and audit scope.
+Slide 2: status summary updated from candidate state to active guard plus completed targeted correction.
+Slide 4: backend summary updated from candidate DDL wording to active placement guard wording.
+Slide 6: candidate-state diagram repurposed in the same inherited layout to explain the active placement guard.
+Slide 7: deploy checklist repurposed in the same inherited five-step layout to visualize national audit results and safe batching controls.
+Slide 11: programmer decisions updated for repository integration, regression tests, and batch migration runbook.
+All other slides preserve their inherited layout and visible content, except speaker-note references updated from handover v1.4 to v1.5.

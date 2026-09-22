@@ -1,0 +1,7 @@
+dist/bdb/laporan-polisi/laporan-polisi.controller.js:212:    (0, common_1.Post)(':id/correct-satker'),
+dist/bdb/laporan-polisi/laporan-polisi.service.d.ts:214:    correctSatker(id: number, satkerId: number, keterangan: string | undefined, userId?: number): Promise<{
+dist/bdb/laporan-polisi/laporan-polisi.controller.d.ts:163:    correctSatker(id: string, body: {
+dist/bdb/laporan-polisi/laporan-polisi.controller.js:66:    correctSatker(id, body, req) {
+dist/bdb/laporan-polisi/laporan-polisi.controller.js:67:        return this.service.correctSatker(parseInt(id, 10), Number(body?.satker_id), body?.keterangan, req?.user?.id ? Number(req.user.id) : undefined);
+dist/bdb/laporan-polisi/laporan-polisi.controller.js:219:], LaporanPolisiController.prototype, "correctSatker", null);
+dist/bdb/laporan-polisi/laporan-polisi.service.js:1567:    async correctSatker(id, satkerId, keterangan, userId) {

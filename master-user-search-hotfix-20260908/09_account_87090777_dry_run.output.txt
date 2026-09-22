@@ -1,0 +1,15 @@
+Pager usage is off.
+=== DRY RUN: LOGIN IDENTIFIER 87090777 ===
+BEGIN
+SET
+SET
+DO
+UPDATE 1
+DO
+  id   |     name     |        email         |     email_polri      |   username   | login_method | local_password_enabled | failed_login_attempts | locked_until | status | approval_status 
+-------+--------------+----------------------+----------------------+--------------+--------------+------------------------+-----------------------+--------------+--------+-----------------
+ 14503 | YOKIY SUGITO | 87090777@polri.go.id | 87090777@polri.go.id | @bangYokiy33 | HYBRID       | t                      |                     0 |              | AKTIF  | APPROVED
+(1 row)
+
+ROLLBACK
+DRY RUN LOGIN IDENTIFIER BERHASIL; ROLLBACK SELESAI.

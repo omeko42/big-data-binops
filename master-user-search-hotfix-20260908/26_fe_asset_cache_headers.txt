@@ -1,0 +1,15 @@
+Connecting to 13b8571bfa34:3000 (172.17.0.2:3000)
+  HTTP/1.1 200 OK
+  Cache-Control: public, max-age=31536000, immutable
+  Accept-Ranges: bytes
+  Last-Modified: Tue, 08 Sep 2026 03:18:02 GMT
+  ETag: W/"a20d-1a07f05ce9a"
+  Content-Type: application/javascript; charset=UTF-8
+  Content-Length: 41485
+  Vary: Accept-Encoding
+  Date: Tue, 08 Sep 2026 03:28:44 GMT
+  Connection: close
+  
+saving to '/dev/null'
+null                 100% |********************************| 41485  0:00:00 ETA
+'/dev/null' saved

@@ -1,0 +1,30 @@
+Pager usage is off.
+Null display is "<NULL>".
+BEGIN
+   id   |                                      no_laporan                                      | satker_id |   satker_nama    | unit_satker_id |       unit_satker_nama        |  unit_satker_kode  | unit_nama | unit_level | penanganan_level | sudah_dilimpahkan | dilimpahkan_eksternal |         updated_at         
+--------+--------------------------------------------------------------------------------------+-----------+------------------+----------------+-------------------------------+--------------------+-----------+------------+------------------+-------------------+-----------------------+----------------------------
+ 380025 | LP/B/57/VII/2026/SPKT/POLSEK RATATOTOK/POLRES MINAHASA TENGGARA/POLDA SULAWESI UTARA |     16875 | POLSEK RATATOTOK |          16877 | UNIT RESKRIM POLSEK RATATOTOK | 060.01.28.15.14.06 | RESKRIM   | polsek     | Polsek           | f                 | f                     | 2026-09-07 21:06:45.854419
+(1 row)
+
+ backup_rows 
+-------------
+           1
+(1 row)
+
+   id    |        action        |     entity     | entity_id | outcome |          created_at           
+---------+----------------------+----------------+-----------+---------+-------------------------------
+ 2116795 | CORRECT_LP_PLACEMENT | laporan_polisi | 380025    | SUCCESS | 2026-09-07 21:06:45.854419+00
+(1 row)
+
+ effective_owner_id | lp_count 
+--------------------+----------
+              16877 |      169
+              16927 |      517
+(2 rows)
+
+ pelimpahan_history_rows 
+-------------------------
+                       0
+(1 row)
+
+ROLLBACK

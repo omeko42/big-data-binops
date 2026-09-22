@@ -1,0 +1,20 @@
+Pager usage is off.
+Null display is "<NULL>".
+=== POLSEK PAYUNG: OPERATOR ACCOUNT SCOPE ===
+BEGIN
+SET
+                                                                                                   account_scope                                                                                                   
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"id": "14657", "name": "JEFRIANDO SINAGA, S.H", "active": null, "role_bdb": "operator", "username": "Sinaga87#", "role_name": "operator", "satker_id": null, "organization_id": null, "scope_satker_id": "3673"}
+(1 row)
+
+ leaf_id |  id  | parent_id |            deskripsi            | tipe_satker | depth | hop 
+---------+------+-----------+---------------------------------+-------------+-------+-----
+    3673 | 3673 |      3671 | UNIT RESKRIM POLSEK PAYUNG      | FUNGSI      |     4 |   0
+    3673 | 3671 |      3663 | POLSEK PAYUNG                   | POLSEK      |     3 |   1
+    3673 | 3663 |      3575 | POLRES BANGKA SELATAN           | POLRES      |     2 |   2
+    3673 | 3575 |         1 | POLDA KEPULAUAN BANGKA BELITUNG | POLDA       |     1 |   3
+    3673 |    1 |    <NULL> | POLRI (MABES POLRI)             | FUNGSI      |     0 |   4
+(5 rows)
+
+ROLLBACK

@@ -1,0 +1,8 @@
+FROM bdb-web:20260805-132056
+
+WORKDIR /usr/src/app
+
+COPY .next/ .next/
+
+RUN node --check .next/static/chunks/00l7wgk9jmf2_-user-satker-fix-20260812.js \
+    && node --check .next/server/chunks/ssr/_1_t8gg6._.js

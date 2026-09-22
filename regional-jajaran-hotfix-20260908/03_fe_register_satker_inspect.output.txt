@@ -1,0 +1,11 @@
+=== STARTED AT ===
+=== MANIFEST SHA ===
+91e83e4d871b8214073c59a97b63c65e4e890313ca6abd79fd631983f8f96edb  .next/server/app/cms/laporan/rekap-pihak-terlibat/page_client-reference-manifest.js
+=== ACTIVE CHUNK REFERENCE COUNT ===
+1
+=== CHUNK SHA ===
+482753257d6e90abec776dc694a16c34b0baf7d8e08395d6f8110b8dbd721175  .next/static/chunks/register-pihak-v5-6478da3b8c2c.js
+=== EXACT RENDERER MATCH COUNT ===
+1
+=== EXACT RENDERER SNIPPET ===
+(s?.label||""),page:Number(a||1),row:Number(t||25),filter:{search:e.search||"",keterlibatan:e.keterlibatan||"ALL",sumber:e.sumber||"ALL",status:e.status||"ALL",from:e.from||"",to:e.to||"",kejahatan:e.kejahatan||"",area:e.area||"",satker_id:e.satker_id??null}})}catch{return null}}function u(e){return[e.unit_nama,e.satker_nama].map((e=>(e||"").trim())).filter(Boolean).join(" ")||"—"}function z(e){let a=e?.response?.data?.message||e?.message;return Array.isArray(a)?a.join("; "):String(a||"Data gagal dimuat. Coba persempit filter lalu klik Terapkan kembali.")}let d=[{label:"Semua Keterlibatan",value:"ALL"},{label:"Saksi",value:"SAKSI"},{label:"Terlapor",value:"TERLAPOR"},{label:"Korban",value:"KORBAN"},{label:"Pelapor",value:"PELAPOR"},{label:"Ahli",value:"AHLI"},{label:"Tersangka",value:"TERS

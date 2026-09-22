@@ -1,0 +1,11 @@
+'use strict';
+const fs = require('fs');
+const file = process.argv[2];
+if (!file) throw new Error('controller file required');
+const code = fs.readFileSync(file, 'utf8');
+const bu = code.indexOf("key: 'belum_update_tunggakan'");
+const ext = code.indexOf("key: 'limpah_eksternal'");
+const cp = code.indexOf("key: 'cp'");
+if (bu < 0 || ext <= bu || cp <= ext) throw new Error('export column order invalid');
+if ((code.match(/key: 'limpah_eksternal'/g) || []).length !== 1) throw new Error('external export column must be unique');
+console.log(JSON.stringify({ exportVerified: true, placement: 'after_belum_update', field: 'limpah_eksternal' }));

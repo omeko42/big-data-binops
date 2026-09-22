@@ -1,0 +1,131 @@
+        if (sumber && sumber.toUpperCase() !== 'ALL') {
+            params.push(sumber.toUpperCase());
+            where.push(`c.sumber=$${params.length}`);
+        }
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        const fromDate = this.toText(query.from);
+        const toDate = this.toText(query.to);
+        if (fromDate && toDate && datePattern.test(fromDate) && datePattern.test(toDate)) {
+            const start = new Date(fromDate + 'T00:00:00Z');
+            const end = new Date(toDate + 'T00:00:00Z');
+            const days = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+            if (days < 1)
+                throw new common_1.BadRequestException('Tanggal akhir tidak boleh sebelum tanggal awal.');
+            if (days > 31)
+                throw new common_1.BadRequestException('Periode maksimal 1 bulan (31 hari).');
+        }
+        for (const [name, op] of [['from', '>='], ['to', '<=']]) {
+            const value = this.toText(query[name]);
+            if (!value)
+                continue;
+            if (!datePattern.test(value))
+                throw new common_1.BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
+            params.push(value);
+            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+        }
+        addLike('jk.keterangan', query.kejahatan);
+        const area = this.toText(query.area);
+        if (area) {
+            params.push(`%${area.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(lower(coalesce(lp.satker_nama,'')) like $${p} or lower(coalesce(lp.unit_satker_nama,'')) like $${p})`);
+        }
+        const satkerId = Number(query.satker_id || 0);
+        if (Number.isSafeInteger(satkerId) && satkerId > 0) {
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                with recursive selected_tree as (
+                    select id from bdb_satker where id=${satkerId}
+                    union
+                    select s.id
+                    from bdb_satker s
+                    join selected_tree t on s.parent_id=t.id
+                )
+                select id from selected_tree
+            )`);
+        }
+        if (includeFacetFilters) {
+            const keterlibatan = this.toText(query.keterlibatan);
+            if (keterlibatan && keterlibatan.toUpperCase() !== 'ALL') {
+                params.push(keterlibatan.toUpperCase());
+                where.push(`c.keterlibatan=$${params.length}`);
+            }
+            const status = this.toText(query.status);
+            if (status && status.toUpperCase() !== 'ALL') {
+                params.push(status.toUpperCase() === 'LIDIK' ? 'PENYELIDIKAN' : status.toUpperCase());
+                where.push(`coalesce(sm.code,'LP')=$${params.length}`);
+            }
+        }
+        return { params, where };
+    }
+    buildDirectSummaryWhere(scope, query, partyAlias, source, includeFacetFilters = false) {
+        const params = [];
+        const where = ['lp.deleted_at is null', this.scopeClause(scope, params)];
+        const selectedSource = (this.toText(query.sumber) || 'ALL').toUpperCase();
+        if (selectedSource !== 'ALL' && selectedSource !== source) {
+            return { params, where: ['1=0'], skip: true };
+        }
+        const search = this.toText(query.search);
+        if (search) {
+            params.push(`%${search.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(lower(coalesce(${partyAlias}.nama,'')) like $${p} or lower(coalesce(${partyAlias}.nik,'')) like $${p} or lower(coalesce(lp.no_laporan,'')) like $${p})`);
+        }
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        const fromDate = this.toText(query.from);
+        const toDate = this.toText(query.to);
+        if (fromDate && toDate && datePattern.test(fromDate) && datePattern.test(toDate)) {
+            const start = new Date(fromDate + 'T00:00:00Z');
+            const end = new Date(toDate + 'T00:00:00Z');
+            const days = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+            if (days < 1)
+                throw new common_1.BadRequestException('Tanggal akhir tidak boleh sebelum tanggal awal.');
+            if (days > 31)
+                throw new common_1.BadRequestException('Periode maksimal 1 bulan (31 hari).');
+        }
+        for (const [name, op] of [['from', '>='], ['to', '<=']]) {
+            const value = this.toText(query[name]);
+            if (!value)
+                continue;
+            if (!datePattern.test(value))
+                throw new common_1.BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
+            params.push(value);
+            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+        }
+        const kejahatan = this.toText(query.kejahatan);
+        if (kejahatan) {
+            params.push(`%${kejahatan.toLowerCase()}%`);
+            where.push(`lower(coalesce(jk.keterangan,'')) like $${params.length}`);
+        }
+        const area = this.toText(query.area);
+        if (area) {
+            params.push(`%${area.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(lower(coalesce(lp.satker_nama,'')) like $${p} or lower(coalesce(lp.unit_satker_nama,'')) like $${p})`);
+        }
+        const satkerId = Number(query.satker_id || 0);
+        if (Number.isSafeInteger(satkerId) && satkerId > 0) {
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                with recursive selected_tree as (
+                    select id from bdb_satker where id=${satkerId}
+                    union
+                    select s.id
+                    from bdb_satker s
+                    join selected_tree t on s.parent_id=t.id
+                )
+                select id from selected_tree
+            )`);
+        }
+        if (includeFacetFilters) {
+            const keterlibatan = this.toText(query.keterlibatan);
+            if (keterlibatan && keterlibatan.toUpperCase() !== 'ALL') {
+                params.push(keterlibatan.toUpperCase());
+                where.push(`upper(coalesce(${partyAlias}.keterlibatan,'-'))=$${params.length}`);
+            }
+            const status = this.toText(query.status);
+            if (status && status.toUpperCase() !== 'ALL') {
+                params.push(status.toUpperCase() === 'LIDIK' ? 'PENYELIDIKAN' : status.toUpperCase());
+                where.push(`coalesce(sm.code,'LP')=$${params.length}`);
+            }
+        }
+        return { params, where, skip: false };
+    }

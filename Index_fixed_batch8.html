@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Pendataan Username dan Akses Satker CAS</title>
+  <style>
+    :root {
+      --navy-950: #061426;
+      --navy-900: #0a1b32;
+      --navy-800: #102743;
+      --navy-700: #24415f;
+      --navy: #071426;
+      --navy2: #102a4c;
+      --red: #b91c1c;
+      --gold: #e4a51e;
+      --line: #dfe5ec;
+      --text: #122033;
+      --muted: #5d6a79;
+      --surface: #ffffff;
+      --shadow: 0 24px 64px rgba(2, 12, 27, .24);
+      --radius-xl: 24px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--navy-950); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.55;
+      background:
+        radial-gradient(circle at 86% 70%, rgba(150, 35, 47, .72), transparent 32%),
+        radial-gradient(circle at 10% 15%, rgba(24, 72, 116, .88), transparent 35%),
+        linear-gradient(135deg, #061426 0%, #0a2039 51%, #3d1624 100%);
+      min-height: 100vh;
+    }
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 48px;
+    }
+    .main-card {
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      padding: 42px clamp(24px, 5vw, 62px) 36px;
+      background:
+        linear-gradient(90deg, rgba(7,21,39,.98), rgba(12,35,62,.94)),
+        var(--navy-900);
+    }
+    .hero::after {
+      position: absolute;
+      top: -100px;
+      right: -80px;
+      width: 300px;
+      height: 300px;
+      border: 1px solid rgba(228,165,30,.15);
+      border-radius: 50%;
+      content: "";
+      box-shadow:
+        0 0 0 36px rgba(228,165,30,.035),
+        0 0 0 76px rgba(228,165,30,.02);
+    }
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 10px;
+      color: #ffc44c;
+      font-weight: 850;
+      letter-spacing: .14em;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0;
+      font-size: clamp(30px, 4.2vw, 48px);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .hero p {
+      position: relative;
+      z-index: 1;
+      max-width: 790px;
+      margin: 14px 0 0;
+      line-height: 1.55;
+      color: rgba(255,255,255,.76);
+      font-size: clamp(15px, 1.8vw, 18px);
+    }
+    .card {
+      background: #fff;
+      padding: 26px;
+    }
+    .ticker {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      min-height: 58px;
+      overflow: hidden;
+      padding: 8px clamp(18px, 4vw, 46px);
+      border-bottom: 1px solid rgba(228,165,30,.24);
+      color: #fff;
+      background: #081a2e;
+    }
+    .ticker-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffc44c;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .ticker-label::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #61dba5;
+      box-shadow: 0 0 0 5px rgba(97,219,165,.12);
+      content: "";
+    }
+    .ticker-window { min-width: 0; overflow: hidden; white-space: nowrap; }
+    .ticker-track {
+      width: max-content;
+      min-width: 100%;
+      color: rgba(255,255,255,.84);
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      animation: tickerMove 24s linear infinite;
+    }
+    @keyframes tickerMove {
+      from { transform: translateX(100%); }
+      to { transform: translateX(-100%); }
+    }
+    .notice {
+      background: #fff8e7;
+      border-left: 4px solid var(--gold);
+      padding: 12px 14px;
+      margin-bottom: 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .field { margin-bottom: 18px; position: relative; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 700; margin-bottom: 7px; font-size: 14px; }
+    .req { color: var(--red); }
+    input, textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 12px 13px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    input:focus, textarea:focus { border-color: #1d4ed8; box-shadow: 0 0 0 3px rgba(29,78,216,.12); }
+    textarea { min-height: 90px; resize: vertical; }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 5px; line-height: 1.4; }
+    .suggestions {
+      display: none;
+      position: absolute;
+      left: 0; right: 0;
+      top: 71px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 20;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      box-shadow: 0 12px 32px rgba(15,23,42,.18);
+    }
+    .option { padding: 11px 12px; cursor: pointer; border-bottom: 1px solid #eef2f7; font-size: 13px; line-height: 1.35; }
+    .option:last-child { border-bottom: 0; }
+    .option:hover { background: #eff6ff; }
+    .actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 6px; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #991b1b, #dc2626);
+      color: #fff;
+      font-weight: 700;
+      padding: 13px 22px;
+      cursor: pointer;
+      font-size: 14px;
+      min-width: 170px;
+    }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .status { font-size: 13px; line-height: 1.4; flex: 1; }
+    .status.ok { color: #166534; }
+    .status.err { color: #b91c1c; }
+    .footer { text-align: center; color: #cbd5e1; font-size: 11px; margin-top: 12px; }
+    .loading { color: var(--muted); font-size: 12px; margin-top: 7px; }
+    .support-panel, .contact-panel {
+      margin-top: 18px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 18px;
+      padding: 24px;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(7,20,38,.98), rgba(16,42,76,.96));
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+    }
+    .panel-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 17px;
+    }
+    .panel-head h2, .contact-panel h2 { margin: 0; color: #fff; font-size: 19px; }
+    .panel-head p, .contact-panel p { margin: 5px 0 0; color: #cbd5e1; font-size: 12px; }
+    .updated { color: #aab6c7; font-size: 10px; white-space: nowrap; }
+    .support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .support-card {
+      min-height: 205px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 18px;
+      background: rgba(2,10,24,.68);
+    }
+    .support-label { margin: 0 0 7px; color: #f5d68a; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .support-card h3 { margin: 0; font-size: 16px; }
+    .milestone-values { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 27px 0 10px; }
+    .milestone-total { font-size: 30px; line-height: 1; }
+    .milestone-target { color: #aab6c7; font-size: 10px; }
+    .bar { height: 10px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.13); }
+    .bar-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#f2ad20,#ffd26a); transition: width .4s ease; }
+    .percent { display: block; margin-top: 8px; color: #cbd5e1; font-size: 10px; }
+    .leaderboard { margin: 16px 0 0; padding: 0; list-style: none; }
+    .leaderboard li { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 11px; }
+    .rank { color: #f5d68a; font-weight: 800; }
+    .leader-amount { color: #cbd5e1; }
+    .empty { color: #aab6c7; }
+    .contact-names { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .contact-name {
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 999px;
+      padding: 8px 13px;
+      color: #fff;
+      background: rgba(255,255,255,.08);
+    }
+    .contact-name:hover, .contact-name.active { border-color: var(--gold); background: rgba(214,169,74,.16); }
+    .contact-detail { margin-top: 13px; border: 1px solid rgba(255,255,255,.13); border-radius: 12px; padding: 13px 15px; background: rgba(2,10,24,.45); }
+    .contact-detail strong, .contact-detail span { display: block; }
+    .contact-detail span { margin-top: 3px; color: #cbd5e1; font-size: 11px; }
+    .contact-detail a { display: inline-block; margin-top: 9px; color: #f5d68a; font-size: 11px; font-weight: 800; text-decoration: none; }
+    @media (max-width: 680px) {
+      .shell { width: 100%; padding: 0 0 32px; }
+      .main-card { border-radius: 0; }
+      .grid { grid-template-columns: 1fr; }
+      .support-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .hero { padding: 30px 20px 28px; }
+      .card { padding: 20px; }
+      .actions { align-items: stretch; flex-direction: column; }
+      button { width: 100%; }
+      .ticker { grid-template-columns: 1fr; gap: 2px; padding: 8px 16px 10px; }
+      .ticker-label { justify-content: center; min-height: 28px; }
+      .ticker-window { min-height: 40px; display: flex; align-items: center; }
+      .ticker-track { width: auto; animation: none; white-space: normal; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <article class="main-card">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">Crime Analytic System (CAS) Bareskrim Polri</p>
+        <h1 id="page-title">Pendataan Username dan Akses Satker</h1>
+        <p>Gunakan email resmi Polri dan pilih satker yang akan diakses. Kode satker diproses otomatis dan tidak ditampilkan kepada pengisi.</p>
+      </section>
+
+      <section class="ticker" aria-label="Dukungan Saweria terbaru">
+        <span class="ticker-label">Dukungan terbaru</span>
+        <div class="ticker-window"><div class="ticker-track" id="tickerTrack">Belum ada dukungan terbaru.</div></div>
+      </section>
+
+      <main class="card">
+      <div class="notice">
+        Pastikan email yang diisi aktif dan dapat diakses. Satu satker cukup mengajukan beberapa operator sesuai kebutuhan; contoh direktorat dengan 5 subdit cukup sekitar 5 akun operator.
+      </div>
+
+      <form id="casForm" autocomplete="off">
+        <div class="grid">
+          <div class="field">
+            <label>Nama lengkap <span class="req">*</span></label>
+            <input id="nama" maxlength="150" required placeholder="Nama lengkap pengguna">
+          </div>
+          <div class="field">
+            <label>NRP/NIP</label>
+            <input id="nrp" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="NRP/NIP sesuai email Polri">
+          </div>
+          <div class="field">
+            <label>Email Polri <span class="req">*</span></label>
+            <input id="email" type="email" required placeholder="NRP@polri.go.id atau NIP@polri.go.id">
+            <div class="hint">Boleh menggunakan subdomain resmi yang berakhiran polri.go.id.</div>
+          </div>
+          <div class="field">
+            <label>Konfirmasi email Polri <span class="req">*</span></label>
+            <input id="konfirmasiEmail" type="email" required placeholder="Ketik ulang email Polri">
+          </div>
+          <div class="field">
+            <label>Nomor WhatsApp</label>
+            <input id="noWa" maxlength="25" placeholder="Wajib untuk menerima password akses akun">
+          </div>
+          <div class="field">
+            <label>Satker yang akan diakses <span class="req">*</span></label>
+            <input id="satkerSearch" required placeholder="Ketik nama Polda, Polres, Polsek, atau satuan">
+            <input id="satkerPath" type="hidden">
+            <div id="suggestions" class="suggestions"></div>
+            <div id="satkerInfo" class="loading">Memuat daftar satker...</div>
+          </div>
+          <div class="field full">
+            <label>Keterangan</label>
+            <textarea id="keterangan" maxlength="500" placeholder="Tidak wajib diisi alias Opsional, misalnya Satker sudah pindah induk dari Polda A ke Polda B atau info ringan terkait jabatan atau kebutuhan khusus seputar akses"></textarea>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div id="status" class="status"></div>
+          <button id="submitBtn" type="submit" disabled>Kirim Pendataan</button>
+        </div>
+      </form>
+      </main>
+    </article>
+
+    <section class="support-panel" aria-labelledby="supportTitle">
+      <div class="panel-head">
+        <div>
+          <h2 id="supportTitle">Dukungan minggu ini</h2>
+          <p><span id="weekLabel">Periode minggu berjalan</span> | Dukungan tidak memengaruhi proses pendaftaran akun.</p>
+        </div>
+        <span class="updated" id="supportUpdated">Memuat data...</span>
+      </div>
+      <div class="support-grid">
+        <article class="support-card">
+          <p class="support-label">Target mingguan</p>
+          <h3 id="milestoneLabel">Target dukungan</h3>
+          <div class="milestone-values">
+            <strong class="milestone-total" id="milestoneTotal">Rp0</strong>
+            <span class="milestone-target" id="milestoneTarget">dari Rp0</span>
+          </div>
+          <div class="bar" id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="bar-fill" id="progressFill"></div></div>
+          <span class="percent" id="progressText">0% tercapai</span>
+        </article>
+        <article class="support-card">
+          <p class="support-label">Supporter teratas</p>
+          <h3>Leaderboard</h3>
+          <ol class="leaderboard" id="leaderboard"><li class="empty">Belum ada dukungan pada minggu ini.</li></ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="contact-panel" aria-labelledby="contactTitle">
+      <h2 id="contactTitle">Kontak tim teknis</h2>
+      <p>Pilih nama PIC untuk melihat detail kontaknya.</p>
+      <div class="contact-names" id="contactNames"></div>
+      <div class="contact-detail" id="contactDetail" hidden></div>
+    </section>
+    <div class="footer">Data hanya digunakan untuk pendataan akun dan pemetaan akses CAS Polri.</div>
+  </div>
+
+  <script>
+    let satkerList = [];
+    let debounceTimer;
+    const form = document.getElementById('casForm');
+    const search = document.getElementById('satkerSearch');
+    const selected = document.getElementById('satkerPath');
+    const suggestions = document.getElementById('suggestions');
+    const statusEl = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+    let technicalContacts = [];
+    const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
+
+    google.script.run
+      .withSuccessHandler(data => {
+        satkerList = data.satker || [];
+        document.getElementById('satkerInfo').textContent = `${data.total.toLocaleString('id-ID')} satker tersedia. Masukan kata kunci dengan ketik minimal 2 karakter. Contoh: "Sorong"`;
+        submitBtn.disabled = false;
+      })
+      .withFailureHandler(err => showStatus(err.message || String(err), false))
+      .getInitialData();
+
+    search.addEventListener('input', () => {
+      selected.value = '';
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(renderSuggestions, 140);
+    });
+
+    search.addEventListener('focus', () => {
+      if (search.value.trim().length >= 2) renderSuggestions();
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.field')) suggestions.style.display = 'none';
+    });
+
+    function normalize(s) {
+      return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function renderSuggestions() {
+      const q = normalize(search.value);
+      suggestions.innerHTML = '';
+      if (q.length < 2) {
+        suggestions.style.display = 'none';
+        return;
+      }
+      const terms = q.split(/\s+/).filter(Boolean);
+      const matches = [];
+      for (const path of satkerList) {
+        const hay = normalize(path);
+        if (terms.every(t => hay.includes(t))) {
+          matches.push(path);
+          if (matches.length >= 35) break;
+        }
+      }
+      if (!matches.length) {
+        suggestions.innerHTML = '<div class="option">Satker tidak ditemukan. Coba kata kunci lain.</div>';
+      } else {
+        matches.forEach(path => {
+          const div = document.createElement('div');
+          div.className = 'option';
+          div.textContent = path;
+          div.addEventListener('click', () => {
+            search.value = path;
+            selected.value = path;
+            suggestions.style.display = 'none';
+          });
+          suggestions.appendChild(div);
+        });
+      }
+      suggestions.style.display = 'block';
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      statusEl.className = 'status';
+      statusEl.textContent = '';
+
+      const exactPath = selected.value || satkerList.find(x => x === search.value.trim()) || '';
+      if (!exactPath) {
+        showStatus('Pilih satker dari daftar hasil pencarian.', false);
+        return;
+      }
+
+      const payload = {
+        nama: document.getElementById('nama').value,
+        nrp: document.getElementById('nrp').value,
+        email: document.getElementById('email').value,
+        konfirmasiEmail: document.getElementById('konfirmasiEmail').value,
+        noWa: document.getElementById('noWa').value,
+        satkerPath: exactPath,
+        keterangan: document.getElementById('keterangan').value
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Mengirim...';
+      google.script.run
+        .withSuccessHandler(res => {
+          showStatus(`${res.message} Satker: ${res.satker}`, true);
+          form.reset();
+          selected.value = '';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Kirim Pendataan';
+        })
+        .withFailureHandler(err => {
+          showStatus(err.message || String(err), false);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Kirim Pendataan';
+        })
+        .submitData(payload);
+    });
+
+    function showStatus(message, ok) {
+      statusEl.textContent = message;
+      statusEl.className = `status ${ok ? 'ok' : 'err'}`;
+    }
+
+    function loadSupportPanel() {
+      google.script.run
+        .withSuccessHandler(renderSupportPanel)
+        .withFailureHandler(() => {
+          document.getElementById('supportUpdated').textContent = 'Data dukungan belum tersedia';
+        })
+        .getSupportPanelData();
+    }
+
+    function renderSupportPanel(data) {
+      const page = data || {};
+      const support = page.support || {};
+      const recent = Array.isArray(support.recent) ? support.recent : [];
+      const ticker = document.getElementById('tickerTrack');
+      ticker.textContent = recent.length
+        ? recent.map(item => `${item.name || 'Anonim'} mendukung ${rupiah.format(Number(item.amount || 0))}`).join('     |     ')
+        : 'Belum ada dukungan pada minggu ini.';
+      ticker.style.animation = 'none';
+      void ticker.offsetWidth;
+      ticker.style.animation = '';
+
+      const total = Math.max(0, Number(support.total || 0));
+      const target = Math.max(0, Number(support.target || 0));
+      const percent = Math.min(100, Math.max(0, Number(support.progressPercent || 0)));
+      document.getElementById('weekLabel').textContent = support.weekLabel || 'Periode minggu berjalan';
+      document.getElementById('milestoneLabel').textContent = support.milestoneLabel || 'Target dukungan';
+      document.getElementById('milestoneTotal').textContent = rupiah.format(total);
+      document.getElementById('milestoneTarget').textContent = `dari ${rupiah.format(target)}`;
+      document.getElementById('progressFill').style.width = `${percent}%`;
+      document.getElementById('progressText').textContent = `${percent}% tercapai`;
+      document.getElementById('progressBar').setAttribute('aria-valuenow', String(percent));
+
+      const list = document.getElementById('leaderboard');
+      list.replaceChildren();
+      const leaders = Array.isArray(support.leaderboard) ? support.leaderboard : [];
+      if (!leaders.length) {
+        const empty = document.createElement('li');
+        empty.className = 'empty';
+        empty.textContent = 'Belum ada dukungan pada minggu ini.';
+        list.appendChild(empty);
+      } else {
+        leaders.forEach((item, index) => {
+          const row = document.createElement('li');
+          const rank = document.createElement('span');
+          const name = document.createElement('strong');
+          const amount = document.createElement('span');
+          rank.className = 'rank';
+          amount.className = 'leader-amount';
+          rank.textContent = `#${index + 1}`;
+          name.textContent = item.name || 'Anonim';
+          amount.textContent = rupiah.format(Number(item.amount || 0));
+          row.append(rank, name, amount);
+          list.appendChild(row);
+        });
+      }
+
+      const updated = support.updatedAt ? new Date(support.updatedAt) : new Date();
+      document.getElementById('supportUpdated').textContent = `Diperbarui ${updated.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}`;
+      technicalContacts = Array.isArray(page.contacts) ? page.contacts : [];
+      renderTechnicalContacts();
+    }
+
+    function renderTechnicalContacts() {
+      const names = document.getElementById('contactNames');
+      names.replaceChildren();
+      if (!technicalContacts.length) {
+        names.textContent = 'Kontak teknis belum tersedia.';
+        return;
+      }
+      technicalContacts.forEach((contact, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'contact-name';
+        button.textContent = contact.name || 'PIC';
+        button.addEventListener('click', () => showTechnicalContact(index, button));
+        names.appendChild(button);
+      });
+    }
+
+    function showTechnicalContact(index, button) {
+      const contact = technicalContacts[index] || {};
+      document.querySelectorAll('.contact-name').forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      const detail = document.getElementById('contactDetail');
+      detail.replaceChildren();
+      const name = document.createElement('strong');
+      const meta = document.createElement('span');
+      name.textContent = contact.name || 'PIC';
+      meta.textContent = [contact.unit, contact.channel].filter(Boolean).join(' | ');
+      detail.append(name, meta);
+      if (/^https?:\/\//i.test(contact.url || '')) {
+        const link = document.createElement('a');
+        link.href = contact.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Buka kontak';
+        detail.appendChild(link);
+      }
+      detail.hidden = false;
+    }
+
+    loadSupportPanel();
+    window.setInterval(loadSupportPanel, 60000);
+  </script>
+</body>
+</html>
