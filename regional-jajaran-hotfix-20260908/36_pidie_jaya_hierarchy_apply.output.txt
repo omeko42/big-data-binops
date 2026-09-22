@@ -1,0 +1,33 @@
+Pager usage is off.
+Null display is "<NULL>".
+=== APPLY: PIDIE JAYA HIERARCHY ===
+BEGIN
+SET
+SET
+CREATE TABLE
+INSERT 0 7
+DO
+ id  
+-----
+ 178
+ 208
+ 211
+ 214
+ 226
+ 232
+ 235
+(7 rows)
+
+ id  
+-----
+ 895
+(1 row)
+
+CREATE SCHEMA
+SELECT 7
+CREATE INDEX
+UPDATE 7
+INSERT 0 7
+DO
+COMMIT
+APPLY PIDIE JAYA BERHASIL.

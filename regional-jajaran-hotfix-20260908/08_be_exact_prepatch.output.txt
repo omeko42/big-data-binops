@@ -1,0 +1,17 @@
+=== SHA SRC DIST ===
+ebc0c929c2de70c07b33d8f170c1886dae4fbfbdae6b8c3cb968f0f56cb19715  src/bdb/pihak-terlibat/pihak-terlibat.service.ts
+9d99ea48232121dd87bcd23a5585f4f9b9f61c96ad1c6c2f22cc648f6eda509f  dist/bdb/pihak-terlibat/pihak-terlibat.service.js
+=== SRC UNIT SELECTS ===
+438:                    lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_nama, jk.keterangan as kejahatan
+452:                    lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_nama, jk.keterangan as kejahatan
+468:                    lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+504:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+524:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+546:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+=== DIST UNIT SELECTS ===
+416:                    lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_nama, jk.keterangan as kejahatan
+427:                    lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_nama, jk.keterangan as kejahatan
+440:                    lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+471:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+486:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan
+503:                        lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,jk.keterangan as kejahatan

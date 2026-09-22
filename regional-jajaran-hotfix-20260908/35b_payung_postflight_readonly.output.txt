@@ -1,0 +1,24 @@
+Pager usage is off.
+Null display is "<NULL>".
+BEGIN
+  id   |         name          | scope_satker_id |  scope_satker_key  | requested_scope_satker_id | requested_scope_satker_key |         updated_at         
+-------+-----------------------+-----------------+--------------------+---------------------------+----------------------------+----------------------------
+ 14657 | JEFRIANDO SINAGA, S.H |            1180 | 060.01.03.07.07.06 |                      1180 | 060.01.03.07.07.06         | 2026-09-07 21:04:46.175436
+(1 row)
+
+ backup_rows 
+-------------
+           1
+(1 row)
+
+   id    |        action         |   entity   | entity_id | outcome |          created_at           
+---------+-----------------------+------------+-----------+---------+-------------------------------
+ 2116770 | CORRECT_ACCOUNT_SCOPE | auth_users | 14657     | SUCCESS | 2026-09-07 21:04:46.175436+00
+(1 row)
+
+ effective_scope_lp 
+--------------------
+                 65
+(1 row)
+
+ROLLBACK

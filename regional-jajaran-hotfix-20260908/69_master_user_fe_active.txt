@@ -1,0 +1,33 @@
+ROUTE_ASSETS
+/_next/static/chunks/0-3dt-fu_0n9h.js
+/_next/static/chunks/0-gigr76s0g8t.js
+/_next/static/chunks/00l7wgk9jmf2_-user-satker-fix-20260812.js
+/_next/static/chunks/0cz1d0mv5g_q7.js
+/_next/static/chunks/0djadui25rg1z.js
+/_next/static/chunks/0kqp3_mvrigjm.js
+/_next/static/chunks/0swxr7o-_u_m4.js
+/_next/static/chunks/0uefab-xpqlc1.js
+/_next/static/chunks/0vnxm1yurd2-8.js
+/_next/static/chunks/14mrh2-p_w84d.js
+/_next/static/chunks/1vltkj7-ay5ua.js
+/_next/static/chunks/22459xkv0m1tw.js
+/_next/static/chunks/27jktro2p5rq9.js
+/_next/static/chunks/2j99jk5-jn4e1.js
+/_next/static/chunks/310vm2bl3xxpt.js
+/_next/static/chunks/3lvvhp-5u902i.js
+/_next/static/chunks/3rxl-jt3pdxgx.js
+/_next/static/chunks/3t8knywnzba2-.js
+/_next/static/chunks/3whxe1w8p6lff.js
+/_next/static/chunks/3yowtoxl1xs_h.js
+/_next/static/chunks/turbopack-1wm-2ukfdknbl.js
+/_next/static/chunks/user-page-pagination-v8-454119d3.js
+USER_CHUNK_HASHES
+7edecdef15afcaebf4f199beb839870f943a52759b25dff71eb4b775157e663c  .next/static/chunks/user-page-pagination-v6-7edecdef.js
+ee986e6aa86285388ef06f9c3ffb71d0222c9a7c2d5b834e96e8eccfdbb0e07d  .next/static/chunks/user-page-pagination-v7-ee986e6a.js
+454119d3796dea3a0bd851f8953fdedc4ffb456f1c408f80d407057d28e713fb  .next/static/chunks/user-page-pagination-v8-454119d3.js
+d3c499d4d58d9cad64510de5adf2920ad44eb6a3a0a068154f68a6bdf30172a5  .next/static/chunks/user-page-pagination-v3-d3c499d4.js
+64ef7549ae2f83d5bd7da704ab977b6039bd034fb2edef8bb08c482032c36bfd  .next/static/chunks/user-page-pagination-v2-64ef7549.js
+3f9c59875e0da0fb8f52b37947c5e96df86b67ace6699a5525238689aa94dad8  .next/static/chunks/user-page-pagination-v4-3f9c5987.js
+PAGE_SERVER_HASHES
+ef53cb6e1e054ce2ec18b9002cb964d2eb1598f3e290c8a3938a55c079b321d4  .next/server/chunks/ssr/app_cms_master_user_page_tsx_1qkbjlo._.js
+9410c902aaab2480e4459b2991e4c95d3fa4c8cc28db80f662121569766fcda3  .next/server/app/cms/master/user/page.js

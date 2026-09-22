@@ -1,0 +1,15 @@
+Pager usage is off.
+Null display is "<NULL>".
+BEGIN
+  id  |        kode        |   kode_canonical   |         deskripsi          | parent_id 
+------+--------------------+--------------------+----------------------------+-----------
+ 1180 | 060.01.03.07.07.06 | 060.01.03.07.07.06 | UNIT RESKRIM POLSEK PAYUNG |      1178
+ 3673 | 060.01.08.04.01.06 | 060.01.08.04.01.06 | UNIT RESKRIM POLSEK PAYUNG |      3671
+(2 rows)
+
+  id   |         name          | scope_satker_id |  scope_satker_key  | requested_scope_satker_id | requested_scope_satker_key |         updated_at         
+-------+-----------------------+-----------------+--------------------+---------------------------+----------------------------+----------------------------
+ 14657 | JEFRIANDO SINAGA, S.H |            3673 | 060.01.08.04.01.06 |                      3673 | 060.01.08.04.01.06         | 2026-09-06 11:12:15.491029
+(1 row)
+
+ROLLBACK

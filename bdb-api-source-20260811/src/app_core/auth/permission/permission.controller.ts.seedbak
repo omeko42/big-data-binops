@@ -1,0 +1,47 @@
+import { Controller, Get, Post, Body, Patch, Param, Delete, Res, Req, Query } from '@nestjs/common';
+import { PermissionService } from '@app_core/auth/permission/permission.service';
+import { CreatePermissionDto } from '@app_core/auth/permission/dto/create-permission.dto';
+import { UpdatePermissionDto } from '@app_core/auth/permission/dto/update-permission.dto';
+import { CoreController, Route } from '@app_core/helper/service/coreController.helper.service';
+import { ApplyFiltersDto } from '@app_core/helper/helperTable.dto';
+
+@CoreController('Master-menu', 'master/menu')
+export class PermissionController {
+    constructor(private readonly permissionService: PermissionService) {}
+    @Get('menu')
+    @Route({ name: 'master.menu', parent: 'master' })
+    async menu(@Res() res) {
+        return res.sendSuccess('menu');
+    }
+
+    @Post()
+    @Route({ name: 'master.menu.create', parent: 'master.menu' })
+    async create(@Res() res) {
+        return res.sendSuccess(await this.permissionService.create());
+    }
+
+    @Get()
+    @Route({ name: 'master.menu.index', parent: 'master.menu' })
+    async findAll(@Query() query: ApplyFiltersDto, @Res() res, @Req() req) {
+        let results = await this.permissionService.findAll(req);
+        return res.sendSuccess(results);
+    }
+
+    @Get(':id')
+    @Route({ name: 'master.menu.show', parent: 'master.menu' })
+    async findOne(@Param('id') id: string, @Res() res) {
+        return res.sendSuccess(await this.permissionService.findOne(+id));
+    }
+
+    @Patch(':id')
+    @Route({ name: 'master.menu.update', parent: 'master.menu' })
+    async update(@Param('id') id: string, @Body() updatePermissionDto: UpdatePermissionDto, @Res() res) {
+        return res.sendSuccess(await this.permissionService.update(+id, updatePermissionDto));
+    }
+
+    @Delete('')
+    @Route({ name: 'master.menu.delete', parent: 'master.menu' })
+    remove(@Param('id') id: string) {
+        return this.permissionService.remove(+id);
+    }
+}

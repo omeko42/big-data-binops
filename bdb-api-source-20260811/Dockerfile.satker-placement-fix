@@ -1,0 +1,13 @@
+FROM bdb-api:20260805-193904
+
+WORKDIR /usr/src/app
+
+# Overlay hanya file yang terkait koreksi struktur satker/unit LP. Dependency,
+# environment, entrypoint, dan konfigurasi runtime diwarisi persis dari image aktif.
+COPY src/bdb/laporan-polisi/laporan-polisi.service.ts src/bdb/laporan-polisi/laporan-polisi.service.ts
+COPY src/bdb/laporan-polisi/satker-placement.util.ts src/bdb/laporan-polisi/satker-placement.util.ts
+COPY src/bdb/laporan-polisi/satker-placement.util.spec.ts src/bdb/laporan-polisi/satker-placement.util.spec.ts
+
+# Build image harus gagal bila aturan placement atau kompilasi TypeScript gagal.
+RUN npm test -- --runInBand satker-placement.util.spec.ts
+RUN npm run build

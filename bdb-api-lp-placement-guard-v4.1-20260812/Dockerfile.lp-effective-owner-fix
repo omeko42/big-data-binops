@@ -1,0 +1,24 @@
+FROM bdb-api:20260805-193904
+
+WORKDIR /usr/src/app
+
+COPY src/bdb/common/lp-scope.util.ts src/bdb/common/lp-scope.util.ts
+COPY src/bdb/common/lp-scope.util.spec.ts src/bdb/common/lp-scope.util.spec.ts
+COPY src/bdb/laporan-polisi/laporan-polisi.service.ts src/bdb/laporan-polisi/laporan-polisi.service.ts
+COPY src/bdb/workflow/workflow.service.ts src/bdb/workflow/workflow.service.ts
+COPY src/bdb/barang-bukti/barang-bukti.service.ts src/bdb/barang-bukti/barang-bukti.service.ts
+COPY src/bdb/barang-bukti/barang-bukti.controller.ts src/bdb/barang-bukti/barang-bukti.controller.ts
+COPY src/bdb/pihak-terlibat/pihak-terlibat.service.ts src/bdb/pihak-terlibat/pihak-terlibat.service.ts
+COPY src/bdb/pihak-terlibat/pihak-terlibat.controller.ts src/bdb/pihak-terlibat/pihak-terlibat.controller.ts
+COPY src/bdb/operasi-satgas/bdb-operasi-satgas.service.ts src/bdb/operasi-satgas/bdb-operasi-satgas.service.ts
+COPY src/bdb/kasus-menonjol/bdb-kasus-menonjol.service.ts src/bdb/kasus-menonjol/bdb-kasus-menonjol.service.ts
+COPY src/bdb/kasus-atensi/bdb-kasus-atensi.service.ts src/bdb/kasus-atensi/bdb-kasus-atensi.service.ts
+COPY src/bdb/lp-pelimpahan/lp-pelimpahan.service.ts src/bdb/lp-pelimpahan/lp-pelimpahan.service.ts
+COPY src/app_core/helper/service/errorException.helper.service.ts src/app_core/helper/service/errorException.helper.service.ts
+COPY config/dors-unit-mapping.json config/dors-unit-mapping.json
+
+RUN npm test -- --runInBand src/bdb/common/lp-scope.util.spec.ts src/bdb/laporan-polisi/satker-placement.util.spec.ts
+RUN node -e "const c=require('./config/dors-unit-mapping.json'); if(c.units.RESKRIM!=='RESKRIM'||c.polsek_min_lp_id!==404912) process.exit(1)"
+RUN grep -q "count(distinct c.id) = 1" src/bdb/laporan-polisi/laporan-polisi.service.ts \
+ && grep -q "bdb_lp_pelimpahan ph" src/bdb/laporan-polisi/laporan-polisi.service.ts
+RUN npm run build

@@ -1,0 +1,4 @@
+[
+    { "key": "lp_a", "label": "LP Model A", "path": "lp_a", "kategori": "lp_model_a" },
+    { "key": "lp_b", "label": "LP Model B", "path": "lp_b", "kategori": "lp_model_b" }
+]

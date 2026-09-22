@@ -1,0 +1,61 @@
+{
+  "bridgeVersion": "3.6",
+  "kind": "google-docs-trusted-read",
+  "status": "complete",
+  "outputDir": "/workspace/google-docs-trusted-read-20260812-before3",
+  "target": {
+    "documentId": "1FNX4Yaeir67ah8o3rULFZFbM9V5w5NuKgyWYwfmDRlU",
+    "title": "Handover Teknis CAS v1.3 - Koreksi Scope Akses LP Unit dan Parent Polres",
+    "revisionId": "AIroW377GlUHUFH8H-Q8vTb4QxuuzqWKuBZc2StRaUBaphVXbfJRMi-WCE9ENPQNW4g5ZhAM54jHHYpc43RPnvXEV5aJzXXnrrkATvGR2Bk",
+    "documentUrl": "https://docs.google.com/document/d/1FNX4Yaeir67ah8o3rULFZFbM9V5w5NuKgyWYwfmDRlU",
+    "selectedTabId": null
+  },
+  "dropdownMetadata": {
+    "status": "unavailable",
+    "resolvedTool": null,
+    "authoritative": false,
+    "count": 0
+  },
+  "controlAwareness": {
+    "hasProtectedControls": false,
+    "authoritativeDropdownCount": 0,
+    "opaqueControlCount": 0,
+    "affectedParagraphCount": 0,
+    "nativeElementCounts": {
+      "dateElement": 1,
+      "richLink": 3
+    },
+    "preservationRequired": false,
+    "recommendedBehavior": "No protected controls were detected in the scanned scope."
+  },
+  "warnings": [],
+  "files": {
+    "document_result": {
+      "path": "/workspace/google-docs-trusted-read-20260812-before3/document-result.json",
+      "bytes": 981119,
+      "sha256": "58f4175e7ff3c397f87fff3169254b4056e79bc2dd72d38c2e1131bfa30d5bd8"
+    },
+    "control_inventory": {
+      "path": "/workspace/google-docs-trusted-read-20260812-before3/control-inventory.json",
+      "bytes": 4351,
+      "sha256": "eace525a0df53de5276fc389a2a44119ae101a310182cfce2e707aba3b307ab0"
+    },
+    "document_outline": {
+      "path": "/workspace/google-docs-trusted-read-20260812-before3/document-outline.json",
+      "bytes": 169642,
+      "sha256": "d2dd266c3a36da661dad5a33303b9dc5b40215693c7163ec1811c82763888927"
+    },
+    "document_text": {
+      "path": "/workspace/google-docs-trusted-read-20260812-before3/document-text.md",
+      "bytes": 42032,
+      "sha256": "44c1b0a15e1430eb0f46fde852e031e395066d19a8ac09b1c6439383395409c8"
+    },
+    "receipt": {
+      "path": "/workspace/google-docs-trusted-read-20260812-before3/receipt.json",
+      "bytes": 1057,
+      "sha256": "a04ff35be258904e030075af951e3b558e2a0b29ad75ae83b9a76bbd30e356ec"
+    }
+  },
+  "error": null
+}
+

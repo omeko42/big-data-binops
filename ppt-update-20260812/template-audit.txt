@@ -1,0 +1,6 @@
+SOURCE: Paparan_Teknis_CAS_Programmer_v1.4_20260812.pptx
+STRUCTURE: 11 slides; custom 16:9 deck with orange top rule, navy title hierarchy, fixed footer/date, and numbered page marker.
+REUSE: all eleven source slides are reused one-to-one. No slide is added or omitted.
+TYPOGRAPHY: inherited typefaces, sizes, weights, spacing, and alignment are preserved; text is shortened to fit existing frames.
+PLACEHOLDERS: source deck contains no visible unfilled authoring placeholders in final renders.
+INSERTION CONTRACT: edit existing inherited text boxes only; do not add overlays or alter master/layout furniture.
