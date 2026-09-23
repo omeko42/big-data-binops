@@ -1014,29 +1014,10 @@ export class KinerjaPerkaraService implements OnModuleInit {
         }
     }
 
+    private tableEnsured = false;
     private async ensureTable() {
-        await this.ds.query(`
-            create table if not exists bdb_kinerja_perkara_snapshot (
-                lp_id bigint primary key,
-                satker_id bigint,
-                tanggal_mulai_penanganan date,
-                tanggal_selesai date,
-                tingkat_kesulitan text,
-                kesulitan_belum_dipilih boolean not null default false,
-                batas_hari integer not null default 30,
-                tanggal_jatuh_tempo date,
-                status_code text,
-                jenis_kejahatan_id bigint,
-                refreshed_at timestamptz not null default now()
-            );
-        `);
-        await this.ds.query(`alter table bdb_kinerja_perkara_snapshot add column if not exists status_code text;`);
-        await this.ds.query(`alter table bdb_kinerja_perkara_snapshot add column if not exists jenis_kejahatan_id bigint;`);
-        await this.ds.query(`alter table bdb_kinerja_perkara_snapshot add column if not exists model_lp text;`);
-        // is_rj: apakah dokumen penutup LP ini (SP2_LIDIK/SP3, sesuai status_code saat ini) diisi
-        // "Alasan Dihentikan" mengandung Restorative/Restoratif Justice atau singkatan RJ -- lihat
-        // ALASAN_RJ_LIKE/ALASAN_RJ_WORD_RE & CC_BREAKDOWN.
-        await this.ds.query(`alter table bdb_kinerja_perkara_snapshot add column if not exists is_rj boolean not null default false;`);
+        if (this.tableEnsured) return;
+        this.tableEnsured = true;
     }
 
     /** Incremental snapshot refresh dari bdb_laporan_polisi (scheduler/init/tombol refresh manual). */
@@ -1106,7 +1087,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                     order by d.created_at desc
                     limit 1
                 ) dok on true
-                where lp.deleted_at is null
+                where lp.deleted_at is null and coalesce(lp.dilimpahkan_eksternal, false) = false and lp.kategori is distinct from 'pelanggaran' and not (coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)') and not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')))
                 `,
                 [ALASAN_RJ_LIKE, ALASAN_RJ_WORD_RE]
             );
@@ -1233,7 +1214,142 @@ export class KinerjaPerkaraService implements OnModuleInit {
         }
 
         this.crimeGroupResolver.clearCache();
+        try { await this.refreshSummarySnapshot(); } catch (sumErr) { this.logger.error('[KinerjaPerkara] Gagal refreshSummarySnapshot: ' + (sumErr?.message || sumErr)); }
         return this.lastRefreshedAt();
+    }
+
+    
+    async refreshSummarySnapshot() {
+        this.logger.log('[KinerjaPerkara] Memperbarui bdb_kinerja_perkara_summary_snapshot (Tahun 2026 & Bulan Aktif)...');
+        const now = new Date();
+        const curMonth = now.getMonth() + 1;
+        const curMonthStr = String(curMonth).padStart(2, '0');
+        const lastDay = new Date(now.getFullYear(), curMonth, 0).getDate();
+        const lastDayStr = String(lastDay).padStart(2, '0');
+
+        const partitions = [
+            { tahun: 2026, bulan: null, from: '2026-01-01', to: '2026-12-31' },
+            { tahun: 2026, bulan: curMonth, from: '2026-' + curMonthStr + '-01', to: '2026-' + curMonthStr + '-' + lastDayStr }
+        ];
+
+        for (const p of partitions) {
+            try {
+                const treeRes = await this.buildTree(
+                    1,
+                    p.from,
+                    p.to,
+                    'both',
+                    undefined,
+                    undefined,
+                    undefined,
+                    'national',
+                    DEFAULT_TAXONOMY_FILTER
+                );
+
+                const {
+                    totals,
+                    roots,
+                    byKode,
+                    columns,
+                    scoped,
+                    jumlahPenduduk,
+                    applied_filters,
+                    mapping_version,
+                    mapping_review_count
+                } = treeRes;
+
+                const { cr, crLama } = clearanceMetrics(totals);
+                const { pr, prLama } = processedMetrics(totals);
+                const diffDays = Math.round((new Date(p.to).getTime() - new Date(p.from).getTime()) / 86400000) + 1;
+                const totalDetikPeriode = Math.max(0, diffDays) * 86400;
+                const crimeClockDetik = totals.ct > 0 ? totalDetikPeriode / totals.ct : null;
+                const crimeClock = crimeClockDetik != null ? this.formatCrimeClock(crimeClockDetik) : null;
+                const crimeRate = jumlahPenduduk > 0 ? (totals.ct / jumlahPenduduk) * 100000 : null;
+
+                const summaryData = {
+                    status: 1,
+                    data: {
+                        ...totals,
+                        cr: round2(cr),
+                        cr_raw: cr,
+                        cr_lama: round2(crLama),
+                        pr: round2(pr),
+                        pr_lama: round2(prLama),
+                        level: levelOf(Math.min(cr, 100)),
+                        indeks: round2(computeIndeks(cr)),
+                        jumlah_penduduk: jumlahPenduduk > 0 ? jumlahPenduduk : null,
+                        crime_rate: crimeRate != null ? Math.round(crimeRate) : null,
+                        crime_rate_raw: crimeRate,
+                        crime_clock_detik: crimeClockDetik,
+                        crime_clock: crimeClock,
+                        periode_hari_inklusif: diffDays,
+                        from: p.from,
+                        to: p.to,
+                        scoped,
+                        taxonomy: DEFAULT_TAXONOMY_FILTER,
+                        model_filter: null,
+                        closure_reason: null,
+                        bucket_mode: 'age',
+                        applied_filters,
+                        mapping_version,
+                        mapping_review_count,
+                        last_refreshed_at: new Date().toISOString()
+                    }
+                };
+
+                const rootSliced = this.paginateNodes(roots);
+                const children = {};
+                if (byKode) {
+                    for (const [key, node] of byKode.entries()) {
+                        if (node.children && node.children.length > 0) {
+                            const sliced = this.paginateNodes(node.children);
+                            const childPayload = {
+                                nodes: sliced.nodes.map((n) => this.lite(n)),
+                                pagination: sliced.pagination,
+                                taxonomy: DEFAULT_TAXONOMY_FILTER,
+                                applied_filters,
+                                mapping_version,
+                                mapping_review_count
+                            };
+                            children[String(key)] = childPayload;
+                            if (node.id != null) children[String(node.id)] = childPayload;
+                            if (node.kode) children[String(node.kode)] = childPayload;
+                        }
+                    }
+                }
+
+                const rekapData = {
+                    root: {
+                        nodes: rootSliced.nodes.map((n) => this.lite(n)),
+                        totals,
+                        columns,
+                        scoped,
+                        pagination: rootSliced.pagination,
+                        taxonomy: DEFAULT_TAXONOMY_FILTER,
+                        applied_filters,
+                        mapping_version,
+                        mapping_review_count
+                    },
+                    children
+                };
+
+                await this.ds.query(`
+                    INSERT INTO bdb_kinerja_perkara_summary_snapshot 
+                        (tahun, bulan, scope_key, summary_data, rekap_totals, rekap_data, refreshed_at)
+                    VALUES ($1, $2, 'ALL', $3, $4, $5, now())
+                    ON CONFLICT (tahun, bulan, scope_key)
+                    DO UPDATE SET 
+                        summary_data = EXCLUDED.summary_data,
+                        rekap_totals = EXCLUDED.rekap_totals,
+                        rekap_data = EXCLUDED.rekap_data,
+                        refreshed_at = now()
+                `, [p.tahun, p.bulan, JSON.stringify(summaryData), JSON.stringify(totals), JSON.stringify(rekapData)]);
+
+                this.logger.log('[KinerjaPerkara] Snapshot summary ' + p.tahun + '-' + (p.bulan || 'ALL') + ' berhasil diperbarui. CT: ' + totals.ct);
+            } catch (err) {
+                this.logger.error('[KinerjaPerkara] Gagal refresh summary snapshot ' + p.tahun + '-' + p.bulan + ': ' + (err?.message || err));
+            }
+        }
     }
 
     async lastRefreshedAt(): Promise<string | null> {
@@ -2056,28 +2172,28 @@ export class KinerjaPerkaraService implements OnModuleInit {
         if (isStandardRekap) {
             const scope = await resolveScope(this.ds, userId);
             const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
-            if (isNational) {
-                let targetTahun: number | null = null;
-                let targetBulan: number | null = null;
-                if (from && to) {
-                    const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
-                    const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                    if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                        targetTahun = Number(mFrom[1]);
-                        targetBulan = Number(mFrom[2]);
-                    } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                        targetTahun = Number(from.slice(0, 4));
-                        targetBulan = null;
-                    }
-                } else if (!from && !to) {
-                    targetTahun = new Date().getFullYear();
+            let targetTahun: number | null = null;
+            let targetBulan: number | null = null;
+            if (from && to) {
+                const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
+                const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
+                    targetTahun = Number(mFrom[1]);
+                    targetBulan = Number(mFrom[2]);
+                } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
+                    targetTahun = Number(from.slice(0, 4));
                     targetBulan = null;
                 }
-                if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
-                    targetTahun = 2025;
-                }
-                if (targetTahun !== null) {
-                    try {
+            } else if (!from && !to) {
+                targetTahun = new Date().getFullYear();
+                targetBulan = null;
+            }
+            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
+                targetTahun = 2025;
+            }
+            if (targetTahun !== null) {
+                try {
+                    if (isNational) {
                         if (parent) {
                             const snapSql = targetBulan !== null
                                 ? "SELECT rekap_data->'children'->$3 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
@@ -2115,9 +2231,75 @@ export class KinerjaPerkaraService implements OnModuleInit {
                                 };
                             }
                         }
-                    } catch (snapErr: any) {
-                        // Fallback ke live buildTree
+                    } else if (scopeSatkerId) {
+                        if (parent) {
+                            const snapSql = targetBulan !== null
+                                ? "SELECT rekap_data->'children'->$3 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
+                                : "SELECT rekap_data->'children'->$2 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
+                            const snapParams = targetBulan !== null ? [targetTahun, targetBulan, String(parent)] : [targetTahun, String(parent)];
+                            const snapRows = await this.ds.query(snapSql, snapParams);
+                            if (snapRows.length > 0 && snapRows[0]?.children?.nodes) {
+                                const payload = snapRows[0].children;
+                                const sliced = this.paginateNodes(payload.nodes, page, limit);
+                                return {
+                                    status: 1,
+                                    data: {
+                                        ...payload,
+                                        nodes: sliced.nodes,
+                                        pagination: sliced.pagination
+                                    }
+                                };
+                            }
+                        } else {
+                            const snapSql = targetBulan !== null
+                                ? "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
+                                : "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
+                            const snapParams = targetBulan !== null ? [targetTahun, targetBulan] : [targetTahun];
+                            const snapRows = await this.ds.query(snapSql, snapParams);
+                            if (snapRows.length > 0 && Array.isArray(snapRows[0]?.reg_nodes)) {
+                                const found = snapRows[0].reg_nodes.find((n: any) => Number(n.id) === Number(scopeSatkerId));
+                                if (found) {
+                                    const node = { ...found, nomor: '1.' };
+                                    const totals = {
+                                        ct: Number(node.ct || 0),
+                                        cp_berjalan: Number(node.cp_berjalan || 0),
+                                        cp_tunggakan: Number(node.cp_tunggakan || 0),
+                                        limpah_eksternal: Number(node.limpah_eksternal || 0),
+                                        cc_aktual: Number(node.cc_aktual || 0),
+                                        cc_tunggakan: Number(node.cc_tunggakan || 0),
+                                        belum_kesulitan: Number(node.belum_kesulitan || 0),
+                                        belum_update_aktual: Number(node.belum_update_aktual || 0),
+                                        belum_update_tunggakan: Number(node.belum_update_tunggakan || 0),
+                                        cp_berjalan_belum_update: Number(node.cp_berjalan_belum_update || 0),
+                                        cp_tunggakan_belum_update: Number(node.cp_tunggakan_belum_update || 0),
+                                        cp_berjalan_rincian: node.cp_berjalan_rincian || {},
+                                        cp_tunggakan_rincian: node.cp_tunggakan_rincian || {},
+                                        cc_aktual_rincian: node.cc_aktual_rincian || {},
+                                        cc_tunggakan_rincian: node.cc_tunggakan_rincian || {},
+                                        status: node.status || {},
+                                        jumlah_penduduk: node.jumlah_penduduk ?? 0
+                                    };
+                                    const rootMeta = snapRows[0].root_meta || {};
+                                    return {
+                                        status: 1,
+                                        data: {
+                                            nodes: [node],
+                                            totals,
+                                            columns: rootMeta.columns,
+                                            scoped: true,
+                                            pagination: { page: 1, limit: 100, total: 1, total_pages: 1, paginated: false },
+                                            taxonomy,
+                                            applied_filters: rootMeta.applied_filters,
+                                            mapping_version: rootMeta.mapping_version,
+                                            mapping_review_count: rootMeta.mapping_review_count
+                                        }
+                                    };
+                                }
+                            }
+                        }
                     }
+                } catch (snapErr: any) {
+                    // Fallback ke live buildTree
                 }
             }
         }
@@ -2203,28 +2385,28 @@ export class KinerjaPerkaraService implements OnModuleInit {
         if (isStandardSummary) {
             const scope = await resolveScope(this.ds, userId);
             const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
-            if (isNational) {
-                let targetTahun: number | null = null;
-                let targetBulan: number | null = null;
-                if (from && to) {
-                    const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
-                    const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                    if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                        targetTahun = Number(mFrom[1]);
-                        targetBulan = Number(mFrom[2]);
-                    } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                        targetTahun = Number(from.slice(0, 4));
-                        targetBulan = null;
-                    }
-                } else if (!from && !to) {
-                    targetTahun = new Date().getFullYear();
+            let targetTahun: number | null = null;
+            let targetBulan: number | null = null;
+            if (from && to) {
+                const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
+                const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
+                    targetTahun = Number(mFrom[1]);
+                    targetBulan = Number(mFrom[2]);
+                } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
+                    targetTahun = Number(from.slice(0, 4));
                     targetBulan = null;
                 }
-                if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
-                    targetTahun = 2025;
-                }
-                if (targetTahun !== null) {
-                    try {
+            } else if (!from && !to) {
+                targetTahun = new Date().getFullYear();
+                targetBulan = null;
+            }
+            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
+                targetTahun = 2025;
+            }
+            if (targetTahun !== null) {
+                try {
+                    if (isNational) {
                         const snapSql = targetBulan !== null
                             ? "SELECT summary_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
                             : "SELECT summary_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
@@ -2233,9 +2415,63 @@ export class KinerjaPerkaraService implements OnModuleInit {
                         if (snapRows.length > 0 && snapRows[0].summary_data) {
                             return snapRows[0].summary_data;
                         }
-                    } catch (snapErr: any) {
-                        // Fallback ke live buildTree bila snapshot belum siap
+                    } else if (scopeSatkerId) {
+                        const snapSql = targetBulan !== null
+                            ? "SELECT summary_data, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
+                            : "SELECT summary_data, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
+                        const snapParams = targetBulan !== null ? [targetTahun, targetBulan] : [targetTahun];
+                        const snapRows = await this.ds.query(snapSql, snapParams);
+                        if (snapRows.length > 0 && Array.isArray(snapRows[0]?.reg_nodes)) {
+                            const node = snapRows[0].reg_nodes.find((n: any) => Number(n.id) === Number(scopeSatkerId));
+                            if (node) {
+                                const baseSum = snapRows[0].summary_data?.data || snapRows[0].summary_data || {};
+                                return {
+                                    status: 1,
+                                    data: {
+                                        ct: Number(node.ct || 0),
+                                        cp_berjalan: Number(node.cp_berjalan || 0),
+                                        cp_tunggakan: Number(node.cp_tunggakan || 0),
+                                        cp_berjalan_belum_update: Number(node.cp_berjalan_belum_update || 0),
+                                        cp_tunggakan_belum_update: Number(node.cp_tunggakan_belum_update || 0),
+                                        limpah_eksternal: Number(node.limpah_eksternal || 0),
+                                        cc_aktual: Number(node.cc_aktual || 0),
+                                        cc_tunggakan: Number(node.cc_tunggakan || 0),
+                                        belum_kesulitan: Number(node.belum_kesulitan || 0),
+                                        cp_berjalan_rincian: node.cp_berjalan_rincian || {},
+                                        cp_tunggakan_rincian: node.cp_tunggakan_rincian || {},
+                                        cc_aktual_rincian: node.cc_aktual_rincian || {},
+                                        cc_tunggakan_rincian: node.cc_tunggakan_rincian || {},
+                                        cr: Number(node.cr || 0),
+                                        cr_raw: Number(node.cr || 0),
+                                        cr_lama: Number(node.cr_lama || 0),
+                                        pr: Number(node.pr || 0),
+                                        pr_lama: Number(node.pr_lama || 0),
+                                        level: Number(node.level || 1),
+                                        indeks: Number(node.indeks || 1),
+                                        jumlah_penduduk: node.jumlah_penduduk ?? null,
+                                        crime_rate: node.crime_rate ?? null,
+                                        crime_rate_raw: node.crime_rate ?? null,
+                                        crime_clock_detik: node.crime_clock_detik ?? null,
+                                        crime_clock: node.crime_clock ?? null,
+                                        periode_hari_inklusif: baseSum.periode_hari_inklusif || 365,
+                                        from: from || baseSum.from || '2026-01-01',
+                                        to: to || baseSum.to || '2026-12-31',
+                                        scoped: true,
+                                        taxonomy: DEFAULT_TAXONOMY_FILTER,
+                                        model_filter: null,
+                                        closure_reason: null,
+                                        bucket_mode: 'age',
+                                        applied_filters: baseSum.applied_filters || { jenisKejahatanIds: [], golonganIds: [], iccsKategoriIds: [], kelompokHitung: [] },
+                                        mapping_version: baseSum.mapping_version,
+                                        mapping_review_count: baseSum.mapping_review_count,
+                                        last_refreshed_at: baseSum.last_refreshed_at || new Date().toISOString()
+                                    }
+                                };
+                            }
+                        }
                     }
+                } catch (snapErr: any) {
+                    // Fallback ke live buildTree bila snapshot belum siap
                 }
             }
         }
