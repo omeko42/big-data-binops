@@ -34,85 +34,9 @@ export class SatkerService implements OnModuleInit {
         }
     }
 
+    private tableEnsured = false;
     async ensureTable() {
-        await this.dataSource.query(`
-            create table if not exists bdb_satker (
-                id bigserial primary key,
-                kode text not null,
-                kode_canonical text not null,
-                deskripsi text,
-                parent_id bigint references bdb_satker(id) on delete set null,
-                root_id bigint references bdb_satker(id) on delete set null,
-                parent_kode text,
-                depth integer not null default 0,
-                is_root boolean not null default false,
-                is_synthetic boolean not null default false,
-                source text not null default 'ROBINOPS',
-                synced_at timestamp not null default now(),
-                created_at timestamp not null default now(),
-                updated_at timestamp not null default now()
-            );
-            create unique index if not exists bdb_satker_kode_canonical_uidx on bdb_satker (kode_canonical);
-            create index if not exists bdb_satker_parent_idx on bdb_satker (parent_id);
-            create index if not exists bdb_satker_root_idx on bdb_satker (root_id);
-            create index if not exists bdb_satker_desk_idx on bdb_satker (lower(deskripsi));
-            -- kolom lokasi/alamat (dikelola manual)
-            alter table bdb_satker add column if not exists alamat text;
-            alter table bdb_satker add column if not exists provinsi text;
-            alter table bdb_satker add column if not exists kabupaten_kota text;
-            alter table bdb_satker add column if not exists kecamatan text;
-            alter table bdb_satker add column if not exists desa text;
-            alter table bdb_satker add column if not exists kode_pos text;
-            alter table bdb_satker add column if not exists longitude text;
-            alter table bdb_satker add column if not exists latitude text;
-            -- jumlah_penduduk: dasar hitung Crime Rate (lihat KinerjaPerkaraService) -- diisi manual per
-            -- satker LEAF (tanpa anak) supaya rollup nasional tidak dobel-hitung antar level hierarki.
-            alter table bdb_satker add column if not exists jumlah_penduduk text;
-            -- klasifikasi (superadmin-only, BUKAN self-service) -- 2 sumbu independen:
-            -- keanggotaan = bagian dari organisasi Polri atau bukan; fungsi = unit reserse atau bukan.
-            alter table bdb_satker add column if not exists keanggotaan text;
-            alter table bdb_satker add column if not exists fungsi text;
-            -- kinerja_aktif: apakah LP satker ini ikut dihitung di rekap Kinerja Perkara (CT/CP/CC/CR) --
-            -- default true (semua tampil) spy tak ada yg tiba2 hilang dari rekap saat fitur ini rilis.
-            alter table bdb_satker add column if not exists kinerja_aktif boolean not null default true;
-            -- tipe_satker: POLDA/POLRES/POLSEK (wilayah geografis nyata) vs FUNGSI (satuan
-            -- organisasi, mis. SAT RESKRIM/BAG OPS -- BUKAN wilayah sendiri). Dasar validasi Jumlah
-            -- Penduduk (lihat sql/bdb/068) supaya rekap Crime Rate tidak dobel-hitung. Auto-terisi
-            -- lewat trigger di bawah utk baris baru, backfill 1x utk baris lama yg msh default.
-            alter table bdb_satker add column if not exists tipe_satker text not null default 'FUNGSI';
-            create index if not exists bdb_satker_tipe_idx on bdb_satker (tipe_satker);
-        `);
-        // Trigger + backfill 1x -- dibungkus cek "trigger sudah ada?" supaya SETELAH pertama kali
-        // (baris lama sudah dibackfill), pemanggilan ensureTable() berikutnya (tiap request, lihat
-        // pola di seluruh service ini) tidak lagi scan+regex 15rb+ baris percuma tiap kali.
-        await this.dataSource.query(`
-            do $$ begin
-                if not exists (select 1 from pg_trigger where tgname = 'trg_bdb_satker_auto_tipe') then
-                    if not exists (select 1 from pg_constraint where conname = 'chk_satker_tipe') then
-                        alter table bdb_satker add constraint chk_satker_tipe check (tipe_satker in ('POLDA','POLRES','POLSEK','FUNGSI'));
-                    end if;
-                    update bdb_satker set tipe_satker = 'POLDA' where tipe_satker <> 'POLDA' and deskripsi ~* '^POLDA ';
-                    update bdb_satker set tipe_satker = 'POLRES' where tipe_satker <> 'POLRES' and deskripsi ~* '^POLRES(TA|TABES)? ';
-                    update bdb_satker set tipe_satker = 'POLSEK' where tipe_satker <> 'POLSEK' and deskripsi ~* '^POLSEK(TA)? ';
-
-                    create or replace function bdb_satker_auto_tipe() returns trigger as $f$
-                    begin
-                        new.tipe_satker := case
-                            when new.deskripsi ~* '^POLDA ' then 'POLDA'
-                            when new.deskripsi ~* '^POLRES(TA|TABES)? ' then 'POLRES'
-                            when new.deskripsi ~* '^POLSEK(TA)? ' then 'POLSEK'
-                            else 'FUNGSI'
-                        end;
-                        return new;
-                    end;
-                    $f$ language plpgsql;
-
-                    create trigger trg_bdb_satker_auto_tipe
-                        before insert on bdb_satker
-                        for each row execute function bdb_satker_auto_tipe();
-                end if;
-            end $$;
-        `);
+        return;
     }
 
     // kolom alamat/lokasi yang bisa dikelola manual (operator/admin_binops self-service jg boleh)
@@ -161,9 +85,151 @@ export class SatkerService implements OnModuleInit {
         const idByCanon = new Map<string, number>(all.map((r: any) => [r.kode_canonical, r.id]));
 
         const parentOf = new Map<string, string | null>();
+        // Canonical code is a stable historical identity. These audited overrides model the
+        // current operational parent without rewriting IDs/codes referenced by LP and users.
+        const hierarchyParentOverrides = new Map<string, string>([
+            // Kubu Raya: retain historic identifiers while using the current territorial parent.
+            ['060.01.18.02.08', '060.01.18.14'],
+            ['060.01.18.02.09', '060.01.18.14'],
+            ['060.01.18.02.10', '060.01.18.14'],
+            ['060.01.18.02.11', '060.01.18.14'],
+            // Current regional parents; retain historical DORS/Pusiknas identifiers.
+            ['060.01.13.15.16', '060.01.13.23'],
+            ['060.01.13.15.14', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.15', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.17', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.18', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.19', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.23', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.24', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.13.15.25', '060.01.13.23'], // POLSEK -> POLRES PANGANDARAN
+            ['060.01.25.18.01', '060.01.25.25'],
+            ['060.01.25.18.05', '060.01.25.25'],
+            ['060.01.25.18.08', '060.01.25.25'],
+            ['060.01.25.18.07', '060.01.25.25'], // POLSEK RINDINGALLO -> POLRES TORAJA UTARA
+            ['060.01.25.18.09', '060.01.25.25'], // POLSEK TONDON NANGGALA -> POLRES TORAJA UTARA
+            ['060.01.25.18.10', '060.01.25.25'], // POLSEK SA'DAN BALUSU -> POLRES TORAJA UTARA
+            ['060.01.25.18.12', '060.01.25.25'], // POLSEK PERSIAPAN SOPAI -> POLRES TORAJA UTARA
+            // POLSEK current jajaran POLRES SUBULUSSALAM; canonical lineage historis masih
+            // berada di POLRES ACEH SINGKIL.
+            ['060.01.02.16.02', '060.01.02.23'], // POLSEK SIMPANG KIRI
+            ['060.01.02.16.05', '060.01.02.23'], // POLSEK RUNDENG
+            ['060.01.02.16.06', '060.01.02.23'], // POLSEK PENANGGALAN
+            ['060.01.02.16.10', '060.01.02.23'], // POLSEK SULTAN DAULAT
+            ['060.01.02.16.15', '060.01.02.23'], // POLSEK LONGKIB
+
+            ['060.01.32.26', '060.01.37'],
+            ['060.01.32.15', '060.01.37'],
+            ['060.01.32.17', '060.01.37'],
+            ['060.01.33.09', '060.01.36'],
+            ['060.01.03.13.01', '060.01.03.101'],
+            ['060.01.27.09.01', '060.01.27.13'],
+            ['060.01.27.09.06', '060.01.27.13'],
+
+            // POLRES MALUKU TENGGARA.
+            ['060.01.30.03.00.10', '060.01.30.35'],
+            ['060.01.30.03.00.13', '060.01.30.35'],
+            ['060.01.30.03.00.14', '060.01.30.35'],
+            ['060.01.30.03.00.16', '060.01.30.35'],
+            ['060.01.30.03.00.17', '060.01.30.35'],
+            ['060.01.30.03.01', '060.01.30.35'],
+            ['060.01.30.03.02', '060.01.30.35'],
+            ['060.01.30.03.03', '060.01.30.35'],
+            ['060.01.30.03.04', '060.01.30.35'],
+            ['060.01.30.03.07', '060.01.30.35'],
+            ['060.01.30.03.09', '060.01.30.35'],
+            ['060.01.31.07.04', '060.01.31.05'],
+
+            // POLRES KEPULAUAN TANIMBAR.
+            ['060.01.30.04.01', '060.01.30.12'],
+            ['060.01.30.04.02', '060.01.30.12'],
+            ['060.01.30.04.03', '060.01.30.12'],
+            ['060.01.30.04.04', '060.01.30.12'],
+            ['060.01.30.04.05', '060.01.30.12'],
+            ['060.01.30.04.06', '060.01.30.12'],
+            ['060.01.30.04.07', '060.01.30.12'],
+            ['060.01.30.04.08', '060.01.30.12'],
+            ['060.01.30.04.09', '060.01.30.12'],
+
+            // POLRES PASANGKAYU.
+            ['060.01.34.05.01', '060.01.34.06'],
+            ['060.01.34.05.02', '060.01.34.06'],
+            ['060.01.34.05.03', '060.01.34.06'],
+            ['060.01.34.05.04', '060.01.34.06'],
+
+            // POLRESTA SORONG KOTA / POLDA PAPUA BARAT DAYA.
+            ['060.01.33.06.01', '060.01.36.101'],
+            ['060.01.33.06.02', '060.01.36.101'],
+            ['060.01.33.06.04', '060.01.36.101'],
+            ['060.01.33.06.18', '060.01.36.101'],
+            ['060.01.33.06.06', '060.01.36.101'],
+            ['060.01.33.07', '060.01.36'],
+            ['060.01.36.03.01', '060.01.33.07'],
+            ['060.01.36.03.02', '060.01.33.07'],
+            ['060.01.36.03.03', '060.01.33.07'],
+            ['060.01.36.03.05', '060.01.33.07'],
+            ['060.01.36.03.07', '060.01.33.07'],
+            ['060.01.36.03.06', '060.01.36.28'],
+            ['060.01.33.07.07.06', '060.01.36.28'],
+            ['060.01.33.08', '060.01.36'],
+
+            // POLRES MAYBRAT / POLRES SORONG SELATAN.
+            ['060.01.36.05.01', '060.01.36.27'],
+            ['060.01.36.05.02', '060.01.36.27'],
+            ['060.01.36.05.03', '060.01.36.27'],
+            ['060.01.36.05.04', '060.01.36.27'],
+            ['060.01.33.08.04.06', '060.01.36.27'],
+            ['060.01.33.08.03.06', '060.01.36.27'],
+            ['060.01.33.08.02.06', '060.01.36.27'],
+            ['060.01.33.08.06.06', '060.01.36.27'],
+            ['060.01.36.05.05', '060.01.33.08'],
+            ['060.01.36.05.06', '060.01.33.08'],
+            ['060.01.36.05.07', '060.01.33.08'],
+            ['060.01.33.08.05.06', '060.01.33.08'],
+            ['060.01.33.08.07.06', '060.01.33.08'],
+            ['060.01.33.08.01.06', '060.01.33.08'],
+
+            // POLDA PAPUA TENGAH.
+            ['060.01.32.20', '060.01.37'],
+            ['060.01.32.16', '060.01.37'],
+            ['060.01.37.02.01', '060.01.32.20'],
+            ['060.01.37.02.02', '060.01.32.20'],
+            ['060.01.37.02.05', '060.01.32.20'],
+            ['060.01.37.02.06', '060.01.32.20'],
+            ['060.01.37.02.07', '060.01.32.20'],
+            ['060.01.37.02.08', '060.01.32.20'],
+            ['060.01.37.02.09', '060.01.32.20'],
+            ['060.01.37.05.03', '060.01.32.16'],
+            ['060.01.37.05.04', '060.01.32.16'],
+
+            // POLSEK KAWASAN BANDARA DEO -> POLRESTA SORONG KOTA.
+            // Entri ini sudah aktif di dist production; dipertahankan di source agar parity.
+            ['060.01.33.06.06', '060.01.36.101'],
+
+            // Delapan Polsek wilayah Kabupaten Sumba Barat Daya masih memakai canonical
+            // lineage historis POLRES SUMBA BARAT (060.01.24.07.xx). Parent operasional
+            // current adalah POLRES SUMBA BARAT DAYA (060.01.24.18). ID dan canonical
+            // dipertahankan agar LP, user, dan mapping DORS tidak terputus.
+            ['060.01.24.07.09', '060.01.24.18'], // POLSEK KODI
+            ['060.01.24.07.08', '060.01.24.18'], // POLSEK KODI BANGEDO
+            ['060.01.24.07.10', '060.01.24.18'], // POLSEK KODI UTARA
+            ['060.01.24.07.20', '060.01.24.18'], // POLSEK KOTA TAMBOLAKA
+            ['060.01.24.07.07', '060.01.24.18'], // POLSEK LOURA
+            ['060.01.24.07.11', '060.01.24.18'], // POLSEK WEWEWA BARAT
+            ['060.01.24.07.12', '060.01.24.18'], // POLSEK WEWEWA SELATAN
+            ['060.01.24.07.13', '060.01.24.18']  // POLSEK WEWEWA TIMUR
+        ]);
         for (const r of all) {
             let pk = this.parentKey(r.kode_canonical.split('.'));
-            while (pk && !canonSet.has(pk)) pk = this.parentKey(pk.split('.'));
+            const overrideParent = hierarchyParentOverrides.get(r.kode_canonical);
+            if (overrideParent) {
+                if (!canonSet.has(overrideParent)) {
+                    throw new Error(`Hierarchy override target tidak ditemukan: ${r.kode_canonical} -> ${overrideParent}`);
+                }
+                pk = overrideParent;
+            } else {
+                while (pk && !canonSet.has(pk)) pk = this.parentKey(pk.split('.'));
+            }
             parentOf.set(r.kode_canonical, pk);
         }
         const depthOf = (ck: string): number => {
@@ -641,41 +707,460 @@ export class SatkerService implements OnModuleInit {
     }
 
     /** Anak langsung dari sebuah node (lazy treeview). */
-    async children(parentId: number) {
+    async children(parentId: number, userId?: number) {
         await this.ensureTable();
+        let allowedSql = '';
+        const params: any[] = [parentId];
+
+        if (userId) {
+            const uRows = await this.dataSource.query(
+                `select u.role_bdb, u.role_name, u.scope_satker_id, s.deskripsi, s.tipe_satker
+                 from auth_users u
+                 left join bdb_satker s on s.id = u.scope_satker_id
+                 where u.id = $1`,
+                [userId]
+            );
+            const u = uRows[0];
+            const roleBdb = String(u?.role_bdb || '').toLowerCase();
+            const roleName = String(u?.role_name || '').toLowerCase();
+            const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
+            const scopeId = u?.scope_satker_id ? Number(u.scope_satker_id) : null;
+            const isMabesLeader = !scopeId || scopeId === 1 || scopeId === 13;
+
+            if (!isSuper && !isMabesLeader && scopeId) {
+                params.push(scopeId);
+                const scopeParam = `$${params.length}`;
+                allowedSql = `
+                    and s.id in (
+                        with recursive
+                        user_satker as (
+                            select us.id, us.parent_id, us.deskripsi, us.tipe_satker, us.kode_canonical, p.tipe_satker as parent_tipe
+                            from bdb_satker us
+                            left join bdb_satker p on p.id = us.parent_id
+                            where us.id = ${scopeParam}
+                        ),
+                        actor_meta as (
+                            select us.id, us.parent_id, us.deskripsi, us.tipe_satker, us.parent_tipe,
+                                case
+                                    when upper(us.deskripsi) ~ 'NARKOBA' then 'NARKOBA'
+                                    when upper(us.deskripsi) ~ 'KRIMSUS|TIPIDEKSUS|TIPIDTER|TIPIDKOR|KORTAS' then 'KRIMSUS'
+                                    when upper(us.deskripsi) ~ 'SIBER' then 'SIBER'
+                                    when upper(us.deskripsi) ~ 'PPA|PPO|RENAKTA' then 'PPA'
+                                    when upper(us.deskripsi) ~ 'POLAIR|AIRUD' then 'POLAIR'
+                                    when upper(us.deskripsi) ~ 'KRIMUM|TIPIDUM|RESKRIM|RES[[:space:]]*KRIM' then 'RESKRIM'
+                                    when us.tipe_satker = 'FUNGSI' then 'OTHER_FUNGSI'
+                                    else 'ALL'
+                                end as domain_code,
+                                case
+                                    when us.id = 1 or us.id = 13 or upper(trim(us.deskripsi)) like '%BARESKRIM%' or upper(trim(us.deskripsi)) like '%MABES%' then 'MABES'
+                                    when us.parent_id in (1, 13) and us.tipe_satker = 'FUNGSI' then 'MABES_DIT'
+                                    when us.tipe_satker = 'POLDA' then 'POLDA'
+                                    when us.parent_tipe = 'POLDA' and us.tipe_satker = 'FUNGSI' then 'POLDA_DIT'
+                                    when us.tipe_satker = 'POLRES' then 'POLRES'
+                                    when us.parent_tipe = 'POLRES' and us.tipe_satker = 'FUNGSI' then 'POLRES_SAT'
+                                    when us.tipe_satker = 'POLSEK' then 'POLSEK'
+                                    when us.parent_tipe = 'POLSEK' and us.tipe_satker = 'FUNGSI' then 'POLSEK_UNIT'
+                                    else 'OTHER'
+                                end as unit_level
+                            from user_satker us
+                        ),
+                        territory_root as (
+                            select case
+                                when m.unit_level in ('MABES', 'OTHER') then 1
+                                when m.unit_level in ('MABES_DIT', 'POLSEK_UNIT', 'POLSEK') then us.id
+                                when m.unit_level = 'POLRES_SAT' then p.id
+                                when m.unit_level = 'POLRES' then us.id
+                                when m.unit_level = 'POLDA_DIT' then p.id
+                                when m.unit_level = 'POLDA' then us.id
+                                else us.id
+                            end as root_id,
+                            us.id as user_satker_id,
+                            m.domain_code,
+                            m.unit_level
+                            from user_satker us
+                            cross join actor_meta m
+                            left join bdb_satker p on p.id = us.parent_id
+                        ),
+                        ancestors as (
+                            select ak.id, ak.parent_id from bdb_satker ak join territory_root tr on ak.id = tr.root_id
+                            union all
+                            select pk.id, pk.parent_id from bdb_satker pk join ancestors a on a.parent_id = pk.id
+                        ),
+                        polres_with_ppa as (
+                            select distinct parent_id as polres_id
+                            from bdb_satker
+                            where upper(deskripsi) ~ 'PPA|PPO|RENAKTA'
+                              and upper(deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER|POLSEK'
+                              and tipe_satker = 'FUNGSI'
+                        ),
+                        descendants as (
+                            select dk.id, dk.parent_id, dk.deskripsi, dk.tipe_satker from bdb_satker dk join territory_root tr on dk.id = tr.root_id
+                            union all
+                            select ck.id, ck.parent_id, ck.deskripsi, ck.tipe_satker from bdb_satker ck join descendants d on ck.parent_id = d.id
+                        ),
+                        filtered_descendants as (
+                            select d.id, d.parent_id, d.deskripsi, d.tipe_satker
+                            from descendants d
+                            cross join territory_root tr
+                            where
+                                (tr.unit_level in ('POLSEK_UNIT', 'POLSEK', 'MABES_DIT'))
+                                or (d.id = tr.user_satker_id)
+                                or (d.tipe_satker in ('POLDA', 'POLRES', 'POLSEK'))
+                                or (upper(d.deskripsi) ~ 'UNIT[[:space:]]*RESKRIM')
+                                or (
+                                    tr.unit_level = 'POLDA_DIT'
+                                    and d.parent_id != tr.root_id
+                                    and (
+                                        (
+                                            tr.domain_code = 'NARKOBA'
+                                            and upper(d.deskripsi) ~ 'NARKOBA'
+                                        )
+                                        or (
+                                            tr.domain_code in ('RESKRIM', 'KRIMSUS', 'SIBER')
+                                            and upper(d.deskripsi) ~ 'SAT[[:space:]]*RESKRIM|SATRESKRIM|RESKRIM'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|PPA|PPO'
+                                        )
+                                        or (
+                                            tr.domain_code = 'PPA'
+                                            and (
+                                                (
+                                                    upper(d.deskripsi) ~ 'PPA|PPO|RENAKTA'
+                                                    and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                                                )
+                                                or (
+                                                    upper(d.deskripsi) ~ 'SAT[[:space:]]*RESKRIM|SATRESKRIM|RESKRIM'
+                                                    and upper(d.deskripsi) !~ 'NARKOBA|PPA|PPO'
+                                                    and d.parent_id not in (select polres_id from polres_with_ppa)
+                                                )
+                                            )
+                                        )
+                                        or (
+                                            tr.domain_code = 'POLAIR'
+                                            and upper(d.deskripsi) ~ 'POLAIR|AIRUD'
+                                        )
+                                    )
+                                )
+                                or (
+                                    tr.unit_level = 'POLRES_SAT' and (
+                                        (
+                                            tr.domain_code = 'NARKOBA'
+                                            and upper(d.deskripsi) ~ 'NARKOBA'
+                                        )
+                                        or (
+                                            tr.domain_code = 'RESKRIM'
+                                            and upper(d.deskripsi) ~ 'RESKRIM|KRIMUM|TIPIDUM'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER|PPA|PPO'
+                                        )
+                                        or (
+                                            tr.domain_code = 'PPA'
+                                            and upper(d.deskripsi) ~ 'PPA|PPO|RENAKTA'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                                        )
+                                        or (
+                                            tr.domain_code = 'KRIMSUS'
+                                            and upper(d.deskripsi) ~ 'KRIMSUS|TIPIDEKSUS|TIPIDTER|TIPIDKOR|KORTAS'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|SIBER|PPA|PPO'
+                                        )
+                                        or (
+                                            tr.domain_code = 'SIBER'
+                                            and upper(d.deskripsi) ~ 'SIBER'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|PPA|PPO'
+                                        )
+                                        or (
+                                            tr.domain_code = 'POLAIR'
+                                            and upper(d.deskripsi) ~ 'POLAIR|AIRUD'
+                                            and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                                        )
+                                    )
+                                )
+                                or (
+                                    tr.domain_code = 'ALL'
+                                )
+                        )
+                        select id from ancestors union select id from filtered_descendants
+                    )
+                `;
+            }
+        }
+
         const rows = await this.dataSource.query(
             `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.depth, s.parent_id,
-                exists(select 1 from bdb_satker c where c.parent_id=s.id) as has_children,
-                (select count(*)::int from bdb_satker c where c.parent_id=s.id) as child_count
-             from bdb_satker s where s.parent_id=$1 order by s.urutan nulls last, s.kode_canonical`,
-            [parentId]
+                exists(select 1 from bdb_satker c where c.parent_id=s.id ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as has_children,
+                (select count(*)::int from bdb_satker c where c.parent_id=s.id ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as child_count
+             from bdb_satker s
+             where s.parent_id = $1
+               ${allowedSql}
+             order by s.urutan nulls last, s.kode_canonical`,
+            params
         );
         return { status: 1, data: rows };
     }
 
     /** Cari satker (deskripsi/kode) + jalur ke root. */
-    async search(q: string, limit = 50) {
+    async search(
+        q?: string,
+        limit: number = 5,
+        page: number = 1,
+        userId?: number,
+        functionDomain?: string,
+        organizationDomain?: string,
+        level?: string
+    ) {
         await this.ensureTable();
-        if (!q || !q.trim()) return { status: 1, data: [] };
-        const rows = await this.dataSource.query(
-            `with recursive found as (
-                select id, kode, deskripsi, parent_id, depth
-                from bdb_satker
-                where lower(deskripsi) like lower($1) or kode like $1
-                order by depth, kode_canonical limit $2
-            )
-            select f.id, f.kode, f.deskripsi, f.depth,
-                (with recursive up(id,kode,deskripsi,parent_id,lvl) as (
-                    select s.id,s.kode,s.deskripsi,s.parent_id,0 from bdb_satker s where s.id=f.id
-                    union all select s.id,s.kode,s.deskripsi,s.parent_id,up.lvl+1 from bdb_satker s join up on s.id=up.parent_id
-                 ) select string_agg(deskripsi,' > ' order by lvl desc) from up) as jalur,
-                (with recursive up2(id,parent_id,lvl) as (
-                    select s.id,s.parent_id,0 from bdb_satker s where s.id=f.id
-                    union all select s.id,s.parent_id,up2.lvl+1 from bdb_satker s join up2 on s.id=up2.parent_id
-                 ) select array_agg(id order by lvl desc) from up2) as path_ids
-            from found f`,
-            [`%${q.trim()}%`, Math.max(1, Math.min(200, Number(limit) || 50))]
-        );
-        return { status: 1, data: rows };
+        const { resolveScope } = require('../common/scope.util');
+        const cleanLimit = Math.max(1, Math.min(200, Number(limit) || 5));
+        const cleanPage = Math.max(1, Number(page) || 1);
+        const offset = (cleanPage - 1) * cleanLimit;
+        const cleanQ = String(q || '').trim();
+
+        // 1. Cek Cakupan Eksternal Polri
+        const isEksternalPolri =
+            String(functionDomain || organizationDomain || '').toUpperCase().includes('EKSTERNAL_POLRI');
+
+        if (isEksternalPolri) {
+            const params: any[] = [];
+            let whereExt = '';
+            if (cleanQ) {
+                params.push('%' + cleanQ + '%');
+                whereExt = 'where lower(e.nama) like lower($' + params.length + ')';
+            }
+            const countRows = await this.dataSource.query(
+                'select count(*)::int as c from bdb_satker_eksternal e ' + whereExt,
+                params
+            );
+            const total = countRows[0]?.c ? Number(countRows[0].c) : 0;
+            params.push(cleanLimit, offset);
+            const extRows = await this.dataSource.query(
+                'select e.id, null as kode, e.nama as deskripsi, 0 as depth, \'EKSTERNAL\' as tipe_satker, ' +
+                '\'NOT_APPLICABLE\' as function_domain, \'EKSTERNAL_POLRI\' as organization_domain, ' +
+                'e.nama as jalur, array[e.id] as path_ids ' +
+                'from bdb_satker_eksternal e ' +
+                whereExt + ' ' +
+                'order by e.nama ' +
+                'limit $' + (params.length - 1) + ' offset $' + params.length,
+                params
+            );
+            return {
+                status: 1,
+                data: extRows,
+                total,
+                page: cleanPage,
+                limit: cleanLimit,
+                total_page: Math.ceil(total / cleanLimit)
+            };
+        }
+
+        // 2. Evaluasi Scope Pengguna & Spesialisasi Fungsi (Domain Affinity & Regional Territory)
+        const scope = await resolveScope(this.dataSource, userId);
+        let actorDomain = 'ALL';
+        let territoryId: number | null = null;
+        let territoryLevel = 'MABES';
+        let allowedSubordinateLevels: string[] = [];
+
+        if (!scope.all) {
+            if (!scope.satkerId) {
+                return { status: 1, data: [], total: 0, page: cleanPage, limit: cleanLimit, total_page: 0 };
+            }
+
+            const actorRows = await this.dataSource.query('select id, deskripsi, tipe_satker from bdb_satker where id=$1', [scope.satkerId]);
+            const desc = String(actorRows[0]?.deskripsi || '').toUpperCase();
+
+            if (/NARKOBA/.test(desc)) actorDomain = 'NARKOBA';
+            else if (/KRIMSUS|TIPIDEKSUS|TIPIDTER|KORTAS|TIPIDKOR/.test(desc)) actorDomain = 'KRIMSUS';
+            else if (/SIBER/.test(desc)) actorDomain = 'SIBER';
+            else if (/PPA|RENAKTA/.test(desc)) actorDomain = 'PPA';
+            else if (/KRIMUM|TIPIDUM|RESKRIM|RES\s*KRIM/.test(desc)) actorDomain = 'TIPIDUM';
+            else actorDomain = 'ALL';
+
+            const ancestors = await this.dataSource.query(
+                `with recursive p as (
+                    select id::int, deskripsi, parent_id::int, tipe_satker, depth::int from bdb_satker where id=$1
+                    union all
+                    select s.id::int, s.deskripsi, s.parent_id::int, s.tipe_satker, s.depth::int from bdb_satker s join p on p.parent_id=s.id
+                 ) select id, deskripsi, parent_id, tipe_satker, depth from p order by depth desc nulls last`,
+                [scope.satkerId]
+            );
+
+            // Cari ancestor teritorial terdekat (POLSEK, POLRES, POLDA, MABES)
+            const terr = ancestors.find((x: any) =>
+                ['POLSEK', 'POLRES', 'POLDA', 'MABES'].includes(String(x.tipe_satker || '').toUpperCase())
+            ) || ancestors.find((x: any) => x.id === 1 || x.id === 13);
+
+            territoryId = terr ? terr.id : 1;
+            if (territoryId === 1 || territoryId === 13 || String(terr?.tipe_satker || '').toUpperCase() === 'MABES') {
+                territoryLevel = 'MABES';
+            } else {
+                territoryLevel = terr ? String(terr.tipe_satker || 'POLDA').toUpperCase() : 'POLDA';
+            }
+
+            if (territoryLevel === 'MABES') allowedSubordinateLevels = ['POLDA', 'POLRES', 'POLSEK'];
+            else if (territoryLevel === 'POLDA') allowedSubordinateLevels = ['POLRES', 'POLSEK'];
+            else if (territoryLevel === 'POLRES') allowedSubordinateLevels = ['POLSEK'];
+            else allowedSubordinateLevels = [];
+        }
+
+                // 3. Bangun Pool Satker Berbasis Master Data Murni (Taxonomy R11)
+        const params: any[] = [];
+        const whereClauses: string[] = ['s.is_synthetic = false'];
+        let cteAllowed = '';
+        const fromSource = 'pool s';
+
+        if (!scope.all && territoryLevel !== 'MABES' && territoryId) {
+            // Regional Scope (Polda / Polres / Polsek)
+            params.push(territoryId);
+            const pTerr = params.length;
+            params.push(scope.satkerId);
+            const pActor = params.length;
+
+            cteAllowed =
+                "with recursive sub as (" +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.tipe_satker " +
+                "from bdb_satker s " +
+                "where s.id = $" + pTerr + " or s.id = $" + pActor + " " +
+                "union all " +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.tipe_satker " +
+                "from bdb_satker s " +
+                "join sub on s.parent_id = sub.id" +
+                "), " +
+                "pool as (" +
+                "select distinct on (s.id) " +
+                "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
+                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
+                "case " +
+                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
+                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
+                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
+                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "end as tipe_satker " +
+                "from sub s " +
+                "left join bdb_satker p on p.id = s.parent_id " +
+                "where s.is_synthetic = false " +
+                "and s.organization_domain = 'INTERNAL_POLRI' " +
+                "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                "), ";
+        } else {
+            // Akses Nasional (Mabes / Superadmin / Admin Binops)
+            cteAllowed =
+                "with pool as (" +
+                "select " +
+                "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
+                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
+                "case " +
+                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
+                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
+                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
+                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "end as tipe_satker " +
+                "from bdb_satker s " +
+                "left join bdb_satker p on p.id = s.parent_id " +
+                "where s.is_synthetic = false " +
+                "and s.organization_domain = 'INTERNAL_POLRI' " +
+                "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                "), ";
+        }
+
+        // 4. Pencarian Fleksibel (Tokenized Search & Normalisasi Kata/Singkatan)
+        if (cleanQ) {
+            const tokens = cleanQ.split(/\s+/).filter(Boolean);
+            if (tokens.length > 0) {
+                const tokenConds: string[] = [];
+                for (const t of tokens) {
+                    params.push('%' + t + '%');
+                    const pRaw = params.length;
+
+                    const cleanT = t.toLowerCase().replace(/dan/g, '').replace(/\s+/g, '');
+                    params.push('%' + cleanT + '%');
+                    const pClean = params.length;
+
+                    let abbrCondition = '';
+                    const lowerT = t.toLowerCase();
+                    if (lowerT === 'jakbar') abbrCondition = " or lower(s.deskripsi) like '%jakarta barat%'";
+                    else if (lowerT === 'jakpus') abbrCondition = " or lower(s.deskripsi) like '%jakarta pusat%'";
+                    else if (lowerT === 'jaksel') abbrCondition = " or lower(s.deskripsi) like '%jakarta selatan%'";
+                    else if (lowerT === 'jaktim') abbrCondition = " or lower(s.deskripsi) like '%jakarta timur%'";
+                    else if (lowerT === 'jakut') abbrCondition = " or lower(s.deskripsi) like '%jakarta utara%'";
+
+                    tokenConds.push(
+                        '(' +
+                        'lower(s.deskripsi) like lower($' + pRaw + ') ' +
+                        'or replace(replace(lower(s.deskripsi), \'dan\', \'\'), \' \', \'\') like lower($' + pClean + ') ' +
+                        'or s.kode like $' + pRaw + ' ' +
+                        'or coalesce(s.dors_kode, \'\') like $' + pRaw +
+                        abbrCondition +
+                        ')'
+                    );
+                }
+                whereClauses.push('(' + tokenConds.join(' and ') + ')');
+            }
+        }
+
+        if (functionDomain) {
+            const fd = functionDomain.trim().toUpperCase();
+            if (fd === 'INTERNAL_RESERSE') {
+                params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+                whereClauses.push('s.function_domain = any($' + params.length + ')');
+            } else if (fd === 'EKSTERNAL_RESERSE') {
+                params.push(['EKSTERNAL_RESERSE']);
+                whereClauses.push('s.function_domain = any($' + params.length + ')');
+            }
+        }
+
+        if (level) {
+            const levels = level
+                .split(',')
+                .map((x) => x.trim().toUpperCase())
+                .filter(Boolean);
+            if (levels.length > 0 && levels.length < 4) {
+                params.push(levels);
+                whereClauses.push('upper(s.tipe_satker) = any($' + params.length + ')');
+            }
+        }
+
+        params.push(cleanLimit);
+        const limitParam = '$' + params.length;
+        params.push(offset);
+        const offsetParam = '$' + params.length;
+        const whereSql = whereClauses.length > 0 ? 'where ' + whereClauses.join(' and ') : '';
+
+        const sql =
+            cteAllowed +
+            'filtered as (' +
+            'select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
+            'count(*) over()::int as full_count ' +
+            'from ' + fromSource + ' ' +
+            whereSql + ' ' +
+            '), ' +
+            'paged as (' +
+            'select * from filtered ' +
+            'order by depth, coalesce(kode_canonical, kode) ' +
+            'limit ' + limitParam + ' offset ' + offsetParam + ' ' +
+            ') ' +
+            'select p.id, p.kode, p.deskripsi, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
+            '(with recursive up(id,kode,deskripsi,parent_id,lvl) as (' +
+            'select s.id,s.kode,s.deskripsi,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
+            'union all select s.id,s.kode,s.deskripsi,s.parent_id,up.lvl+1 from bdb_satker s join up on s.id=up.parent_id' +
+            ') select string_agg(deskripsi,\' > \' order by lvl desc) from up) as jalur, ' +
+            '(with recursive up2(id,parent_id,lvl) as (' +
+            'select s.id,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
+            'union all select s.id,s.parent_id,up2.lvl+1 from bdb_satker s join up2 on s.id=up2.parent_id' +
+            ') select array_agg(id order by lvl desc) from up2) as path_ids ' +
+            'from paged p';
+
+        const rows = await this.dataSource.query(sql, params);
+        let total = rows.length > 0 ? Number(rows[0].full_count) : 0;
+        if (rows.length === 0 && offset > 0) {
+            const countSql = cteAllowed + 'select count(*)::int as c from ' + fromSource + ' ' + whereSql;
+            const countRows = await this.dataSource.query(countSql, params.slice(0, params.length - 2));
+            total = countRows[0]?.c ? Number(countRows[0].c) : 0;
+        }
+        return {
+            status: 1,
+            data: rows,
+            total,
+            page: cleanPage,
+            limit: cleanLimit,
+            total_page: Math.ceil(total / cleanLimit)
+        };
     }
+
 }

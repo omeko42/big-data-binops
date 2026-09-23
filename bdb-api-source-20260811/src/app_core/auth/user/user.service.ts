@@ -64,8 +64,9 @@ export class UserService {
         return String(status || '').trim().toUpperCase();
     }
 
-    private shouldRequireScope(role: BdbRole, status?: string, approvalStatus?: string): boolean {
+    private shouldRequireScope(role: BdbRole, status?: string, approvalStatus?: string, isSuperadmin = false): boolean {
         if (role === 'superadmin') return false;
+        if (role === 'viewer' && isSuperadmin) return false;
         return this.normalizeStatus(status || 'AKTIF') === 'AKTIF' && this.normalizeStatus(approvalStatus || 'APPROVED') === 'APPROVED';
     }
 
@@ -214,7 +215,16 @@ export class UserService {
         const roleBdb = this.normalizeBdbRole(rest.role_bdb || 'viewer');
         const initialStatus = rest.status || 'AKTIF';
         const initialApprovalStatus = rest.approval_status || 'APPROVED';
-        const scope = await this.resolveScope(roleBdb, rest.scope_satker_id, rest.scope_satker_key, this.shouldRequireScope(roleBdb, initialStatus, initialApprovalStatus));
+        const isSuperadmin = authUser && this.normalizeBdbRole(authUser.role_bdb) === 'superadmin';
+        let targetScopeId = rest.scope_satker_id;
+        let targetScopeKey = rest.scope_satker_key;
+        if (authUser && this.normalizeBdbRole(authUser.role_bdb) === 'operator') {
+            if (!targetScopeId && !targetScopeKey) {
+                targetScopeId = authUser.scope_satker_id;
+                targetScopeKey = authUser.scope_satker_key;
+            }
+        }
+        const scope = await this.resolveScope(roleBdb, targetScopeId, targetScopeKey, this.shouldRequireScope(roleBdb, initialStatus, initialApprovalStatus, isSuperadmin));
         if (authUser) {
             await this.assertCanReview(authUser, roleBdb, scope.scope_satker_id, scope.scope_satker_key);
         }
@@ -255,33 +265,125 @@ export class UserService {
 
     async findAll(request: any) {
         const queryBuilder = this.userRepository.createQueryBuilder('user');
-        queryBuilder.leftJoinAndSelect('user.devices', 'devices');
         queryBuilder.leftJoinAndSelect('user.Organisasi', 'Organisasi');
         queryBuilder.leftJoinAndSelect('user.OrganisasiRole', 'OrganisasiRole');
 
         const authUser = request['user'];
         if (this.normalizeBdbRole(authUser?.role_bdb) === 'admin_binops') {
-            const scope = await this.getScopeRows(authUser);
-            const ids = scope.map(row => Number(row.id)).filter(Boolean);
-            const keys = scope.map(row => row.satker_key).filter(Boolean);
-            if (ids.length === 0 && keys.length === 0) {
-                queryBuilder.andWhere('1 = 0');
-            } else {
-                queryBuilder.andWhere('(user.scope_satker_id in (:...ids) or user.scope_satker_key in (:...keys))', {
-                    ids: ids.length ? ids : [-1],
-                    keys: keys.length ? keys : ['__none__']
-                });
+            const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+            const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
+            if (isMabes) {
                 queryBuilder.andWhere("coalesce(user.role_bdb, 'viewer') in ('operator', 'viewer')");
+            } else {
+                const scope = await this.getScopeRows(authUser);
+                const ids = scope.map(row => Number(row.id)).filter(Boolean);
+                const keys = scope.map(row => row.satker_key).filter(Boolean);
+                if (ids.length === 0 && keys.length === 0) {
+                    queryBuilder.andWhere('1 = 0');
+                } else {
+                    queryBuilder.andWhere('(user.scope_satker_id in (:...ids) or user.scope_satker_key in (:...keys))', {
+                        ids: ids.length ? ids : [-1],
+                        keys: keys.length ? keys : ['__none__']
+                    });
+                    queryBuilder.andWhere("coalesce(user.role_bdb, 'viewer') in ('operator', 'viewer')");
+                }
             }
         } else if (this.normalizeBdbRole(authUser?.role_bdb) === 'operator') {
-            // Operator hanya lihat: dirinya sendiri + akun Viewer "pembantu" yang dia tambahkan sendiri.
-            queryBuilder.andWhere('(user.id = :selfId or (user.created_by = :selfId and user.role_bdb = :viewerRole))', {
-                selfId: Number(authUser.id),
-                viewerRole: 'viewer'
-            });
+            const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+            const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
+            if (isMabes) {
+                queryBuilder.andWhere("coalesce(user.role_bdb, 'viewer') in ('operator', 'viewer')");
+            } else {
+                const scope = await this.getScopeRows(authUser);
+                const ids = scope.map(row => Number(row.id)).filter(Boolean);
+                const keys = scope.map(row => row.satker_key).filter(Boolean);
+                if (ids.length === 0 && keys.length === 0) {
+                    queryBuilder.andWhere('(user.id = :selfId or user.created_by = :selfId)', { selfId: Number(authUser.id) });
+                } else {
+                    queryBuilder.andWhere(
+                        '(user.id = :selfId or user.created_by = :selfId or ((user.scope_satker_id in (:...ids) or user.scope_satker_key in (:...keys)) and coalesce(user.role_bdb, \'viewer\') in (\'operator\', \'viewer\')))',
+                        {
+                            selfId: Number(authUser.id),
+                            ids: ids.length ? ids : [-1],
+                            keys: keys.length ? keys : ['__none__']
+                        }
+                    );
+                }
+            }
         }
 
-        const result = await this.tableHelper.applyFilters(queryBuilder, request, {
+        const rawSearchAll = request?.query?.searchAll;
+        const masterUserKeyword = String(Array.isArray(rawSearchAll) ? rawSearchAll[0] : rawSearchAll || '').trim().toLowerCase();
+        if (masterUserKeyword) {
+            queryBuilder.andWhere(`(
+                lower(coalesce(user.name, '')) like :masterUserKeyword
+                or lower(coalesce(user.email, '')) like :masterUserKeyword
+                or lower(coalesce(user.email_google, '')) like :masterUserKeyword
+                or lower(coalesce(user.email_polri, '')) like :masterUserKeyword
+                or lower(coalesce(user.username, '')) like :masterUserKeyword
+                or lower(coalesce(user.role_name, '')) like :masterUserKeyword
+                or lower(coalesce(user.role_bdb, '')) like :masterUserKeyword
+                or lower(coalesce(user.approval_status, '')) like :masterUserKeyword
+                or lower(coalesce(user.status, '')) like :masterUserKeyword
+                or exists (
+                    select 1
+                    from bdb_satker scope_search
+                    where scope_search.is_synthetic = false
+                      and (scope_search.id = user.scope_satker_id or scope_search.kode = user.scope_satker_key)
+                      and (
+                          lower(coalesce(scope_search.deskripsi, '')) like :masterUserKeyword
+                          or lower(coalesce(scope_search.kode, '')) like :masterUserKeyword
+                      )
+                )
+            )`, { masterUserKeyword: `%${masterUserKeyword}%` });
+        }
+
+        const rawSortBy = request?.query?.sortBy ?? request?.query?.['sortBy[]'] ?? request?.query?.['sortBy[0]'];
+        const rawSort = request?.query?.sort ?? request?.query?.['sort[]'] ?? request?.query?.['sort[0]'];
+        const sortFields = Array.isArray(rawSortBy) ? rawSortBy : (rawSortBy ? [rawSortBy] : []);
+        const sortOrders = Array.isArray(rawSort) ? rawSort : (rawSort ? [rawSort] : []);
+
+        const validSortFields = [
+            'id', 'name', 'email', 'role_bdb', 'role_name', 'status', 
+            'approval_status', 'scope_satker_key', 'last_login_at', 'created_at',
+            'activity_score', 'score'
+        ];
+        let hasOrder = false;
+
+        for (let i = 0; i < sortFields.length; i++) {
+            const rawField = String(sortFields[i] || '').trim();
+            const cleanField = rawField.startsWith('user.') ? rawField.slice(5) : rawField;
+            if (!validSortFields.includes(cleanField)) continue;
+
+            const order = String(sortOrders[i] || 'asc').trim().toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+            if (cleanField === 'activity_score' || cleanField === 'score') {
+                queryBuilder.addOrderBy('user.activity_score', order, 'NULLS LAST');
+                queryBuilder.addOrderBy('user.id', 'ASC');
+            } else if (cleanField === 'last_login_at' || cleanField === 'scope_satker_key') {
+                queryBuilder.addOrderBy(`user.${cleanField}`, order, 'NULLS LAST');
+            } else {
+                queryBuilder.addOrderBy(`user.${cleanField}`, order);
+            }
+            hasOrder = true;
+        }
+
+        if (!hasOrder) {
+            queryBuilder.addOrderBy('user.id', 'ASC');
+        }
+
+        const filterQuery = { ...request?.query };
+        delete filterQuery.sortBy;
+        delete filterQuery['sortBy[]'];
+        delete filterQuery['sortBy[0]'];
+        delete filterQuery.sort;
+        delete filterQuery['sort[]'];
+        delete filterQuery['sort[0]'];
+        if (masterUserKeyword) {
+            delete filterQuery.searchAll;
+        }
+        const filterRequest = { ...request, query: filterQuery };
+
+        const result = await this.tableHelper.applyFilters(queryBuilder, filterRequest, {
             coreTable: 'user',
             searchingAll: ['name', 'email', 'email_google', 'email_polri', 'role_name', 'role_bdb', 'approval_status', 'status'],
             searching: ['name', 'email', 'email_google', 'email_polri', 'role_name', 'role_bdb', 'approval_status', 'status'],
@@ -289,11 +391,12 @@ export class UserService {
             searchingOrWhere: ['name', 'email', 'email_google', 'email_polri', 'role_name', 'role_bdb', 'approval_status', 'status'],
             searchingBeetween: ['created_at'],
             yearMonthFilter: ['created_at'],
-            sorting: ['id', 'user.id'],
+            sorting: [],
             joins: []
         });
         await this.enrichUserScopes(result.data || []);
         await this.enrichPoliceProfiles(result.data || []);
+        await this.enrichUserActivity(result.data || []);
         return result;
     }
 
@@ -333,11 +436,12 @@ export class UserService {
             const roleBdb = this.normalizeBdbRole((dto as any).role_bdb || dto.role_name || user.role_bdb);
             const requestedStatus = (dto as any).status ?? user.status ?? 'AKTIF';
             const requestedApprovalStatus = (dto as any).approval_status ?? user.approval_status ?? 'APPROVED';
+            const isSuperadmin = authUser && this.normalizeBdbRole(authUser.role_bdb) === 'superadmin';
             const scope = await this.resolveScope(
                 roleBdb,
                 (dto as any).scope_satker_id ?? user.scope_satker_id,
                 (dto as any).scope_satker_key ?? user.scope_satker_key,
-                this.shouldRequireScope(roleBdb, requestedStatus, requestedApprovalStatus)
+                this.shouldRequireScope(roleBdb, requestedStatus, requestedApprovalStatus, isSuperadmin)
             );
             const scopeSatkerId = scope.scope_satker_id;
             const scopeSatkerKey = scope.scope_satker_key;
@@ -407,13 +511,19 @@ export class UserService {
         if (role === 'superadmin') {
             // Superadmin melihat semua antrian.
         } else if (role === 'admin_binops') {
-            const scope = await this.getScopeRows(authUser);
-            const ids = scope.map(row => Number(row.id)).filter(Boolean);
-            const keys = scope.map(row => row.satker_key).filter(Boolean);
-            if (ids.length === 0 && keys.length === 0) return [];
-            params.push(ids.length ? ids : [-1], keys.length ? keys : ['__none__']);
-            where += " and coalesce(u.requested_role_bdb, u.role_bdb, 'viewer') in ('operator', 'viewer')";
-            where += ' and (u.requested_scope_satker_id = any($1::bigint[]) or u.requested_scope_satker_key = any($2::text[]))';
+            const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+            const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
+            if (isMabes) {
+                where += " and coalesce(u.requested_role_bdb, u.role_bdb, 'viewer') in ('operator', 'viewer')";
+            } else {
+                const scope = await this.getScopeRows(authUser);
+                const ids = scope.map(row => Number(row.id)).filter(Boolean);
+                const keys = scope.map(row => row.satker_key).filter(Boolean);
+                if (ids.length === 0 && keys.length === 0) return [];
+                params.push(ids.length ? ids : [-1], keys.length ? keys : ['__none__']);
+                where += " and coalesce(u.requested_role_bdb, u.role_bdb, 'viewer') in ('operator', 'viewer')";
+                where += ' and (u.requested_scope_satker_id = any($1::bigint[]) or u.requested_scope_satker_key = any($2::text[]))';
+            }
         } else {
             return [];
         }
@@ -423,10 +533,10 @@ export class UserService {
             '  u.id, u.name, u.email, u.email_google, u.email_polri,',
             '  u.role_bdb, u.requested_role_bdb, u.approval_status, u.status,',
             '  u.requested_scope_satker_id, u.requested_scope_satker_key,',
-            '  s.nama_satker_canonical as requested_scope_satker_name,',
+            '  s.deskripsi as requested_scope_satker_name,',
             '  u.created_at',
             'from auth_users u',
-            'left join bdb_satker_master s on s.id = u.requested_scope_satker_id',
+            'left join bdb_satker s on s.id = u.requested_scope_satker_id',
             'where ' + where,
             'order by u.created_at asc'
         ].join(String.fromCharCode(10));
@@ -617,6 +727,50 @@ export class UserService {
 
         return { status: 1, message: `Akun "${target.name}" (${target.email}) dihapus permanen.` };
     }
+    async requestDeletion(id: number, body: { type: string; reason: string }, authUser: User) {
+        if (!Number.isInteger(id) || id <= 0) {
+            throw new BadRequestException('ID pengguna tidak valid.');
+        }
+        const target = await this.userRepository.findOne({ where: { id } });
+        if (!target) throw new NotFoundException('Pengguna tidak ditemukan.');
+        const type = String(body?.type || '').toUpperCase() === 'NONAKTIF' ? 'REQUEST_DEACTIVATE' : 'REQUEST_DELETE';
+        const reason = String(body?.reason || '').trim();
+        await this.dataSource.query(
+            "update auth_users set status = 'NONAKTIF', approval_status = $1, deactivation_reason = $2, deactivated_at = NOW(), deactivated_by = $3, updated_at = NOW() where id = $4",
+            [type, reason, authUser.id, id]
+        );
+        return { status: 1, message: `Pengajuan akun "${target.name}" terkirim ke Superadmin. Akun telah dibekukan sementara.` };
+    }
+
+    async reviewDeletion(id: number, body: { action: string }, authUser: User) {
+        if (!Number.isInteger(id) || id <= 0) {
+            throw new BadRequestException('ID pengguna tidak valid.');
+        }
+        const actorRole = String(authUser?.role_bdb || '').toLowerCase();
+        if (actorRole !== 'superadmin') {
+            throw new ForbiddenException('Hanya superadmin yang dapat memproses permohonan.');
+        }
+        const target = await this.userRepository.findOne({ where: { id } });
+        if (!target) throw new NotFoundException('Pengguna tidak ditemukan.');
+        const action = String(body?.action || '').toUpperCase();
+        if (action === 'APPROVE_DELETE') {
+            return await this.remove(id, authUser);
+        } else if (action === 'APPROVE_DEACTIVATE') {
+            await this.dataSource.query(
+                "update auth_users set status = 'NONAKTIF', approval_status = 'DEACTIVATED', updated_at = NOW() where id = $1",
+                [id]
+            );
+            return { status: 1, message: `Permohonan penonaktifan akun "${target.name}" disetujui.` };
+        } else if (action === 'REJECT') {
+            await this.dataSource.query(
+                "update auth_users set status = 'AKTIF', approval_status = 'APPROVED', deactivated_at = null, deactivated_by = null, deactivation_reason = null, updated_at = NOW() where id = $1",
+                [id]
+            );
+            return { status: 1, message: `Permohonan ditolak, akun "${target.name}" telah diaktifkan kembali.` };
+        } else {
+            throw new BadRequestException('Tindakan review tidak valid.');
+        }
+    }
 
     async user(request: Request, filter: any) {
         const queryBuilder = this.userRepository.createQueryBuilder('user');
@@ -719,6 +873,23 @@ export class UserService {
             if (!binopsMarker.includes('BINOPS')) {
                 throw new BadRequestException({
                     errors: { scope_satker_key: ['role Admin wajib melekat pada satker Binops'] }
+                });
+            }
+        }
+
+        if (role === 'operator') {
+            const satker = rows[0];
+            const childRows = await this.dataSource.query(
+                `select 1 from bdb_satker where parent_id = $1 and is_synthetic = false limit 1`,
+                [Number(satker.id)]
+            );
+            if (childRows && childRows.length > 0) {
+                throw new BadRequestException({
+                    errors: {
+                        scope_satker_key: [
+                            `Role Operator wajib ditempatkan pada satuan fungsi teknis (seperti Satreskrim / Satresnarkoba / Unit Reskrim), tidak boleh berhenti di tingkat induk (${satker.nama_satker_canonical}). Silakan pilih fungsi teknis di bawahnya.`
+                        ]
+                    }
                 });
             }
         }
@@ -891,12 +1062,22 @@ export class UserService {
 
         if (actorRole === 'operator') {
             const currentTargetRole = this.normalizeBdbRole(target.role_bdb);
-            if (currentTargetRole !== 'viewer') {
-                throw new ForbiddenException('Operator hanya boleh mengelola akun Viewer.');
+            if (currentTargetRole !== 'viewer' && currentTargetRole !== 'operator') {
+                throw new ForbiddenException('Operator hanya boleh mengelola akun Operator atau Viewer.');
             }
             const createdBy = (target as any)?.Timestamps?.created_by;
-            if (!createdBy || Number(createdBy) !== Number(authUser.id)) {
-                throw new ForbiddenException('Anda hanya boleh mengelola akun Viewer yang Anda tambahkan sendiri.');
+            const targetSatkerId = target.scope_satker_id ? Number(target.scope_satker_id) : null;
+            const targetSatkerKey = target.scope_satker_key || null;
+            const actorSatkerId = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+            const sameSatker = actorSatkerId != null && targetSatkerId != null && actorSatkerId === targetSatkerId;
+
+            const scope = await this.getScopeRows(authUser);
+            const allowedIds = new Set(scope.map(row => Number(row.id)));
+            const allowedKeys = new Set(scope.map(row => row.satker_key));
+            const inScope = (targetSatkerId && allowedIds.has(Number(targetSatkerId))) || (targetSatkerKey && allowedKeys.has(targetSatkerKey));
+
+            if (!sameSatker && !inScope && (!createdBy || Number(createdBy) !== Number(authUser.id))) {
+                throw new ForbiddenException('Anda hanya boleh mengelola akun di satker Anda sendiri atau subordinatnya.');
             }
             await this.assertCanReview(authUser, targetRole, targetScopeId, targetScopeKey);
             return;
@@ -918,16 +1099,27 @@ export class UserService {
 
         if (actorRole === 'superadmin') return;
 
+        const scopeId = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+        const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
+
         if (actorRole === 'operator') {
-            if (targetRole !== 'viewer') {
-                throw new ForbiddenException('Operator hanya boleh menambahkan akun dengan role Viewer.');
+            if (targetRole !== 'viewer' && targetRole !== 'operator') {
+                throw new ForbiddenException('Operator hanya boleh menambahkan akun dengan role Operator atau Viewer.');
             }
-            const scopeId = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+            if (isMabes) return;
+
             const scopeKey = authUser.scope_satker_key || null;
             const sameId = scopeId != null && targetScopeId != null && Number(targetScopeId) === scopeId;
             const sameKey = !!scopeKey && !!targetScopeKey && targetScopeKey === scopeKey;
             if (!sameId && !sameKey) {
-                throw new ForbiddenException('Viewer yang ditambahkan harus berada di satker yang sama dengan Anda.');
+                const scope = await this.getScopeRows(authUser);
+                const allowedIds = new Set(scope.map(row => Number(row.id)));
+                const allowedKeys = new Set(scope.map(row => row.satker_key));
+                const idAllowed = targetScopeId ? allowedIds.has(Number(targetScopeId)) : false;
+                const keyAllowed = targetScopeKey ? allowedKeys.has(targetScopeKey) : false;
+                if (!idAllowed && !keyAllowed) {
+                    throw new ForbiddenException('Pengguna yang ditambahkan harus berada di satker yang sama dengan Anda atau subordinatnya.');
+                }
             }
             return;
         }
@@ -939,6 +1131,8 @@ export class UserService {
         if (targetRole === 'superadmin' || targetRole === 'admin_binops') {
             throw new ForbiddenException('Admin/Binops hanya boleh approve Operator atau Viewer');
         }
+
+        if (isMabes) return;
 
         const scope = await this.getScopeRows(authUser);
         const allowedIds = new Set(scope.map(row => Number(row.id)));
@@ -956,20 +1150,152 @@ export class UserService {
         const scopeKey = user?.scope_satker_key || null;
         if (!scopeId && !scopeKey) return [];
 
-        const sql = [
-            'with recursive tree as (',
-            '  select id, satker_key, parent_key',
-            '  from bdb_satker_master',
-            '  where ($1::bigint is not null and id = $1::bigint)',
-            '     or ($2::text is not null and satker_key = $2::text)',
-            '  union all',
-            '  select c.id, c.satker_key, c.parent_key',
-            '  from bdb_satker_master c',
-            '  join tree t on c.parent_key = t.satker_key',
-            ')',
-            'select id::text, satker_key',
-            'from tree'
-        ].join(String.fromCharCode(10));
+        const sql = `
+            with recursive
+            user_satker as (
+                select us.id, us.parent_id, us.deskripsi, us.tipe_satker, us.kode_canonical, p.tipe_satker as parent_tipe
+                from bdb_satker us
+                left join bdb_satker p on p.id = us.parent_id
+                where ($1::bigint is not null and us.id = $1::bigint)
+                   or ($2::text is not null and (us.kode_canonical = $2::text or us.kode = $2::text))
+                limit 1
+            ),
+            actor_meta as (
+                select us.id, us.parent_id, us.deskripsi, us.tipe_satker, us.parent_tipe,
+                    case
+                        when upper(us.deskripsi) ~ 'NARKOBA' then 'NARKOBA'
+                        when upper(us.deskripsi) ~ 'KRIMSUS|TIPIDEKSUS|TIPIDTER|TIPIDKOR|KORTAS' then 'KRIMSUS'
+                        when upper(us.deskripsi) ~ 'SIBER' then 'SIBER'
+                        when upper(us.deskripsi) ~ 'PPA|PPO|RENAKTA' then 'PPA'
+                        when upper(us.deskripsi) ~ 'POLAIR|AIRUD' then 'POLAIR'
+                        when upper(us.deskripsi) ~ 'KRIMUM|TIPIDUM|RESKRIM|RES[[:space:]]*KRIM' then 'RESKRIM'
+                        when us.tipe_satker = 'FUNGSI' then 'OTHER_FUNGSI'
+                        else 'ALL'
+                    end as domain_code,
+                    case
+                        when us.id = 1 or us.id = 13 or upper(trim(us.deskripsi)) like '%BARESKRIM%' or upper(trim(us.deskripsi)) like '%MABES%' then 'MABES'
+                        when us.parent_id in (1, 13) and us.tipe_satker = 'FUNGSI' then 'MABES_DIT'
+                        when us.tipe_satker = 'POLDA' then 'POLDA'
+                        when us.parent_tipe = 'POLDA' and us.tipe_satker = 'FUNGSI' then 'POLDA_DIT'
+                        when us.tipe_satker = 'POLRES' then 'POLRES'
+                        when us.parent_tipe = 'POLRES' and us.tipe_satker = 'FUNGSI' then 'POLRES_SAT'
+                        when us.tipe_satker = 'POLSEK' then 'POLSEK'
+                        when us.parent_tipe = 'POLSEK' and us.tipe_satker = 'FUNGSI' then 'POLSEK_UNIT'
+                        else 'OTHER'
+                    end as unit_level
+                from user_satker us
+            ),
+            territory_root as (
+                select case
+                    when m.unit_level in ('MABES', 'OTHER') then 1
+                    when m.unit_level in ('MABES_DIT', 'POLSEK_UNIT', 'POLSEK') then us.id
+                    when m.unit_level = 'POLRES_SAT' then p.id
+                    when m.unit_level = 'POLRES' then us.id
+                    when m.unit_level = 'POLDA_DIT' then p.id
+                    when m.unit_level = 'POLDA' then us.id
+                    else us.id
+                end as root_id,
+                us.id as user_satker_id,
+                m.domain_code,
+                m.unit_level
+                from user_satker us
+                cross join actor_meta m
+                left join bdb_satker p on p.id = us.parent_id
+            ),
+            polres_with_ppa as (
+                select distinct parent_id as polres_id
+                from bdb_satker
+                where upper(deskripsi) ~ 'PPA|PPO|RENAKTA'
+                  and upper(deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER|POLSEK'
+                  and tipe_satker = 'FUNGSI'
+            ),
+            descendants as (
+                select dk.id, dk.parent_id, dk.deskripsi, dk.tipe_satker, dk.kode_canonical from bdb_satker dk join territory_root tr on dk.id = tr.root_id
+                union all
+                select ck.id, ck.parent_id, ck.deskripsi, ck.tipe_satker, ck.kode_canonical from bdb_satker ck join descendants d on ck.parent_id = d.id
+            ),
+            filtered_descendants as (
+                select d.id, d.kode_canonical
+                from descendants d
+                cross join territory_root tr
+                where
+                    (tr.unit_level in ('POLSEK_UNIT', 'POLSEK', 'MABES_DIT'))
+                    or (d.id = tr.user_satker_id)
+                    or (d.tipe_satker in ('POLDA', 'POLRES', 'POLSEK'))
+                    or (upper(d.deskripsi) ~ 'UNIT[[:space:]]*RESKRIM')
+                    or (
+                        tr.unit_level = 'POLDA_DIT'
+                        and d.parent_id != tr.root_id
+                        and (
+                            (
+                                tr.domain_code = 'NARKOBA'
+                                and upper(d.deskripsi) ~ 'NARKOBA'
+                            )
+                            or (
+                                tr.domain_code in ('RESKRIM', 'KRIMSUS', 'SIBER')
+                                and upper(d.deskripsi) ~ 'SAT[[:space:]]*RESKRIM|SATRESKRIM|RESKRIM'
+                                and upper(d.deskripsi) !~ 'NARKOBA|PPA|PPO'
+                            )
+                            or (
+                                tr.domain_code = 'PPA'
+                                and (
+                                    (
+                                        upper(d.deskripsi) ~ 'PPA|PPO|RENAKTA'
+                                        and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                                    )
+                                    or (
+                                        upper(d.deskripsi) ~ 'SAT[[:space:]]*RESKRIM|SATRESKRIM|RESKRIM'
+                                        and upper(d.deskripsi) !~ 'NARKOBA|PPA|PPO'
+                                        and d.parent_id not in (select polres_id from polres_with_ppa)
+                                    )
+                                )
+                            )
+                            or (
+                                tr.domain_code = 'POLAIR'
+                                and upper(d.deskripsi) ~ 'POLAIR|AIRUD'
+                            )
+                        )
+                    )
+                    or (
+                        tr.unit_level = 'POLRES_SAT' and (
+                            (
+                                tr.domain_code = 'NARKOBA'
+                                and upper(d.deskripsi) ~ 'NARKOBA'
+                            )
+                            or (
+                                tr.domain_code = 'RESKRIM'
+                                and upper(d.deskripsi) ~ 'RESKRIM|KRIMUM|TIPIDUM'
+                                and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER|PPA|PPO'
+                            )
+                            or (
+                                tr.domain_code = 'PPA'
+                                and upper(d.deskripsi) ~ 'PPA|PPO|RENAKTA'
+                                and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                            )
+                            or (
+                                tr.domain_code = 'KRIMSUS'
+                                and upper(d.deskripsi) ~ 'KRIMSUS|TIPIDEKSUS|TIPIDTER|TIPIDKOR|KORTAS'
+                                and upper(d.deskripsi) !~ 'NARKOBA|SIBER|PPA|PPO'
+                            )
+                            or (
+                                tr.domain_code = 'SIBER'
+                                and upper(d.deskripsi) ~ 'SIBER'
+                                and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|PPA|PPO'
+                            )
+                            or (
+                                tr.domain_code = 'POLAIR'
+                                and upper(d.deskripsi) ~ 'POLAIR|AIRUD'
+                                and upper(d.deskripsi) !~ 'NARKOBA|KRIMSUS|SIBER'
+                            )
+                        )
+                    )
+                    or (
+                        tr.domain_code = 'ALL'
+                    )
+            )
+            select id::text, kode_canonical as satker_key
+            from filtered_descendants
+        `;
         return this.dataSource.query(sql, [scopeId, scopeKey]);
     }
 
@@ -1083,7 +1409,8 @@ export class UserService {
                     if (!satker) throw new BadRequestException(`Satker "${r.satker_raw}" tidak ditemukan (isi kode Puskarda persis, atau nama satker persis & unik).`);
                 }
 
-                const scope = await this.resolveScope(roleBdb, undefined, satker?.key, this.shouldRequireScope(roleBdb, status, 'APPROVED'));
+                const isSuperadmin = authUser && this.normalizeBdbRole(authUser.role_bdb) === 'superadmin';
+                const scope = await this.resolveScope(roleBdb, undefined, satker?.key, this.shouldRequireScope(roleBdb, status, 'APPROVED', isSuperadmin));
                 if (authUser) await this.assertCanReview(authUser, roleBdb, scope.scope_satker_id ?? undefined, scope.scope_satker_key ?? undefined);
 
                 results.push({
@@ -1269,6 +1596,18 @@ export class UserService {
         }
     }
 
+    /** Catat perubahan password sendiri tanpa pernah menyimpan password/hash ke audit. */
+    async logOwnPasswordChange(authUser: User, sessionRevoked: boolean): Promise<void> {
+        await this.audit.log({
+            user: authUser,
+            action: 'CHANGE_OWN_PASSWORD',
+            entity: 'user',
+            entityId: authUser?.id,
+            outcome: 'SUCCESS',
+            meta: { session_revoked: sessionRevoked }
+        });
+    }
+
     /**
      * Kirim kredensial baru (password acak baru) ke SATU user via email -- dipakai tombol "Reset Password" per baris.
      * Wewenang SAMA PERSIS dgn edit user (assertCanManageUser): superadmin bebas, admin_binops sesuai scope-nya,
@@ -1380,5 +1719,214 @@ export class UserService {
         const totalRows = await this.dataSource.query(`select count(*)::int c from bdb_bulk_password_reset_item ${where}`, [jobId]);
         const data = await this.dataSource.query(`select * from bdb_bulk_password_reset_item ${where} order by id limit $2 offset $3`, [jobId, row, offset]);
         return { data, total: totalRows[0]?.c || 0, page, row };
+    }
+
+    
+    private async enrichUserActivity(users: any[]) {
+        if (!Array.isArray(users) || users.length === 0) return;
+        const userIds = Array.from(new Set(users.map((u) => Number(u.id)).filter(Boolean)));
+        if (!userIds.length) return;
+
+        const rows = await this.dataSource.query(
+            `
+            SELECT user_id, score, login_days_count, lp_created_count, lp_updated_count, 
+                   docs_uploaded_count, last_active_at, status_keaktifan
+            FROM auth_users_activity_cache
+            WHERE user_id = ANY($1::bigint[])
+            `,
+            [userIds]
+        );
+        const map = new Map<number, any>(rows.map((r: any) => [Number(r.user_id), r]));
+        users.forEach((u) => {
+            const a: any = map.get(Number(u.id));
+            u.activity_score = a ? a.score : 0;
+            u.activity_status = a ? a.status_keaktifan : 'INAKTIF';
+            u.activity_login_days = a ? a.login_days_count : 0;
+            u.activity_lp_created = a ? a.lp_created_count : 0;
+            u.activity_lp_updated = a ? a.lp_updated_count : 0;
+            u.activity_docs_uploaded = a ? a.docs_uploaded_count : 0;
+            u.activity_last_active = a ? a.last_active_at : null;
+        });
+    }
+
+    async getUserActivityDetail(userId: number) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User tidak ditemukan');
+
+        const cacheRow = await this.dataSource.query(
+            `SELECT * FROM auth_users_activity_cache WHERE user_id = $1`,
+            [userId]
+        );
+        const summary = cacheRow[0] || {
+            score: 0,
+            login_days_count: 0,
+            lp_created_count: 0,
+            lp_updated_count: 0,
+            docs_uploaded_count: 0,
+            last_active_at: null,
+            status_keaktifan: 'INAKTIF'
+        };
+
+        const recentLogs = await this.dataSource.query(
+            `
+            SELECT id, action, entity, entity_id, meta, ip, created_at, outcome
+            FROM bdb_audit_log
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT 5
+            `,
+            [userId]
+        );
+
+        return {
+            user_id: userId,
+            name: user.name,
+            email: user.email,
+            role_bdb: user.role_bdb,
+            scope_satker_id: user.scope_satker_id,
+            scope_satker_key: user.scope_satker_key,
+            summary: {
+                score: summary.score,
+                status_keaktifan: summary.status_keaktifan,
+                login_days_count: summary.login_days_count,
+                lp_created_count: summary.lp_created_count,
+                lp_updated_count: summary.lp_updated_count,
+                docs_uploaded_count: summary.docs_uploaded_count,
+                last_active_at: summary.last_active_at || user.last_login_at
+            },
+            recent_logs: recentLogs
+        };
+    }
+
+    async mutateUser(userId: number, dto: any, authUser: User) {
+        const actorRole = this.normalizeBdbRole(authUser?.role_bdb);
+        if (actorRole !== 'superadmin' && actorRole !== 'admin_binops') {
+            throw new ForbiddenException('Hanya Superadmin atau Admin Binops yang dapat melakukan mutasi satker pengguna.');
+        }
+
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User tidak ditemukan');
+
+        if (!dto.to_satker_id || !dto.to_satker_key) {
+            throw new BadRequestException('Satker tujuan wajib dipilih');
+        }
+        if (!dto.nomor_surat || !String(dto.nomor_surat).trim()) {
+            throw new BadRequestException('Nomor Surat Telegram / Sprint Mutasi wajib diisi');
+        }
+
+        const targetSatkers = await this.dataSource.query(
+            `SELECT id, kode, deskripsi FROM bdb_satker WHERE id = $1 AND (kode = $2 OR kode_canonical = $2) LIMIT 1`,
+            [dto.to_satker_id, dto.to_satker_key]
+        );
+        if (!targetSatkers.length) {
+            throw new BadRequestException('Satker tujuan tidak valid di struktur satker');
+        }
+        const targetSatker = targetSatkers[0];
+
+        let oldSatkerName = '-';
+        if (user.scope_satker_id) {
+            const oldSatkers = await this.dataSource.query(
+                `SELECT deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`,
+                [user.scope_satker_id]
+            );
+            if (oldSatkers.length) oldSatkerName = oldSatkers[0].deskripsi;
+        }
+
+        const newRole = dto.to_role || user.role_bdb || 'operator';
+
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            await queryRunner.query(
+                `
+                INSERT INTO auth_user_mutations (
+                    user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
+                    to_satker_id, to_satker_key, to_satker_name, to_role,
+                    nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+                `,
+                [
+                    userId,
+                    user.scope_satker_id,
+                    user.scope_satker_key,
+                    oldSatkerName,
+                    user.role_bdb,
+                    targetSatker.id,
+                    targetSatker.kode,
+                    targetSatker.deskripsi,
+                    newRole,
+                    String(dto.nomor_surat).trim(),
+                    dto.tanggal_efektif || new Date(),
+                    dto.keterangan || null,
+                    authUser?.id ? Number(authUser.id) : null
+                ]
+            );
+
+            await queryRunner.query(
+                `
+                UPDATE auth_users 
+                SET scope_satker_id = $1,
+                    scope_satker_key = $2,
+                    requested_scope_satker_id = $1,
+                    requested_scope_satker_key = $2,
+                    role_bdb = $3,
+                    role_name = $3,
+                    updated_at = NOW()
+                WHERE id = $4
+                `,
+                [targetSatker.id, targetSatker.kode, newRole, userId]
+            );
+
+            await queryRunner.query(
+                `
+                INSERT INTO bdb_audit_log (
+                    user_id, user_nama, action, entity, entity_id, meta, created_at, outcome
+                ) VALUES ($1, $2, 'MUTASI_SATKER', 'auth_users', $3, $4, NOW(), 'SUCCESS')
+                `,
+                [
+                    authUser?.id ? Number(authUser.id) : null,
+                    authUser?.name || 'Admin',
+                    userId,
+                    JSON.stringify({
+                        from_satker: oldSatkerName,
+                        to_satker: targetSatker.deskripsi,
+                        nomor_surat: dto.nomor_surat,
+                        target_user: user.name
+                    })
+                ]
+            );
+
+            await queryRunner.commitTransaction();
+            return {
+                success: true,
+                message: `User ${user.name} berhasil dimutasi ke ${targetSatker.deskripsi}`,
+                mutation: {
+                    from: oldSatkerName,
+                    to: targetSatker.deskripsi,
+                    nomor_surat: dto.nomor_surat
+                }
+            };
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    async getUserMutations(userId: number) {
+        const rows = await this.dataSource.query(
+            `
+            SELECT m.*, u.name as mutated_by_name
+            FROM auth_user_mutations m
+            LEFT JOIN auth_users u ON u.id = m.mutated_by
+            WHERE m.user_id = $1
+            ORDER BY m.created_at DESC
+            `,
+            [userId]
+        );
+        return rows;
     }
 }
