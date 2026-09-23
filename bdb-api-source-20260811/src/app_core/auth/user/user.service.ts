@@ -799,7 +799,69 @@ export class UserService {
                 [id]
             );
             return { status: 1, message: `Permohonan penonaktifan akun "${target.name}" disetujui.` };
-        } else if (action === 'REJECT') {
+        } else if (action === 'APPROVE_MUTASI') {
+            const pendingMuts = await this.dataSource.query(
+                `SELECT * FROM auth_user_mutations WHERE user_id = $1 AND status = 'PENDING' ORDER BY created_at DESC LIMIT 1`,
+                [id]
+            );
+            if (!pendingMuts.length) {
+                throw new BadRequestException('Tidak ada permohonan mutasi pending untuk akun ini.');
+            }
+            const mut = pendingMuts[0];
+            const isKeluarReserse = mut.is_keluar_reserse || !mut.to_satker_id;
+
+            if (isKeluarReserse) {
+                await this.dataSource.query(
+                    `UPDATE auth_user_mutations SET status = 'APPROVED', reviewed_by = $1, reviewed_at = NOW() WHERE id = $2`,
+                    [authUser.id, mut.id]
+                );
+                await this.dataSource.query(
+                    `UPDATE auth_users 
+                     SET status = 'NONAKTIF', approval_status = 'MUTASI_KELUAR_RESERSE',
+                         deactivated_at = NOW(), deactivated_by = $1,
+                         deactivation_reason = $2, updated_at = NOW()
+                     WHERE id = $3`,
+                    [authUser.id, `Mutasi keluar fungsi Reserse ke ${mut.to_satker_name || 'Dinas Luar Reskrim'} (Sprin: ${mut.nomor_surat})`, id]
+                );
+                return { status: 1, message: `Permohonan mutasi keluar fungsi Reserse akun "${target.name}" ke ${mut.to_satker_name} disetujui.` };
+            } else {
+                const targetRole = this.normalizeBdbRole(mut.to_role || 'operator');
+                const organisasiRoleId = await this.resolveOrganisasiRoleId(targetRole);
+
+                await this.dataSource.query(
+                    `UPDATE auth_user_mutations SET status = 'APPROVED', reviewed_by = $1, reviewed_at = NOW() WHERE id = $2`,
+                    [authUser.id, mut.id]
+                );
+                await this.dataSource.query(
+                    `UPDATE auth_users 
+                     SET scope_satker_id = $1,
+                         scope_satker_key = $2,
+                         requested_scope_satker_id = $1,
+                         requested_scope_satker_key = $2,
+                         role_bdb = $3,
+                         role_name = $3,
+                         status = 'AKTIF',
+                         approval_status = 'APPROVED',
+                         deactivated_at = NULL,
+                         deactivated_by = NULL,
+                         deactivation_reason = NULL,
+                         self_deactivated_at = NULL,
+                         "organisasiRoleId" = COALESCE($5, "organisasiRoleId"),
+                         updated_at = NOW()
+                     WHERE id = $4`,
+                    [mut.to_satker_id, mut.to_satker_key, targetRole, id, organisasiRoleId]
+                );
+                await this.dataSource.query(
+                    `UPDATE trb_police SET satuan = $1, updated_at = NOW() WHERE lower(email) = lower($2) OR lower(email) = lower($3)`,
+                    [mut.to_satker_name, target.email, target.email_polri || target.email]
+                );
+                return { status: 1, message: `Permohonan mutasi akun "${target.name}" ke ${mut.to_satker_name} disetujui.` };
+            }
+        } else if (action === 'REJECT' || action === 'REJECT_MUTASI') {
+            await this.dataSource.query(
+                `UPDATE auth_user_mutations SET status = 'REJECTED', reviewed_by = $1, reviewed_at = NOW() WHERE user_id = $2 AND status = 'PENDING'`,
+                [authUser.id, id]
+            );
             await this.dataSource.query(
                 "update auth_users set status = 'AKTIF', approval_status = 'APPROVED', deactivated_at = null, deactivated_by = null, deactivation_reason = null, updated_at = NOW() where id = $1",
                 [id]
@@ -1838,36 +1900,64 @@ export class UserService {
 
     async mutateUser(userId: number, dto: any, authUser: User) {
         const actorRole = this.normalizeBdbRole(authUser?.role_bdb);
-        if (actorRole !== 'superadmin' && actorRole !== 'admin_binops') {
-            throw new ForbiddenException('Hanya Superadmin atau Admin Binops yang dapat melakukan mutasi satker pengguna.');
+        if (actorRole !== 'superadmin' && actorRole !== 'admin_binops' && actorRole !== 'operator') {
+            throw new ForbiddenException('Tidak berwenang melakukan mutasi satker pengguna.');
         }
 
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
-        if (!dto.to_satker_id && !dto.to_satker_key) {
-            throw new BadRequestException('Satker tujuan wajib dipilih');
+        // Admin Binops dan Superadmin tidak boleh dimutasi
+        if (user.role_bdb === 'superadmin' || user.role_bdb === 'admin_binops') {
+            throw new BadRequestException('User Admin Binops atau Superadmin tidak dapat dimutasi satker.');
         }
+
+        const isKeluarReserse = Boolean(dto.is_keluar_reserse);
+
         if (!dto.nomor_surat || !String(dto.nomor_surat).trim()) {
             throw new BadRequestException('Nomor Surat Telegram / Sprint Mutasi wajib diisi');
         }
 
-        let targetSatkers = [];
-        if (dto.to_satker_id) {
-            targetSatkers = await this.dataSource.query(
-                `SELECT id, kode, deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`,
-                [dto.to_satker_id]
-            );
-        } else if (dto.to_satker_key) {
-            targetSatkers = await this.dataSource.query(
-                `SELECT id, kode, deskripsi FROM bdb_satker WHERE kode = $1 OR kode_canonical = $1 LIMIT 1`,
-                [dto.to_satker_key]
-            );
+        let targetSatker: { id?: string | number | null; kode?: string | null; deskripsi: string } = {
+            id: null,
+            kode: null,
+            deskripsi: ''
+        };
+
+        if (isKeluarReserse) {
+            const externalName = String(dto.satker_non_reserse || dto.to_satker_name || '').trim();
+            if (!externalName) {
+                throw new BadRequestException('Nama satuan kerja baru (luar Reskrim) wajib diisi');
+            }
+            targetSatker.deskripsi = externalName;
+        } else {
+            if (!dto.to_satker_id && !dto.to_satker_key) {
+                throw new BadRequestException('Satker tujuan wajib dipilih');
+            }
+            let targetSatkers = [];
+            if (dto.to_satker_id) {
+                targetSatkers = await this.dataSource.query(
+                    `SELECT id, kode, deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`,
+                    [dto.to_satker_id]
+                );
+            } else if (dto.to_satker_key) {
+                targetSatkers = await this.dataSource.query(
+                    `SELECT id, kode, deskripsi FROM bdb_satker WHERE kode = $1 OR kode_canonical = $1 LIMIT 1`,
+                    [dto.to_satker_key]
+                );
+            }
+            if (!targetSatkers.length) {
+                throw new BadRequestException('Satker tujuan tidak valid di struktur satker');
+            }
+            targetSatker = targetSatkers[0];
         }
-        if (!targetSatkers.length) {
-            throw new BadRequestException('Satker tujuan tidak valid di struktur satker');
+
+        // Role tujuan mutasi tidak boleh superadmin atau admin_binops
+        const reqRole = dto.to_role ? String(dto.to_role).trim().toLowerCase() : (user.role_bdb || 'operator');
+        if (reqRole === 'superadmin' || reqRole === 'admin_binops') {
+            throw new BadRequestException('Role tujuan mutasi hanya boleh Operator atau Viewer.');
         }
-        const targetSatker = targetSatkers[0];
+        const newRole = isKeluarReserse ? 'nonaktif' : this.normalizeBdbRole(reqRole);
 
         let oldSatkerName = '-';
         if (user.scope_satker_id) {
@@ -1878,100 +1968,261 @@ export class UserService {
             if (oldSatkers.length) oldSatkerName = oldSatkers[0].deskripsi;
         }
 
-        const newRole = this.normalizeBdbRole(dto.to_role || user.role_bdb || 'operator');
-        const organisasiRoleId = await this.resolveOrganisasiRoleId(newRole);
+        const isOperatorReq = actorRole === 'operator';
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
 
         try {
-            await queryRunner.query(
-                `
-                INSERT INTO auth_user_mutations (
-                    user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
-                    to_satker_id, to_satker_key, to_satker_name, to_role,
-                    nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
-                `,
-                [
-                    userId,
-                    user.scope_satker_id,
-                    user.scope_satker_key,
-                    oldSatkerName,
-                    user.role_bdb,
-                    targetSatker.id,
-                    targetSatker.kode,
-                    targetSatker.deskripsi,
-                    newRole,
-                    String(dto.nomor_surat).trim(),
-                    dto.tanggal_efektif || new Date(),
-                    dto.keterangan || null,
-                    authUser?.id ? Number(authUser.id) : null
-                ]
-            );
+            if (isOperatorReq) {
+                // Operator: Masukkan permohonan ke auth_user_mutations dengan status PENDING
+                await queryRunner.query(
+                    `
+                    INSERT INTO auth_user_mutations (
+                        user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
+                        to_satker_id, to_satker_key, to_satker_name, to_role,
+                        nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at,
+                        status, is_keluar_reserse
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), 'PENDING', $14)
+                    `,
+                    [
+                        userId,
+                        user.scope_satker_id,
+                        user.scope_satker_key,
+                        oldSatkerName,
+                        user.role_bdb,
+                        isKeluarReserse ? null : targetSatker.id,
+                        isKeluarReserse ? null : targetSatker.kode,
+                        targetSatker.deskripsi,
+                        newRole,
+                        String(dto.nomor_surat).trim(),
+                        dto.tanggal_efektif || new Date(),
+                        dto.keterangan || null,
+                        authUser?.id ? Number(authUser.id) : null,
+                        isKeluarReserse
+                    ]
+                );
 
-            await queryRunner.query(
-                `
-                UPDATE auth_users 
-                SET scope_satker_id = $1,
-                    scope_satker_key = $2,
-                    requested_scope_satker_id = $1,
-                    requested_scope_satker_key = $2,
-                    role_bdb = $3,
-                    role_name = $3,
-                    status = 'AKTIF',
-                    approval_status = 'APPROVED',
-                    deactivated_at = NULL,
-                    deactivated_by = NULL,
-                    deactivation_reason = NULL,
-                    self_deactivated_at = NULL,
-                    "organisasiRoleId" = COALESCE($5, "organisasiRoleId"),
-                    updated_at = NOW()
-                WHERE id = $4
-                `,
-                [targetSatker.id, targetSatker.kode, newRole, userId, organisasiRoleId]
-            );
+                const approvalStatus = isKeluarReserse ? 'REQUEST_MUTASI_KELUAR' : 'REQUEST_MUTASI';
+                const reason = isKeluarReserse
+                    ? `Permohonan mutasi keluar fungsi Reserse ke ${targetSatker.deskripsi} (Sprin: ${dto.nomor_surat})`
+                    : `Permohonan mutasi ke ${targetSatker.deskripsi} (${newRole}) (Sprin: ${dto.nomor_surat})`;
 
-            // Update trb_police jika ada profile
-            await queryRunner.query(
-                `
-                UPDATE trb_police
-                SET satuan = $1, updated_at = NOW()
-                WHERE lower(email) = lower($2) OR lower(email) = lower($3)
-                `,
-                [targetSatker.deskripsi, user.email, user.email_polri || user.email]
-            );
+                await queryRunner.query(
+                    `
+                    UPDATE auth_users
+                    SET approval_status = $1,
+                        requested_scope_satker_id = $2,
+                        requested_scope_satker_key = $3,
+                        requested_role_bdb = $4,
+                        deactivation_reason = $5,
+                        deactivated_by = $6,
+                        deactivated_at = NOW(),
+                        updated_at = NOW()
+                    WHERE id = $7
+                    `,
+                    [
+                        approvalStatus,
+                        isKeluarReserse ? null : targetSatker.id,
+                        isKeluarReserse ? null : targetSatker.kode,
+                        isKeluarReserse ? (user.role_bdb || 'operator') : newRole,
+                        reason,
+                        authUser?.id ? Number(authUser.id) : null,
+                        userId
+                    ]
+                );
 
-            await queryRunner.query(
-                `
-                INSERT INTO bdb_audit_log (
-                    user_id, user_nama, action, entity, entity_id, meta, created_at, outcome
-                ) VALUES ($1, $2, 'MUTASI_SATKER', 'auth_users', $3, $4, NOW(), 'SUCCESS')
-                `,
-                [
-                    authUser?.id ? Number(authUser.id) : null,
-                    authUser?.name || 'Admin',
-                    userId,
-                    JSON.stringify({
-                        from_satker: oldSatkerName,
-                        to_satker: targetSatker.deskripsi,
-                        nomor_surat: dto.nomor_surat,
-                        target_user: user.name
-                    })
-                ]
-            );
+                await queryRunner.query(
+                    `
+                    INSERT INTO bdb_audit_log (
+                        user_id, user_nama, action, entity, entity_id, meta, created_at, outcome
+                    ) VALUES ($1, $2, 'REQUEST_MUTASI', 'auth_users', $3, $4, NOW(), 'SUCCESS')
+                    `,
+                    [
+                        authUser?.id ? Number(authUser.id) : null,
+                        authUser?.name || 'Operator',
+                        userId,
+                        JSON.stringify({
+                            from_satker: oldSatkerName,
+                            to_satker: targetSatker.deskripsi,
+                            nomor_surat: dto.nomor_surat,
+                            is_keluar_reserse: isKeluarReserse,
+                            target_user: user.name
+                        })
+                    ]
+                );
 
-            await queryRunner.commitTransaction();
-            return {
-                success: true,
-                message: `User ${user.name} berhasil dimutasi ke ${targetSatker.deskripsi}`,
-                mutation: {
-                    from: oldSatkerName,
-                    to: targetSatker.deskripsi,
-                    nomor_surat: dto.nomor_surat
-                }
-            };
+                await queryRunner.commitTransaction();
+                return {
+                    success: true,
+                    requires_approval: true,
+                    message: `Permohonan mutasi personil ${user.name} berhasil diajukan dan sedang menunggu persetujuan Superadmin.`
+                };
+            }
+
+            // Superadmin / Admin Binops: Langsung eksekusi & approve
+            if (isKeluarReserse) {
+                await queryRunner.query(
+                    `
+                    INSERT INTO auth_user_mutations (
+                        user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
+                        to_satker_id, to_satker_key, to_satker_name, to_role,
+                        nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at,
+                        status, is_keluar_reserse, reviewed_by, reviewed_at
+                    ) VALUES ($1, $2, $3, $4, $5, NULL, NULL, $6, 'nonaktif', $7, $8, $9, $10, NOW(), 'APPROVED', true, $10, NOW())
+                    `,
+                    [
+                        userId,
+                        user.scope_satker_id,
+                        user.scope_satker_key,
+                        oldSatkerName,
+                        user.role_bdb,
+                        targetSatker.deskripsi,
+                        String(dto.nomor_surat).trim(),
+                        dto.tanggal_efektif || new Date(),
+                        dto.keterangan || null,
+                        authUser?.id ? Number(authUser.id) : null
+                    ]
+                );
+
+                await queryRunner.query(
+                    `
+                    UPDATE auth_users 
+                    SET status = 'NONAKTIF',
+                        approval_status = 'MUTASI_KELUAR_RESERSE',
+                        deactivated_at = NOW(),
+                        deactivated_by = $1,
+                        deactivation_reason = $2,
+                        updated_at = NOW()
+                    WHERE id = $3
+                    `,
+                    [
+                        authUser?.id ? Number(authUser.id) : null,
+                        `Mutasi keluar fungsi Reserse ke ${targetSatker.deskripsi} (Sprin: ${dto.nomor_surat})`,
+                        userId
+                    ]
+                );
+
+                await queryRunner.query(
+                    `
+                    INSERT INTO bdb_audit_log (
+                        user_id, user_nama, action, entity, entity_id, meta, created_at, outcome
+                    ) VALUES ($1, $2, 'MUTASI_KELUAR_RESERSE', 'auth_users', $3, $4, NOW(), 'SUCCESS')
+                    `,
+                    [
+                        authUser?.id ? Number(authUser.id) : null,
+                        authUser?.name || 'Admin',
+                        userId,
+                        JSON.stringify({
+                            from_satker: oldSatkerName,
+                            to_satker: targetSatker.deskripsi,
+                            nomor_surat: dto.nomor_surat,
+                            target_user: user.name
+                        })
+                    ]
+                );
+
+                await queryRunner.commitTransaction();
+                return {
+                    success: true,
+                    message: `Personil ${user.name} berhasil dimutasikan keluar fungsi Reserse/Reskrim ke ${targetSatker.deskripsi}. Seluruh histori LP lama tetap tersimpan.`,
+                    mutation: {
+                        from: oldSatkerName,
+                        to: targetSatker.deskripsi,
+                        nomor_surat: dto.nomor_surat
+                    }
+                };
+            } else {
+                const organisasiRoleId = await this.resolveOrganisasiRoleId(newRole);
+
+                await queryRunner.query(
+                    `
+                    INSERT INTO auth_user_mutations (
+                        user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
+                        to_satker_id, to_satker_key, to_satker_name, to_role,
+                        nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at,
+                        status, is_keluar_reserse, reviewed_by, reviewed_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), 'APPROVED', false, $13, NOW())
+                    `,
+                    [
+                        userId,
+                        user.scope_satker_id,
+                        user.scope_satker_key,
+                        oldSatkerName,
+                        user.role_bdb,
+                        targetSatker.id,
+                        targetSatker.kode,
+                        targetSatker.deskripsi,
+                        newRole,
+                        String(dto.nomor_surat).trim(),
+                        dto.tanggal_efektif || new Date(),
+                        dto.keterangan || null,
+                        authUser?.id ? Number(authUser.id) : null
+                    ]
+                );
+
+                await queryRunner.query(
+                    `
+                    UPDATE auth_users 
+                    SET scope_satker_id = $1,
+                        scope_satker_key = $2,
+                        requested_scope_satker_id = $1,
+                        requested_scope_satker_key = $2,
+                        role_bdb = $3,
+                        role_name = $3,
+                        status = 'AKTIF',
+                        approval_status = 'APPROVED',
+                        deactivated_at = NULL,
+                        deactivated_by = NULL,
+                        deactivation_reason = NULL,
+                        self_deactivated_at = NULL,
+                        "organisasiRoleId" = COALESCE($5, "organisasiRoleId"),
+                        updated_at = NOW()
+                    WHERE id = $4
+                    `,
+                    [targetSatker.id, targetSatker.kode, newRole, userId, organisasiRoleId]
+                );
+
+                await queryRunner.query(
+                    `
+                    UPDATE trb_police
+                    SET satuan = $1, updated_at = NOW()
+                    WHERE lower(email) = lower($2) OR lower(email) = lower($3)
+                    `,
+                    [targetSatker.deskripsi, user.email, user.email_polri || user.email]
+                );
+
+                await queryRunner.query(
+                    `
+                    INSERT INTO bdb_audit_log (
+                        user_id, user_nama, action, entity, entity_id, meta, created_at, outcome
+                    ) VALUES ($1, $2, 'MUTASI_SATKER', 'auth_users', $3, $4, NOW(), 'SUCCESS')
+                    `,
+                    [
+                        authUser?.id ? Number(authUser.id) : null,
+                        authUser?.name || 'Admin',
+                        userId,
+                        JSON.stringify({
+                            from_satker: oldSatkerName,
+                            to_satker: targetSatker.deskripsi,
+                            nomor_surat: dto.nomor_surat,
+                            target_user: user.name
+                        })
+                    ]
+                );
+
+                await queryRunner.commitTransaction();
+                return {
+                    success: true,
+                    message: `User ${user.name} berhasil dimutasi ke ${targetSatker.deskripsi}`,
+                    mutation: {
+                        from: oldSatkerName,
+                        to: targetSatker.deskripsi,
+                        nomor_surat: dto.nomor_surat
+                    }
+                };
+            }
         } catch (err) {
             await queryRunner.rollbackTransaction();
             throw err;
@@ -1983,9 +2234,10 @@ export class UserService {
     async getUserMutations(userId: number) {
         const rows = await this.dataSource.query(
             `
-            SELECT m.*, u.name as mutated_by_name
+            SELECT m.*, u.name as mutated_by_name, r.name as reviewed_by_name
             FROM auth_user_mutations m
             LEFT JOIN auth_users u ON u.id = m.mutated_by
+            LEFT JOIN auth_users r ON r.id = m.reviewed_by
             WHERE m.user_id = $1
             ORDER BY m.created_at DESC
             `,
