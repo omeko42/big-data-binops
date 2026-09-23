@@ -95,15 +95,23 @@ export class UpdateUserDto {
     @IsOptional()
     two_factor_required: boolean;
 
-    @ApiProperty({ required: false, enum: ['AKTIF', 'PENDING_APPROVAL', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'] })
+    @ApiProperty({ required: false, enum: ['AKTIF', 'NONAKTIF', 'PENDING_APPROVAL', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'] })
     @IsOptional()
-    @IsIn(['AKTIF', 'PENDING_APPROVAL', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'])
+    @IsIn(['AKTIF', 'NONAKTIF', 'PENDING_APPROVAL', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'])
     status: string;
 
-    @ApiProperty({ required: false, enum: ['PENDING_EMAIL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'] })
+    @ApiProperty({ required: false, enum: ['PENDING_EMAIL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'REQUEST_DELETE', 'REQUEST_DEACTIVATE', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'] })
     @IsOptional()
-    @IsIn(['PENDING_EMAIL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'])
+    @IsIn(['PENDING_EMAIL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'REQUEST_DELETE', 'REQUEST_DEACTIVATE', 'NONAKTIF_MANDIRI', 'NONAKTIF_ADMIN', 'ARSIP'])
     approval_status: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    nomor_surat?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    keterangan_mutasi?: string;
 }
 export class sendOtpEmailDto {
     @ApiProperty({
