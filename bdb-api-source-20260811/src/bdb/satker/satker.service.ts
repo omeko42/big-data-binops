@@ -202,6 +202,11 @@ export class SatkerService implements OnModuleInit {
             ['060.01.37.05.03', '060.01.32.16'],
             ['060.01.37.05.04', '060.01.32.16'],
 
+            // POLRES PUNCAK (060.01.32.26) - Polsek Sinak, Ilaga, Beoga historically prefixed 060.01.32.16 (Puncak Jaya)
+            ['060.01.32.16.03', '060.01.32.26'], // POLSEK SINAK -> POLRES PUNCAK
+            ['060.01.32.16.04', '060.01.32.26'], // POLSEK ILAGA -> POLRES PUNCAK
+            ['060.01.32.16.05', '060.01.32.26'], // POLSEK BEOGA -> POLRES PUNCAK
+
             // POLSEK KAWASAN BANDARA DEO -> POLRESTA SORONG KOTA.
             // Entri ini sudah aktif di dist production; dipertahankan di source agar parity.
             ['060.01.33.06.06', '060.01.36.101'],
