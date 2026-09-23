@@ -43,6 +43,7 @@ export class LaporanPolisiService {
         case
             when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode_pusiknas'
             when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode_pusiknas'
+            when jsonb_typeof(r.payload_json->'polda')='object' and (r.payload_json->'polda'->>'kode' = '060.09' or r.payload_json->'polda'->>'nama' ilike '%lampung%') then '060.01.11'
             when jsonb_typeof(r.payload_json->'polda')='object' then r.payload_json->'polda'->>'kode_pusiknas'
         end`;
     // Field "kode" DORS internal (BEDA dari "kode_pusiknas") -- kadang kode_pusiknas kosong
@@ -891,6 +892,16 @@ export class LaporanPolisiService {
                     select 1 from bdb_laporan_polisi lp
                     where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp
                 )
+                and not (
+                    coalesce(r.payload_json->>'dilimpahkan', '0') = '1'
+                    and exists (
+                        select 1 from bdb_laporan_polisi lp2
+                        where lp2.deleted_at is null
+                          and lp2.no_laporan is not null
+                          and trim(lp2.no_laporan) <> ''
+                          and trim(lp2.no_laporan) = trim(r.no_laporan)
+                    )
+                )
             ), candidate_base as (
                 select r.*, s.id as resolved_satker_id,
                        s.deskripsi as resolved_satker_nama,
@@ -1003,8 +1014,9 @@ export class LaporanPolisiService {
         const unmapped = await this.unmappedCount();
         await this.linkMasterData();
         const ownershipSync = await this.syncPelimpahanOwnershipFromDors();
-        this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
-        return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync }, message: `${mapped + mabes + viaAlias + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, nama ${viaName}).` };
+        const reconciledDups = await this.reconcilePelimpahanDuplicates();
+        this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, dups reconciled ${reconciledDups}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
+        return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync, dups_reconciled: reconciledDups }, message: `${mapped + mabes + viaAlias + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, nama ${viaName}).` };
     }
 
     async unmappedCount(): Promise<number> {
@@ -2345,5 +2357,89 @@ export class LaporanPolisiService {
         });
 
         return { status: 1, data: { deleted }, message: `${deleted} data LP belum termapping dihapus.` };
+    }
+
+    /**
+     * Rekonsiliasi otomatis duplikasi LP akibat pelimpahan DORS Pusiknas
+     * (di mana DORS membuat dors_lp_id baru untuk satker penerima tanpa menghapus baris lama).
+     * Menyatukan dokumen, riwayat pelimpahan, dan mengupdate snapshot kinerja perkara.
+     */
+    async reconcilePelimpahanDuplicates(): Promise<number> {
+        const dups = await this.dataSource.query(`
+            SELECT no_laporan
+            FROM bdb_laporan_polisi
+            WHERE deleted_at IS NULL AND no_laporan IS NOT NULL AND TRIM(no_laporan) != ''
+            GROUP BY no_laporan
+            HAVING count(*) > 1
+        `);
+        if (!dups || dups.length === 0) return 0;
+
+        const noLaporans = dups.map((d: any) => d.no_laporan);
+        const rankedRes = await this.dataSource.query(`
+            WITH target_batch AS (
+                SELECT unnest($1::text[]) as target_no
+            ),
+            ranked AS (
+                SELECT 
+                    lp.id, lp.dors_lp_id, lp.no_laporan, lp.satker_id, lp.unit_satker_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY lp.no_laporan
+                        ORDER BY 
+                            (CASE WHEN (SELECT count(*) FROM bdb_dokumen d WHERE d.lp_id = lp.id) > 0 THEN 1 ELSE 0 END) DESC,
+                            (CASE WHEN lp.payload_json->>'pelimpahan' = '1' THEN 1 ELSE 0 END) DESC,
+                            (CASE WHEN lp.payload_json->>'dilimpahkan' = '1' THEN 0 ELSE 1 END) DESC,
+                            coalesce(nullif(regexp_replace(lp.dors_lp_id, '[^0-9]', '', 'g'), ''), '0')::bigint DESC,
+                            lp.id DESC
+                    ) as rn
+                FROM bdb_laporan_polisi lp
+                JOIN target_batch tb ON tb.target_no = lp.no_laporan
+                WHERE lp.deleted_at IS NULL
+            )
+            SELECT r.*,
+                   first_value(r.id) OVER (PARTITION BY r.no_laporan ORDER BY r.rn ASC) as survivor_id
+            FROM ranked r
+        `, [noLaporans]);
+
+        const staleRows = rankedRes.filter((r: any) => Number(r.rn) > 1);
+        for (const stale of staleRows) {
+            const staleId = stale.id;
+            const survivorId = stale.survivor_id;
+
+            await this.dataSource.query(`UPDATE bdb_dokumen SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`UPDATE bdb_lp_pelimpahan SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`UPDATE bdb_lp_tindak_pidana SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`
+                DELETE FROM bdb_lp_tindak_pidana_dors 
+                WHERE laporan_polisi_id = $1 
+                  AND dors_tp_id IN (SELECT dors_tp_id FROM bdb_lp_tindak_pidana_dors WHERE laporan_polisi_id = $2)
+            `, [staleId, survivorId]);
+            await this.dataSource.query(`UPDATE bdb_lp_tindak_pidana_dors SET laporan_polisi_id = $1 WHERE laporan_polisi_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`UPDATE bdb_lp_pihak_manual SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`UPDATE bdb_lp_barang_bukti_manual SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`
+                DELETE FROM bdb_kasus_menonjol_lp 
+                WHERE lp_id = $1 
+                  AND kasus_menonjol_id IN (SELECT kasus_menonjol_id FROM bdb_kasus_menonjol_lp WHERE lp_id = $2)
+            `, [staleId, survivorId]);
+            await this.dataSource.query(`UPDATE bdb_kasus_menonjol_lp SET lp_id = $1 WHERE lp_id = $2`, [survivorId, staleId]);
+            await this.dataSource.query(`DELETE FROM bdb_kinerja_perkara_snapshot WHERE lp_id = $1`, [staleId]);
+            await this.dataSource.query(`
+                UPDATE bdb_laporan_polisi 
+                SET deleted_at = NOW(), 
+                    deleted_by = 1, 
+                    delete_reason = 'DORS_PELIMPAHAN_DUPLICATE_MERGED'
+                WHERE id = $1
+            `, [staleId]);
+            await this.dataSource.query(`
+                UPDATE bdb_laporan_polisi
+                SET sudah_dilimpahkan = true
+                WHERE id = $1 AND sudah_dilimpahkan = false
+            `, [survivorId]);
+        }
+
+        if (staleRows.length > 0) {
+            this.logger.log(`Rekonsiliasi Duplikasi Pelimpahan: ${staleRows.length} duplikat disatukan ke survivor.`);
+        }
+        return staleRows.length;
     }
 }
