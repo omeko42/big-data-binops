@@ -476,12 +476,50 @@ export class UserService {
                 updatedData.deactivated_at = new Date();
                 updatedData.deactivation_reason = 'Dinonaktifkan admin';
             }
-            if (nextStatus === 'AKTIF' && currentStatus !== 'AKTIF') {
+            if (nextStatus === 'AKTIF') {
+                updatedData.approval_status = 'APPROVED';
                 updatedData.self_deactivated_at = null;
                 updatedData.deactivated_by = null;
                 updatedData.deactivated_at = null;
                 updatedData.deactivation_reason = null;
             }
+
+            // Jika satker berubah via edit profil, rekam ke tabel auth_user_mutations
+            if (user.scope_satker_id && scopeSatkerId && Number(user.scope_satker_id) !== Number(scopeSatkerId)) {
+                let oldSatkerName = '-';
+                const oldSatkers = await queryRunner.query(`SELECT deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`, [user.scope_satker_id]);
+                if (oldSatkers && oldSatkers.length) oldSatkerName = oldSatkers[0].deskripsi;
+
+                let newSatkerName = '-';
+                const newSatkers = await queryRunner.query(`SELECT deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`, [scopeSatkerId]);
+                if (newSatkers && newSatkers.length) newSatkerName = newSatkers[0].deskripsi;
+
+                await queryRunner.query(
+                    `
+                    INSERT INTO auth_user_mutations (
+                        user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
+                        to_satker_id, to_satker_key, to_satker_name, to_role,
+                        nomor_surat, tanggal_efektif, keterangan, mutated_by, created_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+                    `,
+                    [
+                        id,
+                        user.scope_satker_id,
+                        user.scope_satker_key,
+                        oldSatkerName,
+                        user.role_bdb,
+                        scopeSatkerId,
+                        scopeSatkerKey,
+                        newSatkerName,
+                        roleBdb,
+                        (dto as any).nomor_surat || 'MUTASI-ADMIN',
+                        new Date(),
+                        (dto as any).keterangan_mutasi || 'Perubahan satker melalui edit profil pengguna',
+                        authUser?.id ? Number(authUser.id) : null
+                    ]
+                );
+            }
+
             await queryRunner.manager.update(User, id, updatedData);
             await this.upsertPoliceProfileByEmail(
                 updatedData.email || user.email,
@@ -1807,17 +1845,25 @@ export class UserService {
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
-        if (!dto.to_satker_id || !dto.to_satker_key) {
+        if (!dto.to_satker_id && !dto.to_satker_key) {
             throw new BadRequestException('Satker tujuan wajib dipilih');
         }
         if (!dto.nomor_surat || !String(dto.nomor_surat).trim()) {
             throw new BadRequestException('Nomor Surat Telegram / Sprint Mutasi wajib diisi');
         }
 
-        const targetSatkers = await this.dataSource.query(
-            `SELECT id, kode, deskripsi FROM bdb_satker WHERE id = $1 AND (kode = $2 OR kode_canonical = $2) LIMIT 1`,
-            [dto.to_satker_id, dto.to_satker_key]
-        );
+        let targetSatkers = [];
+        if (dto.to_satker_id) {
+            targetSatkers = await this.dataSource.query(
+                `SELECT id, kode, deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`,
+                [dto.to_satker_id]
+            );
+        } else if (dto.to_satker_key) {
+            targetSatkers = await this.dataSource.query(
+                `SELECT id, kode, deskripsi FROM bdb_satker WHERE kode = $1 OR kode_canonical = $1 LIMIT 1`,
+                [dto.to_satker_key]
+            );
+        }
         if (!targetSatkers.length) {
             throw new BadRequestException('Satker tujuan tidak valid di struktur satker');
         }
@@ -1832,7 +1878,8 @@ export class UserService {
             if (oldSatkers.length) oldSatkerName = oldSatkers[0].deskripsi;
         }
 
-        const newRole = dto.to_role || user.role_bdb || 'operator';
+        const newRole = this.normalizeBdbRole(dto.to_role || user.role_bdb || 'operator');
+        const organisasiRoleId = await this.resolveOrganisasiRoleId(newRole);
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -1873,10 +1920,27 @@ export class UserService {
                     requested_scope_satker_key = $2,
                     role_bdb = $3,
                     role_name = $3,
+                    status = 'AKTIF',
+                    approval_status = 'APPROVED',
+                    deactivated_at = NULL,
+                    deactivated_by = NULL,
+                    deactivation_reason = NULL,
+                    self_deactivated_at = NULL,
+                    "organisasiRoleId" = COALESCE($5, "organisasiRoleId"),
                     updated_at = NOW()
                 WHERE id = $4
                 `,
-                [targetSatker.id, targetSatker.kode, newRole, userId]
+                [targetSatker.id, targetSatker.kode, newRole, userId, organisasiRoleId]
+            );
+
+            // Update trb_police jika ada profile
+            await queryRunner.query(
+                `
+                UPDATE trb_police
+                SET satuan = $1, updated_at = NOW()
+                WHERE lower(email) = lower($2) OR lower(email) = lower($3)
+                `,
+                [targetSatker.deskripsi, user.email, user.email_polri || user.email]
             );
 
             await queryRunner.query(
