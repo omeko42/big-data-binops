@@ -427,7 +427,7 @@ export class AnevService {
             return ['TIPIDPPAPPO'];
         }
         if (id === 18 || desk === 'DITTIPIDUM BARESKRIM POLRI' || (desk.includes('TIPIDUM') && desk.includes('BARESKRIM'))) {
-            return ['TIPIDUM'];
+            return ['TIPIDUM', 'KRIMUM'];
         }
         if (id === 19 || desk === 'DITTIPIDEKSUS BARESKRIM POLRI' || (desk.includes('TIPIDEKSUS') && desk.includes('BARESKRIM'))) {
             return ['TIPIDEKSUS'];
@@ -436,7 +436,7 @@ export class AnevService {
             return ['TIPIDKOR'];
         }
         if (id === 21 || desk === 'DITTIPIDNARKOBA BARESKRIM POLRI' || (desk.includes('TIPIDNARKOBA') && desk.includes('BARESKRIM'))) {
-            return ['TIPIDNARKOBA'];
+            return ['TIPIDNARKOBA', 'NARKOBA'];
         }
         if (id === 22 || desk === 'DITTIPIDTER BARESKRIM POLRI' || (desk.includes('TIPIDTER') && desk.includes('BARESKRIM'))) {
             return ['TIPIDTER'];
@@ -448,7 +448,7 @@ export class AnevService {
             return ['TIPIDPPAPPO'];
         }
         if (desk.includes('TIPIDUM') || desk.includes('KRIDUM')) {
-            return ['TIPIDUM'];
+            return ['TIPIDUM', 'KRIMUM'];
         }
         if (desk.includes('TIPIDEKSUS') || desk.includes('EKSUS')) {
             return ['TIPIDEKSUS'];
@@ -457,7 +457,7 @@ export class AnevService {
             return ['TIPIDKOR'];
         }
         if (desk.includes('TIPIDNARKOBA') || desk.includes('NARKOBA')) {
-            return ['TIPIDNARKOBA'];
+            return ['TIPIDNARKOBA', 'NARKOBA'];
         }
         if (desk.includes('TIPIDTER')) {
             return ['TIPIDTER'];
@@ -466,10 +466,13 @@ export class AnevService {
             return ['TIPIDSIBER'];
         }
         if (desk.includes('KRIMSUS')) {
-            return ['TIPIDEKSUS', 'TIPIDTER', 'TIPIDSIBER', 'TIPIDKOR'];
+            return ['TIPIDEKSUS', 'TIPIDTER', 'TIPIDSIBER', 'TIPIDKOR', 'KRIMSUS'];
         }
         if (desk.includes('KRIMUM')) {
-            return ['TIPIDUM', 'TIPIDPPAPPO'];
+            return ['TIPIDUM', 'TIPIDPPAPPO', 'KRIMUM'];
+        }
+        if (desk.includes('RESKRIM') || desk.includes('KRIMINAL')) {
+            return ['TIPIDUM', 'KRIMUM', 'TIPIDPPAPPO', 'TIPIDEKSUS', 'TIPIDTER', 'TIPIDKOR', 'TIPIDSIBER', 'KRIMSUS'];
         }
         return null;
     }
@@ -791,6 +794,31 @@ export class AnevService {
                                 fParams
                             );
                             top_kejahatan_regional = funcKej.map((k: any) => ({ nama: k.nama, jml: Number(k.jml) }));
+
+                            // Jika slot kurang dari 10, lengkapi slot s/d 10 dengan kejahatan tertinggi berikutnya di regional Polda tersebut (deduplikasi)
+                            if (top_kejahatan_regional.length < 10) {
+                                const existingNames = top_kejahatan_regional.map(x => x.nama);
+                                const remLimit = 10 - top_kejahatan_regional.length;
+                                const remParams = [...regParams, existingNames, remLimit];
+                                const remKej = await this.ds.query(
+                                    `select kat as nama, count(*)::int as jml from (
+                                        select tp.nama_kategori_kejahatan as kat
+                                        from bdb_lp_tindak_pidana_dors tp
+                                        join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                        ${regWhere}
+                                          and nullif(tp.nama_kategori_kejahatan, '') is not null
+                                          and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
+                                          and tp.nama_kategori_kejahatan != ALL($${remParams.length - 1})
+                                          and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
+                                          and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
+                                          and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
+                                     ) x group by kat order by jml desc limit $${remParams.length}`,
+                                    remParams
+                                );
+                                for (const r of remKej) {
+                                    top_kejahatan_regional.push({ nama: r.nama, jml: Number(r.jml) });
+                                }
+                            }
                         } else {
                             const regKej = await this.ds.query(
                                 `select kat as nama, count(*)::int as jml from (
@@ -842,6 +870,45 @@ export class AnevService {
                             bParams
                         );
                         top_kejahatan_regional = natKej.map((k: any) => ({ nama: k.nama, jml: Number(k.jml) }));
+
+                        // Jika slot kurang dari 10 (misal Narkoba cuma 3, Siber cuma 3), lengkapi slot s/d 10 dengan kejahatan tertinggi Nasional (deduplikasi)
+                        if (top_kejahatan_regional.length < 10) {
+                            const existingNames = top_kejahatan_regional.map(x => x.nama);
+                            const remLimit = 10 - top_kejahatan_regional.length;
+                            const natFallbackWhere: string[] = [
+                                `lp.deleted_at IS NULL`,
+                                `coalesce(lp.dilimpahkan_eksternal, false) = false`,
+                                `nullif(tp.nama_kategori_kejahatan, '') is not null`,
+                                `tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')`,
+                                `tp.nama_kategori_kejahatan not ilike '%lalu lintas%'`,
+                                `tp.nama_kategori_kejahatan not ilike '%kecelakaan%'`,
+                                `tp.nama_kategori_kejahatan not ilike '%laka lantas%'`
+                            ];
+                            const natFallbackParams: any[] = [];
+                            if (existingNames.length > 0) {
+                                natFallbackParams.push(existingNames);
+                                natFallbackWhere.push(`tp.nama_kategori_kejahatan != ALL($${natFallbackParams.length})`);
+                            }
+                            if (f.date_from) { natFallbackParams.push(f.date_from); natFallbackWhere.push(`${DATE_EXPR} >= $${natFallbackParams.length}`); }
+                            if (f.date_to) { natFallbackParams.push(f.date_to); natFallbackWhere.push(`${DATE_EXPR} <= $${natFallbackParams.length}`); }
+                            if (f.year) { natFallbackParams.push(Number(f.year)); natFallbackWhere.push(`extract(year from ${DATE_EXPR})=$${natFallbackParams.length}`); }
+                            if (f.month) { natFallbackParams.push(Number(f.month)); natFallbackWhere.push(`extract(month from ${DATE_EXPR})=$${natFallbackParams.length}`); }
+                            this.appendTaxonomyFilter(f, natFallbackParams, natFallbackWhere);
+
+                            natFallbackParams.push(remLimit);
+                            const natFallbackKej = await this.ds.query(
+                                `select kat as nama, count(*)::int as jml from (
+                                    select tp.nama_kategori_kejahatan as kat
+                                    from bdb_lp_tindak_pidana_dors tp
+                                    join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                    where ${natFallbackWhere.join(' and ')}
+                                 ) x group by kat order by jml desc limit $${natFallbackParams.length}`,
+                                natFallbackParams
+                            );
+                            for (const r of natFallbackKej) {
+                                top_kejahatan_regional.push({ nama: r.nama, jml: Number(r.jml) });
+                            }
+                        }
 
                         const bPerSat = await this.ds.query(
                             `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
