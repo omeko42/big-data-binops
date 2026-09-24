@@ -1431,6 +1431,7 @@ export class DorsService implements OnModuleInit {
                 const r1 = await this.dataSource.query(
                     `UPDATE bdb_laporan_polisi 
                      SET deleted_at = COALESCE(nullif($2,'')::timestamp, now()), 
+                         delete_reason = 'Dihapus dari DORS (gk_history_delete)',
                          updated_at = now() 
                      WHERE dors_lp_id = $1 AND deleted_at IS NULL`,
                     [item.id_laporan, item.action_date]
@@ -1442,6 +1443,7 @@ export class DorsService implements OnModuleInit {
                 const r2 = await this.dataSource.query(
                     `UPDATE bdb_laporan_polisi 
                      SET deleted_at = COALESCE(nullif($2,'')::timestamp, now()), 
+                         delete_reason = 'Dihapus dari DORS (gk_history_delete)',
                          updated_at = now() 
                      WHERE lower(trim(no_laporan)) = lower(trim($1)) AND deleted_at IS NULL`,
                     [item.no_laporan, item.action_date]
@@ -1457,6 +1459,14 @@ export class DorsService implements OnModuleInit {
             );
             if (affected > 0) appliedCount += affected;
         }
+
+        // Segera bersihkan snapshot Kinerja Perkara agar LP yang di-soft delete tidak ikut terhitung
+        await this.dataSource.query(`
+            DELETE FROM bdb_kinerja_perkara_snapshot 
+            WHERE lp_id IN (
+                SELECT id FROM bdb_laporan_polisi WHERE deleted_at IS NOT NULL
+            )
+        `);
 
         return {
             status: 1,
