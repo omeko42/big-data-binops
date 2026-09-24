@@ -757,8 +757,8 @@ export class SatkerService implements OnModuleInit {
                                     else 'ALL'
                                 end as domain_code,
                                 case
-                                    when us.id = 1 or us.id = 13 or upper(trim(us.deskripsi)) like '%BARESKRIM%' or upper(trim(us.deskripsi)) like '%MABES%' then 'MABES'
-                                    when us.parent_id in (1, 13) and us.tipe_satker = 'FUNGSI' then 'MABES_DIT'
+                                    when (us.parent_id in (1, 13) or us.parent_id is null) and us.tipe_satker = 'FUNGSI' and us.id not in (1, 13) and upper(trim(us.deskripsi)) not in ('BARESKRIM POLRI', 'POLRI (MABES POLRI)', 'MABES POLRI') then 'MABES_DIT'
+                                    when us.id in (1, 13) or upper(trim(us.deskripsi)) in ('BARESKRIM POLRI', 'POLRI (MABES POLRI)', 'MABES POLRI') then 'MABES'
                                     when us.tipe_satker = 'POLDA' then 'POLDA'
                                     when us.parent_tipe = 'POLDA' and us.tipe_satker = 'FUNGSI' then 'POLDA_DIT'
                                     when us.tipe_satker = 'POLRES' then 'POLRES'
