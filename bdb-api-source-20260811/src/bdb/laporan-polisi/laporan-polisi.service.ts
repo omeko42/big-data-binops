@@ -75,6 +75,12 @@ export class LaporanPolisiService {
     }
 
     private async initializeTables() {
+        const check = await this.dataSource.query(
+            "select 1 from information_schema.tables where table_schema = 'public' and table_name = 'bdb_laporan_polisi'"
+        );
+        if (check && check.length > 0) {
+            return;
+        }
         await this.dataSource.query(`
             create table if not exists bdb_laporan_polisi (
                 id bigserial primary key,
