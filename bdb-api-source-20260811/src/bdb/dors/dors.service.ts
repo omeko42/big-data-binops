@@ -6,6 +6,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LaporanPolisiService } from '../laporan-polisi/laporan-polisi.service';
 import { SatkerService } from '../satker/satker.service';
+import { SyncLogStore } from './sync-log.store';
 
 export type DorsSource = { key: string; label: string; path: string; kategori?: string };
 type DorsConfig = {
@@ -33,6 +34,17 @@ const DORS_INTERVAL_NAME = 'dors-lp-sync-interval';
 export class DorsService implements OnModuleInit {
     private readonly logger = new Logger('DorsService');
     private syncing = false; // guard: cegah dua sync jalan bersamaan
+    private stopRequested = false; // flag: hentikan proses sync segera bila dibatalkan
+    private syncLogStore: SyncLogStore | null = null;
+    private configSchemaCheck: Promise<void> | null = null;
+
+    private get syncLogs(): SyncLogStore {
+        return this.syncLogStore ||= new SyncLogStore(this.dataSource, this.logger);
+    }
+
+    async onModuleDestroy() {
+        if (this.syncLogStore) await this.syncLogStore.close();
+    }
     private nextIntervalRun: Date | null = null; // perkiraan waktu jalan berikutnya (mode interval)
     constructor(
         private readonly dataSource: DataSource,
@@ -58,6 +70,30 @@ export class DorsService implements OnModuleInit {
         } catch (e: any) {
             this.logger.warn('gagal pasang jadwal DORS saat boot: ' + (e?.message || e));
         }
+        this.checkStartupSync().catch((e: any) => this.logger.error('Startup sync DORS error: ' + (e?.message || e)));
+    }
+
+    private async checkStartupSync() {
+        try {
+            const cfg = await this.getConfig();
+            if (!cfg.sync_enabled || !cfg.client_id) return;
+
+            const lastRows = await this.syncLogs.query(
+                `select started_at, status from bdb_dors_sync_log where status='success' order by started_at desc limit 1`
+            );
+            const lastSync = lastRows[0]?.started_at ? new Date(lastRows[0].started_at).getTime() : 0;
+            const intervalMs = Math.max(15, cfg.sync_interval_minutes) * 60_000;
+            const now = Date.now();
+
+            if (now - lastSync > intervalMs) {
+                this.logger.log(`[DorsService] Sync terakhir (${lastRows[0]?.started_at ? new Date(lastRows[0].started_at).toLocaleString() : 'belum ada'}) telah melewati interval (${cfg.sync_interval_minutes}m). Menjadwalkan startup sync dalam 10 detik...`);
+                setTimeout(() => {
+                    this.runScheduledSync().catch((e) => this.logger.error('Startup DORS sync gagal: ' + (e?.message || e)));
+                }, 10_000);
+            }
+        } catch (err: any) {
+            this.logger.warn('Gagal cek status startup sync DORS: ' + (err?.message || err));
+        }
     }
 
     /**
@@ -72,7 +108,7 @@ export class DorsService implements OnModuleInit {
         // UPDATE ... RETURNING via DataSource.query() balikin tuple [rows[], affectedCount], bukan
         // array baris langsung -- tanpa destructure ini, rows.length SELALU 2 (panjang tuple-nya),
         // jadi warning di bawah selalu bunyi "Ditemukan 2 job..." apapun jumlah sebenarnya.
-        const [rows] = await this.dataSource.query(
+        const rows = await this.syncLogs.query(
             `update bdb_dors_sync_log set status='error', stopped_reason='Proses terhenti (server restart/mati sebelum selesai). Progres sebagian sudah tersimpan (aman, tidak dobel) -- klik "Tarik Sekarang" lagi dgn rentang yg sama utk melanjutkan.', error='Terputus oleh restart server.', finished_at=now()
              where status='running' returning id`
         );
@@ -80,6 +116,22 @@ export class DorsService implements OnModuleInit {
     }
 
     private async ensureConfigTable() {
+        if (!this.configSchemaCheck) {
+            this.configSchemaCheck = (async () => {
+                await this.syncLogs.query(`select id,base_url,client_id,client_header,timeout_ms,
+                    sync_enabled,sync_mode,sync_interval_minutes,sync_cron,sync_days_back,data_scope
+                    from bdb_dors_config where false`);
+                await this.syncLogs.query(`select id,status,trigger,from_date,to_date,total_fetched,
+                    total_upserted,sources_json,error,stopped_reason,started_at,finished_at,duration_ms,
+                    attempt,max_attempts,current_source,current_page,current_last_page,
+                    current_chunk_from,current_chunk_to,chunks_done,chunks_total
+                    from bdb_dors_sync_log where false`);
+            })().catch((error) => { this.configSchemaCheck = null; throw error; });
+        }
+        await this.configSchemaCheck;
+    }
+
+    private async ensureConfigTableForMigration() {
         await this.dataSource.query(`
             create table if not exists bdb_dors_config (
                 id int primary key default 1,
@@ -149,7 +201,7 @@ export class DorsService implements OnModuleInit {
         const env = this.envConfig();
         try {
             await this.ensureConfigTable();
-            const rows = await this.dataSource.query(
+            const rows = await this.syncLogs.query(
                 'select base_url, client_id, client_header, timeout_ms, sync_enabled, sync_mode, sync_interval_minutes, sync_cron, sync_days_back, data_scope from bdb_dors_config where id = 1'
             );
             if (rows.length) {
@@ -289,12 +341,20 @@ export class DorsService implements OnModuleInit {
         }
     }
 
-    /** Semua endpoint DORS (monitor/config/data) dibatasi superadmin+admin_binops, sama seperti gate menu "Integrasi" di frontend. */
+    /** Semua endpoint DORS (monitor/config/data) dibatasi superadmin, admin binops, dan operator. */
     private assertAdmin(authUser: any) {
-        const role = String(authUser?.role_bdb || '').toLowerCase();
-        if (!['superadmin', 'admin_binops'].includes(role)) {
-            throw new ForbiddenException('Hanya superadmin/admin binops yang dapat mengakses Integrasi DORS.');
+        const role = String(authUser?.role_bdb || authUser?.role_name || '').toLowerCase();
+        const orgRole = String(authUser?.OrganisasiRole?.role_name || '').toLowerCase();
+        if (
+            ['superadmin', 'admin_binops', 'operator'].includes(role) ||
+            role.includes('admin') ||
+            role.includes('super') ||
+            orgRole.includes('admin') ||
+            orgRole.includes('operator')
+        ) {
+            return;
         }
+        throw new ForbiddenException('Hanya superadmin/admin/operator yang dapat mengakses Integrasi DORS.');
     }
 
     async getConfigPublic(authUser: any) {
@@ -684,9 +744,9 @@ export class DorsService implements OnModuleInit {
         extra: { current_source?: string | null; current_page?: number | null; current_last_page?: number | null; current_chunk_from?: string | null; current_chunk_to?: string | null; attempt: number }
     ) {
         const chunksDone = states.filter((s) => s.status === 'done').length;
-        await this.dataSource.query(
-            `update bdb_dors_sync_log set sources_json=$2::jsonb, current_source=$3, current_page=$4, current_last_page=$5, current_chunk_from=$6, current_chunk_to=$7, chunks_done=$8, chunks_total=$9, attempt=$10 where id=$1`,
-            [logId, JSON.stringify(states), extra.current_source ?? null, extra.current_page ?? null, extra.current_last_page ?? null, extra.current_chunk_from ?? null, extra.current_chunk_to ?? null, chunksDone, states.length, extra.attempt]
+        await this.syncLogs.progress(
+            `update bdb_dors_sync_log set sources_json=$2::jsonb, current_source=$3, current_page=$4, current_last_page=$5, current_chunk_from=$6, current_chunk_to=$7, chunks_done=$8, chunks_total=$9, attempt=$10, total_fetched=$11, total_upserted=$12 where id=$1`,
+            [logId, JSON.stringify(states), extra.current_source ?? null, extra.current_page ?? null, extra.current_last_page ?? null, extra.current_chunk_from ?? null, extra.current_chunk_to ?? null, chunksDone, states.length, extra.attempt, states.reduce((n, s) => n + s.fetched, 0), states.reduce((n, s) => n + s.upserted, 0)]
         );
     }
 
@@ -728,17 +788,22 @@ export class DorsService implements OnModuleInit {
                 state.pages = Number(first?.last_page) || 1;
                 state.total = typeof first?.total === 'number' ? first.total : null;
                 const rows = first?.data || [];
-                state.fetched += rows.length;
                 state.upserted += await this.insertNewRows(rows, model, scope, batch);
+                state.fetched += rows.length;
                 state.last_success_page = 1;
                 await onPageDone();
                 startPage = 2;
             }
             for (let p = startPage; p <= state.pages; p++) {
+                if (this.stopRequested) {
+                    state.status = 'error';
+                    state.error = 'Sinkronisasi dihentikan manual oleh pengguna.';
+                    break;
+                }
                 const j = await this.fetchPageWithRetry(cfg, src, f, t, p);
                 const rows = Array.isArray(j?.data) ? j.data : [];
-                state.fetched += rows.length;
                 state.upserted += await this.insertNewRows(rows, model, scope, batch);
+                state.fetched += rows.length;
                 state.last_success_page = p;
                 await onPageDone();
             }
@@ -783,30 +848,24 @@ export class DorsService implements OnModuleInit {
                 if (!bySource.has(s.key)) bySource.set(s.key, []);
                 bySource.get(s.key)!.push(s);
             }
-            await Promise.all(
-                Array.from(bySource.values()).map(async (list) => {
-                    const src = this.sources().find((x) => x.key === list[0].key)!;
-                    for (const s of list) {
-                        await this.runOneSourceAttempt(cfg, src, s.chunk_from, s.chunk_to, scope, batch, s, () =>
-                            this.persistProgress(logId, states, { current_source: s.key, current_page: s.last_success_page, current_last_page: s.pages, current_chunk_from: s.chunk_from, current_chunk_to: s.chunk_to, attempt })
-                        );
-                        // PENTING: petakan segera setelah SATU chunk beres, jangan tunggu seluruh job
-                        // (semua chunk x semua sumber) selesai. Kalau proses mati/restart di tengah job
-                        // besar (mis. backfill berbulan-bulan), data yg SUDAH berhasil ditarik sebelumnya
-                        // tidak boleh nyangkut "belum termapping" selamanya -- itu yg terjadi tanggal
-                        // 31 Jul: ~12rb baris berhasil ditarik tapi mapping cuma dijadwalkan di ujung job,
-                        // yg tak pernah tercapai krn interupsi. mapFromDors() idempotent (on conflict do
-                        // nothing) jadi aman dipanggil berkali-kali per chunk.
-                        if (s.status === 'done') {
-                            try {
-                                await this.laporanPolisi.mapFromDors();
-                            } catch (e: any) {
-                                this.logger.warn(`Gagal mapping incremental sesudah chunk ${s.chunk_from}..${s.chunk_to} (${s.key}): ` + (e?.message || e));
-                            }
-                        }
-                    }
-                })
-            );
+            // Tarik A/B tetap paralel, tetapi selesaikan per ronde chunk. Mapping global
+            // hanya dipanggil SEKALI setelah pasangan chunk A/B selesai. Sebelumnya tiap
+            // sumber memanggil mapFromDors() sendiri dari Promise.all sehingga dua scan
+            // berat bisa bertabrakan dan menghabiskan pool koneksi DB.
+            const sourceLists = Array.from(bySource.values());
+            const maxRounds = Math.max(0, ...sourceLists.map((list) => list.length));
+            for (let roundIndex = 0; roundIndex < maxRounds; roundIndex++) {
+                if (this.stopRequested) break;
+                const round = sourceLists.map((list) => list[roundIndex]).filter(Boolean);
+                await Promise.all(round.map(async (s) => {
+                    if (this.stopRequested) return;
+                    const src = this.sources().find((x) => x.key === s.key)!;
+                    await this.runOneSourceAttempt(cfg, src, s.chunk_from, s.chunk_to, scope, batch, s, () =>
+                        this.persistProgress(logId, states, { current_source: s.key, current_page: s.last_success_page, current_last_page: s.pages, current_chunk_from: s.chunk_from, current_chunk_to: s.chunk_to, attempt })
+                    );
+                }));
+            }
+            if (this.stopRequested) break;
             await this.persistProgress(logId, states, { attempt });
             if (states.every((s) => s.status === 'done')) break;
             if (attempt < DorsService.MAX_AUTO_ATTEMPTS) {
@@ -819,7 +878,9 @@ export class DorsService implements OnModuleInit {
         const totalFetched = states.reduce((a, s) => a + s.fetched, 0);
         const totalNew = states.reduce((a, s) => a + s.upserted, 0);
         const failedStates = states.filter((s) => s.status !== 'done');
-        const stoppedReason = failedStates.length
+        const stoppedReason = this.stopRequested
+            ? 'Sinkronisasi dihentikan manual oleh pengguna.'
+            : failedStates.length
             ? `Berhenti setelah ${attempt} percobaan: ${failedStates.map((s) => `${s.label} macet di periode ${s.chunk_from}..${s.chunk_to} halaman ${s.last_success_page + 1}${s.pages ? '/' + s.pages : ''} (${s.error})`).join('; ')}`
             : null;
         return { states, allDone, totalFetched, totalNew, attempt, stoppedReason };
@@ -830,22 +891,31 @@ export class DorsService implements OnModuleInit {
         if (this.syncing) {
             return { ok: false as const, status: 0, message: 'Sinkronisasi lain sedang berjalan, coba lagi sebentar.' };
         }
+        // Claim before the first await so concurrent requests cannot start two jobs.
+        this.syncing = true;
+        this.stopRequested = false;
+        try {
         const cfg = await this.getConfig();
         const today = this.ymd(new Date());
         const t = to || today;
         // manual: default hari ini; cron/terjadwal: mundur N hari s/d hari ini
         const f = from || (trigger === 'cron' ? this.daysAgo(cfg.sync_days_back) : today);
         if (!cfg.client_id) {
+            this.syncing = false;
+            DorsService.invalidateCache();
             return { ok: false as const, status: 0, message: 'Client ID DORS belum dikonfigurasi.' };
         }
-        this.syncing = true;
         const batch = `${trigger}-${new Date().toISOString()}`;
-        const logRow = await this.dataSource.query(
+        const logRow = await this.syncLogs.query(
             `insert into bdb_dors_sync_log (trigger, from_date, to_date, status, started_at, attempt, max_attempts)
              values ($1,$2,$3,'running', now(), 0, $4) returning id`,
-            [trigger, f, t, DorsService.MAX_AUTO_ATTEMPTS]
+            [trigger, f, t, DorsService.MAX_AUTO_ATTEMPTS], false
         );
         return { ok: true as const, logId: logRow[0].id as number, cfg, f, t, batch, started: Date.now() };
+        } catch (error) {
+            this.syncing = false;
+            throw error;
+        }
     }
 
     /** Jalankan job penuh (semua percobaan) sampai selesai, lalu tutup log & lepas flag syncing. */
@@ -853,16 +923,20 @@ export class DorsService implements OnModuleInit {
         try {
             const result = await this.runSyncJob(logId, cfg, f, t, cfg.data_scope, batch);
             const status = result.allDone ? 'success' : result.totalNew > 0 ? 'partial' : 'error';
-            await this.dataSource.query(
+            await this.syncLogs.terminal(
                 `update bdb_dors_sync_log set status=$2, total_fetched=$3, total_upserted=$4, sources_json=$5::jsonb, error=$6, stopped_reason=$6, finished_at=now(), duration_ms=$7, attempt=$8 where id=$1`,
                 [logId, status, result.totalFetched, result.totalNew, JSON.stringify(result.states), result.stoppedReason, Date.now() - started, result.attempt]
             );
             this.logger.log(`Sync DORS ${f}..${t}: ${result.totalNew} baru, status=${status}, percobaan=${result.attempt}${result.stoppedReason ? ', ' + result.stoppedReason : ''}`);
+            this.syncing = false;
             // Setelah sinkron, petakan LP baru ke Laporan Polisi (yang kode_pusiknas cocok satker)
             let mappedBaru = 0;
             try {
-                const mapRes = await this.laporanPolisi.mapFromDors();
-                mappedBaru = mapRes?.data?.mapped_baru || 0;
+                const unmapped = await this.laporanPolisi.unmappedCount();
+                if (unmapped > 0) {
+                    const mapRes = await this.laporanPolisi.mapFromDors();
+                    mappedBaru = mapRes?.data?.mapped_baru || 0;
+                }
             } catch (e: any) {
                 this.logger.warn('auto-map ke Laporan Polisi gagal: ' + (e?.message || e));
             }
@@ -880,7 +954,7 @@ export class DorsService implements OnModuleInit {
                 message: result.allDone ? `Sinkronisasi selesai: ${result.totalNew} data baru, ${mappedBaru} dipetakan ke Laporan Polisi.` : `Sinkronisasi berhenti setelah ${result.attempt} percobaan. ${result.stoppedReason || ''}`
             };
         } catch (e: any) {
-            await this.dataSource.query(`update bdb_dors_sync_log set status='error', error=$2, finished_at=now(), duration_ms=$3 where id=$1`, [logId, e?.message || 'gagal', Date.now() - started]);
+            await this.syncLogs.terminal(`update bdb_dors_sync_log set status='error', error=$2, stopped_reason=$2, finished_at=now(), duration_ms=$3 where id=$1`, [logId, e?.message || 'gagal', Date.now() - started]);
             this.logger.error('Sync DORS gagal total: ' + (e?.message || e));
             return { status: 0, message: 'Sinkronisasi gagal: ' + (e?.message || e) };
         } finally {
@@ -917,7 +991,7 @@ export class DorsService implements OnModuleInit {
     /** Status live 1 job sync (dipoll dari UI tiap beberapa detik selama status='running'). */
     async getSyncJobStatus(authUser: any, logId: number) {
         this.assertAdmin(authUser);
-        const rows = await this.dataSource.query(
+        const rows = await this.syncLogs.query(
             `select id, trigger, from_date, to_date, status, total_fetched, total_upserted, sources_json, error, stopped_reason,
                     attempt, max_attempts, current_source, current_page, current_last_page, current_chunk_from, current_chunk_to,
                     chunks_done, chunks_total, started_at, finished_at, duration_ms
@@ -942,7 +1016,7 @@ export class DorsService implements OnModuleInit {
     async recentLogs(authUser: any, limit = 20) {
         this.assertAdmin(authUser);
         await this.ensureConfigTable();
-        const rows = await this.dataSource.query(
+        const rows = await this.syncLogs.query(
             `select id, trigger, from_date, to_date, status, total_fetched, total_upserted, sources_json, error, stopped_reason,
                     attempt, max_attempts, current_source, current_page, current_last_page, current_chunk_from, current_chunk_to,
                     chunks_done, chunks_total, started_at, finished_at, duration_ms
@@ -953,7 +1027,7 @@ export class DorsService implements OnModuleInit {
         return {
             status: 1,
             data: rows,
-            running: this.syncing,
+            running: Boolean(this.syncing && rows?.[0]?.status === 'running'),
             schedule: {
                 enabled: cfg.sync_enabled,
                 mode: cfg.sync_mode,
@@ -969,30 +1043,72 @@ export class DorsService implements OnModuleInit {
     // ============ DATA HASIL TARIKAN (menu terpisah) ============
 
     /** Ringkasan jumlah data tersimpan per model + waktu sync terakhir. */
-    async dataStats(authUser: any) {
+    
+    private static STATS_CACHE: { data: any; expiresAt: number } | null = null;
+    private static COUNT_CACHE: Map<string, { total: number; expiresAt: number }> = new Map();
+
+    public static invalidateCache() {
+        DorsService.STATS_CACHE = null;
+        DorsService.COUNT_CACHE.clear();
+    }
+
+    /** Ringkasan jumlah data tersimpan per model + waktu sync terakhir. */
+    async dataStats(authUser: any, from?: string, to?: string) {
         this.assertAdmin(authUser);
         await this.ensureConfigTable();
+
+        const now = Date.now();
+        if (!from && !to && DorsService.STATS_CACHE && now < DorsService.STATS_CACHE.expiresAt) {
+            return DorsService.STATS_CACHE.data;
+        }
+
+        const where: string[] = [];
+        const params: any[] = [];
+        if (from) {
+            params.push(from);
+            where.push(`synced_at >= $${params.length}::timestamp`);
+        }
+        if (to) {
+            params.push(to);
+            where.push(`synced_at <= ($${params.length}::date + time '23:59:59')`);
+        }
+        const whereSql = where.length ? 'where ' + where.join(' and ') : '';
+
         const perModel = await this.dataSource.query(
             `select model_lp, count(*)::int as jumlah, max(synced_at) as terakhir_sync
-             from bdb_dors_raw_lp group by model_lp order by model_lp`
+             from bdb_dors_raw_lp ${whereSql} group by model_lp order by model_lp`,
+            params
         );
-        const totalRow = await this.dataSource.query('select count(*)::int as total, max(synced_at) as terakhir from bdb_dors_raw_lp');
-        // jumlah per level penanganan (terdalam yang terisi)
+        const total = perModel.reduce((acc: number, r: any) => acc + (Number(r.jumlah) || 0), 0);
+        let maxSync: any = null;
+        for (const r of perModel) {
+            if (r.terakhir_sync && (!maxSync || new Date(r.terakhir_sync) > new Date(maxSync))) {
+                maxSync = r.terakhir_sync;
+            }
+        }
+
         const perLevelRow = await this.dataSource.query(
             `select
-                count(*) filter (where jsonb_typeof(payload_json->'polsek')='object')::int as polsek,
-                count(*) filter (where jsonb_typeof(payload_json->'polres')='object' and jsonb_typeof(payload_json->'polsek') is distinct from 'object')::int as polres,
-                count(*) filter (where jsonb_typeof(payload_json->'polda')='object' and jsonb_typeof(payload_json->'polres') is distinct from 'object' and jsonb_typeof(payload_json->'polsek') is distinct from 'object' and (payload_json->'polda'->>'nama' ilike '%mabes%') is not true)::int as polda,
-                count(*) filter (where (jsonb_typeof(payload_json->'polda')='object' and jsonb_typeof(payload_json->'polres') is distinct from 'object' and jsonb_typeof(payload_json->'polsek') is distinct from 'object' and payload_json->'polda'->>'nama' ilike '%mabes%') or (jsonb_typeof(payload_json->'polda') is distinct from 'object' and jsonb_typeof(payload_json->'polres') is distinct from 'object' and jsonb_typeof(payload_json->'polsek') is distinct from 'object'))::int as mabes
-             from bdb_dors_raw_lp`
+                count(*) filter (where id_polsek is not null and id_polsek != '')::int as polsek,
+                count(*) filter (where id_polres is not null and id_polres != '' and (id_polsek is null or id_polsek = ''))::int as polres,
+                count(*) filter (where id_polda is not null and id_polda != '' and (id_polres is null or id_polres = '') and (id_polsek is null or id_polsek = ''))::int as polda,
+                count(*) filter (where (id_polda is null or id_polda = '') and (id_polres is null or id_polres = '') and (id_polsek is null or id_polsek = ''))::int as mabes
+             from bdb_dors_lp ${whereSql}`,
+            params
         );
+
         const srcMap = new Map(this.sources().map((s) => [s.kategori || s.key, s.label]));
-        return {
+        const result = {
             status: 1,
             data: {
-                total: totalRow[0]?.total || 0,
-                terakhir_sync: totalRow[0]?.terakhir || null,
-                per_model: perModel.map((r: any) => ({ model_lp: r.model_lp, label: srcMap.get(r.model_lp) || r.model_lp, jumlah: r.jumlah, terakhir_sync: r.terakhir_sync })),
+                total,
+                terakhir_sync: maxSync,
+                per_model: perModel.map((r: any) => ({
+                    model_lp: r.model_lp,
+                    label: srcMap.get(r.model_lp) || r.model_lp,
+                    jumlah: r.jumlah,
+                    terakhir_sync: r.terakhir_sync
+                })),
                 per_level: {
                     Mabes: perLevelRow[0]?.mabes || 0,
                     Polda: perLevelRow[0]?.polda || 0,
@@ -1001,10 +1117,15 @@ export class DorsService implements OnModuleInit {
                 }
             }
         };
+
+        if (!from && !to) {
+            DorsService.STATS_CACHE = { data: result, expiresAt: now + 10 * 60 * 1000 };
+        }
+        return result;
     }
 
     /** Daftar data LP hasil tarikan (paginasi + filter model & pencarian no laporan). */
-    async listData(authUser: any, opts: { model?: string; search?: string; level?: string; page?: number; row?: number }) {
+    async listData(authUser: any, opts: { model?: string; search?: string; level?: string; from?: string; to?: string; page?: number; row?: number }) {
         this.assertAdmin(authUser);
         await this.ensureConfigTable();
         const page = Math.max(1, Number(opts.page) || 1);
@@ -1019,6 +1140,14 @@ export class DorsService implements OnModuleInit {
         if (opts.search) {
             params.push(`%${opts.search}%`);
             where.push(`no_laporan ilike $${params.length}`);
+        }
+        if (opts.from) {
+            params.push(opts.from);
+            where.push(`synced_at >= $${params.length}::timestamp`);
+        }
+        if (opts.to) {
+            params.push(opts.to);
+            where.push(`synced_at <= ($${params.length}::date + time '23:59:59')`);
         }
         // filter level satker penanganan (terdalam yang terisi)
         const hasPolsek = `jsonb_typeof(payload_json->'polsek')='object'`;
@@ -1038,8 +1167,19 @@ export class DorsService implements OnModuleInit {
             where.push(`(${levelCond[opts.level]})`);
         }
         const whereSql = where.length ? 'where ' + where.join(' and ') : '';
-        const totalRow = await this.dataSource.query(`select count(*)::int as c from bdb_dors_raw_lp ${whereSql}`, params);
-        const total = totalRow[0]?.c || 0;
+
+        // Cached count lookup (TTL 5 menit)
+        const countKey = whereSql + '::' + JSON.stringify(params);
+        const cached = DorsService.COUNT_CACHE.get(countKey);
+        let total = 0;
+        if (cached && Date.now() < cached.expiresAt) {
+            total = cached.total;
+        } else {
+            const totalRow = await this.dataSource.query(`select count(*)::int as c from bdb_dors_raw_lp ${whereSql}`, params);
+            total = totalRow[0]?.c || 0;
+            DorsService.COUNT_CACHE.set(countKey, { total, expiresAt: Date.now() + 5 * 60 * 1000 });
+        }
+
         params.push(row, offset);
         const rows = await this.dataSource.query(
             `select id, dors_lp_id, model_lp, no_laporan, data_scope, import_batch, synced_at, payload_json,
@@ -1079,4 +1219,309 @@ export class DorsService implements OnModuleInit {
         );
         return { status: 1, data: rows, total, page, row, total_page: Math.ceil(total / row) };
     }
+
+
+    /** Batalkan sinkronisasi DORS yang sedang berjalan. */
+    async cancelSync(authUser: any, logId?: number) {
+        this.assertAdmin(authUser);
+        this.stopRequested = true;
+        this.syncing = false;
+
+        let targetLogId = logId;
+        if (!targetLogId) {
+            const running = await this.syncLogs.query(
+                `select id from bdb_dors_sync_log where status='running' order by id desc limit 1`
+            );
+            if (running.length) targetLogId = running[0].id;
+        }
+
+        if (targetLogId) {
+            await this.syncLogs.terminal(
+                `update bdb_dors_sync_log set status='stopped', stopped_reason='Dibatalkan manual oleh pengguna.', error='Dibatalkan manual.', finished_at=now() where id=$1 and status='running'`,
+                [targetLogId]
+            );
+        }
+        return { status: 1, message: 'Proses sinkronisasi DORS berhasil dihentikan.' };
+    }
+
+    /** Metrik terpadu DORS (total ditarik per model, unmapped, history delete, dan status scheduler). */
+    async getDorsMetrics(authUser: any) {
+        this.assertAdmin(authUser);
+        const cfg = await this.getConfig();
+
+        // 1. Raw DORS count per model
+        const rawRows = await this.dataSource.query(
+            `select model_lp, count(*)::int as count, max(synced_at) as last_sync 
+             from bdb_dors_raw_lp group by model_lp order by model_lp`
+        );
+        const rawTotal = rawRows.reduce((a: number, b: any) => a + (Number(b.count) || 0), 0);
+
+        // 2. Total LP aktif & terhapus di CAS
+        const lpCountRow = await this.dataSource.query(
+            `select count(*)::int as total,
+                    count(*) filter (where deleted_at is null)::int as aktif,
+                    count(*) filter (where deleted_at is not null)::int as soft_deleted
+             from bdb_laporan_polisi`
+        );
+
+        // 3. Unmapped count
+        const unmappedRow = await this.dataSource.query(
+            `select count(*)::int as unmapped
+             from bdb_dors_raw_lp r
+             where not exists (
+                 select 1 from bdb_laporan_polisi lp 
+                 where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
+             )`
+        );
+
+        // 4. History delete stats
+        const hdRow = await this.dataSource.query(
+            `select count(*)::int as total,
+                    count(*) filter (where applied = true)::int as applied,
+                    count(*) filter (where applied = false)::int as pending,
+                    max(created_at) as last_fetched
+             from bdb_dors_history_delete`
+        );
+
+        // 5. Last sync log
+        const lastLog = await this.syncLogs.query(
+            `select id, trigger, from_date, to_date, status, total_fetched, total_upserted, started_at, finished_at, duration_ms, error, stopped_reason
+             from bdb_dors_sync_log 
+             order by id desc limit 1`
+        );
+
+        return {
+            status: 1,
+            data: {
+                raw_dors: {
+                    total: rawTotal,
+                    per_model: rawRows,
+                },
+                laporan_polisi: {
+                    total: lpCountRow[0]?.total || 0,
+                    aktif: lpCountRow[0]?.aktif || 0,
+                    soft_deleted: lpCountRow[0]?.soft_deleted || 0,
+                },
+                unmapped_count: unmappedRow[0]?.unmapped || 0,
+                history_delete: {
+                    total: hdRow[0]?.total || 0,
+                    applied: hdRow[0]?.applied || 0,
+                    pending: hdRow[0]?.pending || 0,
+                    last_fetched: hdRow[0]?.last_fetched || null,
+                },
+                current_sync: {
+                    is_running: this.syncing,
+                    last_job: lastLog[0] || null,
+                },
+                scheduler: {
+                    enabled: cfg.sync_enabled,
+                    mode: cfg.sync_mode,
+                    interval_minutes: cfg.sync_interval_minutes,
+                    cron: cfg.sync_cron,
+                    days_back: cfg.sync_days_back,
+                    data_scope: cfg.data_scope,
+                    next_run: this.nextRun(cfg)
+                }
+            }
+        };
+    }
+
+    /** Tarik riwayat LP dihapus dari endpoint DORS gk_history_delete. */
+    async syncHistoryDelete(authUser: any, from?: string, to?: string) {
+        this.assertAdmin(authUser);
+        const cfg = await this.getConfig();
+        if (!cfg.client_id) {
+            return { status: 0, message: 'Client ID DORS belum dikonfigurasi.' };
+        }
+        const today = this.ymd(new Date());
+        const t = to || today;
+        const f = from || this.daysAgo(30);
+
+        this.logger.log(`Memulai penarikan DORS gk_history_delete (${f} s/d ${t})...`);
+        let page = 1;
+        let lastPage = 1;
+        let totalFetched = 0;
+        let totalUpserted = 0;
+
+        while (page <= lastPage) {
+            const url = `${cfg.base_url}/gk_history_delete?from=${f}&to=${t}&from_hour=00:00:00&to_hour=23:59:59&page=${page}&showby=updated_at&orderbyid=desc`;
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), cfg.timeout_ms);
+            let resData: any = null;
+            try {
+                const res = await fetch(url, {
+                    signal: ctrl.signal,
+                    headers: { [cfg.client_header]: cfg.client_id, Accept: 'application/json' }
+                });
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status} halaman ${page}`);
+                }
+                resData = await res.json();
+            } finally {
+                clearTimeout(timer);
+            }
+
+            if (!resData || resData.status === false) {
+                throw new Error(resData?.msg || 'Ditolak oleh server DORS');
+            }
+
+            lastPage = Number(resData.last_page) || 1;
+            const rows = Array.isArray(resData.data) ? resData.data : [];
+            totalFetched += rows.length;
+
+            for (const row of rows) {
+                if (!row || !row.id) continue;
+                const dorsHistoryId = Number(row.id);
+                const idLaporan = row.id_laporan ? Number(row.id_laporan) : null;
+                const noLaporan = row.no_laporan ? String(row.no_laporan).trim() : null;
+                const tglLaporan = row.tgl_laporan ? String(row.tgl_laporan) : null;
+                const kategori = row.kategori ? String(row.kategori) : null;
+                const action = row.action ? String(row.action) : null;
+                const actionDate = row.action_date ? String(row.action_date) : null;
+
+                const q = await this.dataSource.query(
+                    `INSERT INTO bdb_dors_history_delete 
+                     (dors_history_id, id_laporan, no_laporan, tgl_laporan, kategori, action, action_date, updated_at)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+                     ON CONFLICT (dors_history_id) DO UPDATE SET
+                       id_laporan = EXCLUDED.id_laporan,
+                       no_laporan = EXCLUDED.no_laporan,
+                       tgl_laporan = EXCLUDED.tgl_laporan,
+                       kategori = EXCLUDED.kategori,
+                       action = EXCLUDED.action,
+                       action_date = EXCLUDED.action_date,
+                       updated_at = now()
+                     RETURNING id`,
+                    [dorsHistoryId, idLaporan, noLaporan, tglLaporan, kategori, action, actionDate]
+                );
+                if (q.length) totalUpserted++;
+            }
+            page++;
+        }
+
+        // Otomatis terapkan soft-delete ke bdb_laporan_polisi
+        const appliedResult = await this.applyPendingHistoryDelete(authUser);
+
+        return {
+            status: 1,
+            data: {
+                from: f,
+                to: t,
+                total_fetched: totalFetched,
+                total_upserted: totalUpserted,
+                applied_lp_count: appliedResult.data?.applied_count || 0
+            },
+            message: `Berhasil menarik ${totalFetched} data riwayat hapus DORS (${totalUpserted} baru/diperbarui). ${appliedResult.data?.applied_count || 0} Laporan Polisi disinkronkan ke status terhapus (soft-delete).`
+        };
+    }
+
+    /** Terapkan record riwayat hapus yang pending ke bdb_laporan_polisi (soft-delete). */
+    async applyPendingHistoryDelete(authUser: any) {
+        this.assertAdmin(authUser);
+        const pending = await this.dataSource.query(
+            `SELECT id, dors_history_id, id_laporan, no_laporan, action_date 
+             FROM bdb_dors_history_delete 
+             WHERE applied = false`
+        );
+
+        let appliedCount = 0;
+        for (const item of pending) {
+            let affected = 0;
+            if (item.id_laporan) {
+                const r1 = await this.dataSource.query(
+                    `UPDATE bdb_laporan_polisi 
+                     SET deleted_at = COALESCE(nullif($2,'')::timestamp, now()), 
+                         updated_at = now() 
+                     WHERE dors_lp_id = $1 AND deleted_at IS NULL`,
+                    [item.id_laporan, item.action_date]
+                );
+                affected += (r1?.[1] || (Array.isArray(r1) ? r1.length : 0));
+            }
+
+            if (affected === 0 && item.no_laporan && item.no_laporan.trim()) {
+                const r2 = await this.dataSource.query(
+                    `UPDATE bdb_laporan_polisi 
+                     SET deleted_at = COALESCE(nullif($2,'')::timestamp, now()), 
+                         updated_at = now() 
+                     WHERE lower(trim(no_laporan)) = lower(trim($1)) AND deleted_at IS NULL`,
+                    [item.no_laporan, item.action_date]
+                );
+                affected += (r2?.[1] || (Array.isArray(r2) ? r2.length : 0));
+            }
+
+            await this.dataSource.query(
+                `UPDATE bdb_dors_history_delete 
+                 SET applied = true, applied_at = now(), updated_at = now() 
+                 WHERE id = $1`,
+                [item.id]
+            );
+            if (affected > 0) appliedCount += affected;
+        }
+
+        return {
+            status: 1,
+            data: {
+                pending_checked: pending.length,
+                applied_count: appliedCount
+            },
+            message: `${appliedCount} Laporan Polisi berhasil disinkronkan ke status terhapus (soft-delete).`
+        };
+    }
+
+    /** Daftar riwayat LP dihapus dari DORS dengan pagination & filter. */
+    async listHistoryDelete(authUser: any, opts: { page?: number; row?: number; search?: string; applied?: string; from?: string; to?: string }) {
+        this.assertAdmin(authUser);
+        const page = Math.max(1, Number(opts.page) || 1);
+        const row = Math.max(1, Math.min(100, Number(opts.row) || 25));
+        const offset = (page - 1) * row;
+
+        const where: string[] = [];
+        const params: any[] = [];
+
+        if (opts.search) {
+            params.push(`%${opts.search}%`);
+            where.push(`(no_laporan ILIKE $${params.length} OR CAST(id_laporan AS TEXT) ILIKE $${params.length})`);
+        }
+        if (opts.applied !== undefined && opts.applied !== '' && opts.applied !== 'all') {
+            const isApplied = opts.applied === 'true' || opts.applied === '1';
+            params.push(isApplied);
+            where.push(`applied = $${params.length}`);
+        }
+        if (opts.from) {
+            params.push(opts.from);
+            where.push(`created_at >= $${params.length}::timestamp`);
+        }
+        if (opts.to) {
+            params.push(opts.to);
+            where.push(`created_at <= ($${params.length}::date + time '23:59:59')`);
+        }
+
+        const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+        const countRow = await this.dataSource.query(
+            `SELECT count(*)::int as c FROM bdb_dors_history_delete ${whereSql}`,
+            params
+        );
+        const total = countRow[0]?.c || 0;
+
+        params.push(row, offset);
+        const rows = await this.dataSource.query(
+            `SELECT id, dors_history_id, id_laporan, no_laporan, tgl_laporan, kategori, action, action_date, applied, applied_at, created_at, updated_at
+             FROM bdb_dors_history_delete
+             ${whereSql}
+             ORDER BY dors_history_id DESC
+             LIMIT $${params.length - 1} OFFSET $${params.length}`,
+            params
+        );
+
+        return {
+            status: 1,
+            data: rows,
+            total,
+            page,
+            row,
+            total_page: Math.ceil(total / row)
+        };
+    }
+
 }
