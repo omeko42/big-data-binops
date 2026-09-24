@@ -2,15 +2,81 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 // tgl_laporan = teks 'DD-MM-YYYY HH:MM:SS'; fallback ke synced_at bila format tak sesuai.
-const DATE_EXPR = "(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end)";
+const DATE_EXPR = "coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)";
 
-type Filter = { year?: any; month?: any; date_from?: string; date_to?: string; status?: string };
+type Filter = {
+    year?: any;
+    month?: any;
+    date_from?: string;
+    date_to?: string;
+    status?: string;
+    functionDomain?: string;
+    organizationDomain?: string;
+};
 
 export type AnevNode = { id: number; kode: string; nama: string; parent_id: number | null; depth: number; status: Record<string, number>; ct: number; cc: number; total: number; children?: AnevNode[] };
 
 @Injectable()
 export class AnevService {
+    private dashCache = new Map<string, { at: number; res: any }>();
+    async refreshRekapSnapshot() {
+        await this.ds.query(`
+            INSERT INTO bdb_anev_rekap_snapshot (satker_id, status_code, kategori, tanggal, total_lp, refreshed_at)
+            SELECT 
+                lp.satker_id,
+                coalesce(st.code, 'LP') as status_code,
+                coalesce(st.kategori, 'CT') as kategori,
+                coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) as tanggal,
+                count(*)::int as total_lp,
+                now() as refreshed_at
+            FROM bdb_laporan_polisi lp
+            LEFT JOIN bdb_status_master st ON st.id = lp.status_id
+            WHERE lp.deleted_at IS NULL
+              AND coalesce(lp.dilimpahkan_eksternal, false) = false
+              AND lp.satker_id IS NOT NULL
+              AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) >= '2025-01-01'::date
+            GROUP BY lp.satker_id, st.code, st.kategori, 4
+            ON CONFLICT (satker_id, status_code, tanggal) 
+            DO UPDATE SET 
+                total_lp = EXCLUDED.total_lp,
+                kategori = EXCLUDED.kategori,
+                refreshed_at = now();
+        `);
+    }
+
+
     constructor(private readonly ds: DataSource) {}
+
+    /**
+     * Filter klasifikasi satker untuk dashboard. Internal Reserse mempertahankan owner lama yang
+     * masih menempel langsung ke POLDA/POLRES/POLSEK (STRUCTURAL), sama dengan fallback Kinerja
+     * Perkara. Domain lain tetap exact. Semua nilai masuk sebagai parameter SQL.
+     */
+    private appendTaxonomyFilter(f: Filter, params: any[], wh: string[], lpAlias = 'lp') {
+        const functionDomain = String(f.functionDomain || '').toUpperCase();
+        const organizationDomain = String(f.organizationDomain || '').toUpperCase();
+        const validFunctions = new Set(['INTERNAL_RESERSE', 'EKSTERNAL_RESERSE', 'STRUCTURAL', 'NOT_APPLICABLE']);
+        const validOrganizations = new Set(['INTERNAL_POLRI', 'EKSTERNAL_POLRI', 'NOT_APPLICABLE']);
+        if (!validFunctions.has(functionDomain) || !validOrganizations.has(organizationDomain)) return;
+
+        params.push(organizationDomain);
+        const organizationParam = `$${params.length}`;
+        if (functionDomain === 'INTERNAL_RESERSE' && organizationDomain === 'INTERNAL_POLRI') {
+            params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+        } else {
+            params.push([functionDomain]);
+        }
+        const functionParam = `$${params.length}`;
+        wh.push(`exists (
+            select 1 from bdb_satker_taxonomy_r11 tx
+             where tx.source_table='BDB_SATKER'
+               and tx.entity_id=coalesce(${lpAlias}.unit_satker_id, ${lpAlias}.satker_id)
+               and tx.organization_domain=${organizationParam}
+               and tx.function_domain=any(${functionParam})
+        )`);
+        wh.push(`${lpAlias}.deleted_at is null`);
+        wh.push(`coalesce(${lpAlias}.dilimpahkan_eksternal,false)=false`);
+    }
 
     private buildWhere(f: Filter) {
         const params: any[] = [];
@@ -41,6 +107,7 @@ export class AnevService {
                 wh.push(`st.code = any($${params.length})`);
             }
         }
+        this.appendTaxonomyFilter(f, params, wh);
         return { where: wh.length ? 'where ' + wh.join(' and ') : '', params };
     }
 
@@ -49,7 +116,7 @@ export class AnevService {
     }
 
     async meta() {
-        const years = await this.ds.query(`select distinct extract(year from ${DATE_EXPR})::int as year from bdb_laporan_polisi lp where lp.tgl_laporan is not null order by 1 desc`);
+        const years = await this.ds.query(`select distinct extract(year from ${DATE_EXPR})::int as year from bdb_laporan_polisi lp where lp.tgl_laporan is not null and extract(year from ${DATE_EXPR})::int >= 2000 and extract(year from ${DATE_EXPR})::int <= extract(year from now())::int order by 1 desc`);
         const statuses = await this.allStatuses();
         return { status: 1, data: { years: years.map((y: any) => y.year).filter((y: any) => y), statuses } };
     }
@@ -85,21 +152,62 @@ export class AnevService {
         let scoped = where;
         if (allowed) {
             params.push(allowed);
-            scoped = (scoped ? scoped + ' and ' : 'where ') + `lp.satker_id = any($${params.length})`;
+            scoped = (scoped ? scoped + ' and ' : 'where ') + `(lp.satker_id = any($${params.length}) or lp.unit_satker_id = any($${params.length}))`;
         }
         if (excludeIds?.length) {
             params.push(excludeIds);
             scoped = (scoped ? scoped + ' and ' : 'where ') + `lp.satker_id <> all($${params.length})`;
         }
-        const counts = await this.ds.query(
-            `select lp.satker_id as sid, st.code as status_code, coalesce(st.kategori,'CT') as kategori, count(*)::int as jml
-             from bdb_laporan_polisi lp
-             join bdb_satker s on s.id=lp.satker_id
-             left join bdb_status_master st on st.id=lp.status_id
-             ${scoped}
-             group by lp.satker_id, st.code, st.kategori`,
-            params
-        );
+        let counts: any[];
+        if (!f.functionDomain && !f.organizationDomain && !f.status && !allowed && !excludeIds) {
+            try {
+                const sParams: any[] = [];
+                const sWhere: string[] = ['1=1'];
+                if (f.date_from) {
+                    sParams.push(f.date_from);
+                    sWhere.push(`tanggal >= ${sParams.length}::date`);
+                }
+                if (f.date_to) {
+                    sParams.push(f.date_to);
+                    sWhere.push(`tanggal <= ${sParams.length}::date`);
+                }
+                if (f.year) {
+                    sParams.push(Number(f.year));
+                    sWhere.push(`extract(year from tanggal) = ${sParams.length}`);
+                }
+                if (f.month) {
+                    sParams.push(Number(f.month));
+                    sWhere.push(`extract(month from tanggal) = ${sParams.length}`);
+                }
+                counts = await this.ds.query(
+                    `select satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
+                     from bdb_anev_rekap_snapshot
+                     where ${sWhere.join(' and ')}
+                     group by satker_id, status_code, kategori`,
+                    sParams
+                );
+            } catch (e: any) {
+                counts = await this.ds.query(
+                    `select lp.satker_id as sid, st.code as status_code, coalesce(st.kategori,'CT') as kategori, count(*)::int as jml
+                     from bdb_laporan_polisi lp
+                     join bdb_satker s on s.id=lp.satker_id
+                     left join bdb_status_master st on st.id=lp.status_id
+                     ${scoped}
+                     group by lp.satker_id, st.code, st.kategori`,
+                    params
+                );
+            }
+        } else {
+            counts = await this.ds.query(
+                `select lp.satker_id as sid, st.code as status_code, coalesce(st.kategori,'CT') as kategori, count(*)::int as jml
+                 from bdb_laporan_polisi lp
+                 join bdb_satker s on s.id=lp.satker_id
+                 left join bdb_status_master st on st.id=lp.status_id
+                 ${scoped}
+                 group by lp.satker_id, st.code, st.kategori`,
+                params
+            );
+        }
         const satkers = await this.ds.query('select id, kode, deskripsi, parent_id, depth from bdb_satker');
         const statuses = await this.allStatuses();
 
@@ -196,7 +304,8 @@ export class AnevService {
         if (f.date_to) { params.push(f.date_to); wh.push(`${DATE_EXPR} <= $${params.length}`); }
         if (f.year) { params.push(Number(f.year)); wh.push(`extract(year from ${DATE_EXPR})=$${params.length}`); }
         if (f.month) { params.push(Number(f.month)); wh.push(`extract(month from ${DATE_EXPR})=$${params.length}`); }
-        if (allowed) { params.push(allowed); wh.push(`lp.satker_id = any($${params.length})`); }
+        if (allowed) { params.push(allowed); wh.push(`(lp.satker_id = any($${params.length}) or lp.unit_satker_id = any($${params.length}))`); }
+        this.appendTaxonomyFilter(f, params, wh);
         return { where: wh.length ? 'where ' + wh.join(' and ') : '', params };
     }
 
@@ -225,22 +334,225 @@ export class AnevService {
         return out;
     }
 
-    /** Tentukan scope data dari user: superadmin/admin_binops -> semua; operator -> subtree satkernya. */
+    /**
+     * Scope operasional satker:
+     * 1. Mabes/Bareskrim: seluruh satker nasional
+     * 2. Sat Reskrim tingkat Polres: Sat Reskrim + Polsek & Unit Reskrim di bawah Polres yang sama
+     * 3. Polda, Polres, Polsek, atau satker lainnya: seluruh satker turunan (subtree) secara rekursif
+     */
+    private async operationalReadIds(rootId: number): Promise<number[]> {
+        const sRows = await this.ds.query('select id, deskripsi, tipe_satker, parent_id from bdb_satker where id=$1', [rootId]);
+        if (!sRows.length) return [rootId];
+        const s = sRows[0];
+        const deskripsi = String(s.deskripsi || '').trim().toUpperCase();
+        const tipe = String(s.tipe_satker || '').trim().toUpperCase();
+
+        const isApex = rootId === 1 || rootId === 13 || deskripsi === 'BARESKRIM POLRI' || deskripsi === 'MABES POLRI';
+        if (isApex) {
+            const all = await this.ds.query('select id from bdb_satker');
+            return all.map((r: any) => Number(r.id)).filter(Number.isFinite);
+        }
+
+        if (deskripsi.startsWith('SAT RESKRIM') && s.parent_id) {
+            const pRows = await this.ds.query('select id, deskripsi, tipe_satker from bdb_satker where id=$1', [s.parent_id]);
+            const p = pRows[0];
+            const pTipe = String(p?.tipe_satker || '').trim().toUpperCase();
+            const pDesk = String(p?.deskripsi || '').trim().toUpperCase();
+            const isPolres = ['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO'].includes(pTipe) || pDesk.startsWith('POLRES');
+            if (isPolres) {
+                const polresChildren = await this.descendantIds(Number(s.parent_id));
+                const satkers = await this.ds.query('select id, deskripsi, tipe_satker, parent_id from bdb_satker where id = any($1)', [polresChildren]);
+                const satkerMap = new Map<number, any>();
+                for (const row of satkers) satkerMap.set(Number(row.id), row);
+
+                const allowed = new Set<number>([Number(rootId)]);
+                for (const cid of polresChildren) {
+                    const cs = satkerMap.get(cid);
+                    if (!cs) continue;
+                    const cTipe = String(cs.tipe_satker || '').trim().toUpperCase();
+                    const cDesk = String(cs.deskripsi || '').trim().toUpperCase();
+                    if (cTipe === 'POLSEK' || cDesk.startsWith('POLSEK')) {
+                        allowed.add(cid);
+                    } else if (cs.parent_id) {
+                        const cp = satkerMap.get(Number(cs.parent_id));
+                        const cpTipe = String(cp?.tipe_satker || '').trim().toUpperCase();
+                        const cpDesk = String(cp?.deskripsi || '').trim().toUpperCase();
+                        if ((cpTipe === 'POLSEK' || cpDesk.startsWith('POLSEK')) && (cDesk.startsWith('UNIT RESKRIM') || cDesk.startsWith('RESKRIM POLSEK'))) {
+                            allowed.add(cid);
+                        }
+                    }
+                }
+                return Array.from(allowed);
+            }
+        }
+
+        return this.descendantIds(rootId);
+    }
+
+    /** Tentukan scope data dari user: superadmin/admin_binops/viewer Bareskrim -> semua; viewer/operator lokal -> subtree satkernya. */
     private async resolveScope(userId?: number) {
-        if (!userId) return { all: false, satkerId: null as number | null };
-        const rows = await this.ds.query('select role_bdb, role_name, scope_satker_id from auth_users where id=$1', [userId]);
+        if (!userId) return { all: false, isSuper: false, satkerId: null as number | null };
+        const rows = await this.ds.query(
+            `select u.role_bdb, u.role_name, u.scope_satker_id, s.deskripsi as satker_deskripsi, s.tipe_satker as satker_tipe
+             from auth_users u
+             left join bdb_satker s on s.id = u.scope_satker_id
+             where u.id = $1`,
+            [userId]
+        );
         const u = rows[0];
         const roleBdb = String(u?.role_bdb || '').toLowerCase();
         const roleName = String(u?.role_name || '').toLowerCase();
         const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
         const isAdmin = roleBdb === 'admin_binops';
         if (isSuper || isAdmin) return { all: true, isSuper, satkerId: null as number | null };
+
+        const isViewer = roleBdb === 'viewer' || roleName.includes('viewer');
+        if (isViewer) {
+            const sId = u?.scope_satker_id != null ? Number(u.scope_satker_id) : null;
+            const sTipe = String(u?.satker_tipe || '').toUpperCase();
+            const sDesk = String(u?.satker_deskripsi || '').toUpperCase();
+            const isApexMabes = !sId || sId === 1 || sId === 13 || sDesk === 'BARESKRIM POLRI' || sDesk === 'MABES POLRI';
+            if (isApexMabes) {
+                return { all: true, isSuper: false, satkerId: sId || 13 };
+            }
+        }
+
         return { all: false, isSuper: false, satkerId: u?.scope_satker_id != null ? Number(u.scope_satker_id) : null };
+    }
+
+    private getCrimeFunctionDomain(satkerId?: number | null, deskripsi?: string): string[] | null {
+        const id = Number(satkerId || 0);
+        const desk = String(deskripsi || '').toUpperCase();
+        if (id === 20675 || desk === 'DITTIPIDPPADANPPO BARESKRIM POLRI' || desk.includes('PPAPPO') || (desk.includes('PPA') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDPPAPPO'];
+        }
+        if (id === 18 || desk === 'DITTIPIDUM BARESKRIM POLRI' || (desk.includes('TIPIDUM') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDUM'];
+        }
+        if (id === 19 || desk === 'DITTIPIDEKSUS BARESKRIM POLRI' || (desk.includes('TIPIDEKSUS') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDEKSUS'];
+        }
+        if (id === 20 || desk === 'DITTIPIDKOR BARESKRIM POLRI' || (desk.includes('TIPIDKOR') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDKOR'];
+        }
+        if (id === 21 || desk === 'DITTIPIDNARKOBA BARESKRIM POLRI' || (desk.includes('TIPIDNARKOBA') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDNARKOBA'];
+        }
+        if (id === 22 || desk === 'DITTIPIDTER BARESKRIM POLRI' || (desk.includes('TIPIDTER') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDTER'];
+        }
+        if (id === 23 || desk === 'DITTIPIDSIBER BARESKRIM POLRI' || (desk.includes('TIPIDSIBER') && desk.includes('BARESKRIM'))) {
+            return ['TIPIDSIBER'];
+        }
+        if (desk.includes('PPA') || desk.includes('PPO')) {
+            return ['TIPIDPPAPPO'];
+        }
+        if (desk.includes('TIPIDUM') || desk.includes('KRIDUM')) {
+            return ['TIPIDUM'];
+        }
+        if (desk.includes('TIPIDEKSUS') || desk.includes('EKSUS')) {
+            return ['TIPIDEKSUS'];
+        }
+        if (desk.includes('TIPIDKOR') || desk.includes('KORUPSI')) {
+            return ['TIPIDKOR'];
+        }
+        if (desk.includes('TIPIDNARKOBA') || desk.includes('NARKOBA')) {
+            return ['TIPIDNARKOBA'];
+        }
+        if (desk.includes('TIPIDTER')) {
+            return ['TIPIDTER'];
+        }
+        if (desk.includes('TIPIDSIBER') || desk.includes('SIBER')) {
+            return ['TIPIDSIBER'];
+        }
+        if (desk.includes('KRIMSUS')) {
+            return ['TIPIDEKSUS', 'TIPIDTER', 'TIPIDSIBER', 'TIPIDKOR'];
+        }
+        if (desk.includes('KRIMUM')) {
+            return ['TIPIDUM', 'TIPIDPPAPPO'];
+        }
+        return null;
     }
 
     /** Ringkasan dashboard: CT, CC, %CC, 5 kejahatan tertinggi, 10 satker CT & CC tertinggi, CT:CC per Polda. */
     async dashboard(f: Filter, userId?: number) {
         const scope = await this.resolveScope(userId);
+        const cacheKey = [
+            scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
+            f.date_from || '',
+            f.date_to || '',
+            f.year || '',
+            f.month || '',
+            f.functionDomain || '',
+            f.organizationDomain || ''
+        ].join(':');
+
+        const force = String((f as any).force || (f as any).refresh || '') === '1';
+        if (!force) {
+            const hit = this.dashCache.get(cacheKey);
+            if (hit && Date.now() - hit.at < 1800000) {
+                return hit.res;
+            }
+        }
+
+        // 13 Partisi Snapshot Lookup (Bulan 1 s/d 12 + Tahun Penuh)
+        const scopeKey = scope.all ? 'ALL' : String(scope.satkerId || 'NONE');
+        const functionDomain = f.functionDomain || 'INTERNAL_RESERSE';
+        const organizationDomain = f.organizationDomain || 'INTERNAL_POLRI';
+
+        let targetTahun: number | null = null;
+        let targetBulan: number | null = null;
+        if (f.year) targetTahun = Number(f.year);
+        if (f.month) targetBulan = Number(f.month);
+        if (f.date_from && f.date_to) {
+            const mFrom = String(f.date_from).match(/^(\d{4})-(\d{2})-01$/);
+            const mTo = String(f.date_to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
+                targetTahun = Number(mFrom[1]);
+                targetBulan = Number(mFrom[2]);
+            } else if (f.date_from === `${targetTahun || 2026}-01-01` && f.date_to === `${targetTahun || 2026}-12-31`) {
+                targetTahun = targetTahun || 2026;
+                targetBulan = null;
+            }
+        }
+
+        // Sesuai aturan: jika saat ini bulan September 2026, bulan Oktober-Desember (10, 11, 12)
+        // tahun 2026 belum terjadi sehingga acuan komparasi tahunan menggunakan data Tahun 2025.
+        if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
+            targetTahun = 2025;
+        }
+
+        if (!force && targetTahun !== null) {
+            try {
+                const snapSql = targetBulan !== null
+                    ? 'SELECT data FROM bdb_anev_dashboard_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = $3 AND function_domain = $4 AND organization_domain = $5 ORDER BY refreshed_at DESC LIMIT 1'
+                    : 'SELECT data FROM bdb_anev_dashboard_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = $2 AND function_domain = $3 AND organization_domain = $4 ORDER BY refreshed_at DESC LIMIT 1';
+                const snapParams = targetBulan !== null
+                    ? [targetTahun, targetBulan, scopeKey, functionDomain, organizationDomain]
+                    : [targetTahun, scopeKey, functionDomain, organizationDomain];
+                const snapRows = await this.ds.query(snapSql, snapParams);
+                if (snapRows.length > 0 && snapRows[0].data) {
+                    const resData = snapRows[0].data;
+                    resData.scoped = !scope.all;
+                    if (!scope.all && scope.satkerId) {
+                        const r = await this.ds.query('select deskripsi from bdb_satker where id=$1', [scope.satkerId]);
+                        resData.scope_satker = r[0]?.deskripsi || null;
+                    }
+                    const isBareskrimDirektorat = !scope.all && !!(
+                        (scope.satkerId && [18, 19, 20, 21, 22, 23, 20675].includes(Number(scope.satkerId))) ||
+                        (resData.scope_satker && resData.scope_satker.toUpperCase().includes('BARESKRIM') && !resData.scope_satker.toUpperCase().includes('POLDA'))
+                    );
+                    resData.is_nasional = isBareskrimDirektorat;
+                    resData.label_kejahatan = isBareskrimDirektorat ? '10 Kejahatan Nasional · Tertinggi' : (!scope.all ? '10 Kejahatan Regional · Tertinggi' : '10 Kejahatan Tertinggi');
+                    resData.label_satker_ct = isBareskrimDirektorat ? '10 Satker · CT Tertinggi' : (!scope.all ? '10 Satker Regional · CT Tertinggi' : '10 Satker · CT Tertinggi');
+                    resData.label_satker_cc = isBareskrimDirektorat ? '10 Satker · CC Tertinggi' : (!scope.all ? '10 Satker Regional · CC Tertinggi' : '10 Satker · CC Tertinggi');
+                    this.dashCache.set(cacheKey, { at: Date.now(), res: { status: 1, data: resData } });
+                    return { status: 1, data: resData };
+                }
+            } catch (snapErr: any) {
+                // fallback ke live query bila ada kendala pada snapshot
+            }
+        }
         // nama satker lingkup (untuk header profil operator)
         let scopeSatker: string | null = null;
         if (!scope.all && scope.satkerId) {
@@ -251,19 +563,22 @@ export class AnevService {
         let allowed: number[] | null = null;
         if (!scope.all) {
             if (!scope.satkerId) return { status: 1, data: empty };
-            allowed = [scope.satkerId]; // isolasi EXACT ke satker sendiri (tidak hirarki)
+            allowed = await this.operationalReadIds(scope.satkerId);
         }
 
         const { where, params } = this.buildWhereLp(f, allowed);
 
-        // Per satker (langsung) + total CT/CC
+        // Peringkat default memakai satker teritorial (lp.satker_id). Child fungsional
+        // (unit_satker_id) hanya layak dipakai jika dashboard sedang difilter jenis kejahatan;
+        // dashboard saat ini belum menyediakan filter tersebut.
+        const satkerField = (!scope.all && scope.satkerId) ? 'coalesce(lp.unit_satker_id, lp.satker_id)' : 'lp.satker_id';
         const perSat = await this.ds.query(
-            `select lp.satker_id as sid, s.deskripsi as nama, coalesce(st.kategori,'CT') as kat, count(*)::int as jml
+            `select ${satkerField} as sid, s.deskripsi as nama, coalesce(st.kategori,'CT') as kat, count(*)::int as jml
              from bdb_laporan_polisi lp
-             join bdb_satker s on s.id=lp.satker_id
+             join bdb_satker s on s.id=${satkerField}
              left join bdb_status_master st on st.id=lp.status_id
              ${where}
-             group by lp.satker_id, s.deskripsi, st.kategori`,
+             group by ${satkerField}, s.deskripsi, st.kategori`,
             params
         );
         const sat = new Map<number, { nama: string; ct: number; cc: number }>();
@@ -271,21 +586,33 @@ export class AnevService {
         for (const r of perSat) {
             let e = sat.get(r.sid);
             if (!e) { e = { nama: r.nama, ct: 0, cc: 0 }; sat.set(r.sid, e); }
-            if (r.kat === 'CC') { e.cc += r.jml; cc += r.jml; } else { e.ct += r.jml; ct += r.jml; }
+            // CT pada Dashboard berarti Crime Total / seluruh LP dalam periode,
+            // bukan hanya LP yang status aktifnya masih berkategori CT.
+            e.ct += r.jml;
+            ct += r.jml;
+            if (r.kat === 'CC') { e.cc += r.jml; cc += r.jml; }
         }
         const arr = [...sat.values()];
-        const top_satker_ct = arr.filter((x) => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
-        const top_satker_cc = arr.filter((x) => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+        let top_satker_ct = arr.filter((x) => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+        let top_satker_cc = arr.filter((x) => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+        let top_kejahatan_regional: { nama: string; jml: number }[] = [];
+        let regional_nama: string | null = null;
+        let regional_ct: number = 0;
 
         // 10 kejahatan tertinggi (dari tabel ternormalisasi bdb_lp_tindak_pidana_dors, bukan unnest
         // jsonb_array_elements langsung -- yg terakhir ini 9x lebih lambat krn overhead pemanggilan
         // fungsi per-baris di Postgres untuk puluhan ribu baris; tabelnya sudah cermin persis payload.
         const kej = await this.ds.query(
             `select kat as nama, count(*)::int as jml from (
-                select coalesce(nullif(tp.nama_kategori_kejahatan,''),'(Tanpa kategori)') as kat
+                select tp.nama_kategori_kejahatan as kat
                 from bdb_lp_tindak_pidana_dors tp
                 join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
-                ${where}
+                ${where ? where + ' and ' : 'where '}
+                  nullif(tp.nama_kategori_kejahatan, '') is not null
+                  and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
+                  and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
+                  and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
+                  and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
              ) x group by kat order by jml desc limit 10`,
             params
         );
@@ -296,11 +623,14 @@ export class AnevService {
         // menghilangkan baris itu sepenuhnya (efeknya jadi INNER JOIN).
         const psParams: any[] = [];
         let psJoin = '';
-        if (allowed) { psParams.push(allowed); psJoin += ` and lp.satker_id = any($${psParams.length})`; }
+        if (allowed) { psParams.push(allowed); psJoin += ` and (lp.satker_id = any($${psParams.length}) or lp.unit_satker_id = any($${psParams.length}))`; }
         if (f.date_from) { psParams.push(f.date_from); psJoin += ` and ${DATE_EXPR} >= $${psParams.length}`; }
         if (f.date_to) { psParams.push(f.date_to); psJoin += ` and ${DATE_EXPR} <= $${psParams.length}`; }
         if (f.year) { psParams.push(Number(f.year)); psJoin += ` and extract(year from ${DATE_EXPR})=$${psParams.length}`; }
         if (f.month) { psParams.push(Number(f.month)); psJoin += ` and extract(month from ${DATE_EXPR})=$${psParams.length}`; }
+        const psTaxonomy: string[] = [];
+        this.appendTaxonomyFilter(f, psParams, psTaxonomy);
+        if (psTaxonomy.length) psJoin += ` and ${psTaxonomy.join(' and ')}`;
         const per_status = await this.ds.query(
             `select s.code, s.nama, coalesce(s.kategori,'CT') as kategori, s.urutan, count(lp.id)::int as jumlah
              from bdb_status_master s
@@ -310,18 +640,32 @@ export class AnevService {
             psParams
         );
 
-        // CT/CC hari ini (tgl_laporan = hari ini)
+        // Aktivitas hari ini memakai dua tanggal yang berbeda:
+        // - CT = tanggal LP masuk;
+        // - CC = tanggal penyelesaian kanonik dari snapshot Kinerja Perkara.
+        // Rumus lama mengelompokkan status CC dengan tanggal LP dan membuat CC Hari Ini salah.
         const tParams: any[] = [];
-        let tWhere = `where ${DATE_EXPR} = current_date`;
-        if (allowed) { tParams.push(allowed); tWhere += ` and lp.satker_id = any($${tParams.length})`; }
-        const todayRows = await this.ds.query(
-            `select coalesce(st.kategori,'CT') as kat, count(*)::int as jml
-             from bdb_laporan_polisi lp left join bdb_status_master st on st.id=lp.status_id
-             ${tWhere} group by st.kategori`,
+        const tWhere: string[] = [`${DATE_EXPR}=current_date`];
+        if (allowed) { tParams.push(allowed); tWhere.push(`(lp.satker_id=any($${tParams.length}) or lp.unit_satker_id=any($${tParams.length}))`); }
+        this.appendTaxonomyFilter(f, tParams, tWhere);
+        const ctTodayRows = await this.ds.query(
+            `select count(*)::int as jml from bdb_laporan_polisi lp where ${tWhere.join(' and ')}`,
             tParams
         );
-        let ct_today = 0, cc_today = 0;
-        for (const r of todayRows) { if (r.kat === 'CC') cc_today += r.jml; else ct_today += r.jml; }
+        const ct_today = Number(ctTodayRows[0]?.jml || 0);
+
+        const cParams: any[] = [];
+        const cWhere: string[] = ['ks.tanggal_selesai=current_date'];
+        if (allowed) { cParams.push(allowed); cWhere.push(`(lp.satker_id=any($${cParams.length}) or lp.unit_satker_id=any($${cParams.length}))`); }
+        this.appendTaxonomyFilter(f, cParams, cWhere);
+        const ccTodayRows = await this.ds.query(
+            `select count(*)::int as jml
+               from bdb_kinerja_perkara_snapshot ks
+               join bdb_laporan_polisi lp on lp.id=ks.lp_id
+              where ${cWhere.join(' and ')}`,
+            cParams
+        );
+        const cc_today = Number(ccTodayRows[0]?.jml || 0);
 
         // Informasi integrasi DORS (khusus superadmin)
         let integrasi: any = null;
@@ -339,22 +683,308 @@ export class AnevService {
 
         // CT:CC per Polda (node depth=1 yang bernama POLDA, sudah rollup subtree)
         const { byKode } = await this.buildTree(f, allowed);
-        const polda = [...byKode.values()]
+        let polda = [...byKode.values()]
             .filter((n) => n.depth === 1 && /^POLDA/i.test(n.nama) && n.total > 0)
-            .sort((a, b) => b.ct - a.ct)
+            .sort((a, b) => b.total - a.total)
             .slice(0, 20)
-            .map((n) => ({ nama: n.nama.replace(/^POLDA\s+/i, ''), ct: n.ct, cc: n.cc }));
+            .map((n) => ({ nama: n.nama.replace(/^POLDA\s+/i, ''), ct: n.total, cc: n.cc }));
 
-        return {
+        if (!scope.all && scope.satkerId) {
+            try {
+                const satkerRows = await this.ds.query('select id, deskripsi, parent_id, tipe_satker from bdb_satker');
+                const satkerMap = new Map<number, { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }>();
+                for (const r of satkerRows) {
+                    satkerMap.set(Number(r.id), { id: Number(r.id), deskripsi: r.deskripsi, parent_id: r.parent_id ? Number(r.parent_id) : null, tipe_satker: r.tipe_satker });
+                }
+
+                let cur: number | null = scope.satkerId;
+                let regionalRoot: { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string } | null = null;
+                while (cur) {
+                    const s = satkerMap.get(cur);
+                    if (!s) break;
+                    if ((s.tipe_satker && s.tipe_satker.toUpperCase() === 'POLDA') || /^POLDA\b/i.test(s.deskripsi)) {
+                        regionalRoot = s;
+                        break;
+                    }
+                    cur = s.parent_id;
+                }
+
+                if (regionalRoot) {
+                    regional_nama = regionalRoot.deskripsi;
+                    const allRegIds: number[] = [];
+                    for (const [id] of satkerMap.entries()) {
+                        let p: number | null = id;
+                        while (p) {
+                            if (p === regionalRoot.id) {
+                                allRegIds.push(id);
+                                break;
+                            }
+                            const parentNode = satkerMap.get(p);
+                            p = parentNode ? parentNode.parent_id : null;
+                        }
+                    }
+
+                    if (allRegIds.length > 0) {
+                        const { where: regWhere, params: regParams } = this.buildWhereLp(f, allRegIds);
+                        const regPerSat = await this.ds.query(
+                            `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                                    coalesce(st.kategori,'CT') as kat,
+                                    count(*)::int as jml
+                             from bdb_laporan_polisi lp
+                             left join bdb_status_master st on st.id = lp.status_id
+                             ${regWhere}
+                               and coalesce(lp.satker_id, lp.unit_satker_id) is not null
+                             group by coalesce(lp.satker_id, lp.unit_satker_id), st.kategori`,
+                            regParams
+                        );
+
+                        const getUnit = (sid: number) => {
+                            let p: number | null = sid;
+                            while (p && p !== regionalRoot!.id) {
+                                const s = satkerMap.get(p);
+                                if (!s) break;
+                                if (s.parent_id === regionalRoot!.id) return s;
+                                p = s.parent_id;
+                            }
+                            return satkerMap.get(sid) || { id: sid, deskripsi: 'UNKNOWN' };
+                        };
+
+                        const unitMap = new Map<number, { id: number; nama: string; ct: number; cc: number }>();
+                        for (const r of regPerSat) {
+                            const u = getUnit(Number(r.sid));
+                            if (u.id === 0 || u.deskripsi === 'UNKNOWN') continue;
+                            let item = unitMap.get(u.id);
+                            if (!item) {
+                                item = { id: u.id, nama: u.deskripsi, ct: 0, cc: 0 };
+                                unitMap.set(u.id, item);
+                            }
+                            item.ct += Number(r.jml);
+                            regional_ct += Number(r.jml);
+                            if (r.kat === 'CC') item.cc += Number(r.jml);
+                        }
+
+                        const regTopCT = [...unitMap.values()].filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10);
+                        const regTopCC = [...unitMap.values()].filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10);
+
+                        if (regTopCT.length > 0) top_satker_ct = regTopCT.map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+                        if (regTopCC.length > 0) top_satker_cc = regTopCC.map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+
+                        // Jika user adalah fungsi spesifik di Polda (Krimum, Krimsus, Narkoba, dll.), ambil kejahatan murni domain fungsi tersebut
+                        const userNode = satkerMap.get(scope.satkerId);
+                        const poldaFuncDomain = this.getCrimeFunctionDomain(userNode?.id, userNode?.deskripsi);
+                        if (poldaFuncDomain) {
+                            const fParams = [...regParams, poldaFuncDomain];
+                            const funcKej = await this.ds.query(
+                                `select kat as nama, count(*)::int as jml from (
+                                    select tp.nama_kategori_kejahatan as kat
+                                    from bdb_lp_tindak_pidana_dors tp
+                                    join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
+                                    join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                    ${regWhere}
+                                      and m.kelompok = ANY($${fParams.length})
+                                      and nullif(tp.nama_kategori_kejahatan, '') is not null
+                                      and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
+                                      and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
+                                      and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
+                                      and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
+                                 ) x group by kat order by jml desc limit 10`,
+                                fParams
+                            );
+                            top_kejahatan_regional = funcKej.map((k: any) => ({ nama: k.nama, jml: Number(k.jml) }));
+                        } else {
+                            const regKej = await this.ds.query(
+                                `select kat as nama, count(*)::int as jml from (
+                                    select tp.nama_kategori_kejahatan as kat
+                                    from bdb_lp_tindak_pidana_dors tp
+                                    join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                    ${regWhere}
+                                      and nullif(tp.nama_kategori_kejahatan, '') is not null
+                                      and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
+                                      and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
+                                      and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
+                                      and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
+                                 ) x group by kat order by jml desc limit 10`,
+                                regParams
+                            );
+                            top_kejahatan_regional = regKej.map((k: any) => ({ nama: k.nama, jml: Number(k.jml) }));
+                        }
+                    }
+                } else {
+                    // Satker Mabes / Direktorat Bareskrim: Tampilkan 10 kejahatan nasional domain fungsi & ranking 10 Polda se-Indonesia
+                    const userNode = satkerMap.get(scope.satkerId);
+                    const bareskrimDomain = this.getCrimeFunctionDomain(userNode?.id, userNode?.deskripsi);
+                    if (bareskrimDomain) {
+                        const bParams: any[] = [bareskrimDomain];
+                        const bWhere: string[] = [
+                            `m.kelompok = ANY($1)`,
+                            `lp.deleted_at IS NULL`,
+                            `coalesce(lp.dilimpahkan_eksternal, false) = false`,
+                            `nullif(tp.nama_kategori_kejahatan, '') is not null`,
+                            `tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')`,
+                            `tp.nama_kategori_kejahatan not ilike '%lalu lintas%'`,
+                            `tp.nama_kategori_kejahatan not ilike '%kecelakaan%'`,
+                            `tp.nama_kategori_kejahatan not ilike '%laka lantas%'`
+                        ];
+                        if (f.date_from) { bParams.push(f.date_from); bWhere.push(`${DATE_EXPR} >= $${bParams.length}`); }
+                        if (f.date_to) { bParams.push(f.date_to); bWhere.push(`${DATE_EXPR} <= $${bParams.length}`); }
+                        if (f.year) { bParams.push(Number(f.year)); bWhere.push(`extract(year from ${DATE_EXPR})=$${bParams.length}`); }
+                        if (f.month) { bParams.push(Number(f.month)); bWhere.push(`extract(month from ${DATE_EXPR})=$${bParams.length}`); }
+                        this.appendTaxonomyFilter(f, bParams, bWhere);
+
+                        const natKej = await this.ds.query(
+                            `select kat as nama, count(*)::int as jml from (
+                                select tp.nama_kategori_kejahatan as kat
+                                from bdb_lp_tindak_pidana_dors tp
+                                join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
+                                join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                where ${bWhere.join(' and ')}
+                             ) x group by kat order by jml desc limit 10`,
+                            bParams
+                        );
+                        top_kejahatan_regional = natKej.map((k: any) => ({ nama: k.nama, jml: Number(k.jml) }));
+
+                        const bPerSat = await this.ds.query(
+                            `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                                    coalesce(st.kategori, 'CT') as kat,
+                                    count(distinct lp.id)::int as jml
+                             from bdb_lp_tindak_pidana_dors tp
+                             join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
+                             join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                             left join bdb_status_master st on st.id = lp.status_id
+                             where ${bWhere.join(' and ')}
+                               and coalesce(lp.satker_id, lp.unit_satker_id) is not null
+                             group by coalesce(lp.satker_id, lp.unit_satker_id), st.kategori`,
+                            bParams
+                        );
+
+                        const getPolda = (sid: number) => {
+                            let p: number | null = sid;
+                            while (p) {
+                                const s = satkerMap.get(p);
+                                if (!s) break;
+                                if ((s.tipe_satker && s.tipe_satker.toUpperCase() === 'POLDA') || /^POLDA\b/i.test(s.deskripsi)) return s;
+                                p = s.parent_id;
+                            }
+                            return null;
+                        };
+
+                        const poldaMap = new Map<number, { id: number; nama: string; ct: number; cc: number }>();
+                        for (const r of bPerSat) {
+                            const pol = getPolda(Number(r.sid));
+                            if (!pol) continue;
+                            let entry = poldaMap.get(pol.id);
+                            if (!entry) {
+                                entry = { id: pol.id, nama: pol.deskripsi, ct: 0, cc: 0 };
+                                poldaMap.set(pol.id, entry);
+                            }
+                            const count = Number(r.jml);
+                            entry.ct += count;
+                            regional_ct += count;
+                            if (r.kat === 'CC') entry.cc += count;
+                        }
+
+                        const poldaArr = [...poldaMap.values()];
+                        if (poldaArr.length > 0) {
+                            top_satker_ct = poldaArr.filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+                            top_satker_cc = poldaArr.filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+                            polda = poldaArr.filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 20).map(x => ({ nama: x.nama.replace(/^POLDA\s+/i, ''), ct: x.ct, cc: x.cc }));
+                            regional_nama = `${scopeSatker || 'Direktorat'} (Nasional)`;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Gagal hitung ranking regional dashboard: ' + String(err));
+            }
+        }
+
+        const isBareskrimDirektorat = !scope.all && !!(
+            (scope.satkerId && [18, 19, 20, 21, 22, 23, 20675].includes(Number(scope.satkerId))) ||
+            (scopeSatker && scopeSatker.toUpperCase().includes('BARESKRIM') && !scopeSatker.toUpperCase().includes('POLDA'))
+        );
+
+        const finalResult = {
             status: 1,
             data: {
                 ct, cc,
-                pct: ct + cc ? Math.round((cc / (ct + cc)) * 1000) / 10 : 0,
+                pct: ct ? Math.round((cc / ct) * 1000) / 10 : 0,
                 ct_today, cc_today, per_status,
-                top_kejahatan: kej.map((k: any) => ({ nama: k.nama, jml: k.jml })),
+                top_kejahatan: (!scope.all && top_kejahatan_regional.length > 0) ? top_kejahatan_regional : kej.map((k: any) => ({ nama: k.nama, jml: k.jml })),
+                top_kejahatan_regional,
+                regional_nama,
+                regional_ct,
+                is_nasional: isBareskrimDirektorat,
+                label_kejahatan: isBareskrimDirektorat ? '10 Kejahatan Nasional · Tertinggi' : (!scope.all ? '10 Kejahatan Regional · Tertinggi' : '10 Kejahatan Tertinggi'),
+                label_satker_ct: isBareskrimDirektorat ? '10 Satker · CT Tertinggi' : (!scope.all ? '10 Satker Regional · CT Tertinggi' : '10 Satker · CT Tertinggi'),
+                label_satker_cc: isBareskrimDirektorat ? '10 Satker · CC Tertinggi' : (!scope.all ? '10 Satker Regional · CC Tertinggi' : '10 Satker · CC Tertinggi'),
                 top_satker_ct, top_satker_cc, polda, integrasi,
                 scoped: !scope.all, scope_ada_data: arr.length > 0, scope_satker: scopeSatker
             }
         };
+        this.dashCache.set(cacheKey, { at: Date.now(), res: finalResult });
+
+        if (targetTahun !== null) {
+            try {
+                await this.ds.query(
+                    `INSERT INTO bdb_anev_dashboard_snapshot (
+                        tahun, bulan, scope_key, function_domain, organization_domain, data, refreshed_at
+                     ) VALUES ($1, $2, $3, $4, $5, $6, now())
+                     ON CONFLICT (tahun, bulan, scope_key, function_domain, organization_domain)
+                     DO UPDATE SET data = EXCLUDED.data, refreshed_at = now()`,
+                    [targetTahun, targetBulan, scopeKey, functionDomain, organizationDomain, JSON.stringify(finalResult.data)]
+                );
+            } catch (saveErr: any) {
+                // Background save error non-fatal
+            }
+        }
+
+        return finalResult;
+    }
+
+    /** Memperbarui seluruh snapshot 13 partisi Dashboard Anev */
+    async refreshDashboardSnapshots(onlyActivePeriod: boolean = false) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const pad = (n: number) => String(n).padStart(2, '0');
+
+        const activePartitions = [
+            { tahun: currentYear, bulan: currentMonth, from: `${currentYear}-${pad(currentMonth)}-01`, to: `${currentYear}-${pad(currentMonth)}-${pad(lastDayOfMonth)}` },
+            { tahun: currentYear, bulan: null, from: `${currentYear}-01-01`, to: `${currentYear}-12-31` }
+        ];
+        const allPartitions = [
+            { tahun: 2026, bulan: 1, from: '2026-01-01', to: '2026-01-31' },
+            { tahun: 2026, bulan: 2, from: '2026-02-01', to: '2026-02-28' },
+            { tahun: 2026, bulan: 3, from: '2026-03-01', to: '2026-03-31' },
+            { tahun: 2026, bulan: 4, from: '2026-04-01', to: '2026-04-30' },
+            { tahun: 2026, bulan: 5, from: '2026-05-01', to: '2026-05-31' },
+            { tahun: 2026, bulan: 6, from: '2026-06-01', to: '2026-06-30' },
+            { tahun: 2026, bulan: 7, from: '2026-07-01', to: '2026-07-31' },
+            { tahun: 2026, bulan: 8, from: '2026-08-01', to: '2026-08-31' },
+            { tahun: 2026, bulan: 9, from: '2026-09-01', to: '2026-09-30' },
+            { tahun: 2025, bulan: 10, from: '2025-10-01', to: '2025-10-31' },
+            { tahun: 2025, bulan: 11, from: '2025-11-01', to: '2025-11-30' },
+            { tahun: 2025, bulan: 12, from: '2025-12-01', to: '2025-12-31' },
+            { tahun: 2026, bulan: null, from: '2026-01-01', to: '2026-12-31' }
+        ];
+
+        const partitions = onlyActivePeriod ? activePartitions : allPartitions;
+        for (const p of partitions) {
+            try {
+                await this.dashboard({
+                    date_from: p.from,
+                    date_to: p.to,
+                    year: p.tahun,
+                    month: p.bulan,
+                    functionDomain: 'INTERNAL_RESERSE',
+                    organizationDomain: 'INTERNAL_POLRI',
+                    force: '1'
+                } as any, 1);
+            } catch (e: any) {
+                console.error(`Gagal refresh dashboard snapshot partition ${p.tahun}-${p.bulan}: ` + e?.message);
+            }
+        }
+        this.dashCache.clear();
     }
 }
+
