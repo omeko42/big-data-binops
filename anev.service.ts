@@ -80,7 +80,7 @@ export class AnevService {
 
     private buildWhere(f: Filter) {
         const params: any[] = [];
-        const wh: string[] = [];
+        const wh: string[] = ['lp.deleted_at is null', 'coalesce(lp.dilimpahkan_eksternal, false) = false'];
         if (f.date_from) {
             params.push(f.date_from);
             wh.push(`${DATE_EXPR} >= $${params.length}`);
@@ -299,7 +299,7 @@ export class AnevService {
     /** WHERE hanya untuk tanggal/tahun/bulan + scope satker (tanpa join status). Alias tabel = lp. */
     private buildWhereLp(f: Filter, allowed?: number[] | null) {
         const params: any[] = [];
-        const wh: string[] = [];
+        const wh: string[] = ['lp.deleted_at is null', 'coalesce(lp.dilimpahkan_eksternal, false) = false'];
         if (f.date_from) { params.push(f.date_from); wh.push(`${DATE_EXPR} >= $${params.length}`); }
         if (f.date_to) { params.push(f.date_to); wh.push(`${DATE_EXPR} <= $${params.length}`); }
         if (f.year) { params.push(Number(f.year)); wh.push(`extract(year from ${DATE_EXPR})=$${params.length}`); }
@@ -625,7 +625,7 @@ export class AnevService {
         // sedang 0 (blm ada LP cocok filter) tetap tampil barisnya; taruh di WHERE akan
         // menghilangkan baris itu sepenuhnya (efeknya jadi INNER JOIN).
         const psParams: any[] = [];
-        let psJoin = '';
+        let psJoin = ' and lp.deleted_at is null and coalesce(lp.dilimpahkan_eksternal, false) = false';
         if (allowed) { psParams.push(allowed); psJoin += ` and (lp.satker_id = any($${psParams.length}) or lp.unit_satker_id = any($${psParams.length}))`; }
         if (f.date_from) { psParams.push(f.date_from); psJoin += ` and ${DATE_EXPR} >= $${psParams.length}`; }
         if (f.date_to) { psParams.push(f.date_to); psJoin += ` and ${DATE_EXPR} <= $${psParams.length}`; }
@@ -648,7 +648,7 @@ export class AnevService {
         // - CC = tanggal penyelesaian kanonik dari snapshot Kinerja Perkara.
         // Rumus lama mengelompokkan status CC dengan tanggal LP dan membuat CC Hari Ini salah.
         const tParams: any[] = [];
-        const tWhere: string[] = [`${DATE_EXPR}=current_date`];
+        const tWhere: string[] = [`${DATE_EXPR}=current_date`, 'lp.deleted_at is null', 'coalesce(lp.dilimpahkan_eksternal, false) = false'];
         if (allowed) { tParams.push(allowed); tWhere.push(`(lp.satker_id=any($${tParams.length}) or lp.unit_satker_id=any($${tParams.length}))`); }
         this.appendTaxonomyFilter(f, tParams, tWhere);
         const ctTodayRows = await this.ds.query(
@@ -658,7 +658,7 @@ export class AnevService {
         const ct_today = Number(ctTodayRows[0]?.jml || 0);
 
         const cParams: any[] = [];
-        const cWhere: string[] = ['ks.tanggal_selesai=current_date'];
+        const cWhere: string[] = ['ks.tanggal_selesai=current_date', 'lp.deleted_at is null', 'coalesce(lp.dilimpahkan_eksternal, false) = false'];
         if (allowed) { cParams.push(allowed); cWhere.push(`(lp.satker_id=any($${cParams.length}) or lp.unit_satker_id=any($${cParams.length}))`); }
         this.appendTaxonomyFilter(f, cParams, cWhere);
         const ccTodayRows = await this.ds.query(
@@ -675,7 +675,7 @@ export class AnevService {
         if (scope.isSuper) {
             const tot = await this.ds.query('select count(*)::int as total, max(synced_at) as terakhir from bdb_dors_raw_lp');
             const perModel = await this.ds.query('select model_lp, count(*)::int as jumlah from bdb_dors_raw_lp group by model_lp order by model_lp');
-            const mapped = await this.ds.query('select count(*)::int as c from bdb_laporan_polisi');
+            const mapped = await this.ds.query('select count(*)::int as c from bdb_laporan_polisi where deleted_at is null');
             integrasi = {
                 total_ditarik: tot[0]?.total || 0,
                 total_termapping: mapped[0]?.c || 0,
