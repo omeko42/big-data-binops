@@ -3,8 +3,8 @@ import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { DorsService } from './dors.service';
 
-// Seluruh endpoint di sini khusus superadmin/admin_binops (sama seperti gate menu "Integrasi" di
-// frontend) -- sebelumnya controller ini tanpa guard sama sekali, jadi bisa diakses tanpa login.
+// Seluruh endpoint di sini khusus superadmin/admin_binops/operator (sama seperti gate menu "Integrasi" di
+// frontend)
 @UseGuards(AuthGuard)
 @UseInterceptors(CurrentUserInterceptor)
 @Controller('bdb/dors')
@@ -77,10 +77,55 @@ export class DorsController {
         return this.service.recentLogs(req.user, limit ? parseInt(limit, 10) : 20);
     }
 
+    /** Batalkan / hentikan proses sinkronisasi DORS yang sedang berjalan. */
+    @Post('sync/cancel')
+    cancelSync(@Req() req: any, @Body() body?: { logId?: number }) {
+        return this.service.cancelSync(req.user, body?.logId);
+    }
+
+    /** Metrik terpadu DORS (total ditarik per model, unmapped, history delete, dan status scheduler). */
+    @Get('metrics')
+    getMetrics(@Req() req: any) {
+        return this.service.getDorsMetrics(req.user);
+    }
+
+    /** Riwayat LP yang dihapus / dibatalkan di DORS (dari gk_history_delete). */
+    @Get('history-delete')
+    getHistoryDelete(
+        @Req() req: any,
+        @Query('page') page?: string,
+        @Query('row') row?: string,
+        @Query('search') search?: string,
+        @Query('applied') applied?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string
+    ) {
+        return this.service.listHistoryDelete(req.user, {
+            page: page ? parseInt(page, 10) : 1,
+            row: row ? parseInt(row, 10) : 25,
+            search,
+            applied,
+            from,
+            to
+        });
+    }
+
+    /** Tarik riwayat LP dihapus dari endpoint DORS gk_history_delete secara manual / on-demand. */
+    @Post('history-delete/sync')
+    syncHistoryDelete(@Req() req: any, @Body() body?: { from?: string; to?: string }) {
+        return this.service.syncHistoryDelete(req.user, body?.from, body?.to);
+    }
+
+    /** Terapkan status penghapusan massal ke Laporan Polisi (soft delete) untuk data yang belum ter-apply. */
+    @Post('history-delete/apply')
+    applyHistoryDelete(@Req() req: any) {
+        return this.service.applyPendingHistoryDelete(req.user);
+    }
+
     /** Ringkasan data LP hasil tarikan (jumlah per model + sync terakhir). */
     @Get('data/stats')
-    dataStats(@Req() req: any) {
-        return this.service.dataStats(req.user);
+    dataStats(@Req() req: any, @Query('from') from?: string, @Query('to') to?: string) {
+        return this.service.dataStats(req.user, from, to);
     }
 
     /** Normalisasi ulang data raw yang belum terpecah ke tabel relasi (data lama). */
@@ -91,7 +136,24 @@ export class DorsController {
 
     /** Daftar data LP hasil tarikan (paginasi + filter). */
     @Get('data')
-    listData(@Req() req: any, @Query('model') model?: string, @Query('search') search?: string, @Query('level') level?: string, @Query('page') page?: string, @Query('row') row?: string) {
-        return this.service.listData(req.user, { model, search, level, page: page ? parseInt(page, 10) : 1, row: row ? parseInt(row, 10) : 25 });
+    listData(
+        @Req() req: any,
+        @Query('model') model?: string,
+        @Query('search') search?: string,
+        @Query('level') level?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+        @Query('page') page?: string,
+        @Query('row') row?: string
+    ) {
+        return this.service.listData(req.user, {
+            model,
+            search,
+            level,
+            from,
+            to,
+            page: page ? parseInt(page, 10) : 1,
+            row: row ? parseInt(row, 10) : 25
+        });
     }
 }
