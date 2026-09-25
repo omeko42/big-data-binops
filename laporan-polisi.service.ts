@@ -389,6 +389,14 @@ export class LaporanPolisiService {
         const valuesSql = pairs.map(([d, k]) => `('${d}','${k}')`).join(',');
         const KP = LaporanPolisiService.KP_SQL;
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (
+                    select 1 from bdb_laporan_polisi lp
+                    where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
+                )
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -398,13 +406,13 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    'Mabes', ${KP}, s.id, s.deskripsi,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             join (values ${valuesSql}) cfg(dors, kw)
               on upper(regexp_replace(coalesce(r.payload_json->'unit'->>'unit',''),'[^A-Za-z0-9]','','g')) = cfg.dors
             join bdb_satker s
               on regexp_replace(upper(s.deskripsi),'[^A-Z0-9]','','g') like '%' || cfg.kw || '%'
             where jsonb_typeof(r.payload_json->'polda')='object' and r.payload_json->'polda'->>'nama' ilike '%mabes%'
-              and not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
             order by r.dors_lp_id, r.model_lp, s.id
             on conflict (dors_lp_id, model_lp) do nothing
             returning id
@@ -858,53 +866,72 @@ export class LaporanPolisiService {
         await this.ensureTable();
         const started = Date.now();
         const ret = await this.dataSource.query(`
-            with raw_target as materialized (
-                select r.*,
-                       ${LaporanPolisiService.LEVEL_SQL} as target_level,
-                       ${LaporanPolisiService.KP_SQL} as child_kp,
-                       ${LaporanPolisiService.DORS_KODE_SQL} as child_dkode,
-                       case
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                then r.payload_json->'polres'->>'kode_pusiknas'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
-                                then r.payload_json->'polda'->>'kode_pusiknas'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                then r.payload_json->'polres'->>'kode_pusiknas'
-                           when jsonb_typeof(r.payload_json->'polres')='object'
-                                then r.payload_json->'polda'->>'kode_pusiknas'
-                       end as parent_kp,
-                       case
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                then r.payload_json->'polres'->>'kode'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
-                                then r.payload_json->'polda'->>'kode'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                then r.payload_json->'polres'->>'kode'
-                           when jsonb_typeof(r.payload_json->'polres')='object'
-                                then r.payload_json->'polda'->>'kode'
-                       end as parent_dkode,
-                       case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                  or jsonb_typeof(r.payload_json->'polsek')='object'
-                            then r.payload_json->'polda'->>'kode_pusiknas' end as grandparent_kp,
-                       case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                  or jsonb_typeof(r.payload_json->'polsek')='object'
-                            then r.payload_json->'polda'->>'kode' end as grandparent_dkode
+            with unmapped_ids as materialized (
+                select r.id
                 from bdb_dors_raw_lp r
                 where not exists (
                     select 1 from bdb_laporan_polisi lp
-                    where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp
+                    where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
                 )
-                and not (
-                    coalesce(r.payload_json->>'dilimpahkan', '0') = '1'
-                    and exists (
+            ),
+            raw_target as materialized (
+                select r.id, r.dors_lp_id, r.model_lp, r.no_laporan, r.data_scope, r.payload_json,
+                       case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then 'Polsek'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then 'Polres'
+                           when jsonb_typeof(r.payload_json->'polda')='object' and r.payload_json->'polda'->>'nama' ilike '%mabes%' then 'Mabes'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then 'Polda'
+                           else 'Mabes'
+                       end as target_level,
+                       nullif(trim(regexp_replace(replace(case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polda')='object' and (r.payload_json->'polda'->>'kode' = '060.09' or r.payload_json->'polda'->>'nama' ilike '%lampung%') then '060.01.11'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then r.payload_json->'polda'->>'kode_pusiknas'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as child_kp,
+                       nullif(trim(regexp_replace(replace(case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then r.payload_json->'polda'->>'kode'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as child_dkode,
+                       nullif(trim(regexp_replace(replace(case
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                then r.payload_json->'polres'->>'kode_pusiknas'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
+                                then r.payload_json->'polda'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                then r.payload_json->'polres'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polres')='object'
+                                then r.payload_json->'polda'->>'kode_pusiknas'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as parent_kp,
+                       nullif(trim(regexp_replace(replace(case
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                then r.payload_json->'polres'->>'kode'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
+                                then r.payload_json->'polda'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                then r.payload_json->'polres'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polres')='object'
+                                then r.payload_json->'polda'->>'kode'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as parent_dkode,
+                       nullif(trim(regexp_replace(replace(case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                  or jsonb_typeof(r.payload_json->'polsek')='object'
+                            then r.payload_json->'polda'->>'kode_pusiknas' end, chr(160), ''), '\\s+', '', 'g')), '') as grandparent_kp,
+                       nullif(trim(regexp_replace(replace(case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                  or jsonb_typeof(r.payload_json->'polsek')='object'
+                            then r.payload_json->'polda'->>'kode' end, chr(160), ''), '\\s+', '', 'g')), '') as grandparent_dkode
+                from unmapped_ids u
+                join bdb_dors_raw_lp r on r.id = u.id
+                where (
+                    coalesce(r.payload_json->>'dilimpahkan', '0') <> '1'
+                    or not exists (
                         select 1 from bdb_laporan_polisi lp2
                         where lp2.deleted_at is null
                           and lp2.no_laporan is not null
-                          and trim(lp2.no_laporan) <> ''
                           and trim(lp2.no_laporan) = trim(r.no_laporan)
                     )
                 )
@@ -913,8 +940,7 @@ export class LaporanPolisiService {
                        s.deskripsi as resolved_satker_nama,
                        coalesce(s.kode,r.child_kp) as resolved_kode,
                        case
-                           when nullif(${LaporanPolisiService.normKode('r.child_dkode')},'') is not null
-                            and ${LaporanPolisiService.normKode('s.dors_kode')}=${LaporanPolisiService.normKode('r.child_dkode')}
+                           when r.child_dkode is not null and s.dors_kode = r.child_dkode
                            then 2 else 1
                        end as signal_rank
                 from raw_target r
@@ -924,12 +950,8 @@ export class LaporanPolisiService {
                  and coalesce(s.kinerja_aktif,true)=true
                  and s.dors_mapping_aktif=true
                  and (
-                      (nullif(${LaporanPolisiService.normKode('r.child_kp')},'') is not null and (
-                           ${LaporanPolisiService.normKode('s.kode')}=${LaporanPolisiService.normKode('r.child_kp')}
-                           or ${LaporanPolisiService.normKode('s.kode_canonical')}=${LaporanPolisiService.normKode('r.child_kp')}
-                      ))
-                      or (nullif(${LaporanPolisiService.normKode('r.child_dkode')},'') is not null
-                          and ${LaporanPolisiService.normKode('s.dors_kode')}=${LaporanPolisiService.normKode('r.child_dkode')})
+                      (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
                  )
                 left join bdb_satker p on p.id=s.parent_id
                 left join bdb_satker gp on gp.id=p.parent_id
@@ -943,13 +965,15 @@ export class LaporanPolisiService {
                           and coalesce(p.kinerja_aktif,true)=true
                           and p.dors_mapping_aktif=true
                           and (
-                               (nullif(${LaporanPolisiService.normKode('r.parent_kp')},'') is not null and (
-                                    ${LaporanPolisiService.normKode('p.kode')}=${LaporanPolisiService.normKode('r.parent_kp')}
-                                    or ${LaporanPolisiService.normKode('p.kode_canonical')}=${LaporanPolisiService.normKode('r.parent_kp')}
-                               ))
-                               or (nullif(${LaporanPolisiService.normKode('r.parent_dkode')},'') is not null
-                                   and ${LaporanPolisiService.normKode('p.dors_kode')}=${LaporanPolisiService.normKode('r.parent_dkode')})
+                               (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                               or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
                           )
+                      )
+                      or (
+                          r.target_level='Polsek'
+                          and gp.id is not null
+                          and upper(coalesce(gp.tipe_satker,''))='POLDA'
+                          and (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
                       )
                   )
                   and (
@@ -961,12 +985,8 @@ export class LaporanPolisiService {
                           and coalesce(gp.kinerja_aktif,true)=true
                           and gp.dors_mapping_aktif=true
                           and (
-                               (nullif(${LaporanPolisiService.normKode('r.grandparent_kp')},'') is not null and (
-                                    ${LaporanPolisiService.normKode('gp.kode')}=${LaporanPolisiService.normKode('r.grandparent_kp')}
-                                    or ${LaporanPolisiService.normKode('gp.kode_canonical')}=${LaporanPolisiService.normKode('r.grandparent_kp')}
-                               ))
-                               or (nullif(${LaporanPolisiService.normKode('r.grandparent_dkode')},'') is not null
-                                   and ${LaporanPolisiService.normKode('gp.dors_kode')}=${LaporanPolisiService.normKode('r.grandparent_dkode')})
+                               (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
+                               or (r.grandparent_dkode is not null and gp.dors_kode = r.grandparent_dkode)
                           )
                       )
                   )
@@ -1021,6 +1041,7 @@ export class LaporanPolisiService {
         await this.linkMasterData();
         const ownershipSync = await this.syncPelimpahanOwnershipFromDors();
         const reconciledDups = await this.reconcilePelimpahanDuplicates();
+        this.kinerjaPerkara.refreshSnapshot().catch((e) => this.logger.warn('refreshSnapshot post-map error: ' + (e?.message || e)));
         this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, dups reconciled ${reconciledDups}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
         return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync, dups_reconciled: reconciledDups }, message: `${mapped + mabes + viaAlias + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, nama ${viaName}).` };
     }
@@ -1200,6 +1221,11 @@ export class LaporanPolisiService {
     private async applyUnitAliases() {
         await this.ensureAliasTable();
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -1209,7 +1235,8 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    ${LaporanPolisiService.LEVEL_SQL}, ${LaporanPolisiService.KP_SQL}, a.satker_id, a.satker_nama,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             join bdb_dors_satker_map a
               on a.unit_nama is not null
                  and a.dors_kode_pusiknas is not null
@@ -1227,6 +1254,11 @@ export class LaporanPolisiService {
     private async applyGroupAliases() {
         await this.ensureAliasTable();
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -1236,7 +1268,8 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    ${LaporanPolisiService.LEVEL_SQL}, ${LaporanPolisiService.KP_SQL}, a.satker_id, a.satker_nama,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             cross join lateral (select
                 case when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'nama'
                      when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'nama'
