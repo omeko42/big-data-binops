@@ -41,7 +41,9 @@ generated/
 # ==========================================
 *.dump
 *.sql
+!scripts/migrations/*.sql
 *.tar
+
 *.tar.gz
 *.tgz
 *.zip
