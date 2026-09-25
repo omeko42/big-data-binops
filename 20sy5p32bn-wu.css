@@ -3690,3 +3690,165 @@ body:not([data-theme=dark]) .kp-toolbar-row {
   border-color: #ef4444 !important;
   color: #fca5a5 !important;
 }
+
+/* ==========================================================================
+   KINERJA PERKARA FILTER POPOVER: DROPUP & COMPACT DIMENSIONS ("ENAK DILIHAT")
+   ========================================================================== */
+
+/* 1. Dropup Panel: Tampil di atas kotak filter, tidak offside menutupi footer */
+.kp-modal-card .kp-filter-dropup,
+.kp-filter-popover .kp-filter-dropup,
+.kp-modal-body > div > div:nth-child(3) .p-multiselect-panel,
+.kp-modal-body > div > div:nth-child(4) .p-multiselect-panel {
+  top: auto !important;
+  bottom: calc(100% + 4px) !important;
+  transform-origin: bottom center !important;
+  border-radius: 10px !important;
+  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--cas-border-card, #233554) !important;
+  animation: kpDropupFadeIn 0.15s ease-out !important;
+  z-index: 2800 !important;
+}
+
+@keyframes kpDropupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 2. ICCS (Right Column): Rapat ke kanan container, lebar proporsional & tidak offside */
+.kp-modal-card .kp-filter-dropup-right,
+.kp-filter-popover .kp-filter-dropup-right,
+.kp-modal-body > div > div:nth-child(3) > div:last-child .p-multiselect-panel {
+  right: 0 !important;
+  left: auto !important;
+  width: max(100%, min(22rem, calc(100vw - 3.5rem))) !important;
+  max-width: min(28rem, calc(100vw - 3.5rem)) !important;
+}
+
+/* 3. Golongan (Left Column): Rapat ke kiri container, lebar proporsional */
+.kp-modal-card .kp-filter-dropup-left,
+.kp-filter-popover .kp-filter-dropup-left,
+.kp-modal-body > div > div:nth-child(3) > div:first-child .p-multiselect-panel {
+  left: 0 !important;
+  right: auto !important;
+  width: max(100%, min(22rem, calc(100vw - 3.5rem))) !important;
+  max-width: min(28rem, calc(100vw - 3.5rem)) !important;
+}
+
+/* 4. Jenis Kejahatan: Lebar 100% dari kartu popover */
+.kp-modal-card .kp-filter-dropup-full,
+.kp-filter-popover .kp-filter-dropup-full,
+.kp-modal-body > div > div:nth-child(4) .p-multiselect-panel {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 5. Items Wrapper: Max-height 175px (nyaman & gak offside) dengan scrollbar ramping */
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper {
+  max-height: 175px !important;
+  scrollbar-width: thin !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar {
+  width: 5px !important;
+}
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar-thumb,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar-thumb,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px !important;
+}
+
+/* 6. List Items: Ukuran enak dilihat, multi-line wrap tanpa text kepotong */
+.kp-modal-card .kp-filter-dropup .p-multiselect-item,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-item,
+.kp-modal-body .p-multiselect-panel .p-multiselect-item {
+  padding: 0.42rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.55rem !important;
+  border-radius: 6px !important;
+  margin: 0.1rem 0.25rem !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-item .p-checkbox,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-item .p-checkbox,
+.kp-modal-body .p-multiselect-panel .p-multiselect-item .p-checkbox {
+  margin-top: 0.12rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* 7. Header search bar di dalam dropup panel */
+.kp-modal-card .kp-filter-dropup .p-multiselect-header,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-header,
+.kp-modal-body .p-multiselect-panel .p-multiselect-header {
+  padding: 0.4rem 0.65rem !important;
+  gap: 0.45rem !important;
+  border-bottom: 1px solid var(--cas-border-card, #233554) !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-filter-container input,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-filter-container input,
+.kp-modal-body .p-multiselect-panel .p-multiselect-filter-container input {
+  font-size: 0.78rem !important;
+  padding: 0.35rem 0.6rem !important;
+  height: 2rem !important;
+  border-radius: 6px !important;
+}
+
+/* 8. Tema Dark Mode Elegan */
+:root[data-theme="dark"] .kp-filter-dropup,
+[data-theme="dark"] .kp-filter-dropup,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel {
+  background: #131f37 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-header,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-header,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-header,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-header {
+  background: #0f172a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item:hover,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item:hover,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item:hover,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item.p-highlight,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item.p-highlight,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item.p-highlight,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item.p-highlight {
+  background: rgba(37, 99, 235, 0.22) !important;
+  color: #93c5fd !important;
+}
+
