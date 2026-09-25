@@ -502,7 +502,7 @@ function kpFlattenNodes(arr, depth=0){
 
 function kpPrintPdf(){
   let rows = kpFlattenNodes(s);
-  let rowsHtml = rows.map(r=>{
+  let rowsHtml = rows.map((r, rIdx)=>{
     let ind = r.depth>0 ? `padding-left:${r.depth*12+6}px;font-style:italic;` : "font-weight:600;";
     let noStr = r.nomor || "";
     let ctV = (r.ct??0).toLocaleString("id-ID");
@@ -514,7 +514,8 @@ function kpPrintPdf(){
     let crV = ((r.cr??0)).toFixed(2)+"%";
     let idxV = (r.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
     let lvlV = r.level ? `LEVEL ${r.level}` : "-";
-    return `<tr><td style="text-align:center;width:30px;">${noStr}</td><td style="text-align:left;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:bold;background:#eff6ff;">${ctV}</td><td style="text-align:right;">${buV}</td><td style="text-align:right;">${limV}</td><td style="text-align:right;">${cpV}</td><td style="text-align:center;">${prV}</td><td style="text-align:right;font-weight:bold;color:#166534;">${ccV}</td><td style="text-align:center;font-weight:bold;">${crV}</td><td style="text-align:center;white-space:nowrap;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
+    let bgRow = rIdx % 2 === 1 ? "background:#f8fafc;" : "background:#ffffff;";
+    return `<tr style="${bgRow}"><td style="text-align:center;width:30px;color:#000;">${noStr}</td><td style="text-align:left;color:#000;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:bold;background:#dbeafe;color:#1d4ed8;">${ctV}</td><td style="text-align:right;color:#000;">${buV}</td><td style="text-align:right;color:#000;">${limV}</td><td style="text-align:right;color:#000;">${cpV}</td><td style="text-align:center;color:#000;">${prV}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${ccV}</td><td style="text-align:center;font-weight:bold;color:#000;">${crV}</td><td style="text-align:center;white-space:nowrap;color:#000;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
   }).join("");
   let totCt = (d.ct??0).toLocaleString("id-ID");
   let totBu = ((d.cp_berjalan_belum_update??0)+(d.cp_tunggakan_belum_update??0)).toLocaleString("id-ID");
@@ -525,14 +526,41 @@ function kpPrintPdf(){
   let totCr = ((d.cr??0)).toFixed(2)+"%";
   let totIdx = (d.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
   let totLvl = d.level ? `LEVEL ${d.level}` : "-";
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfJudul} ${pdfWilayah} - ${pdfPeriode}</title><style>@page{size:A4 landscape;margin:12mm 15mm 12mm 15mm;}*{box-sizing:border-box;}body{font-family:'Times New Roman',Times,serif;font-size:8.5pt;color:#000;background:#fff;margin:0;padding:0;line-height:1.25;}.header-table{width:100%;border-collapse:collapse;margin-bottom:12px;border:none;}.header-table td{border:none;vertical-align:top;padding:0;}.kop-wrap{display:inline-block;text-align:center;min-width:280px;}.kop-1{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;}.kop-2{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;}.kop-3{font-size:8.5pt;}.kop-alamat{font-size:7pt;font-style:italic;color:#333;}.kop-line-thick{border-top:2px solid #000;margin:3px 0 1px 0;}.kop-line-thin{border-top:0.75px solid #000;margin:0 0 4px 0;}.title-wrap{text-align:right;padding-top:4px;}.title-main{font-size:11pt;font-weight:bold;text-decoration:underline;text-transform:uppercase;letter-spacing:0.5px;}.title-period{font-size:9.5pt;font-weight:bold;margin-top:3px;text-transform:uppercase;}table.data-table{width:100%;border-collapse:collapse;font-size:8pt;margin-top:8px;}table.data-table th,table.data-table td{border:1px solid #1e293b;padding:4px 5px;}table.data-table th{background-color:#1e3a5f !important;color:#ffffff !important;font-weight:bold;text-align:center;font-size:7.8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.total-row td{background-color:#e2e8f0 !important;font-weight:bold;border-top:2px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.sig-table{width:100%;border-collapse:collapse;margin-top:20px;page-break-inside:avoid;}.sig-table td{border:none;padding:0;}.sig-box{float:right;text-align:center;min-width:280px;}.sig-date{font-size:8.5pt;margin-bottom:2px;}.sig-pos{font-size:8.5pt;font-weight:bold;margin-bottom:50px;}.sig-name{font-size:8.5pt;font-weight:bold;text-decoration:underline;}.sig-rank{font-size:8pt;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><table class="header-table"><tr><td style="width:50%;"><div class="kop-wrap"><div class="kop-1">${pdfKop1||"KEPOLISIAN NEGARA REPUBLIK INDONESIA"}</div><div class="kop-2">${pdfKop2||"PEMBINAAN OPERASIONAL RESERSE"}</div>${pdfKop3?`<div class="kop-3">${pdfKop3}</div>`:""}${pdfAlamat?`<div class="kop-alamat">${pdfAlamat}</div>`:""}<div class="kop-line-thick"></div><div class="kop-line-thin"></div></div></td><td style="width:50%;"><div class="title-wrap"><div class="title-main">${pdfJudul||"LAPORAN PERIODIK RESERSE"} ${pdfWilayah||"NASIONAL"}</div><div class="title-period">PERIODE ${pdfPeriode||"TAHUN 2026"}</div></div></td></tr></table><table class="data-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:60px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:90px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">TOTAL KESELURUHAN</td><td style="text-align:right;">${totCt}</td><td style="text-align:right;">${totBu}</td><td style="text-align:right;">${totLim}</td><td style="text-align:right;">${totCp}</td><td style="text-align:center;">${totPr}</td><td style="text-align:right;">${totCc}</td><td style="text-align:center;">${totCr}</td><td style="text-align:center;">${totIdx} (${totLvl})</td></tr></tfoot></table><table class="sig-table"><tr><td></td><td style="width:320px;"><div class="sig-box"><div class="sig-date">${pdfTempatTgl||"Jakarta, 25 September 2026"}</div><div class="sig-pos">${pdfJabatan||"KEPALA BIRO PEMBINAAN OPERASIONAL"}</div><div class="sig-name">${pdfNama||"..........................................................."}</div><div class="sig-rank">${pdfPangkat||"BRIGADIR JENDERAL POLISI"}</div></div></td></tr></table></body></html>`;
-  let w = window.open("","_blank");
-  if(!w){alert("Pop-up diblokir. Izinkan pop-up untuk mencetak PDF.");return;}
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  setTimeout(()=>{w.print();},350);
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfJudul} ${pdfWilayah} - ${pdfPeriode}</title><style>@page{size:A4 landscape;margin:10mm 12mm 10mm 12mm;}*{box-sizing:border-box;}body{font-family:'Times New Roman',Times,serif;font-size:8.5pt;color:#000;background:#fff;margin:0;padding:0;line-height:1.25;}.header-table{width:100%;border-collapse:collapse;margin-bottom:12px;border:none;}.header-table td{border:none;vertical-align:top;padding:0;}.kop-wrap{display:inline-block;text-align:center;min-width:280px;}.kop-1{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;color:#000;}.kop-2{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;color:#000;}.kop-3{font-size:8.5pt;color:#000;}.kop-alamat{font-size:7pt;font-style:italic;color:#333;}.kop-line-thick{border-top:2px solid #000;margin:3px 0 1px 0;}.kop-line-thin{border-top:0.75px solid #000;margin:0 0 4px 0;}.title-wrap{text-align:right;padding-top:4px;}.title-main{font-size:11pt;font-weight:bold;text-decoration:underline;text-transform:uppercase;letter-spacing:0.5px;color:#000;}.title-period{font-size:9.5pt;font-weight:bold;margin-top:3px;text-transform:uppercase;color:#000;}table.data-table{width:100%;border-collapse:collapse;font-size:8pt;margin-top:8px;}table.data-table th,table.data-table td{border:1px solid #000000;padding:4px 5px;}table.data-table th{background-color:#1e3a5f !important;color:#ffffff !important;font-weight:bold;text-align:center;font-size:7.8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.total-row td{background-color:#e2e8f0 !important;color:#000000 !important;font-weight:bold;border-top:2px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.sig-table{width:100%;border-collapse:collapse;margin-top:20px;page-break-inside:avoid;}.sig-table td{border:none;padding:0;}.sig-box{float:right;text-align:center;min-width:280px;color:#000;}.sig-date{font-size:8.5pt;margin-bottom:2px;color:#000;}.sig-pos{font-size:8.5pt;font-weight:bold;margin-bottom:50px;color:#000;}.sig-name{font-size:8.5pt;font-weight:bold;text-decoration:underline;color:#000;}.sig-rank{font-size:8pt;color:#000;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><table class="header-table"><tr><td style="width:50%;"><div class="kop-wrap"><div class="kop-1">${pdfKop1||"KEPOLISIAN NEGARA REPUBLIK INDONESIA"}</div><div class="kop-2">${pdfKop2||"PEMBINAAN OPERASIONAL RESERSE"}</div>${pdfKop3?`<div class="kop-3">${pdfKop3}</div>`:""}${pdfAlamat?`<div class="kop-alamat">${pdfAlamat}</div>`:""}<div class="kop-line-thick"></div><div class="kop-line-thin"></div></div></td><td style="width:50%;"><div class="title-wrap"><div class="title-main">${pdfJudul||"LAPORAN PERIODIK RESERSE"} ${pdfWilayah||"NASIONAL"}</div><div class="title-period">PERIODE ${pdfPeriode||"TAHUN 2026"}</div></div></td></tr></table><table class="data-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:60px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:90px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">TOTAL KESELURUHAN</td><td style="text-align:right;">${totCt}</td><td style="text-align:right;">${totBu}</td><td style="text-align:right;">${totLim}</td><td style="text-align:right;">${totCp}</td><td style="text-align:center;">${totPr}</td><td style="text-align:right;">${totCc}</td><td style="text-align:center;">${totCr}</td><td style="text-align:center;">${totIdx} (${totLvl})</td></tr></tfoot></table><table class="sig-table"><tr><td></td><td style="width:320px;"><div class="sig-box"><div class="sig-date">${pdfTempatTgl||"Jakarta, 25 September 2026"}</div><div class="sig-pos">${pdfJabatan||"KEPALA BIRO PEMBINAAN OPERASIONAL"}</div><div class="sig-name">${pdfNama||"..........................................................."}</div><div class="sig-rank">${pdfPangkat||"BRIGADIR JENDERAL POLISI"}</div></div></td></tr></table></body></html>`;
+  try {
+    let iframe = document.getElementById("kp-print-iframe");
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "kp-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.zIndex = "-9999";
+      document.body.appendChild(iframe);
+    }
+    let doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    iframe.contentWindow.focus();
+    setTimeout(() => {
+      iframe.contentWindow.print();
+    }, 350);
+  } catch (err) {
+    let w = window.open("", "_blank");
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => { w.print(); }, 350);
+    } else {
+      alert("Pop-up diblokir. Harap izinkan pop-up di browser Anda.");
+    }
+  }
 }
 
 function applyUnifiedFilter(){
@@ -1770,32 +1798,72 @@ function resetUnifiedFilter(){
       
       pdfModalOpen &&
         (0, a.jsx)("div", {
+          className: "kp-pdf-overlay",
+          onClick: e => {
+            if (e.target === e.currentTarget) setPdfModalOpen(!1);
+          },
           style: {
             position: "fixed",
             inset: 0,
             zIndex: 9999,
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(15, 23, 42, 0.75)",
-            backdropFilter: "blur(4px)",
-            padding: "0.75rem"
+            justifyContent: "flex-start",
+            background: "rgba(10, 15, 29, 0.85)",
+            backdropFilter: "blur(6px)",
+            padding: "0.6rem",
+            boxSizing: "border-box",
+            overflow: "hidden"
           },
           children: (0, a.jsxs)("div", {
             className: "kp-pdf-modal",
+            style: {
+              width: "100%",
+              maxWidth: "1400px",
+              height: "100%",
+              maxHeight: "calc(100vh - 1.2rem)",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "12px",
+              border: "1px solid #334155",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6)",
+              overflow: "hidden",
+              background: "#0f172a",
+              color: "#f8fafc"
+            },
             children: [
               (0, a.jsxs)("div", {
                 className: "kp-modal-header",
+                style: {
+                  flexShrink: 0,
+                  padding: "0.75rem 1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#1e293b",
+                  borderBottom: "1px solid #334155"
+                },
                 children: [
                   (0, a.jsxs)("div", {
                     children: [
                       (0, a.jsx)("div", {
                         className: "kp-modal-title",
+                        style: {
+                          fontSize: "1rem",
+                          fontWeight: 800,
+                          color: "#f8fafc"
+                        },
                         children:
                           "📑 Format Cetak & KOP Laporan Resmi (PDF Presisi)"
                       }),
                       (0, a.jsx)("div", {
                         className: "kp-modal-sub",
+                        style: {
+                          fontSize: "0.75rem",
+                          color: "#94a3b8",
+                          marginTop: "2px"
+                        },
                         children:
                           "Sesuaikan teks KOP, Judul, Wilayah, Periode, dan Penandatangan pada form di sebelah kiri atau langsung pada dokumen"
                       })
@@ -1812,32 +1880,75 @@ function resetUnifiedFilter(){
                         label: "Cetak / Ekspor PDF",
                         icon: "pi pi-print",
                         onClick: kpPrintPdf,
-                        style: { fontWeight: 700 }
+                        style: {
+                          fontWeight: 700,
+                          background: "#dc2626",
+                          borderColor: "#dc2626",
+                          color: "#ffffff"
+                        }
                       }),
                       (0, a.jsx)(p.Button, {
                         icon: "pi pi-times",
                         text: !0,
                         rounded: !0,
-                        onClick: () => setPdfModalOpen(!1)
+                        onClick: () => setPdfModalOpen(!1),
+                        style: { color: "#94a3b8" }
                       })
                     ]
                   })
                 ]
               }),
               (0, a.jsxs)("div", {
-                style: { display: "flex", flex: 1, overflow: "hidden" },
+                style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" },
                 children: [
                   (0, a.jsxs)("div", {
                     className: "kp-pdf-sidebar",
+                    style: {
+                      width: "360px",
+                      minWidth: "320px",
+                      height: "100%",
+                      minHeight: 0,
+                      overflowY: "auto",
+                      background: "#0f172a",
+                      borderRight: "1px solid #1e293b",
+                      padding: "1rem 1.2rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.85rem"
+                    },
                     children: [
-                      (0, a.jsx)("div", {
+                      (0, a.jsxs)("div", {
                         style: {
-                          fontSize: "0.82rem",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px"
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
                         },
-                        children: "✍️ Pengaturan KOP & Teks Dokumen"
+                        children: [
+                          (0, a.jsx)("div", {
+                            style: {
+                              fontSize: "0.82rem",
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                              color: "#f8fafc"
+                            },
+                            children: "✍️ Pengaturan KOP & Teks"
+                          }),
+                          (0, a.jsx)(p.Button, {
+                            label: "Cetak PDF",
+                            icon: "pi pi-print",
+                            size: "small",
+                            onClick: kpPrintPdf,
+                            style: {
+                              fontWeight: 700,
+                              background: "#dc2626",
+                              borderColor: "#dc2626",
+                              color: "#ffffff",
+                              padding: "0.3rem 0.6rem",
+                              fontSize: "0.75rem"
+                            }
+                          })
+                        ]
                       }),
                       (0, a.jsxs)("div", {
                         children: [
@@ -1991,6 +2102,8 @@ function resetUnifiedFilter(){
                   (0, a.jsx)("div", {
                     style: {
                       flex: 1,
+                      minHeight: 0,
+                      height: "100%",
                       overflow: "auto",
                       background: "#334155",
                       padding: "1.5rem",
@@ -1998,6 +2111,7 @@ function resetUnifiedFilter(){
                       justifyContent: "center"
                     },
                     children: (0, a.jsxs)("div", {
+                      className: "kp-paper-sheet",
                       style: {
                         background: "#ffffff",
                         color: "#000000",
@@ -2040,7 +2154,8 @@ function resetUnifiedFilter(){
                                         style: {
                                           fontSize: "10pt",
                                           fontWeight: "bold",
-                                          letterSpacing: "0.5px"
+                                          letterSpacing: "0.5px",
+                                          color: "#000000"
                                         },
                                         children: pdfKop1
                                       }),
@@ -2048,35 +2163,37 @@ function resetUnifiedFilter(){
                                         style: {
                                           fontSize: "10pt",
                                           fontWeight: "bold",
-                                          letterSpacing: "0.5px"
+                                          letterSpacing: "0.5px",
+                                          color: "#000000"
                                         },
                                         children: pdfKop2
                                       }),
                                       pdfKop3
                                         ? (0, a.jsx)("div", {
-                                            style: { fontSize: "9pt" },
+                                            style: { fontSize: "9pt", color: "#000000" },
                                             children: pdfKop3
                                           })
                                         : null,
                                       pdfAlamat
                                         ? (0, a.jsx)("div", {
+                                            className: "kp-kop-alamat",
                                             style: {
                                               fontSize: "7.5pt",
                                               fontStyle: "italic",
-                                              color: "#333"
+                                              color: "#333333"
                                             },
                                             children: pdfAlamat
                                           })
                                         : null,
                                       (0, a.jsx)("div", {
                                         style: {
-                                          borderTop: "2px solid #000",
+                                          borderTop: "2px solid #000000",
                                           margin: "4px 0 1px 0"
                                         }
                                       }),
                                       (0, a.jsx)("div", {
                                         style: {
-                                          borderTop: "0.75px solid #000",
+                                          borderTop: "0.75px solid #000000",
                                           margin: "0 0 4px 0"
                                         }
                                       })
@@ -2099,7 +2216,8 @@ function resetUnifiedFilter(){
                                           fontWeight: "bold",
                                           textDecoration: "underline",
                                           textTransform: "uppercase",
-                                          letterSpacing: "0.5px"
+                                          letterSpacing: "0.5px",
+                                          color: "#000000"
                                         },
                                         children: [
                                           pdfJudul,
@@ -2112,7 +2230,8 @@ function resetUnifiedFilter(){
                                           fontSize: "10pt",
                                           fontWeight: "bold",
                                           marginTop: "4px",
-                                          textTransform: "uppercase"
+                                          textTransform: "uppercase",
+                                          color: "#000000"
                                         },
                                         children: [
                                           "PERIODE ",
@@ -2136,16 +2255,18 @@ function resetUnifiedFilter(){
                           children: [
                             (0, a.jsx)("thead", {
                               children: (0, a.jsxs)("tr", {
-                                style: { background: "#1e3a5f", color: "#fff" },
+                                style: { background: "#1e3a5f", color: "#ffffff" },
                                 children: [
                                   (0, a.jsx)(
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "30px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "NO"
                                     }
@@ -2154,9 +2275,11 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "SATKER / KESATUAN"
                                     }
@@ -2165,10 +2288,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "65px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "CT"
                                     }
@@ -2177,10 +2302,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "65px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "SISA (BU)"
                                     }
@@ -2189,10 +2316,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "60px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "LIMPAH"
                                     }
@@ -2201,10 +2330,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "65px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "CP"
                                     }
@@ -2213,10 +2344,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "55px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "PR"
                                     }
@@ -2225,10 +2358,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "65px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "CC"
                                     }
@@ -2237,10 +2372,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "55px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "CR"
                                     }
@@ -2249,10 +2386,12 @@ function resetUnifiedFilter(){
                                     "th",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 4px",
                                         width: "95px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        background: "#1e3a5f",
+                                        color: "#ffffff"
                                       },
                                       children: "INDEKS KINERJA"
                                     }
@@ -2298,16 +2437,17 @@ function resetUnifiedFilter(){
                                   {
                                     style: {
                                       background:
-                                        rIdx % 2 === 1 ? "#fafafa" : "#ffffff"
+                                        rIdx % 2 === 1 ? "#f1f5f9" : "#ffffff"
                                     },
                                     children: [
                                       (0, a.jsx)(
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
-                                            textAlign: "center"
+                                            textAlign: "center",
+                                            color: "#000000"
                                           },
                                           children: r.nomor || ""
                                         }
@@ -2316,9 +2456,10 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
                                             textAlign: "left",
+                                            color: "#000000",
                                             ...ind
                                           },
                                           children: r.nama || "-"
@@ -2327,12 +2468,14 @@ function resetUnifiedFilter(){
                                       (0, a.jsx)(
                                         "td",
                                         {
+                                          className: "col-ct",
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
                                             textAlign: "right",
                                             fontWeight: "bold",
-                                            background: "#f0f7ff"
+                                            background: "#dbeafe",
+                                            color: "#1d4ed8"
                                           },
                                           children: ctV
                                         }
@@ -2341,9 +2484,10 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
-                                            textAlign: "right"
+                                            textAlign: "right",
+                                            color: "#000000"
                                           },
                                           children: buV
                                         }
@@ -2352,9 +2496,10 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
-                                            textAlign: "right"
+                                            textAlign: "right",
+                                            color: "#000000"
                                           },
                                           children: limV
                                         }
@@ -2363,9 +2508,10 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
-                                            textAlign: "right"
+                                            textAlign: "right",
+                                            color: "#000000"
                                           },
                                           children: cpV
                                         }
@@ -2374,9 +2520,10 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
-                                            textAlign: "center"
+                                            textAlign: "center",
+                                            color: "#000000"
                                           },
                                           children: prV
                                         }
@@ -2384,12 +2531,13 @@ function resetUnifiedFilter(){
                                       (0, a.jsx)(
                                         "td",
                                         {
+                                          className: "col-cc",
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
                                             textAlign: "right",
                                             fontWeight: "bold",
-                                            color: "#166534"
+                                            color: "#15803d"
                                           },
                                           children: ccV
                                         }
@@ -2398,10 +2546,11 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
                                             textAlign: "center",
-                                            fontWeight: "bold"
+                                            fontWeight: "bold",
+                                            color: "#000000"
                                           },
                                           children: crV
                                         }
@@ -2410,13 +2559,15 @@ function resetUnifiedFilter(){
                                         "td",
                                         {
                                           style: {
-                                            border: "1px solid #000",
+                                            border: "1px solid #000000",
                                             padding: "4px 5px",
                                             textAlign: "center",
-                                            whiteSpace: "nowrap"
+                                            whiteSpace: "nowrap",
+                                            color: "#000000"
                                           },
                                           children: [
                                             (0, a.jsx)("strong", {
+                                              style: { color: "#000000" },
                                               children: idxV
                                             }),
                                             " (",
@@ -2433,10 +2584,12 @@ function resetUnifiedFilter(){
                             }),
                             (0, a.jsx)("tfoot", {
                               children: (0, a.jsxs)("tr", {
+                                className: "total-row",
                                 style: {
                                   background: "#e2e8f0",
                                   fontWeight: "bold",
-                                  borderTop: "2px solid #000"
+                                  borderTop: "2px solid #000000",
+                                  color: "#000000"
                                 },
                                 children: [
                                   (0, a.jsx)(
@@ -2444,9 +2597,10 @@ function resetUnifiedFilter(){
                                     {
                                       colSpan: 2,
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        color: "#000000"
                                       },
                                       children: "TOTAL KESELURUHAN"
                                     }
@@ -2455,9 +2609,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "right"
+                                        textAlign: "right",
+                                        color: "#000000"
                                       },
                                       children: (d.ct ?? 0).toLocaleString(
                                         "id-ID"
@@ -2468,9 +2623,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "right"
+                                        textAlign: "right",
+                                        color: "#000000"
                                       },
                                       children: (
                                         (d.cp_berjalan_belum_update ?? 0) +
@@ -2482,9 +2638,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "right"
+                                        textAlign: "right",
+                                        color: "#000000"
                                       },
                                       children: (
                                         d.limpah_eksternal ?? 0
@@ -2495,9 +2652,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "right"
+                                        textAlign: "right",
+                                        color: "#000000"
                                       },
                                       children: (
                                         (d.cp_berjalan ?? 0) +
@@ -2509,9 +2667,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        color: "#000000"
                                       },
                                       children: (d.pr ?? 0).toFixed(2) + "%"
                                     }
@@ -2519,10 +2678,13 @@ function resetUnifiedFilter(){
                                   (0, a.jsx)(
                                     "td",
                                     {
+                                      className: "col-cc",
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "right"
+                                        textAlign: "right",
+                                        color: "#15803d",
+                                        fontWeight: "bold"
                                       },
                                       children: (
                                         (d.cc_aktual ?? 0) +
@@ -2534,9 +2696,10 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
-                                        textAlign: "center"
+                                        textAlign: "center",
+                                        color: "#000000"
                                       },
                                       children: (d.cr ?? 0).toFixed(2) + "%"
                                     }
@@ -2545,13 +2708,15 @@ function resetUnifiedFilter(){
                                     "td",
                                     {
                                       style: {
-                                        border: "1px solid #000",
+                                        border: "1px solid #000000",
                                         padding: "5px 6px",
                                         textAlign: "center",
-                                        whiteSpace: "nowrap"
+                                        whiteSpace: "nowrap",
+                                        color: "#000000"
                                       },
                                       children: [
                                         (0, a.jsx)("strong", {
+                                          style: { color: "#000000" },
                                           children: (
                                             d.indeks ?? 0
                                           ).toLocaleString("id-ID", {
@@ -2574,15 +2739,17 @@ function resetUnifiedFilter(){
                           style: {
                             display: "flex",
                             justifyContent: "flex-end",
-                            marginTop: "30px"
+                            marginTop: "30px",
+                            color: "#000000"
                           },
                           children: (0, a.jsxs)("div", {
-                            style: { textAlign: "center", minWidth: "280px" },
+                            style: { textAlign: "center", minWidth: "280px", color: "#000000" },
                             children: [
                               (0, a.jsx)("div", {
                                 style: {
                                   fontSize: "9pt",
-                                  marginBottom: "4px"
+                                  marginBottom: "4px",
+                                  color: "#000000"
                                 },
                                 children: pdfTempatTgl
                               }),
@@ -2590,7 +2757,8 @@ function resetUnifiedFilter(){
                                 style: {
                                   fontSize: "9pt",
                                   fontWeight: "bold",
-                                  marginBottom: "55px"
+                                  marginBottom: "55px",
+                                  color: "#000000"
                                 },
                                 children: pdfJabatan
                               }),
@@ -2598,14 +2766,15 @@ function resetUnifiedFilter(){
                                 style: {
                                   fontSize: "9pt",
                                   fontWeight: "bold",
-                                  textDecoration: "underline"
+                                  textDecoration: "underline",
+                                  color: "#000000"
                                 },
                                 children:
                                   pdfNama ||
                                   "..........................................................."
                               }),
                               (0, a.jsx)("div", {
-                                style: { fontSize: "8.5pt" },
+                                style: { fontSize: "8.5pt", color: "#000000" },
                                 children: pdfPangkat
                               })
                             ]

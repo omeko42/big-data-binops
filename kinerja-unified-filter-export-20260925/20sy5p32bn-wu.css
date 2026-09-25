@@ -3314,50 +3314,123 @@ body:not([data-theme=dark]) .kp-toolbar-row {
   border-top-color: #1f2b45 !important;
 }
 
-/* PDF Web Word Modal Container */
+/* PDF Web Word Modal Container & Responsive Full-View Fix */
+.kp-pdf-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  background: rgba(10, 15, 29, 0.85) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  padding: 0.6rem !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
 .kp-pdf-modal {
-  width: 98%;
-  max-width: 1350px;
-  height: 94vh;
-  border-radius: 14px;
-  border: 1px solid #dbe3ee;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #ffffff;
-  color: #0f172a;
+  width: 100% !important;
+  max-width: 1400px !important;
+  height: 100% !important;
+  max-height: calc(100vh - 1.2rem) !important;
+  border-radius: 12px !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
 }
 :root[data-theme=dark] .kp-pdf-modal {
-  background: #111a2e !important;
-  border-color: #1f2b45 !important;
+  background: #0f172a !important;
+  border-color: #1e293b !important;
   color: #f8fafc !important;
 }
 
+.kp-modal-header {
+  flex-shrink: 0 !important;
+  padding: 0.75rem 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.kp-modal-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: #f8fafc !important;
+}
+.kp-modal-sub {
+  font-size: 0.75rem !important;
+  color: #94a3b8 !important;
+  margin-top: 2px !important;
+}
+
 .kp-pdf-sidebar {
-  width: 360px;
-  min-width: 320px;
-  border-right: 1px solid #e2e8f0;
-  background: #ffffff;
-  overflow-y: auto;
-  padding: 1rem 1.2rem;
-  display: grid;
-  gap: 0.85rem;
+  width: 360px !important;
+  min-width: 320px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-right: 1px solid #1e293b !important;
+  background: #0f172a !important;
+  overflow-y: auto !important;
+  padding: 1rem 1.2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
 }
 :root[data-theme=dark] .kp-pdf-sidebar {
-  background: #0f1a2e !important;
-  border-right-color: #1f2b45 !important;
+  background: #0f172a !important;
+  border-right-color: #1e293b !important;
 }
 
 .kp-pdf-sidebar label {
   display: block;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #475569;
+  color: #cbd5e1 !important;
   margin-bottom: 0.25rem;
 }
 :root[data-theme=dark] .kp-pdf-sidebar label {
   color: #cbd5e1 !important;
+}
+
+/* Paper Sheet Physical Isolation (Always White Paper & Crisp Black Text) */
+.kp-paper-sheet {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5) !important;
+}
+.kp-paper-sheet div,
+.kp-paper-sheet span,
+.kp-paper-sheet p,
+.kp-paper-sheet td,
+.kp-paper-sheet strong {
+  color: #000000 !important;
+}
+.kp-paper-sheet .kp-kop-alamat {
+  color: #333333 !important;
+}
+.kp-paper-sheet th {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+}
+.kp-paper-sheet td.col-ct {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+.kp-paper-sheet td.col-cc {
+  color: #15803d !important;
+}
+.kp-paper-sheet tr.total-row td {
+  background: #e2e8f0 !important;
+  color: #000000 !important;
+  font-weight: bold !important;
 }
 
 /* Modal Outlined Buttons Contrast Fix (Bulan / Tahun / Custom) */
