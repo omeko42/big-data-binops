@@ -1290,7 +1290,9 @@ function resetUnifiedFilter(){
                                   filter: !0,
                                   showClear: !0,
                                   maxSelectedLabels: 1,
-                                  style: { width: "100%", fontSize: "0.78rem" }
+                                  style: { width: "100%", fontSize: "0.78rem" },
+                                  panelClassName: "kp-filter-dropup kp-filter-dropup-left",
+                                  panelStyle: { maxHeight: "210px" }
                                 })
                               ]
                             }),
@@ -1333,7 +1335,9 @@ function resetUnifiedFilter(){
                                   filter: !0,
                                   showClear: !0,
                                   maxSelectedLabels: 1,
-                                  style: { width: "100%", fontSize: "0.78rem" }
+                                  style: { width: "100%", fontSize: "0.78rem" },
+                                  panelClassName: "kp-filter-dropup kp-filter-dropup-right",
+                                  panelStyle: { maxHeight: "210px" }
                                 })
                               ]
                             })
@@ -1410,7 +1414,8 @@ function resetUnifiedFilter(){
                               showClear: !0,
                               maxSelectedLabels: 3,
                               style: { width: "100%", fontSize: "0.8rem" },
-                              panelStyle: { maxWidth: "33rem" },
+                              panelClassName: "kp-filter-dropup kp-filter-dropup-full",
+                              panelStyle: { maxHeight: "210px", maxWidth: "100%" },
                               filterBy: "label,fullLabel",
                               itemTemplate: e =>
                                 (0, a.jsx)("span", {
