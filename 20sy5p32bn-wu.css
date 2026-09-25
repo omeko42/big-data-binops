@@ -1011,7 +1011,8 @@ a {
 
 :root[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"],
 :root[data-theme="dark"] .dash-kasus-item [style*="color:#64748b"],
-[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"] {
+[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"],
+[data-theme="dark"] .dash-kasus-item [style*="color:#64748b"] {
   color: #94a3b8 !important;
 }
 
@@ -1021,20 +1022,57 @@ a {
   color: #f8fafc !important;
 }
 
-:root[data-theme="dark"] .cms-card span[style*="color: #64748b"],
-:root[data-theme="dark"] .cms-card span[style*="color:#64748b"],
-[data-theme="dark"] .cms-card span[style*="color: #64748b"] {
+/* Fix items with hardcoded #334155 (e.g. crime & satker names in 10 Kejahatan Tertinggi & Satker CT/CC) */
+:root[data-theme="dark"] .cms-card [style*="334155"],
+[data-theme="dark"] .cms-card [style*="334155"],
+:root[data-theme="dark"] ol > li > span[style*="334155"],
+[data-theme="dark"] ol > li > span[style*="334155"],
+:root[data-theme="dark"] ol > li span[style*="color: #334155"],
+[data-theme="dark"] ol > li span[style*="color: #334155"],
+:root[data-theme="dark"] ol > li span[style*="color:#334155"],
+[data-theme="dark"] ol > li span[style*="color:#334155"] {
+  color: #f1f5f9 !important;
+}
+
+/* Fix muted texts with hardcoded #64748b in cms-card (e.g. Orang, Berisiko, LP suffix) */
+:root[data-theme="dark"] .cms-card [style*="color: #64748b"],
+:root[data-theme="dark"] .cms-card [style*="color:#64748b"],
+[data-theme="dark"] .cms-card [style*="color: #64748b"],
+[data-theme="dark"] .cms-card [style*="color:#64748b"] {
   color: #cbd5e1 !important;
 }
 
-:root[data-theme="dark"] .cms-card span[style*="color: #94a3b8"],
-:root[data-theme="dark"] .cms-card span[style*="color:#94a3b8"],
-[data-theme="dark"] .cms-card span[style*="color: #94a3b8"] {
+/* Fix secondary texts with hardcoded #94a3b8 in cms-card */
+:root[data-theme="dark"] .cms-card [style*="color: #94a3b8"],
+:root[data-theme="dark"] .cms-card [style*="color:#94a3b8"],
+[data-theme="dark"] .cms-card [style*="color: #94a3b8"],
+[data-theme="dark"] .cms-card [style*="color:#94a3b8"] {
   color: #94a3b8 !important;
 }
 
+/* Fix dark text #0f172a or #1e293b in cms-card (e.g. Indeks Kinerja numbers) */
+:root[data-theme="dark"] .cms-card [style*="color: #0f172a"],
+:root[data-theme="dark"] .cms-card [style*="color:#0f172a"],
+[data-theme="dark"] .cms-card [style*="color: #0f172a"],
+[data-theme="dark"] .cms-card [style*="color:#0f172a"],
+:root[data-theme="dark"] .cms-card [style*="color: #1e293b"],
+:root[data-theme="dark"] .cms-card [style*="color:#1e293b"],
+[data-theme="dark"] .cms-card [style*="color: #1e293b"],
+[data-theme="dark"] .cms-card [style*="color:#1e293b"] {
+  color: #f8fafc !important;
+}
+
+/* Fix Rank Badge in Dark Mode: Sleek glass pill with crisp white text */
 :root[data-theme="dark"] ol > li > span:first-child,
 [data-theme="dark"] ol > li > span:first-child {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Ensure cms-card-label has high contrast in dark mode */
+:root[data-theme="dark"] .cms-card-label,
+[data-theme="dark"] .cms-card-label {
   color: #cbd5e1 !important;
 }
 
