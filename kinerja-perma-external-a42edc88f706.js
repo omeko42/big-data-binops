@@ -469,7 +469,7 @@ function kpForceReload(){
   return eT(!0)
 }
 
-async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{...eS,parent:a.key}}),t=(e.data?.data?.nodes||[]).map(E);o(e=>F(e,a.key,t))}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal memuat sub-satker."})}}async function eP(){if(await (0,_.confirmAction)("Menghitung ulang data kinerja perkara dari seluruh LP sekarang akan membebani proses lain di server untuk beberapa saat. Lanjutkan?",{header:"Refresh Sekarang",danger:!0,acceptLabel:"Ya, Refresh"})){Y(!0);try{await R.apiAuth.post("/bdb/kinerja-perkara/refresh"),l.current?.show({severity:"success",summary:"Diperbarui",detail:"Data kinerja perkara terkini sudah tersedia."}),kpCacheInvalidateAll(),await kpForceReload()}catch(e){l.current?.show({severity:"error",summary:"Gagal",detail:e.response?.data?.message||"Gagal me-refresh data"})}finally{Y(!1)}}}async function eR(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.csv",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal mengunduh CSV."})}finally{en(!1)}}
+async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{...eS,parent:a.key}}),t=(e.data?.data?.nodes||[]).map(E);o(e=>F(e,a.key,t))}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal memuat sub-satker."})}}async function eP(){if(await (0,_.confirmAction)("Menghitung ulang data kinerja perkara dari seluruh LP sekarang akan membebani proses lain di server untuk beberapa saat. Lanjutkan?",{header:"Refresh Sekarang",danger:!0,acceptLabel:"Ya, Refresh"})){Y(!0);try{await R.apiAuth.post("/bdb/kinerja-perkara/refresh"),l.current?.show({severity:"success",summary:"Diperbarui",detail:"Data kinerja perkara terkini sudah tersedia."}),kpCacheInvalidateAll(),await kpForceReload()}catch(e){l.current?.show({severity:"error",summary:"Gagal",detail:e.response?.data?.message||"Gagal me-refresh data"})}finally{Y(!1)}}}async function eExportXlsx(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.xlsx",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.xlsx`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"warn",summary:"Info",detail:"Gagal mengunduh Excel (.xlsx). Mengunduh versi CSV mentah..."}),await eR()}finally{en(!1)}}async function eR(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.csv",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal mengunduh CSV."})}finally{en(!1)}}
 
 function openPdfModal(){
   setExportMenuOpen(!1);
@@ -886,201 +886,25 @@ function resetUnifiedFilter(){
       (0, a.jsxs)("div", {
         className: "kp-toolbar-row",
         children: [
-          (0, a.jsx)(p.Button, {
-            label: "Filter Perkara (" + activeCount + ") ▾",
-            icon: "pi pi-sliders-h",
-            outlined: !0,
-            onClick: () => setUnifiedFilterOpen(!0),
-            className: "att-btn kp-filter-trigger-btn"
-          }),
-          (0, a.jsx)("div", { className: "kp-toolbar-divider" }),
-          (0, a.jsxs)(p.Button, {
-            onClick: () => ea(e => !e),
-            outlined: !ee,
-            className: "att-btn",
-            style: {
-              background: ee ? "#fef9c3" : void 0,
-              borderColor: ee ? "#facc15" : void 0,
-              color: ee ? "#854d0e" : void 0
-            },
-            children: [
-              (0, a.jsx)(P, { size: 15, style: { marginRight: "0.4rem" } }),
-              " ",
-              ee ? "Sembunyikan Detail" : "Tampilkan Detail"
-            ]
-          }),
           (0, a.jsxs)("div", {
-            style: {
-              marginLeft: "auto",
-              display: "flex",
-              gap: "0.5rem",
-              alignItems: "center"
-            },
+            className: "kp-filter-wrapper",
+            style: { position: "relative" },
             children: [
-              (0, a.jsxs)("div", {
-                style: { position: "relative" },
-                children: [
-                  (0, a.jsx)(p.Button, {
-                    label: "Ekspor ▾",
-                    icon: "pi pi-download",
-                    outlined: !0,
-                    className: "att-btn",
-                    onClick: () => setExportMenuOpen(v => !v)
-                  }),
-                  exportMenuOpen &&
-                    (0, a.jsx)("div", {
-                      style: { position: "fixed", inset: 0, zIndex: 2499 },
-                      onClick: () => setExportMenuOpen(!1)
-                    }),
-                  exportMenuOpen &&
-                    (0, a.jsxs)("div", {
-                      className: "kp-export-pop",
-                      children: [
-                        (0, a.jsxs)(
-                          "button",
-                          {
-                            type: "button",
-                            className: "kp-export-btn",
-                            onClick: () => {
-                              setExportMenuOpen(!1);
-                              eR();
-                            }
-                          },
-                          [
-                            (0, a.jsx)("div", {
-                              style: {
-                                width: "2rem",
-                                height: "2rem",
-                                borderRadius: "8px",
-                                background: "rgba(22, 163, 74, 0.12)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0
-                              },
-                              children: (0, a.jsx)("i", {
-                                className: "pi pi-file-excel",
-                                style: { fontSize: "1.2rem", color: "#16a34a" }
-                              })
-                            }),
-                            (0, a.jsxs)("div", {
-                              children: [
-                                (0, a.jsx)("div", {
-                                  className: "kp-export-title",
-                                  children: "Ekspor CSV (Excel)"
-                                }),
-                                (0, a.jsx)("div", {
-                                  className: "kp-export-sub",
-                                  children: "Unduh data tabular mentah"
-                                })
-                              ]
-                            })
-                          ]
-                        ),
-                        (0, a.jsx)("div", { className: "kp-export-divider" }),
-                        (0, a.jsxs)(
-                          "button",
-                          {
-                            type: "button",
-                            className: "kp-export-btn",
-                            onClick: openPdfModal
-                          },
-                          [
-                            (0, a.jsx)("div", {
-                              style: {
-                                width: "2rem",
-                                height: "2rem",
-                                borderRadius: "8px",
-                                background: "rgba(220, 38, 38, 0.12)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0
-                              },
-                              children: (0, a.jsx)("i", {
-                                className: "pi pi-file-pdf",
-                                style: { fontSize: "1.2rem", color: "#dc2626" }
-                              })
-                            }),
-                            (0, a.jsxs)("div", {
-                              children: [
-                                (0, a.jsx)("div", {
-                                  className: "kp-export-title",
-                                  children: "Cetak / Ekspor PDF Resmi"
-                                }),
-                                (0, a.jsx)("div", {
-                                  className: "kp-export-sub",
-                                  children: "Format surat dinas KOP Presisi & TTD"
-                                })
-                              ]
-                            })
-                          ]
-                        )
-                      ]
-                    })
-                ]
-              }),
               (0, a.jsx)(p.Button, {
-                icon: "pi pi-refresh",
+                label: "Filter Perkara (" + activeCount + ") ▾",
+                icon: "pi pi-sliders-h",
                 outlined: !0,
-                onClick: kpForceReload,
-                loading: G,
-                "aria-label": "Muat ulang"
-              })
-            ]
-          })
-        ]
-      }),
-      (0, a.jsxs)("div", {
-        className: "kp-chips-row",
-        children: [
-          (0, a.jsx)("span", {
-            className: "kp-chips-label",
-            children: "Filter Aktif:"
-          }),
-          activeList.map(item =>
-            (0, a.jsxs)(
-              "span",
-              {
-                className: "kp-chip " + (item.cls || ""),
-                children: [
-                  (0, a.jsx)("i", {
-                    className: item.icon,
-                    style: { fontSize: "0.75rem" }
-                  }),
-                  (0, a.jsx)("span", { children: item.label }),
-                  (0, a.jsx)("button", {
-                    type: "button",
-                    className: "kp-chip-remove",
-                    title: "Hapus filter",
-                    onClick: e => {
-                      e.stopPropagation();
-                      item.remove();
-                    },
-                    children: "×"
-                  })
-                ]
-              },
-              item.key
-            )
-          )
-        ]
-      }),
-      unifiedFilterOpen &&
-        (0, a.jsx)("div", {
-          style: {
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(15, 23, 42, 0.65)",
-            backdropFilter: "blur(4px)",
-            padding: "1rem"
-          },
-          children: (0, a.jsxs)("div", {
-            className: "kp-modal-card",
+                onClick: () => setUnifiedFilterOpen(v => !v),
+                className: "att-btn kp-filter-trigger-btn" + (unifiedFilterOpen ? " active" : "")
+              }),
+              unifiedFilterOpen &&
+                (0, a.jsx)("div", {
+                  style: { position: "fixed", inset: 0, zIndex: 2490 },
+                  onClick: () => setUnifiedFilterOpen(!1)
+                }),
+              unifiedFilterOpen &&
+                (0, a.jsxs)("div", {
+            className: "kp-modal-card kp-filter-popover",
             children: [
               (0, a.jsxs)("div", {
                 className: "kp-modal-header",
@@ -1466,7 +1290,9 @@ function resetUnifiedFilter(){
                                   filter: !0,
                                   showClear: !0,
                                   maxSelectedLabels: 1,
-                                  style: { width: "100%", fontSize: "0.78rem" }
+                                  style: { width: "100%", fontSize: "0.78rem" },
+                                  panelClassName: "kp-filter-dropup kp-filter-dropup-left",
+                                  panelStyle: { maxHeight: "210px" }
                                 })
                               ]
                             }),
@@ -1509,7 +1335,9 @@ function resetUnifiedFilter(){
                                   filter: !0,
                                   showClear: !0,
                                   maxSelectedLabels: 1,
-                                  style: { width: "100%", fontSize: "0.78rem" }
+                                  style: { width: "100%", fontSize: "0.78rem" },
+                                  panelClassName: "kp-filter-dropup kp-filter-dropup-right",
+                                  panelStyle: { maxHeight: "210px" }
                                 })
                               ]
                             })
@@ -1586,7 +1414,8 @@ function resetUnifiedFilter(){
                               showClear: !0,
                               maxSelectedLabels: 3,
                               style: { width: "100%", fontSize: "0.8rem" },
-                              panelStyle: { maxWidth: "33rem" },
+                              panelClassName: "kp-filter-dropup kp-filter-dropup-full",
+                              panelStyle: { maxHeight: "210px", maxWidth: "100%" },
                               filterBy: "label,fullLabel",
                               itemTemplate: e =>
                                 (0, a.jsx)("span", {
@@ -1729,7 +1558,216 @@ function resetUnifiedFilter(){
               })
             ]
           })
-        }),
+            ]
+          }),
+          (0, a.jsx)("div", { className: "kp-toolbar-divider" }),
+          (0, a.jsxs)(p.Button, {
+            onClick: () => ea(e => !e),
+            outlined: !ee,
+            className: "att-btn",
+            style: {
+              background: ee ? "#fef9c3" : void 0,
+              borderColor: ee ? "#facc15" : void 0,
+              color: ee ? "#854d0e" : void 0
+            },
+            children: [
+              (0, a.jsx)(P, { size: 15, style: { marginRight: "0.4rem" } }),
+              " ",
+              ee ? "Sembunyikan Detail" : "Tampilkan Detail"
+            ]
+          }),
+          (0, a.jsxs)("div", {
+            style: {
+              marginLeft: "auto",
+              display: "flex",
+              gap: "0.5rem",
+              alignItems: "center"
+            },
+            children: [
+              (0, a.jsxs)("div", {
+                style: { position: "relative" },
+                children: [
+                  (0, a.jsx)(p.Button, {
+                    label: "Ekspor ▾",
+                    icon: "pi pi-download",
+                    outlined: !0,
+                    className: "att-btn",
+                    loading: et,
+                    onClick: () => setExportMenuOpen(v => !v)
+                  }),
+                  exportMenuOpen &&
+                    (0, a.jsx)("div", {
+                      style: { position: "fixed", inset: 0, zIndex: 2499 },
+                      onClick: () => setExportMenuOpen(!1)
+                    }),
+                  exportMenuOpen &&
+                    (0, a.jsxs)("div", {
+                      className: "kp-export-pop",
+                      children: [
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: () => {
+                            setExportMenuOpen(!1);
+                            eExportXlsx();
+                          },
+                          children: [
+                            (0, a.jsx)("div", {
+                              style: {
+                                width: "2rem",
+                                height: "2rem",
+                                borderRadius: "8px",
+                                background: "rgba(22, 163, 74, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              },
+                              children: (0, a.jsx)("i", {
+                                className: "pi pi-file-excel",
+                                style: { fontSize: "1.2rem", color: "#16a34a" }
+                              })
+                            }),
+                            (0, a.jsxs)("div", {
+                              children: [
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-title",
+                                  children: "Ekspor Excel (.xlsx)"
+                                }),
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-sub",
+                                  children: "Unduh spreadsheet format Excel"
+                                })
+                              ]
+                            })
+                          ]
+                        }),
+                        (0, a.jsx)("div", { className: "kp-export-divider" }),
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: () => {
+                            setExportMenuOpen(!1);
+                            eR();
+                          },
+                          children: [
+                            (0, a.jsx)("div", {
+                              style: {
+                                width: "2rem",
+                                height: "2rem",
+                                borderRadius: "8px",
+                                background: "rgba(37, 99, 235, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              },
+                              children: (0, a.jsx)("i", {
+                                className: "pi pi-table",
+                                style: { fontSize: "1.2rem", color: "#2563eb" }
+                              })
+                            }),
+                            (0, a.jsxs)("div", {
+                              children: [
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-title",
+                                  children: "Ekspor CSV (.csv)"
+                                }),
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-sub",
+                                  children: "Unduh data tabular mentah"
+                                })
+                              ]
+                            })
+                          ]
+                        }),
+                        (0, a.jsx)("div", { className: "kp-export-divider" }),
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: openPdfModal,
+                          children: [
+                            (0, a.jsx)("div", {
+                              style: {
+                                width: "2rem",
+                                height: "2rem",
+                                borderRadius: "8px",
+                                background: "rgba(220, 38, 38, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              },
+                              children: (0, a.jsx)("i", {
+                                className: "pi pi-file-pdf",
+                                style: { fontSize: "1.2rem", color: "#dc2626" }
+                              })
+                            }),
+                            (0, a.jsxs)("div", {
+                              children: [
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-title",
+                                  children: "Cetak / Ekspor PDF Resmi"
+                                }),
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-sub",
+                                  children: "Format surat dinas KOP Presisi & TTD"
+                                })
+                              ]
+                            })
+                          ]
+                        })
+                      ]
+                    })
+                ]
+              }),
+              (0, a.jsx)(p.Button, {
+                icon: "pi pi-refresh",
+                outlined: !0,
+                onClick: kpForceReload,
+                loading: G,
+                "aria-label": "Muat ulang"
+              })
+            ]
+          })
+        ]
+      }),
+      (0, a.jsxs)("div", {
+        className: "kp-chips-row",
+        children: [
+          (0, a.jsx)("span", {
+            className: "kp-chips-label",
+            children: "Filter Aktif:"
+          }),
+          activeList.map(item =>
+            (0, a.jsxs)(
+              "span",
+              {
+                className: "kp-chip " + (item.cls || ""),
+                children: [
+                  (0, a.jsx)("i", {
+                    className: item.icon,
+                    style: { fontSize: "0.75rem" }
+                  }),
+                  (0, a.jsx)("span", { children: item.label }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    className: "kp-chip-remove",
+                    title: "Hapus filter",
+                    onClick: e => {
+                      e.stopPropagation();
+                      item.remove();
+                    },
+                    children: "×"
+                  })
+                ]
+              },
+              item.key
+            )
+          )
+        ]
+      }),
+      
       pdfModalOpen &&
         (0, a.jsx)("div", {
           style: {

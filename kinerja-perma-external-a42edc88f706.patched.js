@@ -469,7 +469,7 @@ function kpForceReload(){
   return eT(!0)
 }
 
-async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{...eS,parent:a.key}}),t=(e.data?.data?.nodes||[]).map(E);o(e=>F(e,a.key,t))}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal memuat sub-satker."})}}async function eP(){if(await (0,_.confirmAction)("Menghitung ulang data kinerja perkara dari seluruh LP sekarang akan membebani proses lain di server untuk beberapa saat. Lanjutkan?",{header:"Refresh Sekarang",danger:!0,acceptLabel:"Ya, Refresh"})){Y(!0);try{await R.apiAuth.post("/bdb/kinerja-perkara/refresh"),l.current?.show({severity:"success",summary:"Diperbarui",detail:"Data kinerja perkara terkini sudah tersedia."}),kpCacheInvalidateAll(),await kpForceReload()}catch(e){l.current?.show({severity:"error",summary:"Gagal",detail:e.response?.data?.message||"Gagal me-refresh data"})}finally{Y(!1)}}}async function eR(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.csv",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal mengunduh CSV."})}finally{en(!1)}}
+async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{...eS,parent:a.key}}),t=(e.data?.data?.nodes||[]).map(E);o(e=>F(e,a.key,t))}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal memuat sub-satker."})}}async function eP(){if(await (0,_.confirmAction)("Menghitung ulang data kinerja perkara dari seluruh LP sekarang akan membebani proses lain di server untuk beberapa saat. Lanjutkan?",{header:"Refresh Sekarang",danger:!0,acceptLabel:"Ya, Refresh"})){Y(!0);try{await R.apiAuth.post("/bdb/kinerja-perkara/refresh"),l.current?.show({severity:"success",summary:"Diperbarui",detail:"Data kinerja perkara terkini sudah tersedia."}),kpCacheInvalidateAll(),await kpForceReload()}catch(e){l.current?.show({severity:"error",summary:"Gagal",detail:e.response?.data?.message||"Gagal me-refresh data"})}finally{Y(!1)}}}async function eExportXlsx(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.xlsx",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.xlsx`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"warn",summary:"Info",detail:"Gagal mengunduh Excel (.xlsx). Mengunduh versi CSV mentah..."}),await eR()}finally{en(!1)}}async function eR(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.csv",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal mengunduh CSV."})}finally{en(!1)}}
 
 function openPdfModal(){
   setExportMenuOpen(!1);
@@ -1592,6 +1592,7 @@ function resetUnifiedFilter(){
                     icon: "pi pi-download",
                     outlined: !0,
                     className: "att-btn",
+                    loading: et,
                     onClick: () => setExportMenuOpen(v => !v)
                   }),
                   exportMenuOpen &&
@@ -1603,23 +1604,20 @@ function resetUnifiedFilter(){
                     (0, a.jsxs)("div", {
                       className: "kp-export-pop",
                       children: [
-                        (0, a.jsxs)(
-                          "button",
-                          {
-                            type: "button",
-                            className: "kp-export-btn",
-                            onClick: () => {
-                              setExportMenuOpen(!1);
-                              eR();
-                            }
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: () => {
+                            setExportMenuOpen(!1);
+                            eExportXlsx();
                           },
-                          [
+                          children: [
                             (0, a.jsx)("div", {
                               style: {
                                 width: "2rem",
                                 height: "2rem",
                                 borderRadius: "8px",
-                                background: "rgba(22, 163, 74, 0.12)",
+                                background: "rgba(22, 163, 74, 0.15)",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -1634,7 +1632,46 @@ function resetUnifiedFilter(){
                               children: [
                                 (0, a.jsx)("div", {
                                   className: "kp-export-title",
-                                  children: "Ekspor CSV (Excel)"
+                                  children: "Ekspor Excel (.xlsx)"
+                                }),
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-sub",
+                                  children: "Unduh spreadsheet format Excel"
+                                })
+                              ]
+                            })
+                          ]
+                        }),
+                        (0, a.jsx)("div", { className: "kp-export-divider" }),
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: () => {
+                            setExportMenuOpen(!1);
+                            eR();
+                          },
+                          children: [
+                            (0, a.jsx)("div", {
+                              style: {
+                                width: "2rem",
+                                height: "2rem",
+                                borderRadius: "8px",
+                                background: "rgba(37, 99, 235, 0.15)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0
+                              },
+                              children: (0, a.jsx)("i", {
+                                className: "pi pi-table",
+                                style: { fontSize: "1.2rem", color: "#2563eb" }
+                              })
+                            }),
+                            (0, a.jsxs)("div", {
+                              children: [
+                                (0, a.jsx)("div", {
+                                  className: "kp-export-title",
+                                  children: "Ekspor CSV (.csv)"
                                 }),
                                 (0, a.jsx)("div", {
                                   className: "kp-export-sub",
@@ -1643,22 +1680,19 @@ function resetUnifiedFilter(){
                               ]
                             })
                           ]
-                        ),
+                        }),
                         (0, a.jsx)("div", { className: "kp-export-divider" }),
-                        (0, a.jsxs)(
-                          "button",
-                          {
-                            type: "button",
-                            className: "kp-export-btn",
-                            onClick: openPdfModal
-                          },
-                          [
+                        (0, a.jsxs)("button", {
+                          type: "button",
+                          className: "kp-export-btn",
+                          onClick: openPdfModal,
+                          children: [
                             (0, a.jsx)("div", {
                               style: {
                                 width: "2rem",
                                 height: "2rem",
                                 borderRadius: "8px",
-                                background: "rgba(220, 38, 38, 0.12)",
+                                background: "rgba(220, 38, 38, 0.15)",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -1682,7 +1716,7 @@ function resetUnifiedFilter(){
                               ]
                             })
                           ]
-                        )
+                        })
                       ]
                     })
                 ]
