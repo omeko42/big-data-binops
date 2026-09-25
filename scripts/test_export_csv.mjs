@@ -22,10 +22,10 @@ async function test() {
     const req = http.request({
         hostname: '127.0.0.1',
         port: 3850,
-        path: '/api/bdb/kinerja-perkara/rekap/export.xlsx?from=2026-01-01&to=2026-12-31&visibility=national',
+        path: '/api/bdb/kinerja-perkara/rekap/export.pdf?from=2026-01-01&to=2026-12-31&visibility=national',
         headers: { Authorization: 'Bearer ' + token }
     }, (res) => {
-        console.log('XLSX Status:', res.statusCode, res.headers['content-type']);
+        console.log('PDF Status:', res.statusCode, res.headers['content-type']);
         let buf = '';
         res.on('data', chunk => buf += chunk);
         res.on('end', () => {
