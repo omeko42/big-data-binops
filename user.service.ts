@@ -1436,7 +1436,7 @@ export class UserService {
     }
 
     // ===================== Import Massal Pengguna (Excel) =====================
-    private static readonly IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email', 'Email Dinas Polri', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
+    private static readonly IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email Dinas Polri (Utama)', 'Email Sekunder (Opsional)', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
     private static readonly IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer'];
     private static readonly IMPORT_STATUS_OPTS = ['AKTIF', 'NONAKTIF'];
 
@@ -1482,14 +1482,27 @@ export class UserService {
             if (rowNumber === 1) return; // header
             const name = cell(row, 1);
             const nrp = cell(row, 2);
-            const email = cell(row, 3);
-            const email_polri = cell(row, 4);
+            let val3 = cell(row, 3);
+            let val4 = cell(row, 4);
             const username = cell(row, 5);
             const role_bdb = cell(row, 6).toLowerCase();
             const satker_raw = cell(row, 7);
             const status = cell(row, 8).toUpperCase();
-            if (!name && !email && !nrp) return; // baris kosong, lewati
-            out.push({ row: rowNumber, name, nrp, email, email_polri, username, role_bdb, satker_raw, status });
+            if (!name && !val3 && !val4 && !nrp) return; // baris kosong, lewati
+
+            let email_polri = '';
+            let email_sekunder = '';
+            if (val3.toLowerCase().endsWith('@polri.go.id')) {
+                email_polri = val3;
+                email_sekunder = val4;
+            } else if (val4.toLowerCase().endsWith('@polri.go.id')) {
+                email_polri = val4;
+                email_sekunder = val3;
+            } else {
+                email_polri = val3 || val4;
+            }
+
+            out.push({ row: rowNumber, name, nrp, email: email_sekunder || email_polri, email_polri, username, role_bdb, satker_raw, status });
         });
         return out;
     }
@@ -1510,26 +1523,31 @@ export class UserService {
         for (const r of raw) {
             try {
                 if (!r.name) throw new BadRequestException('Nama wajib diisi.');
-                if (!r.email) throw new BadRequestException('Email wajib diisi.');
-                const emailNorm = this.normalizeEmail(r.email);
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) throw new BadRequestException('Format email tidak valid.');
+                if (!r.nrp) throw new BadRequestException('NRP/NIP wajib diisi.');
+                if (!r.email_polri) throw new BadRequestException('Email Dinas Polri (Utama) wajib diisi.');
+                const emailPolriNorm = this.normalizeEmail(r.email_polri);
+                if (!emailPolriNorm.endsWith('@polri.go.id')) throw new BadRequestException('Email Dinas Polri wajib menggunakan domain @polri.go.id.');
 
-                for (const [field, val] of [['email', emailNorm], ['email_polri', r.email_polri ? this.normalizeEmail(r.email_polri) : ''], ['username', r.username ? r.username.toLowerCase() : '']] as const) {
+                const secEmailNorm = r.email && r.email.toLowerCase() !== emailPolriNorm ? this.normalizeEmail(r.email) : '';
+                if (secEmailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(secEmailNorm)) throw new BadRequestException('Format email sekunder tidak valid.');
+                if (secEmailNorm && secEmailNorm === emailPolriNorm) throw new BadRequestException('Email sekunder tidak boleh sama dengan email dinas Polri.');
+
+                for (const [field, val] of [['email_polri', emailPolriNorm], ['email', secEmailNorm], ['username', r.username ? r.username.toLowerCase() : '']] as const) {
                     if (!val) continue;
                     const dupRow = seen[field].get(val);
-                    if (dupRow) throw new BadRequestException(`${field === 'email' ? 'Email' : field === 'email_polri' ? 'Email Dinas Polri' : 'Username'} ini sudah dipakai di baris ${dupRow} pada file yang sama.`);
+                    if (dupRow) throw new BadRequestException(`${field === 'email' ? 'Email Sekunder' : field === 'email_polri' ? 'Email Dinas Polri' : 'Username'} ini sudah dipakai di baris ${dupRow} pada file yang sama.`);
                     seen[field].set(val, r.row);
                 }
 
-                const existingUser = await this.findByEmail(emailNorm);
-                if (existingUser) throw new ConflictException('Email sudah dipakai akun lain di sistem.');
-                if (r.email_polri) {
-                    const check = await this.checkIdentifierAvailability('email_polri', r.email_polri);
-                    if (!check.available) throw new ConflictException(`Email Dinas Polri sudah dipakai${check.satker_nama ? ' oleh ' + check.satker_nama : ''}.`);
+                const existingPolri = await this.findByEmail(emailPolriNorm);
+                if (existingPolri) throw new ConflictException('Email Dinas Polri sudah dipakai akun lain di sistem.');
+                if (secEmailNorm) {
+                    const existingSec = await this.findByEmail(secEmailNorm);
+                    if (existingSec) throw new ConflictException('Email Sekunder sudah dipakai akun lain di sistem.');
                 }
                 if (r.username) {
-                    const check = await this.checkIdentifierAvailability('username', r.username);
-                    if (!check.available) throw new ConflictException(`Username sudah dipakai${check.satker_nama ? ' oleh ' + check.satker_nama : ''}.`);
+                    const checkUser = await this.checkIdentifierAvailability('username', r.username);
+                    if (!checkUser.available) throw new ConflictException(`Username sudah dipakai${checkUser.satker_nama ? ' oleh ' + checkUser.satker_nama : ''}.`);
                 }
 
                 const roleBdb = this.normalizeBdbRole(r.role_bdb || 'viewer');
@@ -1554,8 +1572,8 @@ export class UserService {
                     ok: true,
                     name: r.name,
                     nrp: r.nrp || undefined,
-                    email: emailNorm,
-                    email_polri: r.email_polri || undefined,
+                    email: secEmailNorm || emailPolriNorm,
+                    email_polri: emailPolriNorm,
                     username: r.username || undefined,
                     role_bdb: roleBdb,
                     status,
@@ -1636,11 +1654,11 @@ export class UserService {
         wb.creator = 'BDB';
 
         const sheet = wb.addWorksheet('Data Pengguna');
-        sheet.columns = UserService.IMPORT_HEADERS.map((h) => ({ header: h, width: h === 'Kode atau Nama Satker' ? 28 : h === 'Email' || h === 'Email Dinas Polri' ? 26 : 18 }));
+        sheet.columns = UserService.IMPORT_HEADERS.map((h) => ({ header: h, width: h === 'Kode atau Nama Satker' ? 28 : h.includes('Email') ? 28 : 18 }));
         sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
         sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
         sheet.views = [{ state: 'frozen', ySplit: 1 }];
-        sheet.addRow(['Contoh Nama', '98010710', 'contoh@polri.go.id', 'contoh@polri.go.id', 'contoh.username', 'operator', '060.01.02 (lihat sheet "Daftar Satker")', 'AKTIF']).font = { italic: true, color: { argb: 'FF94A3B8' } };
+        sheet.addRow(['Contoh Nama', '98010710', '98010710@polri.go.id', '', 'contoh.username', 'operator', '060.01.02 (lihat sheet "Daftar Satker")', 'AKTIF']).font = { italic: true, color: { argb: 'FF94A3B8' } };
         for (let i = 2; i <= 200; i++) {
             sheet.getCell(`F${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: [`"${UserService.IMPORT_ROLE_OPTS.join(',')}"`] };
             sheet.getCell(`H${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: [`"${UserService.IMPORT_STATUS_OPTS.join(',')}"`] };
