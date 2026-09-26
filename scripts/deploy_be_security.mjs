@@ -22,6 +22,10 @@ function main() {
         docker restart bdb-api
         sleep 5
         docker ps --filter "name=bdb-api"
+
+        echo "Committing bdb-api container image..."
+        docker commit bdb-api bdb-api:latest
+        echo "DEPLOY_AND_COMMIT_SUCCESS"
     `);
     console.log(res);
 }
