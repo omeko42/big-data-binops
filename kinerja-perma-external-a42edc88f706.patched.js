@@ -5,8 +5,9 @@
 [pdfModalOpen,setPdfModalOpen]=(0,t.useState)(!1),
 [pdfExpanded,setPdfExpanded]=(0,t.useState)(!1),
 [pdfOrientation,setPdfOrientation]=(0,t.useState)("landscape"),
-[pdfSatkerName,setPdfSatkerName]=(0,t.useState)("Nasional"),
-[pdfPeriode,setPdfPeriode]=(0,t.useState)("Tahun 2026"),
+[pdfSatkerName,setPdfSatkerName]=(0,t.useState)("BARESKRIM POLRI DAN JAJARAN"),
+[pdfPeriode,setPdfPeriode]=(0,t.useState)("TAHUN 2026"),
+[pdfCrimeFilter,setPdfCrimeFilter]=(0,t.useState)(""),
 [pdfWaktuCetak,setPdfWaktuCetak]=(0,t.useState)(""),
 [pdfDataPer,setPdfDataPer]=(0,t.useState)(""),[activeKelompokCrime,setActiveKelompokCrime]=(0,t.useState)("ALL"),[activeTipidCrime,setActiveTipidCrime]=(0,t.useState)("ALL"),[kpPeriodOpen,setKpPeriodOpen]=(0,t.useState)(!1),
 [kpPeriodMode,setKpPeriodMode]=(0,t.useState)("year"),
@@ -463,33 +464,108 @@ function kpForceReload(){
 
 async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{...eS,parent:a.key}}),t=(e.data?.data?.nodes||[]).map(E);o(e=>F(e,a.key,t))}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal memuat sub-satker."})}}async function eP(){if(await (0,_.confirmAction)("Menghitung ulang data kinerja perkara dari seluruh LP sekarang akan membebani proses lain di server untuk beberapa saat. Lanjutkan?",{header:"Refresh Sekarang",danger:!0,acceptLabel:"Ya, Refresh"})){Y(!0);try{await R.apiAuth.post("/bdb/kinerja-perkara/refresh"),l.current?.show({severity:"success",summary:"Diperbarui",detail:"Data kinerja perkara terkini sudah tersedia."}),kpCacheInvalidateAll(),await kpForceReload()}catch(e){l.current?.show({severity:"error",summary:"Gagal",detail:e.response?.data?.message||"Gagal me-refresh data"})}finally{Y(!1)}}}async function eExportXlsx(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.xlsx",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.xlsx`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"warn",summary:"Info",detail:"Gagal mengunduh Excel (.xlsx). Mengunduh versi CSV mentah..."}),await eR()}finally{en(!1)}}async function eR(){en(!0);try{let a=await R.apiAuth.get("/bdb/kinerja-perkara/rekap/export.csv",{params:eS,responseType:"blob"}),t=URL.createObjectURL(a.data),n=document.createElement("a");n.href=t,n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`,n.click(),URL.revokeObjectURL(t)}catch{l.current?.show({severity:"error",summary:"Gagal",detail:"Gagal mengunduh CSV."})}finally{en(!1)}}
 
+
+const KP_INDO_MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+function formatIndoDateTime(dt){
+  if(!dt) return "—";
+  let d = typeof dt === "string" ? new Date(dt) : dt;
+  if(isNaN(d.getTime())) return String(dt);
+  let dd = d.getDate();
+  let mm = KP_INDO_MONTHS[d.getMonth()];
+  let yy = d.getFullYear();
+  let hh = String(d.getHours()).padStart(2, "0");
+  let mi = String(d.getMinutes()).padStart(2, "0");
+  return `${dd} ${mm} ${yy} pukul ${hh}.${mi} WIB`;
+}
+
+function getPdfTitleLines(orientation, satker, periode, crime){
+  let sUpper = (satker || "BARESKRIM POLRI DAN JAJARAN").toUpperCase().trim();
+  let pUpper = (periode || "TAHUN 2026").toUpperCase().trim();
+  if(!pUpper.startsWith("PERIODE")){
+    pUpper = "PERIODE " + pUpper;
+  }
+  let cUpper = (crime || "").toUpperCase().trim();
+
+  let lines = [];
+  if(orientation === "landscape"){
+    lines.push(`LAMPIRAN KINERJA PERKARA SATKER ${sUpper}`);
+    if(cUpper){
+      let combined = `${pUpper} • ${cUpper}`;
+      if(combined.length <= 65){
+        lines.push(combined);
+      } else {
+        lines.push(pUpper);
+        lines.push(cUpper);
+      }
+    } else {
+      lines.push(pUpper);
+    }
+  } else {
+    lines.push("LAMPIRAN KINERJA PERKARA SATKER");
+    lines.push(sUpper);
+    lines.push(pUpper);
+    if(cUpper){
+      lines.push(cUpper);
+    }
+  }
+  return lines;
+}
+
 function openPdfModal(){
   setExportMenuOpen(!1);
-  let satker = "Semua Jajaran (Mabes & Seluruh Polda)";
+  let satker = "BARESKRIM POLRI DAN JAJARAN";
   if(eScope==="scoped"&&eScopeSatkerId){
     let sObj=eScopeOpts.find(x=>x.value===eScopeSatkerId);
     if(sObj&&sObj.label){
-      satker=sObj.label;
+      let lbl = sObj.label.toUpperCase().trim();
+      if(lbl === "BARESKRIM POLRI" || eScopeSatkerId === 13){
+        satker = "BARESKRIM POLRI DAN JAJARAN";
+      } else {
+        satker = lbl + (lbl.includes("POLDA") && !lbl.includes("JAJARAN") ? " DAN JAJARAN" : "");
+      }
     }
   } else if(eScope==="all"){
-    satker="Nasional";
+    satker = "BARESKRIM POLRI DAN JAJARAN";
   }
+
+  let crime = "";
+  let curAP = eAP || {};
+  let curJenis = (curAP.jenis && curAP.jenis.length > 0) ? curAP.jenis : (em || []);
+  let curGol = (curAP.golongan && curAP.golongan.length > 0) ? curAP.golongan : (ey || []);
+  let curKel = (curAP.kelompok && curAP.kelompok.length > 0) ? curAP.kelompok : (eKG || []);
+  let curIccs = (curAP.iccs && curAP.iccs.length > 0) ? curAP.iccs : (ek || []);
+
+  if(curJenis.length > 0){
+    let names = curJenis.map(id => {
+      let item = (eg || []).find(x => x.value === id);
+      return item ? (item.fullLabel || item.label) : id;
+    });
+    crime = "KEJAHATAN SPESIFIK: " + names.join(", ").toUpperCase();
+  } else if(curGol.length > 0){
+    let names = curGol.map(id => {
+      let item = (ej || []).find(x => x.value === id);
+      return item ? item.label : id;
+    });
+    let gStr = names.join(", ").toUpperCase();
+    crime = gStr.startsWith("GOLONGAN") ? gStr : ("GOLONGAN " + gStr);
+  } else if(curKel.length > 0){
+    crime = "KELOMPOK: " + curKel.join(", ").toUpperCase();
+  } else if(curIccs.length > 0){
+    let names = curIccs.map(id => {
+      let item = (eC || []).find(x => x.value === id);
+      return item ? item.label : id;
+    });
+    crime = "ICCS: " + names.join(", ").toUpperCase();
+  }
+
   let per = (kpPeriodLabel || "Tahun 2026").trim();
-  let d = new Date();
-  let months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-  let waktu = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} pukul ${String(d.getHours()).padStart(2, "0")}.${String(d.getMinutes()).padStart(2, "0")} WIB`;
-  let dPer = "—";
-  if(x?.last_refreshed_at){
-    let a=new Date(x.last_refreshed_at);
-    if(!isNaN(a.getTime())){
-      let sm=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-      dPer = `${a.getDate()} ${sm[a.getMonth()]} ${a.getFullYear()}, ${String(a.getHours()).padStart(2, "0")}.${String(a.getMinutes()).padStart(2, "0")} WIB`;
-    } else {
-      dPer = x.last_refreshed_at;
-    }
-  }
+  let waktu = formatIndoDateTime(new Date());
+  let dPer = x?.last_refreshed_at ? formatIndoDateTime(x.last_refreshed_at) : waktu;
+
   setPdfSatkerName(satker);
   setPdfPeriode(per);
+  setPdfCrimeFilter(crime);
   setPdfWaktuCetak(waktu);
   setPdfDataPer(dPer);
   setPdfOrientation("landscape");
@@ -585,7 +661,10 @@ function kpPrintPdf(){
   let totIdx = (totalData?.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
   let totLvl = totalData?.level ? `LV ${totalData.level}` : "-";
 
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>LAMPIRAN KINERJA PERKARA SATKER ${(pdfSatkerName||"NASIONAL").toUpperCase()} - PERIODE ${(pdfPeriode||"TAHUN 2026").toUpperCase()}</title><style>@page{size:A4 ${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}body{padding-bottom:26px;}.sheet-title-box{text-align:center;margin-bottom:14px;padding-bottom:2px;}.sheet-title-line1{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0;line-height:1.35;}.sheet-title-line2{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:none;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:#475569;background:#ffffff;padding-top:4px;}</style></head><body><div class="sheet-title-box"><div class="sheet-title-line1">LAMPIRAN KINERJA PERKARA SATKER ${(pdfSatkerName||"NASIONAL").toUpperCase()}</div><div class="sheet-title-line2">PERIODE ${(pdfPeriode||"TAHUN 2026").toUpperCase()}</div></div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">${totCt}</td><td style="text-align:right;font-weight:bold;">${totBu}</td><td style="text-align:right;font-weight:bold;">${totLim}</td><td style="text-align:right;font-weight:bold;">${totCp}</td><td style="text-align:center;font-weight:bold;">${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${totCc}</td><td style="text-align:center;font-weight:bold;">${totCr}</td><td style="text-align:center;font-weight:bold;">${totIdx} (${totLvl})</td></tr></tbody></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> ${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> ${pdfWaktuCetak||"—"}</div></div></body></html>`;
+  let tLines = getPdfTitleLines(pdfOrientation, pdfSatkerName, pdfPeriode, pdfCrimeFilter);
+  let titleLinesHtml = tLines.map(line => `<div class="sheet-title-line">${line}</div>`).join("");
+
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 ${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}body{padding-bottom:26px;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:none;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:#475569;background:#ffffff;padding-top:4px;}</style></head><body><div class="sheet-title-box">${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">${totCt}</td><td style="text-align:right;font-weight:bold;">${totBu}</td><td style="text-align:right;font-weight:bold;">${totLim}</td><td style="text-align:right;font-weight:bold;">${totCp}</td><td style="text-align:center;font-weight:bold;">${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${totCc}</td><td style="text-align:center;font-weight:bold;">${totCr}</td><td style="text-align:center;font-weight:bold;">${totIdx} (${totLvl})</td></tr></tbody></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> ${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> ${pdfWaktuCetak||"—"}</div></div></body></html>`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -1857,6 +1936,8 @@ function resetUnifiedFilter(){
       }),
       
       (0, a.jsx)(h.Dialog, {
+  className: "kp-print-dialog",
+  contentClassName: "kp-dialog-canvas",
   header: (0, a.jsxs)("div", {
     style: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "1rem", paddingRight: "0.5rem" },
     children: [
@@ -1866,8 +1947,8 @@ function resetUnifiedFilter(){
           (0, a.jsx)("i", { className: "pi pi-file-pdf", style: { color: "#dc2626", fontSize: "1.3rem" } }),
           (0, a.jsxs)("div", {
             children: [
-              (0, a.jsx)("div", { style: { fontWeight: 800, fontSize: "1.05rem", color: "#0f172a" }, children: "Cetak Lampiran Kinerja Perkara" }),
-              (0, a.jsx)("div", { style: { fontSize: "0.75rem", color: "#64748b" }, children: "Kertas A4 • Margin: Kiri 3cm, Atas 2cm, Kanan 2cm, Bawah 2cm • Font Tabel: 10pt" })
+              (0, a.jsx)("div", { className: "kp-modal-header-title", children: "Cetak Lampiran Kinerja Perkara" }),
+              (0, a.jsx)("div", { className: "kp-modal-header-sub", children: "Kertas A4 • Margin: Kiri 3cm, Atas 2cm, Kanan 2cm, Bawah 2cm • Font Tabel: 10pt" })
             ]
           })
         ]
@@ -1875,27 +1956,35 @@ function resetUnifiedFilter(){
       (0, a.jsxs)("div", {
         style: { display: "flex", gap: "0.5rem", alignItems: "center" },
         children: [
-          (0, a.jsx)(p.Button, {
-            label: pdfOrientation === "landscape" ? "Mendatar (Landscape)" : "Tegak (Portrait)",
-            icon: pdfOrientation === "landscape" ? "pi pi-file-o" : "pi pi-file",
-            text: !0,
-            size: "small",
+          (0, a.jsxs)("button", {
+            type: "button",
+            className: "kp-modal-btn",
             onClick: () => setPdfOrientation(v => v === "portrait" ? "landscape" : "portrait"),
-            title: "Ubah orientasi kertas cetak"
+            title: "Ubah orientasi kertas cetak",
+            children: [
+              (0, a.jsx)("i", { className: pdfOrientation === "landscape" ? "pi pi-file-o" : "pi pi-file", style: { fontSize: "0.85rem" } }),
+              pdfOrientation === "landscape" ? "Mendatar (Landscape)" : "Tegak (Portrait)"
+            ]
           }),
-          (0, a.jsx)(p.Button, {
-            label: pdfExpanded ? "Perkecil Tampilan" : "Perbesar Layar",
-            icon: pdfExpanded ? "pi pi-window-minimize" : "pi pi-window-maximize",
-            text: !0,
-            size: "small",
-            onClick: () => setPdfExpanded(v => !v)
+          (0, a.jsxs)("button", {
+            type: "button",
+            className: "kp-modal-btn",
+            onClick: () => setPdfExpanded(v => !v),
+            title: "Perbesar atau perkecil modal",
+            children: [
+              (0, a.jsx)("i", { className: pdfExpanded ? "pi pi-window-minimize" : "pi pi-window-maximize", style: { fontSize: "0.85rem" } }),
+              pdfExpanded ? "Perkecil Tampilan" : "Perbesar Layar"
+            ]
           }),
-          (0, a.jsx)(p.Button, {
-            label: "Cetak / Simpan PDF",
-            icon: "pi pi-print",
-            size: "small",
+          (0, a.jsxs)("button", {
+            type: "button",
+            className: "p-button p-button-sm",
             onClick: kpPrintPdf,
-            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700 }
+            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700, borderRadius: "8px", padding: "0.4rem 0.85rem", display: "inline-flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" },
+            children: [
+              (0, a.jsx)("i", { className: "pi pi-print", style: { fontSize: "0.9rem" } }),
+              "Cetak / Simpan PDF"
+            ]
           })
         ]
       })
@@ -1913,14 +2002,13 @@ function resetUnifiedFilter(){
     overflow: "auto",
     height: pdfExpanded ? "calc(100vh - 125px)" : "auto",
     maxHeight: pdfExpanded ? "calc(100vh - 125px)" : "75vh",
-    background: "#0b1220",
     padding: "1.5rem"
   },
   footer: (0, a.jsxs)("div", {
     style: { display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" },
     children: [
       (0, a.jsxs)("div", {
-        style: { fontSize: "0.78rem", color: "#64748b", display: "flex", alignItems: "center", gap: "0.4rem" },
+        className: "kp-dialog-footer-text",
         children: [
           (0, a.jsx)("i", { className: "pi pi-info-circle", style: { color: "#3b82f6" } }),
           (0, a.jsx)("span", { children: "Kertas A4 default dengan margin: Kiri 3cm, Atas 2cm, Kanan 2cm, Bawah 2cm. Total Keseluruhan hanya di halaman terakhir." })
@@ -1929,18 +2017,21 @@ function resetUnifiedFilter(){
       (0, a.jsxs)("div", {
         style: { display: "flex", gap: "0.5rem" },
         children: [
-          (0, a.jsx)(p.Button, {
-            label: "Tutup",
-            text: !0,
-            size: "small",
-            onClick: () => setPdfModalOpen(!1)
+          (0, a.jsx)("button", {
+            type: "button",
+            className: "kp-modal-btn",
+            onClick: () => setPdfModalOpen(!1),
+            children: "Tutup"
           }),
-          (0, a.jsx)(p.Button, {
-            label: "Cetak / Simpan PDF",
-            icon: "pi pi-print",
-            size: "small",
+          (0, a.jsxs)("button", {
+            type: "button",
+            className: "p-button p-button-sm",
             onClick: kpPrintPdf,
-            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700 }
+            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700, borderRadius: "8px", padding: "0.4rem 0.85rem", display: "inline-flex", alignItems: "center", gap: "0.4rem", cursor: "pointer" },
+            children: [
+              (0, a.jsx)("i", { className: "pi pi-print", style: { fontSize: "0.9rem" } }),
+              "Cetak / Simpan PDF"
+            ]
           })
         ]
       })
@@ -1950,161 +2041,160 @@ function resetUnifiedFilter(){
   dismissableMask: !1,
   children: (() => {
     let { rows: pRows, totalData: pTotal } = getTableDataForPrint(s, d);
+    let tLines = getPdfTitleLines(pdfOrientation, pdfSatkerName, pdfPeriode, pdfCrimeFilter);
     return (0, a.jsxs)("div", {
-      style: {
-        background: "#ffffff",
-        color: "#0f172a",
-        borderRadius: "8px",
-        border: "1px solid #cbd5e1",
-        boxShadow: "0 6px 24px rgba(0, 0, 0, 0.25)",
-        padding: "20mm 20mm 15mm 30mm",
-        margin: "0 auto",
-        maxWidth: pdfOrientation === "landscape" ? "1250px" : "850px",
-        minHeight: pdfOrientation === "landscape" ? "560px" : "750px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        fontFamily: "Arial, sans-serif"
-      },
+      className: "kp-paper-canvas-wrap",
       children: [
+        (0, a.jsx)("style", { children: "\n/* Light Mode Defaults */\n.kp-modal-header-title { font-weight: 800; font-size: 1.05rem; color: #0f172a; }\n.kp-modal-header-sub { font-size: 0.75rem; color: #64748b; margin-top: 1px; }\n.kp-modal-btn { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.15s ease; font-family: inherit; }\n.kp-modal-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }\n.kp-dialog-canvas { background: #e2e8f0 !important; }\n.kp-dialog-footer-text { font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 0.4rem; }\n\n/* Dark Theme Overrides */\n:root[data-theme=\"dark\"] .kp-print-dialog .p-dialog-header { background: #111a2e !important; border-bottom: 1px solid #1f2b45 !important; }\n:root[data-theme=\"dark\"] .kp-modal-header-title { color: #f8fafc !important; }\n:root[data-theme=\"dark\"] .kp-modal-header-sub { color: #94a3b8 !important; }\n:root[data-theme=\"dark\"] .kp-modal-btn { background: #1e293b !important; border: 1px solid #334155 !important; color: #f1f5f9 !important; }\n:root[data-theme=\"dark\"] .kp-modal-btn:hover { background: #27354f !important; color: #ffffff !important; border-color: #475569 !important; }\n:root[data-theme=\"dark\"] .kp-dialog-canvas { background: #070d18 !important; }\n:root[data-theme=\"dark\"] .kp-print-dialog .p-dialog-footer { background: #111a2e !important; border-top: 1px solid #1f2b45 !important; }\n:root[data-theme=\"dark\"] .kp-dialog-footer-text { color: #94a3b8 !important; }\n\n/* Protected Authentic White A4 Paper Sheet */\n.kp-paper-sheet,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet,\n:root[data-theme=\"dark\"] .kp-paper-sheet {\n  background-color: #ffffff !important;\n  color: #0f172a !important;\n  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;\n  border: 1px solid #cbd5e1 !important;\n}\n.kp-paper-sheet .sheet-title-box,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet .sheet-title-box {\n  text-align: center !important;\n  margin-bottom: 28px !important;\n}\n.kp-paper-sheet .kp-sheet-title-line,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet .kp-sheet-title-line {\n  font-family: Arial, sans-serif !important;\n  font-size: 12pt !important;\n  font-weight: bold !important;\n  color: #0f172a !important;\n  text-transform: uppercase !important;\n  letter-spacing: 0.5px !important;\n  line-height: 1.35 !important;\n  margin: 2px 0 !important;\n  text-align: center !important;\n}\n.kp-paper-sheet table,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet table {\n  width: 100% !important;\n  border-collapse: collapse !important;\n  background-color: #ffffff !important;\n  font-family: Arial, sans-serif !important;\n  font-size: 10pt !important;\n}\n.kp-paper-sheet th,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet th {\n  background-color: #f1f5f9 !important;\n  color: #0f172a !important;\n  border: 1px solid #94a3b8 !important;\n  padding: 5px 4px !important;\n  font-family: Arial, sans-serif !important;\n  font-size: 10pt !important;\n  font-weight: bold !important;\n  text-align: center !important;\n}\n.kp-paper-sheet td,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet td {\n  border: 1px solid #cbd5e1 !important;\n  padding: 4.5px 5px !important;\n  font-family: Arial, sans-serif !important;\n  font-size: 10pt !important;\n  color: #0f172a !important;\n}\n.kp-paper-sheet tr.kp-row-white td,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet tr.kp-row-white td {\n  background-color: #ffffff !important;\n}\n.kp-paper-sheet tr.kp-row-zebra td,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet tr.kp-row-zebra td {\n  background-color: #f8fafc !important;\n}\n.kp-paper-sheet tr.total-row td,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet tr.total-row td {\n  background-color: #e2e8f0 !important;\n  color: #0f172a !important;\n  border: 1px solid #94a3b8 !important;\n  border-top: 2px solid #0f172a !important;\n  border-bottom: 2px solid #0f172a !important;\n  font-weight: bold !important;\n}\n.kp-paper-sheet .kp-sheet-footer,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet .kp-sheet-footer {\n  margin-top: 24px !important;\n  padding-top: 6px !important;\n  border-top: 1px dashed #cbd5e1 !important;\n  display: flex !important;\n  justify-content: space-between !important;\n  align-items: flex-end !important;\n  font-size: 9pt !important;\n  color: #475569 !important;\n}\n.kp-paper-sheet .kp-sheet-footer strong,\n:root[data-theme=\"dark\"] .p-dialog .kp-paper-sheet .kp-sheet-footer strong {\n  color: #0f172a !important;\n}\n" }),
         (0, a.jsxs)("div", {
-          children: [
-            (0, a.jsxs)("div", {
-              style: {
-                textAlign: "center",
-                marginBottom: "14px",
-                paddingBottom: "2px"
-              },
-              children: [
-                (0, a.jsx)("div", {
-                  style: {
-                    fontSize: "12pt",
-                    fontWeight: "bold",
-                    color: "#0f172a",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    margin: 0,
-                    lineHeight: 1.35
-                  },
-                  children: "LAMPIRAN KINERJA PERKARA SATKER " + (pdfSatkerName || "NASIONAL").toUpperCase()
-                }),
-                (0, a.jsx)("div", {
-                  style: {
-                    fontSize: "12pt",
-                    fontWeight: "bold",
-                    color: "#0f172a",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    marginTop: "3px",
-                    lineHeight: 1.35
-                  },
-                  children: "PERIODE " + (pdfPeriode || "TAHUN 2026").toUpperCase()
-                })
-              ]
-            }),
-            (0, a.jsx)("div", {
-              style: { overflowX: "auto" },
-              children: (0, a.jsxs)("table", {
-                style: {
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontFamily: "Arial, sans-serif",
-                  fontSize: "10pt"
-                },
-                children: [
-                  (0, a.jsx)("thead", {
-                    children: (0, a.jsxs)("tr", {
-                      style: { background: "#f1f5f9" },
-                      children: [
-                        (0, a.jsx)("th", { style: { width: "30px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "NO" }),
-                        (0, a.jsx)("th", { style: { border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "left", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SATKER / KESATUAN" }),
-                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CT" }),
-                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SISA (BU)" }),
-                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "LIMPAH EKS." }),
-                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CP" }),
-                        (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "PR" }),
-                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CC" }),
-                        (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CR" }),
-                        (0, a.jsx)("th", { style: { width: "95px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "INDEKS KINERJA" })
-                      ]
-                    })
-                  }),
-                  (0, a.jsxs)("tbody", {
-                    children: [
-                      pRows.map((r, rIdx) => {
-                        let ind = r.depth > 0 ? (r.depth * 14 + 6) + "px" : "6px";
-                        let isAlt = rIdx % 2 === 1;
-                        return (0, a.jsxs)("tr", {
-                          key: r.id || rIdx,
-                          style: { background: isAlt ? "#f8fafc" : "#ffffff" },
-                          children: [
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: r.nomor || "" }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 500, fontSize: "10pt", color: "#0f172a" }, children: r.nama || "-" }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: (r.pr ?? 0).toFixed(2) + "%" }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#15803d" }, children: ((r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: (r.cr ?? 0).toFixed(2) + "%" }),
-                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", whiteSpace: "nowrap", fontSize: "10pt", color: "#0f172a" }, children: (r.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (r.level ? " (LV " + r.level + ")" : " (-)") })
-                          ]
-                        });
-                      }),
-                      (0, a.jsxs)("tr", {
-                        className: "total-row",
-                        style: {
-                          background: "#e2e8f0",
-                          fontWeight: "bold",
-                          borderTop: "2px solid #0f172a",
-                          borderBottom: "2px solid #0f172a"
-                        },
-                        children: [
-                          (0, a.jsx)("td", { colSpan: 2, style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: "TOTAL KESELURUHAN" }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#1d4ed8", fontWeight: "bold" }, children: (pTotal?.ct ?? 0).toLocaleString("id-ID") }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan_belum_update ?? 0) + (pTotal?.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan ?? 0) + (pTotal?.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.pr ?? 0).toFixed(2) + "%" }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#15803d", fontWeight: "bold" }, children: ((pTotal?.cc_aktual ?? 0) + (pTotal?.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.cr ?? 0).toFixed(2) + "%" }),
-                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (pTotal?.level ? " (LV " + pTotal.level + ")" : " (-)") })
-                        ]
-                      })
-                    ]
-                  })
-                ]
-              })
-            })
-          ]
-        }),
-        (0, a.jsxs)("div", {
+          className: "kp-paper-sheet",
           style: {
-            marginTop: "24px",
-            paddingTop: "6px",
-            borderTop: "1px dashed #cbd5e1",
+            backgroundColor: "#ffffff",
+            color: "#0f172a",
+            borderRadius: "6px",
+            border: "1px solid #cbd5e1",
+            boxShadow: "0 12px 36px rgba(0, 0, 0, 0.45)",
+            padding: "20mm 20mm 15mm 30mm",
+            margin: "0 auto",
+            maxWidth: pdfOrientation === "landscape" ? "1250px" : "850px",
+            minHeight: pdfOrientation === "landscape" ? "560px" : "750px",
             display: "flex",
+            flexDirection: "column",
             justifyContent: "space-between",
-            alignItems: "flex-end",
-            fontSize: "9pt",
-            color: "#475569"
+            fontFamily: "Arial, sans-serif"
           },
           children: [
             (0, a.jsxs)("div", {
               children: [
-                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
-                "CAS Bareskrim Polri",
-                (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
-                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
-                pdfDataPer || "—",
-                (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
-                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Diambil: " }),
-                pdfWaktuCetak || "—"
+                (0, a.jsx)("div", {
+                  className: "sheet-title-box",
+                  style: {
+                    textAlign: "center",
+                    marginBottom: "28px",
+                    paddingBottom: "2px"
+                  },
+                  children: tLines.map((line, idx) => (0, a.jsx)("div", {
+                    key: idx,
+                    className: "kp-sheet-title-line",
+                    style: {
+                      fontSize: "12pt",
+                      fontWeight: "bold",
+                      color: "#0f172a",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      margin: "2px 0",
+                      lineHeight: 1.35
+                    },
+                    children: line
+                  }))
+                }),
+                (0, a.jsx)("div", {
+                  style: { overflowX: "auto" },
+                  children: (0, a.jsxs)("table", {
+                    style: {
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontFamily: "Arial, sans-serif",
+                      fontSize: "10pt"
+                    },
+                    children: [
+                      (0, a.jsx)("thead", {
+                        children: (0, a.jsxs)("tr", {
+                          style: { background: "#f1f5f9" },
+                          children: [
+                            (0, a.jsx)("th", { style: { width: "30px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "NO" }),
+                            (0, a.jsx)("th", { style: { border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "left", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SATKER / KESATUAN" }),
+                            (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CT" }),
+                            (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SISA (BU)" }),
+                            (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "LIMPAH EKS." }),
+                            (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CP" }),
+                            (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "PR" }),
+                            (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CC" }),
+                            (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CR" }),
+                            (0, a.jsx)("th", { style: { width: "95px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "INDEKS KINERJA" })
+                          ]
+                        })
+                      }),
+                      (0, a.jsxs)("tbody", {
+                        children: [
+                          pRows.map((r, rIdx) => {
+                            let ind = r.depth > 0 ? (r.depth * 14 + 6) + "px" : "6px";
+                            let isAlt = rIdx % 2 === 1;
+                            return (0, a.jsxs)("tr", {
+                              key: r.id || rIdx,
+                              className: isAlt ? "kp-row-zebra" : "kp-row-white",
+                              style: { background: isAlt ? "#f8fafc" : "#ffffff" },
+                              children: [
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: r.nomor || "" }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 500, fontSize: "10pt", color: "#0f172a" }, children: r.nama || "-" }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: (r.pr ?? 0).toFixed(2) + "%" }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#15803d" }, children: ((r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: (r.cr ?? 0).toFixed(2) + "%" }),
+                                (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", whiteSpace: "nowrap", fontSize: "10pt", color: "#0f172a" }, children: (r.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (r.level ? " (LV " + r.level + ")" : " (-)") })
+                              ]
+                            });
+                          }),
+                          (0, a.jsxs)("tr", {
+                            className: "total-row",
+                            style: {
+                              background: "#e2e8f0",
+                              fontWeight: "bold",
+                              borderTop: "2px solid #0f172a",
+                              borderBottom: "2px solid #0f172a"
+                            },
+                            children: [
+                              (0, a.jsx)("td", { colSpan: 2, style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: "TOTAL KESELURUHAN" }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#1d4ed8", fontWeight: "bold" }, children: (pTotal?.ct ?? 0).toLocaleString("id-ID") }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan_belum_update ?? 0) + (pTotal?.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan ?? 0) + (pTotal?.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.pr ?? 0).toFixed(2) + "%" }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#15803d", fontWeight: "bold" }, children: ((pTotal?.cc_aktual ?? 0) + (pTotal?.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.cr ?? 0).toFixed(2) + "%" }),
+                              (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (pTotal?.level ? " (LV " + pTotal.level + ")" : " (-)") })
+                            ]
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                })
               ]
             }),
-            (0, a.jsx)("div", {
-              style: { color: "#94a3b8", fontSize: "8.5pt" },
-              children: "Halaman 1 dari N (otomatis saat dicetak)"
+            (0, a.jsxs)("div", {
+              className: "kp-sheet-footer",
+              style: {
+                marginTop: "24px",
+                paddingTop: "6px",
+                borderTop: "1px dashed #cbd5e1",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-end",
+                fontSize: "9pt",
+                color: "#475569"
+              },
+              children: [
+                (0, a.jsxs)("div", {
+                  children: [
+                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
+                    "CAS Bareskrim Polri",
+                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
+                    pdfDataPer || "—",
+                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Diambil: " }),
+                    pdfWaktuCetak || "—"
+                  ]
+                }),
+                (0, a.jsx)("div", {
+                  style: { color: "#94a3b8", fontSize: "8.5pt" },
+                  children: "Halaman 1 dari N (otomatis saat dicetak)"
+                })
+              ]
             })
           ]
         })
