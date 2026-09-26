@@ -105,11 +105,21 @@ export class SatkerLegacyReconciliationService {
             left join lateral (
                 select s.id, s.kode, s.deskripsi
                 from bdb_satker s
-                where g.kode_pusiknas is not null
-                  and ${SatkerLegacyReconciliationService.normKode('s.kode')} in (
-                      ${SatkerLegacyReconciliationService.normKode('g.kode_pusiknas')},
-                      ${SatkerLegacyReconciliationService.normKode(`regexp_replace(g.kode_pusiknas, '(\\.00)+$', '')`)}
-                  )
+                left join bdb_satker p on p.id = s.parent_id
+                where (
+                    g.kode_pusiknas is not null
+                    and ${SatkerLegacyReconciliationService.normKode('s.kode')} in (
+                        ${SatkerLegacyReconciliationService.normKode('g.kode_pusiknas')},
+                        ${SatkerLegacyReconciliationService.normKode(`regexp_replace(g.kode_pusiknas, '(\\.00)+$', '')`)}
+                    )
+                ) or (
+                    g.kode_pusiknas is null
+                    and upper(trim(s.deskripsi)) = upper(trim(g.nama))
+                    and (
+                        g.parent_nama is null
+                        or (p.id is not null and similarity(upper(p.deskripsi), upper(g.parent_nama)) >= 0.7)
+                    )
+                )
                 limit 1
             ) exact on true
             left join lateral (
@@ -159,7 +169,7 @@ export class SatkerLegacyReconciliationService {
                 select level,
                        count(*)::int as grup,
                        sum(lp_terdampak)::int as lp_terdampak,
-                       count(*) filter (where exact_id is not null)::int as grup_cocok
+                       count(*) filter (where exact_id is not null or (nama_id is not null and nama_sim >= 0.95))::int as grup_cocok
                 from g group by level order by level
             `);
             const totalGrupCocok = rows.reduce((acc: number, r: any) => acc + Number(r.grup_cocok || 0), 0);
