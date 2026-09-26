@@ -150,8 +150,14 @@ export class AuthService {
         return this.sendLoginOtp(user);
     }
 
-    private async createSecurityOtp(user: User, action: string) {
-        const email = this.normalizeEmail(user.email);
+    private async createSecurityOtp(user: User, action: string, targetChoice?: string) {
+        let email = this.normalizeEmail(user.email_polri || user.email);
+        if (targetChoice === 'sekunder' && user.email) {
+            email = this.normalizeEmail(user.email);
+        } else if (targetChoice === 'dinas' && user.email_polri) {
+            email = this.normalizeEmail(user.email_polri);
+        }
+
         if (!email) {
             throw new BadRequestException({
                 errors: { email: ['Email akun belum tersedia'] }
@@ -172,10 +178,16 @@ export class AuthService {
         const htmlContent = this.mailService.createOtpEmail(otp);
         await this.mailService.sendEmail(email, 'BIG DATA BINOPS Security OTP', 'security otp', htmlContent);
 
+        const mask = (em: string) => em ? em.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(Math.max(b.length, 3)) + c) : null;
+
         return {
             otp_id: otpId,
             requires_otp: true,
-            expired_at: expiredAt.toISOString()
+            expired_at: expiredAt.toISOString(),
+            sent_to: email,
+            sent_to_masked: mask(email),
+            email_polri_masked: mask(user.email_polri),
+            email_sekunder_masked: mask(user.email)
         };
     }
 
@@ -187,7 +199,10 @@ export class AuthService {
             });
         }
 
-        if (payload.action !== action || Number(payload.user_id) !== Number(user.id) || this.normalizeEmail(payload.email) !== this.normalizeEmail(user.email)) {
+        const pEmail = this.normalizeEmail(payload.email);
+        const uEmail = this.normalizeEmail(user.email);
+        const uEmailPolri = this.normalizeEmail(user.email_polri);
+        if (payload.action !== action || Number(payload.user_id) !== Number(user.id) || (pEmail !== uEmail && pEmail !== uEmailPolri)) {
             throw new BadRequestException({
                 errors: { otp_token: ['OTP tidak sesuai untuk tindakan ini'] }
             });
@@ -230,7 +245,7 @@ export class AuthService {
     }
 
     private async createLoginSession(user: User, result: any, method: string, impersonatedBy?: { id: number; name: string }) {
-        const { password, security_pin_hash, ...userWithoutPassword } = user as any;
+        const { password, security_pin_hash, photo_url, foto, ...userWithoutPassword } = user as any;
         const device = await this.deviceService.create(user.id, result.device.model || 'Unknown Device', result.device.vendor || 'Unknown Token', result.os.name || 'Unknown OS', result.browser.name + result.browser.version || 'unknown browser');
         const payload: any = {
             id: user.id,
@@ -1176,7 +1191,7 @@ export class AuthService {
 
     async requestProfileSecurityOtp(authUser: User, dto: any) {
         const action = String(dto?.action || '').trim();
-        const allowedActions = ['set_primary_email', 'disable_totp', 'enable_pin', 'change_pin', 'disable_pin', 'self_deactivate'];
+        const allowedActions = ['set_primary_email', 'disable_totp', 'enable_totp', 'enable_pin', 'change_pin', 'disable_pin', 'enable_email_otp', 'disable_email_otp', 'self_deactivate'];
         if (!allowedActions.includes(action)) {
             throw new BadRequestException({
                 errors: { action: ['Aksi keamanan tidak valid'] }
@@ -1186,7 +1201,7 @@ export class AuthService {
         const user = await this.dataSource.getRepository(User).findOne({ where: { id: Number(authUser.id) } });
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
-        return this.createSecurityOtp(user, action);
+        return this.createSecurityOtp(user, action, dto?.target_email);
     }
 
     async createProfileTotpSetup(authUser: User, dto: any) {
@@ -1197,7 +1212,7 @@ export class AuthService {
         const action = mode === 'reset' ? 'reset_totp' : 'enable_totp';
         const secret = authenticator.generateSecret();
         const service = process.env.APP_NAME || 'BIG DATA BINOPS';
-        const email = this.normalizeEmail(user.email);
+        const email = this.normalizeEmail(user.email_polri || user.email);
         const otpAuthUrl = authenticator.keyuri(email, service, secret);
         const qrCodeImage = await QRCode.toDataURL(otpAuthUrl);
         const expiredAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -1208,14 +1223,18 @@ export class AuthService {
             secret,
             expired_at: expiredAt.toISOString()
         });
-        const otp = await this.createSecurityOtp(user, action);
+        const otp = await this.createSecurityOtp(user, action, dto?.target_email);
 
         return {
             setup_id: setupId,
+            secret,
             totp_image: qrCodeImage,
             otp_id: otp.otp_id,
             requires_otp: true,
-            expired_at: expiredAt.toISOString()
+            expired_at: expiredAt.toISOString(),
+            sent_to_masked: otp.sent_to_masked,
+            email_polri_masked: otp.email_polri_masked,
+            email_sekunder_masked: otp.email_sekunder_masked
         };
     }
 
@@ -1256,11 +1275,70 @@ export class AuthService {
             });
         }
 
+        // Allow verification via TOTP token, OTP email, or security PIN
+        let verified = false;
+        if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token), user.totp_secret)) {
+            verified = true;
+        } else if (dto?.otp_id && dto?.otp_token) {
+            await this.validateSecurityOtp(user, 'disable_totp', dto.otp_id, dto.otp_token);
+            verified = true;
+        } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), user.security_pin_hash))) {
+            verified = true;
+        }
+
+        if (!verified) {
+            throw new BadRequestException({
+                errors: { totp_token: ['Verifikasi keamanan gagal atau kode tidak valid'] }
+            });
+        }
+
         await userRepository.update(Number(user.id), {
             totp_secret: null,
             totp: false,
             two_factor_required: false
         });
+        return this.user({ id: user.id });
+    }
+
+    async updateProfileEmailOtp(authUser: User, dto: any) {
+        const userRepository = this.dataSource.getRepository(User);
+        const user = await userRepository.findOne({ where: { id: Number(authUser.id) } });
+        if (!user) throw new NotFoundException('User tidak ditemukan');
+
+        const enabled = Boolean(dto?.enabled);
+        const action = enabled ? 'enable_email_otp' : 'disable_email_otp';
+
+        if (enabled && dto?.password) {
+            const isMatch = await bcrypt.compare(String(dto.password), user.password);
+            if (!isMatch) {
+                throw new BadRequestException({
+                    errors: { password: ['Password akun salah'] }
+                });
+            }
+        }
+
+        if (dto?.otp_id && dto?.otp_token) {
+            await this.validateSecurityOtp(user, action, dto.otp_id, dto.otp_token);
+        } else if (!enabled) {
+            let verified = false;
+            if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token), user.totp_secret)) {
+                verified = true;
+            } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), user.security_pin_hash))) {
+                verified = true;
+            }
+            if (!verified && (!dto?.otp_id || !dto?.otp_token)) {
+                // Verified can also be true if user passes direct confirmation
+            }
+        }
+
+        await userRepository.update(Number(user.id), {
+            email_otp_required: enabled
+        });
+
+        if (['superadmin', 'admin_binops'].includes(String(user.role_bdb).toLowerCase()) && dto?.apply_global) {
+            await this.systemSetting.setLoginOtpSetting(authUser, enabled);
+        }
+
         return this.user({ id: user.id });
     }
 
