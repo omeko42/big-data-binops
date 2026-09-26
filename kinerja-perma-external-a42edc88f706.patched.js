@@ -565,7 +565,7 @@ function getTableDataForPrint(arr, d){
 function kpPrintPdf(){
   let { rows, totalData } = getTableDataForPrint(s, d);
   let rowsHtml = rows.map((r, rIdx)=>{
-    let ind = r.depth > 0 ? `padding-left:${r.depth * 14 + 6}px;font-style:italic;` : "font-weight:700;";
+    let ind = r.depth > 0 ? `padding-left:${r.depth * 14 + 6}px;font-style:italic;` : "font-weight:500;";
     let noStr = r.nomor || "";
     let ctV = (r.ct??0).toLocaleString("id-ID");
     let buV = ((r.cp_berjalan_belum_update??0)+(r.cp_tunggakan_belum_update??0)).toLocaleString("id-ID");
@@ -577,7 +577,7 @@ function kpPrintPdf(){
     let idxV = (r.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
     let lvlV = r.level ? `LEVEL ${r.level}` : "-";
     let bgRow = rIdx % 2 === 1 ? "background:#f8fafc;" : "background:#ffffff;";
-    return `<tr style="${bgRow}"><td style="text-align:center;width:28px;color:#0f172a;">${noStr}</td><td style="text-align:left;color:#0f172a;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:700;color:#1d4ed8;">${ctV}</td><td style="text-align:right;color:#0f172a;">${buV}</td><td style="text-align:right;color:#0f172a;">${limV}</td><td style="text-align:right;color:#0f172a;">${cpV}</td><td style="text-align:center;color:#0f172a;">${prV}</td><td style="text-align:right;font-weight:700;color:#15803d;">${ccV}</td><td style="text-align:center;font-weight:700;color:#0f172a;">${crV}</td><td style="text-align:center;white-space:nowrap;color:#0f172a;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
+    return `<tr style="${bgRow}"><td style="text-align:center;width:30px;color:#0f172a;">${noStr}</td><td style="text-align:left;color:#0f172a;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">${ctV}</td><td style="text-align:right;color:#0f172a;">${buV}</td><td style="text-align:right;color:#0f172a;">${limV}</td><td style="text-align:right;color:#0f172a;">${cpV}</td><td style="text-align:center;color:#0f172a;">${prV}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${ccV}</td><td style="text-align:center;font-weight:bold;color:#0f172a;">${crV}</td><td style="text-align:center;white-space:nowrap;color:#0f172a;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
   }).join("");
 
   let totCt = (totalData?.ct??0).toLocaleString("id-ID");
@@ -592,7 +592,7 @@ function kpPrintPdf(){
 
   let docTitle = `Lampiran Kinerja Perkara Satker ${pdfSatkerName||"Nasional"} Periode ${pdfPeriode||"Tahun 2026"}`;
 
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docTitle}</title><style>@page{size:A4 ${pdfOrientation||"portrait"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:10pt;font-family:Arial,sans-serif;color:#64748b;}@bottom-left{content:"Lampiran Kinerja Perkara \\2022 DORS Bareskrim Polri";font-size:10pt;font-family:Arial,sans-serif;color:#94a3b8;}}*{box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:12pt;color:#0f172a;background:#ffffff;margin:0;padding:0;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-header{margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #0f172a;}.sheet-title{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 6px 0;}.sheet-meta{font-family:Arial,sans-serif;font-size:10pt;color:#475569;display:flex;justify-content:space-between;align-items:center;}.sheet-meta-left{display:flex;gap:12px;align-items:center;}.sheet-meta-item strong{color:#0f172a;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12pt;margin-top:6px;}thead{display:table-header-group;}tfoot{display:table-footer-group;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:11pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:6px 4px;text-align:center;vertical-align:middle;}td{font-family:Arial,sans-serif;font-size:12pt;border:1px solid #cbd5e1;padding:5px 5px;vertical-align:middle;}.total-row td{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;background-color:#e2e8f0 !important;color:#0f172a !important;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}</style></head><body><div class="sheet-header"><div class="sheet-title">${docTitle}</div><div class="sheet-meta"><div class="sheet-meta-left"><span class="sheet-meta-item"><strong>Sumber Data:</strong> DORS Bareskrim Polri</span><span>&bull;</span><span class="sheet-meta-item"><strong>Data per:</strong> ${pdfDataPer||"—"}</span><span>&bull;</span><span class="sheet-meta-item"><strong>Waktu Cetak:</strong> ${pdfWaktuCetak||"—"}</span></div><div><span>Format Lampiran Ringkas</span></div></div></div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">${totCt}</td><td style="text-align:right;font-weight:bold;">${totBu}</td><td style="text-align:right;font-weight:bold;">${totLim}</td><td style="text-align:right;font-weight:bold;">${totCp}</td><td style="text-align:center;font-weight:bold;">${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${totCc}</td><td style="text-align:center;font-weight:bold;">${totCr}</td><td style="text-align:center;font-weight:bold;">${totIdx} (${totLvl})</td></tr></tfoot></table></body></html>`;
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docTitle}</title><style>@page{size:A4 ${pdfOrientation||"portrait"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-left{content:"Sumber Data: CAS Bareskrim Polri";font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:9pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:12pt;color:#0f172a;background:#ffffff;margin:0;padding:0;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:14px;padding-bottom:4px;}.sheet-title{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:12pt;}thead{display:table-header-group;}tfoot{display:table-footer-group;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:11pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:6px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:5px 5px;vertical-align:middle;font-size:12pt;}.total-row td{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;background-color:#e2e8f0 !important;color:#0f172a !important;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.sheet-footer-meta{margin-top:14px;padding-top:6px;font-size:9.5pt;color:#475569;display:flex;justify-content:space-between;align-items:flex-end;}</style></head><body><div class="sheet-title-box"><div class="sheet-title">${docTitle}</div></div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">${totCt}</td><td style="text-align:right;font-weight:bold;">${totBu}</td><td style="text-align:right;font-weight:bold;">${totLim}</td><td style="text-align:right;font-weight:bold;">${totCp}</td><td style="text-align:center;font-weight:bold;">${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${totCc}</td><td style="text-align:center;font-weight:bold;">${totCr}</td><td style="text-align:center;font-weight:bold;">${totIdx} (${totLvl})</td></tr></tfoot></table><div class="sheet-footer-meta"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> ${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> ${pdfWaktuCetak||"—"}</div></div></body></html>`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -1971,57 +1971,24 @@ function resetUnifiedFilter(){
         fontSize: "12pt"
       },
       children: [
-        (0, a.jsxs)("div", {
+        (0, a.jsx)("div", {
           style: {
-            borderBottom: "2px solid #0f172a",
-            paddingBottom: "8px",
-            marginBottom: "12px"
+            textAlign: "center",
+            marginBottom: "14px",
+            paddingBottom: "4px"
           },
-          children: [
-            (0, a.jsx)("div", {
-              style: {
-                fontSize: "12pt",
-                fontWeight: "bold",
-                color: "#0f172a",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                marginBottom: "6px"
-              },
-              children: "Lampiran Kinerja Perkara Satker " + (pdfSatkerName || "Nasional") + " Periode " + (pdfPeriode || "Tahun 2026")
-            }),
-            (0, a.jsxs)("div", {
-              style: {
-                fontSize: "10pt",
-                color: "#475569",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px",
-                alignItems: "center"
-              },
-              children: [
-                (0, a.jsxs)("span", {
-                  children: [
-                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
-                    "DORS Bareskrim Polri"
-                  ]
-                }),
-                (0, a.jsx)("span", { style: { color: "#cbd5e1" }, children: "•" }),
-                (0, a.jsxs)("span", {
-                  children: [
-                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
-                    pdfDataPer || "—"
-                  ]
-                }),
-                (0, a.jsx)("span", { style: { color: "#cbd5e1" }, children: "•" }),
-                (0, a.jsxs)("span", {
-                  children: [
-                    (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Waktu Cetak: " }),
-                    pdfWaktuCetak || "—"
-                  ]
-                })
-              ]
-            })
-          ]
+          children: (0, a.jsx)("div", {
+            style: {
+              fontSize: "12pt",
+              fontWeight: "bold",
+              color: "#0f172a",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              margin: 0,
+              lineHeight: 1.35
+            },
+            children: "Lampiran Kinerja Perkara Satker " + (pdfSatkerName || "Nasional") + " Periode " + (pdfPeriode || "Tahun 2026")
+          })
         }),
         (0, a.jsx)("div", {
           style: { overflowX: "auto" },
@@ -2030,8 +1997,7 @@ function resetUnifiedFilter(){
               width: "100%",
               borderCollapse: "collapse",
               fontFamily: "Arial, sans-serif",
-              fontSize: "12pt",
-              marginTop: "6px"
+              fontSize: "12pt"
             },
             children: [
               (0, a.jsx)("thead", {
@@ -2060,7 +2026,7 @@ function resetUnifiedFilter(){
                     style: { background: isAlt ? "#f8fafc" : "#ffffff" },
                     children: [
                       (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", textAlign: "center", fontSize: "12pt", color: "#0f172a" }, children: r.nomor || "" }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : "bold", fontSize: "12pt", color: "#0f172a" }, children: r.nama || "-" }),
+                      (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 500, fontSize: "12pt", color: "#0f172a" }, children: r.nama || "-" }),
                       (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "12pt", color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
                       (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", textAlign: "right", fontSize: "12pt", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
                       (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "5px 5px", textAlign: "right", fontSize: "12pt", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
@@ -2099,18 +2065,31 @@ function resetUnifiedFilter(){
         }),
         (0, a.jsxs)("div", {
           style: {
-            marginTop: "1.2rem",
-            paddingTop: "0.6rem",
-            borderTop: "1px dashed #cbd5e1",
+            marginTop: "14px",
+            paddingTop: "6px",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "10pt",
-            color: "#64748b"
+            alignItems: "flex-end",
+            fontSize: "9.5pt",
+            color: "#475569"
           },
           children: [
-            (0, a.jsx)("span", { children: "Lampiran Kinerja Perkara • DORS Bareskrim Polri" }),
-            (0, a.jsx)("span", { children: "Halaman 1 dari N (otomatis saat dicetak)" })
+            (0, a.jsxs)("div", {
+              children: [
+                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
+                "CAS Bareskrim Polri",
+                (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
+                pdfDataPer || "—",
+                (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Diambil: " }),
+                pdfWaktuCetak || "—"
+              ]
+            }),
+            (0, a.jsx)("div", {
+              style: { color: "#94a3b8", fontSize: "8.5pt" },
+              children: "Halaman 1 dari N (otomatis saat dicetak)"
+            })
           ]
         })
       ]
