@@ -192,6 +192,12 @@ export class User {
     @Column({ type: 'text', nullable: true })
     photo_url: string;
 
+    @Column({ type: 'varchar', length: 64, nullable: true })
+    photo_hash: string;
+
+    @Column({ type: 'timestamp', nullable: true })
+    photo_updated_at: Date;
+
     @Column({ type: 'boolean', default: false })
     is_pns: boolean;
 

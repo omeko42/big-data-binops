@@ -675,7 +675,19 @@ export class UserService {
         if (name && name !== authUser.name) authUpdate.name = name;
         if (dto.is_pns !== undefined) authUpdate.is_pns = Boolean(dto.is_pns);
         if (dto.social_media !== undefined) authUpdate.social_media = dto.social_media;
-        if (dto.photo_url || dto.foto) authUpdate.photo_url = dto.photo_url || dto.foto;
+        if (dto.photo_url !== undefined || dto.foto !== undefined) {
+            const rawPhoto = String(dto.photo_url || dto.foto || '').trim();
+            if (rawPhoto) {
+                const photoHash = crypto.createHash('sha256').update(rawPhoto).digest('hex');
+                authUpdate.photo_url = rawPhoto;
+                (authUpdate as any).photo_hash = photoHash;
+                (authUpdate as any).photo_updated_at = new Date();
+            } else {
+                authUpdate.photo_url = null;
+                (authUpdate as any).photo_hash = null;
+                (authUpdate as any).photo_updated_at = new Date();
+            }
+        }
 
         if (dto.email_polri !== undefined) {
             const emailPolri = this.normalizeEmail(dto.email_polri);
@@ -1082,9 +1094,11 @@ export class UserService {
         const jabatan = this.cleanOptionalText(payload?.jabatan);
         const isPns = payload?.is_pns !== undefined ? Boolean(payload.is_pns) : null;
         const socialMedia = payload?.social_media ? JSON.stringify(payload.social_media) : null;
+        const fotoProvided = (payload?.foto !== undefined || payload?.photo_url !== undefined);
         const foto = this.cleanOptionalText(payload?.foto || payload?.photo_url);
+        const photoHash = foto ? crypto.createHash('sha256').update(foto).digest('hex') : null;
 
-        if (!nrp && !nama && !satuan && !noHp && !pangkat && !jabatan && isPns === null && !socialMedia && !foto) return;
+        if (!nrp && !nama && !satuan && !noHp && !pangkat && !jabatan && isPns === null && !socialMedia && !foto && !fotoProvided) return;
 
         const emails = Array.from(new Set([normalizedEmail, previousNormalizedEmail].filter(Boolean)));
         const existingRows = await executor.query(
@@ -1114,11 +1128,13 @@ export class UserService {
                     email = $8,
                     is_pns = coalesce($9, is_pns),
                     social_media = coalesce($10::jsonb, social_media),
-                    foto = coalesce($11, foto),
+                    foto = CASE WHEN $11::boolean THEN $12 ELSE foto END,
+                    photo_hash = CASE WHEN $11::boolean THEN $13 ELSE photo_hash END,
+                    photo_updated_at = CASE WHEN $11::boolean THEN now() ELSE photo_updated_at END,
                     updated_at = now()
                 where id = $1
                 `,
-                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail, isPns, socialMedia, foto]
+                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail, isPns, socialMedia, fotoProvided, foto, photoHash]
             );
             return;
         }
@@ -1137,12 +1153,14 @@ export class UserService {
                 is_pns,
                 social_media,
                 foto,
+                photo_hash,
+                photo_updated_at,
                 created_at,
                 updated_at
             )
-            values ($1, $2, 'l', coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, coalesce($8, false), coalesce($9::jsonb, '{}'::jsonb), $10, now(), now())
+            values ($1, $2, 'l', coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, coalesce($8, false), coalesce($9::jsonb, '{}'::jsonb), $10, $11, now(), now(), now())
             `,
-            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail, isPns, socialMedia, foto]
+            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail, isPns, socialMedia, foto, photoHash]
         );
     }
 
