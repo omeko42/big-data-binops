@@ -44,12 +44,17 @@ deployFile('laporan-filter-perma-a15e28ec2e81.js', lpContent, '/usr/src/app/.nex
 const profileContent = fs.readFileSync('3def3ti6rk0vr.patched.js', 'utf8');
 deployFile('3def3ti6rk0vr.js', profileContent, '/usr/src/app/.next/static/chunks/3def3ti6rk0vr.js');
 
-// 5. Check syntax, restart container, commit, reload nginx
+// 5. Deploy Kinerja Perkara chunk
+const kpContent = fs.readFileSync('kinerja-perma-external-a42edc88f706.patched.js', 'utf8');
+deployFile('kinerja-perma-external-a42edc88f706.js', kpContent, '/usr/src/app/.next/static/chunks/kinerja-perma-external-a42edc88f706.js');
+
+// 6. Check syntax, restart container, commit, reload nginx
 console.log('Verifying JS chunks inside container...');
 const checkCmd = `
 docker exec bdb-web node --check /usr/src/app/.next/static/chunks/user-page-pagination-v9-dfbc949b.js &&
 docker exec bdb-web node --check /usr/src/app/.next/static/chunks/laporan-filter-perma-a15e28ec2e81.js &&
 docker exec bdb-web node --check /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js &&
+docker exec bdb-web node --check /usr/src/app/.next/static/chunks/kinerja-perma-external-a42edc88f706.js &&
 echo "ALL_SYNTAX_CHECKS_PASSED"
 `;
 
