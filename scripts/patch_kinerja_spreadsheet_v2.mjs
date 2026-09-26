@@ -124,7 +124,7 @@ function getTableDataForPrint(arr, d){
 
 `;
 
-// 3. Update kpPrintPdf block: Total row only on the last page at the end of tbody
+// 3. Update kpPrintPdf block: fixed page-footer anchored at bottom of page
 const printStart = original.indexOf('function kpPrintPdf(){');
 if (printStart === -1) throw new Error('kpPrintPdf not found');
 const printEnd = original.indexOf('function applyUnifiedFilter(){', printStart);
@@ -158,7 +158,7 @@ const newPrintPdf = `function kpPrintPdf(){
   let totIdx = (totalData?.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
   let totLvl = totalData?.level ? \`LV \${totalData.level}\` : "-";
 
-  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>LAMPIRAN KINERJA PERKARA SATKER \${(pdfSatkerName||"NASIONAL").toUpperCase()} - PERIODE \${(pdfPeriode||"TAHUN 2026").toUpperCase()}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:9pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}body{font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;margin:0;padding:0;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:14px;padding-bottom:2px;}.sheet-title-line1{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0;line-height:1.35;}.sheet-title-line2{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:none;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.sheet-footer-meta{margin-top:14px;padding-top:6px;font-size:9.5pt;color:#475569;display:flex;justify-content:space-between;align-items:flex-end;page-break-inside:avoid;}</style></head><body><div class="sheet-title-box"><div class="sheet-title-line1">LAMPIRAN KINERJA PERKARA SATKER \${(pdfSatkerName||"NASIONAL").toUpperCase()}</div><div class="sheet-title-line2">PERIODE \${(pdfPeriode||"TAHUN 2026").toUpperCase()}</div></div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table><div class="sheet-footer-meta"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> \${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> \${pdfWaktuCetak||"—"}</div></div></body></html>\`;
+  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>LAMPIRAN KINERJA PERKARA SATKER \${(pdfSatkerName||"NASIONAL").toUpperCase()} - PERIODE \${(pdfPeriode||"TAHUN 2026").toUpperCase()}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}body{padding-bottom:26px;}.sheet-title-box{text-align:center;margin-bottom:14px;padding-bottom:2px;}.sheet-title-line1{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0;line-height:1.35;}.sheet-title-line2{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:none;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:#475569;background:#ffffff;padding-top:4px;}</style></head><body><div class="sheet-title-box"><div class="sheet-title-line1">LAMPIRAN KINERJA PERKARA SATKER \${(pdfSatkerName||"NASIONAL").toUpperCase()}</div><div class="sheet-title-line2">PERIODE \${(pdfPeriode||"TAHUN 2026").toUpperCase()}</div></div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> \${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> \${pdfWaktuCetak||"—"}</div></div></body></html>\`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -313,134 +313,143 @@ const newDialogJsx = `(0, a.jsx)(h.Dialog, {
   dismissableMask: !1,
   children: (() => {
     let { rows: pRows, totalData: pTotal } = getTableDataForPrint(s, d);
-    return (0, a.jsx)("div", {
+    return (0, a.jsxs)("div", {
       style: {
         background: "#ffffff",
         color: "#0f172a",
         borderRadius: "8px",
         border: "1px solid #cbd5e1",
         boxShadow: "0 6px 24px rgba(0, 0, 0, 0.25)",
-        padding: "20mm 20mm 20mm 30mm",
+        padding: "20mm 20mm 15mm 30mm",
         margin: "0 auto",
         maxWidth: pdfOrientation === "landscape" ? "1250px" : "850px",
+        minHeight: pdfOrientation === "landscape" ? "560px" : "750px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
         fontFamily: "Arial, sans-serif"
       },
       children: [
         (0, a.jsxs)("div", {
-          style: {
-            textAlign: "center",
-            marginBottom: "14px",
-            paddingBottom: "2px"
-          },
           children: [
-            (0, a.jsx)("div", {
+            (0, a.jsxs)("div", {
               style: {
-                fontSize: "12pt",
-                fontWeight: "bold",
-                color: "#0f172a",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                margin: 0,
-                lineHeight: 1.35
+                textAlign: "center",
+                marginBottom: "14px",
+                paddingBottom: "2px"
               },
-              children: "LAMPIRAN KINERJA PERKARA SATKER " + (pdfSatkerName || "NASIONAL").toUpperCase()
+              children: [
+                (0, a.jsx)("div", {
+                  style: {
+                    fontSize: "12pt",
+                    fontWeight: "bold",
+                    color: "#0f172a",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    margin: 0,
+                    lineHeight: 1.35
+                  },
+                  children: "LAMPIRAN KINERJA PERKARA SATKER " + (pdfSatkerName || "NASIONAL").toUpperCase()
+                }),
+                (0, a.jsx)("div", {
+                  style: {
+                    fontSize: "12pt",
+                    fontWeight: "bold",
+                    color: "#0f172a",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    marginTop: "3px",
+                    lineHeight: 1.35
+                  },
+                  children: "PERIODE " + (pdfPeriode || "TAHUN 2026").toUpperCase()
+                })
+              ]
             }),
             (0, a.jsx)("div", {
-              style: {
-                fontSize: "12pt",
-                fontWeight: "bold",
-                color: "#0f172a",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                marginTop: "3px",
-                lineHeight: 1.35
-              },
-              children: "PERIODE " + (pdfPeriode || "TAHUN 2026").toUpperCase()
-            })
-          ]
-        }),
-        (0, a.jsx)("div", {
-          style: { overflowX: "auto" },
-          children: (0, a.jsxs)("table", {
-            style: {
-              width: "100%",
-              borderCollapse: "collapse",
-              fontFamily: "Arial, sans-serif",
-              fontSize: "10pt"
-            },
-            children: [
-              (0, a.jsx)("thead", {
-                children: (0, a.jsxs)("tr", {
-                  style: { background: "#f1f5f9" },
-                  children: [
-                    (0, a.jsx)("th", { style: { width: "30px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "NO" }),
-                    (0, a.jsx)("th", { style: { border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "left", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SATKER / KESATUAN" }),
-                    (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CT" }),
-                    (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SISA (BU)" }),
-                    (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "LIMPAH EKS." }),
-                    (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CP" }),
-                    (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "PR" }),
-                    (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CC" }),
-                    (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CR" }),
-                    (0, a.jsx)("th", { style: { width: "95px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "INDEKS KINERJA" })
-                  ]
-                })
-              }),
-              (0, a.jsxs)("tbody", {
+              style: { overflowX: "auto" },
+              children: (0, a.jsxs)("table", {
+                style: {
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: "10pt"
+                },
                 children: [
-                  pRows.map((r, rIdx) => {
-                    let ind = r.depth > 0 ? (r.depth * 14 + 6) + "px" : "6px";
-                    let isAlt = rIdx % 2 === 1;
-                    return (0, a.jsxs)("tr", {
-                      key: r.id || rIdx,
-                      style: { background: isAlt ? "#f8fafc" : "#ffffff" },
+                  (0, a.jsx)("thead", {
+                    children: (0, a.jsxs)("tr", {
+                      style: { background: "#f1f5f9" },
                       children: [
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: r.nomor || "" }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 500, fontSize: "10pt", color: "#0f172a" }, children: r.nama || "-" }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: (r.pr ?? 0).toFixed(2) + "%" }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#15803d" }, children: ((r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: (r.cr ?? 0).toFixed(2) + "%" }),
-                        (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", whiteSpace: "nowrap", fontSize: "10pt", color: "#0f172a" }, children: (r.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (r.level ? " (LV " + r.level + ")" : " (-)") })
+                        (0, a.jsx)("th", { style: { width: "30px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "NO" }),
+                        (0, a.jsx)("th", { style: { border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "left", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SATKER / KESATUAN" }),
+                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CT" }),
+                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "SISA (BU)" }),
+                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "LIMPAH EKS." }),
+                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CP" }),
+                        (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "PR" }),
+                        (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CC" }),
+                        (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "CR" }),
+                        (0, a.jsx)("th", { style: { width: "95px", border: "1px solid #94a3b8", padding: "5px 4px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: "INDEKS KINERJA" })
                       ]
-                    });
+                    })
                   }),
-                  (0, a.jsxs)("tr", {
-                    className: "total-row",
-                    style: {
-                      background: "#e2e8f0",
-                      fontWeight: "bold",
-                      borderTop: "2px solid #0f172a",
-                      borderBottom: "2px solid #0f172a"
-                    },
+                  (0, a.jsxs)("tbody", {
                     children: [
-                      (0, a.jsx)("td", { colSpan: 2, style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: "TOTAL KESELURUHAN" }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#1d4ed8", fontWeight: "bold" }, children: (pTotal?.ct ?? 0).toLocaleString("id-ID") }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan_belum_update ?? 0) + (pTotal?.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan ?? 0) + (pTotal?.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.pr ?? 0).toFixed(2) + "%" }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#15803d", fontWeight: "bold" }, children: ((pTotal?.cc_aktual ?? 0) + (pTotal?.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.cr ?? 0).toFixed(2) + "%" }),
-                      (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (pTotal?.level ? " (LV " + pTotal.level + ")" : " (-)") })
+                      pRows.map((r, rIdx) => {
+                        let ind = r.depth > 0 ? (r.depth * 14 + 6) + "px" : "6px";
+                        let isAlt = rIdx % 2 === 1;
+                        return (0, a.jsxs)("tr", {
+                          key: r.id || rIdx,
+                          style: { background: isAlt ? "#f8fafc" : "#ffffff" },
+                          children: [
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: r.nomor || "" }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 500, fontSize: "10pt", color: "#0f172a" }, children: r.nama || "-" }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontSize: "10pt", color: "#0f172a" }, children: ((r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontSize: "10pt", color: "#0f172a" }, children: (r.pr ?? 0).toFixed(2) + "%" }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "right", fontWeight: "bold", fontSize: "10pt", color: "#15803d" }, children: ((r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", fontWeight: "bold", fontSize: "10pt", color: "#0f172a" }, children: (r.cr ?? 0).toFixed(2) + "%" }),
+                            (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4.5px 5px", textAlign: "center", whiteSpace: "nowrap", fontSize: "10pt", color: "#0f172a" }, children: (r.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (r.level ? " (LV " + r.level + ")" : " (-)") })
+                          ]
+                        });
+                      }),
+                      (0, a.jsxs)("tr", {
+                        className: "total-row",
+                        style: {
+                          background: "#e2e8f0",
+                          fontWeight: "bold",
+                          borderTop: "2px solid #0f172a",
+                          borderBottom: "2px solid #0f172a"
+                        },
+                        children: [
+                          (0, a.jsx)("td", { colSpan: 2, style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: "TOTAL KESELURUHAN" }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#1d4ed8", fontWeight: "bold" }, children: (pTotal?.ct ?? 0).toLocaleString("id-ID") }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan_belum_update ?? 0) + (pTotal?.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: ((pTotal?.cp_berjalan ?? 0) + (pTotal?.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.pr ?? 0).toFixed(2) + "%" }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "right", fontSize: "10pt", color: "#15803d", fontWeight: "bold" }, children: ((pTotal?.cc_aktual ?? 0) + (pTotal?.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.cr ?? 0).toFixed(2) + "%" }),
+                          (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "5px 8px", textAlign: "center", fontSize: "10pt", color: "#0f172a", fontWeight: "bold" }, children: (pTotal?.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (pTotal?.level ? " (LV " + pTotal.level + ")" : " (-)") })
+                        ]
+                      })
                     ]
                   })
                 ]
               })
-            ]
-          })
+            })
+          ]
         }),
         (0, a.jsxs)("div", {
           style: {
-            marginTop: "14px",
+            marginTop: "24px",
             paddingTop: "6px",
+            borderTop: "1px dashed #cbd5e1",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-end",
-            fontSize: "9.5pt",
+            fontSize: "9pt",
             color: "#475569"
           },
           children: [
