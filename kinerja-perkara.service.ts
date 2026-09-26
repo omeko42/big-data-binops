@@ -1069,7 +1069,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                     lp.id as lp_id,
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     ${DATE_EXPR} as tanggal_mulai_penanganan,
-                    lp.tanggal_selesai,
+                    case when lp.tanggal_selesai > current_date then current_date else lp.tanggal_selesai end as tanggal_selesai,
                     lp.tingkat_kesulitan,
                     (lp.tingkat_kesulitan is null) as kesulitan_belum_dipilih,
                     case lp.tingkat_kesulitan
