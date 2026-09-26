@@ -1326,6 +1326,14 @@ export class AuthService {
         };
     }
 
+    private clearUserSecurityRateLimits(userId: number | string) {
+        const id = Number(userId);
+        const actions = ['set_primary_email', 'disable_totp', 'enable_totp', 'reset_totp', 'enable_pin', 'change_pin', 'disable_pin', 'enable_email_otp', 'disable_email_otp'];
+        for (const act of actions) {
+            this.clearOtpRateLimit(`sec_otp:${id}:${act}`);
+        }
+    }
+
     async updateProfileTotp(authUser: User, dto: any) {
         const userRepository = this.dataSource.getRepository(User);
         const user = await userRepository
@@ -1358,6 +1366,7 @@ export class AuthService {
                 totp: true,
                 two_factor_required: true
             });
+            this.clearUserSecurityRateLimits(user.id);
             return this.user({ id: user.id });
         }
 
@@ -1385,6 +1394,7 @@ export class AuthService {
             totp: false,
             two_factor_required: false
         });
+        this.clearUserSecurityRateLimits(user.id);
         return this.user({ id: user.id });
     }
 
@@ -1431,6 +1441,7 @@ export class AuthService {
             await this.systemSetting.setLoginOtpSetting(authUser, enabled);
         }
 
+        this.clearUserSecurityRateLimits(user.id);
         return this.user({ id: user.id });
     }
 
@@ -1463,6 +1474,7 @@ export class AuthService {
                 pin_required: true,
                 security_pin_hash: await bcrypt.hash(pin, 10)
             });
+            this.clearUserSecurityRateLimits(user.id);
             return this.user({ id: user.id });
         } else {
             let verified = false;
@@ -1487,6 +1499,7 @@ export class AuthService {
                 pin_required: false,
                 security_pin_hash: null
             });
+            this.clearUserSecurityRateLimits(user.id);
             return this.user({ id: user.id });
         }
     }
