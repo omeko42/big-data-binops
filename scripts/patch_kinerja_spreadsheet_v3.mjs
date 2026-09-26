@@ -249,7 +249,11 @@ const newPrintPdf = `function kpPrintPdf(){
   let tLines = getPdfTitleLines(pdfOrientation, pdfSatkerName, pdfPeriode, pdfCrimeFilter);
   let titleLinesHtml = tLines.map(line => \`<div class="sheet-title-line">\${line}</div>\`).join("");
 
-  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:table-footer-group;}tr{page-break-inside:avoid;break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;height:24px;display:flex;justify-content:space-between;align-items:center;font-size:8.5pt;color:#475569;background:#ffffff;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody><tfoot><tr><td colspan="10" style="border:none !important;height:32px !important;padding:0 !important;background:transparent !important;"><div style="height:32px;"></div></td></tr></tfoot></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> \${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> \${pdfWaktuCetak||"—"}</div></div></body></html>\`;
+  let footerDataPer = pdfDataPer || "—";
+  let footerWaktuCetak = pdfWaktuCetak || "—";
+  let footerFontSize = pdfOrientation === "portrait" ? "6.8pt" : "8.5pt";
+
+  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-left{content:"Sumber Data: CAS Bareskrim Polri \\\\2022  Data per: \${footerDataPer} \\\\2022  Diambil: \${footerWaktuCetak}";font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#475569;}@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tr{page-break-inside:avoid;break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border:1px solid #94a3b8 !important;border-top:2px solid #0f172a !important;border-bottom:2px solid #0f172a !important;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table></body></html>\`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -655,25 +659,26 @@ const newDialogJsx = `(0, a.jsx)(h.Dialog, {
                 borderTop: "1px dashed #cbd5e1",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "flex-end",
-                fontSize: "9pt",
+                alignItems: "center",
+                fontSize: "8.5pt",
                 color: "#475569"
               },
               children: [
                 (0, a.jsxs)("div", {
+                  style: { display: "flex", alignItems: "center", flexWrap: "wrap" },
                   children: [
                     (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
                     "CAS Bareskrim Polri",
-                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#94a3b8" }, children: "•" }),
                     (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
                     pdfDataPer || "—",
-                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#cbd5e1" }, children: "•" }),
+                    (0, a.jsx)("span", { style: { margin: "0 6px", color: "#94a3b8" }, children: "•" }),
                     (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Diambil: " }),
                     pdfWaktuCetak || "—"
                   ]
                 }),
                 (0, a.jsx)("div", {
-                  style: { color: "#94a3b8", fontSize: "8.5pt" },
+                  style: { color: "#64748b", fontSize: "8.5pt", whiteSpace: "nowrap" },
                   children: "Halaman 1 dari N (otomatis saat dicetak)"
                 })
               ]
