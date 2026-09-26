@@ -25,6 +25,17 @@ const newStateBlock = `[exportMenuOpen,setExportMenuOpen]=(0,t.useState)(!1),
 
 // Helper code for title lines & date formatting
 const helperFunctions = `
+function generateCasHashFilename(ext){
+  let arr = new Uint8Array(8);
+  if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(arr);
+  } else {
+    for (let i = 0; i < 8; i++) arr[i] = Math.floor(Math.random() * 256);
+  }
+  let hex = Array.from(arr, b => b.toString(16).padStart(2, "0")).join("");
+  return "cas_" + hex + (ext ? "." + ext : "");
+}
+
 const KP_INDO_MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
 function formatIndoDateTime(dt){
@@ -253,7 +264,8 @@ const newPrintPdf = `function kpPrintPdf(){
   let footerWaktuCetak = pdfWaktuCetak || "—";
   let footerFontSize = pdfOrientation === "portrait" ? "6.8pt" : "8.5pt";
 
-  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-left{content:"Sumber Data: CAS Bareskrim Polri \\\\2022  Data per: \${footerDataPer} \\\\2022  Diambil: \${footerWaktuCetak}";font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#475569;}@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tr{page-break-inside:avoid;break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border:1px solid #94a3b8 !important;border-top:2px solid #0f172a !important;border-bottom:2px solid #0f172a !important;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table></body></html>\`;
+  let pdfDocTitle = generateCasHashFilename();
+  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${pdfDocTitle}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-left{content:"Sumber Data: CAS Bareskrim Polri \\\\2022  Data per: \${footerDataPer} \\\\2022  Diambil: \${footerWaktuCetak}";font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#475569;}@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:\${footerFontSize};font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tr{page-break-inside:avoid;break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border:1px solid #94a3b8 !important;border-top:2px solid #0f172a !important;border-bottom:2px solid #0f172a !important;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table></body></html>\`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -717,6 +729,22 @@ const stStart = patched.indexOf('[exportMenuOpen,setExportMenuOpen]=(0,t.useStat
 const stEnd = patched.indexOf(stateSearchEnd, stStart) + stateSearchEnd.length;
 patched = patched.slice(0, stStart) + newStateBlock + patched.slice(stEnd);
 console.log('Replaced state block');
+
+// 5. Replace XLSX and CSV download filenames with hash
+if (patched.includes('n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.xlsx`')) {
+  patched = patched.replace(
+    'n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.xlsx`',
+    'n.download=generateCasHashFilename("xlsx")'
+  );
+  console.log('Replaced XLSX download filename with hash');
+}
+if (patched.includes('n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`')) {
+  patched = patched.replace(
+    'n.download=`kinerja-perkara-${eAP.from}_${eAP.to}.csv`',
+    'n.download=generateCasHashFilename("csv")'
+  );
+  console.log('Replaced CSV download filename with hash');
+}
 
 // Validate syntax
 console.log('Testing syntax of patched file...');
