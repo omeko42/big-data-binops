@@ -292,7 +292,7 @@ export class AuthService {
     }
 
     private async createLoginSession(user: User, result: any, method: string, impersonatedBy?: { id: number; name: string }) {
-        const { password, security_pin_hash, photo_url, foto, ...userWithoutPassword } = user as any;
+        const { password, security_pin_hash, totp_secret, photo_url, foto, ...userWithoutPassword } = user as any;
         const device = await this.deviceService.create(user.id, result.device.model || 'Unknown Device', result.device.vendor || 'Unknown Token', result.os.name || 'Unknown OS', result.browser.name + result.browser.version || 'unknown browser');
         const payload: any = {
             id: user.id,
@@ -902,18 +902,17 @@ export class AuthService {
         const secret = authenticator.generateSecret();
         const service = process.env.APP_NAME || 'Bareskrim-CAS';
 
-        const label = registerTotp.email;
-        const otpAuthUrl = authenticator.keyuri(label, service, secret);
-        const qrCodeImage = await QRCode.toDataURL(otpAuthUrl);
-        const user = await this.usersService.findByEmail(registerTotp.email);
+        const user = await this.usersService.findByLoginIdentifier(registerTotp.email);
         if (!user) {
             throw new BadRequestException({
+                message: 'Akun tidak ditemukan atau sesi login telah berakhir',
                 errors: { password: ['invalid credentials'] }
             });
         }
         this.usersService.assertCanPasswordLogin(user);
         if (!(await bcrypt.compare(registerTotp.password, user.password))) {
             throw new BadRequestException({
+                message: 'Password salah',
                 errors: { password: ['invalid credentials'] }
             });
         }
@@ -923,30 +922,37 @@ export class AuthService {
                 pinSession = this.decryptSecurityPayload((registerTotp as any).pin_session_id);
             } catch {
                 throw new BadRequestException({
+                    message: 'PIN belum diverifikasi',
                     errors: { pin: ['PIN belum diverifikasi'] }
                 });
             }
             if (pinSession.action !== 'pin_verified' || Number(pinSession.user_id) !== Number(user.id) || this.normalizeEmail(pinSession.email) !== this.normalizeEmail(user.email)) {
                 throw new BadRequestException({
+                    message: 'Sesi verifikasi PIN tidak valid',
                     errors: { pin: ['PIN belum diverifikasi'] }
                 });
             }
         }
+        const label = user.email_polri || user.email || user.username || registerTotp.email;
+        const otpAuthUrl = authenticator.keyuri(label, service, secret);
+        const qrCodeImage = await QRCode.toDataURL(otpAuthUrl);
         user.totp_secret = secret;
         await this.usersService.save(user);
         return { totp_image: qrCodeImage };
     }
 
     async TotpValidation(verifyTotp: verifyTOTP, result: any): Promise<any> {
-        const user = await this.usersService.findByEmail(verifyTotp.email);
+        const user = await this.usersService.findByLoginIdentifier(verifyTotp.email);
         if (!user) {
             throw new BadRequestException({
+                message: 'Akun tidak ditemukan atau sesi login telah berakhir',
                 errors: { password: ['invalid credentials'] }
             });
         }
         this.usersService.assertCanPasswordLogin(user);
         if (!(await bcrypt.compare(verifyTotp.password, user.password))) {
             throw new BadRequestException({
+                message: 'Password salah',
                 errors: { password: ['invalid credentials'] }
             });
         }
@@ -956,21 +962,36 @@ export class AuthService {
                 pinSession = this.decryptSecurityPayload((verifyTotp as any).pin_session_id);
             } catch {
                 throw new BadRequestException({
+                    message: 'PIN belum diverifikasi',
                     errors: { pin: ['PIN belum diverifikasi'] }
                 });
             }
             if (pinSession.action !== 'pin_verified' || Number(pinSession.user_id) !== Number(user.id) || this.normalizeEmail(pinSession.email) !== this.normalizeEmail(user.email)) {
                 throw new BadRequestException({
+                    message: 'Sesi verifikasi PIN tidak valid',
                     errors: { pin: ['PIN belum diverifikasi'] }
                 });
             }
         }
-        if (!verifyTotp.totp_token || !user.totp_secret) {
-            throw new BadRequestException('Missing token or secret');
+        if (!user.totp_secret) {
+            throw new BadRequestException({
+                message: 'Aplikasi Authenticator belum dikonfigurasi pada akun ini',
+                errors: { totp_token: ['Aplikasi Authenticator belum dikonfigurasi pada akun ini'] }
+            });
         }
-        const isValid = authenticator.check(verifyTotp.totp_token, user.totp_secret);
+        if (!verifyTotp.totp_token) {
+            throw new BadRequestException({
+                message: 'Masukkan 6 digit kode authenticator',
+                errors: { totp_token: ['Masukkan 6 digit kode authenticator'] }
+            });
+        }
+        authenticator.options = { window: 1 };
+        const isValid = authenticator.check(String(verifyTotp.totp_token).trim(), user.totp_secret);
         if (!isValid) {
-            throw new UnauthorizedException('Invalid TOTP code');
+            throw new BadRequestException({
+                message: 'Kode authenticator salah atau telah kedaluwarsa',
+                errors: { totp_token: ['Kode authenticator salah atau telah kedaluwarsa'] }
+            });
         }
         return this.finishLoginAfterFactors(user, result, 'LOCAL_TOTP');
     }
