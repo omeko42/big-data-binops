@@ -17,7 +17,7 @@ const newStateBlock = `[exportMenuOpen,setExportMenuOpen]=(0,t.useState)(!1),
 [pdfModalOpen,setPdfModalOpen]=(0,t.useState)(!1),
 [pdfExpanded,setPdfExpanded]=(0,t.useState)(!1),
 [pdfOrientation,setPdfOrientation]=(0,t.useState)("landscape"),
-[pdfSatkerName,setPdfSatkerName]=(0,t.useState)("BARESKRIM POLRI DAN JAJARAN"),
+[pdfSatkerName,setPdfSatkerName]=(0,t.useState)("BARESKRIM POLRI DAN POLDA JAJARAN"),
 [pdfPeriode,setPdfPeriode]=(0,t.useState)("TAHUN 2026"),
 [pdfCrimeFilter,setPdfCrimeFilter]=(0,t.useState)(""),
 [pdfWaktuCetak,setPdfWaktuCetak]=(0,t.useState)(""),
@@ -40,7 +40,10 @@ function formatIndoDateTime(dt){
 }
 
 function getPdfTitleLines(orientation, satker, periode, crime){
-  let sUpper = (satker || "BARESKRIM POLRI DAN JAJARAN").toUpperCase().trim();
+  let sUpper = (satker || "BARESKRIM POLRI DAN POLDA JAJARAN").toUpperCase().trim();
+  if(sUpper.includes("SEMUA JAJARAN") || sUpper.includes("MABES & SELURUH POLDA") || sUpper === "NASIONAL" || sUpper === "BARESKRIM POLRI DAN JAJARAN" || sUpper === "BARESKRIM POLRI"){
+    sUpper = "BARESKRIM POLRI DAN POLDA JAJARAN";
+  }
   let pUpper = (periode || "TAHUN 2026").toUpperCase().trim();
   if(!pUpper.startsWith("PERIODE")){
     pUpper = "PERIODE " + pUpper;
@@ -74,7 +77,10 @@ function getPdfTitleLines(orientation, satker, periode, crime){
 `;
 
 // 2. Update openPdfModal block & getTableDataForPrint
-const openPdfStart = original.indexOf('function openPdfModal(){');
+let openPdfStart = original.indexOf('const KP_INDO_MONTHS =');
+if (openPdfStart === -1) {
+  openPdfStart = original.indexOf('function openPdfModal(){');
+}
 if (openPdfStart === -1) throw new Error('openPdfModal not found');
 const openPdfEnd = original.indexOf('function kpPrintPdf(){', openPdfStart);
 if (openPdfEnd === -1) throw new Error('kpPrintPdf not found');
@@ -82,19 +88,22 @@ if (openPdfEnd === -1) throw new Error('kpPrintPdf not found');
 const newOpenPdf = helperFunctions + `
 function openPdfModal(){
   setExportMenuOpen(!1);
-  let satker = "BARESKRIM POLRI DAN JAJARAN";
+  let satker = "BARESKRIM POLRI DAN POLDA JAJARAN";
   if(eScope==="scoped"&&eScopeSatkerId){
     let sObj=eScopeOpts.find(x=>x.value===eScopeSatkerId);
     if(sObj&&sObj.label){
       let lbl = sObj.label.toUpperCase().trim();
-      if(lbl === "BARESKRIM POLRI" || eScopeSatkerId === 13){
-        satker = "BARESKRIM POLRI DAN JAJARAN";
+      if(lbl === "BARESKRIM POLRI" || eScopeSatkerId === 13 || lbl.includes("SEMUA JAJARAN") || lbl.includes("MABES & SELURUH POLDA") || lbl === "NASIONAL"){
+        satker = "BARESKRIM POLRI DAN POLDA JAJARAN";
       } else {
         satker = lbl + (lbl.includes("POLDA") && !lbl.includes("JAJARAN") ? " DAN JAJARAN" : "");
       }
     }
-  } else if(eScope==="all"){
-    satker = "BARESKRIM POLRI DAN JAJARAN";
+  } else {
+    satker = "BARESKRIM POLRI DAN POLDA JAJARAN";
+  }
+  if(satker.includes("SEMUA JAJARAN") || satker.includes("MABES & SELURUH POLDA") || satker === "NASIONAL" || satker === "BARESKRIM POLRI DAN JAJARAN"){
+    satker = "BARESKRIM POLRI DAN POLDA JAJARAN";
   }
 
   let crime = "";
@@ -240,7 +249,7 @@ const newPrintPdf = `function kpPrintPdf(){
   let tLines = getPdfTitleLines(pdfOrientation, pdfSatkerName, pdfPeriode, pdfCrimeFilter);
   let titleLinesHtml = tLines.map(line => \`<div class="sheet-title-line">\${line}</div>\`).join("");
 
-  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}body{padding-bottom:26px;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:none;}tr{page-break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;font-size:8.5pt;color:#475569;background:#ffffff;padding-top:4px;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> \${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> \${pdfWaktuCetak||"—"}</div></div></body></html>\`;
+  let html = \`<!DOCTYPE html><html><head><meta charset="utf-8"><title>\${tLines[0] || "LAMPIRAN KINERJA PERKARA SATKER"}</title><style>@page{size:A4 \${pdfOrientation||"landscape"};margin-top:2cm;margin-right:2cm;margin-bottom:2cm;margin-left:3cm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:8.5pt;font-family:Arial,sans-serif;color:#64748b;}}*{box-sizing:border-box;}html,body{margin:0;padding:0;font-family:Arial,sans-serif;font-size:10pt;color:#0f172a;background:#ffffff;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-title-box{text-align:center;margin-bottom:28px;padding-bottom:2px;}.sheet-title-line{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:2px 0;line-height:1.35;}table.sheet-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:10pt;}thead{display:table-header-group;}tfoot{display:table-footer-group;}tr{page-break-inside:avoid;break-inside:avoid;}th{font-family:Arial,sans-serif;font-size:10pt;font-weight:bold;background-color:#f1f5f9 !important;color:#0f172a !important;border:1px solid #94a3b8;padding:5px 4px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:4.5px 5px;vertical-align:middle;font-size:10pt;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:bold;font-size:10pt;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}.page-footer{position:fixed;bottom:0;left:0;right:0;height:24px;display:flex;justify-content:space-between;align-items:center;font-size:8.5pt;color:#475569;background:#ffffff;}</style></head><body><div class="sheet-title-box">\${titleLinesHtml}</div><table class="sheet-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:65px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:95px;">INDEKS KINERJA</th></tr></thead><tbody>\${rowsHtml}<tr class="total-row" style="page-break-inside:avoid;break-inside:avoid;"><td colspan="2" style="text-align:center;font-weight:bold;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:bold;color:#1d4ed8;">\${totCt}</td><td style="text-align:right;font-weight:bold;">\${totBu}</td><td style="text-align:right;font-weight:bold;">\${totLim}</td><td style="text-align:right;font-weight:bold;">\${totCp}</td><td style="text-align:center;font-weight:bold;">\${totPr}</td><td style="text-align:right;font-weight:bold;color:#15803d;">\${totCc}</td><td style="text-align:center;font-weight:bold;">\${totCr}</td><td style="text-align:center;font-weight:bold;">\${totIdx} (\${totLvl})</td></tr></tbody><tfoot><tr><td colspan="10" style="border:none !important;height:32px !important;padding:0 !important;background:transparent !important;"><div style="height:32px;"></div></td></tr></tfoot></table><div class="page-footer"><div><strong>Sumber Data:</strong> CAS Bareskrim Polri &nbsp;&bull;&nbsp; <strong>Data per:</strong> \${pdfDataPer||"—"} &nbsp;&bull;&nbsp; <strong>Diambil:</strong> \${pdfWaktuCetak||"—"}</div></div></body></html>\`;
 
   try {
     let iframe = document.getElementById("kp-print-iframe");
@@ -248,11 +257,13 @@ const newPrintPdf = `function kpPrintPdf(){
       iframe = document.createElement("iframe");
       iframe.id = "kp-print-iframe";
       iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
       iframe.style.border = "none";
+      iframe.style.opacity = "0";
+      iframe.style.pointerEvents = "none";
       iframe.style.zIndex = "-9999";
       document.body.appendChild(iframe);
     }
@@ -688,7 +699,10 @@ patched = patched.slice(0, pStart) + newPrintPdf + patched.slice(pEnd);
 console.log('Replaced kpPrintPdf');
 
 // 3. Replace openPdfModal
-const opStart = patched.indexOf('function openPdfModal(){');
+let opStart = patched.indexOf('const KP_INDO_MONTHS =');
+if (opStart === -1) {
+  opStart = patched.indexOf('function openPdfModal(){');
+}
 const opEnd = patched.indexOf('function kpPrintPdf(){', opStart);
 patched = patched.slice(0, opStart) + newOpenPdf + patched.slice(opEnd);
 console.log('Replaced openPdfModal & added getTableDataForPrint');
