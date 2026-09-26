@@ -1208,22 +1208,17 @@ a {
 }
 
 /* ==========================================================================
-   STATUS CARDS (RINCIAN STATUS LP - 11 STATUSES)
+   STATUS CARDS (RINCIAN STATUS LP & EXECUTIVE KPI CARDS)
    ========================================================================== */
 
 .lp-status-cards {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(7.2rem, 1fr)) !important;
   gap: 0.65rem !important;
   margin: 1.15rem 0 !important;
 }
 
-@media (min-width: 1400px) {
-  .lp-status-cards {
-    grid-template-columns: repeat(11, minmax(0, 1fr)) !important;
-  }
-}
-
+/* Individual Metric Card Base */
 .lp-stat {
   display: flex !important;
   flex-direction: column !important;
@@ -1235,12 +1230,14 @@ a {
   border: 1px solid #cbd5e1 !important;
   border-top-width: 4px !important;
   border-top-style: solid !important;
+  border-top-color: #94a3b8 !important; /* Neutral border default for party cards & general roles */
   border-radius: 12px !important;
   padding: 0.75rem 0.85rem !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
   min-width: 0 !important;
   overflow: hidden !important;
+  user-select: none !important;
 }
 
 .lp-stat:hover {
@@ -1256,6 +1253,7 @@ a {
   border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
   border-top-width: 4px !important;
   border-top-style: solid !important;
+  border-top-color: #475569 !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
@@ -1296,48 +1294,97 @@ a {
   color: #94a3b8 !important;
 }
 
-/* 11 Status LP Semantic Top Borders (Light & Dark) */
-/* 1. Belum Update */
-.lp-stat:nth-child(1),
-:root[data-theme="dark"] .lp-stat:nth-child(1) { border-top-color: #ef4444 !important; }
-/* 2. Lidik */
-.lp-stat:nth-child(2),
-:root[data-theme="dark"] .lp-stat:nth-child(2) { border-top-color: #0284c7 !important; }
-/* 3. SP2 Lidik */
-.lp-stat:nth-child(3),
-:root[data-theme="dark"] .lp-stat:nth-child(3) { border-top-color: #2563eb !important; }
-/* 4. Sidik */
-.lp-stat:nth-child(4),
-:root[data-theme="dark"] .lp-stat:nth-child(4) { border-top-color: #6366f1 !important; }
-/* 5. Perma */
-.lp-stat:nth-child(5),
-:root[data-theme="dark"] .lp-stat:nth-child(5) { border-top-color: #10b981 !important; }
-/* 6. SPDP */
-.lp-stat:nth-child(6),
-:root[data-theme="dark"] .lp-stat:nth-child(6) { border-top-color: #f59e0b !important; }
-/* 7. SP3 */
-.lp-stat:nth-child(7),
-:root[data-theme="dark"] .lp-stat:nth-child(7) { border-top-color: #059669 !important; }
-/* 8. Tahap I */
-.lp-stat:nth-child(8),
-:root[data-theme="dark"] .lp-stat:nth-child(8) { border-top-color: #8b5cf6 !important; }
-/* 9. P19 */
-.lp-stat:nth-child(9),
-:root[data-theme="dark"] .lp-stat:nth-child(9) { border-top-color: #ea580c !important; }
-/* 10. P21 */
-.lp-stat:nth-child(10),
-:root[data-theme="dark"] .lp-stat:nth-child(10) { border-top-color: #06b6d4 !important; }
-/* 11. Tahap II */
-.lp-stat:nth-child(11),
-:root[data-theme="dark"] .lp-stat:nth-child(11) { border-top-color: #16a34a !important; }
+/* Neutral Total / Semua Card */
+.lp-stat.total {
+  border-top-color: #0f172a !important;
+}
+:root[data-theme="dark"] .lp-stat.total {
+  border-top-color: #94a3b8 !important;
+}
 
-/* Filter Bar .lp-stat variants (LP list page) */
-.lp-stat.total { border-top-color: #0f172a !important; }
-:root[data-theme="dark"] .lp-stat.total { border-top-color: #94a3b8 !important; }
+/* Active State (Selected Filter) */
 .lp-stat.active {
   border-color: #ef4444 !important;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
+  border-top-color: #ef4444 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35), 0 6px 16px rgba(239, 68, 68, 0.15) !important;
 }
+:root[data-theme="dark"] .lp-stat.active {
+  border-color: #ef4444 !important;
+  border-top-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45), 0 8px 20px rgba(0, 0, 0, 0.5) !important;
+}
+.lp-stat.active .l {
+  color: #b91c1c !important;
+  font-weight: 800 !important;
+}
+:root[data-theme="dark"] .lp-stat.active .l {
+  color: #fca5a5 !important;
+}
+
+/* --- 1. DASHBOARD RINGKASAN: Rincian Status LP (Exact 11 Statuses, No Total Card) --- */
+@media (min-width: 1400px) {
+  .dash-section .lp-status-cards {
+    grid-template-columns: repeat(11, minmax(0, 1fr)) !important;
+  }
+}
+.dash-section .lp-status-cards .lp-stat:nth-child(1),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(1) { border-top-color: #ef4444 !important; } /* Belum Update */
+.dash-section .lp-status-cards .lp-stat:nth-child(2),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(2) { border-top-color: #0284c7 !important; } /* Lidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(3),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(3) { border-top-color: #2563eb !important; } /* SP2 Lidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(4),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(4) { border-top-color: #6366f1 !important; } /* Sidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(5),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(5) { border-top-color: #10b981 !important; } /* Perma */
+.dash-section .lp-status-cards .lp-stat:nth-child(6),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(6) { border-top-color: #f59e0b !important; } /* SPDP */
+.dash-section .lp-status-cards .lp-stat:nth-child(7),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(7) { border-top-color: #059669 !important; } /* SP3 */
+.dash-section .lp-status-cards .lp-stat:nth-child(8),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(8) { border-top-color: #8b5cf6 !important; } /* Tahap I */
+.dash-section .lp-status-cards .lp-stat:nth-child(9),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(9) { border-top-color: #ea580c !important; } /* P19 */
+.dash-section .lp-status-cards .lp-stat:nth-child(10),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(10) { border-top-color: #06b6d4 !important; } /* P21 */
+.dash-section .lp-status-cards .lp-stat:nth-child(11),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(11) { border-top-color: #16a34a !important; } /* Tahap II */
+
+/* --- 2. LAPORAN POLISI: 12 Cards (Semua LP + 11 Statuses) --- */
+.lp-status-cards:has(.lp-stat:nth-child(12)) {
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)) !important;
+}
+@media (min-width: 1360px) {
+  .lp-status-cards:has(.lp-stat:nth-child(12)) {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  }
+}
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(1),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(1) { border-top-color: #0f172a !important; } /* Semua LP: Neutral Slate */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(2),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(2) { border-top-color: #ef4444 !important; } /* Belum Update */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(3),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(3) { border-top-color: #0284c7 !important; } /* Lidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(4),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(4) { border-top-color: #2563eb !important; } /* SP2 Lidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(5),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(5) { border-top-color: #6366f1 !important; } /* Sidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(6),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(6) { border-top-color: #10b981 !important; } /* Perma */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(7),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(7) { border-top-color: #f59e0b !important; } /* SPDP */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(8),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(8) { border-top-color: #059669 !important; } /* SP3 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(9),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(9) { border-top-color: #8b5cf6 !important; } /* Tahap I */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(10),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(10) { border-top-color: #ea580c !important; } /* P19 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(11),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(11) { border-top-color: #06b6d4 !important; } /* P21 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(12),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(12) { border-top-color: #16a34a !important; } /* Tahap II */
 
 /* ==========================================================================
    DASHBOARD PANELS & LIST ITEMS (NO DARK-ON-DARK TEXT)
@@ -3069,60 +3116,84 @@ div[style*="z-index:1000"] {
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35) !important;
 }
 
-/* Explicit Button Severities */
-.p-button.p-button-info,
-.p-button-info.p-button {
+/* Explicit Button Severities (Solid only, exclude text & outlined) */
+.p-button.p-button-info:not(.p-button-outlined):not(.p-button-text),
+.p-button-info.p-button:not(.p-button-outlined):not(.p-button-text) {
   background: #0284c7 !important;
   border: 1px solid #0284c7 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
 }
-.p-button.p-button-info:hover,
-.p-button-info.p-button:hover {
+.p-button.p-button-info:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-info.p-button:not(.p-button-outlined):not(.p-button-text):hover {
   background: #0369a1 !important;
   border-color: #0369a1 !important;
   box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
 }
 
-.p-button.p-button-success,
-.p-button-success.p-button {
+.p-button.p-button-success:not(.p-button-outlined):not(.p-button-text),
+.p-button-success.p-button:not(.p-button-outlined):not(.p-button-text) {
   background: #16a34a !important;
   border: 1px solid #16a34a !important;
   color: #ffffff !important;
   font-weight: 700 !important;
 }
-.p-button.p-button-success:hover,
-.p-button-success.p-button:hover {
+.p-button.p-button-success:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-success.p-button:not(.p-button-outlined):not(.p-button-text):hover {
   background: #15803d !important;
   border-color: #15803d !important;
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35) !important;
 }
 
-.p-button.p-button-warning,
-.p-button-warning.p-button {
+.p-button.p-button-warning:not(.p-button-outlined):not(.p-button-text),
+.p-button-warning.p-button:not(.p-button-outlined):not(.p-button-text) {
   background: #d97706 !important;
   border: 1px solid #d97706 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
 }
-.p-button.p-button-warning:hover,
-.p-button-warning.p-button:hover {
+.p-button.p-button-warning:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-warning.p-button:not(.p-button-outlined):not(.p-button-text):hover {
   background: #b45309 !important;
   border-color: #b45309 !important;
   box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
 }
 
-.p-button.p-button-secondary,
-.p-button-secondary.p-button {
+.p-button.p-button-secondary:not(.p-button-outlined):not(.p-button-text),
+.p-button-secondary.p-button:not(.p-button-outlined):not(.p-button-text) {
   background: #334155 !important;
   border: 1px solid #475569 !important;
   color: #f1f5f9 !important;
   font-weight: 700 !important;
 }
-.p-button.p-button-secondary:hover,
-.p-button-secondary.p-button:hover {
+.p-button.p-button-secondary:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-secondary.p-button:not(.p-button-outlined):not(.p-button-text):hover {
   background: #475569 !important;
   border-color: #64748b !important;
+}
+
+/* Secondary Button text / ghost icon (Edit, refresh, etc.) */
+.p-button.p-button-secondary.p-button-text,
+.p-button-secondary.p-button.p-button-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #64748b !important;
+}
+.p-button.p-button-secondary.p-button-text:hover,
+.p-button-secondary.p-button.p-button-text:hover {
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #0f172a !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text,
+[data-theme="dark"] .p-button.p-button-secondary.p-button-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text:hover,
+[data-theme="dark"] .p-button.p-button-secondary.p-button-text:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
 }
 
 /* Danger Button text / icon */
@@ -3551,4 +3622,814 @@ div[style*="calc(100% + 0.45rem)"] {
 [data-theme="dark"] .p-dialog table th {
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #e2e8f0 !important;
+}
+
+
+/* ==========================================================================
+   KINERJA PERKARA UNIFIED FILTER, EXPORT & PDF MODAL DESIGN SYSTEM (V2)
+   ========================================================================== */
+
+.kp-toolbar-row {
+  padding: 0.65rem 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1000;
+}
+:root[data-theme=light] .kp-toolbar-row,
+body:not([data-theme=dark]) .kp-toolbar-row {
+  border-bottom-color: #e2e8f0;
+}
+
+.kp-toolbar-divider {
+  width: 1px;
+  height: 1.5rem;
+  background-color: #cbd5e1;
+  margin: 0 0.15rem;
+  flex-shrink: 0;
+}
+:root[data-theme=dark] .kp-toolbar-divider {
+  background-color: #334155;
+}
+
+.kp-filter-trigger-btn {
+  font-weight: 700 !important;
+  color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  background-color: rgba(220, 38, 38, 0.08) !important;
+}
+.kp-filter-trigger-btn:hover {
+  background-color: rgba(220, 38, 38, 0.16) !important;
+}
+:root[data-theme=dark] .kp-filter-trigger-btn {
+  color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.16) !important;
+}
+:root[data-theme=dark] .kp-filter-trigger-btn:hover {
+  background-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+.kp-chips-row {
+  padding: 0.5rem 1rem 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+:root[data-theme=dark] .kp-chips-row {
+  border-bottom-color: #1f2b45;
+  background: #0b1220;
+}
+
+.kp-chips-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-right: 0.15rem;
+  letter-spacing: 0.02em;
+}
+:root[data-theme=dark] .kp-chips-label {
+  color: #94a3b8;
+}
+
+.kp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  user-select: none;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+:root[data-theme=dark] .kp-chip {
+  background: #1e293b;
+  border-color: #334155;
+  color: #93c5fd;
+}
+.kp-chip.satker {
+  border-color: #fef3c7;
+  background: #fffbeb;
+  color: #b45309;
+}
+:root[data-theme=dark] .kp-chip.satker {
+  border-color: #78350f;
+  background: #291805;
+  color: #fde68a;
+}
+.kp-chip.crime {
+  border-color: #dcfce7;
+  background: #f0fdf4;
+  color: #15803d;
+}
+:root[data-theme=dark] .kp-chip.crime {
+  border-color: #14532d;
+  background: #052e16;
+  color: #86efac;
+}
+
+.kp-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  margin-left: 0.2rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  color: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.kp-chip-remove:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+:root[data-theme=dark] .kp-chip-remove {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Export Popover Menu (FIX FOR SCREENSHOT 3) */
+.kp-export-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 2500;
+  min-width: 16.5rem;
+  border-radius: 10px;
+  padding: 0.45rem 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff !important;
+  border: 1px solid #dbe3ee !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.16) !important;
+}
+:root[data-theme=dark] .kp-export-pop {
+  background: #111a2e !important;
+  border-color: #334155 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.kp-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s;
+}
+.kp-export-btn:hover {
+  background: #f1f5f9;
+}
+:root[data-theme=dark] .kp-export-btn:hover {
+  background: #1e293b !important;
+}
+
+.kp-export-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+:root[data-theme=dark] .kp-export-title {
+  color: #f8fafc !important;
+}
+
+.kp-export-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+:root[data-theme=dark] .kp-export-sub {
+  color: #94a3b8 !important;
+}
+
+.kp-export-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.25rem 0;
+}
+:root[data-theme=dark] .kp-export-divider {
+  background: #1f2b45 !important;
+}
+
+/* Unified Filter Modal Dialog (FIX FOR SCREENSHOTS 1 & 2) */
+.kp-modal-card {
+  width: 95%;
+  max-width: 48rem;
+  max-height: 90vh;
+  border-radius: 14px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe3ee;
+  color: #0f172a;
+}
+:root[data-theme=dark] .kp-modal-card {
+  background: #111a2e !important;
+  border-color: #1f2b45 !important;
+  color: #f8fafc !important;
+}
+
+.kp-modal-header {
+  padding: 1rem 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+:root[data-theme=dark] .kp-modal-header {
+  background: #0f172a !important;
+  border-bottom-color: #1f2b45 !important;
+}
+
+.kp-modal-title {
+  font-weight: 800;
+  font-size: 1.08rem;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+:root[data-theme=dark] .kp-modal-title {
+  color: #f8fafc !important;
+}
+
+.kp-modal-sub {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+:root[data-theme=dark] .kp-modal-sub {
+  color: #94a3b8 !important;
+}
+
+.kp-tab-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+:root[data-theme=dark] .kp-tab-bar {
+  background: #0b1220 !important;
+  border-bottom-color: #1f2b45 !important;
+}
+
+.kp-tab-btn {
+  padding: 0.8rem 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .kp-tab-btn {
+    padding: 0.6rem 0.25rem;
+    font-size: 0.72rem;
+  }
+}
+.kp-tab-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.02);
+}
+.kp-tab-btn.active {
+  color: #dc2626 !important;
+  font-weight: 800;
+  border-bottom-color: #dc2626 !important;
+  background: #ffffff;
+}
+:root[data-theme=dark] .kp-tab-btn {
+  color: #94a3b8 !important;
+}
+:root[data-theme=dark] .kp-tab-btn:hover {
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.03);
+}
+:root[data-theme=dark] .kp-tab-btn.active {
+  color: #ef4444 !important;
+  border-bottom-color: #ef4444 !important;
+  background: #111a2e !important;
+}
+
+.kp-modal-body {
+  padding: 1.35rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 320px;
+  max-height: 60vh;
+}
+
+.kp-modal-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+}
+:root[data-theme=dark] .kp-modal-section {
+  background: #0f1a2e !important;
+  border-color: #1f2b45 !important;
+}
+
+.kp-modal-sec-title {
+  font-size: 0.73rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+:root[data-theme=dark] .kp-modal-sec-title {
+  color: #94a3b8 !important;
+}
+
+.kp-modal-tip {
+  font-size: 0.75rem;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  line-height: 1.4;
+}
+:root[data-theme=dark] .kp-modal-tip {
+  color: #93c5fd !important;
+  background: rgba(30, 58, 138, 0.25) !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+.kp-modal-footer {
+  padding: 0.85rem 1.35rem;
+  display: flex;
+  justifyContent: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+:root[data-theme=dark] .kp-modal-footer {
+  background: #0f172a !important;
+  border-top-color: #1f2b45 !important;
+}
+
+/* PDF Web Word Modal Container & Responsive Full-View Fix */
+.kp-pdf-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  background: rgba(10, 15, 29, 0.85) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  padding: 0.6rem !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.kp-pdf-modal {
+  width: 100% !important;
+  max-width: 1400px !important;
+  height: 100% !important;
+  max-height: calc(100vh - 1.2rem) !important;
+  border-radius: 12px !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+:root[data-theme=dark] .kp-pdf-modal {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.kp-modal-header {
+  flex-shrink: 0 !important;
+  padding: 0.75rem 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.kp-modal-title {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+  color: #f8fafc !important;
+}
+.kp-modal-sub {
+  font-size: 0.75rem !important;
+  color: #94a3b8 !important;
+  margin-top: 2px !important;
+}
+
+.kp-pdf-sidebar {
+  width: 360px !important;
+  min-width: 320px !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-right: 1px solid #1e293b !important;
+  background: #0f172a !important;
+  overflow-y: auto !important;
+  padding: 1rem 1.2rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+}
+:root[data-theme=dark] .kp-pdf-sidebar {
+  background: #0f172a !important;
+  border-right-color: #1e293b !important;
+}
+
+.kp-pdf-sidebar label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #cbd5e1 !important;
+  margin-bottom: 0.25rem;
+}
+:root[data-theme=dark] .kp-pdf-sidebar label {
+  color: #cbd5e1 !important;
+}
+
+/* Paper Sheet Physical Isolation (Always White Paper & Crisp Black Text) */
+.kp-paper-sheet {
+  background: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5) !important;
+}
+.kp-paper-sheet div,
+.kp-paper-sheet span,
+.kp-paper-sheet p,
+.kp-paper-sheet td,
+.kp-paper-sheet strong {
+  color: #000000 !important;
+}
+.kp-paper-sheet .kp-kop-alamat {
+  color: #333333 !important;
+}
+.kp-paper-sheet th {
+  background: #1e3a5f !important;
+  color: #ffffff !important;
+}
+.kp-paper-sheet td.col-ct {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+.kp-paper-sheet td.col-cc {
+  color: #15803d !important;
+}
+.kp-paper-sheet tr.total-row td {
+  background: #e2e8f0 !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+/* Modal Outlined Buttons Contrast Fix (Bulan / Tahun / Custom) */
+:root[data-theme=dark] .kp-modal-card .p-button.p-button-outlined {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+}
+:root[data-theme=dark] .kp-modal-card .p-button.p-button-outlined:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  color: #ffffff !important;
+}
+:root[data-theme=light] .kp-modal-card .p-button.p-button-outlined {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+:root[data-theme=light] .kp-modal-card .p-button.p-button-outlined:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+/* Modal Footer Buttons */
+:root[data-theme=dark] .kp-modal-footer .p-button-text {
+  color: #cbd5e1 !important;
+}
+:root[data-theme=dark] .kp-modal-footer .p-button-text:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Links in Modal */
+.kp-link-select-all {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+:root[data-theme=dark] .kp-link-select-all {
+  color: #60a5fa !important;
+}
+.kp-link-clear-all {
+  color: #ef4444;
+  cursor: pointer;
+  font-weight: 600;
+}
+:root[data-theme=dark] .kp-link-clear-all {
+  color: #f87171 !important;
+}
+
+/* Modal Close Button */
+.kp-modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: #94a3b8;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+.kp-modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+:root[data-theme=dark] .kp-modal-close-btn {
+  color: #94a3b8;
+}
+:root[data-theme=dark] .kp-modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+
+
+/* ==========================================================================
+   MOBILE SIDEBAR DRAWER & BACKDROP STACKING (FINAL OVERRIDE)
+   Fixes sidebar appearing blurred behind backdrop-filter overlay on mobile
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .cms-overlay {
+    z-index: 998 !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    display: block !important;
+  }
+
+  .cms-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: 85vw !important;
+    z-index: 999 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.6) !important;
+    -webkit-overflow-scrolling: touch !important;
+    overflow-y: auto !important;
+  }
+
+  .cms-sidebar.cms-sidebar-open {
+    transform: translateX(0) !important;
+    z-index: 1000 !important;
+  }
+}
+
+
+
+/* ==========================================================================
+   KINERJA PERKARA FILTER POPOVER: DROPUP & COMPACT DIMENSIONS ("ENAK DILIHAT")
+   ========================================================================== */
+
+/* 1. Dropup Panel: Tampil di atas kotak filter, tidak offside menutupi footer */
+.kp-modal-card .kp-filter-dropup,
+.kp-filter-popover .kp-filter-dropup,
+.kp-modal-body > div > div:nth-child(3) .p-multiselect-panel,
+.kp-modal-body > div > div:nth-child(4) .p-multiselect-panel {
+  top: auto !important;
+  bottom: calc(100% + 4px) !important;
+  transform-origin: bottom center !important;
+  border-radius: 10px !important;
+  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--cas-border-card, #233554) !important;
+  animation: kpDropupFadeIn 0.15s ease-out !important;
+  z-index: 2800 !important;
+}
+
+@keyframes kpDropupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 2. ICCS (Right Column): Rapat ke kanan container, lebar proporsional & tidak offside */
+.kp-modal-card .kp-filter-dropup-right,
+.kp-filter-popover .kp-filter-dropup-right,
+.kp-modal-body > div > div:nth-child(3) > div:last-child .p-multiselect-panel {
+  right: 0 !important;
+  left: auto !important;
+  width: max(100%, min(22rem, calc(100vw - 3.5rem))) !important;
+  max-width: min(28rem, calc(100vw - 3.5rem)) !important;
+}
+
+/* 3. Golongan (Left Column): Rapat ke kiri container, lebar proporsional */
+.kp-modal-card .kp-filter-dropup-left,
+.kp-filter-popover .kp-filter-dropup-left,
+.kp-modal-body > div > div:nth-child(3) > div:first-child .p-multiselect-panel {
+  left: 0 !important;
+  right: auto !important;
+  width: max(100%, min(22rem, calc(100vw - 3.5rem))) !important;
+  max-width: min(28rem, calc(100vw - 3.5rem)) !important;
+}
+
+/* 4. Jenis Kejahatan: Lebar 100% dari kartu popover */
+.kp-modal-card .kp-filter-dropup-full,
+.kp-filter-popover .kp-filter-dropup-full,
+.kp-modal-body > div > div:nth-child(4) .p-multiselect-panel {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 5. Items Wrapper: Max-height 175px (nyaman & gak offside) dengan scrollbar ramping */
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper {
+  max-height: 175px !important;
+  scrollbar-width: thin !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar {
+  width: 5px !important;
+}
+.kp-modal-card .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar-thumb,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-items-wrapper::-webkit-scrollbar-thumb,
+.kp-modal-body .p-multiselect-panel .p-multiselect-items-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px !important;
+}
+
+/* 6. List Items: Ukuran enak dilihat, multi-line wrap tanpa text kepotong */
+.kp-modal-card .kp-filter-dropup .p-multiselect-item,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-item,
+.kp-modal-body .p-multiselect-panel .p-multiselect-item {
+  padding: 0.42rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.55rem !important;
+  border-radius: 6px !important;
+  margin: 0.1rem 0.25rem !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-item .p-checkbox,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-item .p-checkbox,
+.kp-modal-body .p-multiselect-panel .p-multiselect-item .p-checkbox {
+  margin-top: 0.12rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* 7. Header search bar di dalam dropup panel */
+.kp-modal-card .kp-filter-dropup .p-multiselect-header,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-header,
+.kp-modal-body .p-multiselect-panel .p-multiselect-header {
+  padding: 0.4rem 0.65rem !important;
+  gap: 0.45rem !important;
+  border-bottom: 1px solid var(--cas-border-card, #233554) !important;
+}
+
+.kp-modal-card .kp-filter-dropup .p-multiselect-filter-container input,
+.kp-filter-popover .kp-filter-dropup .p-multiselect-filter-container input,
+.kp-modal-body .p-multiselect-panel .p-multiselect-filter-container input {
+  font-size: 0.78rem !important;
+  padding: 0.35rem 0.6rem !important;
+  height: 2rem !important;
+  border-radius: 6px !important;
+}
+
+/* 8. Tema Dark Mode Elegan */
+:root[data-theme="dark"] .kp-filter-dropup,
+[data-theme="dark"] .kp-filter-dropup,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel {
+  background: #131f37 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-header,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-header,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-header,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-header {
+  background: #0f172a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item:hover,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item:hover,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item:hover,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .kp-filter-dropup .p-multiselect-item.p-highlight,
+[data-theme="dark"] .kp-filter-dropup .p-multiselect-item.p-highlight,
+:root[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item.p-highlight,
+[data-theme="dark"] .kp-modal-body .p-multiselect-panel .p-multiselect-item.p-highlight {
+  background: rgba(37, 99, 235, 0.22) !important;
+  color: #93c5fd !important;
+}
+
+
+
+
+/* ==========================================================================
+   USER PROFILE & EXECUTIVE VIEW ENHANCEMENTS
+   ========================================================================== */
+
+/* User Profile Header Pills: Sleek glass integration */
+.cms-card div:has(> .profile-pill),
+div[style*="marginTop:-1.6rem"],
+div[style*="margin-top: -1.6rem"],
+div[style*="margin-top:-1.6rem"] {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+
+div[style*="marginTop:-1.6rem"] > span,
+div[style*="margin-top: -1.6rem"] > span,
+div[style*="margin-top:-1.6rem"] > span {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+}
+
+:root[data-theme="dark"] div[style*="marginTop:-1.6rem"] > span,
+[data-theme="dark"] div[style*="marginTop:-1.6rem"] > span {
+  background: #111a2e !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Kinerja Perkara Summary Strip Smooth Horizontal Layout */
+#kp-summary-strip {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent !important;
+}
+#kp-summary-strip::-webkit-scrollbar {
+  height: 5px !important;
+}
+#kp-summary-strip::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25) !important;
+  border-radius: 999px !important;
 }
