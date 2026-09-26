@@ -1,4 +1,4 @@
-import { runBE, copyFileToBE } from '../scripts/be_exec.mjs';
+import { runBE, copyFileToBE, runBEWithInput } from '../scripts/be_exec.mjs';
 import fs from 'fs';
 import path from 'path';
 
@@ -27,7 +27,7 @@ async function deploy() {
     runBE(`mkdir -p ${remoteStaging}`);
 
     for (const f of files) {
-        const localPath = path.join('scratch', 'be_src', f);
+        const localPath = path.join('dors-satker-legacy-mapping-fix-20260926', f);
         const base = path.basename(f);
         const remotePath = `${remoteStaging}/${base}`;
         copyFileToBE(localPath, remotePath);
@@ -66,18 +66,59 @@ async function deploy() {
         throw new Error('API failed to become ready within 60 seconds!');
     }
 
-    console.log('7. Triggering comprehensive mapFromDors() sweep to clear backfill...');
-    const t0 = Date.now();
-    const mapSweep = runBE(`docker exec bdb-api node -e "
+    console.log('7. Recording alias map and satker dors_kode in DB...');
+    const dbPrepScript = `
         const { Client } = require('pg');
-        const c = new Client({host: '10.0.0.x', user: 'bdb_app', password: 'Bareskrim2026', database: 'big_data_binops'});
+        const c = new Client({ host: '10.0.0.x', user: 'bdb_app', password: 'Bareskrim2026', database: 'big_data_binops' });
         c.connect().then(async () => {
-            const unmapped = await c.query('select count(*)::int as c from bdb_dors_raw_lp r where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp)');
-            console.log('Remaining unmapped in DB before sweep:', unmapped.rows[0].c);
+            await c.query("update bdb_satker set dors_kode = '060.26.90' where id = 20674 and dors_kode is null");
+            await c.query("update bdb_satker set dors_kode = '060.13.33.05' where id = 6173 and dors_kode is null");
+            await c.query(\`
+                insert into bdb_dors_satker_map (dors_nama, dors_parent_nama, satker_id, satker_nama, catatan)
+                values 
+                    ('POLRES BANGGAI LAUT', 'POLDA SULTENG', 20674, 'POLRES BANGGAI LAUT', 'Auto-resolved parent-verified'),
+                    ('POLSEK CARINGIN', 'POLRES GARUT', 6173, 'POLSEK CARINGIN', 'Auto-resolved parent-verified')
+                on conflict do nothing
+            \`);
+            await c.end();
+            console.log('DB prep done.');
+        });
+    `;
+    runBEWithInput('docker exec -i bdb-api node', dbPrepScript);
+
+    console.log('8. Triggering lpService.mapFromDors() via application context...');
+    const runMapScript = `
+        const { NestFactory } = require('@nestjs/core');
+        const { AppModule } = require('/usr/src/app/dist/app.module');
+        const { LaporanPolisiService } = require('/usr/src/app/dist/bdb/laporan-polisi/laporan-polisi.service');
+
+        async function run() {
+            const app = await NestFactory.createApplicationContext(AppModule, { logger: ['warn', 'error'] });
+            const lpService = app.get(LaporanPolisiService);
+            console.log('Calling mapFromDors()...');
+            const res = await lpService.mapFromDors();
+            console.log('mapFromDors() complete:', res);
+            await app.close();
+        }
+        run().catch(e => { console.error(e); process.exit(1); });
+    `;
+    const mapOut = runBEWithInput('docker exec -i bdb-api node', runMapScript);
+    console.log(mapOut);
+
+    console.log('9. Checking remaining unmapped LPs in database...');
+    const verifyScript = `
+        const { Client } = require('pg');
+        const c = new Client({ host: '10.0.0.x', user: 'bdb_app', password: 'Bareskrim2026', database: 'big_data_binops' });
+        c.connect().then(async () => {
+            const rem = await c.query('select count(*)::int as c from bdb_dors_raw_lp r where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp)');
+            console.log('REMAINING UNMAPPED COUNT:', rem.rows[0].c);
+            const active = await c.query('select count(*)::int as c from bdb_laporan_polisi where deleted_at is null');
+            console.log('TOTAL ACTIVE LP COUNT:', active.rows[0].c);
             await c.end();
         });
-    "`);
-    console.log(mapSweep);
+    `;
+    const verifyOut = runBEWithInput('docker exec -i bdb-api node', verifyScript);
+    console.log(verifyOut);
 
     console.log('=== DEPLOY SUCCESSFUL ===');
 }

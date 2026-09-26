@@ -883,6 +883,11 @@ export class LaporanPolisiService {
                            when jsonb_typeof(r.payload_json->'polda')='object' then 'Polda'
                            else 'Mabes'
                        end as target_level,
+                       upper(trim(coalesce(
+                           r.payload_json->'polsek'->>'nama',
+                           r.payload_json->'polres'->>'nama',
+                           r.payload_json->'polda'->>'nama'
+                       ))) as target_nama,
                        nullif(trim(regexp_replace(replace(case
                            when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode_pusiknas'
                            when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode_pusiknas'
@@ -940,8 +945,9 @@ export class LaporanPolisiService {
                        s.deskripsi as resolved_satker_nama,
                        coalesce(s.kode,r.child_kp) as resolved_kode,
                        case
-                           when r.child_dkode is not null and s.dors_kode = r.child_dkode
-                           then 2 else 1
+                           when r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp) then 3
+                           when r.child_dkode is not null and s.dors_kode = r.child_dkode then 2
+                           else 1
                        end as signal_rank
                 from raw_target r
                 join bdb_satker s
@@ -952,44 +958,52 @@ export class LaporanPolisiService {
                  and (
                       (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
                       or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
+                      or (r.child_kp is null and upper(trim(s.deskripsi)) = upper(trim(r.target_nama)))
                  )
                 left join bdb_satker p on p.id=s.parent_id
                 left join bdb_satker gp on gp.id=p.parent_id
                 where r.target_level in ('Polda','Polres','Polsek')
                   and (
-                      r.target_level='Polda'
-                      or (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      -- 1. Exact code match (prioritas tertinggi: child_kp atau child_dkode)
+                      (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
+                      -- 2. Tanpa kode pusiknas (child_kp is null) -> WAJIB nama persis + induk cocok
                       or (
-                          p.id is not null
-                          and upper(coalesce(p.tipe_satker,''))=case when r.target_level='Polsek' then 'POLRES' else 'POLDA' end
-                          and coalesce(p.is_synthetic,false)=false
-                          and coalesce(p.kinerja_aktif,true)=true
-                          and p.dors_mapping_aktif=true
+                          r.child_kp is null
+                          and upper(trim(s.deskripsi)) = upper(trim(r.target_nama))
                           and (
-                               (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
-                               or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              (r.target_level = 'Polsek' and p.id is not null and (
+                                  (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                  or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              ))
+                              or (r.target_level = 'Polres' and p.id is not null and (
+                                  (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                  or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              ))
+                              or (r.target_level = 'Polda')
+                          )
+                      )
+                      -- 3. Fallback hierarki restrukturisasi jika ada child_kp
+                      or (
+                          r.child_kp is not null
+                          and (
+                              p.id is not null
+                              and upper(coalesce(p.tipe_satker,''))=case when r.target_level='Polsek' then 'POLRES' else 'POLDA' end
+                              and coalesce(p.is_synthetic,false)=false
+                              and coalesce(p.kinerja_aktif,true)=true
+                              and p.dors_mapping_aktif=true
+                              and (
+                                   (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                   or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              )
                           )
                       )
                       or (
-                          r.target_level='Polsek'
+                          r.child_kp is not null
+                          and r.target_level='Polsek'
                           and gp.id is not null
                           and upper(coalesce(gp.tipe_satker,''))='POLDA'
                           and (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
-                      )
-                  )
-                  and (
-                      r.target_level<>'Polsek'
-                      or (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
-                      or (
-                          gp.id is not null
-                          and upper(coalesce(gp.tipe_satker,''))='POLDA'
-                          and coalesce(gp.is_synthetic,false)=false
-                          and coalesce(gp.kinerja_aktif,true)=true
-                          and gp.dors_mapping_aktif=true
-                          and (
-                               (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
-                               or (r.grandparent_dkode is not null and gp.dors_kode = r.grandparent_dkode)
-                          )
                       )
                   )
             ), candidate_ranked as (
