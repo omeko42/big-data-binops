@@ -3,20 +3,11 @@
 [unifiedFilterTab,setUnifiedFilterTab]=(0,t.useState)(0),
 [exportMenuOpen,setExportMenuOpen]=(0,t.useState)(!1),
 [pdfModalOpen,setPdfModalOpen]=(0,t.useState)(!1),
-[pdfKop1,setPdfKop1]=(0,t.useState)("KEPOLISIAN NEGARA REPUBLIK INDONESIA"),
-[pdfKop2,setPdfKop2]=(0,t.useState)("PEMBINAAN OPERASIONAL RESERSE"),
-[pdfKop3,setPdfKop3]=(0,t.useState)("BIRO PEMBINAAN OPERASIONAL"),
-[pdfAlamat,setPdfAlamat]=(0,t.useState)("Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan 12110"),
-[pdfJudul,setPdfJudul]=(0,t.useState)("LAPORAN PERIODIK RESERSE"),
-[pdfWilayah,setPdfWilayah]=(0,t.useState)("NASIONAL"),
-[pdfPeriode,setPdfPeriode]=(0,t.useState)("TAHUN 2026"),
-[pdfTempatTgl,setPdfTempatTgl]=(0,t.useState)(()=>{
-  let d=new Date(),m=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-  return `Jakarta, ${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`
-}),
-[pdfJabatan,setPdfJabatan]=(0,t.useState)("KEPALA BIRO PEMBINAAN OPERASIONAL"),
-[pdfNama,setPdfNama]=(0,t.useState)(""),
-[pdfPangkat,setPdfPangkat]=(0,t.useState)("BRIGADIR JENDERAL POLISI"),[activeKelompokCrime,setActiveKelompokCrime]=(0,t.useState)("ALL"),[activeTipidCrime,setActiveTipidCrime]=(0,t.useState)("ALL"),[kpPeriodOpen,setKpPeriodOpen]=(0,t.useState)(!1),
+[pdfExpanded,setPdfExpanded]=(0,t.useState)(!1),
+[pdfSatkerName,setPdfSatkerName]=(0,t.useState)("Nasional"),
+[pdfPeriode,setPdfPeriode]=(0,t.useState)("Tahun 2026"),
+[pdfWaktuCetak,setPdfWaktuCetak]=(0,t.useState)(""),
+[pdfDataPer,setPdfDataPer]=(0,t.useState)(""),[activeKelompokCrime,setActiveKelompokCrime]=(0,t.useState)("ALL"),[activeTipidCrime,setActiveTipidCrime]=(0,t.useState)("ALL"),[kpPeriodOpen,setKpPeriodOpen]=(0,t.useState)(!1),
 [kpPeriodMode,setKpPeriodMode]=(0,t.useState)("year"),
 [kpPeriodMonth,setKpPeriodMonth]=(0,t.useState)(()=>{
   let d=new Date(),
@@ -473,17 +464,39 @@ async function ew(e){let a=e.node;if(!a.children&&!a.leaf)try{let e=await R.apiA
 
 function openPdfModal(){
   setExportMenuOpen(!1);
-  let wName="NASIONAL", kop2Name="PEMBINAAN OPERASIONAL RESERSE";
+  let satker = "Semua Jajaran (Mabes & Seluruh Polda)";
   if(eScope==="scoped"&&eScopeSatkerId){
     let sObj=eScopeOpts.find(x=>x.value===eScopeSatkerId);
     if(sObj&&sObj.label){
-      wName=sObj.label.toUpperCase()+" DAN JAJARAN";
-      kop2Name=sObj.label.toUpperCase();
+      satker=sObj.label;
     }
+  } else if(eScope==="all"){
+    satker="Nasional";
   }
-  setPdfWilayah(wName);
-  setPdfKop2(kop2Name);
-  setPdfPeriode((kpPeriodLabel||"TAHUN 2026").toUpperCase());
+  let per = (kpPeriodLabel || "Tahun 2026").trim();
+  let waktu = new Date().toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }) + " WIB";
+  let dPer = "—";
+  if(x?.last_refreshed_at){
+    let a=new Date(x.last_refreshed_at);
+    dPer = isNaN(a.getTime()) ? x.last_refreshed_at : a.toLocaleString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }) + " WIB";
+  }
+  setPdfSatkerName(satker);
+  setPdfPeriode(per);
+  setPdfWaktuCetak(waktu);
+  setPdfDataPer(dPer);
+  setPdfExpanded(!1);
   setPdfModalOpen(!0);
 }
 
@@ -503,7 +516,7 @@ function kpFlattenNodes(arr, depth=0){
 function kpPrintPdf(){
   let rows = kpFlattenNodes(s);
   let rowsHtml = rows.map((r, rIdx)=>{
-    let ind = r.depth>0 ? `padding-left:${r.depth*12+6}px;font-style:italic;` : "font-weight:600;";
+    let ind = r.depth > 0 ? `padding-left:${r.depth * 14 + 6}px;font-style:italic;` : "font-weight:700;";
     let noStr = r.nomor || "";
     let ctV = (r.ct??0).toLocaleString("id-ID");
     let buV = ((r.cp_berjalan_belum_update??0)+(r.cp_tunggakan_belum_update??0)).toLocaleString("id-ID");
@@ -515,8 +528,9 @@ function kpPrintPdf(){
     let idxV = (r.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
     let lvlV = r.level ? `LEVEL ${r.level}` : "-";
     let bgRow = rIdx % 2 === 1 ? "background:#f8fafc;" : "background:#ffffff;";
-    return `<tr style="${bgRow}"><td style="text-align:center;width:30px;color:#000;">${noStr}</td><td style="text-align:left;color:#000;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:bold;background:#dbeafe;color:#1d4ed8;">${ctV}</td><td style="text-align:right;color:#000;">${buV}</td><td style="text-align:right;color:#000;">${limV}</td><td style="text-align:right;color:#000;">${cpV}</td><td style="text-align:center;color:#000;">${prV}</td><td style="text-align:right;font-weight:bold;color:#15803d;">${ccV}</td><td style="text-align:center;font-weight:bold;color:#000;">${crV}</td><td style="text-align:center;white-space:nowrap;color:#000;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
+    return `<tr style="${bgRow}"><td style="text-align:center;width:28px;color:#0f172a;">${noStr}</td><td style="text-align:left;color:#0f172a;${ind}">${r.nama||"-"}</td><td style="text-align:right;font-weight:700;color:#1d4ed8;">${ctV}</td><td style="text-align:right;color:#0f172a;">${buV}</td><td style="text-align:right;color:#0f172a;">${limV}</td><td style="text-align:right;color:#0f172a;">${cpV}</td><td style="text-align:center;color:#0f172a;">${prV}</td><td style="text-align:right;font-weight:700;color:#15803d;">${ccV}</td><td style="text-align:center;font-weight:700;color:#0f172a;">${crV}</td><td style="text-align:center;white-space:nowrap;color:#0f172a;"><strong>${idxV}</strong> (${lvlV})</td></tr>`;
   }).join("");
+
   let totCt = (d.ct??0).toLocaleString("id-ID");
   let totBu = ((d.cp_berjalan_belum_update??0)+(d.cp_tunggakan_belum_update??0)).toLocaleString("id-ID");
   let totLim = (d.limpah_eksternal??0).toLocaleString("id-ID");
@@ -526,7 +540,11 @@ function kpPrintPdf(){
   let totCr = ((d.cr??0)).toFixed(2)+"%";
   let totIdx = (d.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
   let totLvl = d.level ? `LEVEL ${d.level}` : "-";
-  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${pdfJudul} ${pdfWilayah} - ${pdfPeriode}</title><style>@page{size:A4 landscape;margin:10mm 12mm 10mm 12mm;}*{box-sizing:border-box;}body{font-family:'Times New Roman',Times,serif;font-size:8.5pt;color:#000;background:#fff;margin:0;padding:0;line-height:1.25;}.header-table{width:100%;border-collapse:collapse;margin-bottom:12px;border:none;}.header-table td{border:none;vertical-align:top;padding:0;}.kop-wrap{display:inline-block;text-align:center;min-width:280px;}.kop-1{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;color:#000;}.kop-2{font-size:9.5pt;font-weight:bold;letter-spacing:0.5px;color:#000;}.kop-3{font-size:8.5pt;color:#000;}.kop-alamat{font-size:7pt;font-style:italic;color:#333;}.kop-line-thick{border-top:2px solid #000;margin:3px 0 1px 0;}.kop-line-thin{border-top:0.75px solid #000;margin:0 0 4px 0;}.title-wrap{text-align:right;padding-top:4px;}.title-main{font-size:11pt;font-weight:bold;text-decoration:underline;text-transform:uppercase;letter-spacing:0.5px;color:#000;}.title-period{font-size:9.5pt;font-weight:bold;margin-top:3px;text-transform:uppercase;color:#000;}table.data-table{width:100%;border-collapse:collapse;font-size:8pt;margin-top:8px;}table.data-table th,table.data-table td{border:1px solid #000000;padding:4px 5px;}table.data-table th{background-color:#1e3a5f !important;color:#ffffff !important;font-weight:bold;text-align:center;font-size:7.8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.total-row td{background-color:#e2e8f0 !important;color:#000000 !important;font-weight:bold;border-top:2px solid #000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.sig-table{width:100%;border-collapse:collapse;margin-top:20px;page-break-inside:avoid;}.sig-table td{border:none;padding:0;}.sig-box{float:right;text-align:center;min-width:280px;color:#000;}.sig-date{font-size:8.5pt;margin-bottom:2px;color:#000;}.sig-pos{font-size:8.5pt;font-weight:bold;margin-bottom:50px;color:#000;}.sig-name{font-size:8.5pt;font-weight:bold;text-decoration:underline;color:#000;}.sig-rank{font-size:8pt;color:#000;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><table class="header-table"><tr><td style="width:50%;"><div class="kop-wrap"><div class="kop-1">${pdfKop1||"KEPOLISIAN NEGARA REPUBLIK INDONESIA"}</div><div class="kop-2">${pdfKop2||"PEMBINAAN OPERASIONAL RESERSE"}</div>${pdfKop3?`<div class="kop-3">${pdfKop3}</div>`:""}${pdfAlamat?`<div class="kop-alamat">${pdfAlamat}</div>`:""}<div class="kop-line-thick"></div><div class="kop-line-thin"></div></div></td><td style="width:50%;"><div class="title-wrap"><div class="title-main">${pdfJudul||"LAPORAN PERIODIK RESERSE"} ${pdfWilayah||"NASIONAL"}</div><div class="title-period">PERIODE ${pdfPeriode||"TAHUN 2026"}</div></div></td></tr></table><table class="data-table"><thead><tr><th style="width:30px;">NO</th><th>SATKER / KESATUAN</th><th style="width:65px;">CT</th><th style="width:65px;">SISA (BU)</th><th style="width:60px;">LIMPAH EKS.</th><th style="width:65px;">CP</th><th style="width:55px;">PR</th><th style="width:65px;">CC</th><th style="width:55px;">CR</th><th style="width:90px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;">TOTAL KESELURUHAN</td><td style="text-align:right;">${totCt}</td><td style="text-align:right;">${totBu}</td><td style="text-align:right;">${totLim}</td><td style="text-align:right;">${totCp}</td><td style="text-align:center;">${totPr}</td><td style="text-align:right;">${totCc}</td><td style="text-align:center;">${totCr}</td><td style="text-align:center;">${totIdx} (${totLvl})</td></tr></tfoot></table><table class="sig-table"><tr><td></td><td style="width:320px;"><div class="sig-box"><div class="sig-date">${pdfTempatTgl||"Jakarta, 25 September 2026"}</div><div class="sig-pos">${pdfJabatan||"KEPALA BIRO PEMBINAAN OPERASIONAL"}</div><div class="sig-name">${pdfNama||"..........................................................."}</div><div class="sig-rank">${pdfPangkat||"BRIGADIR JENDERAL POLISI"}</div></div></td></tr></table></body></html>`;
+
+  let docTitle = `Lampiran Kinerja Perkara Satker ${pdfSatkerName||"Nasional"} Periode ${pdfPeriode||"Tahun 2026"}`;
+
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docTitle}</title><style>@page{size:A4 landscape;margin:8mm 10mm 10mm 10mm;@bottom-right{content:"Halaman " counter(page) " dari " counter(pages);font-size:7.5pt;font-family:Arial,Roboto,'Segoe UI',sans-serif;color:#64748b;}@bottom-left{content:"Lampiran Kinerja Perkara \\2022 DORS Bareskrim Polri";font-size:7.5pt;font-family:Arial,Roboto,'Segoe UI',sans-serif;color:#94a3b8;}}*{box-sizing:border-box;}body{font-family:Arial,Roboto,'Segoe UI',sans-serif;font-size:7.5pt;color:#0f172a;background:#ffffff;margin:0;padding:0;line-height:1.25;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.sheet-header{margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #0f172a;}.sheet-title{font-size:10.5pt;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 3px 0;}.sheet-meta{font-size:7.5pt;color:#475569;display:flex;justify-content:space-between;align-items:center;}.sheet-meta-left{display:flex;gap:12px;}.sheet-meta-item strong{color:#0f172a;}table.sheet-table{width:100%;border-collapse:collapse;font-size:7.5pt;}thead{display:table-header-group;}tfoot{display:table-footer-group;}tr{page-break-inside:avoid;}th{background-color:#f1f5f9 !important;color:#0f172a !important;font-weight:700;border:1px solid #94a3b8;padding:4px 5px;text-align:center;vertical-align:middle;}td{border:1px solid #cbd5e1;padding:3.5px 5px;vertical-align:middle;}.total-row td{background-color:#e2e8f0 !important;color:#0f172a !important;font-weight:800;border-top:2px solid #0f172a;border-bottom:2px solid #0f172a;}</style></head><body><div class="sheet-header"><div class="sheet-title">${docTitle}</div><div class="sheet-meta"><div class="sheet-meta-left"><span class="sheet-meta-item"><strong>Sumber Data:</strong> DORS Bareskrim Polri</span><span>&bull;</span><span class="sheet-meta-item"><strong>Data per:</strong> ${pdfDataPer||"—"}</span><span>&bull;</span><span class="sheet-meta-item"><strong>Waktu Cetak:</strong> ${pdfWaktuCetak||"—"}</span></div><div><span>Format Lampiran Ringkas</span></div></div></div><table class="sheet-table"><thead><tr><th style="width:28px;">NO</th><th>SATKER / KESATUAN</th><th style="width:60px;">CT</th><th style="width:60px;">SISA (BU)</th><th style="width:60px;">LIMPAH EKS.</th><th style="width:60px;">CP</th><th style="width:50px;">PR</th><th style="width:60px;">CC</th><th style="width:50px;">CR</th><th style="width:85px;">INDEKS KINERJA</th></tr></thead><tbody>${rowsHtml}</tbody><tfoot><tr class="total-row"><td colspan="2" style="text-align:center;font-weight:800;">TOTAL KESELURUHAN</td><td style="text-align:right;font-weight:800;">${totCt}</td><td style="text-align:right;font-weight:800;">${totBu}</td><td style="text-align:right;font-weight:800;">${totLim}</td><td style="text-align:right;font-weight:800;">${totCp}</td><td style="text-align:center;font-weight:800;">${totPr}</td><td style="text-align:right;font-weight:800;">${totCc}</td><td style="text-align:center;font-weight:800;">${totCr}</td><td style="text-align:center;font-weight:800;">${totIdx} (${totLvl})</td></tr></tfoot></table></body></html>`;
+
   try {
     let iframe = document.getElementById("kp-print-iframe");
     if (!iframe) {
@@ -1796,998 +1814,247 @@ function resetUnifiedFilter(){
         ]
       }),
       
-      pdfModalOpen &&
-        (0, a.jsx)("div", {
-          className: "kp-pdf-overlay",
-          onClick: e => {
-            if (e.target === e.currentTarget) setPdfModalOpen(!1);
-          },
-          style: {
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            background: "rgba(10, 15, 29, 0.85)",
-            backdropFilter: "blur(6px)",
-            padding: "0.6rem",
-            boxSizing: "border-box",
-            overflow: "hidden"
-          },
-          children: (0, a.jsxs)("div", {
-            className: "kp-pdf-modal",
+      (0, a.jsx)(h.Dialog, {
+  header: (0, a.jsxs)("div", {
+    style: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "1rem", paddingRight: "0.5rem" },
+    children: [
+      (0, a.jsxs)("div", {
+        style: { display: "flex", alignItems: "center", gap: "0.6rem" },
+        children: [
+          (0, a.jsx)("i", { className: "pi pi-file-pdf", style: { color: "#dc2626", fontSize: "1.3rem" } }),
+          (0, a.jsxs)("div", {
+            children: [
+              (0, a.jsx)("div", { style: { fontWeight: 800, fontSize: "1.05rem", color: "#0f172a" }, children: "Cetak Lampiran Kinerja Perkara" }),
+              (0, a.jsx)("div", { style: { fontSize: "0.75rem", color: "#64748b" }, children: "Format tabel ringkas Google Spreadsheet (tanpa kop surat & ttd)" })
+            ]
+          })
+        ]
+      }),
+      (0, a.jsxs)("div", {
+        style: { display: "flex", gap: "0.5rem", alignItems: "center" },
+        children: [
+          (0, a.jsx)(p.Button, {
+            label: pdfExpanded ? "Perkecil Tampilan" : "Perbesar Penuh",
+            icon: pdfExpanded ? "pi pi-window-minimize" : "pi pi-window-maximize",
+            text: !0,
+            size: "small",
+            onClick: () => setPdfExpanded(v => !v)
+          }),
+          (0, a.jsx)(p.Button, {
+            label: "Cetak / Simpan PDF",
+            icon: "pi pi-print",
+            size: "small",
+            onClick: kpPrintPdf,
+            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700 }
+          })
+        ]
+      })
+    ]
+  }),
+  visible: pdfModalOpen,
+  onHide: () => setPdfModalOpen(!1),
+  maximized: pdfExpanded,
+  maximizable: !0,
+  onMaximize: e => setPdfExpanded(e.maximized),
+  style: pdfExpanded
+    ? { width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh", margin: 0, top: 0, left: 0, borderRadius: 0 }
+    : { width: "82rem", maxWidth: "96vw" },
+  contentStyle: {
+    overflow: "auto",
+    height: pdfExpanded ? "calc(100vh - 125px)" : "auto",
+    maxHeight: pdfExpanded ? "calc(100vh - 125px)" : "75vh",
+    background: "#f1f5f9",
+    padding: "1.2rem"
+  },
+  footer: (0, a.jsxs)("div", {
+    style: { display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" },
+    children: [
+      (0, a.jsxs)("div", {
+        style: { fontSize: "0.78rem", color: "#64748b", display: "flex", alignItems: "center", gap: "0.4rem" },
+        children: [
+          (0, a.jsx)("i", { className: "pi pi-info-circle", style: { color: "#3b82f6" } }),
+          (0, a.jsx)("span", { children: "Nomor halaman tercetak otomatis di pojok kanan bawah jika lampiran melebihi 1 halaman." })
+        ]
+      }),
+      (0, a.jsxs)("div", {
+        style: { display: "flex", gap: "0.5rem" },
+        children: [
+          (0, a.jsx)(p.Button, {
+            label: "Tutup",
+            text: !0,
+            size: "small",
+            onClick: () => setPdfModalOpen(!1)
+          }),
+          (0, a.jsx)(p.Button, {
+            label: "Cetak / Simpan PDF",
+            icon: "pi pi-print",
+            size: "small",
+            onClick: kpPrintPdf,
+            style: { background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", fontWeight: 700 }
+          })
+        ]
+      })
+    ]
+  }),
+  modal: !0,
+  dismissableMask: !1,
+  children: (0, a.jsx)("div", {
+    style: {
+      background: "#ffffff",
+      borderRadius: "8px",
+      border: "1px solid #cbd5e1",
+      boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
+      padding: "1.5rem 1.8rem",
+      margin: "0 auto",
+      maxWidth: "1350px",
+      color: "#0f172a",
+      fontFamily: "Arial, Roboto, 'Segoe UI', sans-serif"
+    },
+    children: [
+      (0, a.jsxs)("div", {
+        style: {
+          borderBottom: "2px solid #0f172a",
+          paddingBottom: "0.6rem",
+          marginBottom: "0.9rem"
+        },
+        children: [
+          (0, a.jsx)("div", {
             style: {
-              width: "100%",
-              maxWidth: "1400px",
-              height: "100%",
-              maxHeight: "calc(100vh - 1.2rem)",
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              color: "#0f172a",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              marginBottom: "0.35rem"
+            },
+            children: "Lampiran Kinerja Perkara Satker " + (pdfSatkerName || "Nasional") + " Periode " + (pdfPeriode || "Tahun 2026")
+          }),
+          (0, a.jsxs)("div", {
+            style: {
+              fontSize: "0.78rem",
+              color: "#475569",
               display: "flex",
-              flexDirection: "column",
-              borderRadius: "12px",
-              border: "1px solid #334155",
-              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.6)",
-              overflow: "hidden",
-              background: "#0f172a",
-              color: "#f8fafc"
+              flexWrap: "wrap",
+              gap: "0.75rem",
+              alignItems: "center"
             },
             children: [
-              (0, a.jsxs)("div", {
-                className: "kp-modal-header",
-                style: {
-                  flexShrink: 0,
-                  padding: "0.75rem 1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#1e293b",
-                  borderBottom: "1px solid #334155"
-                },
+              (0, a.jsxs)("span", {
                 children: [
-                  (0, a.jsxs)("div", {
-                    children: [
-                      (0, a.jsx)("div", {
-                        className: "kp-modal-title",
-                        style: {
-                          fontSize: "1rem",
-                          fontWeight: 800,
-                          color: "#f8fafc"
-                        },
-                        children:
-                          "📑 Format Cetak & KOP Laporan Resmi (PDF Presisi)"
-                      }),
-                      (0, a.jsx)("div", {
-                        className: "kp-modal-sub",
-                        style: {
-                          fontSize: "0.75rem",
-                          color: "#94a3b8",
-                          marginTop: "2px"
-                        },
-                        children:
-                          "Sesuaikan teks KOP, Judul, Wilayah, Periode, dan Penandatangan pada form di sebelah kiri atau langsung pada dokumen"
-                      })
-                    ]
-                  }),
-                  (0, a.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      gap: "0.6rem",
-                      alignItems: "center"
-                    },
-                    children: [
-                      (0, a.jsx)(p.Button, {
-                        label: "Cetak / Ekspor PDF",
-                        icon: "pi pi-print",
-                        onClick: kpPrintPdf,
-                        style: {
-                          fontWeight: 700,
-                          background: "#dc2626",
-                          borderColor: "#dc2626",
-                          color: "#ffffff"
-                        }
-                      }),
-                      (0, a.jsx)(p.Button, {
-                        icon: "pi pi-times",
-                        text: !0,
-                        rounded: !0,
-                        onClick: () => setPdfModalOpen(!1),
-                        style: { color: "#94a3b8" }
-                      })
-                    ]
-                  })
+                  (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Sumber Data: " }),
+                  "DORS Bareskrim Polri"
                 ]
               }),
-              (0, a.jsxs)("div", {
-                style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" },
+              (0, a.jsx)("span", { style: { color: "#cbd5e1" }, children: "•" }),
+              (0, a.jsxs)("span", {
                 children: [
-                  (0, a.jsxs)("div", {
-                    className: "kp-pdf-sidebar",
-                    style: {
-                      width: "360px",
-                      minWidth: "320px",
-                      height: "100%",
-                      minHeight: 0,
-                      overflowY: "auto",
-                      background: "#0f172a",
-                      borderRight: "1px solid #1e293b",
-                      padding: "1rem 1.2rem",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.85rem"
-                    },
-                    children: [
-                      (0, a.jsxs)("div", {
-                        style: {
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center"
-                        },
-                        children: [
-                          (0, a.jsx)("div", {
-                            style: {
-                              fontSize: "0.82rem",
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.5px",
-                              color: "#f8fafc"
-                            },
-                            children: "✍️ Pengaturan KOP & Teks"
-                          }),
-                          (0, a.jsx)(p.Button, {
-                            label: "Cetak PDF",
-                            icon: "pi pi-print",
-                            size: "small",
-                            onClick: kpPrintPdf,
-                            style: {
-                              fontWeight: 700,
-                              background: "#dc2626",
-                              borderColor: "#dc2626",
-                              color: "#ffffff",
-                              padding: "0.3rem 0.6rem",
-                              fontSize: "0.75rem"
-                            }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "KOP Baris 1 (Instansi Induk)"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfKop1,
-                            onChange: e => setPdfKop1(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "KOP Baris 2 (Satker / Fungsi)"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfKop2,
-                            onChange: e => setPdfKop2(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "KOP Baris 3 (Biro / Bagian)"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfKop3,
-                            onChange: e => setPdfKop3(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Alamat KOP / Kontak"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfAlamat,
-                            onChange: e => setPdfAlamat(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsx)("div", {
-                        style: {
-                          height: 1,
-                          background: "rgba(255,255,255,0.1)",
-                          margin: "0.2rem 0"
-                        }
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Judul Laporan"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfJudul,
-                            onChange: e => setPdfJudul(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Cakupan Wilayah"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfWilayah,
-                            onChange: e => setPdfWilayah(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Periode Laporan"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfPeriode,
-                            onChange: e => setPdfPeriode(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsx)("div", {
-                        style: {
-                          height: 1,
-                          background: "rgba(255,255,255,0.1)",
-                          margin: "0.2rem 0"
-                        }
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Tempat & Tanggal TTD"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfTempatTgl,
-                            onChange: e => setPdfTempatTgl(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Jabatan Penandatangan"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfJabatan,
-                            onChange: e => setPdfJabatan(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Nama Pejabat"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfNama,
-                            placeholder: "[NAMA PEJABAT]",
-                            onChange: e => setPdfNama(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      }),
-                      (0, a.jsxs)("div", {
-                        children: [
-                          (0, a.jsx)("label", {
-                            children: "Pangkat / NRP"
-                          }),
-                          (0, a.jsx)(m.InputText, {
-                            value: pdfPangkat,
-                            onChange: e => setPdfPangkat(e.target.value),
-                            style: { width: "100%", fontSize: "0.8rem" }
-                          })
-                        ]
-                      })
-                    ]
-                  }),
-                  (0, a.jsx)("div", {
-                    style: {
-                      flex: 1,
-                      minHeight: 0,
-                      height: "100%",
-                      overflow: "auto",
-                      background: "#334155",
-                      padding: "1.5rem",
-                      display: "flex",
-                      justifyContent: "center"
-                    },
-                    children: (0, a.jsxs)("div", {
-                      className: "kp-paper-sheet",
-                      style: {
-                        background: "#ffffff",
-                        color: "#000000",
-                        width: "100%",
-                        maxWidth: "1050px",
-                        minHeight: "750px",
-                        padding: "30px 40px",
-                        boxShadow: "0 14px 40px rgba(0,0,0,0.5)",
-                        borderRadius: 4,
-                        fontFamily: "'Times New Roman', Times, serif",
-                        fontSize: "9pt",
-                        lineHeight: 1.25
-                      },
-                      children: [
-                        (0, a.jsx)("table", {
-                          style: {
-                            width: "100%",
-                            borderCollapse: "collapse",
-                            marginBottom: "15px",
-                            border: "none"
-                          },
-                          children: (0, a.jsx)("tbody", {
-                            children: (0, a.jsxs)("tr", {
-                              children: [
-                                (0, a.jsx)("td", {
-                                  style: {
-                                    width: "50%",
-                                    verticalAlign: "top",
-                                    border: "none",
-                                    padding: 0
-                                  },
-                                  children: (0, a.jsxs)("div", {
-                                    style: {
-                                      display: "inline-block",
-                                      textAlign: "center",
-                                      minWidth: "260px"
-                                    },
-                                    children: [
-                                      (0, a.jsx)("div", {
-                                        style: {
-                                          fontSize: "10pt",
-                                          fontWeight: "bold",
-                                          letterSpacing: "0.5px",
-                                          color: "#000000"
-                                        },
-                                        children: pdfKop1
-                                      }),
-                                      (0, a.jsx)("div", {
-                                        style: {
-                                          fontSize: "10pt",
-                                          fontWeight: "bold",
-                                          letterSpacing: "0.5px",
-                                          color: "#000000"
-                                        },
-                                        children: pdfKop2
-                                      }),
-                                      pdfKop3
-                                        ? (0, a.jsx)("div", {
-                                            style: { fontSize: "9pt", color: "#000000" },
-                                            children: pdfKop3
-                                          })
-                                        : null,
-                                      pdfAlamat
-                                        ? (0, a.jsx)("div", {
-                                            className: "kp-kop-alamat",
-                                            style: {
-                                              fontSize: "7.5pt",
-                                              fontStyle: "italic",
-                                              color: "#333333"
-                                            },
-                                            children: pdfAlamat
-                                          })
-                                        : null,
-                                      (0, a.jsx)("div", {
-                                        style: {
-                                          borderTop: "2px solid #000000",
-                                          margin: "4px 0 1px 0"
-                                        }
-                                      }),
-                                      (0, a.jsx)("div", {
-                                        style: {
-                                          borderTop: "0.75px solid #000000",
-                                          margin: "0 0 4px 0"
-                                        }
-                                      })
-                                    ]
-                                  })
-                                }),
-                                (0, a.jsx)("td", {
-                                  style: {
-                                    width: "50%",
-                                    verticalAlign: "top",
-                                    textAlign: "right",
-                                    border: "none",
-                                    padding: "4px 0 0 0"
-                                  },
-                                  children: (0, a.jsxs)("div", {
-                                    children: [
-                                      (0, a.jsxs)("div", {
-                                        style: {
-                                          fontSize: "11.5pt",
-                                          fontWeight: "bold",
-                                          textDecoration: "underline",
-                                          textTransform: "uppercase",
-                                          letterSpacing: "0.5px",
-                                          color: "#000000"
-                                        },
-                                        children: [
-                                          pdfJudul,
-                                          " ",
-                                          pdfWilayah
-                                        ]
-                                      }),
-                                      (0, a.jsxs)("div", {
-                                        style: {
-                                          fontSize: "10pt",
-                                          fontWeight: "bold",
-                                          marginTop: "4px",
-                                          textTransform: "uppercase",
-                                          color: "#000000"
-                                        },
-                                        children: [
-                                          "PERIODE ",
-                                          pdfPeriode
-                                        ]
-                                      })
-                                    ]
-                                  })
-                                })
-                              ]
-                            })
-                          })
-                        }),
-                        (0, a.jsxs)("table", {
-                          style: {
-                            width: "100%",
-                            borderCollapse: "collapse",
-                            fontSize: "8pt",
-                            marginTop: "10px"
-                          },
-                          children: [
-                            (0, a.jsx)("thead", {
-                              children: (0, a.jsxs)("tr", {
-                                style: { background: "#1e3a5f", color: "#ffffff" },
-                                children: [
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "30px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "NO"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "SATKER / KESATUAN"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "65px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "CT"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "65px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "SISA (BU)"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "60px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "LIMPAH"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "65px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "CP"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "55px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "PR"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "65px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "CC"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "55px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "CR"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "th",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 4px",
-                                        width: "95px",
-                                        textAlign: "center",
-                                        background: "#1e3a5f",
-                                        color: "#ffffff"
-                                      },
-                                      children: "INDEKS KINERJA"
-                                    }
-                                  )
-                                ]
-                              })
-                            }),
-                            (0, a.jsx)("tbody", {
-                              children: kpFlattenNodes(s).map((r, rIdx) => {
-                                let ind =
-                                  r.depth > 0
-                                    ? {
-                                        paddingLeft: (r.depth * 14 + 6) + "px",
-                                        fontStyle: "italic"
-                                      }
-                                    : { fontWeight: "bold" };
-                                let ctV = (r.ct ?? 0).toLocaleString("id-ID");
-                                let buV = (
-                                  (r.cp_berjalan_belum_update ?? 0) +
-                                  (r.cp_tunggakan_belum_update ?? 0)
-                                ).toLocaleString("id-ID");
-                                let limV = (
-                                  r.limpah_eksternal ?? 0
-                                ).toLocaleString("id-ID");
-                                let cpV = (
-                                  (r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)
-                                ).toLocaleString("id-ID");
-                                let prV = (r.pr ?? 0).toFixed(2) + "%";
-                                let ccV = (
-                                  (r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)
-                                ).toLocaleString("id-ID");
-                                let crV = (r.cr ?? 0).toFixed(2) + "%";
-                                let idxV = (r.indeks ?? 0).toLocaleString(
-                                  "id-ID",
-                                  {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                  }
-                                );
-                                let lvlV = r.level ? ("LEVEL " + r.level) : "-";
-                                return (0, a.jsxs)(
-                                  "tr",
-                                  {
-                                    style: {
-                                      background:
-                                        rIdx % 2 === 1 ? "#f1f5f9" : "#ffffff"
-                                    },
-                                    children: [
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "center",
-                                            color: "#000000"
-                                          },
-                                          children: r.nomor || ""
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "left",
-                                            color: "#000000",
-                                            ...ind
-                                          },
-                                          children: r.nama || "-"
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          className: "col-ct",
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "right",
-                                            fontWeight: "bold",
-                                            background: "#dbeafe",
-                                            color: "#1d4ed8"
-                                          },
-                                          children: ctV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "right",
-                                            color: "#000000"
-                                          },
-                                          children: buV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "right",
-                                            color: "#000000"
-                                          },
-                                          children: limV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "right",
-                                            color: "#000000"
-                                          },
-                                          children: cpV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "center",
-                                            color: "#000000"
-                                          },
-                                          children: prV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          className: "col-cc",
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "right",
-                                            fontWeight: "bold",
-                                            color: "#15803d"
-                                          },
-                                          children: ccV
-                                        }
-                                      ),
-                                      (0, a.jsx)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "center",
-                                            fontWeight: "bold",
-                                            color: "#000000"
-                                          },
-                                          children: crV
-                                        }
-                                      ),
-                                      (0, a.jsxs)(
-                                        "td",
-                                        {
-                                          style: {
-                                            border: "1px solid #000000",
-                                            padding: "4px 5px",
-                                            textAlign: "center",
-                                            whiteSpace: "nowrap",
-                                            color: "#000000"
-                                          },
-                                          children: [
-                                            (0, a.jsx)("strong", {
-                                              style: { color: "#000000" },
-                                              children: idxV
-                                            }),
-                                            " (",
-                                            lvlV,
-                                            ")"
-                                          ]
-                                        }
-                                      )
-                                    ]
-                                  },
-                                  r.nomor || rIdx
-                                );
-                              })
-                            }),
-                            (0, a.jsx)("tfoot", {
-                              children: (0, a.jsxs)("tr", {
-                                className: "total-row",
-                                style: {
-                                  background: "#e2e8f0",
-                                  fontWeight: "bold",
-                                  borderTop: "2px solid #000000",
-                                  color: "#000000"
-                                },
-                                children: [
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      colSpan: 2,
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "center",
-                                        color: "#000000"
-                                      },
-                                      children: "TOTAL KESELURUHAN"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "right",
-                                        color: "#000000"
-                                      },
-                                      children: (d.ct ?? 0).toLocaleString(
-                                        "id-ID"
-                                      )
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "right",
-                                        color: "#000000"
-                                      },
-                                      children: (
-                                        (d.cp_berjalan_belum_update ?? 0) +
-                                        (d.cp_tunggakan_belum_update ?? 0)
-                                      ).toLocaleString("id-ID")
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "right",
-                                        color: "#000000"
-                                      },
-                                      children: (
-                                        d.limpah_eksternal ?? 0
-                                      ).toLocaleString("id-ID")
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "right",
-                                        color: "#000000"
-                                      },
-                                      children: (
-                                        (d.cp_berjalan ?? 0) +
-                                        (d.cp_tunggakan ?? 0)
-                                      ).toLocaleString("id-ID")
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "center",
-                                        color: "#000000"
-                                      },
-                                      children: (d.pr ?? 0).toFixed(2) + "%"
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      className: "col-cc",
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "right",
-                                        color: "#15803d",
-                                        fontWeight: "bold"
-                                      },
-                                      children: (
-                                        (d.cc_aktual ?? 0) +
-                                        (d.cc_tunggakan ?? 0)
-                                      ).toLocaleString("id-ID")
-                                    }
-                                  ),
-                                  (0, a.jsx)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "center",
-                                        color: "#000000"
-                                      },
-                                      children: (d.cr ?? 0).toFixed(2) + "%"
-                                    }
-                                  ),
-                                  (0, a.jsxs)(
-                                    "td",
-                                    {
-                                      style: {
-                                        border: "1px solid #000000",
-                                        padding: "5px 6px",
-                                        textAlign: "center",
-                                        whiteSpace: "nowrap",
-                                        color: "#000000"
-                                      },
-                                      children: [
-                                        (0, a.jsx)("strong", {
-                                          style: { color: "#000000" },
-                                          children: (
-                                            d.indeks ?? 0
-                                          ).toLocaleString("id-ID", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                          })
-                                        }),
-                                        " (",
-                                        d.level ? ("LEVEL " + d.level) : "-",
-                                        ")"
-                                      ]
-                                    }
-                                  )
-                                ]
-                              })
-                            })
-                          ]
-                        }),
-                        (0, a.jsx)("div", {
-                          style: {
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            marginTop: "30px",
-                            color: "#000000"
-                          },
-                          children: (0, a.jsxs)("div", {
-                            style: { textAlign: "center", minWidth: "280px", color: "#000000" },
-                            children: [
-                              (0, a.jsx)("div", {
-                                style: {
-                                  fontSize: "9pt",
-                                  marginBottom: "4px",
-                                  color: "#000000"
-                                },
-                                children: pdfTempatTgl
-                              }),
-                              (0, a.jsx)("div", {
-                                style: {
-                                  fontSize: "9pt",
-                                  fontWeight: "bold",
-                                  marginBottom: "55px",
-                                  color: "#000000"
-                                },
-                                children: pdfJabatan
-                              }),
-                              (0, a.jsx)("div", {
-                                style: {
-                                  fontSize: "9pt",
-                                  fontWeight: "bold",
-                                  textDecoration: "underline",
-                                  color: "#000000"
-                                },
-                                children:
-                                  pdfNama ||
-                                  "..........................................................."
-                              }),
-                              (0, a.jsx)("div", {
-                                style: { fontSize: "8.5pt", color: "#000000" },
-                                children: pdfPangkat
-                              })
-                            ]
-                          })
-                        })
-                      ]
-                    })
-                  })
+                  (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Data per: " }),
+                  pdfDataPer || "—"
+                ]
+              }),
+              (0, a.jsx)("span", { style: { color: "#cbd5e1" }, children: "•" }),
+              (0, a.jsxs)("span", {
+                children: [
+                  (0, a.jsx)("strong", { style: { color: "#0f172a" }, children: "Waktu Cetak: " }),
+                  pdfWaktuCetak || "—"
                 ]
               })
             ]
           })
+        ]
+      }),
+      (0, a.jsx)("div", {
+        style: { overflowX: "auto" },
+        children: (0, a.jsxs)("table", {
+          style: {
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "0.75rem",
+            fontFamily: "Arial, Roboto, 'Segoe UI', sans-serif"
+          },
+          children: [
+            (0, a.jsx)("thead", {
+              children: (0, a.jsxs)("tr", {
+                style: { background: "#f1f5f9" },
+                children: [
+                  (0, a.jsx)("th", { style: { width: "30px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "NO" }),
+                  (0, a.jsx)("th", { style: { border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "left", fontWeight: 700, color: "#0f172a" }, children: "SATKER / KESATUAN" }),
+                  (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "CT" }),
+                  (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "SISA (BU)" }),
+                  (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "LIMPAH EKS." }),
+                  (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "CP" }),
+                  (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "PR" }),
+                  (0, a.jsx)("th", { style: { width: "65px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "CC" }),
+                  (0, a.jsx)("th", { style: { width: "55px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "CR" }),
+                  (0, a.jsx)("th", { style: { width: "95px", border: "1px solid #94a3b8", padding: "5px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: "INDEKS KINERJA" })
+                ]
+              })
+            }),
+            (0, a.jsx)("tbody", {
+              children: kpFlattenNodes(s).map((r, rIdx) => {
+                let ind = r.depth > 0 ? (r.depth * 14 + 6) + "px" : "6px";
+                let isAlt = rIdx % 2 === 1;
+                return (0, a.jsxs)("tr", {
+                  key: r.id || rIdx,
+                  style: { background: isAlt ? "#f8fafc" : "#ffffff" },
+                  children: [
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "center", color: "#0f172a" }, children: r.nomor || "" }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", paddingLeft: ind, fontStyle: r.depth > 0 ? "italic" : "normal", fontWeight: r.depth > 0 ? 500 : 700, color: "#0f172a" }, children: r.nama || "-" }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "right", fontWeight: 700, color: "#1d4ed8" }, children: (r.ct ?? 0).toLocaleString("id-ID") }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "right", color: "#0f172a" }, children: ((r.cp_berjalan_belum_update ?? 0) + (r.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "right", color: "#0f172a" }, children: (r.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "right", color: "#0f172a" }, children: ((r.cp_berjalan ?? 0) + (r.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "center", color: "#0f172a" }, children: (r.pr ?? 0).toFixed(2) + "%" }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "right", fontWeight: 700, color: "#15803d" }, children: ((r.cc_aktual ?? 0) + (r.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "center", fontWeight: 700, color: "#0f172a" }, children: (r.cr ?? 0).toFixed(2) + "%" }),
+                    (0, a.jsx)("td", { style: { border: "1px solid #cbd5e1", padding: "4px 6px", textAlign: "center", whiteSpace: "nowrap", color: "#0f172a" }, children: (r.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (r.level ? " (LEVEL " + r.level + ")" : " (-)") })
+                  ]
+                });
+              })
+            }),
+            (0, a.jsx)("tfoot", {
+              children: (0, a.jsxs)("tr", {
+                style: {
+                  background: "#e2e8f0",
+                  fontWeight: 800,
+                  borderTop: "2px solid #0f172a",
+                  borderBottom: "2px solid #0f172a"
+                },
+                children: [
+                  (0, a.jsx)("td", { colSpan: 2, style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "center", color: "#0f172a" }, children: "TOTAL KESELURUHAN" }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "right", color: "#1d4ed8" }, children: (d.ct ?? 0).toLocaleString("id-ID") }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "right", color: "#0f172a" }, children: ((d.cp_berjalan_belum_update ?? 0) + (d.cp_tunggakan_belum_update ?? 0)).toLocaleString("id-ID") }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "right", color: "#0f172a" }, children: (d.limpah_eksternal ?? 0).toLocaleString("id-ID") }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "right", color: "#0f172a" }, children: ((d.cp_berjalan ?? 0) + (d.cp_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "center", color: "#0f172a" }, children: (d.pr ?? 0).toFixed(2) + "%" }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "right", color: "#15803d" }, children: ((d.cc_aktual ?? 0) + (d.cc_tunggakan ?? 0)).toLocaleString("id-ID") }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "center", color: "#0f172a" }, children: (d.cr ?? 0).toFixed(2) + "%" }),
+                  (0, a.jsx)("td", { style: { border: "1px solid #94a3b8", padding: "6px 8px", textAlign: "center", color: "#0f172a" }, children: (d.indeks ?? 0).toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (d.level ? " (LEVEL " + d.level + ")" : " (-)") })
+                ]
+              })
+            })
+          ]
         })
+      }),
+      (0, a.jsxs)("div", {
+        style: {
+          marginTop: "1rem",
+          paddingTop: "0.6rem",
+          borderTop: "1px dashed #cbd5e1",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "0.75rem",
+          color: "#94a3b8"
+        },
+        children: [
+          (0, a.jsx)("span", { children: "Lampiran Kinerja Perkara • DORS Bareskrim Polri" }),
+          (0, a.jsx)("span", { children: "Halaman 1 dari N (otomatis saat dicetak)" })
+        ]
+      })
+    ]
+  })
+})
     ]
   });
 })(),
