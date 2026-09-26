@@ -22,6 +22,24 @@ export function runBE(cmd) {
     ], { timeout: 45000, maxBuffer: 20 * 1024 * 1024 }).toString();
 }
 
+export function runBEWithInput(cmd, input) {
+    return cp.execFileSync(plinkPath, [
+        '-batch', '-ssh', '-hostkey', beHostKey,
+        '-pw', config.CAS_SSH_PASSWORD,
+        targetBE,
+        cmd
+    ], { input, timeout: 60000, maxBuffer: 20 * 1024 * 1024 }).toString();
+}
+
+export function copyFileToBE(localPath, remotePath) {
+    return cp.execFileSync('D:/Putty/pscp.exe', [
+        '-batch', '-hostkey', beHostKey,
+        '-pw', config.CAS_SSH_PASSWORD,
+        localPath,
+        `${targetBE}:${remotePath}`
+    ], { timeout: 60000 }).toString();
+}
+
 if (process.argv[2]) {
     console.log(runBE(process.argv[2]));
 }

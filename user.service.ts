@@ -140,6 +140,7 @@ export class UserService {
             .where('lower(user.email) = :email', { email: normalizedEmail })
             .orWhere('lower(user.email_google) = :email', { email: normalizedEmail })
             .orWhere('lower(user.email_polri) = :email', { email: normalizedEmail })
+            .orWhere('lower(user.email_polri) = :email', { email: normalizedEmail })
             .addSelect('user.password')
             .addSelect('user.security_pin_hash')
             .getOne();
@@ -161,13 +162,14 @@ export class UserService {
             .leftJoinAndSelect('Organisasi.OrganisasiLevel', 'OrganisasiLevel')
             .where('lower(user.email_polri) = :id', { id: normalized })
             .orWhere('lower(user.username) = :id', { id: normalized })
+            .orWhere('lower(user.email) = :id', { id: normalized })
             .addSelect('user.password')
             .addSelect('user.security_pin_hash')
             .getOne();
     }
 
     /** Cek ketersediaan username/email_polri -- dipakai form Master Pengguna sblm submit (live validation). */
-    async checkIdentifierAvailability(field: 'username' | 'email_polri', value: string, excludeUserId?: number): Promise<{ available: boolean; satker_nama?: string }> {
+    async checkIdentifierAvailability(field: 'username' | 'email_polri' | 'email', value: string, excludeUserId?: number): Promise<{ available: boolean; satker_nama?: string }> {
         const normalized = this.normalizeEmail(value);
         if (!normalized) return { available: true };
         const qb = this.userRepository.createQueryBuilder('user').where(`lower(user.${field}) = :v`, { v: normalized });
@@ -667,10 +669,13 @@ export class UserService {
      * (nama, NRP, pangkat, jabatan, satuan, no. HP). Tidak pernah lewat sini: role, scope
      * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
      */
-    async updateOwnProfile(authUser: User, dto: { name?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string }) {
+    async updateOwnProfile(authUser: User, dto: { name?: string; email?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string; is_pns?: boolean; social_media?: any; photo_url?: string; foto?: string }) {
         const name = (dto.name || '').trim();
         const authUpdate: Partial<User> = {};
         if (name && name !== authUser.name) authUpdate.name = name;
+        if (dto.is_pns !== undefined) authUpdate.is_pns = Boolean(dto.is_pns);
+        if (dto.social_media !== undefined) authUpdate.social_media = dto.social_media;
+        if (dto.photo_url || dto.foto) authUpdate.photo_url = dto.photo_url || dto.foto;
 
         if (dto.email_polri !== undefined) {
             const emailPolri = this.normalizeEmail(dto.email_polri);
@@ -682,6 +687,17 @@ export class UserService {
                     }
                 }
                 authUpdate.email_polri = emailPolri || null;
+            }
+        }
+        if (dto.email !== undefined) {
+            const secondaryEmail = this.normalizeEmail(dto.email);
+            const targetEmail = secondaryEmail || authUpdate.email_polri || authUser.email_polri || authUser.email;
+            if (targetEmail && targetEmail !== this.normalizeEmail(authUser.email)) {
+                const check = await this.checkIdentifierAvailability('email', targetEmail, Number(authUser.id));
+                if (!check.available) {
+                    throw new ConflictException({ errors: { email: [`Email ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                }
+                authUpdate.email = targetEmail;
             }
         }
         if (dto.username !== undefined) {
@@ -706,8 +722,11 @@ export class UserService {
             pangkat: dto.pangkat,
             jabatan: dto.jabatan,
             satuan: dto.satuan,
-            no_hp: dto.no_hp
-        });
+            no_hp: dto.no_hp,
+            is_pns: dto.is_pns,
+            social_media: dto.social_media,
+            foto: dto.photo_url || dto.foto
+        }, this.dataSource, authUser.email_polri);
         return { status: 1, message: 'Profil berhasil diperbarui.' };
     }
 
@@ -1061,8 +1080,11 @@ export class UserService {
         const noHp = this.cleanOptionalText(payload?.no_hp || payload?.phone || payload?.no_handphone);
         const pangkat = this.cleanOptionalText(payload?.pangkat);
         const jabatan = this.cleanOptionalText(payload?.jabatan);
+        const isPns = payload?.is_pns !== undefined ? Boolean(payload.is_pns) : null;
+        const socialMedia = payload?.social_media ? JSON.stringify(payload.social_media) : null;
+        const foto = this.cleanOptionalText(payload?.foto || payload?.photo_url);
 
-        if (!nrp && !nama && !satuan && !noHp && !pangkat && !jabatan) return;
+        if (!nrp && !nama && !satuan && !noHp && !pangkat && !jabatan && isPns === null && !socialMedia && !foto) return;
 
         const emails = Array.from(new Set([normalizedEmail, previousNormalizedEmail].filter(Boolean)));
         const existingRows = await executor.query(
@@ -1090,10 +1112,13 @@ export class UserService {
                     pangkat = coalesce($6, pangkat),
                     jabatan = coalesce($7, jabatan),
                     email = $8,
+                    is_pns = coalesce($9, is_pns),
+                    social_media = coalesce($10::jsonb, social_media),
+                    foto = coalesce($11, foto),
                     updated_at = now()
                 where id = $1
                 `,
-                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail]
+                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail, isPns, socialMedia, foto]
             );
             return;
         }
@@ -1109,19 +1134,22 @@ export class UserService {
                 satuan,
                 no_hp,
                 email,
+                is_pns,
+                social_media,
+                foto,
                 created_at,
                 updated_at
             )
-            values ($1, $2, 'l', coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, now(), now())
+            values ($1, $2, 'l', coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, coalesce($8, false), coalesce($9::jsonb, '{}'::jsonb), $10, now(), now())
             `,
-            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail]
+            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail, isPns, socialMedia, foto]
         );
     }
 
     private async enrichPoliceProfiles(users: any[]) {
         if (!Array.isArray(users) || users.length === 0) return;
 
-        const emails = Array.from(new Set(users.map((user) => this.normalizeEmail(user?.email)).filter(Boolean)));
+        const emails = Array.from(new Set(users.flatMap((user) => [this.normalizeEmail(user?.email), this.normalizeEmail(user?.email_polri)]).filter(Boolean)));
         if (!emails.length) return;
 
         const rows = await this.dataSource.query(
@@ -1134,7 +1162,10 @@ export class UserService {
                 no_hp,
                 pangkat,
                 jabatan,
-                email
+                email,
+                foto,
+                is_pns,
+                social_media
             from trb_police
             where lower(email) = any($1::text[])
             order by lower(email), id desc
@@ -1145,11 +1176,16 @@ export class UserService {
         const byEmail = new Map<string, any>(rows.map((row: any) => [row.email_key, row]));
 
         users.forEach((user) => {
-            const profile: any = byEmail.get(this.normalizeEmail(user?.email));
+            const profile: any = byEmail.get(this.normalizeEmail(user?.email)) || byEmail.get(this.normalizeEmail(user?.email_polri));
             if (!profile) return;
             user.nrp = profile.nrp;
             user.no_hp = profile.no_hp;
             user.satuan = profile.satuan;
+            user.pangkat = profile.pangkat;
+            user.jabatan = profile.jabatan;
+            user.is_pns = Boolean(user.is_pns || profile.is_pns);
+            user.social_media = user.social_media || profile.social_media || {};
+            user.photo_url = user.photo_url || profile.foto || null;
             user.Police = profile;
         });
     }
