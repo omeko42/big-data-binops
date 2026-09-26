@@ -22,6 +22,15 @@ export function runFE(cmd) {
     ], { timeout: 30000, maxBuffer: 20 * 1024 * 1024 }).toString();
 }
 
+export function copyFileToFE(localPath, remotePath) {
+    return cp.execFileSync('D:/Putty/pscp.exe', [
+        '-batch', '-hostkey', feHostKey,
+        '-pw', config.CAS_SSH_PASSWORD,
+        localPath,
+        `${targetFE}:${remotePath}`
+    ], { timeout: 60000 }).toString();
+}
+
 if (process.argv[2]) {
     console.log(runFE(process.argv[2]));
 }
