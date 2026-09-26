@@ -1245,15 +1245,62 @@ export class AuthService {
             });
         }
 
-        const user = await this.dataSource.getRepository(User).findOne({ where: { id: Number(authUser.id) } });
+        const userRepository = this.dataSource.getRepository(User);
+        const user = await userRepository
+            .createQueryBuilder('user')
+            .addSelect('user.password')
+            .where('user.id = :id', { id: Number(authUser.id) })
+            .getOne();
         if (!user) throw new NotFoundException('User tidak ditemukan');
+
+        // Validasi password akun terlebih dahulu jika dikirimkan atau aksi aktivasi (mencegah OTP terbuang jika salah password)
+        if (dto?.password || ['enable_email_otp', 'enable_pin', 'change_pin'].includes(action)) {
+            if (!dto?.password) {
+                throw new BadRequestException({
+                    errors: { password: ['Silakan masukkan password akun Anda terlebih dahulu'] }
+                });
+            }
+            if (!user.password) {
+                throw new BadRequestException({
+                    errors: { password: ['Akun ini belum memiliki password lokal'] }
+                });
+            }
+            const isMatch = await bcrypt.compare(String(dto.password), String(user.password));
+            if (!isMatch) {
+                throw new BadRequestException({
+                    errors: { password: ['Password akun salah. Silakan periksa kembali password Anda.'] }
+                });
+            }
+        }
 
         return this.createSecurityOtp(user, action, dto?.target_email);
     }
 
     async createProfileTotpSetup(authUser: User, dto: any) {
-        const user = await this.dataSource.getRepository(User).findOne({ where: { id: Number(authUser.id) } });
+        const userRepository = this.dataSource.getRepository(User);
+        const user = await userRepository
+            .createQueryBuilder('user')
+            .addSelect('user.password')
+            .where('user.id = :id', { id: Number(authUser.id) })
+            .getOne();
         if (!user) throw new NotFoundException('User tidak ditemukan');
+
+        if (!dto?.password) {
+            throw new BadRequestException({
+                errors: { password: ['Silakan masukkan password akun Anda untuk melanjutkan'] }
+            });
+        }
+        if (!user.password) {
+            throw new BadRequestException({
+                errors: { password: ['Akun ini belum memiliki password lokal'] }
+            });
+        }
+        const isMatch = await bcrypt.compare(String(dto.password), String(user.password));
+        if (!isMatch) {
+            throw new BadRequestException({
+                errors: { password: ['Password akun salah. Silakan periksa kembali password Anda.'] }
+            });
+        }
 
         const mode = String(dto?.mode || '').trim().toLowerCase();
         const action = mode === 'reset' ? 'reset_totp' : 'enable_totp';
@@ -1262,7 +1309,7 @@ export class AuthService {
         const email = this.normalizeEmail(user.email_polri || user.email);
         const otpAuthUrl = authenticator.keyuri(email, service, secret);
         const qrCodeImage = await QRCode.toDataURL(otpAuthUrl);
-        const expiredAt = new Date(Date.now() + 10 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 15 * 60 * 1000);
         const setupId = this.encryptSecurityPayload({
             action,
             user_id: Number(user.id),
@@ -1270,18 +1317,12 @@ export class AuthService {
             secret,
             expired_at: expiredAt.toISOString()
         });
-        const otp = await this.createSecurityOtp(user, action, dto?.target_email);
 
         return {
             setup_id: setupId,
             secret,
             totp_image: qrCodeImage,
-            otp_id: otp.otp_id,
-            requires_otp: true,
-            expired_at: expiredAt.toISOString(),
-            sent_to_masked: otp.sent_to_masked,
-            email_polri_masked: otp.email_polri_masked,
-            email_sekunder_masked: otp.email_sekunder_masked
+            expired_at: expiredAt.toISOString()
         };
     }
 
@@ -1289,6 +1330,7 @@ export class AuthService {
         const userRepository = this.dataSource.getRepository(User);
         const user = await userRepository
             .createQueryBuilder('user')
+            .addSelect('user.password')
             .addSelect('user.totp_secret')
             .addSelect('user.security_pin_hash')
             .where('user.id = :id', { id: Number(authUser.id) })
@@ -1299,16 +1341,15 @@ export class AuthService {
         if (enabled) {
             const setupPayload = this.decryptSecurityPayload(dto?.setup_id);
             const action = setupPayload.action;
-            if (!['enable_totp', 'reset_totp'].includes(action) || Number(setupPayload.user_id) !== Number(user.id) || this.normalizeEmail(setupPayload.email) !== this.normalizeEmail(user.email)) {
+            if (!['enable_totp', 'reset_totp'].includes(action) || Number(setupPayload.user_id) !== Number(user.id)) {
                 throw new BadRequestException({
-                    errors: { otp_token: ['Setup authenticator tidak valid'] }
+                    errors: { totp_token: ['Setup authenticator tidak valid atau telah kedaluwarsa'] }
                 });
             }
 
-            await this.validateSecurityOtp(user, action, dto?.otp_id, dto?.otp_token);
-            if (!dto?.totp_token || !authenticator.check(String(dto.totp_token), setupPayload.secret)) {
+            if (!dto?.totp_token || !authenticator.check(String(dto.totp_token).trim(), setupPayload.secret)) {
                 throw new BadRequestException({
-                    errors: { totp_token: ['Kode authenticator tidak valid'] }
+                    errors: { totp_token: ['Kode authenticator (6 digit) tidak valid atau salah'] }
                 });
             }
 
@@ -1320,27 +1361,22 @@ export class AuthService {
             return this.user({ id: user.id });
         }
 
-        await this.validateSecurityOtp(user, 'disable_totp', dto?.otp_id, dto?.otp_token);
-        if (user.totp_secret && (!dto?.totp_token || !authenticator.check(String(dto.totp_token), user.totp_secret))) {
-            throw new BadRequestException({
-                errors: { totp_token: ['Kode authenticator tidak valid'] }
-            });
-        }
-
-        // Allow verification via TOTP token, OTP email, or security PIN
+        // Disable TOTP: allow verification with TOTP token, Password, or PIN
         let verified = false;
-        if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token), user.totp_secret)) {
+        if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token).trim(), user.totp_secret)) {
+            verified = true;
+        } else if (dto?.password && user.password && (await bcrypt.compare(String(dto.password), String(user.password)))) {
+            verified = true;
+        } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
             verified = true;
         } else if (dto?.otp_id && dto?.otp_token) {
             await this.validateSecurityOtp(user, 'disable_totp', dto.otp_id, dto.otp_token);
-            verified = true;
-        } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
             verified = true;
         }
 
         if (!verified) {
             throw new BadRequestException({
-                errors: { totp_token: ['Verifikasi keamanan gagal atau kode tidak valid'] }
+                errors: { totp_token: ['Verifikasi gagal: Masukkan kode Authenticator yang benar atau Password akun Anda'] }
             });
         }
 
@@ -1366,32 +1402,23 @@ export class AuthService {
         const enabled = Boolean(dto?.enabled);
         const action = enabled ? 'enable_email_otp' : 'disable_email_otp';
 
-        if (enabled && dto?.password) {
-            if (!user.password) {
-                throw new BadRequestException({
-                    errors: { password: ['Akun ini belum memiliki password lokal'] }
-                });
-            }
-            const isMatch = await bcrypt.compare(String(dto.password), String(user.password));
-            if (!isMatch) {
-                throw new BadRequestException({
-                    errors: { password: ['Password akun salah'] }
-                });
-            }
-        }
-
-        if (dto?.otp_id && dto?.otp_token) {
-            await this.validateSecurityOtp(user, action, dto.otp_id, dto.otp_token);
-        } else if (!enabled) {
+        if (enabled) {
+            await this.validateSecurityOtp(user, action, dto?.otp_id, dto?.otp_token);
+        } else {
             let verified = false;
-            if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token), user.totp_secret)) {
+            if (dto?.password && user.password && (await bcrypt.compare(String(dto.password), String(user.password)))) {
+                verified = true;
+            } else if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token).trim(), user.totp_secret)) {
                 verified = true;
             } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
                 verified = true;
+            } else if (dto?.otp_id && dto?.otp_token) {
+                await this.validateSecurityOtp(user, action, dto.otp_id, dto.otp_token);
+                verified = true;
             }
-            if (!verified && (!dto?.otp_id || !dto?.otp_token)) {
+            if (!verified) {
                 throw new BadRequestException({
-                    errors: { otp_token: ['Verifikasi keamanan diperlukan untuk menonaktifkan fitur ini'] }
+                    errors: { password: ['Verifikasi keamanan diperlukan untuk menonaktifkan fitur ini'] }
                 });
             }
         }
@@ -1411,6 +1438,8 @@ export class AuthService {
         const userRepository = this.dataSource.getRepository(User);
         const user = await userRepository
             .createQueryBuilder('user')
+            .addSelect('user.password')
+            .addSelect('user.totp_secret')
             .addSelect('user.security_pin_hash')
             .where('user.id = :id', { id: Number(authUser.id) })
             .getOne();
@@ -1418,29 +1447,48 @@ export class AuthService {
 
         const enabled = Boolean(dto?.enabled);
         const action = String(dto?.action || (enabled ? (user.pin_required ? 'change_pin' : 'enable_pin') : 'disable_pin'));
-        await this.validateSecurityOtp(user, action, dto?.otp_id, dto?.otp_token);
 
-        if (!enabled) {
+        if (enabled) {
+            const pin = this.validatePinFormat(dto?.pin);
+            const pinConfirmation = this.validatePinFormat(dto?.pin_confirmation || dto?.pin, 'pin_confirmation');
+            if (pin !== pinConfirmation) {
+                throw new BadRequestException({
+                    errors: { pin_confirmation: ['Konfirmasi PIN belum sama'] }
+                });
+            }
+
+            await this.validateSecurityOtp(user, action, dto?.otp_id, dto?.otp_token);
+
+            await userRepository.update(Number(user.id), {
+                pin_required: true,
+                security_pin_hash: await bcrypt.hash(pin, 10)
+            });
+            return this.user({ id: user.id });
+        } else {
+            let verified = false;
+            if (dto?.password && user.password && (await bcrypt.compare(String(dto.password), String(user.password)))) {
+                verified = true;
+            } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
+                verified = true;
+            } else if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token).trim(), user.totp_secret)) {
+                verified = true;
+            } else if (dto?.otp_id && dto?.otp_token) {
+                await this.validateSecurityOtp(user, action, dto.otp_id, dto.otp_token);
+                verified = true;
+            }
+
+            if (!verified) {
+                throw new BadRequestException({
+                    errors: { password: ['Verifikasi gagal: Masukkan password akun atau PIN lama Anda'] }
+                });
+            }
+
             await userRepository.update(Number(user.id), {
                 pin_required: false,
                 security_pin_hash: null
             });
             return this.user({ id: user.id });
         }
-
-        const pin = this.validatePinFormat(dto?.pin);
-        const pinConfirmation = this.validatePinFormat(dto?.pin_confirmation || dto?.pin, 'pin_confirmation');
-        if (pin !== pinConfirmation) {
-            throw new BadRequestException({
-                errors: { pin_confirmation: ['Konfirmasi PIN belum sama'] }
-            });
-        }
-
-        await userRepository.update(Number(user.id), {
-            pin_required: true,
-            security_pin_hash: await bcrypt.hash(pin, 10)
-        });
-        return this.user({ id: user.id });
     }
 
     async forgotPasswordRequest(dto: ForgotPasswordRequestDto) {
