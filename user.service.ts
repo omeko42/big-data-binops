@@ -201,6 +201,9 @@ export class UserService {
                 errors: { email: ['Email already in use'] }
             });
         }
+        if (rest.email_polri && rest.username && this.normalizeEmail(rest.email_polri) === this.normalizeEmail(rest.username)) {
+            throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
+        }
         if (rest.email_polri) {
             const check = await this.checkIdentifierAvailability('email_polri', rest.email_polri);
             if (!check.available) {
@@ -422,6 +425,12 @@ export class UserService {
                 throw new NotFoundException('User with ID ' + id + ' not found.');
             }
 
+            const polriToCheck = (dto as any).email_polri !== undefined ? (dto as any).email_polri : user.email_polri;
+            const usernameToCheck = (dto as any).username !== undefined ? (dto as any).username : user.username;
+            if (polriToCheck && usernameToCheck && this.normalizeEmail(polriToCheck) === this.normalizeEmail(usernameToCheck)) {
+                throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
+            }
+
             if ((dto as any).email_polri && this.normalizeEmail((dto as any).email_polri) !== this.normalizeEmail(user.email_polri)) {
                 const check = await this.checkIdentifierAvailability('email_polri', (dto as any).email_polri, Number(id));
                 if (!check.available) {
@@ -473,7 +482,7 @@ export class UserService {
             };
             const nextStatus = this.normalizeStatus(updatedData.status);
             const currentStatus = this.normalizeStatus(user.status || 'AKTIF');
-            if (nextStatus === 'NONAKTIF_ADMIN' && currentStatus !== 'NONAKTIF_ADMIN') {
+            if ((nextStatus === 'NONAKTIF' || nextStatus === 'NONAKTIF_ADMIN') && currentStatus !== 'NONAKTIF_ADMIN' && currentStatus !== 'NONAKTIF') {
                 updatedData.deactivated_by = authUser?.id ? Number(authUser.id) : null;
                 updatedData.deactivated_at = new Date();
                 updatedData.deactivation_reason = 'Dinonaktifkan admin';
@@ -665,6 +674,41 @@ export class UserService {
     }
 
     /**
+     * Dapatkan profil sendiri (termasuk foto profil avatar, data personil kepolisian, dll).
+     */
+    async getOwnProfile(authUser: User) {
+        const user = await this.userRepository.findOne({ where: { id: Number(authUser.id) } });
+        if (!user) throw new NotFoundException('User tidak ditemukan');
+        let policeProfile: any = null;
+        try {
+            const policeRows = await this.dataSource.query(
+                `select nrp, nama, satuan, no_hp, pangkat, jabatan, email, foto, is_pns, social_media
+                 from trb_police
+                 where lower(email) = any($1::text[])
+                 order by id desc limit 1`,
+                [[this.normalizeEmail(user.email), this.normalizeEmail(user.email_polri)].filter(Boolean)]
+            );
+            policeProfile = policeRows?.[0] || null;
+        } catch {}
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            email_polri: user.email_polri,
+            username: user.username,
+            foto: user.photo_url || policeProfile?.foto || null,
+            photo_url: user.photo_url || policeProfile?.foto || null,
+            nrp: policeProfile?.nrp || null,
+            no_hp: policeProfile?.no_hp || null,
+            satuan: policeProfile?.satuan || null,
+            pangkat: policeProfile?.pangkat || null,
+            jabatan: policeProfile?.jabatan || null,
+            role_bdb: user.role_bdb,
+            status: user.status
+        };
+    }
+
+    /**
      * Edit profil sendiri (siapa pun yang login) -- HANYA data personil non-sensitif
      * (nama, NRP, pangkat, jabatan, satuan, no. HP). Tidak pernah lewat sini: role, scope
      * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
@@ -723,6 +767,11 @@ export class UserService {
                 }
                 authUpdate.username = username || null;
             }
+        }
+        const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : authUser.email_polri;
+        const effectiveUsername = authUpdate.username !== undefined ? authUpdate.username : authUser.username;
+        if (effectivePolri && effectiveUsername && this.normalizeEmail(effectivePolri) === this.normalizeEmail(effectiveUsername)) {
+            throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
         }
         if (Object.keys(authUpdate).length) {
             await this.userRepository.update(Number(authUser.id), authUpdate);
