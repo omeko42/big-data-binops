@@ -458,29 +458,29 @@ a {
 }
 
 /* Cards & Modals: Prevent White Cards inside Dark Modals/Dialogs */
-:root[data-theme="dark"] .p-dialog [style*="background: #ffffff"],
-:root[data-theme="dark"] .p-dialog [style*="background:#ffffff"],
-:root[data-theme="dark"] .p-dialog [style*="background: white"],
-:root[data-theme="dark"] .p-dialog [style*="background: #fff"],
-:root[data-theme="dark"] .p-dialog [style*="background:#fff"],
-:root[data-theme="dark"] .p-dialog [style*="background: #f8fafc"],
-:root[data-theme="dark"] .p-dialog [style*="background:#f8fafc"] {
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #ffffff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#ffffff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: white"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #fff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#fff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #f8fafc"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#f8fafc"] {
   background: #16223b !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #e2e8f0 !important;
 }
-:root[data-theme="dark"] .p-dialog [style*="color: #0f172a"],
-:root[data-theme="dark"] .p-dialog [style*="color:#0f172a"],
-:root[data-theme="dark"] .p-dialog [style*="color: #1e293b"],
-:root[data-theme="dark"] .p-dialog [style*="color:#1e293b"],
-:root[data-theme="dark"] .p-dialog [style*="color: #334155"],
-:root[data-theme="dark"] .p-dialog [style*="color:#334155"],
-:root[data-theme="dark"] .p-dialog [style*="color: #475569"],
-:root[data-theme="dark"] .p-dialog [style*="color:#475569"] {
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #0f172a"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#0f172a"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #1e293b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#1e293b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #334155"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#334155"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #475569"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#475569"] {
   color: #f1f5f9 !important;
 }
-:root[data-theme="dark"] .p-dialog [style*="color: #64748b"],
-:root[data-theme="dark"] .p-dialog [style*="color:#64748b"] {
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #64748b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#64748b"] {
   color: #94a3b8 !important;
 }
 :root[data-theme="dark"] .p-dialog [style*="background: #eff6ff"],
@@ -4495,3 +4495,109 @@ div[style*="margin-top:-1.6rem"] > span {
   border-color: #ef4444 !important;
   color: #fca5a5 !important;
 }
+
+/* ==========================================================================
+   KP PRINT DIALOG & A4 PREVIEW SHEET (DUAL THEME SUPPORT)
+   ========================================================================== */
+.kp-modal-header-title { font-weight: 800; font-size: 1.05rem; color: #0f172a; }
+.kp-modal-header-sub { font-size: 0.75rem; color: #64748b; margin-top: 1px; }
+.kp-modal-btn { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.15s ease; font-family: inherit; }
+.kp-modal-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+.kp-dialog-canvas { background: #e2e8f0 !important; }
+.kp-dialog-footer-text { font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 0.4rem; }
+
+:root[data-theme="dark"] .kp-print-dialog .p-dialog-header { background: #111a2e !important; border-bottom: 1px solid #1f2b45 !important; }
+:root[data-theme="dark"] .kp-modal-header-title { color: #f8fafc !important; }
+:root[data-theme="dark"] .kp-modal-header-sub { color: #94a3b8 !important; }
+:root[data-theme="dark"] .kp-modal-btn { background: #1e293b !important; border: 1px solid #334155 !important; color: #f1f5f9 !important; }
+:root[data-theme="dark"] .kp-modal-btn:hover { background: #27354f !important; color: #ffffff !important; border-color: #475569 !important; }
+:root[data-theme="dark"] .kp-dialog-canvas { background: #070d18 !important; }
+:root[data-theme="dark"] .kp-print-dialog .p-dialog-footer { background: #111a2e !important; border-top: 1px solid #1f2b45 !important; }
+:root[data-theme="dark"] .kp-dialog-footer-text { color: #94a3b8 !important; }
+
+/* Protected Authentic White A4 Paper Sheet */
+.kp-paper-sheet,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet,
+:root[data-theme="dark"] .kp-paper-sheet {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.kp-paper-sheet .sheet-title-box,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .sheet-title-box {
+  text-align: center !important;
+  margin-bottom: 28px !important;
+}
+.kp-paper-sheet .kp-sheet-title-line,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-title-line {
+  font-family: Arial, sans-serif !important;
+  font-size: 12pt !important;
+  font-weight: bold !important;
+  color: #0f172a !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  line-height: 1.35 !important;
+  margin: 2px 0 !important;
+  text-align: center !important;
+}
+.kp-paper-sheet table,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background-color: #ffffff !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+}
+.kp-paper-sheet th,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  padding: 5px 4px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+  font-weight: bold !important;
+  text-align: center !important;
+}
+.kp-paper-sheet td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet td {
+  border: 1px solid #cbd5e1 !important;
+  padding: 4.5px 5px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+  color: #0f172a !important;
+}
+.kp-paper-sheet tr.kp-row-white td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.kp-row-white td {
+  background-color: #ffffff !important;
+}
+.kp-paper-sheet tr.kp-row-zebra td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.kp-row-zebra td {
+  background-color: #f8fafc !important;
+}
+.kp-paper-sheet tr.total-row td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.total-row td {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  border-top: 2px solid #0f172a !important;
+  border-bottom: 2px solid #0f172a !important;
+  font-weight: bold !important;
+}
+.kp-paper-sheet .kp-sheet-footer,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-footer {
+  margin-top: 24px !important;
+  padding-top: 6px !important;
+  border-top: 1px dashed #cbd5e1 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  font-size: 9pt !important;
+  color: #475569 !important;
+}
+.kp-paper-sheet .kp-sheet-footer strong,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-footer strong {
+  color: #0f172a !important;
+}
+
