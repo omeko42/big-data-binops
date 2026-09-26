@@ -1038,15 +1038,140 @@ a {
   color: var(--cas-text-secondary) !important;
 }
 
-/* Top KPI Cards (Crime Total, Crime Clearance, Clearance Rate) */
-.dash-minicard:nth-child(1), .lp-stat:nth-child(1) {
-  border-top: 4px solid #ef4444 !important;
+/* ==========================================================================
+   DASHBOARD KPI & MINICARDS (KINERJA PERKARA, PROFIL RISIKO, DORS)
+   ========================================================================== */
+
+.dash-minicard {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top: 4px solid #94a3b8 !important;
+  border-radius: 12px !important;
+  padding: 0.85rem 1rem !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease !important;
 }
-.dash-minicard:nth-child(2), .lp-stat:nth-child(2) {
-  border-top: 4px solid #10b981 !important;
+
+.dash-minicard:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
 }
-.dash-minicard:nth-child(3), .lp-stat:nth-child(3) {
-  border-top: 4px solid #3b82f6 !important;
+
+:root[data-theme="dark"] .dash-minicard,
+[data-theme="dark"] .dash-minicard {
+  background: #0d1526 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Minicard Label (First child) */
+.dash-minicard > div:first-child {
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  line-height: 1.25 !important;
+}
+
+:root[data-theme="dark"] .dash-minicard > div:first-child,
+[data-theme="dark"] .dash-minicard > div:first-child {
+  color: #94a3b8 !important;
+}
+
+/* Minicard Value (Second child / numbers) */
+.dash-minicard > div:nth-child(2),
+.dash-minicard > div:nth-child(2) strong {
+  font-size: 1.35rem !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+  color: #0f172a !important;
+  margin-top: 0.25rem !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+:root[data-theme="dark"] .dash-minicard > div:nth-child(2),
+:root[data-theme="dark"] .dash-minicard > div:nth-child(2) strong,
+[data-theme="dark"] .dash-minicard > div:nth-child(2),
+[data-theme="dark"] .dash-minicard > div:nth-child(2) strong {
+  color: #f8fafc !important;
+}
+
+/* Kinerja Perkara 9 Cards: Exact Semantic Colors (Light & Dark) */
+/* 1. CP AKTUAL */
+.dash-panel-clickable .dash-minicard:nth-child(1),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(1) {
+  border-top-color: #f43f5e !important;
+}
+/* 2. CP TUNGGAKAN */
+.dash-panel-clickable .dash-minicard:nth-child(2),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(2) {
+  border-top-color: #f59e0b !important;
+}
+/* 3. PR (LAMA) */
+.dash-panel-clickable .dash-minicard:nth-child(3),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(3) {
+  border-top-color: #6366f1 !important;
+}
+/* 4. PR (BARU) */
+.dash-panel-clickable .dash-minicard:nth-child(4),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(4) {
+  border-top-color: #3b82f6 !important;
+}
+/* 5. CC AKTUAL */
+.dash-panel-clickable .dash-minicard:nth-child(5),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(5) {
+  border-top-color: #10b981 !important;
+}
+/* 6. CC TUNGGAKAN */
+.dash-panel-clickable .dash-minicard:nth-child(6),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(6) {
+  border-top-color: #059669 !important;
+}
+/* 7. CR (LAMA) */
+.dash-panel-clickable .dash-minicard:nth-child(7),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(7) {
+  border-top-color: #8b5cf6 !important;
+}
+/* 8. CR (BARU) */
+.dash-panel-clickable .dash-minicard:nth-child(8),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(8) {
+  border-top-color: #06b6d4 !important;
+}
+/* 9. INDEKS KINERJA */
+.dash-panel-clickable .dash-minicard:nth-child(9),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(9) {
+  border-top-color: #dc2626 !important;
+}
+
+/* Profil Risiko Kejahatan Cards: Exact Semantic Colors (Light & Dark) */
+/* 1. JUMLAH PENDUDUK */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(1),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(1) {
+  border-top-color: #3b82f6 !important;
+}
+/* 2. TINGKAT RISIKO KEJAHATAN */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(2),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(2) {
+  border-top-color: #ef4444 !important;
+}
+/* 3. CRIME CLOCK */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(3),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(3) {
+  border-top-color: #0ea5e9 !important;
+}
+/* 4. STATUS TERTINGGI */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(4),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(4) {
+  border-top-color: #8b5cf6 !important;
 }
 
 /* LP Fact Card Modern */
@@ -1082,57 +1207,136 @@ a {
   font-weight: 800;
 }
 
-/* Status Cards Carousel / Grid */
+/* ==========================================================================
+   STATUS CARDS (RINCIAN STATUS LP - 11 STATUSES)
+   ========================================================================== */
+
 .lp-status-cards {
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: 0.85rem;
-  margin: 1.25rem 0;
-  display: grid;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)) !important;
+  gap: 0.65rem !important;
+  margin: 1.15rem 0 !important;
+}
+
+@media (min-width: 1400px) {
+  .lp-status-cards {
+    grid-template-columns: repeat(11, minmax(0, 1fr)) !important;
+  }
 }
 
 .lp-stat {
-  text-align: left;
-  cursor: pointer;
-  background: var(--cas-bg-surface);
-  border: 1px solid var(--cas-border-card);
-  border-radius: 13px;
-  padding: 0.8rem 0.95rem;
-  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-  box-shadow: var(--cas-shadow-sm);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 0.85rem !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.lp-stat:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
 }
 
 :root[data-theme="dark"] .lp-stat,
 [data-theme="dark"] .lp-stat {
-  background: var(--cas-bg-surface) !important;
-  border-color: var(--cas-border-card) !important;
-}
-
-.lp-stat:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--cas-shadow-md);
+  background: #111a2e !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
 .lp-stat .n {
-  color: var(--cas-text-primary);
-  font-size: 1.65rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+  color: #0f172a !important;
+  font-size: 1.45rem !important;
+  font-weight: 850 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.02em !important;
+  font-variant-numeric: tabular-nums !important;
 }
 
 :root[data-theme="dark"] .lp-stat .n,
 [data-theme="dark"] .lp-stat .n {
-  color: var(--cas-text-primary) !important;
+  color: #f8fafc !important;
 }
 
+.lp-stat .l,
 .lp-stat .lbl {
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--cas-text-muted);
-  margin-top: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 800;
+  color: #64748b !important;
+  font-size: 0.68rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+  margin-top: 0.35rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
+:root[data-theme="dark"] .lp-stat .l,
+:root[data-theme="dark"] .lp-stat .lbl,
+[data-theme="dark"] .lp-stat .l,
+[data-theme="dark"] .lp-stat .lbl {
+  color: #94a3b8 !important;
+}
+
+/* 11 Status LP Semantic Top Borders (Light & Dark) */
+/* 1. Belum Update */
+.lp-stat:nth-child(1),
+:root[data-theme="dark"] .lp-stat:nth-child(1) { border-top-color: #ef4444 !important; }
+/* 2. Lidik */
+.lp-stat:nth-child(2),
+:root[data-theme="dark"] .lp-stat:nth-child(2) { border-top-color: #0284c7 !important; }
+/* 3. SP2 Lidik */
+.lp-stat:nth-child(3),
+:root[data-theme="dark"] .lp-stat:nth-child(3) { border-top-color: #2563eb !important; }
+/* 4. Sidik */
+.lp-stat:nth-child(4),
+:root[data-theme="dark"] .lp-stat:nth-child(4) { border-top-color: #6366f1 !important; }
+/* 5. Perma */
+.lp-stat:nth-child(5),
+:root[data-theme="dark"] .lp-stat:nth-child(5) { border-top-color: #10b981 !important; }
+/* 6. SPDP */
+.lp-stat:nth-child(6),
+:root[data-theme="dark"] .lp-stat:nth-child(6) { border-top-color: #f59e0b !important; }
+/* 7. SP3 */
+.lp-stat:nth-child(7),
+:root[data-theme="dark"] .lp-stat:nth-child(7) { border-top-color: #059669 !important; }
+/* 8. Tahap I */
+.lp-stat:nth-child(8),
+:root[data-theme="dark"] .lp-stat:nth-child(8) { border-top-color: #8b5cf6 !important; }
+/* 9. P19 */
+.lp-stat:nth-child(9),
+:root[data-theme="dark"] .lp-stat:nth-child(9) { border-top-color: #ea580c !important; }
+/* 10. P21 */
+.lp-stat:nth-child(10),
+:root[data-theme="dark"] .lp-stat:nth-child(10) { border-top-color: #06b6d4 !important; }
+/* 11. Tahap II */
+.lp-stat:nth-child(11),
+:root[data-theme="dark"] .lp-stat:nth-child(11) { border-top-color: #16a34a !important; }
+
+/* Filter Bar .lp-stat variants (LP list page) */
+.lp-stat.total { border-top-color: #0f172a !important; }
+:root[data-theme="dark"] .lp-stat.total { border-top-color: #94a3b8 !important; }
+.lp-stat.active {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
 }
 
 /* ==========================================================================
@@ -2986,9 +3190,11 @@ div[style*="z-index:1000"] {
 }
 
 .dash-minicard {
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   border: 1px solid #cbd5e1 !important;
-  background: #f8fafc !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  background: #ffffff !important;
 }
 
 /* Dark Mode Cards */
@@ -3010,7 +3216,11 @@ div[style*="z-index:1000"] {
 :root[data-theme="dark"] .dash-minicard,
 [data-theme="dark"] .dash-minicard {
   background: #0d1526 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
   color: #f8fafc !important;
 }
 
@@ -3098,8 +3308,7 @@ div[style*="calc(100% + 0.45rem)"] {
 /* --- 5. SENADA STATUS TAGS & BADGES --- */
 .p-tag,
 .p-badge,
-.att-chip,
-.lp-stat {
+.att-chip {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
