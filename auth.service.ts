@@ -1287,7 +1287,12 @@ export class AuthService {
 
     async updateProfileTotp(authUser: User, dto: any) {
         const userRepository = this.dataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id: Number(authUser.id) } });
+        const user = await userRepository
+            .createQueryBuilder('user')
+            .addSelect('user.totp_secret')
+            .addSelect('user.security_pin_hash')
+            .where('user.id = :id', { id: Number(authUser.id) })
+            .getOne();
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
         const enabled = Boolean(dto?.enabled);
@@ -1329,7 +1334,7 @@ export class AuthService {
         } else if (dto?.otp_id && dto?.otp_token) {
             await this.validateSecurityOtp(user, 'disable_totp', dto.otp_id, dto.otp_token);
             verified = true;
-        } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), user.security_pin_hash))) {
+        } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
             verified = true;
         }
 
@@ -1349,14 +1354,25 @@ export class AuthService {
 
     async updateProfileEmailOtp(authUser: User, dto: any) {
         const userRepository = this.dataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id: Number(authUser.id) } });
+        const user = await userRepository
+            .createQueryBuilder('user')
+            .addSelect('user.password')
+            .addSelect('user.totp_secret')
+            .addSelect('user.security_pin_hash')
+            .where('user.id = :id', { id: Number(authUser.id) })
+            .getOne();
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
         const enabled = Boolean(dto?.enabled);
         const action = enabled ? 'enable_email_otp' : 'disable_email_otp';
 
         if (enabled && dto?.password) {
-            const isMatch = await bcrypt.compare(String(dto.password), user.password);
+            if (!user.password) {
+                throw new BadRequestException({
+                    errors: { password: ['Akun ini belum memiliki password lokal'] }
+                });
+            }
+            const isMatch = await bcrypt.compare(String(dto.password), String(user.password));
             if (!isMatch) {
                 throw new BadRequestException({
                     errors: { password: ['Password akun salah'] }
@@ -1370,11 +1386,13 @@ export class AuthService {
             let verified = false;
             if (dto?.totp_token && user.totp_secret && authenticator.check(String(dto.totp_token), user.totp_secret)) {
                 verified = true;
-            } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), user.security_pin_hash))) {
+            } else if (dto?.pin && user.security_pin_hash && (await bcrypt.compare(String(dto.pin), String(user.security_pin_hash)))) {
                 verified = true;
             }
             if (!verified && (!dto?.otp_id || !dto?.otp_token)) {
-                // Verified can also be true if user passes direct confirmation
+                throw new BadRequestException({
+                    errors: { otp_token: ['Verifikasi keamanan diperlukan untuk menonaktifkan fitur ini'] }
+                });
             }
         }
 
