@@ -39,28 +39,162 @@ async function toggleUserStatus(targetUser){
         e.current?.show({severity:"error",summary:"Gagal",detail:msg});
     }
 }
+function formatIndoDateStr(d) {
+    if (!d) return "-";
+    try {
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return String(d);
+        return dt.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    } catch(e) {
+        return String(d);
+    }
+}
+function formatIndoTimeStr(d) {
+    if (!d) return "";
+    try {
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return "";
+        return dt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB";
+    } catch(e) {
+        return "";
+    }
+}
+function renderUserMiniCard(u) {
+    if (!u) return null;
+    const initial = (u.name || "?").trim().charAt(0).toUpperCase();
+    const isAktif = (u.status || "").toUpperCase() === "AKTIF";
+    const roleColor = Q[u.role_bdb] || "secondary";
+    return (0,a.jsxs)("div", {
+        style: {
+            display: "flex",
+            alignItems: "center",
+            gap: "0.85rem",
+            padding: "0.75rem 0.9rem",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "10px"
+        },
+        children: [
+            (0,a.jsxs)("div", {
+                style: { position: "relative", flexShrink: 0 },
+                children: [
+                    u.photo_url ? (0,a.jsx)("img", {
+                        src: u.photo_url,
+                        alt: u.name,
+                        style: { width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255, 255, 255, 0.15)" }
+                    }) : (0,a.jsx)("div", {
+                        style: {
+                            width: "46px",
+                            height: "46px",
+                            borderRadius: "50%",
+                            background: "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
+                            color: "#ffffff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 700,
+                            fontSize: "1.15rem",
+                            boxShadow: "0 2px 8px rgba(2, 132, 199, 0.3)"
+                        },
+                        children: initial
+                    }),
+                    (0,a.jsx)("span", {
+                        style: {
+                            position: "absolute",
+                            bottom: "0px",
+                            right: "0px",
+                            width: "12px",
+                            height: "12px",
+                            borderRadius: "50%",
+                            background: isAktif ? "#16a34a" : "#dc2626",
+                            border: "2px solid #0f172a"
+                        },
+                        title: isAktif ? "Status: AKTIF" : "Status: NONAKTIF"
+                    })
+                ]
+            }),
+            (0,a.jsxs)("div", {
+                style: { display: "flex", flexDirection: "column", gap: "0.25rem", minWidth: 0, flex: 1 },
+                children: [
+                    (0,a.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" },
+                        children: [
+                            (0,a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.95rem", color: "var(--cas-text, #f8fafc)" }, children: u.name }),
+                            (0,a.jsx)(t.Tag, { value: u.role_bdb || "viewer", severity: roleColor, style: { fontSize: "0.7rem", padding: "0.1rem 0.45rem" } })
+                        ]
+                    }),
+                    (0,a.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", gap: "0.85rem", flexWrap: "wrap", fontSize: "0.76rem", color: "var(--cas-subtle, #94a3b8)" },
+                        children: [
+                            (0,a.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" }, children: [(0,a.jsx)("i", { className: "pi pi-building", style: { fontSize: "0.72rem", color: "#38bdf8" } }), u.scope_satker_name || "Nasional"] }),
+                            (u.nrp || u.username) ? (0,a.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" }, children: [(0,a.jsx)("i", { className: "pi pi-id-card", style: { fontSize: "0.72rem", color: "#a855f7" } }), "NRP/ID: " + (u.nrp || u.username)] }) : null,
+                            (0,a.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" }, children: [(0,a.jsx)("i", { className: "pi pi-envelope", style: { fontSize: "0.72rem", color: "#f59e0b" } }), u.email_polri || u.email] })
+                        ]
+                    })
+                ]
+            })
+        ]
+    });
+}
 async function openMutateDialog(user){
     setMutUser(user);
+    const rawReason = (user.deactivation_reason || "").trim();
+    let effDate = new Date().toISOString().slice(0, 10);
+    if (user.deactivated_at) {
+        try {
+            const dt = new Date(user.deactivated_at);
+            if (!isNaN(dt.getTime())) effDate = dt.toISOString().slice(0, 10);
+        } catch(e){}
+    }
+    const isOutOfRes = user.approval_status === "REQUEST_MUTASI_KELUAR" ||
+        /keluar.*reserse|non.*reskrim|luar.*reskrim|sabhara|lantas|binmas|propam|polsek|samapta/i.test(rawReason);
+    let sprin = "";
+    const sprinMatch = rawReason.match(/(?:ST|Sprint|Sprin|SK|Kep|No.?|Nomor)[\s/:]*([A-Za-z0-9\/\.\-]+)/i);
+    if (sprinMatch && sprinMatch[1]) {
+        sprin = sprinMatch[0].trim();
+    }
+    let nonReserseName = "";
+    if (isOutOfRes) {
+        const destMatch = rawReason.match(/(?:ke|tujuan|di)\s+([A-Za-z0-9\s\.\/\(\)]+?)(?:\s*\(|;|\.|\$)/i);
+        if (destMatch && destMatch[1]) {
+            nonReserseName = destMatch[1].trim();
+        }
+    }
     setMutData({
-        to_satker_id:user.scope_satker_id?Number(user.scope_satker_id):null,
-        to_satker_key:user.scope_satker_key||"",
-        to_satker_name:user.scope_satker_name||"",
-        to_role:user.role_bdb||"operator",
-        nomor_surat:"",
-        tanggal_efektif:new Date().toISOString().slice(0,10),
-        keterangan:"",
-        is_keluar_reserse:false,
-        satker_non_reserse:""
+        to_satker_id: user.requested_scope_satker_id ? Number(user.requested_scope_satker_id) : (user.scope_satker_id ? Number(user.scope_satker_id) : null),
+        to_satker_key: user.requested_scope_satker_key || user.scope_satker_key || "",
+        to_satker_name: user.scope_satker_name || "",
+        to_role: user.requested_role_bdb || user.role_bdb || "operator",
+        nomor_surat: sprin,
+        tanggal_efektif: effDate,
+        keterangan: rawReason,
+        is_keluar_reserse: isOutOfRes,
+        satker_non_reserse: nonReserseName
     });
     setMutHistory([]);
     setMutHistoryLoading(!0);
-    try{
-        let res=await L.apiAuth.get(`/user/${user.id}/mutations`);
-        let list=res.data?.data||res.data||[];
-        setMutHistory(Array.isArray(list)?list:[]);
-    }catch(err){
-        console.error("Gagal mengambil histori mutasi:",err);
-    }finally{
+    try {
+        let res = await L.apiAuth.get('/user/' + user.id + '/mutations');
+        let list = res.data?.data || res.data || [];
+        setMutHistory(Array.isArray(list) ? list : []);
+        const pending = Array.isArray(list) ? list.find(m => m.status === 'PENDING') : null;
+        if (pending) {
+            setMutData(prev => ({
+                ...prev,
+                to_satker_id: pending.to_satker_id ? Number(pending.to_satker_id) : prev.to_satker_id,
+                to_satker_key: pending.to_satker_key || prev.to_satker_key,
+                to_satker_name: pending.to_satker_name || prev.to_satker_name,
+                to_role: pending.to_role || prev.to_role,
+                nomor_surat: pending.nomor_surat || prev.nomor_surat,
+                tanggal_efektif: pending.tanggal_efektif ? new Date(pending.tanggal_efektif).toISOString().slice(0, 10) : prev.tanggal_efektif,
+                keterangan: pending.keterangan || prev.keterangan,
+                is_keluar_reserse: Boolean(pending.is_keluar_reserse),
+                satker_non_reserse: pending.is_keluar_reserse ? (pending.to_satker_name || prev.satker_non_reserse) : prev.satker_non_reserse
+            }));
+        }
+    } catch(err) {
+        console.error("Gagal mengambil histori mutasi:", err);
+    } finally {
         setMutHistoryLoading(!1);
     }
 }
@@ -435,152 +569,325 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
         });
     })()
 }),(0,a.jsx)(d.Dialog,{
-    header:mutUser?`Mutasi Satker Personil — ${mutUser.name}`:"Mutasi Satker",
+    header:mutUser ? (ed.isOperator ? "Ajukan Usulan Mutasi Personil" : (mutUser.approval_status?.startsWith("REQUEST_") ? "Tinjau & Proses Usulan Mutasi Personil" : ("Mutasi Satker Personil — " + mutUser.name))) : "Mutasi Satker",
     visible:!!mutUser,
     onHide:()=>setMutUser(null),
-    style:{width:"42rem",maxWidth:"96vw"},
+    style:{width:"46rem",maxWidth:"96vw"},
     modal:!0,
     dismissableMask:!0,
     footer:(0,a.jsxs)("div",{
-        style:{display:"flex",justifyContent:"flex-end",gap:"0.5rem"},
+        style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",gap:"0.5rem",flexWrap:"wrap"},
         children:[
             (0,a.jsx)(o.Button,{label:"Batal",text:!0,disabled:mutLoading,onClick:()=>setMutUser(null)}),
-            (0,a.jsx)(o.Button,{label:ed.isOperator?"Kirim Permohonan Mutasi ke Superadmin":"Proses Mutasi Personil",icon:ed.isOperator?"pi pi-send":"pi pi-check",severity:"primary",loading:mutLoading,onClick:handleMutateSubmit})
+            (0,a.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",gap:"0.5rem"},
+                children:[
+                    (!ed.isOperator && mutUser?.approval_status?.startsWith("REQUEST_")) ? (0,a.jsx)(o.Button,{
+                        label:"Tolak Usulan",
+                        severity:"secondary",
+                        icon:"pi pi-times",
+                        disabled:mutLoading,
+                        onClick:async ()=>{
+                            let target = mutUser;
+                            setMutUser(null);
+                            eh(target);
+                            await asSuperadminReview("REJECT");
+                        }
+                    }) : null,
+                    (0,a.jsx)(o.Button,{
+                        label:ed.isOperator ? "Kirim Usulan Mutasi ke Superadmin" : "Eksekusi Mutasi Personil",
+                        icon:ed.isOperator ? "pi pi-send" : "pi pi-check",
+                        severity:"info",
+                        loading:mutLoading,
+                        onClick:handleMutateSubmit
+                    })
+                ]
+            })
         ]
     }),
-    children:mutUser&&(0,a.jsxs)("div",{
+    children:mutUser && (0,a.jsxs)("div",{
         style:{display:"flex",flexDirection:"column",gap:"0.9rem"},
         children:[
-            (0,a.jsxs)("div",{
-                style:{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"8px",padding:"0.75rem 0.9rem",fontSize:"0.82rem",color:"#1e3a8a"},
+            /* Proposal Banner if any proposal note or requested */
+            ((mutUser.deactivation_reason || "").trim() || mutUser.approval_status?.startsWith("REQUEST_") || mutHistory.some(m => m.status === 'PENDING')) ? (0,a.jsxs)("div",{
+                style:{
+                    background:"linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.05) 100%)",
+                    border:"1px solid rgba(56, 189, 248, 0.35)",
+                    borderRadius:"10px",
+                    padding:"0.85rem 1rem",
+                    display:"flex",
+                    flexDirection:"column",
+                    gap:"0.45rem"
+                },
                 children:[
-                    (0,a.jsxs)("div",{style:{fontWeight:700,fontSize:"0.95rem"},children:[mutUser.name,(0,a.jsx)("span",{style:{fontWeight:400,color:"#3b82f6",marginLeft:"0.4rem"},children:`(${mutUser.email})`})]}),
-                    (0,a.jsxs)("div",{style:{marginTop:"0.3rem",display:"flex",gap:"1.5rem"},children:[
-                        (0,a.jsxs)("div",{children:[(0,a.jsx)("span",{style:{color:"#64748b"},children:"Satker Saat Ini: "}),(0,a.jsx)("strong",{children:mutUser.scope_satker_name||"Nasional"})]}),
-                        (0,a.jsxs)("div",{children:[(0,a.jsx)("span",{style:{color:"#64748b"},children:"Role Saat Ini: "}),(0,a.jsx)(t.Tag,{value:mutUser.role_bdb||"viewer",severity:Q[mutUser.role_bdb||"viewer"],style:{fontSize:"0.72rem"}})]})
-                    ]}),
-                    (0,a.jsx)("div",{style:{marginTop:"0.45rem",fontSize:"0.76rem",color:"#1d4ed8",fontStyle:"italic",borderTop:"1px dashed #93c5fd",paddingTop:"0.35rem"},children:"ℹ️ Ketentuan CAS: Riwayat LP yang pernah dibuat di satker lama TIDAK akan dipindahkan ke satker baru, melainkan tetap menjadi arsip yurisdiksi satker asal."})
-                ]
-            }),
-            (0,a.jsxs)("div",{
-                style:{background:mutData.is_keluar_reserse?"#fffbeb":"#f8fafc",border:mutData.is_keluar_reserse?"1px solid #fde68a":"1px solid #e2e8f0",borderRadius:"8px",padding:"0.65rem 0.85rem",display:"flex",flexDirection:"column",gap:"0.35rem"},
-                children:[
-                    (0,a.jsxs)("label",{
-                        style:{display:"flex",alignItems:"center",gap:"0.5rem",cursor:"pointer",fontWeight:600,fontSize:"0.85rem",color:mutData.is_keluar_reserse?"#b45309":"#334155"},
+                    (0,a.jsxs)("div",{
+                        style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.4rem"},
                         children:[
-                            (0,a.jsx)("input",{
-                                type:"checkbox",
-                                checked:!!mutData.is_keluar_reserse,
-                                onChange:e=>setMutData(prev=>({...prev,is_keluar_reserse:e.target.checked})),
-                                style:{cursor:"pointer",width:"1rem",height:"1rem"}
+                            (0,a.jsxs)("div",{
+                                style:{display:"flex",alignItems:"center",gap:"0.5rem"},
+                                children:[
+                                    (0,a.jsx)("span",{
+                                        style:{
+                                            background:"#0284c7",
+                                            color:"#ffffff",
+                                            borderRadius:"6px",
+                                            padding:"0.2rem 0.55rem",
+                                            fontSize:"0.72rem",
+                                            fontWeight:700,
+                                            textTransform:"uppercase",
+                                            letterSpacing:"0.03em"
+                                        },
+                                        children:"📋 Usulan Mutasi Operator"
+                                    }),
+                                    mutUser.deactivated_at ? (0,a.jsxs)("span",{
+                                        style:{fontSize:"0.75rem",color:"var(--cas-subtle, #94a3b8)",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+                                        children:[
+                                            (0,a.jsx)("i",{className:"pi pi-calendar",style:{fontSize:"0.7rem",color:"#38bdf8"}}),
+                                            "Diajukan: " + formatIndoDateStr(mutUser.deactivated_at) + (formatIndoTimeStr(mutUser.deactivated_at) ? " " + formatIndoTimeStr(mutUser.deactivated_at) : "")
+                                        ]
+                                    }) : null
+                                ]
                             }),
-                            "Mutasi Keluar Fungsi Reserse / Reskrim (Dinas Luar Reskrim / Non-Reskrim)"
+                            (0,a.jsx)("span",{
+                                style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:600},
+                                children:"✓ Data usulan otomatis dimuat ke formulir"
+                            })
                         ]
                     }),
-                    mutData.is_keluar_reserse&&(0,a.jsx)("div",{
-                        style:{fontSize:"0.76rem",color:"#92400e",fontStyle:"italic"},
-                        children:"ℹ️ Personil yang mutasi keluar fungsi Reserse akan dinonaktifkan dari akses CAS Reskrim, namun SELURUH REKAM JEJAK & HISTORI LP TETAP TERSIMPAN UTUH. Apabila di kemudian hari personil kembali bertugas di fungsi Reserse/Reskrim, akun dapat dimutasikan kembali ke Satker Reskrim baru dan riwayatnya langsung tersambung."
+                    ((mutUser.deactivation_reason || "").trim() || mutHistory.find(m => m.status === 'PENDING')?.keterangan) ? (0,a.jsxs)("div",{
+                        style:{
+                            background:"rgba(0, 0, 0, 0.16)",
+                            borderLeft:"3px solid #38bdf8",
+                            padding:"0.5rem 0.75rem",
+                            borderRadius:"0 6px 6px 0",
+                            fontSize:"0.82rem",
+                            color:"var(--cas-text, #f1f5f9)",
+                            lineHeight:1.5,
+                            fontStyle:"italic"
+                        },
+                        children:[
+                            (0,a.jsx)("span",{style:{fontWeight:600,fontStyle:"normal",color:"#93c5fd",marginRight:"0.35rem"},children:"Alasan/Catatan Operator:"}),
+                            mutUser.deactivation_reason || mutHistory.find(m => m.status === 'PENDING')?.keterangan
+                        ]
+                    }) : null
+                ]
+            }) : null,
+
+            /* Rich Personnel Card */
+            renderUserMiniCard(mutUser),
+
+            /* Policy notice */
+            (0,a.jsxs)("div",{
+                style:{
+                    background:"rgba(2, 132, 199, 0.08)",
+                    border:"1px dashed rgba(56, 189, 248, 0.3)",
+                    borderRadius:"8px",
+                    padding:"0.5rem 0.75rem",
+                    display:"flex",
+                    alignItems:"center",
+                    gap:"0.45rem",
+                    fontSize:"0.75rem",
+                    color:"#38bdf8"
+                },
+                children:[
+                    (0,a.jsx)("i",{className:"pi pi-shield",style:{fontSize:"0.85rem",flexShrink:0}}),
+                    "Ketentuan CAS Bareskrim: Seluruh histori dan administrasi LP personil di satker asal tetap tersimpan aman dan terarsip."
+                ]
+            }),
+
+            /* Mutasi Type Selector (Cards) */
+            (0,a.jsxs)("div",{
+                style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem"},
+                children:[
+                    (0,a.jsxs)("div",{
+                        onClick:()=>setMutData(prev=>({...prev,is_keluar_reserse:false})),
+                        style:{
+                            cursor:"pointer",
+                            padding:"0.75rem 0.85rem",
+                            borderRadius:"8px",
+                            border:!mutData.is_keluar_reserse?"2px solid #0284c7":"1px solid rgba(255, 255, 255, 0.1)",
+                            background:!mutData.is_keluar_reserse?"rgba(2, 132, 199, 0.12)":"rgba(255, 255, 255, 0.02)",
+                            transition:"all 0.15s ease"
+                        },
+                        children:[
+                            (0,a.jsxs)("div",{
+                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:!mutData.is_keluar_reserse?"#38bdf8":"var(--cas-text, #f8fafc)"},
+                                children:[
+                                    (0,a.jsx)("i",{className:"pi pi-building",style:{fontSize:"0.9rem"}}),
+                                    "Mutasi Internal Reskrim"
+                                ]
+                            }),
+                            (0,a.jsx)("div",{
+                                style:{fontSize:"0.72rem",color:"var(--cas-subtle, #94a3b8)",marginTop:"0.25rem"},
+                                children:"Pindah satker / unit lain di jajaran Reserse POLRI."
+                            })
+                        ]
+                    }),
+                    (0,a.jsxs)("div",{
+                        onClick:()=>setMutData(prev=>({...prev,is_keluar_reserse:true})),
+                        style:{
+                            cursor:"pointer",
+                            padding:"0.75rem 0.85rem",
+                            borderRadius:"8px",
+                            border:mutData.is_keluar_reserse?"2px solid #f59e0b":"1px solid rgba(255, 255, 255, 0.1)",
+                            background:mutData.is_keluar_reserse?"rgba(245, 158, 11, 0.12)":"rgba(255, 255, 255, 0.02)",
+                            transition:"all 0.15s ease"
+                        },
+                        children:[
+                            (0,a.jsxs)("div",{
+                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:mutData.is_keluar_reserse?"#fbbf24":"var(--cas-text, #f8fafc)"},
+                                children:[
+                                    (0,a.jsx)("i",{className:"pi pi-sign-out",style:{fontSize:"0.9rem"}}),
+                                    "Mutasi Keluar Reserse"
+                                ]
+                            }),
+                            (0,a.jsx)("div",{
+                                style:{fontSize:"0.72rem",color:"var(--cas-subtle, #94a3b8)",marginTop:"0.25rem"},
+                                children:"Dinas luar fungsi Reskrim (Sabhara, Lantas, dll)."
+                            })
+                        ]
                     })
                 ]
             }),
-            mutData.is_keluar_reserse?(0,a.jsx)(ee,{
-                label:"Satuan Kerja / Fungsi Baru (Luar Reskrim) *",
-                hint:"Nama kesatuan baru di luar Reskrim",
-                children:(0,a.jsx)(l.InputText,{
-                    value:mutData.satker_non_reserse||"",
-                    placeholder:"Contoh: Sat Sabhara Polres Bone / Ditlantas Polda Sulsel / Bagops",
-                    onChange:e=>setMutData(prev=>({...prev,satker_non_reserse:e.target.value})),
-                    style:{width:"100%"}
-                })
-            }):(0,a.jsxs)(a.Fragment,{children:[
-                (0,a.jsx)(ee,{
-                    label:"Satker Tujuan Mutasi *",
-                    hint:mutData.to_satker_name?mutData.to_satker_name:"Pilih satuan kerja baru",
-                    children:(0,a.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem",background:"rgba(255,255,255,0.03)",padding:"0.65rem 0.8rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)"},children:[
-                        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"},children:[
-                            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,flex:1},children:[
-                                (0,a.jsx)(P.Building2,{size:16,style:{color:"#38bdf8",flexShrink:0}}),
-                                (0,a.jsx)("div",{style:{fontSize:"0.84rem",fontWeight:600,color:mutData.to_satker_name?"#f8fafc":"#94a3b8",wordBreak:"break-word"},children:mutData.to_satker_name||"— Belum Memilih Satker Tujuan —"})
-                            ]}),
-                            (0,a.jsx)(o.Button,{type:"button",label:mutData.to_satker_id?"Ubah Satker":"Pilih Satker Berjenjang",icon:"pi pi-sitemap",className:"p-button-sm p-button-outlined",onClick:()=>openSatkerPicker("mutasi"),style:{fontSize:"0.75rem",padding:"0.3rem 0.6rem"}})
-                        ]}),
-                        mutData.to_satker_key&&(0,a.jsxs)("div",{style:{fontSize:"0.72rem",color:"#64748b",fontFamily:"monospace"},children:["Kode: ",mutData.to_satker_key]})
-                    ]})
-                }),
-                (0,a.jsx)(ee,{
-                    label:"Role Penugasan Baru *",
-                    children:(0,a.jsx)(u.Dropdown,{
-                        value:mutData.to_role,
-                        options:[
-                            {label:"Operator (Input & Kelola LP)",value:"operator"},
-                            {label:"Viewer (Hanya Lihat Laporan)",value:"viewer"}
-                        ],
-                        onChange:(e)=>setMutData(prev=>({...prev,to_role:e.value})),
-                        style:{width:"100%"}
+
+            mutData.is_keluar_reserse ? (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsxs)("div",{
+                        style:{background:"rgba(245, 158, 11, 0.1)",border:"1px solid rgba(245, 158, 11, 0.3)",borderRadius:"8px",padding:"0.65rem 0.85rem",display:"flex",flexDirection:"column",gap:"0.25rem"},
+                        children:[
+                            (0,a.jsxs)("div",{style:{fontWeight:600,fontSize:"0.82rem",color:"#fbbf24",display:"flex",alignItems:"center",gap:"0.35rem"},children:[(0,a.jsx)("i",{className:"pi pi-info-circle"}),"Penonaktifan Akses Sementara"]}),
+                            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#fef3c7",lineHeight:1.45},children:"Personil yang mutasi keluar fungsi Reserse akan dinonaktifkan dari akses CAS Reskrim, namun SELURUH REKAM JEJAK & HISTORI LP TETAP TERSIMPAN UTUH. Jika kelak personil kembali ke jajaran Reserse, akun dapat dimutasikan kembali dan langsung tersambung."})
+                        ]
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:"Satuan Kerja / Fungsi Baru (Luar Reskrim) *",
+                        hint:"Nama kesatuan baru dinas luar Reskrim",
+                        children:(0,a.jsx)(l.InputText,{
+                            value:mutData.satker_non_reserse || "",
+                            placeholder:"Contoh: Sat Sabhara Polres Bone / Ditlantas Polda Sulsel / Bagops",
+                            onChange:e=>setMutData(prev=>({...prev,satker_non_reserse:e.target.value})),
+                            style:{width:"100%"}
+                        })
                     })
-                })
-            ]}),
-            (0,a.jsx)(ee,{
-                label:"Nomor Surat Keputusan / Telegram (STR/SK) *",
-                hint:"Dasar hukum mutasi penugasan",
-                children:(0,a.jsx)(l.InputText,{
-                    value:mutData.nomor_surat,
-                    placeholder:"Contoh: ST/01/IX/KEP./2026/RO-SDM",
-                    onChange:(e)=>setMutData(prev=>({...prev,nomor_surat:e.target.value})),
-                    style:{width:"100%"}
-                })
+                ]
+            }) : (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsx)(ee,{
+                        label:"Satker Tujuan Mutasi *",
+                        hint:mutData.to_satker_name ? mutData.to_satker_name : "Pilih satuan kerja baru",
+                        children:(0,a.jsxs)("div",{
+                            style:{display:"flex",flexDirection:"column",gap:"0.45rem",background:"rgba(255,255,255,0.03)",padding:"0.65rem 0.8rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)"},
+                            children:[
+                                (0,a.jsxs)("div",{
+                                    style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"},
+                                    children:[
+                                        (0,a.jsxs)("div",{
+                                            style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,flex:1},
+                                            children:[
+                                                (0,a.jsx)(P.Building2,{size:16,style:{color:"#38bdf8",flexShrink:0}}),
+                                                (0,a.jsx)("div",{style:{fontSize:"0.84rem",fontWeight:600,color:mutData.to_satker_name?"#f8fafc":"#94a3b8",wordBreak:"break-word"},children:mutData.to_satker_name||"— Belum Memilih Satker Tujuan —"})
+                                            ]
+                                        }),
+                                        (0,a.jsx)(o.Button,{
+                                            type:"button",
+                                            label:mutData.to_satker_id?"Ubah Satker":"Pilih Satker Berjenjang",
+                                            icon:"pi pi-sitemap",
+                                            className:"p-button-sm p-button-outlined",
+                                            onClick:()=>openSatkerPicker("mutasi"),
+                                            style:{fontSize:"0.75rem",padding:"0.3rem 0.6rem"}
+                                        })
+                                    ]
+                                }),
+                                mutData.to_satker_key ? (0,a.jsxs)("div",{style:{fontSize:"0.72rem",color:"#64748b",fontFamily:"monospace"},children:["Kode: ",mutData.to_satker_key]}) : null
+                            ]
+                        })
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:"Role Penugasan Baru *",
+                        children:(0,a.jsx)(u.Dropdown,{
+                            value:mutData.to_role,
+                            options:[
+                                {label:"Operator (Input & Kelola LP)",value:"operator"},
+                                {label:"Viewer (Hanya Lihat Laporan)",value:"viewer"}
+                            ],
+                            onChange:e=>setMutData(prev=>({...prev,to_role:e.value})),
+                            style:{width:"100%"}
+                        })
+                    })
+                ]
             }),
-            (0,a.jsx)(ee,{
-                label:"Tanggal Efektif Mutasi *",
-                children:(0,a.jsx)("input",{
-                    type:"date",
-                    className:"p-inputtext p-component",
-                    style:{width:"100%",padding:"0.45rem 0.6rem"},
-                    value:mutData.tanggal_efektif,
-                    onChange:(e)=>setMutData(prev=>({...prev,tanggal_efektif:e.target.value}))
-                })
+
+            /* Sprint and Effective Date */
+            (0,a.jsxs)("div",{
+                style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem"},
+                children:[
+                    (0,a.jsx)(ee,{
+                        label:"Nomor Surat Keputusan / Sprint *",
+                        hint:"Dasar hukum telegram mutasi",
+                        children:(0,a.jsx)(l.InputText,{
+                            value:mutData.nomor_surat,
+                            placeholder:"Contoh: ST/01/IX/KEP./2026/RO-SDM",
+                            onChange:e=>setMutData(prev=>({...prev,nomor_surat:e.target.value})),
+                            style:{width:"100%"}
+                        })
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:"Tanggal Efektif Mutasi *",
+                        hint:mutUser.deactivated_at ? ("Tgl diajukan: " + formatIndoDateStr(mutUser.deactivated_at)) : "Tanggal mulai penugasan",
+                        children:(0,a.jsx)("input",{
+                            type:"date",
+                            className:"p-inputtext p-component",
+                            style:{width:"100%",padding:"0.45rem 0.6rem"},
+                            value:mutData.tanggal_efektif,
+                            onChange:e=>setMutData(prev=>({...prev,tanggal_efektif:e.target.value}))
+                        })
+                    })
+                ]
             }),
+
             (0,a.jsx)(ee,{
-                label:"Keterangan Penugasan",
-                hint:"Opsional",
+                label:"Keterangan / Catatan Penugasan",
+                hint:"Opsional (bisa disesuaikan dari usulan operator)",
                 children:(0,a.jsx)(l.InputText,{
                     value:mutData.keterangan,
-                    placeholder:"Contoh: Mutasi rutin rotasi jabatan fungsi Reskrim/Narkoba",
-                    onChange:(e)=>setMutData(prev=>({...prev,keterangan:e.target.value})),
+                    placeholder:"Contoh: Mutasi rotasi dinas sesuai sprin kapolda",
+                    onChange:e=>setMutData(prev=>({...prev,keterangan:e.target.value})),
                     style:{width:"100%"}
                 })
             }),
-            mutHistory&&mutHistory.length>0&&(0,a.jsxs)("div",{
-                style:{marginTop:"0.5rem"},
+
+            /* Riwayat Mutasi Terdahulu */
+            mutHistory && mutHistory.length > 0 ? (0,a.jsxs)("div",{
+                style:{marginTop:"0.4rem"},
                 children:[
-                    (0,a.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:700,color:"#475569",marginBottom:"0.3rem"},children:"Riwayat Mutasi Personil Terdahulu"}),
+                    (0,a.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:700,color:"#94a3b8",marginBottom:"0.35rem"},children:"Riwayat Mutasi Personil Terdahulu"}),
                     (0,a.jsx)("div",{
-                        style:{maxHeight:"8rem",overflowY:"auto",border:"1px solid #e2e8f0",borderRadius:"6px"},
+                        style:{maxHeight:"8.5rem",overflowY:"auto",border:"1px solid rgba(255, 255, 255, 0.1)",borderRadius:"6px"},
                         children:(0,a.jsxs)("table",{
                             style:{width:"100%",borderCollapse:"collapse",fontSize:"0.75rem"},
                             children:[
                                 (0,a.jsx)("thead",{
-                                    style:{background:"#f8fafc",borderBottom:"1px solid #e2e8f0"},
+                                    style:{background:"rgba(255, 255, 255, 0.05)",borderBottom:"1px solid rgba(255, 255, 255, 0.1)"},
                                     children:(0,a.jsxs)("tr",{
                                         children:[
-                                            (0,a.jsx)("th",{style:{padding:"0.35rem 0.5rem",textAlign:"left"},children:"Tgl Efektif"}),
-                                            (0,a.jsx)("th",{style:{padding:"0.35rem 0.5rem",textAlign:"left"},children:"Dari Satker"}),
-                                            (0,a.jsx)("th",{style:{padding:"0.35rem 0.5rem",textAlign:"left"},children:"Ke Satker"}),
-                                            (0,a.jsx)("th",{style:{padding:"0.35rem 0.5rem",textAlign:"left"},children:"No. Surat"}),
-                                            (0,a.jsx)("th",{style:{padding:"0.35rem 0.5rem",textAlign:"left"},children:"Dimutasi Oleh"})
+                                            (0,a.jsx)("th",{style:{padding:"0.4rem 0.5rem",textAlign:"left"},children:"Tgl Efektif"}),
+                                            (0,a.jsx)("th",{style:{padding:"0.4rem 0.5rem",textAlign:"left"},children:"Dari Satker"}),
+                                            (0,a.jsx)("th",{style:{padding:"0.4rem 0.5rem",textAlign:"left"},children:"Ke Satker"}),
+                                            (0,a.jsx)("th",{style:{padding:"0.4rem 0.5rem",textAlign:"left"},children:"No. Surat"}),
+                                            (0,a.jsx)("th",{style:{padding:"0.4rem 0.5rem",textAlign:"left"},children:"Dimutasi Oleh"})
                                         ]
                                     })
                                 }),
                                 (0,a.jsx)("tbody",{
                                     children:mutHistory.map((m,idx)=>(0,a.jsxs)("tr",{
                                         key:m.id||idx,
-                                        style:{borderBottom:"1px solid #f1f5f9"},
+                                        style:{borderBottom:"1px solid rgba(255, 255, 255, 0.05)"},
                                         children:[
-                                            (0,a.jsx)("td",{style:{padding:"0.35rem 0.5rem"},children:m.tanggal_efektif?new Date(m.tanggal_efektif).toLocaleDateString("id-ID"):"-"}),
-                                            (0,a.jsx)("td",{style:{padding:"0.35rem 0.5rem",color:"#64748b"},children:m.from_satker_name||"-"}),
-                                            (0,a.jsx)("td",{style:{padding:"0.35rem 0.5rem",fontWeight:600,color:"#1e3a8a"},children:m.to_satker_name||"-"}),
-                                            (0,a.jsx)("td",{style:{padding:"0.35rem 0.5rem"},children:m.nomor_surat||"-"}),
-                                            (0,a.jsx)("td",{style:{padding:"0.35rem 0.5rem",color:"#64748b"},children:m.mutated_by_name||m.mutated_by||"-"})
+                                            (0,a.jsx)("td",{style:{padding:"0.4rem 0.5rem"},children:m.tanggal_efektif ? new Date(m.tanggal_efektif).toLocaleDateString("id-ID") : "-"}),
+                                            (0,a.jsx)("td",{style:{padding:"0.4rem 0.5rem",color:"#94a3b8"},children:m.from_satker_name || "-"}),
+                                            (0,a.jsx)("td",{style:{padding:"0.4rem 0.5rem",fontWeight:600,color:"#38bdf8"},children:m.to_satker_name || "-"}),
+                                            (0,a.jsx)("td",{style:{padding:"0.4rem 0.5rem"},children:m.nomor_surat || "-"}),
+                                            (0,a.jsx)("td",{style:{padding:"0.4rem 0.5rem",color:"#94a3b8"},children:m.mutated_by_name || m.mutated_by || "-"})
                                         ]
                                     }))
                                 })
@@ -588,7 +895,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         })
                     })
                 ]
-            })
+            }) : null
         ]
     })
 }),(0,a.jsx)(d.Dialog,{
@@ -708,4 +1015,372 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
         ]})
     ]}),
     ed.isOperator&&!e9&&(0,a.jsx)("div",{style:{padding:"0.75rem 0.9rem",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8},children:(0,a.jsxs)("label",{htmlFor:"user-form-conscious-input",style:{display:"flex",alignItems:"flex-start",gap:"0.6rem",fontSize:"0.82rem",color:"#1e40af",cursor:"pointer"},children:[(0,a.jsx)(c.Checkbox,{id:"user-form-conscious",inputId:"user-form-conscious-input",checked:eConscious,onChange:e=>eConsciousSet(!!e.checked),style:{marginTop:"0.15rem"}}),(0,a.jsx)("span",{children:"Saya menyatakan secara sadar dan bertanggung jawab bahwa akun ini ditambahkan ke satuan kerja saya sendiri atau satuan kerja di bawah hirarki penugasan saya yang sah."})]})})
-]})}),(0,a.jsx)(d.Dialog,{header:ed.isOperator?"Ajukan Penghapusan / Penonaktifan Akun":(eb?.approval_status?.startsWith("REQUEST_")?"Tinjau Permohonan Hapus / Nonaktif":"Hapus Paksa Akun Pengguna"),visible:!!eb,onHide:()=>eh(null),style:{width:"38rem",maxWidth:"96vw"},modal:!0,footer:eb&&(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",gap:"0.5rem",flexWrap:"wrap"},children:[(0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>eh(null),disabled:ey}),(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap"},children:[ed.isOperator?(0,a.jsx)(o.Button,{label:"Kirim Permohonan",icon:"pi pi-send",severity:"danger",onClick:asOperatorRequest,loading:ey,disabled:!eDelReason.trim()}):(eb.approval_status?.startsWith("REQUEST_")?(0,a.jsxs)(a.Fragment,{children:[(0,a.jsx)(o.Button,{label:"Tolak (Aktifkan)",severity:"secondary",onClick:()=>asSuperadminReview("REJECT"),loading:ey}),eb.deactivation_reason?.toLowerCase().includes("mutasi")?(0,a.jsx)(o.Button,{label:"Proses Sebagai Mutasi",icon:"pi pi-sync",severity:"info",onClick:()=>{let target=eb;eh(null);openMutateDialog(target)}}):null,(0,a.jsx)(o.Button,{label:eb.approval_status==="REQUEST_DELETE"?"Setujui Hapus Permanen":eb.approval_status?.includes("MUTASI")?"Setujui Mutasi":"Setujui Nonaktifkan",severity:eb.approval_status?.includes("MUTASI")?"primary":"danger",icon:"pi pi-check",onClick:()=>asSuperadminReview(eb.approval_status==="REQUEST_DELETE"?"APPROVE_DELETE":eb.approval_status?.includes("MUTASI")?"APPROVE_MUTASI":"APPROVE_DEACTIVATE"),loading:ey})]}):(0,a.jsx)(o.Button,{label:"Hapus Permanen",icon:"pi pi-trash",severity:"danger",onClick:as,loading:ey,disabled:ef.trim().toLowerCase()!==(eb.email||"").trim().toLowerCase()}))]})]}),children:eb&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[ed.isOperator?(0,a.jsxs)(a.Fragment,{children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#dc2626",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#991b1b"},children:["Sebagai Operator, tindakan ini akan mengajukan permohonan ke Superadmin untuk akun ",(0,a.jsx)("strong",{children:eb.name})," (",eb.email,"). ",(0,a.jsx)("strong",{children:"Akun akan langsung dibekukan (nonaktif) sementara"})," demi keamanan."]})]}),(0,a.jsx)(ee,{label:"Jenis Permohonan",children:(0,a.jsx)(u.Dropdown,{value:eDelType,options:[{label:"Ajukan Penghapusan Permanen",value:"HAPUS"},{label:"Ajukan Penonaktifan Akun",value:"NONAKTIF"}],onChange:e=>eDelTypeSet(e.value),style:{width:"100%"}})}),(0,a.jsx)(ee,{label:"Alasan / Keterangan Pengajuan (wajib)",children:(0,a.jsx)(n.InputTextarea,{value:eDelReason,onChange:e=>eDelReasonSet(e.target.value),rows:3,style:{width:"100%"},placeholder:"misal: personil mutasi dinas keluar jajaran Reserse, pensiun, dll.",autoFocus:!0})}),eDelReason.toLowerCase().includes("mutasi")?(0,a.jsxs)("div",{style:{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.6rem 0.8rem",fontSize:"0.78rem",color:"#1e40af",display:"flex",flexDirection:"column",gap:"0.35rem"},children:[(0,a.jsx)("div",{style:{fontWeight:600},children:"💡 Terdeteksi Alasan Mutasi Penugasan"}),(0,a.jsx)("div",{children:"Jika personil berpindah satker atau keluar fungsi Reskrim, disarankan menggunakan fitur Mutasi Satker agar historical LP personil tetap aman dan akun tidak terhapus."}),(0,a.jsx)(o.Button,{label:"Beralih ke Form Mutasi Satker",icon:"pi pi-sync",size:"small",style:{alignSelf:"flex-start"},onClick:()=>{let target=eb;eh(null);openMutateDialog(target)}})]}):null]}):(eb.approval_status?.startsWith("REQUEST_")?(0,a.jsxs)(a.Fragment,{children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#d97706",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#92400e"},children:["Operator telah mengajukan permohonan ",(0,a.jsx)("strong",{children:eb.approval_status==="REQUEST_DELETE"?"PENGHAPUSAN PERMANEN":eb.approval_status?.includes("MUTASI")?"MUTASI SATKER / PENUGASAN":"PENONAKTIFAN"})," untuk akun ",(0,a.jsx)("strong",{children:eb.name})," (",eb.email,")."]})]}),(0,a.jsxs)("div",{style:{padding:"0.75rem",background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0",fontSize:"0.82rem"},children:[(0,a.jsx)("div",{style:{fontWeight:600,color:"#475569",marginBottom:"0.25rem"},children:"Keterangan / Alasan dari Operator:"}),(0,a.jsx)("div",{style:{color:"#1e293b",whiteSpace:"pre-wrap"},children:eb.deactivation_reason||"Tidak ada keterangan."}),eb.deactivation_reason?.toLowerCase().includes("mutasi")?(0,a.jsxs)("div",{style:{marginTop:"0.6rem",padding:"0.65rem 0.85rem",background:"var(--cas-info-subtle, #eff6ff)",borderRadius:8,border:"1px solid var(--cas-info-border, #bfdbfe)",display:"flex",flexDirection:"column",gap:"0.45rem"},children:[(0,a.jsxs)("div",{style:{fontSize:"0.78rem",color:"var(--cas-info-text, #1e40af)",lineHeight:1.45},children:[(0,a.jsx)("strong",{children:"💡 Alasan Terkait Mutasi: "}),"Permohonan ini beralasan mutasi dinas. Anda dapat langsung mengalihkan ke proses Mutasi Satker agar rekam jejak personil tetap terjaga."]}),(0,a.jsx)(o.Button,{label:"Alihkan ke Mutasi",icon:"pi pi-sync",size:"small",severity:"info",style:{alignSelf:"flex-start",whiteSpace:"nowrap"},onClick:()=>{let target=eb;eh(null);openMutateDialog(target)}})]}):null]})]}):(0,a.jsxs)(a.Fragment,{children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#dc2626",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#991b1b"},children:["Akun ",(0,a.jsx)("strong",{children:eb.name})," (",eb.email,") akan ",(0,a.jsx)("strong",{children:"dihapus permanen"})," dari database — bukan dinonaktifkan. Tidak bisa dibatalkan atau dipulihkan."]})]}),(0,a.jsx)(ee,{label:`Ketik email akun ini untuk konfirmasi: ${eb.email}`,children:(0,a.jsx)(l.InputText,{id:"user-edit-email",name:"edit_email",value:ef,onChange:e=>ek(e.target.value),style:{width:"100%"},placeholder:eb.email,autoFocus:!0})})]}))]})}),(0,a.jsx)(d.Dialog,{header:"Impersonate — Masuk Sebagai User Lain",visible:!!ej,onHide:()=>ev(null),style:{width:"32rem",maxWidth:"96vw"},modal:!0,footer:(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>ev(null),disabled:eS}),(0,a.jsx)(o.Button,{label:"Masuk Sebagai User Ini",icon:"pi pi-sign-in",onClick:ai,loading:eS,disabled:10>ar(ew)})]}),children:ej&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#7c3aed",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#5b21b6"},children:["Anda akan masuk sebagai ",(0,a.jsx)("strong",{children:ej.name})," (",ej.email,", role ",(0,a.jsx)("strong",{children:ej.role_bdb}),") tanpa perlu password akun itu. Sesi impersonate berlaku 30 menit dan tercatat penuh di log audit. Sesi superadmin Anda tersimpan — bisa kembali kapan saja lewat banner di atas layar."]})]}),(0,a.jsx)(ee,{label:`Keterangan / alasan impersonate (wajib, minimal 10 kata — saat ini ${ar(ew)} kata)`,children:(0,a.jsx)(n.InputTextarea,{id:"user-impersonate-reason",name:"reason",value:ew,onChange:e=>e_(e.target.value),rows:3,style:{width:"100%"},placeholder:"mis. menyelidiki laporan operator bahwa menu Rekap LP tidak menampilkan data satkernya, perlu dicek langsung dari sudut pandang akun operator tersebut",autoFocus:!0})})]})}),(0,a.jsxs)(d.Dialog,{header:"Import Massal Pengguna",visible:eP,onHide:at,style:{width:"upload"===eA?"32rem":"52rem",maxWidth:"96vw"},modal:!0,footer:"upload"===eA?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup",text:!0,onClick:at,disabled:eE})}):"review"===eA?(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Pilih Ulang File",text:!0,onClick:()=>{eR("upload"),eI(null),eM([])},disabled:e$}),(0,a.jsx)(o.Button,{label:`Import Sekarang (${ao})`,icon:"pi pi-check",onClick:ad,loading:e$,disabled:0===ao})]}):(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Selesai",onClick:at})}),children:["upload"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(z.FileSpreadsheet,{size:20,style:{color:"#2563eb",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#1e3a8a"},children:["Unduh template Excel, isi data pengguna (Nama, Email, Role, Satker, dst — kolom Role/Status sudah ada dropdown pilihan). Tidak perlu hafal kode satker: buka sheet ",(0,a.jsx)("b",{children:'"Daftar Satker"'})," di file yang sama, cari nama Polda/Polres/Polsek/Satuan-nya, lalu copy kode-nya ke kolom Satker. Lalu unggah kembali di sini — setiap baris akan divalidasi dulu sebelum benar-benar dibuat. Password akun dibuat otomatis dan hanya ditampilkan sekali setelah proses import selesai."]})]}),(0,a.jsx)(o.Button,{label:"Unduh Template Excel",icon:(0,a.jsx)(I.Download,{size:15,style:{marginRight:"0.4rem"}}),outlined:!0,onClick:al,loading:ez}),(0,a.jsxs)("div",{children:[(0,a.jsx)("label",{style:{display:"block",marginBottom:"0.4rem",fontSize:"0.8rem",fontWeight:700,color:"#334155"},children:"Unggah File Excel Terisi"}),(0,a.jsx)("input",{id:"user-import-file",name:"import_file",ref:eF,type:"file",accept:".xlsx",style:{display:"none"},onChange:e=>{var a;eI(a=e.target.files?.[0]||null),eF.current&&(eF.current.value=""),a&&an(a)}}),eB?(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",fontSize:"0.82rem",background:"#f8fafc",borderRadius:8,padding:"0.5rem 0.7rem"},children:[(0,a.jsx)(O.FileText,{size:15,style:{color:"#2563eb",flex:"0 0 auto"}}),(0,a.jsxs)("span",{style:{flex:1,wordBreak:"break-all"},children:[eB.name," ",(0,a.jsxs)("span",{style:{color:"#94a3b8"},children:["(",function(e){if(!e)return"—";let a=e/1048576;return a>=1?`${a.toFixed(1)} MB`:`${Math.max(1,Math.round(e/1024))} KB`}(eB.size),")"]})]}),eE&&(0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"#2563eb"},children:"Memvalidasi…"})]}):(0,a.jsxs)("button",{type:"button",className:"att-btn",onClick:()=>eF.current?.click(),disabled:eE,style:{display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,a.jsx)(B.Upload,{size:15})," Pilih File Excel (.xlsx)"]})]})]}),"review"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.75rem",flexWrap:"wrap"},children:[(0,a.jsx)(t.Tag,{severity:"success",value:`${ao} baris valid`}),(0,a.jsx)(t.Tag,{severity:"danger",value:`${eD.length-ao} baris bermasalah`}),(0,a.jsx)(t.Tag,{severity:"info",value:`${eD.length} total baris`})]}),(0,a.jsxs)(r.DataTable,{value:eD,size:"small",scrollable:!0,scrollHeight:"24rem",emptyMessage:"Tidak ada baris terbaca dari file.",stripedRows:!0,children:[(0,a.jsx)(i.Column,{field:"row",header:"Baris",style:{width:"4rem"}}),(0,a.jsx)(i.Column,{header:"Status",style:{width:"6rem"},body:e=>e.ok?(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#16a34a",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(E.CheckCircle2,{size:14})," Valid"]}):(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#dc2626",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(N.XCircle,{size:14})," Error"]})}),(0,a.jsx)(i.Column,{field:"name",header:"Nama"}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{header:"Role",body:e=>e.role_bdb||"-"}),(0,a.jsx)(i.Column,{header:"Satker",body:e=>e.scope_satker_name||"—"}),(0,a.jsx)(i.Column,{header:"Keterangan",body:e=>e.ok?(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"}):(0,a.jsx)("span",{style:{color:"#dc2626"},children:e.message})})]})]}),"result"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(M.AlertTriangle,{size:20,style:{color:"#d97706",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#92400e"},children:["Password akun baru hanya ditampilkan ",(0,a.jsx)("strong",{children:"satu kali"})," di bawah ini. Segera unduh atau salin dan sampaikan ke masing-masing pengguna sebelum menutup dialog ini."]})]}),(0,a.jsx)(o.Button,{label:"Unduh CSV Email + Password",icon:(0,a.jsx)(D.KeyRound,{size:15,style:{marginRight:"0.4rem"}}),outlined:!0,onClick:function(){let e=eU.filter(e=>e.ok&&e.password);if(0===e.length)return;let a=new Blob(["Email,Password\n"+e.map(e=>`${e.email},${e.password}`).join("\n")],{type:"text/csv;charset=utf-8;"}),s=URL.createObjectURL(a),r=document.createElement("a");r.href=s,r.download=`password-akun-baru-${Date.now()}.csv`,r.click(),URL.revokeObjectURL(s)},disabled:0===eU.filter(e=>e.ok).length}),(0,a.jsxs)(r.DataTable,{value:eU,size:"small",scrollable:!0,scrollHeight:"22rem",stripedRows:!0,children:[(0,a.jsx)(i.Column,{field:"row",header:"Baris",style:{width:"4rem"}}),(0,a.jsx)(i.Column,{header:"Status",style:{width:"6rem"},body:e=>e.ok?(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#16a34a",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(E.CheckCircle2,{size:14})," Berhasil"]}):(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#dc2626",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(N.XCircle,{size:14})," Gagal"]})}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{header:"Password",body:e=>e.password?(0,a.jsx)("code",{style:{fontSize:"0.82rem",background:"#f1f5f9",padding:"0.15rem 0.4rem",borderRadius:4},children:e.password}):(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"})}),(0,a.jsx)(i.Column,{header:"Keterangan",body:e=>e.ok?(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"}):(0,a.jsx)("span",{style:{color:"#dc2626"},children:e.message})})]})]})]}),(0,a.jsxs)(d.Dialog,{header:"Reset Password Massal + Kirim Email",visible:eH,onHide:ah,style:{width:"done"===eq?"46rem":"32rem",maxWidth:"96vw"},modal:!0,closable:"loading"!==eq,footer:"confirm"===eq?(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:ah}),(0,a.jsx)(o.Button,{label:"Mulai Proses",severity:"danger",icon:"pi pi-send",onClick:af,loading:e0,disabled:eQ.trim()!==Z})]}):"progress"===eq?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup (proses tetap lanjut di server)",text:!0,onClick:ah})}):"done"===eq?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup",onClick:ah})}):void 0,children:["loading"===eq&&(0,a.jsx)("p",{style:{fontSize:"0.85rem",color:"#64748b"},children:"Memuat status…"}),"confirm"===eq&&(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#dc2626",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#991b1b"},children:["Ini akan me-reset password ",(0,a.jsxs)("strong",{children:[eX," akun"]})," (semua role selain superadmin, tak termasuk akun Anda) menjadi password acak baru, lalu mengirimkannya via email ke masing-masing akun. Password lama mereka ",(0,a.jsx)("strong",{children:"langsung tidak berlaku"}),". Tidak bisa dibatalkan setelah dimulai, dan berjalan di latar belakang server (bisa makan waktu cukup lama untuk ",eX," email)."]})]}),(0,a.jsx)(ee,{label:`Ketik "${Z}" untuk konfirmasi`,children:(0,a.jsx)(l.InputText,{id:"user-confirm-input",name:"confirm_input",value:eQ,onChange:e=>eZ(e.target.value),placeholder:Z,autoFocus:!0})})]}),("progress"===eq||"done"===eq)&&e5&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.9rem"},children:["progress"===eq&&(0,a.jsx)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"center",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.6rem 0.9rem",fontSize:"0.82rem",color:"#1e3a8a"},children:"Sedang berjalan… halaman ini boleh ditutup, proses tetap lanjut di server. Status diperbarui otomatis tiap 4 detik."}),"done"===eq&&(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"center",background:"completed"===e5.status?"#f0fdf4":"#fef2f2",border:`1px solid ${"completed"===e5.status?"#bbf7d0":"#fecaca"}`,borderRadius:8,padding:"0.6rem 0.9rem",fontSize:"0.82rem",color:"completed"===e5.status?"#166534":"#991b1b"},children:["completed"===e5.status?(0,a.jsx)(E.CheckCircle2,{size:18}):(0,a.jsx)(N.XCircle,{size:18}),"completed"===e5.status?"Proses selesai.":`Proses berhenti karena error: ${e5.last_error||"tidak diketahui"}`]}),(0,a.jsx)(w,{id:"fld-user-page-paginati-18",name:"field_user_page_paginati_18",value:e5.total?Math.round(e5.done/e5.total*100):0}),(0,a.jsxs)("div",{style:{display:"flex",gap:"0.75rem",flexWrap:"wrap"},children:[(0,a.jsx)(t.Tag,{value:`${e5.done}/${e5.total} diproses`}),(0,a.jsx)(t.Tag,{severity:"success",value:`${e5.success} berhasil`}),(0,a.jsx)(t.Tag,{severity:"danger",value:`${e5.failed} gagal`})]}),"done"===eq&&e5.failed>0&&(0,a.jsxs)("div",{children:[(0,a.jsxs)("label",{style:{display:"block",marginBottom:"0.4rem",fontSize:"0.8rem",fontWeight:700,color:"#334155"},children:["Baris Gagal (",e5.failed,")"]}),(0,a.jsxs)(r.DataTable,{value:e2,size:"small",loading:e6,scrollable:!0,scrollHeight:"16rem",stripedRows:!0,emptyMessage:"Tidak ada.",children:[(0,a.jsx)(i.Column,{field:"user_id",header:"ID User",style:{width:"6rem"}}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{field:"message",header:"Keterangan"})]})]})]})]})]})}],98769)}]);
+]})}),(0,a.jsx)(d.Dialog,{
+    header:ed.isOperator ? "Ajukan Penonaktifan / Penghapusan Akun" : (
+        eb?.approval_status === "REQUEST_DEACTIVATE" ? "Tinjau Permohonan Penonaktifan Akun" :
+        eb?.approval_status === "REQUEST_DELETE" ? "Tinjau Permohonan Hapus Permanen" :
+        eb?.approval_status?.startsWith("REQUEST_") ? "Tinjau Permohonan Akun Pengguna" :
+        "Hapus Paksa Akun Pengguna"
+    ),
+    visible:!!eb,
+    onHide:()=>eh(null),
+    style:{width:"40rem",maxWidth:"96vw"},
+    modal:!0,
+    footer:eb && (0,a.jsxs)("div",{
+        style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",gap:"0.5rem",flexWrap:"wrap"},
+        children:[
+            (0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>eh(null),disabled:ey}),
+            (0,a.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap"},
+                children:[
+                    ed.isOperator ? (0,a.jsx)(o.Button,{
+                        label:"Kirim Permohonan",
+                        icon:"pi pi-send",
+                        severity:eDelType==="HAPUS"?"danger":"warning",
+                        onClick:asOperatorRequest,
+                        loading:ey,
+                        disabled:!eDelReason.trim()
+                    }) : (eb.approval_status?.startsWith("REQUEST_") ? (0,a.jsxs)(a.Fragment,{
+                        children:[
+                            (0,a.jsx)(o.Button,{label:"Tolak (Aktifkan)",severity:"secondary",onClick:()=>asSuperadminReview("REJECT"),loading:ey}),
+                            (0,a.jsx)(o.Button,{
+                                label:"Alihkan ke Mutasi",
+                                icon:"pi pi-sync",
+                                severity:"info",
+                                onClick:()=>{
+                                    let target = eb;
+                                    eh(null);
+                                    openMutateDialog(target);
+                                }
+                            }),
+                            (0,a.jsx)(o.Button,{
+                                label:eb.approval_status === "REQUEST_DELETE" ? "Setujui Hapus Permanen" : "Setujui Nonaktifkan",
+                                severity:eb.approval_status === "REQUEST_DELETE" ? "danger" : "warning",
+                                icon:eb.approval_status === "REQUEST_DELETE" ? "pi pi-trash" : "pi pi-power-off",
+                                onClick:()=>asSuperadminReview(eb.approval_status === "REQUEST_DELETE" ? "APPROVE_DELETE" : "APPROVE_DEACTIVATE"),
+                                loading:ey
+                            })
+                        ]
+                    }) : (0,a.jsx)(o.Button,{
+                        label:"Hapus Permanen",
+                        icon:"pi pi-trash",
+                        severity:"danger",
+                        onClick:as,
+                        loading:ey,
+                        disabled:ef.trim().toLowerCase() !== (eb.email || "").trim().toLowerCase()
+                    }))
+                ]
+            })
+        ]
+    }),
+    children:eb && (0,a.jsxs)("div",{
+        style:{display:"flex",flexDirection:"column",gap:"0.85rem"},
+        children:[
+            /* Render Personnel Mini Card */
+            renderUserMiniCard(eb),
+
+            /* Content based on Mode */
+            ed.isOperator ? (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsxs)("div",{
+                        style:{
+                            display:"flex",
+                            gap:"0.6rem",
+                            alignItems:"flex-start",
+                            background:"rgba(239, 68, 68, 0.1)",
+                            border:"1px solid rgba(239, 68, 68, 0.3)",
+                            borderRadius:8,
+                            padding:"0.75rem 0.9rem"
+                        },
+                        children:[
+                            (0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
+                            (0,a.jsxs)("div",{
+                                style:{fontSize:"0.82rem",color:"#fca5a5",lineHeight:1.45},
+                                children:[
+                                    "Sebagai Operator, tindakan ini akan mengajukan permohonan ke Superadmin untuk akun ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:eb.name}),
+                                    ". ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:"Akun akan langsung dibekukan (nonaktif) sementara"}),
+                                    " demi keamanan."
+                                ]
+                            })
+                        ]
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:"Jenis Permohonan",
+                        children:(0,a.jsx)(u.Dropdown,{
+                            value:eDelType,
+                            options:[
+                                {label:"Ajukan Penonaktifan Akun (Disarankan jika mutasi luar reskrim, cuti, dinas lain)",value:"NONAKTIF"},
+                                {label:"Ajukan Penghapusan Permanen (Hanya jika salah buat akun / duplikat)",value:"HAPUS"}
+                            ],
+                            onChange:e=>eDelTypeSet(e.value),
+                            style:{width:"100%"}
+                        })
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:"Alasan / Keterangan Pengajuan (wajib) *",
+                        children:(0,a.jsx)(n.InputTextarea,{
+                            value:eDelReason,
+                            onChange:e=>eDelReasonSet(e.target.value),
+                            rows:3,
+                            style:{width:"100%"},
+                            placeholder:"Tuliskan alasan lengkap, misal: personil mutasi dinas keluar jajaran Reserse, pensiun, dsb.",
+                            autoFocus:!0
+                        })
+                    }),
+                    eDelReason.toLowerCase().includes("mutasi") ? (0,a.jsxs)("div",{
+                        style:{
+                            background:"rgba(2, 132, 199, 0.12)",
+                            border:"1px solid rgba(56, 189, 248, 0.35)",
+                            borderRadius:8,
+                            padding:"0.65rem 0.85rem",
+                            fontSize:"0.78rem",
+                            color:"#38bdf8",
+                            display:"flex",
+                            flexDirection:"column",
+                            gap:"0.35rem"
+                        },
+                        children:[
+                            (0,a.jsx)("div",{style:{fontWeight:700},children:"💡 Terdeteksi Alasan Mutasi Penugasan"}),
+                            (0,a.jsx)("div",{children:"Jika personil berpindah satker atau keluar fungsi Reskrim, disarankan menggunakan fitur Mutasi Satker agar historical LP personil tetap aman dan akun tidak terhapus."}),
+                            (0,a.jsx)(o.Button,{
+                                label:"Beralih ke Form Mutasi Satker",
+                                icon:"pi pi-sync",
+                                size:"small",
+                                severity:"info",
+                                style:{alignSelf:"flex-start"},
+                                onClick:()=>{
+                                    let target = eb;
+                                    eh(null);
+                                    openMutateDialog(target);
+                                }
+                            })
+                        ]
+                    }) : null
+                ]
+            }) : (eb.approval_status === "REQUEST_DEACTIVATE" ? (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsxs)("div",{
+                        style:{
+                            display:"flex",
+                            gap:"0.6rem",
+                            alignItems:"flex-start",
+                            background:"rgba(245, 158, 11, 0.12)",
+                            border:"1px solid rgba(245, 158, 11, 0.35)",
+                            borderRadius:8,
+                            padding:"0.75rem 0.9rem"
+                        },
+                        children:[
+                            (0,a.jsx)("i",{className:"pi pi-power-off",style:{fontSize:"1.1rem",color:"#f59e0b",flex:"0 0 auto",marginTop:"0.15rem"}}),
+                            (0,a.jsxs)("div",{
+                                style:{fontSize:"0.82rem",color:"#fef3c7",lineHeight:1.45},
+                                children:[
+                                    "Operator telah mengajukan permohonan ",
+                                    (0,a.jsx)("strong",{style:{color:"#fbbf24"},children:"PENONAKTIFAN AKUN"}),
+                                    " untuk ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:eb.name}),
+                                    ". Akun telah dibekukan sementara menunggu persetujuan Anda."
+                                ]
+                            })
+                        ]
+                    }),
+                    (0,a.jsxs)("div",{
+                        style:{
+                            padding:"0.75rem 0.9rem",
+                            background:"rgba(255, 255, 255, 0.03)",
+                            borderRadius:8,
+                            border:"1px solid rgba(255, 255, 255, 0.08)",
+                            fontSize:"0.82rem"
+                        },
+                        children:[
+                            (0,a.jsxs)("div",{
+                                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem"},
+                                children:[
+                                    (0,a.jsx)("div",{style:{fontWeight:700,color:"#cbd5e1"},children:"Catatan / Alasan dari Pengaju:"}),
+                                    eb.deactivated_at ? (0,a.jsxs)("div",{style:{fontSize:"0.74rem",color:"#94a3b8",display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:[(0,a.jsx)("i",{className:"pi pi-calendar",style:{fontSize:"0.7rem"}}),formatIndoDateStr(eb.deactivated_at)]}) : null
+                                ]
+                            }),
+                            (0,a.jsx)("div",{
+                                style:{
+                                    color:"var(--cas-text, #f8fafc)",
+                                    background:"rgba(0, 0, 0, 0.15)",
+                                    borderLeft:"3px solid #f59e0b",
+                                    padding:"0.5rem 0.75rem",
+                                    borderRadius:"0 6px 6px 0",
+                                    lineHeight:1.5,
+                                    whiteSpace:"pre-wrap"
+                                },
+                                children:eb.deactivation_reason || "Tidak ada keterangan tertulis."
+                            }),
+                            (0,a.jsxs)("div",{
+                                style:{
+                                    marginTop:"0.65rem",
+                                    padding:"0.65rem 0.85rem",
+                                    background:"rgba(2, 132, 199, 0.1)",
+                                    borderRadius:8,
+                                    border:"1px solid rgba(56, 189, 248, 0.3)",
+                                    display:"flex",
+                                    flexDirection:"column",
+                                    gap:"0.45rem"
+                                },
+                                children:[
+                                    (0,a.jsxs)("div",{
+                                        style:{fontSize:"0.78rem",color:"#38bdf8",lineHeight:1.45},
+                                        children:[
+                                            (0,a.jsx)("strong",{children:"💡 Opsi Alihkan ke Mutasi: "}),
+                                            "Jika personil ini pindah tugas atau mutasi kesatuan kerja, alihkan langsung ke proses Mutasi Satker agar data usulan terisi otomatis dan historical LP tetap terjaga."
+                                        ]
+                                    }),
+                                    (0,a.jsx)(o.Button,{
+                                        label:"Alihkan ke Form Mutasi Satker",
+                                        icon:"pi pi-sync",
+                                        size:"small",
+                                        severity:"info",
+                                        style:{alignSelf:"flex-start",whiteSpace:"nowrap"},
+                                        onClick:()=>{
+                                            let target = eb;
+                                            eh(null);
+                                            openMutateDialog(target);
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            }) : (eb.approval_status === "REQUEST_DELETE" ? (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsxs)("div",{
+                        style:{
+                            display:"flex",
+                            gap:"0.6rem",
+                            alignItems:"flex-start",
+                            background:"rgba(239, 68, 68, 0.12)",
+                            border:"1px solid rgba(239, 68, 68, 0.4)",
+                            borderRadius:8,
+                            padding:"0.75rem 0.9rem"
+                        },
+                        children:[
+                            (0,a.jsx)(A.ShieldAlert,{size:22,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
+                            (0,a.jsxs)("div",{
+                                style:{fontSize:"0.82rem",color:"#fca5a5",lineHeight:1.45},
+                                children:[
+                                    "Operator telah mengajukan ",
+                                    (0,a.jsx)("strong",{style:{color:"#ef4444"},children:"PENGHAPUSAN PERMANEN"}),
+                                    " untuk akun ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:eb.name}),
+                                    ". Jika disetujui, akun ini akan dihapus permanen dari sistem dan seluruh datanya tidak dapat dikembalikan."
+                                ]
+                            })
+                        ]
+                    }),
+                    (0,a.jsxs)("div",{
+                        style:{
+                            padding:"0.75rem 0.9rem",
+                            background:"rgba(255, 255, 255, 0.03)",
+                            borderRadius:8,
+                            border:"1px solid rgba(255, 255, 255, 0.08)",
+                            fontSize:"0.82rem"
+                        },
+                        children:[
+                            (0,a.jsxs)("div",{
+                                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem"},
+                                children:[
+                                    (0,a.jsx)("div",{style:{fontWeight:700,color:"#cbd5e1"},children:"Alasan Pengajuan Hapus:"}),
+                                    eb.deactivated_at ? (0,a.jsxs)("div",{style:{fontSize:"0.74rem",color:"#94a3b8",display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:[(0,a.jsx)("i",{className:"pi pi-calendar",style:{fontSize:"0.7rem"}}),formatIndoDateStr(eb.deactivated_at)]}) : null
+                                ]
+                            }),
+                            (0,a.jsx)("div",{
+                                style:{
+                                    color:"var(--cas-text, #f8fafc)",
+                                    background:"rgba(0, 0, 0, 0.15)",
+                                    borderLeft:"3px solid #ef4444",
+                                    padding:"0.5rem 0.75rem",
+                                    borderRadius:"0 6px 6px 0",
+                                    lineHeight:1.5,
+                                    whiteSpace:"pre-wrap"
+                                },
+                                children:eb.deactivation_reason || "Tidak ada keterangan tertulis."
+                            }),
+                            (0,a.jsxs)("div",{
+                                style:{
+                                    marginTop:"0.65rem",
+                                    padding:"0.65rem 0.85rem",
+                                    background:"rgba(2, 132, 199, 0.1)",
+                                    borderRadius:8,
+                                    border:"1px solid rgba(56, 189, 248, 0.3)",
+                                    display:"flex",
+                                    flexDirection:"column",
+                                    gap:"0.45rem"
+                                },
+                                children:[
+                                    (0,a.jsxs)("div",{
+                                        style:{fontSize:"0.78rem",color:"#38bdf8",lineHeight:1.45},
+                                        children:[
+                                            (0,a.jsx)("strong",{children:"💡 Alasan Terkait Mutasi / Alih Tugas? "}),
+                                            "Jika personil hanya pindah dinas atau rotasi, jangan dihapus permanen! Alihkan ke Mutasi Satker agar arsip LP personil tetap aman."
+                                        ]
+                                    }),
+                                    (0,a.jsx)(o.Button,{
+                                        label:"Alihkan ke Form Mutasi Satker",
+                                        icon:"pi pi-sync",
+                                        size:"small",
+                                        severity:"info",
+                                        style:{alignSelf:"flex-start",whiteSpace:"nowrap"},
+                                        onClick:()=>{
+                                            let target = eb;
+                                            eh(null);
+                                            openMutateDialog(target);
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            }) : (0,a.jsxs)(a.Fragment,{
+                children:[
+                    (0,a.jsxs)("div",{
+                        style:{
+                            display:"flex",
+                            gap:"0.6rem",
+                            alignItems:"flex-start",
+                            background:"rgba(239, 68, 68, 0.12)",
+                            border:"1px solid rgba(239, 68, 68, 0.35)",
+                            borderRadius:8,
+                            padding:"0.75rem 0.9rem"
+                        },
+                        children:[
+                            (0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
+                            (0,a.jsxs)("div",{
+                                style:{fontSize:"0.82rem",color:"#fca5a5"},
+                                children:[
+                                    "Akun ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:eb.name}),
+                                    " (",
+                                    eb.email,
+                                    ") akan ",
+                                    (0,a.jsx)("strong",{style:{color:"#ffffff"},children:"dihapus permanen"}),
+                                    " dari database sistem. Tindakan ini tidak dapat dibatalkan atau dipulihkan."
+                                ]
+                            })
+                        ]
+                    }),
+                    (0,a.jsx)(ee,{
+                        label:("Ketik email akun untuk konfirmasi: " + eb.email),
+                        children:(0,a.jsx)(l.InputText,{
+                            id:"user-edit-email",
+                            name:"edit_email",
+                            value:ef,
+                            onChange:e=>ek(e.target.value),
+                            style:{width:"100%"},
+                            placeholder:eb.email,
+                            autoFocus:!0
+                        })
+                    })
+                ]
+            })))
+        ]
+    })
+}),(0,a.jsx)(d.Dialog,{header:"Impersonate — Masuk Sebagai User Lain",visible:!!ej,onHide:()=>ev(null),style:{width:"32rem",maxWidth:"96vw"},modal:!0,footer:(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>ev(null),disabled:eS}),(0,a.jsx)(o.Button,{label:"Masuk Sebagai User Ini",icon:"pi pi-sign-in",onClick:ai,loading:eS,disabled:10>ar(ew)})]}),children:ej&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#7c3aed",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#5b21b6"},children:["Anda akan masuk sebagai ",(0,a.jsx)("strong",{children:ej.name})," (",ej.email,", role ",(0,a.jsx)("strong",{children:ej.role_bdb}),") tanpa perlu password akun itu. Sesi impersonate berlaku 30 menit dan tercatat penuh di log audit. Sesi superadmin Anda tersimpan — bisa kembali kapan saja lewat banner di atas layar."]})]}),(0,a.jsx)(ee,{label:`Keterangan / alasan impersonate (wajib, minimal 10 kata — saat ini ${ar(ew)} kata)`,children:(0,a.jsx)(n.InputTextarea,{id:"user-impersonate-reason",name:"reason",value:ew,onChange:e=>e_(e.target.value),rows:3,style:{width:"100%"},placeholder:"mis. menyelidiki laporan operator bahwa menu Rekap LP tidak menampilkan data satkernya, perlu dicek langsung dari sudut pandang akun operator tersebut",autoFocus:!0})})]})}),(0,a.jsxs)(d.Dialog,{header:"Import Massal Pengguna",visible:eP,onHide:at,style:{width:"upload"===eA?"32rem":"52rem",maxWidth:"96vw"},modal:!0,footer:"upload"===eA?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup",text:!0,onClick:at,disabled:eE})}):"review"===eA?(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Pilih Ulang File",text:!0,onClick:()=>{eR("upload"),eI(null),eM([])},disabled:e$}),(0,a.jsx)(o.Button,{label:`Import Sekarang (${ao})`,icon:"pi pi-check",onClick:ad,loading:e$,disabled:0===ao})]}):(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Selesai",onClick:at})}),children:["upload"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(z.FileSpreadsheet,{size:20,style:{color:"#2563eb",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#1e3a8a"},children:["Unduh template Excel, isi data pengguna (Nama, Email, Role, Satker, dst — kolom Role/Status sudah ada dropdown pilihan). Tidak perlu hafal kode satker: buka sheet ",(0,a.jsx)("b",{children:'"Daftar Satker"'})," di file yang sama, cari nama Polda/Polres/Polsek/Satuan-nya, lalu copy kode-nya ke kolom Satker. Lalu unggah kembali di sini — setiap baris akan divalidasi dulu sebelum benar-benar dibuat. Password akun dibuat otomatis dan hanya ditampilkan sekali setelah proses import selesai."]})]}),(0,a.jsx)(o.Button,{label:"Unduh Template Excel",icon:(0,a.jsx)(I.Download,{size:15,style:{marginRight:"0.4rem"}}),outlined:!0,onClick:al,loading:ez}),(0,a.jsxs)("div",{children:[(0,a.jsx)("label",{style:{display:"block",marginBottom:"0.4rem",fontSize:"0.8rem",fontWeight:700,color:"#334155"},children:"Unggah File Excel Terisi"}),(0,a.jsx)("input",{id:"user-import-file",name:"import_file",ref:eF,type:"file",accept:".xlsx",style:{display:"none"},onChange:e=>{var a;eI(a=e.target.files?.[0]||null),eF.current&&(eF.current.value=""),a&&an(a)}}),eB?(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",fontSize:"0.82rem",background:"#f8fafc",borderRadius:8,padding:"0.5rem 0.7rem"},children:[(0,a.jsx)(O.FileText,{size:15,style:{color:"#2563eb",flex:"0 0 auto"}}),(0,a.jsxs)("span",{style:{flex:1,wordBreak:"break-all"},children:[eB.name," ",(0,a.jsxs)("span",{style:{color:"#94a3b8"},children:["(",function(e){if(!e)return"—";let a=e/1048576;return a>=1?`${a.toFixed(1)} MB`:`${Math.max(1,Math.round(e/1024))} KB`}(eB.size),")"]})]}),eE&&(0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"#2563eb"},children:"Memvalidasi…"})]}):(0,a.jsxs)("button",{type:"button",className:"att-btn",onClick:()=>eF.current?.click(),disabled:eE,style:{display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,a.jsx)(B.Upload,{size:15})," Pilih File Excel (.xlsx)"]})]})]}),"review"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.75rem",flexWrap:"wrap"},children:[(0,a.jsx)(t.Tag,{severity:"success",value:`${ao} baris valid`}),(0,a.jsx)(t.Tag,{severity:"danger",value:`${eD.length-ao} baris bermasalah`}),(0,a.jsx)(t.Tag,{severity:"info",value:`${eD.length} total baris`})]}),(0,a.jsxs)(r.DataTable,{value:eD,size:"small",scrollable:!0,scrollHeight:"24rem",emptyMessage:"Tidak ada baris terbaca dari file.",stripedRows:!0,children:[(0,a.jsx)(i.Column,{field:"row",header:"Baris",style:{width:"4rem"}}),(0,a.jsx)(i.Column,{header:"Status",style:{width:"6rem"},body:e=>e.ok?(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#16a34a",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(E.CheckCircle2,{size:14})," Valid"]}):(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#dc2626",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(N.XCircle,{size:14})," Error"]})}),(0,a.jsx)(i.Column,{field:"name",header:"Nama"}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{header:"Role",body:e=>e.role_bdb||"-"}),(0,a.jsx)(i.Column,{header:"Satker",body:e=>e.scope_satker_name||"—"}),(0,a.jsx)(i.Column,{header:"Keterangan",body:e=>e.ok?(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"}):(0,a.jsx)("span",{style:{color:"#dc2626"},children:e.message})})]})]}),"result"===eA&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(M.AlertTriangle,{size:20,style:{color:"#d97706",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#92400e"},children:["Password akun baru hanya ditampilkan ",(0,a.jsx)("strong",{children:"satu kali"})," di bawah ini. Segera unduh atau salin dan sampaikan ke masing-masing pengguna sebelum menutup dialog ini."]})]}),(0,a.jsx)(o.Button,{label:"Unduh CSV Email + Password",icon:(0,a.jsx)(D.KeyRound,{size:15,style:{marginRight:"0.4rem"}}),outlined:!0,onClick:function(){let e=eU.filter(e=>e.ok&&e.password);if(0===e.length)return;let a=new Blob(["Email,Password\n"+e.map(e=>`${e.email},${e.password}`).join("\n")],{type:"text/csv;charset=utf-8;"}),s=URL.createObjectURL(a),r=document.createElement("a");r.href=s,r.download=`password-akun-baru-${Date.now()}.csv`,r.click(),URL.revokeObjectURL(s)},disabled:0===eU.filter(e=>e.ok).length}),(0,a.jsxs)(r.DataTable,{value:eU,size:"small",scrollable:!0,scrollHeight:"22rem",stripedRows:!0,children:[(0,a.jsx)(i.Column,{field:"row",header:"Baris",style:{width:"4rem"}}),(0,a.jsx)(i.Column,{header:"Status",style:{width:"6rem"},body:e=>e.ok?(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#16a34a",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(E.CheckCircle2,{size:14})," Berhasil"]}):(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#dc2626",fontSize:"0.8rem",fontWeight:700},children:[(0,a.jsx)(N.XCircle,{size:14})," Gagal"]})}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{header:"Password",body:e=>e.password?(0,a.jsx)("code",{style:{fontSize:"0.82rem",background:"#f1f5f9",padding:"0.15rem 0.4rem",borderRadius:4},children:e.password}):(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"})}),(0,a.jsx)(i.Column,{header:"Keterangan",body:e=>e.ok?(0,a.jsx)("span",{style:{color:"#94a3b8"},children:"—"}):(0,a.jsx)("span",{style:{color:"#dc2626"},children:e.message})})]})]})]}),(0,a.jsxs)(d.Dialog,{header:"Reset Password Massal + Kirim Email",visible:eH,onHide:ah,style:{width:"done"===eq?"46rem":"32rem",maxWidth:"96vw"},modal:!0,closable:"loading"!==eq,footer:"confirm"===eq?(0,a.jsxs)("div",{children:[(0,a.jsx)(o.Button,{label:"Batal",text:!0,onClick:ah}),(0,a.jsx)(o.Button,{label:"Mulai Proses",severity:"danger",icon:"pi pi-send",onClick:af,loading:e0,disabled:eQ.trim()!==Z})]}):"progress"===eq?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup (proses tetap lanjut di server)",text:!0,onClick:ah})}):"done"===eq?(0,a.jsx)("div",{children:(0,a.jsx)(o.Button,{label:"Tutup",onClick:ah})}):void 0,children:["loading"===eq&&(0,a.jsx)("p",{style:{fontSize:"0.85rem",color:"#64748b"},children:"Memuat status…"}),"confirm"===eq&&(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"flex-start",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"0.7rem 0.9rem"},children:[(0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#dc2626",flex:"0 0 auto",marginTop:"0.1rem"}}),(0,a.jsxs)("div",{style:{fontSize:"0.82rem",color:"#991b1b"},children:["Ini akan me-reset password ",(0,a.jsxs)("strong",{children:[eX," akun"]})," (semua role selain superadmin, tak termasuk akun Anda) menjadi password acak baru, lalu mengirimkannya via email ke masing-masing akun. Password lama mereka ",(0,a.jsx)("strong",{children:"langsung tidak berlaku"}),". Tidak bisa dibatalkan setelah dimulai, dan berjalan di latar belakang server (bisa makan waktu cukup lama untuk ",eX," email)."]})]}),(0,a.jsx)(ee,{label:`Ketik "${Z}" untuk konfirmasi`,children:(0,a.jsx)(l.InputText,{id:"user-confirm-input",name:"confirm_input",value:eQ,onChange:e=>eZ(e.target.value),placeholder:Z,autoFocus:!0})})]}),("progress"===eq||"done"===eq)&&e5&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.9rem"},children:["progress"===eq&&(0,a.jsx)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"center",background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.6rem 0.9rem",fontSize:"0.82rem",color:"#1e3a8a"},children:"Sedang berjalan… halaman ini boleh ditutup, proses tetap lanjut di server. Status diperbarui otomatis tiap 4 detik."}),"done"===eq&&(0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",alignItems:"center",background:"completed"===e5.status?"#f0fdf4":"#fef2f2",border:`1px solid ${"completed"===e5.status?"#bbf7d0":"#fecaca"}`,borderRadius:8,padding:"0.6rem 0.9rem",fontSize:"0.82rem",color:"completed"===e5.status?"#166534":"#991b1b"},children:["completed"===e5.status?(0,a.jsx)(E.CheckCircle2,{size:18}):(0,a.jsx)(N.XCircle,{size:18}),"completed"===e5.status?"Proses selesai.":`Proses berhenti karena error: ${e5.last_error||"tidak diketahui"}`]}),(0,a.jsx)(w,{id:"fld-user-page-paginati-18",name:"field_user_page_paginati_18",value:e5.total?Math.round(e5.done/e5.total*100):0}),(0,a.jsxs)("div",{style:{display:"flex",gap:"0.75rem",flexWrap:"wrap"},children:[(0,a.jsx)(t.Tag,{value:`${e5.done}/${e5.total} diproses`}),(0,a.jsx)(t.Tag,{severity:"success",value:`${e5.success} berhasil`}),(0,a.jsx)(t.Tag,{severity:"danger",value:`${e5.failed} gagal`})]}),"done"===eq&&e5.failed>0&&(0,a.jsxs)("div",{children:[(0,a.jsxs)("label",{style:{display:"block",marginBottom:"0.4rem",fontSize:"0.8rem",fontWeight:700,color:"#334155"},children:["Baris Gagal (",e5.failed,")"]}),(0,a.jsxs)(r.DataTable,{value:e2,size:"small",loading:e6,scrollable:!0,scrollHeight:"16rem",stripedRows:!0,emptyMessage:"Tidak ada.",children:[(0,a.jsx)(i.Column,{field:"user_id",header:"ID User",style:{width:"6rem"}}),(0,a.jsx)(i.Column,{field:"email",header:"Email"}),(0,a.jsx)(i.Column,{field:"message",header:"Keterangan"})]})]})]})]})]})}],98769)}]);

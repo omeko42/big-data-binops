@@ -895,7 +895,7 @@ export class UserService {
             return await this.remove(id, authUser);
         } else if (action === 'APPROVE_DEACTIVATE') {
             await this.dataSource.query(
-                "update auth_users set status = 'NONAKTIF', approval_status = 'DEACTIVATED', updated_at = NOW() where id = $1",
+                "update auth_users set status = 'NONAKTIF', approval_status = 'NONAKTIF_ADMIN', updated_at = NOW() where id = $1",
                 [id]
             );
             return { status: 1, message: `Permohonan penonaktifan akun "${target.name}" disetujui.` };
@@ -2203,6 +2203,11 @@ export class UserService {
             }
 
             // Superadmin / Admin Binops: Langsung eksekusi & approve
+            await queryRunner.query(
+                `UPDATE auth_user_mutations SET status = 'SUPERSEDED', reviewed_by = $1, reviewed_at = NOW() WHERE user_id = $2 AND status = 'PENDING'`,
+                [authUser?.id ? Number(authUser.id) : null, userId]
+            );
+
             if (isKeluarReserse) {
                 await queryRunner.query(
                     `
