@@ -140,9 +140,10 @@ export class UserService {
             .where('lower(user.email) = :email', { email: normalizedEmail })
             .orWhere('lower(user.email_google) = :email', { email: normalizedEmail })
             .orWhere('lower(user.email_polri) = :email', { email: normalizedEmail })
-            .orWhere('lower(user.email_polri) = :email', { email: normalizedEmail })
+            .orWhere('lower(user.username) = :email', { email: normalizedEmail })
             .addSelect('user.password')
             .addSelect('user.security_pin_hash')
+            .addSelect('user.totp_secret')
             .getOne();
     }
 
@@ -165,6 +166,7 @@ export class UserService {
             .orWhere('lower(user.email) = :id', { id: normalized })
             .addSelect('user.password')
             .addSelect('user.security_pin_hash')
+            .addSelect('user.totp_secret')
             .getOne();
     }
 
