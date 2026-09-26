@@ -202,7 +202,13 @@ export class UserService {
             });
         }
         if (rest.email_polri && rest.username && this.normalizeEmail(rest.email_polri) === this.normalizeEmail(rest.username)) {
-            throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
+            throw new BadRequestException({
+                message: 'Username dan Email Dinas Polri tidak boleh sama. Gunakan username alfanumerik / alias unik.',
+                errors: {
+                    username: ['Username tidak boleh sama dengan Email Dinas Polri.'],
+                    email_polri: ['Email Dinas Polri tidak boleh sama dengan Username.']
+                }
+            });
         }
         if (rest.email_polri) {
             const check = await this.checkIdentifierAvailability('email_polri', rest.email_polri);
@@ -428,7 +434,13 @@ export class UserService {
             const polriToCheck = (dto as any).email_polri !== undefined ? (dto as any).email_polri : user.email_polri;
             const usernameToCheck = (dto as any).username !== undefined ? (dto as any).username : user.username;
             if (polriToCheck && usernameToCheck && this.normalizeEmail(polriToCheck) === this.normalizeEmail(usernameToCheck)) {
-                throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
+                throw new BadRequestException({
+                    message: 'Username dan Email Dinas Polri tidak boleh sama. Gunakan username alfanumerik / alias unik.',
+                    errors: {
+                        username: ['Username tidak boleh sama dengan Email Dinas Polri.'],
+                        email_polri: ['Email Dinas Polri tidak boleh sama dengan Username.']
+                    }
+                });
             }
 
             if ((dto as any).email_polri && this.normalizeEmail((dto as any).email_polri) !== this.normalizeEmail(user.email_polri)) {
@@ -771,7 +783,13 @@ export class UserService {
         const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : authUser.email_polri;
         const effectiveUsername = authUpdate.username !== undefined ? authUpdate.username : authUser.username;
         if (effectivePolri && effectiveUsername && this.normalizeEmail(effectivePolri) === this.normalizeEmail(effectiveUsername)) {
-            throw new BadRequestException({ errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri. Gunakan username alfanumerik / alias lain.'] } });
+            throw new BadRequestException({
+                message: 'Username dan Email Dinas Polri tidak boleh sama. Gunakan username alfanumerik / alias unik.',
+                errors: {
+                    username: ['Username tidak boleh sama dengan Email Dinas Polri.'],
+                    email_polri: ['Email Dinas Polri tidak boleh sama dengan Username.']
+                }
+            });
         }
         if (Object.keys(authUpdate).length) {
             await this.userRepository.update(Number(authUser.id), authUpdate);

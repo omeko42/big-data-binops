@@ -150,7 +150,53 @@ export class AuthService {
         return this.sendLoginOtp(user);
     }
 
+    private otpRateLimits = new Map<string, { lastSentAt: number; attempts: number; windowStart: number }>();
+
+    private checkOtpRateLimit(key: string) {
+        const now = Date.now();
+        const existing = this.otpRateLimits.get(key);
+        if (!existing) {
+            this.otpRateLimits.set(key, { lastSentAt: now, attempts: 1, windowStart: now });
+            return;
+        }
+
+        // Window 15 menit
+        if (now - existing.windowStart > 15 * 60 * 1000) {
+            existing.windowStart = now;
+            existing.attempts = 1;
+            existing.lastSentAt = now;
+            return;
+        }
+
+        // Cek jeda / cooldown 60 detik (1 menit) sebelum boleh kirim ulang
+        const elapsed = now - existing.lastSentAt;
+        if (elapsed < 60 * 1000) {
+            const waitSeconds = Math.ceil((60 * 1000 - elapsed) / 1000);
+            throw new BadRequestException({
+                message: `Tunggu ${waitSeconds} detik sebelum meminta kode OTP kembali.`,
+                errors: { otp: [`Tunggu ${waitSeconds} detik sebelum meminta kode OTP kembali.`] }
+            });
+        }
+
+        // Cek batas maksimal 3 kali percobaan pengiriman
+        if (existing.attempts >= 3) {
+            throw new BadRequestException({
+                message: 'Batas pengiriman OTP tercapai (maksimal 3 kali). Silakan coba lagi nanti.',
+                errors: { otp: ['Batas pengiriman OTP tercapai (maksimal 3 kali). Silakan coba lagi dalam 15 menit.'] }
+            });
+        }
+
+        existing.attempts += 1;
+        existing.lastSentAt = now;
+    }
+
+    private clearOtpRateLimit(key: string) {
+        this.otpRateLimits.delete(key);
+    }
+
     private async createSecurityOtp(user: User, action: string, targetChoice?: string) {
+        const rateLimitKey = `sec_otp:${user.id}:${action}`;
+        this.checkOtpRateLimit(rateLimitKey);
         let email = this.normalizeEmail(user.email_polri || user.email);
         if (targetChoice === 'sekunder' && user.email) {
             email = this.normalizeEmail(user.email);
@@ -208,6 +254,7 @@ export class AuthService {
             });
         }
 
+        this.clearOtpRateLimit(`sec_otp:${user.id}:${action}`);
         return payload;
     }
 
