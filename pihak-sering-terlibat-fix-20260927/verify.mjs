@@ -33,6 +33,11 @@ async function verify() {
     console.log('3. Verifying dashboard chunk on live bdb-web...');
     const dashGrep = runFE('docker exec bdb-web grep -o "onLihatSemua:()=>e.push(\\"/cms/laporan/pihak-sering-terlibat\\")" /usr/src/app/.next/static/chunks/dashboard-perma-318125d33290.js || true').trim();
     console.log('Found dashboard onLihatSemua redirect in live chunk:', dashGrep ? 'YES' : 'NO');
+    const filterGrep = runFE('docker exec bdb-web grep -o "dash-filter-pihak-jenis" /usr/src/app/.next/static/chunks/dashboard-perma-318125d33290.js || true').trim();
+    console.log('Card headerExtra (sub-card filter) cleanly removed:', !filterGrep ? 'YES' : 'NO');
+    if (filterGrep) {
+        throw new Error('Filter dropdown still present in dashboard chunk!');
+    }
 
     console.log('4. Verifying backend API health & Sarjono status...');
     const check = runBE("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3850/ || true").trim();
