@@ -665,7 +665,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 WITH raw_corp AS (
                     SELECT 
                         lp.id as lp_id,
-                        lp.satker_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            when d.id_polda is not null then d.id_polda
+                            else '060.01.00'
+                        end as wilayah_kode,
                         regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1 '), '\\s+', ' ', 'g') as norm_nama,
                         'KORP:' || rtrim(regexp_replace(regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1_'), '[^A-Z0-9]+', '_', 'g'), '_+', '_', 'g'), '_') as synth_nik,
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
@@ -1280,8 +1285,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         else coalesce(d.synced_at, lp.synced_at, now())::date
                     end as tgl_date,
                     coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
-                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
                     coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
@@ -1291,6 +1298,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 JOIN bdb_dors_lp d ON d.id = t.lp_id
                 LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE (
                     regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(t.nama)) ILIKE ('%' || $2 || '%')
@@ -1300,18 +1309,20 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 SELECT 
                     lp.id as lp_id,
-                    coalesce(lp.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                    coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(lp.tgl_laporan from 1 for 10)
-                        else to_char(coalesce(lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                        else to_char(coalesce(d.synced_at, lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
                     end as tgl_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
-                        else coalesce(lp.synced_at, lp.created_at, now())::date
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                        else coalesce(d.synced_at, lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
                     coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
-                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
                     coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
@@ -1319,7 +1330,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     'DOKUMEN' as sumber
                 FROM document_parties x
                 JOIN bdb_laporan_polisi lp ON lp.id = x.lp_id AND lp.deleted_at is null
+                LEFT JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE (
                     regexp_replace(upper(trim(x.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(x.nama)) ILIKE ('%' || $2 || '%')
@@ -1329,18 +1343,20 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 SELECT 
                     lp.id as lp_id,
-                    coalesce(lp.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                    coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(lp.tgl_laporan from 1 for 10)
-                        else to_char(coalesce(lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                        else to_char(coalesce(d.synced_at, lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
                     end as tgl_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
-                        else coalesce(lp.synced_at, lp.created_at, now())::date
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                        else coalesce(d.synced_at, lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
                     coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
-                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
                     coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
@@ -1348,7 +1364,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     'MANUAL' as sumber
                 FROM bdb_lp_pihak_manual m
                 JOIN bdb_laporan_polisi lp ON lp.id = m.lp_id AND lp.deleted_at is null
+                LEFT JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE m.deleted_at is null AND (
                     regexp_replace(upper(trim(m.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(m.nama)) ILIKE ('%' || $2 || '%')
@@ -1380,8 +1399,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
                         else coalesce(d.synced_at, lp.synced_at, now())::date
                     end as tgl_date,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
                     'DORS' as sumber
                 FROM bdb_dors_lp_terlibat t
@@ -1396,17 +1421,23 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 SELECT 
                     lp.id as lp_id,
-                    coalesce(lp.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                    coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(lp.tgl_laporan from 1 for 10)
-                        else to_char(coalesce(lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                        else to_char(coalesce(d.synced_at, lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
                     end as tgl_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
-                        else coalesce(lp.synced_at, lp.created_at, now())::date
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                        else coalesce(d.synced_at, lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(x.keterlibatan, 'PIHAK'))) as peran,
                     'DOKUMEN' as sumber
                 FROM document_parties x
@@ -1421,17 +1452,23 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 SELECT 
                     lp.id as lp_id,
-                    coalesce(lp.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                    coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(lp.tgl_laporan from 1 for 10)
-                        else to_char(coalesce(lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                        else to_char(coalesce(d.synced_at, lp.synced_at, lp.created_at, now()), 'DD-MM-YYYY')
                     end as tgl_laporan,
                     case 
-                        when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
-                        else coalesce(lp.synced_at, lp.created_at, now())::date
+                        when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                        else coalesce(d.synced_at, lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
-                    coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                    coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                    coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                    coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as peran,
                     'MANUAL' as sumber
                 FROM bdb_lp_pihak_manual m
@@ -1478,6 +1515,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     ...r,
                     waktu_kejadian: r.waktu_kejadian || '—',
                     tempat_kejadian: r.tempat_kejadian || '—',
+                    kejahatan: r.kejahatan || '—',
+                    status_lp: r.status_lp || 'PROSES',
+                    uraian_kejadian: r.uraian_kejadian || '—',
                     satker_nama: r.satker_nama || 'POLRI',
                     wilayah_nama: r.wilayah_nama || 'POLRI',
                     in_period: inPeriod,
