@@ -331,6 +331,222 @@ a {
 
   --surface-hover: #1a2742;
   --surface-border: rgba(255, 255, 255, 0.11);
+
+  /* PrimeReact Complete Dark Theme Variable Mapping */
+  --surface-a: #111a2e;
+  --surface-b: #090e1a;
+  --surface-c: #16223b;
+  --surface-d: rgba(255, 255, 255, 0.12);
+  --surface-e: #111a2e;
+  --surface-f: #111a2e;
+
+  --surface-0: #111a2e;
+  --surface-50: #0f172a;
+  --surface-100: #16223b;
+  --surface-200: #1a2742;
+  --surface-300: #223456;
+  --surface-400: #334155;
+  --surface-500: #64748b;
+  --surface-600: #94a3b8;
+  --surface-700: #cbd5e1;
+  --surface-800: #e2e8f0;
+  --surface-900: #f8fafc;
+
+  --text-color: #f1f5f9;
+  --text-color-secondary: #94a3b8;
+  --surface-ground: #090e1a;
+  --surface-card: #111a2e;
+  --surface-overlay: #16223b;
+}
+
+/* ==========================================================================
+   COMPREHENSIVE DARK MODE OVERRIDES & COMPONENT ENHANCEMENTS
+   ========================================================================== */
+
+/* Universal Dark Mode Overrides for Hardcoded Light/Dark Inline Elements */
+:root[data-theme="dark"] .p-datatable-tbody > tr > td {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #0f172a"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#0f172a"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(15, 23, 42)"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(15,23,42)"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #1e293b"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#1e293b"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(30, 41, 59)"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(30,41,59)"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #334155"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#334155"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #111827"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#111827"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #000"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#000"] {
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: #64748b"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color:#64748b"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(100, 116, 139)"],
+:root[data-theme="dark"] .p-datatable-tbody > tr > td [style*="color: rgb(100,116,139)"] {
+  color: #94a3b8 !important;
+}
+
+/* Secondary & Polri Badges in Tables in Dark Mode */
+:root[data-theme="dark"] .p-datatable-tbody [style*="background: #eff6ff"],
+:root[data-theme="dark"] .p-datatable-tbody [style*="background:#eff6ff"],
+:root[data-theme="dark"] .p-datatable-tbody [style*="background: rgb(239, 246, 255)"] {
+  background: rgba(56, 189, 248, 0.16) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}
+
+:root[data-theme="dark"] .p-datatable-tbody [style*="background: #f1f5f9"],
+:root[data-theme="dark"] .p-datatable-tbody [style*="background:#f1f5f9"],
+:root[data-theme="dark"] .p-datatable-tbody [style*="background: rgb(241, 245, 249)"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Outlined Buttons in Dark Mode */
+:root[data-theme="dark"] .p-button.p-button-outlined {
+  color: #e2e8f0;
+  border-color: #334155;
+  background: transparent;
+}
+:root[data-theme="dark"] .p-button.p-button-outlined:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: #64748b !important;
+  color: #ffffff !important;
+}
+
+/* Table Action Buttons & Lucide Icons */
+.att-icon-link, .p-button.p-button-text {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.att-icon-link svg, .p-button.p-button-text svg, .p-button.p-button-rounded svg {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  min-width: 1.15rem !important;
+  min-height: 1.15rem !important;
+  flex: none !important;
+}
+
+:root[data-theme="dark"] .att-icon-link {
+  color: #38bdf8 !important;
+}
+:root[data-theme="dark"] .att-icon-link:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #7dd3fc !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text {
+  color: #cbd5e1 !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+:root[data-theme="dark"] .p-button.p-button-text[style*="color: #0284c7"],
+:root[data-theme="dark"] .p-button.p-button-text[style*="color:#0284c7"] {
+  color: #38bdf8 !important;
+}
+:root[data-theme="dark"] .p-button.p-button-text[style*="color: #7c3aed"],
+:root[data-theme="dark"] .p-button.p-button-text[style*="color:#7c3aed"] {
+  color: #c084fc !important;
+}
+
+/* Cards & Modals: Prevent White Cards inside Dark Modals/Dialogs */
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #ffffff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#ffffff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: white"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #fff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#fff"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background: #f8fafc"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="background:#f8fafc"] {
+  background: #16223b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #0f172a"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#0f172a"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #1e293b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#1e293b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #334155"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#334155"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #475569"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#475569"] {
+  color: #f1f5f9 !important;
+}
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color: #64748b"],
+:root[data-theme="dark"] .p-dialog:not(.kp-print-dialog) [style*="color:#64748b"] {
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] .p-dialog [style*="background: #eff6ff"],
+:root[data-theme="dark"] .p-dialog [style*="background:#eff6ff"] {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.25) !important;
+  color: #bae6fd !important;
+}
+:root[data-theme="dark"] .p-dialog [style*="background: #f1f5f9"],
+:root[data-theme="dark"] .p-dialog [style*="background:#f1f5f9"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #cbd5e1 !important;
+}
+:root[data-theme="dark"] .p-dialog thead[style*="background: #f8fafc"],
+:root[data-theme="dark"] .p-dialog thead[style*="background:#f8fafc"] {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+:root[data-theme="dark"] .p-dialog code {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Sticky Columns in Dark Mode */
+:root[data-theme="dark"] [style*="position:sticky"][style*="background: #fff"],
+:root[data-theme="dark"] [style*="position:sticky"][style*="background:#fff"],
+:root[data-theme="dark"] [style*="position: sticky"][style*="background: #fff"],
+:root[data-theme="dark"] [style*="position: sticky"][style*="background:#fff"],
+:root[data-theme="dark"] td[style*="background: #fff"],
+:root[data-theme="dark"] td[style*="background:#fff"],
+:root[data-theme="dark"] th[style*="background: #fff"],
+:root[data-theme="dark"] th[style*="background:#fff"] {
+  background: #111a2e !important;
+  color: #f1f5f9 !important;
+}
+
+/* Filter Dropdown Popovers in Dark Mode */
+:root[data-theme="dark"] [style*="position:absolute"][style*="background: #fff"],
+:root[data-theme="dark"] [style*="position:absolute"][style*="background:#fff"],
+:root[data-theme="dark"] [style*="position: absolute"][style*="background: #fff"],
+:root[data-theme="dark"] [style*="position: absolute"][style*="background:#fff"],
+:root[data-theme="dark"] [style*="position:absolute"][style*="background: white"],
+:root[data-theme="dark"] [style*="position: absolute"][style*="background: white"] {
+  background: #111a2e !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6) !important;
+}
+
+:root[data-theme="dark"] [style*="position:absolute"] [style*="background: #f8fafc"],
+:root[data-theme="dark"] [style*="position:absolute"] [style*="background:#f8fafc"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="background: #f8fafc"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="background:#f8fafc"] {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root[data-theme="dark"] [style*="position:absolute"] [style*="color: #0f172a"],
+:root[data-theme="dark"] [style*="position:absolute"] [style*="color:#0f172a"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="color: #0f172a"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="color:#0f172a"],
+:root[data-theme="dark"] [style*="position:absolute"] [style*="color: #334155"],
+:root[data-theme="dark"] [style*="position:absolute"] [style*="color:#334155"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="color: #334155"],
+:root[data-theme="dark"] [style*="position: absolute"] [style*="color:#334155"] {
+  color: #f1f5f9 !important;
 }
 
 /* ==========================================================================
@@ -822,15 +1038,140 @@ a {
   color: var(--cas-text-secondary) !important;
 }
 
-/* Top KPI Cards (Crime Total, Crime Clearance, Clearance Rate) */
-.dash-minicard:nth-child(1) {
-  border-top: 4px solid #ef4444 !important;
+/* ==========================================================================
+   DASHBOARD KPI & MINICARDS (KINERJA PERKARA, PROFIL RISIKO, DORS)
+   ========================================================================== */
+
+.dash-minicard {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top: 4px solid #94a3b8 !important;
+  border-radius: 12px !important;
+  padding: 0.85rem 1rem !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.18s ease !important;
 }
-.dash-minicard:nth-child(2) {
-  border-top: 4px solid #10b981 !important;
+
+.dash-minicard:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
 }
-.dash-minicard:nth-child(3) {
-  border-top: 4px solid #3b82f6 !important;
+
+:root[data-theme="dark"] .dash-minicard,
+[data-theme="dark"] .dash-minicard {
+  background: #0d1526 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Minicard Label (First child) */
+.dash-minicard > div:first-child {
+  font-size: 0.7rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  line-height: 1.25 !important;
+}
+
+:root[data-theme="dark"] .dash-minicard > div:first-child,
+[data-theme="dark"] .dash-minicard > div:first-child {
+  color: #94a3b8 !important;
+}
+
+/* Minicard Value (Second child / numbers) */
+.dash-minicard > div:nth-child(2),
+.dash-minicard > div:nth-child(2) strong {
+  font-size: 1.35rem !important;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+  color: #0f172a !important;
+  margin-top: 0.25rem !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+:root[data-theme="dark"] .dash-minicard > div:nth-child(2),
+:root[data-theme="dark"] .dash-minicard > div:nth-child(2) strong,
+[data-theme="dark"] .dash-minicard > div:nth-child(2),
+[data-theme="dark"] .dash-minicard > div:nth-child(2) strong {
+  color: #f8fafc !important;
+}
+
+/* Kinerja Perkara 9 Cards: Exact Semantic Colors (Light & Dark) */
+/* 1. CP AKTUAL */
+.dash-panel-clickable .dash-minicard:nth-child(1),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(1) {
+  border-top-color: #f43f5e !important;
+}
+/* 2. CP TUNGGAKAN */
+.dash-panel-clickable .dash-minicard:nth-child(2),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(2) {
+  border-top-color: #f59e0b !important;
+}
+/* 3. PR (LAMA) */
+.dash-panel-clickable .dash-minicard:nth-child(3),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(3) {
+  border-top-color: #6366f1 !important;
+}
+/* 4. PR (BARU) */
+.dash-panel-clickable .dash-minicard:nth-child(4),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(4) {
+  border-top-color: #3b82f6 !important;
+}
+/* 5. CC AKTUAL */
+.dash-panel-clickable .dash-minicard:nth-child(5),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(5) {
+  border-top-color: #10b981 !important;
+}
+/* 6. CC TUNGGAKAN */
+.dash-panel-clickable .dash-minicard:nth-child(6),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(6) {
+  border-top-color: #059669 !important;
+}
+/* 7. CR (LAMA) */
+.dash-panel-clickable .dash-minicard:nth-child(7),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(7) {
+  border-top-color: #8b5cf6 !important;
+}
+/* 8. CR (BARU) */
+.dash-panel-clickable .dash-minicard:nth-child(8),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(8) {
+  border-top-color: #06b6d4 !important;
+}
+/* 9. INDEKS KINERJA */
+.dash-panel-clickable .dash-minicard:nth-child(9),
+:root[data-theme="dark"] .dash-panel-clickable .dash-minicard:nth-child(9) {
+  border-top-color: #dc2626 !important;
+}
+
+/* Profil Risiko Kejahatan Cards: Exact Semantic Colors (Light & Dark) */
+/* 1. JUMLAH PENDUDUK */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(1),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(1) {
+  border-top-color: #3b82f6 !important;
+}
+/* 2. TINGKAT RISIKO KEJAHATAN */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(2),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(2) {
+  border-top-color: #ef4444 !important;
+}
+/* 3. CRIME CLOCK */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(3),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(3) {
+  border-top-color: #0ea5e9 !important;
+}
+/* 4. STATUS TERTINGGI */
+.dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(4),
+:root[data-theme="dark"] .dash-section:not(.dash-panel-clickable) .dash-integrasi-grid .dash-minicard:nth-child(4) {
+  border-top-color: #8b5cf6 !important;
 }
 
 /* LP Fact Card Modern */
@@ -866,58 +1207,184 @@ a {
   font-weight: 800;
 }
 
-/* Status Cards Carousel / Grid */
+/* ==========================================================================
+   STATUS CARDS (RINCIAN STATUS LP & EXECUTIVE KPI CARDS)
+   ========================================================================== */
+
 .lp-status-cards {
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: 0.85rem;
-  margin: 1.25rem 0;
-  display: grid;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(7.2rem, 1fr)) !important;
+  gap: 0.65rem !important;
+  margin: 1.15rem 0 !important;
 }
 
+/* Individual Metric Card Base */
 .lp-stat {
-  text-align: left;
-  cursor: pointer;
-  background: var(--cas-bg-surface);
-  border: 1px solid var(--cas-border-card);
-  border-radius: 13px;
-  padding: 0.8rem 0.95rem;
-  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-  box-shadow: var(--cas-shadow-sm);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  border-top-color: #94a3b8 !important; /* Neutral border default for party cards & general roles */
+  border-radius: 12px !important;
+  padding: 0.75rem 0.85rem !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  user-select: none !important;
+}
+
+.lp-stat:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
 }
 
 :root[data-theme="dark"] .lp-stat,
 [data-theme="dark"] .lp-stat {
-  background: var(--cas-bg-surface) !important;
-  border-color: var(--cas-border-card) !important;
-}
-
-.lp-stat:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--cas-shadow-md);
+  background: #111a2e !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  border-top-color: #475569 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
 }
 
 .lp-stat .n {
-  color: var(--cas-text-primary);
-  font-size: 1.65rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+  color: #0f172a !important;
+  font-size: 1.45rem !important;
+  font-weight: 850 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.02em !important;
+  font-variant-numeric: tabular-nums !important;
 }
 
 :root[data-theme="dark"] .lp-stat .n,
 [data-theme="dark"] .lp-stat .n {
-  color: var(--cas-text-primary) !important;
+  color: #f8fafc !important;
 }
 
+.lp-stat .l,
 .lp-stat .lbl {
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--cas-text-muted);
-  margin-top: 0.25rem;
-  font-size: 0.72rem;
-  font-weight: 800;
+  color: #64748b !important;
+  font-size: 0.68rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+  margin-top: 0.35rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
 }
+
+:root[data-theme="dark"] .lp-stat .l,
+:root[data-theme="dark"] .lp-stat .lbl,
+[data-theme="dark"] .lp-stat .l,
+[data-theme="dark"] .lp-stat .lbl {
+  color: #94a3b8 !important;
+}
+
+/* Neutral Total / Semua Card */
+.lp-stat.total {
+  border-top-color: #0f172a !important;
+}
+:root[data-theme="dark"] .lp-stat.total {
+  border-top-color: #94a3b8 !important;
+}
+
+/* Active State (Selected Filter) */
+.lp-stat.active {
+  border-color: #ef4444 !important;
+  border-top-color: #ef4444 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35), 0 6px 16px rgba(239, 68, 68, 0.15) !important;
+}
+:root[data-theme="dark"] .lp-stat.active {
+  border-color: #ef4444 !important;
+  border-top-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45), 0 8px 20px rgba(0, 0, 0, 0.5) !important;
+}
+.lp-stat.active .l {
+  color: #b91c1c !important;
+  font-weight: 800 !important;
+}
+:root[data-theme="dark"] .lp-stat.active .l {
+  color: #fca5a5 !important;
+}
+
+/* --- 1. DASHBOARD RINGKASAN: Rincian Status LP (Exact 11 Statuses, No Total Card) --- */
+@media (min-width: 1400px) {
+  .dash-section .lp-status-cards {
+    grid-template-columns: repeat(11, minmax(0, 1fr)) !important;
+  }
+}
+.dash-section .lp-status-cards .lp-stat:nth-child(1),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(1) { border-top-color: #ef4444 !important; } /* Belum Update */
+.dash-section .lp-status-cards .lp-stat:nth-child(2),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(2) { border-top-color: #0284c7 !important; } /* Lidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(3),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(3) { border-top-color: #2563eb !important; } /* SP2 Lidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(4),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(4) { border-top-color: #6366f1 !important; } /* Sidik */
+.dash-section .lp-status-cards .lp-stat:nth-child(5),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(5) { border-top-color: #10b981 !important; } /* Perma */
+.dash-section .lp-status-cards .lp-stat:nth-child(6),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(6) { border-top-color: #f59e0b !important; } /* SPDP */
+.dash-section .lp-status-cards .lp-stat:nth-child(7),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(7) { border-top-color: #059669 !important; } /* SP3 */
+.dash-section .lp-status-cards .lp-stat:nth-child(8),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(8) { border-top-color: #8b5cf6 !important; } /* Tahap I */
+.dash-section .lp-status-cards .lp-stat:nth-child(9),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(9) { border-top-color: #ea580c !important; } /* P19 */
+.dash-section .lp-status-cards .lp-stat:nth-child(10),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(10) { border-top-color: #06b6d4 !important; } /* P21 */
+.dash-section .lp-status-cards .lp-stat:nth-child(11),
+:root[data-theme="dark"] .dash-section .lp-status-cards .lp-stat:nth-child(11) { border-top-color: #16a34a !important; } /* Tahap II */
+
+/* --- 2. LAPORAN POLISI: 12 Cards (Semua LP + 11 Statuses) --- */
+.lp-status-cards:has(.lp-stat:nth-child(12)) {
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr)) !important;
+}
+@media (min-width: 1360px) {
+  .lp-status-cards:has(.lp-stat:nth-child(12)) {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  }
+}
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(1),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(1) { border-top-color: #0f172a !important; } /* Semua LP: Neutral Slate */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(2),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(2) { border-top-color: #ef4444 !important; } /* Belum Update */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(3),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(3) { border-top-color: #0284c7 !important; } /* Lidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(4),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(4) { border-top-color: #2563eb !important; } /* SP2 Lidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(5),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(5) { border-top-color: #6366f1 !important; } /* Sidik */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(6),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(6) { border-top-color: #10b981 !important; } /* Perma */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(7),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(7) { border-top-color: #f59e0b !important; } /* SPDP */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(8),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(8) { border-top-color: #059669 !important; } /* SP3 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(9),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(9) { border-top-color: #8b5cf6 !important; } /* Tahap I */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(10),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(10) { border-top-color: #ea580c !important; } /* P19 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(11),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(11) { border-top-color: #06b6d4 !important; } /* P21 */
+.lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(12),
+:root[data-theme="dark"] .lp-status-cards:has(.lp-stat:nth-child(12)) .lp-stat:nth-child(12) { border-top-color: #16a34a !important; } /* Tahap II */
 
 /* ==========================================================================
    DASHBOARD PANELS & LIST ITEMS (NO DARK-ON-DARK TEXT)
@@ -1011,8 +1478,7 @@ a {
 
 :root[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"],
 :root[data-theme="dark"] .dash-kasus-item [style*="color:#64748b"],
-[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"],
-[data-theme="dark"] .dash-kasus-item [style*="color:#64748b"] {
+[data-theme="dark"] .dash-kasus-item [style*="color: #64748b"] {
   color: #94a3b8 !important;
 }
 
@@ -1022,57 +1488,20 @@ a {
   color: #f8fafc !important;
 }
 
-/* Fix items with hardcoded #334155 (e.g. crime & satker names in 10 Kejahatan Tertinggi & Satker CT/CC) */
-:root[data-theme="dark"] .cms-card [style*="334155"],
-[data-theme="dark"] .cms-card [style*="334155"],
-:root[data-theme="dark"] ol > li > span[style*="334155"],
-[data-theme="dark"] ol > li > span[style*="334155"],
-:root[data-theme="dark"] ol > li span[style*="color: #334155"],
-[data-theme="dark"] ol > li span[style*="color: #334155"],
-:root[data-theme="dark"] ol > li span[style*="color:#334155"],
-[data-theme="dark"] ol > li span[style*="color:#334155"] {
-  color: #f1f5f9 !important;
-}
-
-/* Fix muted texts with hardcoded #64748b in cms-card (e.g. Orang, Berisiko, LP suffix) */
-:root[data-theme="dark"] .cms-card [style*="color: #64748b"],
-:root[data-theme="dark"] .cms-card [style*="color:#64748b"],
-[data-theme="dark"] .cms-card [style*="color: #64748b"],
-[data-theme="dark"] .cms-card [style*="color:#64748b"] {
+:root[data-theme="dark"] .cms-card span[style*="color: #64748b"],
+:root[data-theme="dark"] .cms-card span[style*="color:#64748b"],
+[data-theme="dark"] .cms-card span[style*="color: #64748b"] {
   color: #cbd5e1 !important;
 }
 
-/* Fix secondary texts with hardcoded #94a3b8 in cms-card */
-:root[data-theme="dark"] .cms-card [style*="color: #94a3b8"],
-:root[data-theme="dark"] .cms-card [style*="color:#94a3b8"],
-[data-theme="dark"] .cms-card [style*="color: #94a3b8"],
-[data-theme="dark"] .cms-card [style*="color:#94a3b8"] {
+:root[data-theme="dark"] .cms-card span[style*="color: #94a3b8"],
+:root[data-theme="dark"] .cms-card span[style*="color:#94a3b8"],
+[data-theme="dark"] .cms-card span[style*="color: #94a3b8"] {
   color: #94a3b8 !important;
 }
 
-/* Fix dark text #0f172a or #1e293b in cms-card (e.g. Indeks Kinerja numbers) */
-:root[data-theme="dark"] .cms-card [style*="color: #0f172a"],
-:root[data-theme="dark"] .cms-card [style*="color:#0f172a"],
-[data-theme="dark"] .cms-card [style*="color: #0f172a"],
-[data-theme="dark"] .cms-card [style*="color:#0f172a"],
-:root[data-theme="dark"] .cms-card [style*="color: #1e293b"],
-:root[data-theme="dark"] .cms-card [style*="color:#1e293b"],
-[data-theme="dark"] .cms-card [style*="color: #1e293b"],
-[data-theme="dark"] .cms-card [style*="color:#1e293b"] {
-  color: #f8fafc !important;
-}
-
-/* Fix Rank Badge in Dark Mode: Sleek glass pill with crisp white text */
 :root[data-theme="dark"] ol > li > span:first-child,
 [data-theme="dark"] ol > li > span:first-child {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-
-/* Ensure cms-card-label has high contrast in dark mode */
-:root[data-theme="dark"] .cms-card-label,
-[data-theme="dark"] .cms-card-label {
   color: #cbd5e1 !important;
 }
 
@@ -2417,10 +2846,8 @@ body[data-theme="dark"] .p-card {
   background: var(--cas-bg-app, #f8fafc);
 }
 
-@media (min-width: 1025px) {
-  .cms-sidebar {
-    z-index: 40 !important;
-  }
+.cms-sidebar {
+  z-index: 40 !important;
 }
 
 .cms-header-fixed {
@@ -2674,7 +3101,7 @@ div[style*="z-index:1000"] {
 
 
 /* Primary Action Buttons (Cari, Terapkan, Selesai) - Polri Presisi Crimson Red */
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary),
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-info):not(.p-button-success):not(.p-button-warning):not(.p-button-help),
 .att-btn-primary {
   background: #ef4444 !important;
   border: 1px solid #ef4444 !important;
@@ -2682,11 +3109,102 @@ div[style*="z-index:1000"] {
   font-weight: 700 !important;
 }
 
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):hover,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-info):not(.p-button-success):not(.p-button-warning):not(.p-button-help):hover,
 .att-btn-primary:hover {
   background: #dc2626 !important;
   border-color: #dc2626 !important;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35) !important;
+}
+
+/* Explicit Button Severities (Solid only, exclude text & outlined) */
+.p-button.p-button-info:not(.p-button-outlined):not(.p-button-text),
+.p-button-info.p-button:not(.p-button-outlined):not(.p-button-text) {
+  background: #0284c7 !important;
+  border: 1px solid #0284c7 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.p-button.p-button-info:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-info.p-button:not(.p-button-outlined):not(.p-button-text):hover {
+  background: #0369a1 !important;
+  border-color: #0369a1 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
+}
+
+.p-button.p-button-success:not(.p-button-outlined):not(.p-button-text),
+.p-button-success.p-button:not(.p-button-outlined):not(.p-button-text) {
+  background: #16a34a !important;
+  border: 1px solid #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.p-button.p-button-success:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-success.p-button:not(.p-button-outlined):not(.p-button-text):hover {
+  background: #15803d !important;
+  border-color: #15803d !important;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35) !important;
+}
+
+.p-button.p-button-warning:not(.p-button-outlined):not(.p-button-text),
+.p-button-warning.p-button:not(.p-button-outlined):not(.p-button-text) {
+  background: #d97706 !important;
+  border: 1px solid #d97706 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.p-button.p-button-warning:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-warning.p-button:not(.p-button-outlined):not(.p-button-text):hover {
+  background: #b45309 !important;
+  border-color: #b45309 !important;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35) !important;
+}
+
+.p-button.p-button-secondary:not(.p-button-outlined):not(.p-button-text),
+.p-button-secondary.p-button:not(.p-button-outlined):not(.p-button-text) {
+  background: #334155 !important;
+  border: 1px solid #475569 !important;
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+}
+.p-button.p-button-secondary:not(.p-button-outlined):not(.p-button-text):hover,
+.p-button-secondary.p-button:not(.p-button-outlined):not(.p-button-text):hover {
+  background: #475569 !important;
+  border-color: #64748b !important;
+}
+
+/* Secondary Button text / ghost icon (Edit, refresh, etc.) */
+.p-button.p-button-secondary.p-button-text,
+.p-button-secondary.p-button.p-button-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #64748b !important;
+}
+.p-button.p-button-secondary.p-button-text:hover,
+.p-button-secondary.p-button.p-button-text:hover {
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #0f172a !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text,
+[data-theme="dark"] .p-button.p-button-secondary.p-button-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] .p-button.p-button-secondary.p-button-text:hover,
+[data-theme="dark"] .p-button.p-button-secondary.p-button-text:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+/* Danger Button text / icon */
+:root[data-theme="dark"] .p-button.p-button-danger.p-button-text,
+[data-theme="dark"] .p-button.p-button-danger.p-button-text {
+  color: #f87171 !important;
+}
+:root[data-theme="dark"] .p-button.p-button-danger.p-button-text:hover,
+[data-theme="dark"] .p-button.p-button-danger.p-button-text:hover {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
 }
 
 /* Inputs & Dropdowns */
@@ -2743,9 +3261,11 @@ div[style*="z-index:1000"] {
 }
 
 .dash-minicard {
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   border: 1px solid #cbd5e1 !important;
-  background: #f8fafc !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  background: #ffffff !important;
 }
 
 /* Dark Mode Cards */
@@ -2767,7 +3287,11 @@ div[style*="z-index:1000"] {
 :root[data-theme="dark"] .dash-minicard,
 [data-theme="dark"] .dash-minicard {
   background: #0d1526 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
   color: #f8fafc !important;
 }
 
@@ -2919,7 +3443,161 @@ div[style*="calc(100% + 0.45rem)"] {
 :root[data-theme="dark"] [style*="color:#111827"],
 :root[data-theme="dark"] [style*="color: #111827"],
 :root[data-theme="dark"] [style*="color:#1e293b"],
-:root[data-theme="dark"] [style*="color: #1e293b"] {
+:root[data-theme="dark"] [style*="color: #1e293b"],
+[data-theme="dark"] [style*="color:#0b1524"],
+[data-theme="dark"] [style*="color: #0b1524"],
+[data-theme="dark"] [style*="color:#0f172a"],
+[data-theme="dark"] [style*="color: #0f172a"],
+[data-theme="dark"] [style*="color:#111827"],
+[data-theme="dark"] [style*="color: #111827"],
+[data-theme="dark"] [style*="color:#1e293b"],
+[data-theme="dark"] [style*="color: #1e293b"] {
+  color: #f8fafc !important;
+}
+
+/* --- UNIVERSAL DARK-MODE ALERT & CARD INVERSIONS --- */
+/* Amber / Warning Alerts (#fffbeb) */
+:root[data-theme="dark"] *[style*="background: #fffbeb"],
+:root[data-theme="dark"] *[style*="background:#fffbeb"],
+[data-theme="dark"] *[style*="background: #fffbeb"],
+[data-theme="dark"] *[style*="background:#fffbeb"] {
+  background: rgba(245, 158, 11, 0.14) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  color: #fde68a !important;
+}
+:root[data-theme="dark"] [style*="color: #92400e"],
+:root[data-theme="dark"] [style*="color:#92400e"],
+:root[data-theme="dark"] [style*="color: #b45309"],
+:root[data-theme="dark"] [style*="color:#b45309"],
+[data-theme="dark"] [style*="color: #92400e"],
+[data-theme="dark"] [style*="color:#92400e"],
+[data-theme="dark"] [style*="color: #b45309"],
+[data-theme="dark"] [style*="color:#b45309"] {
+  color: #fde68a !important;
+}
+
+/* Blue / Info Alerts (#eff6ff) */
+:root[data-theme="dark"] *[style*="background: #eff6ff"],
+:root[data-theme="dark"] *[style*="background:#eff6ff"],
+[data-theme="dark"] *[style*="background: #eff6ff"],
+[data-theme="dark"] *[style*="background:#eff6ff"] {
+  background: rgba(14, 165, 233, 0.14) !important;
+  border: 1px solid rgba(14, 165, 233, 0.35) !important;
+  color: #7dd3fc !important;
+}
+:root[data-theme="dark"] [style*="color: #1e40af"],
+:root[data-theme="dark"] [style*="color:#1e40af"],
+:root[data-theme="dark"] [style*="color: #1e3a8a"],
+:root[data-theme="dark"] [style*="color:#1e3a8a"],
+:root[data-theme="dark"] [style*="color: #1d4ed8"],
+:root[data-theme="dark"] [style*="color:#1d4ed8"],
+[data-theme="dark"] [style*="color: #1e40af"],
+[data-theme="dark"] [style*="color:#1e40af"],
+[data-theme="dark"] [style*="color: #1e3a8a"],
+[data-theme="dark"] [style*="color:#1e3a8a"],
+[data-theme="dark"] [style*="color: #1d4ed8"],
+[data-theme="dark"] [style*="color:#1d4ed8"] {
+  color: #93c5fd !important;
+}
+
+/* Red / Danger Alerts (#fef2f2) */
+:root[data-theme="dark"] *[style*="background: #fef2f2"],
+:root[data-theme="dark"] *[style*="background:#fef2f2"],
+[data-theme="dark"] *[style*="background: #fef2f2"],
+[data-theme="dark"] *[style*="background:#fef2f2"] {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+  color: #fca5a5 !important;
+}
+:root[data-theme="dark"] [style*="color: #991b1b"],
+:root[data-theme="dark"] [style*="color:#991b1b"],
+:root[data-theme="dark"] [style*="color: #dc2626"],
+:root[data-theme="dark"] [style*="color:#dc2626"],
+[data-theme="dark"] [style*="color: #991b1b"],
+[data-theme="dark"] [style*="color:#991b1b"],
+[data-theme="dark"] [style*="color: #dc2626"],
+[data-theme="dark"] [style*="color:#dc2626"] {
+  color: #fca5a5 !important;
+}
+
+/* Green / Success Alerts (#f0fdf4) */
+:root[data-theme="dark"] *[style*="background: #f0fdf4"],
+:root[data-theme="dark"] *[style*="background:#f0fdf4"],
+[data-theme="dark"] *[style*="background: #f0fdf4"],
+[data-theme="dark"] *[style*="background:#f0fdf4"] {
+  background: rgba(22, 163, 74, 0.14) !important;
+  border: 1px solid rgba(22, 163, 74, 0.35) !important;
+  color: #86efac !important;
+}
+:root[data-theme="dark"] [style*="color: #166534"],
+:root[data-theme="dark"] [style*="color:#166534"],
+:root[data-theme="dark"] [style*="color: #15803d"],
+:root[data-theme="dark"] [style*="color:#15803d"],
+[data-theme="dark"] [style*="color: #166534"],
+[data-theme="dark"] [style*="color:#166534"],
+[data-theme="dark"] [style*="color: #15803d"],
+[data-theme="dark"] [style*="color:#15803d"] {
+  color: #86efac !important;
+}
+
+/* Purple Alerts (#f5f3ff) */
+:root[data-theme="dark"] *[style*="background: #f5f3ff"],
+:root[data-theme="dark"] *[style*="background:#f5f3ff"],
+[data-theme="dark"] *[style*="background: #f5f3ff"],
+[data-theme="dark"] *[style*="background:#f5f3ff"] {
+  background: rgba(124, 58, 237, 0.14) !important;
+  border: 1px solid rgba(124, 58, 237, 0.35) !important;
+  color: #c4b5fd !important;
+}
+:root[data-theme="dark"] [style*="color: #5b21b6"],
+:root[data-theme="dark"] [style*="color:#5b21b6"],
+[data-theme="dark"] [style*="color: #5b21b6"],
+[data-theme="dark"] [style*="color:#5b21b6"] {
+  color: #c4b5fd !important;
+}
+
+/* Neutral Slate Subtle Cards (#f8fafc, #f1f5f9) */
+:root[data-theme="dark"] *[style*="background: #f8fafc"],
+:root[data-theme="dark"] *[style*="background:#f8fafc"],
+[data-theme="dark"] *[style*="background: #f8fafc"],
+[data-theme="dark"] *[style*="background:#f8fafc"],
+:root[data-theme="dark"] *[style*="background: #f1f5f9"],
+:root[data-theme="dark"] *[style*="background:#f1f5f9"],
+[data-theme="dark"] *[style*="background: #f1f5f9"],
+[data-theme="dark"] *[style*="background:#f1f5f9"] {
+  background: #16223b !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+:root[data-theme="dark"] [style*="color: #475569"],
+:root[data-theme="dark"] [style*="color:#475569"],
+[data-theme="dark"] [style*="color: #475569"],
+[data-theme="dark"] [style*="color:#475569"] {
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] [style*="color: #334155"],
+:root[data-theme="dark"] [style*="color:#334155"],
+[data-theme="dark"] [style*="color: #334155"],
+[data-theme="dark"] [style*="color:#334155"] {
+  color: #cbd5e1 !important;
+}
+
+/* Modal Dialog Close Button */
+.p-dialog .p-dialog-header .p-dialog-header-icons .p-dialog-header-close,
+.p-dialog .p-dialog-header .p-dialog-header-icon {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  color: #94a3b8 !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+}
+.p-dialog .p-dialog-header .p-dialog-header-icons .p-dialog-header-close:hover,
+.p-dialog .p-dialog-header .p-dialog-header-icon:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #f8fafc !important;
 }
 
@@ -3508,6 +4186,8 @@ body:not([data-theme=dark]) .kp-toolbar-row {
   color: #ffffff;
 }
 
+
+
 /* ==========================================================================
    MOBILE SIDEBAR DRAWER & BACKDROP STACKING (FINAL OVERRIDE)
    Fixes sidebar appearing blurred behind backdrop-filter overlay on mobile
@@ -3546,223 +4226,7 @@ body:not([data-theme=dark]) .kp-toolbar-row {
   }
 }
 
-/* ==========================================================================
-   LAPORAN POLISI (LP) EXECUTIVE KPI STATUS CARDS REDESIGN
-   Transforms squished pill badges into modern, professional metric cards
-   ========================================================================== */
 
-.lp-status-cards {
-  display: flex !important;
-  gap: 0.65rem !important;
-  overflow-x: auto !important;
-  flex-wrap: nowrap !important;
-  -webkit-overflow-scrolling: touch !important;
-  padding: 0.4rem 0.2rem 0.85rem !important;
-  margin: 0.75rem 0 1.25rem !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(148, 163, 184, 0.4) transparent !important;
-}
-
-.lp-status-cards::-webkit-scrollbar {
-  height: 6px !important;
-  display: block !important;
-}
-.lp-status-cards::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-.lp-status-cards::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3) !important;
-  border-radius: 999px !important;
-}
-:root[data-theme="dark"] .lp-status-cards::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18) !important;
-}
-
-/* Individual Metric Card */
-.lp-stat {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: flex-start !important;
-  text-align: left !important;
-  flex: 1 1 0px !important;
-  min-width: 7.2rem !important;
-  max-width: 9.5rem !important;
-  padding: 0.75rem 0.9rem !important;
-  border-radius: 12px !important;
-  cursor: pointer !important;
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-top-width: 3.5px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  position: relative !important;
-  user-select: none !important;
-}
-
-:root[data-theme="dark"] .lp-stat {
-  background: #111a2e !important;
-  border-color: #1f2b45 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-}
-
-.lp-stat:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12) !important;
-}
-:root[data-theme="dark"] .lp-stat:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
-  border-color: #334155 !important;
-}
-
-/* 1. Total (Semua LP) */
-.lp-stat.total {
-  border-top-color: #dc2626 !important;
-}
-.lp-stat.total .n {
-  color: #0f172a !important;
-}
-:root[data-theme="dark"] .lp-stat.total .n {
-  color: #f8fafc !important;
-}
-
-/* 2. CT / Dalam Proses (Belum Update, Lidik, Sidik, SPDP, Tahap I, P19, P21) */
-.lp-stat.ct {
-  border-top-color: #2563eb !important;
-}
-.lp-stat.ct .n {
-  color: #0f172a !important;
-}
-:root[data-theme="dark"] .lp-stat.ct .n {
-  color: #f8fafc !important;
-}
-
-/* Belum Update specific warm amber accent */
-.lp-stat[title*="Belum"],
-.lp-stat[title*="belum"],
-.lp-stat.ct:nth-child(2) {
-  border-top-color: #f59e0b !important;
-}
-
-/* 3. CC / Selesai (SP2LID, PERMA, SP3, Tahap II) */
-.lp-stat.cc {
-  border-top-color: #10b981 !important;
-}
-.lp-stat.cc .n {
-  color: #15803d !important;
-}
-:root[data-theme="dark"] .lp-stat.cc .n {
-  color: #4ade80 !important;
-}
-
-/* Active State (Selected Filter) */
-.lp-stat.active {
-  border-color: #ef4444 !important;
-  border-top-color: #ef4444 !important;
-  background: #fef2f2 !important;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35), 0 6px 16px rgba(239, 68, 68, 0.15) !important;
-}
-:root[data-theme="dark"] .lp-stat.active {
-  border-color: #ef4444 !important;
-  border-top-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.12) !important;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.45), 0 8px 20px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Number / Metric Typography */
-.lp-stat .n {
-  font-size: 1.35rem !important;
-  font-weight: 900 !important;
-  line-height: 1.15 !important;
-  letter-spacing: -0.02em !important;
-  font-variant-numeric: tabular-nums !important;
-  display: block !important;
-  margin-bottom: 0.2rem !important;
-  transition: color 0.15s ease !important;
-}
-
-/* Label Typography */
-.lp-stat .l {
-  font-size: 0.68rem !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  color: #64748b !important;
-  display: block !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
-  line-height: 1.25 !important;
-  transition: color 0.15s ease !important;
-}
-:root[data-theme="dark"] .lp-stat .l {
-  color: #94a3b8 !important;
-}
-
-.lp-stat.active .l {
-  color: #b91c1c !important;
-  font-weight: 800 !important;
-}
-:root[data-theme="dark"] .lp-stat.active .l {
-  color: #fca5a5 !important;
-}
-
-
-/* Filter Popover Attached Beneath Button */
-.kp-filter-wrapper {
-  position: relative;
-  display: inline-flex;
-}
-
-.kp-filter-popover {
-  position: absolute !important;
-  top: calc(100% + 8px) !important;
-  left: 0 !important;
-  z-index: 2500 !important;
-  width: min(44rem, calc(100vw - 2.5rem)) !important;
-  max-width: 44rem !important;
-  max-height: min(34rem, calc(100vh - 180px)) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--cas-border-card, #233554) !important;
-  animation: kpFilterPopFadeIn 0.15s ease-out;
-}
-
-.kp-filter-popover .kp-modal-header {
-  padding: 0.85rem 1.15rem;
-}
-
-.kp-filter-popover .kp-modal-body {
-  padding: 1.15rem;
-  min-height: 240px;
-  max-height: min(24rem, calc(100vh - 280px));
-}
-
-.kp-filter-popover .kp-modal-footer {
-  padding: 0.75rem 1.15rem;
-}
-
-@keyframes kpFilterPopFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.kp-filter-trigger-btn.active {
-  background: rgba(220, 38, 38, 0.12) !important;
-  border-color: #ef4444 !important;
-  color: #ef4444 !important;
-}
-:root[data-theme=dark] .kp-filter-trigger-btn.active {
-  background: rgba(239, 68, 68, 0.16) !important;
-  border-color: #ef4444 !important;
-  color: #fca5a5 !important;
-}
 
 /* ==========================================================================
    KINERJA PERKARA FILTER POPOVER: DROPUP & COMPACT DIMENSIONS ("ENAK DILIHAT")
@@ -3925,3 +4389,338 @@ body:not([data-theme=dark]) .kp-toolbar-row {
   color: #93c5fd !important;
 }
 
+
+
+
+/* ==========================================================================
+   USER PROFILE & EXECUTIVE VIEW ENHANCEMENTS
+   ========================================================================== */
+
+/* User Profile Header Pills: Sleek glass integration */
+.cms-card div:has(> .profile-pill),
+div[style*="marginTop:-1.6rem"],
+div[style*="margin-top: -1.6rem"],
+div[style*="margin-top:-1.6rem"] {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+
+div[style*="marginTop:-1.6rem"] > span,
+div[style*="margin-top: -1.6rem"] > span,
+div[style*="margin-top:-1.6rem"] > span {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+}
+
+:root[data-theme="dark"] div[style*="marginTop:-1.6rem"] > span,
+[data-theme="dark"] div[style*="marginTop:-1.6rem"] > span {
+  background: #111a2e !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Kinerja Perkara Summary Strip Smooth Horizontal Layout */
+#kp-summary-strip {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent !important;
+}
+#kp-summary-strip::-webkit-scrollbar {
+  height: 5px !important;
+}
+#kp-summary-strip::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25) !important;
+  border-radius: 999px !important;
+}
+
+
+
+/* ==========================================================================
+   KINERJA PERKARA FLOATING POPOVER & ANCHOR FIX
+   ========================================================================== */
+
+/* Filter Popover Attached Beneath Button */
+.kp-filter-wrapper {
+  position: relative !important;
+  display: inline-flex !important;
+}
+
+.kp-filter-popover,
+.kp-modal-card.kp-filter-popover {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  z-index: 2500 !important;
+  width: min(44rem, calc(100vw - 2.5rem)) !important;
+  max-width: 44rem !important;
+  max-height: min(34rem, calc(100vh - 180px)) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--cas-border-card, #233554) !important;
+  animation: kpFilterPopFadeIn 0.15s ease-out !important;
+}
+
+.kp-filter-popover .kp-modal-header {
+  padding: 0.85rem 1.15rem !important;
+}
+
+.kp-filter-popover .kp-modal-body {
+  padding: 1.15rem !important;
+  min-height: 240px !important;
+  max-height: min(24rem, calc(100vh - 280px)) !important;
+}
+
+.kp-filter-popover .kp-modal-footer {
+  padding: 0.75rem 1.15rem !important;
+}
+
+@keyframes kpFilterPopFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kp-filter-trigger-btn.active {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+:root[data-theme=dark] .kp-filter-trigger-btn.active {
+  background: rgba(239, 68, 68, 0.16) !important;
+  border-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+/* ==========================================================================
+   KP PRINT DIALOG & A4 PREVIEW SHEET (DUAL THEME SUPPORT)
+   ========================================================================== */
+.kp-modal-header-title { font-weight: 800; font-size: 1.05rem; color: #0f172a; }
+.kp-modal-header-sub { font-size: 0.75rem; color: #64748b; margin-top: 1px; }
+.kp-modal-btn { background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; border-radius: 8px; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem; transition: all 0.15s ease; font-family: inherit; }
+.kp-modal-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
+.kp-dialog-canvas { background: #e2e8f0 !important; }
+.kp-dialog-footer-text { font-size: 0.78rem; color: #64748b; display: flex; align-items: center; gap: 0.4rem; }
+
+:root[data-theme="dark"] .kp-print-dialog .p-dialog-header { background: #111a2e !important; border-bottom: 1px solid #1f2b45 !important; }
+:root[data-theme="dark"] .kp-modal-header-title { color: #f8fafc !important; }
+:root[data-theme="dark"] .kp-modal-header-sub { color: #94a3b8 !important; }
+:root[data-theme="dark"] .kp-modal-btn { background: #1e293b !important; border: 1px solid #334155 !important; color: #f1f5f9 !important; }
+:root[data-theme="dark"] .kp-modal-btn:hover { background: #27354f !important; color: #ffffff !important; border-color: #475569 !important; }
+:root[data-theme="dark"] .kp-dialog-canvas { background: #070d18 !important; }
+:root[data-theme="dark"] .kp-print-dialog .p-dialog-footer { background: #111a2e !important; border-top: 1px solid #1f2b45 !important; }
+:root[data-theme="dark"] .kp-dialog-footer-text { color: #94a3b8 !important; }
+
+/* Protected Authentic White A4 Paper Sheet */
+.kp-paper-sheet,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet,
+:root[data-theme="dark"] .kp-paper-sheet {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.kp-paper-sheet .sheet-title-box,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .sheet-title-box {
+  text-align: center !important;
+  margin-bottom: 28px !important;
+}
+.kp-paper-sheet .kp-sheet-title-line,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-title-line {
+  font-family: Arial, sans-serif !important;
+  font-size: 12pt !important;
+  font-weight: bold !important;
+  color: #0f172a !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  line-height: 1.35 !important;
+  margin: 2px 0 !important;
+  text-align: center !important;
+}
+.kp-paper-sheet table,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background-color: #ffffff !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+}
+.kp-paper-sheet th,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  padding: 5px 4px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+  font-weight: bold !important;
+  text-align: center !important;
+}
+.kp-paper-sheet td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet td {
+  border: 1px solid #cbd5e1 !important;
+  padding: 4.5px 5px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 10pt !important;
+  color: #0f172a !important;
+}
+.kp-paper-sheet tr.kp-row-white td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.kp-row-white td {
+  background-color: #ffffff !important;
+}
+.kp-paper-sheet tr.kp-row-zebra td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.kp-row-zebra td {
+  background-color: #f8fafc !important;
+}
+.kp-paper-sheet tr.total-row td,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet tr.total-row td {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  border-top: 2px solid #0f172a !important;
+  border-bottom: 2px solid #0f172a !important;
+  font-weight: bold !important;
+}
+.kp-paper-sheet .kp-sheet-footer,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-footer {
+  margin-top: 24px !important;
+  padding-top: 6px !important;
+  border-top: 1px dashed #cbd5e1 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  font-size: 9pt !important;
+  color: #475569 !important;
+}
+.kp-paper-sheet .kp-sheet-footer strong,
+:root[data-theme="dark"] .p-dialog .kp-paper-sheet .kp-sheet-footer strong {
+  color: #0f172a !important;
+}
+
+
+
+/* --- DORS INTEGRATION THEME ENHANCEMENTS --- */
+.dors-sched-grid .p-inputnumber .p-inputnumber-button,
+.p-inputnumber-button-up,
+.p-inputnumber-button-down {
+  background: var(--surface-100, #f1f5f9) !important;
+  border: 1px solid var(--surface-border, #cbd5e1) !important;
+  color: var(--text-color, #334155) !important;
+  box-shadow: none !important;
+}
+.p-inputnumber-button-up:hover,
+.p-inputnumber-button-down:hover {
+  background: var(--surface-200, #e2e8f0) !important;
+  color: var(--text-color, #0f172a) !important;
+}
+:root[data-theme=dark] .p-inputnumber .p-inputnumber-button,
+:root[data-theme=dark] .p-inputnumber-button-up,
+:root[data-theme=dark] .p-inputnumber-button-down {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #cbd5e1 !important;
+  box-shadow: none !important;
+}
+:root[data-theme=dark] .p-inputnumber-button-up:hover,
+:root[data-theme=dark] .p-inputnumber-button-down:hover {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+.dors-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-color-secondary, #94a3b8);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dors-tab-btn:hover {
+  color: var(--text-color, #f1f5f9);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+}
+.dors-tab-btn.active-sync {
+  font-weight: 800;
+  color: #3b82f6;
+  border-bottom: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+}
+.dors-tab-btn.active-hd {
+  font-weight: 800;
+  color: #ef4444;
+  border-bottom: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+.dors-tab-btn.active-sources {
+  font-weight: 800;
+  color: #0ea5e9;
+  border-bottom: 2px solid #0ea5e9;
+  background: rgba(14, 165, 233, 0.12);
+}
+:root[data-theme=dark] .dors-tab-btn.active-sync {
+  color: #60a5fa !important;
+  border-bottom: 2px solid #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.18) !important;
+}
+:root[data-theme=dark] .dors-tab-btn.active-hd {
+  color: #f87171 !important;
+  border-bottom: 2px solid #ef4444 !important;
+  background: rgba(239, 68, 68, 0.18) !important;
+}
+:root[data-theme=dark] .dors-tab-btn.active-sources {
+  color: #38bdf8 !important;
+  border-bottom: 2px solid #0ea5e9 !important;
+  background: rgba(14, 165, 233, 0.18) !important;
+}
+
+
+/* ==========================================================================
+   FIX NESTED INNER BORDER IN DROPDOWNS & MULTISELECTS (NO INNER SUB-CARD/BORDER)
+   Ensure .p-dropdown-label and .p-multiselect-label never inherit .p-inputtext border/bg
+   ========================================================================== */
+.p-dropdown .p-dropdown-label,
+.p-dropdown .p-dropdown-label.p-inputtext,
+.p-dropdown .p-inputtext,
+.p-dropdown input.p-dropdown-label,
+.p-dropdown .p-dropdown-label:focus,
+.p-dropdown .p-dropdown-label:hover,
+.p-dropdown.p-focus .p-dropdown-label,
+.p-multiselect .p-multiselect-label,
+.p-multiselect .p-multiselect-label.p-inputtext,
+.p-multiselect .p-inputtext,
+.p-multiselect .p-multiselect-label:focus,
+.p-multiselect .p-multiselect-label:hover,
+.p-multiselect.p-focus .p-multiselect-label,
+:root[data-theme="dark"] .p-dropdown .p-dropdown-label,
+:root[data-theme="dark"] .p-dropdown .p-dropdown-label.p-inputtext,
+:root[data-theme="dark"] .p-dropdown .p-inputtext,
+:root[data-theme="dark"] .p-multiselect .p-multiselect-label,
+:root[data-theme="dark"] .p-multiselect .p-multiselect-label.p-inputtext,
+:root[data-theme="dark"] .p-multiselect .p-inputtext,
+[data-theme="dark"] .p-dropdown .p-dropdown-label,
+[data-theme="dark"] .p-dropdown .p-dropdown-label.p-inputtext,
+[data-theme="dark"] .p-dropdown .p-inputtext,
+[data-theme="dark"] .p-multiselect .p-multiselect-label,
+[data-theme="dark"] .p-multiselect .p-multiselect-label.p-inputtext,
+[data-theme="dark"] .p-multiselect .p-multiselect-label.p-placeholder,
+[data-theme="dark"] .p-multiselect .p-inputtext {
+  border: 0 none !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  outline: 0 none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
