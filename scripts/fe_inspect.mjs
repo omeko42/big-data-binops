@@ -11,7 +11,16 @@ export function runRemote(target, hostKey, cmd) {
     const b64 = Buffer.from(cmd).toString('base64');
     const remoteCmd = `echo '${b64}' | base64 -d | bash`;
     const fullCmd = `"${plinkPath}" -batch -ssh -hostkey "${hostKey}" -pw ${password} ${target} "${remoteCmd}"`;
-    return execSync(fullCmd, { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 });
+    for (let attempt = 1; attempt <= 4; attempt++) {
+        try {
+            return execSync(fullCmd, { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 });
+        } catch (e) {
+            if (attempt === 4) throw e;
+            const sleepMs = attempt * 600;
+            const start = Date.now();
+            while (Date.now() - start < sleepMs) {}
+        }
+    }
 }
 
 export function runFE(cmd) {
