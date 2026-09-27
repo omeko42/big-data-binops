@@ -34,9 +34,15 @@ async function verify() {
     const dashGrep = runFE('docker exec bdb-web grep -o "onLihatSemua:()=>e.push(\\"/cms/laporan/pihak-sering-terlibat\\")" /usr/src/app/.next/static/chunks/dashboard-perma-318125d33290.js || true').trim();
     console.log('Found dashboard onLihatSemua redirect in live chunk:', dashGrep ? 'YES' : 'NO');
     const filterGrep = runFE('docker exec bdb-web grep -o "dash-filter-pihak-jenis" /usr/src/app/.next/static/chunks/dashboard-perma-318125d33290.js || true').trim();
-    console.log('Card headerExtra (sub-card filter) cleanly removed:', !filterGrep ? 'YES' : 'NO');
-    if (filterGrep) {
-        throw new Error('Filter dropdown still present in dashboard chunk!');
+    console.log('Card headerExtra filter dropdown present:', filterGrep ? 'YES' : 'NO');
+    if (!filterGrep) {
+        throw new Error('Filter dropdown missing from dashboard chunk!');
+    }
+
+    const cssFixGrep = runFE('docker exec bdb-web grep -o "FIX NESTED INNER BORDER IN DROPDOWNS" /usr/src/app/.next/static/chunks/20sy5p32bn-wu.css || true').trim();
+    console.log('CSS fix for nested inner border in dropdowns present:', cssFixGrep ? 'YES' : 'NO');
+    if (!cssFixGrep) {
+        throw new Error('CSS nested border fix missing from 20sy5p32bn-wu.css!');
     }
 
     console.log('4. Verifying backend API health & Sarjono status...');
