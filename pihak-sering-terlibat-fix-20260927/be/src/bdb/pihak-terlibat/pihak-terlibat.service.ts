@@ -472,13 +472,18 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                         satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                         count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                        jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                        jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                         tipe_subjek, tipe_identitas
                     )
                     WITH raw_dors AS (
                         SELECT 
                             lp.id as lp_id,
-                            lp.satker_id,
+                            coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                            case 
+                                when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                                when d.id_polda is not null then d.id_polda
+                                else '060.01.00'
+                            end as wilayah_kode,
                             upper(trim(t.nama)) as nama,
                             trim(t.nik) as nik,
                             upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
@@ -500,6 +505,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         FROM bdb_laporan_polisi lp
                         JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                         JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                        LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                         WHERE lp.deleted_at IS NULL
                           AND t.nik IS NOT NULL AND trim(t.nik) ~ '^[1-9][0-9]{15}$'
                           AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
@@ -519,7 +525,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     raw_tsk AS (
                         SELECT 
                             d.lp_id,
-                            lp.satker_id,
+                            coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                            case 
+                                when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                                else '060.01.00'
+                            end as wilayah_kode,
                             upper(trim(item->>'nama')) as nama,
                             trim(item->>'nik') as nik,
                             'TERSANGKA'::text as keterlibatan,
@@ -542,6 +552,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         FROM bdb_dokumen d
                         JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
                         LEFT JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id
+                        LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                         CROSS JOIN LATERAL jsonb_array_elements(
                             CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
                         ) party(item)
@@ -571,16 +582,32 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
                             count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
                             count(distinct satker_id)::int as jumlah_satker_unik,
+                            count(distinct wilayah_kode)::int as jumlah_polda_unik,
                             min(satker_tier)::int as satker_tier,
-                            (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) as is_lintas_wilayah,
+                            (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
                             (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
                             string_agg(distinct satker_nama, ', ') as daftar_satker,
                             max(seen_at) as last_seen,
                             (
-                                (case when (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) then 10000 else 0 end)
-                                + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 1000 else 0 end)
-                                + (count(distinct satker_id) * 100)
-                                + (count(distinct lp_id) * 10)
+                                (case 
+                                    when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
+                                        then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
+                                    when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
+                                        then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
+                                    when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
+                                        then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
+                                    when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                        then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
+                                    when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                        then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
+                                    when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
+                                        then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
+                                    else 0 
+                                end)
+                                + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
+                                + (count(distinct satker_id) * 300)
+                                + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
+                                + (count(distinct lp_id) * 50)
                             )::int as nasional_score
                         FROM filtered
                         WHERE 1=1 ${roleFilter}
@@ -596,7 +623,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         nama, nik, total_lp,
                         satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
                         count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                        jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                        jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                         'PERORANGAN' as tipe_subjek,
                         'NIK' as tipe_identitas
                     FROM person_agg
@@ -653,6 +680,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     FROM bdb_laporan_polisi lp
                     JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
                       AND (
                         upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
@@ -673,16 +701,32 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
                         count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
                         count(distinct satker_id)::int as jumlah_satker_unik,
+                        count(distinct wilayah_kode)::int as jumlah_polda_unik,
                         min(satker_tier)::int as satker_tier,
-                        (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) as is_lintas_wilayah,
+                        (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
                         (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
                         string_agg(distinct satker_nama, ', ') as daftar_satker,
                         max(seen_at) as last_seen,
                         (
-                            (case when (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) then 10000 else 0 end)
-                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 1000 else 0 end)
-                            + (count(distinct satker_id) * 100)
-                            + (count(distinct lp_id) * 10)
+                            (case 
+                                when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
+                                    then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
+                                when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
+                                    then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
+                                when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
+                                    then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
+                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                    then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
+                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                    then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
+                                when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
+                                    then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
+                                else 0 
+                            end)
+                            + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
+                            + (count(distinct satker_id) * 300)
+                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
+                            + (count(distinct lp_id) * 50)
                         )::int as nasional_score
                     FROM raw_corp
                     GROUP BY synth_nik
@@ -707,7 +751,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     tipe_subjek, tipe_identitas
                 )
                 SELECT 
@@ -719,7 +763,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     'KORPORASI' as tipe_subjek,
                     'BADAN HUKUM' as tipe_identitas
                 FROM multi_corp
@@ -1235,8 +1279,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
                         else coalesce(d.synced_at, lp.synced_at, now())::date
                     end as tgl_date,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
                     coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
                     'DORS' as sumber
                 FROM bdb_dors_lp_terlibat t
@@ -1261,8 +1309,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
                         else coalesce(lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
                     coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(x.keterlibatan, 'PIHAK'))) as peran,
                     'DOKUMEN' as sumber
                 FROM document_parties x
@@ -1286,8 +1338,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10), 'DD-MM-YYYY')
                         else coalesce(lp.synced_at, lp.created_at, now())::date
                     end as tgl_date,
+                    coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                    coalesce(d.tempat_kejadian, '—') as tempat_kejadian,
                     coalesce(jk.keterangan, '—') as kejahatan,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                    coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
                     upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as peran,
                     'MANUAL' as sumber
                 FROM bdb_lp_pihak_manual m
@@ -1332,6 +1388,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 JOIN bdb_dors_lp d ON d.id = t.lp_id
                 LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE t.nik = $1
 
                 UNION ALL
@@ -1353,7 +1411,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     'DOKUMEN' as sumber
                 FROM document_parties x
                 JOIN bdb_laporan_polisi lp ON lp.id = x.lp_id AND lp.deleted_at is null
+                LEFT JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE x.nik = $1
 
                 UNION ALL
@@ -1375,7 +1436,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     'MANUAL' as sumber
                 FROM bdb_lp_pihak_manual m
                 JOIN bdb_laporan_polisi lp ON lp.id = m.lp_id AND lp.deleted_at is null
+                LEFT JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
                 WHERE m.deleted_at is null AND m.nik = $1
             )
             SELECT *,
@@ -1412,6 +1476,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const inPeriod = (!fromStr || tDateStr >= fromStr) && (!toStr || tDateStr <= toStr);
                 deduped.push({
                     ...r,
+                    waktu_kejadian: r.waktu_kejadian || '—',
+                    tempat_kejadian: r.tempat_kejadian || '—',
+                    satker_nama: r.satker_nama || 'POLRI',
+                    wilayah_nama: r.wilayah_nama || 'POLRI',
                     in_period: inPeriod,
                     tahun: tDateStr ? tDateStr.substring(0, 4) : '—'
                 });
@@ -1597,18 +1665,20 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 }
 
                 const orderClauseMaster = catFilter === 'ALL'
-                    ? 'kasta_rank ASC, satker_tier ASC, jumlah_satker_unik DESC, total_lp DESC, last_seen DESC'
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
-                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
-                       catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
-                       catFilter === 'SAKSI' ? 'count_saksi DESC,' :
-                       catFilter === 'KORBAN' ? 'count_korban DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ' satker_tier ASC, jumlah_satker_unik DESC, total_lp DESC, last_seen DESC';
+                    ? (keterlibatan === 'LINTAS_WILAYAH' 
+                        ? 'jumlah_polda_unik DESC, nasional_score DESC, total_lp DESC, last_seen DESC' 
+                        : 'nasional_score DESC, total_lp DESC, last_seen DESC')
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
+                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
+                       catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
+                       catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
+                       catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
+                       catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
 
                 const snapRanking = await this.dataSource.query(`
                     SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                           jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                           jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                            tipe_subjek, tipe_identitas,
                            CASE 
                              WHEN count_dpo > 0 THEN 'DPO'
@@ -1688,7 +1758,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         count_pelapor: Number(r.count_pelapor || 0),
                         count_dpo: Number(r.count_dpo || 0),
                         jumlah_satker_unik: Number(r.jumlah_satker_unik || 1),
+                        jumlah_polda_unik: Number(r.jumlah_polda_unik || 1),
                         is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
+                        nasional_score: Number(r.nasional_score || 0),
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
                         tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
                         last_seen: r.last_seen
@@ -1719,18 +1791,18 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const catFilter = (keterlibatan && keterlibatan !== 'ALL' && keterlibatan !== 'LINTAS_WILAYAH') ? keterlibatan : 'ALL';
 
                 const orderClauseDash = catFilter === 'ALL'
-                    ? 'kasta_rank ASC, satker_tier ASC, jumlah_satker_unik DESC, total_lp DESC, last_seen DESC'
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
-                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
-                       catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
-                       catFilter === 'SAKSI' ? 'count_saksi DESC,' :
-                       catFilter === 'KORBAN' ? 'count_korban DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ' satker_tier ASC, jumlah_satker_unik DESC, total_lp DESC, last_seen DESC';
+                    ? 'nasional_score DESC, total_lp DESC, last_seen DESC'
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
+                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
+                       catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
+                       catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
+                       catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
+                       catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
 
                 const snapRanking = await this.dataSource.query(`
                     SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                           jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                           jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                            tipe_subjek, tipe_identitas,
                            CASE 
                              WHEN count_dpo > 0 THEN 'DPO'
@@ -1801,7 +1873,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             count_pelapor: Number(r.count_pelapor || 0),
                             count_dpo: Number(r.count_dpo || 0),
                             jumlah_satker_unik: Number(r.jumlah_satker_unik || 1),
+                            jumlah_polda_unik: Number(r.jumlah_polda_unik || 1),
                             is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
+                            nasional_score: Number(r.nasional_score || 0),
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
                             tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
                             last_seen: r.last_seen
@@ -1823,7 +1897,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const snap = await this.dataSource.query(`
             SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                   jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                   jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                    CASE 
                      WHEN count_dpo > 0 THEN 'DPO'
                      WHEN count_tersangka > 0 THEN 'TERSANGKA'
@@ -1844,7 +1918,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                    END as kasta_rank
             FROM bdb_pihak_terlibat_ranking_snapshot
             WHERE ${partitionWhere} AND total_lp > 1
-            ORDER BY kasta_rank ASC, satker_tier ASC, jumlah_satker_unik DESC, total_lp DESC, last_seen DESC
+            ORDER BY nasional_score DESC, total_lp DESC, last_seen DESC
             LIMIT ${limit}
         `);
         return {
@@ -2217,7 +2291,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 WITH raw_dors AS (
                     SELECT 
                         lp.id as lp_id,
-                        lp.satker_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            when d.id_polda is not null then d.id_polda
+                            else '060.01.00'
+                        end as wilayah_kode,
                         upper(trim(t.nama)) as nama,
                         trim(t.nik) as nik,
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
@@ -2240,6 +2319,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     FROM bdb_laporan_polisi lp
                     JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) >= '${startDay}'::date
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) <= '${lastDay}'::date
@@ -2263,7 +2343,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 raw_tsk AS (
                     SELECT 
                         d.lp_id,
-                        lp.satker_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
                         upper(trim(item->>'nama')) as nama,
                         trim(item->>'nik') as nik,
                         'TERSANGKA'::text as keterlibatan,
@@ -2286,6 +2370,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     FROM bdb_dokumen d
                     JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
                     LEFT JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     CROSS JOIN LATERAL jsonb_array_elements(
                         CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
                     ) party(item)
@@ -2316,16 +2401,32 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
                         count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
                         count(distinct satker_id)::int as jumlah_satker_unik,
+                        count(distinct wilayah_kode)::int as jumlah_polda_unik,
                         min(satker_tier)::int as satker_tier,
-                        (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) as is_lintas_wilayah,
+                        (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
                         (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
                         string_agg(distinct satker_nama, ', ') as daftar_satker,
                         max(seen_at) as last_seen,
                         (
-                            (case when (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) then 10000 else 0 end)
-                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 1000 else 0 end)
-                            + (count(distinct satker_id) * 100)
-                            + (count(distinct lp_id) * 10)
+                            (case 
+                                when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
+                                    then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
+                                when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
+                                    then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
+                                when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
+                                    then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
+                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                    then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
+                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                    then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
+                                when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
+                                    then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
+                                else 0 
+                            end)
+                            + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
+                            + (count(distinct satker_id) * 300)
+                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
+                            + (count(distinct lp_id) * 50)
                         )::int as nasional_score
                     FROM filtered
                     GROUP BY nik
@@ -2385,7 +2486,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     tipe_subjek, tipe_identitas
                 )
                 SELECT 
@@ -2397,7 +2498,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     'PERORANGAN' as tipe_subjek,
                     'NIK' as tipe_identitas
                 FROM ranked
@@ -2425,6 +2526,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     FROM bdb_laporan_polisi lp
                     JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) >= '${startDay}'::date
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) <= '${lastDay}'::date
@@ -2447,16 +2549,32 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
                         count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
                         count(distinct satker_id)::int as jumlah_satker_unik,
+                        count(distinct wilayah_kode)::int as jumlah_polda_unik,
                         min(satker_tier)::int as satker_tier,
-                        (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) as is_lintas_wilayah,
+                        (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
                         (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
                         string_agg(distinct satker_nama, ', ') as daftar_satker,
                         max(seen_at) as last_seen,
                         (
-                            (case when (count(distinct satker_id) > 1 OR min(satker_tier) != max(satker_tier)) then 10000 else 0 end)
-                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 1000 else 0 end)
-                            + (count(distinct satker_id) * 100)
-                            + (count(distinct lp_id) * 10)
+                            (case 
+                                when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
+                                    then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
+                                when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
+                                    then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
+                                when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
+                                    then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
+                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                    then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
+                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                    then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
+                                when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
+                                    then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
+                                else 0 
+                            end)
+                            + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
+                            + (count(distinct satker_id) * 300)
+                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
+                            + (count(distinct lp_id) * 50)
                         )::int as nasional_score
                     FROM raw_corp
                     GROUP BY synth_nik
@@ -2481,7 +2599,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     tipe_subjek, tipe_identitas
                 )
                 SELECT 
@@ -2493,7 +2611,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                    jumlah_satker_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     'KORPORASI' as tipe_subjek,
                     'BADAN HUKUM' as tipe_identitas
                 FROM multi_corp ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
