@@ -44,9 +44,9 @@ function getVerificationBadge(role, isUserOne) {
   var r = String(role || '').toLowerCase().trim();
   if (r === 'superadmin') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#10b981', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
-  if (r === 'operator') return { color: '#3b82f6', label: 'Operator Terverifikasi', role: 'operator' };
-  if (r === 'viewer') return { color: '#3b82f6', label: 'Viewer Terverifikasi', role: 'viewer' };
-  return null;
+  if (r === 'operator') return { color: '#38bdf8', label: 'Operator Terverifikasi', role: 'operator' };
+  if (r === 'viewer') return { color: '#38bdf8', label: 'Viewer Terverifikasi', role: 'viewer' };
+  return { color: '#38bdf8', label: 'Personil CAS Terverifikasi', role: 'personil' };
 }
 
 function formatCount(num) {
