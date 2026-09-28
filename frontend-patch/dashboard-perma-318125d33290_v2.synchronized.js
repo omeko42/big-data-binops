@@ -2,7 +2,7 @@ function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")
   function formatCallsign(rawCallsign, authorId, username) {
     var idStr = String(authorId || '');
     if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
-    var c = String(rawCallsign || '').trim().replace(/^@/, '');
+    var c = String(rawCallsign || '').trim().replace(/^@/, ''); if (c.startsWith('pers_') || c.startsWith('user_')) c = '';
     var invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
     if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
       return '@' + c.toLowerCase();

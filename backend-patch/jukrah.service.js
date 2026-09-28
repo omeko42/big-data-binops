@@ -177,7 +177,7 @@ let JukrahService = class JukrahService {
         const posts = rows.map((r) => {
             const isSelf = Number(r.author_id) === uid;
             const canSeeRealName = isGlobalAdmin || isSelf;
-            const handle = r.author_callsign ? `@${r.author_callsign}` : `@pers_${r.author_id}`;
+            const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
             const displayName = canSeeRealName ? (r.raw_author_name || handle) : handle;
             const isVerified = r.author_role && r.author_role !== 'sharese';
             const media = (r.media_urls || []).map((m) => ({
@@ -193,8 +193,8 @@ let JukrahService = class JukrahService {
                 author_role: r.author_role,
                 author_photo: r.author_photo,
                 author_satker: r.author_satker_singkat || r.author_satker_nama || 'Mabes Bareskrim',
-                author_callsign: r.author_callsign || (handle.startsWith('@') ? handle.slice(1) : handle),
-                author_username: r.author_callsign || (handle.startsWith('@') ? handle.slice(1) : handle),
+                author_callsign: (handle.startsWith('@') ? handle.slice(1) : handle),
+                author_username: (handle.startsWith('@') ? handle.slice(1) : handle),
                 author_photo_url: r.author_photo || null,
                 satker: r.author_satker_singkat || r.author_satker_nama || 'Mabes Bareskrim',
                 satker_name: r.author_satker_nama || r.author_satker_singkat || 'Mabes Bareskrim',
@@ -205,12 +205,14 @@ let JukrahService = class JukrahService {
                 media,
                 case_lp_ids: r.case_lp_ids || [],
                 reaction_counts: r.reaction_counts || { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 },
+                total_reactions: Object.values(r.reaction_counts || {}).reduce((s, v) => s + Number(v || 0), 0),
                 repost_count: Number(r.repost_count || 0),
                 view_count: Number(r.view_count || 0),
                 is_official_jukrah: Boolean(r.is_official_jukrah),
                 is_pinned: Boolean(r.is_pinned),
                 parent_post_id: r.parent_post_id ? Number(r.parent_post_id) : null,
                 my_reaction: r.my_reaction || null,
+                user_reaction: r.my_reaction || null,
                 my_acknowledged: Boolean(r.my_acknowledged),
                 comments_count: Number(r.comments_count || 0),
                 is_bookmarked: Boolean(r.is_bookmarked),
@@ -232,7 +234,7 @@ let JukrahService = class JukrahService {
             const parentMap = new Map(parents.map((p) => [Number(p.id), {
                     id: Number(p.id),
                     content: p.content,
-                    author_handle: p.callsign ? `@${p.callsign}` : `@pers_${p.id}`,
+                    author_handle: this.formatCallsign(p.callsign, p.id, p.username),
                     satker: p.satker || 'Mabes',
                     created_at: p.created_at
                 }]));
@@ -368,7 +370,8 @@ let JukrahService = class JukrahService {
         const newCounts = { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 };
         counts.forEach((c) => { newCounts[c.reaction_type] = Number(c.c); });
         await this.dataSource.query('UPDATE bdb_social_posts SET reaction_counts = $2 WHERE id = $1', [postId, JSON.stringify(newCounts)]);
-        return { status: 1, data: { my_reaction: currentReaction, reaction_counts: newCounts } };
+        const total = Object.values(newCounts).reduce((s, v) => s + Number(v || 0), 0);
+        return { status: 1, data: { my_reaction: currentReaction, user_reaction: currentReaction, reaction_counts: newCounts, total_reactions: total } };
     }
     async getComments(user, postId) {
         const uid = Number(user?.id);
@@ -384,7 +387,7 @@ let JukrahService = class JukrahService {
         const comments = rows.map((r) => {
             const isSelf = Number(r.author_id) === uid;
             const canSeeReal = isGlobalAdmin || isSelf;
-            const handle = r.callsign ? `@${r.callsign}` : `@pers_${r.author_id}`;
+            const handle = this.formatCallsign(r.callsign, r.author_id, r.username);
             return {
                 id: Number(r.id),
                 parent_id: r.parent_id ? Number(r.parent_id) : null,
@@ -573,7 +576,8 @@ let JukrahService = class JukrahService {
     formatCallsign(rawCallsign, authorId, username) {
         const idStr = String(authorId || '');
         if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
-        const c = String(rawCallsign || '').trim().replace(/^@/, '');
+        let c = String(rawCallsign || '').trim().replace(/^@/, '');
+        if (c.startsWith('pers_') || c.startsWith('user_')) c = '';
         const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
         if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
             return '@' + c.toLowerCase();
