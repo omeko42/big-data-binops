@@ -1,14 +1,10 @@
-import { runFE } from './fe_exec.mjs';
+import { runFE } from './fe_inspect.mjs';
 
-const cmd = `docker exec bdb-web node -e "
-const fs = require('fs');
-for (const f of ['233p45nuh4m5b.css', '34oh417k1w4ti.css']) {
-  const p = '/usr/src/app/.next/static/chunks/' + f;
-  if (fs.existsSync(p)) {
-    console.log('=== ' + f + ' (size: ' + fs.statSync(p).size + ') ===');
-    console.log(fs.readFileSync(p, 'utf8').slice(0, 500));
-  }
+const cmd = `docker exec bdb-web node -e '
+const fs = require("fs");
+for (const file of ["/usr/src/app/.next/static/chunks/34oh417k1w4ti.css", "/usr/src/app/.next/static/chunks/233p45nuh4m5b.css"]) {
+  const content = fs.readFileSync(file, "utf8");
+  console.log(file, "length:", content.length, "first 200 chars:", content.slice(0, 200));
 }
-"`;
-
+'`;
 console.log(runFE(cmd));

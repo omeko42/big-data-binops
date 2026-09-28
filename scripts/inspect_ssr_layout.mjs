@@ -1,13 +1,13 @@
-import { runFE } from './fe_exec.mjs';
+import fs from 'fs';
 
-const cmd = `docker exec bdb-web node -e '
-  const fs = require("fs");
-  const code = fs.readFileSync("/usr/src/app/.next/server/chunks/ssr/app_cms_layout_tsx_0ml_4_3._.js", "utf8");
-  console.log("Has livePhoto?", code.includes("livePhoto"));
-  console.log("Has photo_url in avatar?", code.includes("photo_url"));
-  const idx = code.indexOf("cms-user-avatar");
-  console.log("=== Around cms-user-avatar ===");
-  console.log(code.substring(idx - 100, idx + 100));
-'`;
-
-console.log(runFE(cmd));
+const content = fs.readFileSync('frontend-patch/app_cms_layout_tsx_0ml_4_3._.js', 'utf8');
+const idx = content.indexOf('["superadmin","admin_binops"');
+console.log('Found in SSR:', idx);
+if (idx !== -1) {
+    console.log(content.substring(idx - 30, idx + 4000));
+} else {
+    console.log('Not found by role array, searching Jukrah:');
+    let jIdx = content.indexOf('Jukrah');
+    console.log('Jukrah at:', jIdx);
+    if (jIdx !== -1) console.log(content.substring(jIdx - 200, jIdx + 400));
+}
