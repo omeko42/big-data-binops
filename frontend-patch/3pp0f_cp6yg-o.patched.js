@@ -1167,7 +1167,7 @@ e.s(["default",0,function() {
                       var cmInitials = String(cm.author_name || cmHandle || 'P').charAt(0).toUpperCase();
                       var cmAvatar = cm.author_photo_url || cm.author_photo || null;
 
-                      return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
+                      return (0,t.jsxs)("div",{key:cm.id,style:{background:"var(--surface-50, rgba(0,0,0,0.02))",border:"1px solid var(--surface-border, rgba(0,0,0,0.06))",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
                           onClick:() => handleOpenUserProfile(cm.author_id || cm.user_id, cm),
                           style:{cursor:"pointer",display:"inline-flex",transition:"transform 0.15s ease"},
@@ -1197,7 +1197,7 @@ e.s(["default",0,function() {
                               children:"✕"
                             })
                           ]}),
-                          (0,t.jsx)("div",{style:{color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.4",whiteSpace:"pre-wrap"},children:
+                          (0,t.jsx)("div",{style:{color:"var(--text-color, #1e293b)",lineHeight:"1.4",whiteSpace:"pre-wrap"},children:
                             renderPostContent(cm.content, (tag) => {
                               setFeedType('all');
                               setSearchQuery(tag);
@@ -1241,7 +1241,7 @@ e.s(["default",0,function() {
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
 
-            return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
+            return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--surface-50, rgba(0,0,0,0.02))",border:"1px solid var(--surface-border, rgba(0,0,0,0.06))",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
                 onClick:() => { setReactionsPostId(null); handleOpenUserProfile(usr.id, usr); },
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
@@ -1249,7 +1249,7 @@ e.s(["default",0,function() {
                 children:[
                   renderCornerAvatar(usr.photo_url, initials, usrBadge, 2.2, 14, 8),
                   (0,t.jsxs)("div",{children:[
-                    (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"#fff",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
+                    (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--text-color, #0f172a)",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
                       usr.pangkat && usr.pangkat !== '-' ? usr.pangkat + ' ' : '',
                       usr.name || usr.username
                     ]}),
@@ -1362,34 +1362,34 @@ e.s(["default",0,function() {
           // Identity Meta
           (0,t.jsxs)("div",{style:{marginTop:"1.8rem",padding:"0 0.5rem"},children:[
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap"},children:[
-              (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#fff"},children:previewUser.name}),
-              (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
+              (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:previewUser.name}),
+              (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#16a34a",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
             ]}),
-            (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#38bdf8",fontWeight:700,marginTop:"0.2rem"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
-            (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"#e2e8f0",marginTop:"0.25rem",fontWeight:600},children:[
+            (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#0284c7",fontWeight:700,marginTop:"0.2rem"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
+            (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"var(--text-color, #334155)",marginTop:"0.25rem",fontWeight:600},children:[
               previewUser.pangkat && previewUser.pangkat !== '-' ? previewUser.pangkat + " • " : "",
               previewUser.jabatan || previewUser.role || "Penyidik Reserse Polri"
             ]}),
-            (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri")})
+            (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"var(--text-color-secondary, #64748b)",marginTop:"0.15rem"},children:toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri")})
           ]}),
 
           // Details Grid (NRP, Status Kedinasan, Email Dinas, Bio)
           (0,t.jsxs)("div",{style:{display:"grid",gap:"0.6rem",padding:"0 0.5rem"},children:[
             (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem"},children:[
-              (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.06)"},children:[
+              (0,t.jsxs)("div",{style:{background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))"},children:[
                 (0,t.jsx)("div",{style:{fontSize:"0.68rem",color:"#94a3b8",fontWeight:700},children:"NRP / IDENTITAS"}),
-                (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"#fff",fontWeight:700,marginTop:"0.15rem"},children:previewUser.nrp || "-"})
+                (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--text-color, #0f172a)",fontWeight:700,marginTop:"0.15rem"},children:previewUser.nrp || "-"})
               ]}),
-              (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.06)"},children:[
+              (0,t.jsxs)("div",{style:{background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))"},children:[
                 (0,t.jsx)("div",{style:{fontSize:"0.68rem",color:"#94a3b8",fontWeight:700},children:"STATUS KEDINASAN"}),
                 (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"#4ade80",fontWeight:700,marginTop:"0.15rem"},children:"Polri Aktif"})
               ]})
             ]}),
-            (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.06)"},children:[
+            (0,t.jsxs)("div",{style:{background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))"},children:[
               (0,t.jsx)("div",{style:{fontSize:"0.68rem",color:"#94a3b8",fontWeight:700},children:"EMAIL DINAS POLRI"}),
-              (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"#fff",fontWeight:600,marginTop:"0.15rem"},children:previewUser.email_polri || previewUser.email || "reskrim.ops@polri.go.id"})
+              (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--text-color, #0f172a)",fontWeight:600,marginTop:"0.15rem"},children:previewUser.email_polri || previewUser.email || "reskrim.ops@polri.go.id"})
             ]}),
-            previewUser.bio && (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.06)"},children:[
+            previewUser.bio && (0,t.jsxs)("div",{style:{background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.6rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))"},children:[
               (0,t.jsx)("div",{style:{fontSize:"0.68rem",color:"#94a3b8",fontWeight:700},children:"TENTANG PERSONIL"}),
               (0,t.jsx)("div",{style:{fontSize:"0.8rem",color:"#cbd5e1",marginTop:"0.2rem",lineHeight:1.45},children:previewUser.bio})
             ]})
