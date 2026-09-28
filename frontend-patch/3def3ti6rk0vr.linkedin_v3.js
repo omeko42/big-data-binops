@@ -625,25 +625,25 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
   ]}),
   children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.5rem 0"},children:[
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Posisi / Jabatan Kedinasan *"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Posisi / Jabatan Kedinasan *"}),
       (0,t.jsx)(i.InputText,{value:eExpForm.title,onChange:ev=>setExpForm({...eExpForm,title:ev.target.value}),placeholder:"Contoh: Kanit Reskrim / Penyidik Pratama / Bintara Operator",style:{width:"100%",fontSize:"0.85rem"}}),
     ]}),
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Instansi / Satuan Kerja (Satker) *"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Instansi / Satuan Kerja (Satker) *"}),
       (0,t.jsx)(i.InputText,{value:eExpForm.company,onChange:ev=>setExpForm({...eExpForm,company:ev.target.value}),placeholder:"Contoh: Ditreskrimsus Polda Metro Jaya / Bareskrim Polri",style:{width:"100%",fontSize:"0.85rem"}}),
     ]}),
     (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem"},children:[
       (0,t.jsxs)("div",{children:[
-        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Periode Penugasan"}),
+        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Periode Penugasan"}),
         (0,t.jsx)(i.InputText,{value:eExpForm.period,onChange:ev=>setExpForm({...eExpForm,period:ev.target.value}),placeholder:"Contoh: 2021 - Sekarang",style:{width:"100%",fontSize:"0.85rem"}}),
       ]}),
       (0,t.jsxs)("div",{children:[
-        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Lokasi Penugasan"}),
+        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Lokasi Penugasan"}),
         (0,t.jsx)(i.InputText,{value:eExpForm.location,onChange:ev=>setExpForm({...eExpForm,location:ev.target.value}),placeholder:"Contoh: Jakarta Selatan",style:{width:"100%",fontSize:"0.85rem"}}),
       ]})
     ]}),
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Deskripsi Penugasan / Prestasi"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Deskripsi Penugasan / Prestasi"}),
       (0,t.jsx)(i.InputText,{value:eExpForm.description,onChange:ev=>setExpForm({...eExpForm,description:ev.target.value}),placeholder:"Keterangan ringkas lingkup tugas atau penanganan perkara penting",style:{width:"100%",fontSize:"0.85rem"}}),
     ]})
   ]})
@@ -683,25 +683,25 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
   ]}),
   children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.5rem 0"},children:[
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Institusi / Universitas / Pusdik *"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Institusi / Universitas / Pusdik *"}),
       (0,t.jsx)(i.InputText,{value:eEduForm.school,onChange:ev=>setEduForm({...eEduForm,school:ev.target.value}),placeholder:"Contoh: Akpol / PTIK / Pusdik Reskrim Lemdiklat Polri / Universitas...",style:{width:"100%",fontSize:"0.85rem"}}),
     ]}),
     (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem"},children:[
       (0,t.jsxs)("div",{children:[
-        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Gelar / Jenjang / Kejuruan"}),
+        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Gelar / Jenjang / Kejuruan"}),
         (0,t.jsx)(i.InputText,{value:eEduForm.degree,onChange:ev=>setEduForm({...eEduForm,degree:ev.target.value}),placeholder:"Contoh: Sarjana Terapan Kepolisian (S.Tr.K.) / Dikjur",style:{width:"100%",fontSize:"0.85rem"}}),
       ]}),
       (0,t.jsxs)("div",{children:[
-        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Bidang Studi / Fokus Keahlian"}),
+        (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Bidang Studi / Fokus Keahlian"}),
         (0,t.jsx)(i.InputText,{value:eEduForm.field,onChange:ev=>setEduForm({...eEduForm,field:ev.target.value}),placeholder:"Contoh: Manajemen Penyidikan / Siber",style:{width:"100%",fontSize:"0.85rem"}}),
       ]})
     ]}),
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Tahun / Periode Kelulusan"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Tahun / Periode Kelulusan"}),
       (0,t.jsx)(i.InputText,{value:eEduForm.year,onChange:ev=>setEduForm({...eEduForm,year:ev.target.value}),placeholder:"Contoh: 2018 - 2022",style:{width:"100%",fontSize:"0.85rem"}}),
     ]}),
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.3rem"},children:"Keterangan Tambahan / Prestasi"}),
+      (0,t.jsx)("label",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--text-color-secondary, #64748b)",marginBottom:"0.3rem"},children:"Keterangan Tambahan / Prestasi"}),
       (0,t.jsx)(i.InputText,{value:eEduForm.description,onChange:ev=>setEduForm({...eEduForm,description:ev.target.value}),placeholder:"Keterangan ringkas pelatihan atau penghargaan akademis",style:{width:"100%",fontSize:"0.85rem"}}),
     ]})
   ]})
@@ -730,7 +730,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     })
   ]}),
   children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.5rem 0"},children:[
-    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"#cbd5e1",fontWeight:700},children:"Pilih Tema Sampul Kedinasan:"}),
+    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"var(--text-color-secondary, #64748b)",fontWeight:700},children:"Pilih Tema Sampul Kedinasan:"}),
     (0,t.jsx)("div",{
       style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem"},
       children:[
@@ -830,7 +830,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     children:[
       (0,t.jsx)("span",{style:{fontSize:"1.5rem"},children:sec.icon}),
       (0,t.jsxs)("div",{style:{flex:1},children:[
-        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.88rem",color:"#f8fafc"},children:sec.title}),
+        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.88rem",color:"var(--text-color, #0f172a)"},children:sec.title}),
         (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#94a3b8",marginTop:"0.15rem"},children:sec.desc})
       ]}),
       (0,t.jsx)("span",{style:{fontSize:"1.1rem",color:"#38bdf8"},children:"➕"})
@@ -906,7 +906,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"10px",padding:"1rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"},children:[
           (0,t.jsxs)("div",{children:[
-            (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#fff"},children:"Kata Sandi Akun"}),
+            (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"var(--text-color, #0f172a)"},children:"Kata Sandi Akun"}),
             (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#94a3b8",marginTop:"0.15rem"},children:"Ubah kata sandi secara berkala untuk menjaga kerahasiaan data perkara"})
           ]}),
           (0,t.jsx)("button",{
@@ -923,7 +923,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
           (0,t.jsxs)("div",{children:[
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#fff"},children:"Two-Factor Authentication (TOTP)"}),
+              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"var(--text-color, #0f172a)"},children:"Two-Factor Authentication (TOTP)"}),
               (0,t.jsx)("span",{style:{fontSize:"0.7rem",padding:"0.1rem 0.45rem",borderRadius:"4px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)",fontWeight:700},children:"Direkomendasikan"})
             ]}),
             (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#94a3b8",marginTop:"0.15rem"},children:"Gunakan aplikasi Google Authenticator untuk verifikasi 6 digit saat login"})
@@ -941,7 +941,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       (0,t.jsxs)("div",{style:{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"10px",padding:"1rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
           (0,t.jsxs)("div",{children:[
-            (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#fff"},children:"PIN Otorisasi Taktis"}),
+            (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"var(--text-color, #0f172a)"},children:"PIN Otorisasi Taktis"}),
             (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#94a3b8",marginTop:"0.15rem"},children:"Otorisasi 6 digit angka untuk eksekusi tindakan administratif khusus"})
           ]}),
           (0,t.jsx)("button",{
@@ -1269,14 +1269,14 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},onClick:openEditIntro,children:[
             (0,t.jsx)("div",{style:{width:"34px",height:"34px",borderRadius:"8px",background:"rgba(56,189,248,0.12)",border:"1px solid rgba(56,189,248,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",flexShrink:0},children:"🏢"}),
             (0,t.jsxs)("div",{children:[
-              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary, #f8fafc)",lineHeight:1.2},children:K(a?.scope_satker_name) || a?.satker || a?.satuan || "Kepolisian Negara Republik Indonesia"}),
+              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--text-color, #0f172a)",lineHeight:1.2},children:K(a?.scope_satker_name) || a?.satker || a?.satuan || "Kepolisian Negara Republik Indonesia"}),
               (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8"},children:a?.jabatan || "Bareskrim Polri"})
             ]})
           ]}),
           getActiveEducation().length > 0 ? (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},onClick:()=>openEditEdu(0),children:[
             (0,t.jsx)("div",{style:{width:"34px",height:"34px",borderRadius:"8px",background:"rgba(168,85,247,0.12)",border:"1px solid rgba(168,85,247,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",flexShrink:0},children:"🎓"}),
             (0,t.jsxs)("div",{children:[
-              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary, #f8fafc)",lineHeight:1.2},children:getActiveEducation()[0].school}),
+              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--text-color, #0f172a)",lineHeight:1.2},children:getActiveEducation()[0].school}),
               (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8"},children:getActiveEducation()[0].degree || getActiveEducation()[0].field || "Pendidikan Formal"})
             ]})
           ]}) : null
@@ -1298,7 +1298,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     (0,t.jsxs)("div",{style:{marginTop:"0.85rem"},children:[
       // Name & Callsign row with Verified Checkmark & Online Status
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap"},children:[
-        (0,t.jsx)("span",{style:{fontSize:"1.55rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},children:(a?.callsign||a?.username||a?.name||"omeko11")}),
+        (0,t.jsx)("span",{style:{fontSize:"1.55rem",fontWeight:800,color:"var(--text-color, #0f172a)",lineHeight:1.2},children:(a?.callsign||a?.username||a?.name||"omeko11")}),
         // Centang Verifikasi (Official blue checkmark)
         (0,t.jsxs)("svg",{viewBox:"0 0 24 24",width:20,height:20,style:{verticalAlign:"middle",flexShrink:0},title:"Terverifikasi Kedinasan Mabes Polri",children:[
           (0,t.jsx)("circle",{cx:12,cy:12,r:11,fill:"#0284c7"}),
@@ -1316,10 +1316,10 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       }),
 
       // Location, Contact Info & Connections
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.45rem",fontSize:"0.82rem",color:"var(--cas-text-secondary, #94a3b8)"},children:[
-        (0,t.jsx)("span",{children:(a?.social_media?.kota || "Jakarta Selatan, Indonesia")}),
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.45rem",fontSize:"0.82rem",color:"var(--text-color-secondary, #64748b)"},children:[
+        (0,t.jsx)("span",{children:(K(a?.scope_satker_name) || a?.satker || a?.satuan || "Mabes Bareskrim Polri")}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
-        (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info kontak"}),
+        (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#0284c7",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info Kontak"}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
         (0,t.jsxs)("button",{
           type:"button",
@@ -1327,36 +1327,36 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
             setNetworkModal(!0);
             fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter);
           },
-          style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
+          style:{background:"transparent",border:"none",color:"#0284c7",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
           children:[
-            (function(){
-              let isSuper = String(a?.role_bdb||"").toLowerCase() === "superadmin" || String(eH||"").toLowerCase() === "superadmin";
-              return isSuper ? "3.200+ koneksi" : ((a?.social_media?.connections_count || 38) + " koneksi");
-            })()
+            "👮 Jaringan Personil CAS"
           ]
         })
       ]}),
 
-      // Action Pills Bar
+      // Action Pills Bar (Tactical Police Actions)
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap",marginTop:"1.1rem"},children:[
         (0,t.jsx)("button",{
           type:"button",
           onClick:openEditIntro,
-          style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem",boxShadow:"0 2px 8px rgba(37,99,235,0.4)"},
-          children:"Terbuka untuk"
+          style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem",boxShadow:"0 2px 8px rgba(37,99,235,0.3)"},
+          children:"✏️ Edit Biodata"
         }),
         (0,t.jsx)("button",{
           type:"button",
-          onClick:()=>setAddSectionModal(!0),
-          style:{background:"transparent",color:"#38bdf8",border:"1px solid #38bdf8",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},
-          children:"Tambahkan bagian profil"
+          onClick:()=>{setSettingsTab('keamanan');setSettingsModal(!0);},
+          style:{background:"transparent",color:"#0284c7",border:"1px solid #0284c7",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+          children:"🔐 Keamanan Akun"
         }),
         (0,t.jsxs)("button",{
           type:"button",
-          onClick:()=>{setSettingsTab('keamanan');setSettingsModal(!0);},
-          style:{background:"rgba(255,255,255,0.06)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"999px",padding:"0.45rem 1.1rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+          onClick:()=>{
+            setNetworkModal(!0);
+            fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter);
+          },
+          style:{background:"var(--surface-50, rgba(0,0,0,0.04))",color:"var(--text-color, #1e293b)",border:"1px solid var(--surface-border, #cbd5e1)",borderRadius:"999px",padding:"0.45rem 1.1rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
           children:[
-            "⚙️ Pengaturan ▾"
+            "👮 Direktori Personil"
           ]
         })
       ]})
@@ -1373,7 +1373,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     // A. Tentang Saya (Bio Card)
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"},children:[
-        (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Tentang"}),
+        (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Tentang"}),
         (0,t.jsx)("button",{
           type:"button",
           "aria-label":"Edit ringkasan tentang",
@@ -1405,7 +1405,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
         (0,t.jsxs)("div",{children:[
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
             (0,t.jsx)("span",{style:{fontSize:"1.25rem"},children:"📝"}),
-            (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Aktivitas"})
+            (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Aktivitas"})
           ]}),
           (0,t.jsx)("p",{style:{margin:"0.15rem 0 0",fontSize:"0.78rem",color:"#94a3b8"},children:"Postingan, catatan kedinasan, dan pemikiran taktis"})
         ]}),
@@ -1436,7 +1436,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       ]}),
 
       // Quick Composer for personal notes/posts
-      (0,t.jsxs)("div",{style:{padding:"0.9rem",borderRadius:"10px",marginBottom:"1.25rem",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",background:"rgba(0,0,0,0.18)"},children:[
+      (0,t.jsxs)("div",{style:{padding:"0.9rem",borderRadius:"10px",marginBottom:"1.25rem",border:"1px solid var(--surface-border, #cbd5e1)",background:"var(--surface-50, rgba(0,0,0,0.02))"},children:[
         (0,t.jsx)("textarea",{
           id:"cas-post-composer",
           value:ePostText,
@@ -1444,14 +1444,15 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
           rows:2,
           placeholder:"Mulai buat postingan catatan kedinasan, pemikiran intelijen, atau temuan perkara baru... (Maks 3.000 karakter)",
           maxLength:3000,
-          style:{width:"100%",fontSize:"0.86rem",padding:"0.65rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.25))",color:"var(--cas-text-primary, #f8fafc)",resize:"vertical",fontFamily:"inherit"}
+          className:"p-inputtextarea p-inputtext p-component",
+          style:{width:"100%",fontSize:"0.86rem",padding:"0.65rem 0.85rem",borderRadius:"8px",border:"1px solid var(--surface-border, #cbd5e1)",background:"var(--surface-input, var(--surface-card, #ffffff))",color:"var(--text-color, #0f172a)",resize:"vertical",fontFamily:"inherit"}
         }),
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.6rem",flexWrap:"wrap",gap:"0.5rem"},children:[
           (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",alignItems:"center"},children:[
             (0,t.jsxs)("select",{
               value:ePostAudience,
               onChange:ev => setPostAudience(ev.target.value),
-              style:{fontSize:"0.76rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"rgba(0,0,0,0.3)",color:"var(--cas-text-primary, #f8fafc)"},
+              style:{fontSize:"0.76rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--surface-border, #cbd5e1)",background:"var(--surface-card, #ffffff)",color:"var(--text-color, #0f172a)"},
               children:[
                 (0,t.jsx)("option",{value:"public",children:"🌐 Publik / Nasional"}),
                 (0,t.jsx)("option",{value:"followers",children:"👥 Rekan Penyidik / Satker"}),
@@ -1488,9 +1489,9 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       eLoadingFeed ? (
         (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"#94a3b8"},children:"Memuat linimasa Anda…"})
       ) : ePersonalPosts.length === 0 ? (
-        (0,t.jsxs)("div",{style:{textAlign:"center",padding:"2.5rem",borderRadius:"12px",background:"rgba(0,0,0,0.12)",border:"1px dashed rgba(255,255,255,0.1)"},children:[
+        (0,t.jsxs)("div",{style:{textAlign:"center",padding:"2.5rem",borderRadius:"12px",background:"var(--surface-50, rgba(0,0,0,0.02))",border:"1px dashed var(--surface-border, rgba(0,0,0,0.12))"},children:[
           (0,t.jsx)("div",{style:{fontSize:"2.2rem",marginBottom:"0.4rem"},children:"📭"}),
-          (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.95rem",color:"var(--cas-text-primary, #f1f5f9)"},children:"Belum ada postingan di kategori ini."}),
+          (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.95rem",color:"var(--text-color, #1e293b)"},children:"Belum ada postingan di kategori ini."}),
           (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.2rem"},children:"Gunakan form di atas untuk membagikan tulisan atau catatan kedinasan pertama Anda."})
         ]})
       ) : (
@@ -1498,7 +1499,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
           ePersonalPosts.map(p => {
             var totRcts = p.total_reactions || 0;
             var audLabel = p.audience_type === 'private' ? '🔒 Privat' : (p.audience_type === 'followers' ? '👥 Satker / Rekan' : '🌐 Publik');
-            return (0,t.jsxs)("div",{key:p.id,style:{padding:"1rem",borderRadius:"10px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",background:"rgba(0,0,0,0.15)"},children:[
+            return (0,t.jsxs)("div",{key:p.id,style:{padding:"1rem",borderRadius:"10px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))",background:"var(--surface-card, #ffffff)",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"},children:[
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.5rem",marginBottom:"0.55rem"},children:[
                 (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
                   (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",fontSize:"0.86rem"},children:p.author_callsign ? ('@' + p.author_callsign) : ('@' + (a?.callsign || a?.username || 'omeko11'))}),
@@ -1532,7 +1533,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
                 ]})
               ]}),
 
-              (0,t.jsx)("div",{style:{fontSize:"0.88rem",lineHeight:"1.5",color:"var(--cas-text-primary, #e2e8f0)",whiteSpace:"pre-wrap",wordBreak:"break-word",marginBottom:"0.75rem"},children:p.content}),
+              (0,t.jsx)("div",{style:{fontSize:"0.88rem",lineHeight:"1.5",color:"var(--text-color, #1e293b)",whiteSpace:"pre-wrap",wordBreak:"break-word",marginBottom:"0.75rem"},children:p.content}),
 
               // Stats & Action Bar (Clean: NO 0x dilihat!)
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:"0.4rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.06))",fontSize:"0.76rem"},children:[
@@ -1602,7 +1603,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
           (0,t.jsx)("span",{style:{fontSize:"1.25rem"},children:"💼"}),
-          (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Pengalaman"})
+          (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Pengalaman"})
         ]}),
         (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
           (0,t.jsx)("button",{
@@ -1659,7 +1660,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
           (0,t.jsx)("span",{style:{fontSize:"1.25rem"},children:"🎓"}),
-          (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Pendidikan"})
+          (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Pendidikan"})
         ]}),
         (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
           (0,t.jsx)("button",{
@@ -1719,11 +1720,11 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     // 1. Keamanan Mandiri Status Widget
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Keamanan Mandiri"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Keamanan Mandiri"}),
         (0,t.jsx)("span",{style:{fontSize:"1rem"},children:"🛡️"})
       ]}),
       (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.6rem"},children:"Status proteksi autentikasi akun kedinasan Anda:"}),
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(0,0,0,0.25)",padding:"0.5rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)",marginBottom:"0.75rem"},children:[
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.5rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))",marginBottom:"0.75rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
           (0,t.jsx)("span",{style:{color:"#4ade80",fontSize:"0.85rem"},children:"✓"}),
           (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#cbd5e1",fontWeight:600},children:"Kata Sandi Aktif"})
@@ -1741,7 +1742,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     // 2. Bahasa profil Card
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Bahasa profil"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Bahasa profil"}),
         (0,t.jsx)("button",{
           type:"button",
           "aria-label":"Edit bahasa profil",
@@ -1757,7 +1758,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     // 3. Profil publik dan URL Card
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Profil publik dan URL"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Profil publik dan URL"}),
         (0,t.jsx)("button",{
           type:"button",
           "aria-label":"Edit Profil publik dan URL",
@@ -1768,7 +1769,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
         })
       ]}),
       (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.6rem"},children:"Identitas Callsign terverifikasi:"}),
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(0,0,0,0.25)",padding:"0.5rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)"},children:[
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.5rem 0.75rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.08))"},children:[
         (0,t.jsxs)("span",{style:{fontSize:"0.84rem",fontWeight:800,color:"#38bdf8",fontFamily:"monospace"},children:[
           "@", a?.callsign || a?.username || a?.nrp || "omeko11"
         ]}),
@@ -1779,7 +1780,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
     // 4. Rekan Personil Terkait (DYNAMIC from DB via eNetworkUsers)
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.85rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.9rem",fontWeight:800,color:"#fff"},children:"Rekan Personil Terkait"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.9rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Rekan Personil Terkait"}),
         (0,t.jsx)("button",{
           type:"button",
           onClick:()=>{setNetworkModal(!0);fetchNetworkDirectory(eNetworkSearch,eNetworkSatkerFilter);},
@@ -1794,7 +1795,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
               rek.photo_url || rek.foto ? (0,t.jsx)("img",{src:rek.photo_url || rek.foto,alt:rek.name,style:{width:"100%",height:"100%",objectFit:"cover"}}) : (rek.name ? rek.name.charAt(0).toUpperCase() : "👮")
             }),
             (0,t.jsxs)("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:[
-              (0,t.jsx)("div",{style:{fontSize:"0.8rem",fontWeight:700,color:"#fff",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:rek.name}),
+              (0,t.jsx)("div",{style:{fontSize:"0.8rem",fontWeight:700,color:"var(--text-color, #0f172a)",lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:rek.name}),
               (0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:rek.pangkat && rek.pangkat !== '-' ? rek.pangkat + " • " + (rek.satker_singkat || rek.satker_nama || "Polri") : (rek.satker_singkat || rek.satker_nama || "Personil Polri")}),
               (0,t.jsxs)("div",{style:{fontSize:"0.68rem",color:"#38bdf8",fontWeight:700},children:["@", rek.callsign || rek.username || (rek.nrp ? rek.nrp : "personil")]})
             ]})

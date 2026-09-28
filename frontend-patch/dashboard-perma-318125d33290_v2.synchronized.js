@@ -877,9 +877,9 @@ children:[
     marginTop:"1rem",
     padding:"1rem 1.25rem",
     borderRadius:"12px",
-    border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",
-    background:"var(--cas-bg-card, #1e293b)",
-    boxShadow:"0 2px 10px rgba(0,0,0,0.1)"
+    border:"1px solid var(--surface-border, rgba(0,0,0,0.08))",
+    background:"var(--surface-card, #ffffff)",
+    boxShadow:"0 2px 10px rgba(0,0,0,0.05)"
   },
   children:[
     // Header
@@ -890,7 +890,7 @@ children:[
         alignItems:"center",
         marginBottom:"0.75rem",
         paddingBottom:"0.6rem",
-        borderBottom:"1px solid rgba(255,255,255,0.06)"
+        borderBottom:"1px solid var(--surface-border, rgba(0,0,0,0.06))"
       },
       children:[
         (0,t.jsxs)("div",{
@@ -898,11 +898,11 @@ children:[
           children:[
             (0,t.jsx)("span",{style:{fontSize:"1.1rem"},children:"📡"}),
             (0,t.jsx)("span",{
-              style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary, #f8fafc)"},
+              style:{fontWeight:800,fontSize:"0.95rem",color:"var(--text-color, #0f172a)"},
               children:"Ruang Kolaborasi Terkini"
             }),
             (0,t.jsx)("span",{
-              style:{fontSize:"0.68rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.1rem 0.5rem",borderRadius:"999px",fontWeight:700},
+              style:{fontSize:"0.68rem",background:"rgba(56,189,248,0.15)",color:"#0284c7",padding:"0.1rem 0.5rem",borderRadius:"999px",fontWeight:700},
               children:"Live Feed"
             })
           ]
@@ -910,7 +910,7 @@ children:[
         (0,t.jsxs)("button",{
           type:"button",
           onClick:()=>e.push("/cms/broadcaster"),
-          style:{background:"transparent",border:"none",color:"#38bdf8",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+          style:{background:"transparent",border:"none",color:"#0284c7",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
           children:["Lihat Semua Feed ➔"]
         })
       ]
@@ -918,17 +918,17 @@ children:[
 
     // Body: Exactly 5 compact rows with ellipsis and click navigation
     casFeedLoading ? (
-      (0,t.jsx)("div",{style:{padding:"0.8rem",textAlign:"center",color:"#94a3b8",fontSize:"0.82rem"},children:"Memuat siaran taktis terkini…"})
+      (0,t.jsx)("div",{style:{padding:"0.8rem",textAlign:"center",color:"var(--text-color-secondary, #94a3b8)",fontSize:"0.82rem"},children:"Memuat siaran taktis terkini…"})
     ) : casFeed.length === 0 ? (
       (0,t.jsxs)("div",{
-        style:{padding:"0.8rem",textAlign:"center",color:"#94a3b8",fontSize:"0.82rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem"},
+        style:{padding:"0.8rem",textAlign:"center",color:"var(--text-color-secondary, #94a3b8)",fontSize:"0.82rem",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem"},
         children:[
           (0,t.jsx)("span",{children:"📭"}),
           (0,t.jsx)("span",{children:"Belum ada catatan taktis baru di linimasa CAS."}),
           (0,t.jsx)("button",{
             type:"button",
             onClick:()=>e.push("/cms/broadcaster"),
-            style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",textDecoration:"underline",fontSize:"0.82rem"},
+            style:{background:"transparent",border:"none",color:"#0284c7",fontWeight:700,cursor:"pointer",textDecoration:"underline",fontSize:"0.82rem"},
             children:"Mulai Buat Postingan"
           })
         ]
@@ -951,21 +951,21 @@ children:[
               gap:"0.75rem",
               padding:"0.45rem 0.65rem",
               borderRadius:"6px",
-              background:"rgba(255,255,255,0.02)",
-              border:"1px solid rgba(255,255,255,0.04)",
+              background:"var(--surface-50, rgba(0,0,0,0.02))",
+              border:"1px solid var(--surface-border, rgba(0,0,0,0.06))",
               cursor:"pointer",
               fontSize:"0.82rem",
               transition:"background 0.15s ease"
             },
-            onMouseEnter:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.05)",
-            onMouseLeave:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.02)",
+            onMouseEnter:ev => ev.currentTarget.style.background = "var(--surface-hover, rgba(0,0,0,0.04))",
+            onMouseLeave:ev => ev.currentTarget.style.background = "var(--surface-50, rgba(0,0,0,0.02))",
             children:[
               // Left: Author callsign & satker
               (0,t.jsxs)("div",{
                 style:{display:"inline-flex",alignItems:"center",gap:"0.45rem",flexShrink:0},
                 children:[
-                  (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8"},children:callsign}),
-                  (0,t.jsx)("span",{style:{fontSize:"0.68rem",background:"rgba(255,255,255,0.08)",color:"#cbd5e1",padding:"0.05rem 0.35rem",borderRadius:"4px"},children:satker}),
+                  (0,t.jsx)("span",{style:{fontWeight:800,color:"#0284c7"},children:callsign}),
+                  (0,t.jsx)("span",{style:{fontSize:"0.68rem",background:"rgba(56,189,248,0.12)",color:"#0369a1",border:"1px solid rgba(56,189,248,0.25)",padding:"0.05rem 0.35rem",borderRadius:"4px",fontWeight:600},children:satker}),
                   (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"•"})
                 ]
               }),
@@ -977,16 +977,16 @@ children:[
                   overflow:"hidden",
                   textOverflow:"ellipsis",
                   whiteSpace:"nowrap",
-                  color:"var(--cas-text-primary, #e2e8f0)"
+                  color:"var(--text-color, #1e293b)"
                 },
                 children:item.content || item.title || "-"
               }),
               // Right: Time & arrow
               (0,t.jsxs)("div",{
-                style:{display:"inline-flex",alignItems:"center",gap:"0.5rem",flexShrink:0,color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.72rem"},
+                style:{display:"inline-flex",alignItems:"center",gap:"0.5rem",flexShrink:0,color:"var(--text-color-secondary, #64748b)",fontSize:"0.72rem"},
                 children:[
                   (0,t.jsx)("span",{children:timeStr}),
-                  (0,t.jsx)("span",{style:{color:"#60a5fa",fontWeight:800},children:"➔"})
+                  (0,t.jsx)("span",{style:{color:"#0284c7",fontWeight:800},children:"➔"})
                 ]
               })
             ]

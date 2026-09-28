@@ -251,7 +251,7 @@ e.s(["default", 0, function() {
                   (0, t.jsx)("span", { style: { fontSize: "1.5rem" }, children: "⚙️" }),
                   (0, t.jsx)("h1", {
                     className: "cms-page-title",
-                    style: { margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--cas-text-primary, #f8fafc)" },
+                    style: { margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--text-color, #0f172a)" },
                     children: "Kelola Jukrahcaster & Kedinasan"
                   }),
                   (0, t.jsx)("span", {
@@ -270,7 +270,7 @@ e.s(["default", 0, function() {
               }),
               (0, t.jsx)("p", {
                 className: "cms-page-sub",
-                style: { margin: "0.35rem 0 0", color: "var(--cas-text-secondary, #94a3b8)", fontSize: "0.85rem" },
+                style: { margin: "0.35rem 0 0", color: "var(--text-color-secondary, #64748b)", fontSize: "0.85rem" },
                 children: "Pusat Komando Siaran Resmi Bareskrim: Penyebaran Instruksi Dinas, Analitik Keterbacaan Satker, dan Pengawasan Linimasa CAS."
               })
             ]
@@ -393,7 +393,7 @@ e.s(["default", 0, function() {
                 children: [
                   (0, t.jsx)(iconMegaphone, { size: 18, style: { color: "#3b82f6" } }),
                   (0, t.jsx)("h2", {
-                    style: { fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--cas-text-primary, #f8fafc)" },
+                    style: { fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--text-color, #0f172a)" },
                     children: "Formulir Siaran Jukrah / Instruksi Kedinasan"
                   })
                 ]
@@ -405,7 +405,7 @@ e.s(["default", 0, function() {
                   (0, t.jsxs)("div", {
                     children: [
                       (0, t.jsx)("label", {
-                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--cas-text-secondary, #94a3b8)", marginBottom: "0.3rem" },
+                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-color-secondary, #64748b)", marginBottom: "0.3rem" },
                         children: "Nomor / Perihal Jukrah (Opsional)"
                       }),
                       (0, t.jsx)(r.InputText, {
@@ -419,7 +419,7 @@ e.s(["default", 0, function() {
                   (0, t.jsxs)("div", {
                     children: [
                       (0, t.jsx)("label", {
-                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--cas-text-secondary, #94a3b8)", marginBottom: "0.3rem" },
+                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-color-secondary, #64748b)", marginBottom: "0.3rem" },
                         children: "Isi Instruksi Kedinasan & Pedoman Taktis (Maks 3.000 Karakter) *"
                       }),
                       (0, t.jsx)("textarea", {
@@ -428,16 +428,18 @@ e.s(["default", 0, function() {
                         placeholder: "Tuliskan instruksi, arahan pimpinan, dan petunjuk operasional di sini...",
                         rows: 5,
                         maxLength: 3000,
+                        className: "p-inputtextarea p-inputtext p-component",
                         style: {
                           width: "100%",
                           borderRadius: "8px",
-                          border: "1px solid var(--cas-border, rgba(255,255,255,0.15))",
-                          background: "var(--cas-bg-surface-2, rgba(0,0,0,0.2))",
-                          color: "var(--cas-text-primary, #f8fafc)",
+                          border: "1px solid var(--surface-border, #cbd5e1)",
+                          background: "var(--surface-input, var(--surface-card, #ffffff))",
+                          color: "var(--text-color, #0f172a)",
                           fontSize: "0.88rem",
                           lineHeight: "1.5",
                           padding: "0.65rem 0.85rem",
-                          resize: "vertical"
+                          resize: "vertical",
+                          fontFamily: "inherit"
                         }
                       }),
                       // Live counter & alerts
@@ -445,7 +447,7 @@ e.s(["default", 0, function() {
                         style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.35rem" },
                         children: [
                           (0, t.jsx)("span", {
-                            style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #94a3b8)" },
+                            style: { fontSize: "0.72rem", color: "var(--text-color-secondary, #64748b)" },
                             children: "Semua personil yang membaca akan diwajibkan mengonfirmasi tombol 'Paham & Siap Laksanakan'."
                           }),
                           (0, t.jsxs)("span", {
@@ -508,7 +510,7 @@ e.s(["default", 0, function() {
                               alignItems: "center",
                               gap: "0.35rem",
                               fontSize: "0.78rem",
-                              color: "var(--cas-text-primary, #f8fafc)",
+                              color: "var(--text-color, #0f172a)",
                               cursor: "pointer"
                             },
                             children: [
@@ -557,7 +559,7 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             children: [
               (0, t.jsxs)("h3", {
-                style: { fontSize: "0.95rem", fontWeight: 800, margin: "0 0 0.75rem", color: "var(--cas-text-secondary, #94a3b8)" },
+                style: { fontSize: "0.95rem", fontWeight: 800, margin: "0 0 0.75rem", color: "var(--text-color-secondary, #64748b)" },
                 children: ["Arsip Jukrah Resmi Kedinasan Aktif (", officialPosts.length, ")"]
               }),
               loadingPosts ? (0, t.jsx)("div", { style: { color: "#94a3b8", padding: "1.5rem", textAlign: "center" }, children: "Memuat arsip siaran..." }) :
@@ -614,11 +616,11 @@ e.s(["default", 0, function() {
                               children: "📌 PINNED"
                             }),
                             (0, t.jsx)("span", {
-                              style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--cas-text-primary, #f8fafc)" },
+                              style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--text-color, #0f172a)" },
                               children: post.author_handle
                             }),
                             (0, t.jsxs)("span", {
-                              style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #94a3b8)", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                              style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
                               children: [(0, t.jsx)(a.Clock, { size: 12 }), " ", formatDate(post.created_at)]
                             })
                           ]
@@ -627,7 +629,7 @@ e.s(["default", 0, function() {
                           style: {
                             margin: 0,
                             fontSize: "0.86rem",
-                            color: "var(--cas-text-primary, #e2e8f0)",
+                            color: "var(--text-color, #1e293b)",
                             lineHeight: "1.45",
                             whiteSpace: "pre-wrap",
                             wordBreak: "break-word"
@@ -734,7 +736,7 @@ e.s(["default", 0, function() {
                 style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                 children: [
                   (0, t.jsx)(iconBarChart, { size: 18, style: { color: "#3b82f6" } }),
-                  (0, t.jsx)("span", { style: { fontSize: "0.88rem", fontWeight: 700, color: "var(--cas-text-primary, #f8fafc)" }, children: "Pilih Siaran Jukrah:" })
+                  (0, t.jsx)("span", { style: { fontSize: "0.88rem", fontWeight: 700, color: "var(--text-color, #0f172a)" }, children: "Pilih Siaran Jukrah:" })
                 ]
               }),
               (0, t.jsx)("select", {
@@ -748,7 +750,7 @@ e.s(["default", 0, function() {
                   borderRadius: "6px",
                   background: "var(--cas-bg-surface-2, rgba(0,0,0,0.2))",
                   border: "1px solid var(--cas-border, rgba(255,255,255,0.2))",
-                  color: "var(--cas-text-primary, #f8fafc)"
+                  color: "var(--text-color, #0f172a)"
                 },
                 children: officialPosts.map(p => (0, t.jsx)("option", {
                   value: p.id,
@@ -781,16 +783,16 @@ e.s(["default", 0, function() {
                 className: "cms-card",
                 style: { background: "var(--cas-bg-card, #1e293b)", border: "1px solid var(--cas-border, rgba(255,255,255,0.1))", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #94a3b8)", fontWeight: 700 }, children: "🏢 TOTAL SATKER DITARGETKAN" }),
-                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--cas-text-primary, #f8fafc)" }, children: totalTargetSatker })
+                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", fontWeight: 700 }, children: "🏢 TOTAL SATKER DITARGETKAN" }),
+                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--text-color, #0f172a)" }, children: totalTargetSatker })
                 ]
               }),
               (0, t.jsxs)("div", {
                 className: "cms-card",
                 style: { background: "var(--cas-bg-card, #1e293b)", border: "1px solid var(--cas-border, rgba(255,255,255,0.1))", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #94a3b8)", fontWeight: 700 }, children: "👥 TOTAL PERSONIL TERDAFTAR" }),
-                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--cas-text-primary, #f8fafc)" }, children: totalPersonil })
+                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", fontWeight: 700 }, children: "👥 TOTAL PERSONIL TERDAFTAR" }),
+                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--text-color, #0f172a)" }, children: totalPersonil })
                 ]
               }),
               (0, t.jsxs)("div", {
@@ -838,7 +840,7 @@ e.s(["default", 0, function() {
                 style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" },
                 children: [
                   (0, t.jsx)("h3", {
-                    style: { fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "var(--cas-text-primary, #f8fafc)" },
+                    style: { fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "var(--text-color, #0f172a)" },
                     children: "Rincian Kepatuhan per Satuan Kerja"
                   }),
                   (0, t.jsx)(r.InputText, {
@@ -858,7 +860,7 @@ e.s(["default", 0, function() {
                   children: [
                     (0, t.jsx)("thead", {
                       children: (0, t.jsxs)("tr", {
-                        style: { borderBottom: "1px solid var(--cas-border, rgba(255,255,255,0.15))", textAlign: "left", color: "var(--cas-text-secondary, #94a3b8)", fontSize: "0.75rem" },
+                        style: { borderBottom: "1px solid var(--cas-border, rgba(255,255,255,0.15))", textAlign: "left", color: "var(--text-color-secondary, #64748b)", fontSize: "0.75rem" },
                         children: [
                           (0, t.jsx)("th", { style: { padding: "0.6rem 0.75rem" }, children: "SATKER / DIREKTORAT" }),
                           (0, t.jsx)("th", { style: { padding: "0.6rem 0.75rem", textAlign: "center" }, children: "PERSONIL KONFIRMASI" }),
@@ -880,12 +882,12 @@ e.s(["default", 0, function() {
                             (0, t.jsxs)("td", {
                               style: { padding: "0.65rem 0.75rem" },
                               children: [
-                                (0, t.jsx)("div", { style: { fontWeight: 700, color: "var(--cas-text-primary, #f8fafc)" }, children: s.satker_nama }),
-                                s.satker_singkat && (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #94a3b8)" }, children: s.satker_singkat })
+                                (0, t.jsx)("div", { style: { fontWeight: 700, color: "var(--text-color, #0f172a)" }, children: s.satker_nama }),
+                                s.satker_singkat && (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: "var(--text-color-secondary, #64748b)" }, children: s.satker_singkat })
                               ]
                             }),
                             (0, t.jsx)("td", {
-                              style: { padding: "0.65rem 0.75rem", textAlign: "center", fontWeight: 700, color: "var(--cas-text-primary, #f8fafc)" },
+                              style: { padding: "0.65rem 0.75rem", textAlign: "center", fontWeight: 700, color: "var(--text-color, #0f172a)" },
                               children: s.total_sudah_baca + " / " + s.total_personil + " personil"
                             }),
                             (0, t.jsxs)("td", {
@@ -954,7 +956,7 @@ e.s(["default", 0, function() {
                   (0, t.jsxs)("div", {
                     children: [
                       (0, t.jsx)("div", { style: { fontSize: "0.95rem", fontWeight: 800, color: "#f87171" }, children: "Protokol Keamanan & Moderasi Sandi CAS" }),
-                      (0, t.jsx)("div", { style: { fontSize: "0.78rem", color: "var(--cas-text-secondary, #94a3b8)" }, children: "Jika ditemukan potensi kebocoran intelijen atau pelanggaran kode etik, gunakan tombol Panic Takedown." })
+                      (0, t.jsx)("div", { style: { fontSize: "0.78rem", color: "var(--text-color-secondary, #64748b)" }, children: "Jika ditemukan potensi kebocoran intelijen atau pelanggaran kode etik, gunakan tombol Panic Takedown." })
                     ]
                   })
                 ]
@@ -1026,7 +1028,7 @@ e.s(["default", 0, function() {
                     (0, t.jsxs)("div", {
                       style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.35rem" },
                       children: [
-                        (0, t.jsx)("span", { style: { fontWeight: 800, color: "var(--cas-text-primary, #f8fafc)", fontSize: "0.88rem" }, children: p.author_handle }),
+                        (0, t.jsx)("span", { style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" }, children: p.author_handle }),
                         p.raw_name && (0, t.jsxs)("span", { style: { fontSize: "0.75rem", color: "#94a3b8" }, children: ["(", p.raw_name, ")"] }),
                         (0, t.jsx)("span", {
                           style: {
@@ -1048,7 +1050,7 @@ e.s(["default", 0, function() {
                       style: {
                         margin: "0.35rem 0 0",
                         fontSize: "0.86rem",
-                        color: "var(--cas-text-primary, #e2e8f0)",
+                        color: "var(--text-color, #1e293b)",
                         lineHeight: "1.45",
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word"

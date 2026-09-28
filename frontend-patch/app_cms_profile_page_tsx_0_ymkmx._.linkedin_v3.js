@@ -11,7 +11,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     (0,b.jsx)("button",{
       type:"button",
       "aria-label":"Edit gambar latar belakang",
-      style:{position:"absolute",top:"14px",right:"16px",background:"rgba(15,23,42,0.75)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:"50%",width:"36px",height:"36px",display:"inline-flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"1rem",cursor:"pointer"},
+      style:{position:"absolute",top:"14px",right:"16px",background:"rgba(15,23,42,0.75)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:"50%",width:"36px",height:"36px",display:"inline-flex",alignItems:"center",justifyContent:"center",color:"var(--text-color, #0f172a)",fontSize:"1rem",cursor:"pointer"},
       children:"✏️"
     })
   ]}),
@@ -21,13 +21,13 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     (0,b.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:"1rem"},children:[
       // Avatar
       (0,b.jsxs)("div",{style:{position:"relative",marginTop:"-70px",width:"135px",height:"135px",flex:"0 0 135px"},children:[
-        (0,b.jsx)("div",{style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-card-bg, #1e293b)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff"},children:
+        (0,b.jsx)("div",{style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-card-bg, #1e293b)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:
           (d?.photo_url||d?.foto)?(0,b.jsx)("img",{src:d.photo_url||d.foto,alt:d?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):aL
         }),
         (0,b.jsx)("button",{
           type:"button",
           "aria-label":"Edit foto profil",
-          style:{position:"absolute",bottom:"4px",right:"4px",width:"34px",height:"34px",borderRadius:"50%",background:"#2563eb",border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:"0.95rem",boxShadow:"0 2px 6px rgba(0,0,0,0.35)",cursor:"pointer"},
+          style:{position:"absolute",bottom:"4px",right:"4px",width:"34px",height:"34px",borderRadius:"50%",background:"#2563eb",border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--text-color, #0f172a)",fontSize:"0.95rem",boxShadow:"0 2px 6px rgba(0,0,0,0.35)",cursor:"pointer"},
           children:"✏️"
         })
       ]}),
@@ -38,14 +38,14 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
           (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
             (0,b.jsx)("div",{style:{width:"34px",height:"34px",borderRadius:"8px",background:"rgba(56,189,248,0.12)",border:"1px solid rgba(56,189,248,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",flexShrink:0},children:"🏢"}),
             (0,b.jsxs)("div",{children:[
-              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary, #f8fafc)",lineHeight:1.2},children:d?.satker || d?.satuan || "Kepolisian Negara Republik Indonesia"}),
+              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--text-color, #0f172a)",lineHeight:1.2},children:d?.satker || d?.satuan || "Kepolisian Negara Republik Indonesia"}),
               (0,b.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8"},children:d?.jabatan || "Bareskrim Polri"})
             ]})
           ]}),
           (d?.social_media?.education && d.social_media.education.length > 0) ? (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
             (0,b.jsx)("div",{style:{width:"34px",height:"34px",borderRadius:"8px",background:"rgba(168,85,247,0.12)",border:"1px solid rgba(168,85,247,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",flexShrink:0},children:"🎓"}),
             (0,b.jsxs)("div",{children:[
-              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary, #f8fafc)",lineHeight:1.2},children:d.social_media.education[0].school}),
+              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--text-color, #0f172a)",lineHeight:1.2},children:d.social_media.education[0].school}),
               (0,b.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8"},children:d.social_media.education[0].degree || d.social_media.education[0].field || "Pendidikan Formal"})
             ]})
           ]}) : null
@@ -63,7 +63,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Identity, Headline, Location & Action Bar
     (0,b.jsxs)("div",{style:{marginTop:"0.85rem"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap"},children:[
-        (0,b.jsx)("span",{style:{fontSize:"1.55rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},children:(d?.callsign||d?.username||d?.name||"omeko11")}),
+        (0,b.jsx)("span",{style:{fontSize:"1.55rem",fontWeight:800,color:"var(--text-color, #0f172a)",lineHeight:1.2},children:(d?.callsign||d?.username||d?.name||"omeko11")}),
         (0,b.jsxs)("svg",{viewBox:"0 0 24 24",width:20,height:20,style:{verticalAlign:"middle",flexShrink:0},children:[
           (0,b.jsx)("circle",{cx:12,cy:12,r:11,fill:"#0284c7"}),
           (0,b.jsx)("path",{d:"m7.5 12 3 3 6-6",stroke:"#ffffff",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
@@ -73,23 +73,23 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
         ]})
       ]}),
 
-      (0,b.jsx)("div",{style:{fontSize:"0.95rem",color:"var(--cas-text-primary, #e2e8f0)",marginTop:"0.35rem",fontWeight:500,lineHeight:1.4},children:
+      (0,b.jsx)("div",{style:{fontSize:"0.95rem",color:"var(--text-color, #1e293b)",marginTop:"0.35rem",fontWeight:500,lineHeight:1.4},children:
         (d?.social_media?.headline || d?.jabatan || "Personil Polri • Mabes Bareskrim")
       }),
 
-      (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.45rem",fontSize:"0.82rem",color:"var(--cas-text-secondary, #94a3b8)"},children:[
-        (0,b.jsx)("span",{children:(d?.social_media?.kota || "Jakarta Selatan, Indonesia")}),
+      (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.45rem",fontSize:"0.82rem",color:"var(--text-color-secondary, #64748b)"},children:[
+        (0,b.jsx)("span",{children:(d?.scope_satker_name || d?.satker || d?.satuan || "Mabes Bareskrim Polri")}),
         (0,b.jsx)("span",{style:{color:"#64748b"},children:"•"}),
-        (0,b.jsx)("span",{style:{color:"#38bdf8",fontWeight:700,cursor:"pointer",textDecoration:"underline"},children:"Info kontak"}),
+        (0,b.jsx)("span",{style:{color:"#0284c7",fontWeight:700,cursor:"pointer",textDecoration:"underline"},children:"Info Kontak"}),
         (0,b.jsx)("span",{style:{color:"#64748b"},children:"•"}),
-        (0,b.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",cursor:"pointer",textDecoration:"underline"},children:"3.200+ koneksi"})
+        (0,b.jsx)("span",{style:{fontWeight:700,color:"#0284c7",cursor:"pointer",textDecoration:"underline"},children:"👮 Jaringan Personil CAS"})
       ]}),
 
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap",marginTop:"1.1rem"},children:[
-        (0,b.jsx)("button",{type:"button",style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:"Terbuka untuk"}),
-        (0,b.jsx)("button",{type:"button",style:{background:"transparent",color:"#38bdf8",border:"1px solid #38bdf8",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:"Tambahkan bagian profil"}),
-        (0,b.jsxs)("button",{type:"button",style:{background:"rgba(255,255,255,0.06)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"999px",padding:"0.45rem 1.1rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:[
-          "⚙️ Pengaturan ▾"
+        (0,b.jsx)("button",{type:"button",style:{background:"#2563eb",color:"var(--text-color, #0f172a)",border:"none",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:"✏️ Edit Biodata"}),
+        (0,b.jsx)("button",{type:"button",style:{background:"transparent",color:"#0284c7",border:"1px solid #0284c7",borderRadius:"999px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:"🔐 Keamanan Akun"}),
+        (0,b.jsxs)("button",{type:"button",style:{background:"var(--surface-50, rgba(0,0,0,0.04))",color:"var(--text-color, #1e293b)",border:"1px solid var(--surface-border, #cbd5e1)",borderRadius:"999px",padding:"0.45rem 1.1rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer"},children:[
+          "👮 Direktori Personil"
         ]})
       ]})
     ]})
@@ -103,7 +103,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Tentang
     (0,b.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"},children:[
-        (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Tentang"}),
+        (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Tentang"}),
         (0,b.jsx)("button",{type:"button","aria-label":"Edit ringkasan tentang",style:{background:"transparent",border:"none",fontSize:"1.15rem",color:"#94a3b8"},children:"✏️"})
       ]}),
       d?.social_media?.bio ? (0,b.jsx)("div",{style:{fontSize:"0.88rem",lineHeight:1.6,color:"var(--cas-text-primary, #cbd5e1)",whiteSpace:"pre-wrap"},children:d.social_media.bio}) : (0,b.jsx)("div",{style:{color:"#94a3b8",fontSize:"0.85rem"},children:"Belum ada ringkasan Tentang Saya yang ditambahkan."})
@@ -115,12 +115,12 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
         (0,b.jsxs)("div",{children:[
           (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
             (0,b.jsx)("span",{style:{fontSize:"1.25rem"},children:"📝"}),
-            (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Aktivitas"})
+            (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Aktivitas"})
           ]}),
           (0,b.jsx)("p",{style:{margin:"0.15rem 0 0",fontSize:"0.78rem",color:"#94a3b8"},children:"Postingan dan catatan kedinasan"})
         ]}),
         (0,b.jsxs)("div",{style:{display:"inline-flex",gap:"0.25rem"},children:[
-          (0,b.jsx)("button",{type:"button",style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"6px",padding:"0.35rem 0.75rem",fontSize:"0.76rem",fontWeight:700},children:"Postingan Saya"})
+          (0,b.jsx)("button",{type:"button",style:{background:"#2563eb",color:"var(--text-color, #0f172a)",border:"none",borderRadius:"6px",padding:"0.35rem 0.75rem",fontSize:"0.76rem",fontWeight:700},children:"Postingan Saya"})
         ]})
       ]}),
       (0,b.jsxs)("div",{style:{textAlign:"center",padding:"1.5rem",color:"#94a3b8",fontSize:"0.85rem"},children:[
@@ -134,7 +134,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem"},children:[
         (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
           (0,b.jsx)("span",{style:{fontSize:"1.25rem"},children:"💼"}),
-          (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Pengalaman"})
+          (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Pengalaman"})
         ]}),
         (0,b.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
           (0,b.jsx)("button",{type:"button","aria-label":"Tambahkan pengalaman",style:{background:"transparent",border:"none",fontSize:"1.15rem",color:"#94a3b8"},children:"➕"}),
@@ -146,7 +146,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
           (0,b.jsxs)("div",{key:idx,style:{display:"flex",gap:"0.85rem",paddingTop:idx>0?"1rem":0},children:[
             (0,b.jsx)("div",{style:{width:"44px",height:"44px",borderRadius:"8px",background:"rgba(56,189,248,0.12)",border:"1px solid rgba(56,189,248,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.3rem",flexShrink:0},children:"🏢"}),
             (0,b.jsxs)("div",{children:[
-              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"#fff"},children:exp.title || "Posisi Kedinasan"}),
+              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"var(--text-color, #0f172a)"},children:exp.title || "Posisi Kedinasan"}),
               (0,b.jsx)("div",{style:{fontSize:"0.8rem",color:"#38bdf8",fontWeight:600},children:exp.company || "Satker"}),
               (0,b.jsx)("div",{style:{fontSize:"0.74rem",color:"#94a3b8",marginTop:"0.15rem"},children:exp.period || ""})
             ]})
@@ -166,7 +166,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem"},children:[
         (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
           (0,b.jsx)("span",{style:{fontSize:"1.25rem"},children:"🎓"}),
-          (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Pendidikan"})
+          (0,b.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Pendidikan"})
         ]}),
         (0,b.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
           (0,b.jsx)("button",{type:"button","aria-label":"Tambahkan pendidikan",style:{background:"transparent",border:"none",fontSize:"1.15rem",color:"#94a3b8"},children:"➕"}),
@@ -178,7 +178,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
           (0,b.jsxs)("div",{key:idx,style:{display:"flex",gap:"0.85rem",paddingTop:idx>0?"1rem":0},children:[
             (0,b.jsx)("div",{style:{width:"44px",height:"44px",borderRadius:"8px",background:"rgba(168,85,247,0.12)",border:"1px solid rgba(168,85,247,0.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.3rem",flexShrink:0},children:"🎓"}),
             (0,b.jsxs)("div",{children:[
-              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"#fff"},children:edu.school || "Institusi Pendidikan"}),
+              (0,b.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"var(--text-color, #0f172a)"},children:edu.school || "Institusi Pendidikan"}),
               (0,b.jsx)("div",{style:{fontSize:"0.8rem",color:"#c084fc",fontWeight:600},children:edu.degree || ""})
             ]})
           ]})
@@ -198,7 +198,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Keamanan Widget
     (0,b.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Keamanan Mandiri"}),
+        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Keamanan Mandiri"}),
         (0,b.jsx)("span",{style:{fontSize:"1rem"},children:"🛡️"})
       ]}),
       (0,b.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.6rem"},children:"Status proteksi autentikasi akun kedinasan Anda:"}),
@@ -208,7 +208,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Bahasa profil
     (0,b.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Bahasa profil"}),
+        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Bahasa profil"}),
         (0,b.jsx)("button",{type:"button","aria-label":"Edit bahasa profil",style:{background:"transparent",border:"none",fontSize:"1rem",color:"#94a3b8"},children:"✏️"})
       ]}),
       (0,b.jsx)("div",{style:{fontSize:"0.82rem",color:"#94a3b8"},children:"Bahasa Indonesia"})
@@ -217,7 +217,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Profil publik dan URL
     (0,b.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"#fff"},children:"Profil publik dan URL"}),
+        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.92rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Profil publik dan URL"}),
         (0,b.jsx)("button",{type:"button","aria-label":"Edit Profil publik dan URL",style:{background:"transparent",border:"none",fontSize:"1rem",color:"#94a3b8"},children:"✏️"})
       ]}),
       (0,b.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.6rem"},children:"Identitas Callsign terverifikasi:"}),
@@ -232,7 +232,7 @@ module.exports=[20291,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(61803
     // Rekan Personil Terkait (SSR Placeholder - hydrated on client from real DB)
     (0,b.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,b.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.85rem"},children:[
-        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.9rem",fontWeight:800,color:"#fff"},children:"Rekan Personil Terkait"}),
+        (0,b.jsx)("h4",{style:{margin:0,fontSize:"0.9rem",fontWeight:800,color:"var(--text-color, #0f172a)"},children:"Rekan Personil Terkait"}),
         (0,b.jsx)("span",{style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:700},children:"Direktori"})
       ]}),
       (0,b.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",padding:"0.5rem 0",textAlign:"center"},children:"Memuat direktori personil…"})
