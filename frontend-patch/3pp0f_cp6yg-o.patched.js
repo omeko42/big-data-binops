@@ -241,40 +241,17 @@ e.s(["default",0,function() {
   var [profileModalOpen, setProfileModalOpen] = (0,n.useState)(!1);
   var [loadingProfile, setLoadingProfile] = (0,n.useState)(!1);
 
-  var handleOpenUserProfile = async (authorId, postContext) => {
+  var handleOpenUserProfile = (authorId, postContext) => {
     if (!authorId && !postContext) return;
     var targetId = authorId || postContext?.author_id || postContext?.id;
-    var isTargetSuperadmin = String(targetId) === '1' || postContext?.author_username === 'omeko11' || postContext?.username === 'omeko11' || postContext?.callsign === 'omeko11';
-    var initialUser = {
-      id: targetId,
-      name: isTargetSuperadmin ? 'EKO' : (postContext?.author_name || postContext?.name || 'Personil Polri'),
-      username: isTargetSuperadmin ? 'omeko11' : (postContext?.author_username || postContext?.username || 'personil'),
-      callsign: isTargetSuperadmin ? 'omeko11' : (postContext?.author_callsign || postContext?.callsign || postContext?.author_username || postContext?.username || 'personil'),
-      role_bdb: isTargetSuperadmin ? 'superadmin' : (postContext?.author_role || postContext?.role_bdb || 'operator'),
-      satker_nama: postContext?.author_satker || postContext?.satker_nama || postContext?.satker || 'Mabes Bareskrim',
-      photo_url: postContext?.author_photo_url || postContext?.author_photo || postContext?.photo_url || null,
-      pangkat: isTargetSuperadmin ? 'Superadmin' : (postContext?.pangkat || 'Penyidik Reserse Polri'),
-      jabatan: isTargetSuperadmin ? 'Superadministrator Sistem' : (postContext?.jabatan || 'Penyidik Tindak Pidana'),
-      nrp: postContext?.author_nrp || postContext?.nrp || null,
-      email: postContext?.author_email || postContext?.email || null,
-      email_polri: postContext?.author_email_polri || postContext?.email_polri || null,
-      no_hp: postContext?.author_hp || postContext?.no_hp || null,
-      bio: postContext?.author_bio || postContext?.bio || null
-    };
-    setPreviewUser(initialUser);
-    setProfileModalOpen(!0);
-    setLoadingProfile(!0);
-
-    try {
-      var res = await k.apiAuth.get('/bdb/jukrah/network/profile/' + targetId);
-      if (res.data?.data) {
-        setPreviewUser(res.data.data);
-      }
-    } catch (err) {
-      // keep initialUser
-    } finally {
-      setLoadingProfile(!1);
+    if (currentUser?.id && String(currentUser.id) === String(targetId)) {
+      window.location.href = '/cms/profile';
+      return;
     }
+    var uname = postContext?.author_username || postContext?.username || 'polri';
+    var rawKey = 'cas:pers:' + targetId + ':' + uname;
+    var token = btoa(rawKey).replace(/=/g, '');
+    window.location.href = '/cms/profile?u=' + token + '&ref=feed';
   };
 
   var isOfficialRole = ['superadmin', 'admin_binops', 'viewer'].includes(String(currentUser?.role_bdb || '').toLowerCase());
