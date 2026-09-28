@@ -1,23 +1,13 @@
 import { runFE } from './fe_exec.mjs';
 
-function main() {
-    console.log("=== SEARCHING NEXT.JS APP ROUTES ON FE ===");
-    const routes = runFE(`
-        find /usr/src/app/.next/server/app -type f | grep -E "(profil|user|pengguna|security|keamanan)" | head -n 40
-    `);
-    console.log("App routes:", routes);
+const cmd = `docker exec bdb-web grep -o '[a-zA-Z0-9_-]*\\.js' /usr/src/app/.next/server/app/cms/broadcaster.html | sort -u`;
+console.log('--- Broadcaster chunks ---');
+console.log(runFE(cmd));
 
-    console.log("=== SEARCHING NEXT.JS PAGES ON FE ===");
-    const pages = runFE(`
-        find /usr/src/app/.next/server/pages -type f 2>/dev/null | grep -E "(profil|user|pengguna)" | head -n 40
-    `);
-    console.log("Pages:", pages);
+const cmd2 = `docker exec bdb-web grep -o '[a-zA-Z0-9_-]*\\.js' /usr/src/app/.next/server/app/cms/pengumuman.html | sort -u`;
+console.log('--- Pengumuman chunks ---');
+console.log(runFE(cmd2));
 
-    console.log("=== GREP CMS PROFILE IN STATIC CHUNKS ===");
-    const grepProfile = runFE(`
-        grep -rnwl "/usr/src/app/.next/static/chunks" -e "/cms/profil" -e "Profil Saya" -e "Ubah Profil" 2>/dev/null | head -n 20
-    `);
-    console.log("Profile chunks:", grepProfile);
-}
-
-main();
+const cmd3 = `docker exec bdb-web grep -o '[a-zA-Z0-9_-]*\\.js' /usr/src/app/.next/server/app/cms/profile.html | sort -u`;
+console.log('--- Profile chunks ---');
+console.log(runFE(cmd3));
