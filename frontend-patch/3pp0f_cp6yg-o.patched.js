@@ -49,6 +49,12 @@ function getVerificationBadge(role, isUserOne) {
   return null;
 }
 
+function formatCount(num) {
+  var n = Number(num || 0);
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
 function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
@@ -222,6 +228,15 @@ e.s(["default",0,function() {
   var [reportReason, setReportReason] = (0,n.useState)('');
   var [submittingReport, setSubmittingReport] = (0,n.useState)(!1);
 
+  var [selectedPostDetail, setSelectedPostDetail] = (0,n.useState)(null);
+  var handleOpenPostDetail = async (post) => {
+    if (!post) return;
+    post.view_count = (post.view_count || 0) + 1;
+    setSelectedPostDetail({ ...post });
+    try {
+      await c.apiAuth.post('/bdb/jukrah/post/' + post.id + '/acknowledge');
+    } catch(e) {}
+  };
   var [previewUser, setPreviewUser] = (0,n.useState)(null);
   var [profileModalOpen, setProfileModalOpen] = (0,n.useState)(!1);
   var [loadingProfile, setLoadingProfile] = (0,n.useState)(!1);
@@ -916,15 +931,38 @@ e.s(["default",0,function() {
                 )
               ]}),
 
-              // Post Body Content
-              (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.6",whiteSpace:"pre-wrap",wordBreak:"break-word",marginBottom:"0.85rem"},children:
-                renderPostContent(post.content, (tag) => {
-                  setFeedType('all');
-                  setSearchQuery(tag);
-                  window.scrollTo({ top: 220, behavior: 'smooth' });
-                  toastRef.current?.show({ severity: 'info', summary: 'Filter Tagar', detail: 'Menampilkan postingan dengan tagar ' + tag });
+              // Post Body Content (Maksimal 3 Baris - Clamped & Clickable Detail)
+              (0,t.jsxs)("div",{style:{marginBottom:"0.85rem"},children:[
+                (0,t.jsx)("div",{
+                  onClick:() => handleOpenPostDetail(post),
+                  title:"Klik untuk membaca postingan selengkapnya",
+                  style:{
+                    fontSize:"0.9rem",
+                    color:"var(--text-color, #0f172a)",
+                    lineHeight:"1.55",
+                    whiteSpace:"pre-wrap",
+                    wordBreak:"break-word",
+                    display:"-webkit-box",
+                    WebkitLineClamp:3,
+                    WebkitBoxOrient:"vertical",
+                    overflow:"hidden",
+                    textOverflow:"ellipsis",
+                    cursor:"pointer"
+                  },
+                  children:renderPostContent(post.content, (tag) => {
+                    setFeedType('all');
+                    setSearchQuery(tag);
+                    window.scrollTo({ top: 220, behavior: 'smooth' });
+                    toastRef.current?.show({ severity: 'info', summary: 'Filter Tagar', detail: 'Menampilkan postingan dengan tagar ' + tag });
+                  })
+                }),
+                (post.content && post.content.length > 180) && (0,t.jsx)("button",{
+                  type:"button",
+                  onClick:() => handleOpenPostDetail(post),
+                  style:{background:"transparent",border:"none",color:"#0284c7",fontSize:"0.78rem",fontWeight:700,cursor:"pointer",padding:"0.2rem 0",display:"inline-flex",alignItems:"center",gap:"0.25rem"},
+                  children:"Lihat selengkapnya ➔"
                 })
-              }),
+              ]}),
 
               // Media Attachments Viewer (Stream tokenized)
               post.media_urls && post.media_urls.length > 0 && (0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",marginBottom:"0.85rem",gridTemplateColumns:post.media_urls.length > 1 ? 'repeat(auto-fit, minmax(14rem, 1fr))' : '1fr'},children:
@@ -960,21 +998,11 @@ e.s(["default",0,function() {
                 })
               }),
 
-              // Metrics stats row (Clickable reactions to open "Siapa saja yg ngelike" modal)
-              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"0.74rem",color:"#94a3b8",paddingBottom:"0.6rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
-                (totalReactions > 0) ? (
-                  (0,t.jsxs)("button",{
-                    type:"button",
-                    onClick:() => handleOpenReactionsList(post.id),
-                    style:{background:"transparent",border:"none",cursor:"pointer",padding:0,color:"#38bdf8",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.35rem"},
-                    title:"Lihat siapa saja yang memberi reaksi",
-                    children:[
-                      "👍 ",totalReactions," reaksi"
-                    ]
-                  })
-                ) : (
-                  (0,t.jsx)("span",{style:{color:"#64748b"},children:"Belum ada reaksi"})
-                ),
+              // Metrics stats row (Views count & Comments)
+              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"0.74rem",color:"var(--text-color-secondary, #94a3b8)",paddingBottom:"0.6rem",borderBottom:"1px solid var(--surface-border, rgba(0,0,0,0.06))"},children:[
+                (0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#0284c7",fontWeight:600},children:[
+                  "👁️ ",formatCount(post.view_count || 1)," dilihat"
+                ]}),
                 (0,t.jsxs)("div",{style:{display:"flex",gap:"0.8rem"},children:[
                   (0,t.jsxs)("span",{children:[post.comments_count || 0," komentar"]}),
                   (post.repost_count > 0) && (0,t.jsxs)("span",{children:[post.repost_count," diteruskan"]})
@@ -983,12 +1011,36 @@ e.s(["default",0,function() {
 
               // Post Interaction Action Bar (Reactions with hover popup, Comment, Repost, Bookmark)
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-around",paddingTop:"0.4rem",position:"relative"},children:[
-                // Long-Press / Hover Reaction Bar Trigger
+                // Long-Press / Hover Reaction Bar Trigger with Reaction Count on the LEFT
                 (0,t.jsxs)("div",{
-                  style:{position:"relative"},
+                  style:{position:"relative",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
                   onMouseEnter:() => setHoverReactionPostId(post.id),
                   onMouseLeave:() => setTimeout(() => setHoverReactionPostId(id => (id === post.id ? null : id)), 400),
                   children:[
+                    // Reaction Count on Left
+                    totalReactions > 0 ? (
+                      (0,t.jsxs)("button",{
+                        type:"button",
+                        onClick:() => handleOpenReactionsList(post.id),
+                        title:"Lihat siapa saja yang memberi reaksi",
+                        style:{
+                          background:"rgba(56,189,248,0.12)",
+                          border:"1px solid rgba(56,189,248,0.25)",
+                          color:"#0284c7",
+                          padding:"0.2rem 0.55rem",
+                          borderRadius:"999px",
+                          fontWeight:800,
+                          fontSize:"0.76rem",
+                          cursor:"pointer",
+                          display:"inline-flex",
+                          alignItems:"center",
+                          gap:"0.25rem"
+                        },
+                        children:[
+                          "👍 ", formatCount(totalReactions)
+                        ]
+                      })
+                    ) : null,
                     (0,t.jsxs)("button",{
                       type:"button",
                       onClick:() => handleReact(post.id, currentReact ? currentReact : 'like'),
@@ -1331,6 +1383,59 @@ e.s(["default",0,function() {
 
     // PDF Preview modal
     (0,t.jsx)(O.default,{file:previewPdf,onHide:() => setPreviewPdf(null)}),
+
+    // Detail Postingan Modal Pop-up
+    (0,t.jsx)(u.Dialog,{
+      header:"Detail Postingan Linimasa CAS",
+      visible:!!selectedPostDetail,
+      onHide:() => setSelectedPostDetail(null),
+      style:{width:"42rem",maxWidth:"95vw"},
+      modal:!0,
+      dismissableMask:!0,
+      children: selectedPostDetail && (0,t.jsxs)("div",{
+        style:{display:"grid",gap:"1rem"},
+        children:[
+          // Header: Author meta + Views Count
+          (0,t.jsxs)("div",{
+            style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.6rem"},
+            children:[
+              (0,t.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
+                onClick:() => { setSelectedPostDetail(null); handleOpenUserProfile(selectedPostDetail.author_id, selectedPostDetail); },
+                title:"Buka Halaman Profil Personil",
+                children:[
+                  renderCornerAvatar(selectedPostDetail.author_photo_url || selectedPostDetail.author_photo, String(selectedPostDetail.author_name || 'P').charAt(0).toUpperCase(), getVerificationBadge(selectedPostDetail.author_role, String(selectedPostDetail.author_id)==='1'), 2.4, 15, 8.5),
+                  (0,t.jsxs)("div",{children:[
+                    (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#0284c7"},children:formatCallsign(selectedPostDetail.author_callsign, selectedPostDetail.author_id, selectedPostDetail.author_username)}),
+                    (0,t.jsxs)("div",{style:{fontSize:"0.72rem",color:"var(--text-color-secondary, #64748b)"},children:[
+                      selectedPostDetail.author_satker || "Mabes Polri", " • ", timeAgo(selectedPostDetail.created_at)
+                    ]})
+                  ]})
+                ]
+              }),
+              (0,t.jsxs)("span",{
+                style:{fontSize:"0.75rem",fontWeight:700,background:"rgba(56,189,248,0.12)",color:"#0284c7",padding:"0.25rem 0.65rem",borderRadius:"999px",border:"1px solid rgba(56,189,248,0.25)",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+                children:["👁️ ", formatCount(selectedPostDetail.view_count || 1), " dilihat"]
+              })
+            ]
+          }),
+          // Post full content
+          (0,t.jsx)("div",{
+            style:{fontSize:"0.95rem",lineHeight:"1.65",color:"var(--text-color, #0f172a)",whiteSpace:"pre-wrap",wordBreak:"break-word",background:"var(--surface-50, rgba(0,0,0,0.02))",padding:"0.85rem 1rem",borderRadius:"8px",border:"1px solid var(--surface-border, rgba(0,0,0,0.06))"},
+            children:renderPostContent(selectedPostDetail.content)
+          }),
+          // Media Attachments if any
+          selectedPostDetail.media_urls && selectedPostDetail.media_urls.length > 0 && (0,t.jsx)("div",{
+            style:{display:"grid",gap:"0.5rem"},
+            children:selectedPostDetail.media_urls.map((m, mIdx) => {
+              var mUrl = m.stream_url || (m.token ? ('/api/bdb/jukrah/stream/' + m.token) : m.url);
+              var isImg = m.type?.startsWith('image/') || m.name?.match(/\.(png|jpe?g|webp|gif)$/i);
+              return isImg ? (0,t.jsx)("img",{key:mIdx,src:mUrl,alt:"Lampiran",style:{maxWidth:"100%",maxHeight:"360px",borderRadius:"8px",objectFit:"contain",margin:"0 auto"}}) : null;
+            })
+          })
+        ]
+      })
+    }),
 
     // Modal: Tactical Profile Preview Dialog
     (0,t.jsx)(u.Dialog,{
