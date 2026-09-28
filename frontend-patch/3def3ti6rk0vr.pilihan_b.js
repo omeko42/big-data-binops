@@ -1494,20 +1494,30 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsxs)("div",{
         style:{position:"relative",marginTop:"-70px",width:"135px",height:"135px",flex:"0 0 135px"},
         children:[
-          (0,t.jsx)("div",{style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-card-bg, #1e293b)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff"},children:
+          (0,t.jsx)("div",{
+            title:isReadOnlyMode?"Foto Profil":"Klik foto untuk mengganti foto profil",
+            onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
+            style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-card-bg, #1e293b)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff",cursor:isReadOnlyMode?"default":"pointer",transition:"transform 0.15s ease"},
+            children:
             (a?.photo_url||a?.foto)?(0,t.jsx)("img",{src:a.photo_url||a.foto,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):eB
           }),
-          // Gold Verified Badge (Yellow circle with white checkmark)
-          (0,t.jsxs)("div",{
-            title:"Terverifikasi Kedinasan",
-            style:{position:"absolute",bottom:"4px",right:"4px",width:"32px",height:"32px",borderRadius:"50%",background:"#eab308",border:"3px solid #1e293b",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)",cursor:isReadOnlyMode?"default":"pointer"},
-            onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
-            children:[
-              (0,t.jsxs)("svg",{viewBox:"0 0 24 24",width:18,height:18,children:[
-                (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
-              ]})
-            ]
-          })
+          // Tiered Verified Badge (Gold: Superadmin, Emerald: Admin Binops, Cyan Blue: Personil CAS)
+          (function(){
+            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
+            var roleStr = String(a?.role_bdb || '').toLowerCase();
+            var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
+            var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+            return (0,t.jsxs)("div",{
+              title:bLabel,
+              style:{position:"absolute",bottom:"4px",right:"4px",width:"32px",height:"32px",borderRadius:"50%",background:bColor,border:"3px solid #1e293b",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)",cursor:isReadOnlyMode?"default":"pointer"},
+              onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
+              children:[
+                (0,t.jsxs)("svg",{viewBox:"0 0 24 24",width:18,height:18,children:[
+                  (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+                ]})
+              ]
+            });
+          })()
         ]
       })
       // Kanan atas Hero: Bersih (tanpa pill Satker)!
@@ -1515,13 +1525,28 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
     // Identity, Location & Action Bar
     (0,t.jsxs)("div",{style:{marginTop:"0.85rem"},children:[
-      // Name & Callsign row: @OMEKO11 ● Online monolitik
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap"},children:[
+      // Name & Callsign row: @OMEKO11 [Verified Badge] ● Online monolitik
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap"},children:[
         (0,t.jsx)("span",{style:{fontSize:"1.6rem",fontWeight:800,color:"#ffffff",lineHeight:1.2},children:(function(){
           var cs = a?.callsign || a?.username || "OMEKO11";
           if (cs.startsWith('@')) return cs.toUpperCase();
           return '@' + cs.toUpperCase();
         })()}),
+        (function(){
+          var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
+          var roleStr = String(a?.role_bdb || '').toLowerCase();
+          var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
+          var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+          return (0,t.jsx)("span",{
+            title:bLabel,
+            style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"20px",height:"20px",borderRadius:"50%",background:bColor,boxShadow:"0 1px 4px rgba(0,0,0,0.3)"},
+            children:[
+              (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:12,height:12,children:[
+                (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+              ]})
+            ]
+          });
+        })(),
         // Clean Online Status Pill
         (0,t.jsxs)("span",{style:{fontSize:"0.76rem",fontWeight:700,padding:"0.2rem 0.65rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.35)",display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
           "● Online"
@@ -1530,7 +1555,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
       // Subline: Nasional • Info kontak • 4.120+ koneksi
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",color:"#94a3b8"},children:[
-        (0,t.jsx)("span",{children:(a?.scope_satker_name || a?.satker_nama || a?.satuan || "Nasional")}),
+        (0,t.jsx)("span",{children:(function(){
+          var isSuper = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
+          if (isSuper) return "Nasional";
+          return a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan || "Nasional";
+        })()}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
         (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info kontak"}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
@@ -2002,7 +2031,18 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             }),
             (0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[
               (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.82rem",color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.name}),
-              (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#38bdf8"},children:'@' + pers.callsign}),
+              (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem"},children:[
+                (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:700},children:'@' + pers.callsign}),
+                (0,t.jsx)("span",{
+                  title:"Personil Terverifikasi",
+                  style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:"#38bdf8",flexShrink:0},
+                  children:[
+                    (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:[
+                      (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+                    ]})
+                  ]
+                })
+              ]}),
               (0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.satker})
             ]}),
             (0,t.jsx)("button",{

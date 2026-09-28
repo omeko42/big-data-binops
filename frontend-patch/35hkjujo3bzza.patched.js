@@ -616,8 +616,30 @@ e.s(["default", 0, function() {
                               children: "📌 PINNED"
                             }),
                             (0, t.jsx)("span", {
-                              style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--text-color, #0f172a)" },
-                              children: post.author_handle
+                              style: { display: "inline-flex", alignItems: "center", gap: "0.35rem" },
+                              children: [
+                                (0, t.jsx)("span", {
+                                  style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--text-color, #0f172a)" },
+                                  children: (function(item){
+                                    if (!item) return "@anak_serse";
+                                    if (String(item.author_id)==='1' || item.author_username==='omeko11' || item.author_callsign==='omeko11') return "@omeko11";
+                                    if (item.author_callsign) return "@" + String(item.author_callsign).replace(/^@/, '');
+                                    if (item.author_username) return "@" + item.author_username;
+                                    return item.author_handle || (item.author_name ? ("@" + String(item.author_name).toLowerCase().replace(/[^a-z0-9]/g, '')) : "@anak_serse");
+                                  })(post)
+                                }),
+                                (function(item){
+                                  var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin';
+                                  var r = String(item?.author_role || '').toLowerCase();
+                                  var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
+                                  var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+                                  return (0, t.jsx)("span", {
+                                    title: bTitle,
+                                    style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "13px", height: "13px", borderRadius: "50%", background: bColor, flexShrink: 0 },
+                                    children: [(0, t.jsx)("svg", { viewBox: "0 0 24 24", width: 8, height: 8, children: [(0, t.jsx)("path", { d: "m6 12 4 4 8-8", stroke: "#ffffff", strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })] })]
+                                  });
+                                })(post)
+                              ]
                             }),
                             (0, t.jsxs)("span", {
                               style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
@@ -1028,7 +1050,32 @@ e.s(["default", 0, function() {
                     (0, t.jsxs)("div", {
                       style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.35rem" },
                       children: [
-                        (0, t.jsx)("span", { style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" }, children: p.author_handle }),
+                        (0, t.jsxs)("div", {
+                          style: { display: "inline-flex", alignItems: "center", gap: "0.35rem" },
+                          children: [
+                            (0, t.jsx)("span", {
+                              style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" },
+                              children: (function(item){
+                                if (!item) return "@anak_serse";
+                                if (String(item.author_id)==='1' || item.author_username==='omeko11' || item.author_callsign==='omeko11') return "@omeko11";
+                                if (item.author_callsign) return "@" + String(item.author_callsign).replace(/^@/, '');
+                                if (item.author_username) return "@" + item.author_username;
+                                return item.author_handle || (item.author_name ? ("@" + String(item.author_name).toLowerCase().replace(/[^a-z0-9]/g, '')) : "@anak_serse");
+                              })(p)
+                            }),
+                            (function(item){
+                              var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin';
+                              var r = String(item?.author_role || '').toLowerCase();
+                              var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
+                              var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+                              return (0, t.jsx)("span", {
+                                title: bTitle,
+                                style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "13px", height: "13px", borderRadius: "50%", background: bColor, flexShrink: 0 },
+                                children: [(0, t.jsx)("svg", { viewBox: "0 0 24 24", width: 8, height: 8, children: [(0, t.jsx)("path", { d: "m6 12 4 4 8-8", stroke: "#ffffff", strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })] })]
+                              });
+                            })(p)
+                          ]
+                        }),
                         
                         (0, t.jsx)("span", {
                           style: {
@@ -1038,7 +1085,7 @@ e.s(["default", 0, function() {
                             padding: "0.1rem 0.4rem",
                             borderRadius: "4px"
                           },
-                          children: p.author_satker || "Satker Polri"
+                          children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin'; if (isSuper) return "Nasional"; return item?.author_satker || item?.satker_name || item?.satker || "Robinops Bareskrim"; })(p)
                         }),
                         (0, t.jsxs)("span", {
                           style: { fontSize: "0.72rem", color: "#64748b" },
