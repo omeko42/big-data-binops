@@ -112,6 +112,21 @@ async function main() {
     ro_state=$(docker exec bdb-web grep -o "isReadOnlyMode" /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js | head -n 1)
     echo "  ✓ Profile isReadOnlyMode Guard: '$ro_state'"
 
+    totp_check=$(docker exec bdb-web grep -o "Google Authenticator (TOTP)" /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js | head -n 1)
+    echo "  ✓ Profile 2FA TOTP: '$totp_check'"
+
+    otp_check=$(docker exec bdb-web grep -o "OTP Email Kedinasan" /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js | head -n 1)
+    echo "  ✓ Profile 2FA Email OTP: '$otp_check'"
+
+    totp_modal=$(docker exec bdb-web grep -o "Setup Google Authenticator (TOTP)" /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js | head -n 1)
+    echo "  ✓ Profile TOTP Setup Modal: '$totp_modal'"
+
+    linkedin_check=$(docker exec bdb-web grep -c "Bahasa profil" /usr/src/app/.next/static/chunks/3def3ti6rk0vr.js || true)
+    echo "  ✓ LinkedIn remnants in profile (must be 0): '$linkedin_check'"
+
+    modal_open_check=$(docker exec bdb-web grep -c "setProfileModalOpen(!0)" /usr/src/app/.next/static/chunks/3pp0f_cp6yg-o.js || true)
+    echo "  ✓ Feed setProfileModalOpen calls (must be 0): '$modal_open_check'"
+
     raw_check=$(docker exec bdb-web grep -c "p.raw_name &&" /usr/src/app/.next/static/chunks/35hkjujo3bzza.js || true)
     echo "  ✓ Feed raw_name count (must be 0): '$raw_check'"
   `);
