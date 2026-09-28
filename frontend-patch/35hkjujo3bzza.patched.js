@@ -1029,7 +1029,7 @@ e.s(["default", 0, function() {
                       style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.35rem" },
                       children: [
                         (0, t.jsx)("span", { style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" }, children: p.author_handle }),
-                        p.raw_name && (0, t.jsxs)("span", { style: { fontSize: "0.75rem", color: "#94a3b8" }, children: ["(", p.raw_name, ")"] }),
+                        
                         (0, t.jsx)("span", {
                           style: {
                             fontSize: "0.68rem",

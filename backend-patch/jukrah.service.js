@@ -448,6 +448,7 @@ let JukrahService = class JukrahService {
         await this.dataSource.query(`INSERT INTO bdb_social_read_receipts (post_id, satker_id, user_id, acknowledged_at)
              VALUES ($1, $2, $3, NOW())
              ON CONFLICT (post_id, user_id) DO NOTHING`, [postId, satkerId, uid]);
+        await this.dataSource.query('UPDATE bdb_social_posts SET view_count = coalesce(view_count, 0) + 1 WHERE id = $1', [postId]);
         return { status: 1, message: 'Konfirmasi keterbacaan tercatat.' };
     }
     async updateVisibility(user, postId, audienceType) {
