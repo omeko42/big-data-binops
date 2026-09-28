@@ -53,6 +53,7 @@ function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
+  if (c.startsWith('pers_') || c.startsWith('user_')) c = '';
   var invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
   if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
     return '@' + c.toLowerCase();
@@ -363,7 +364,9 @@ e.s(["default",0,function() {
     setPosts(prev => prev.map(p => {
       if (p.id === postId) {
         var oldCounts = { ...(p.reaction_counts || {}) };
-        var total = p.total_reactions || 0;
+        var total = (p.total_reactions != null && p.total_reactions > 0)
+          ? p.total_reactions
+          : Object.values(oldCounts).reduce((acc, v) => acc + Number(v || 0), 0);
         if (currentReact && oldCounts[currentReact] > 0) {
           oldCounts[currentReact]--;
           total = Math.max(0, total - 1);
@@ -793,6 +796,9 @@ e.s(["default",0,function() {
           var isUserOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
           var authorHandle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
           var authorBadge = getVerificationBadge(post.author_role, isUserOne);
+          var totalReactions = (post.total_reactions != null && post.total_reactions > 0)
+            ? post.total_reactions
+            : Object.values(post.reaction_counts || {}).reduce((acc, val) => acc + Number(val || 0), 0);
           var authorNameDisplay = isUserOne ? 'EKO' : post.author_name;
           var authorInitials = String(authorNameDisplay || authorHandle || 'P').charAt(0).toUpperCase();
 
@@ -956,14 +962,14 @@ e.s(["default",0,function() {
 
               // Metrics stats row (Clickable reactions to open "Siapa saja yg ngelike" modal)
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"0.74rem",color:"#94a3b8",paddingBottom:"0.6rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
-                (post.total_reactions > 0) ? (
+                (totalReactions > 0) ? (
                   (0,t.jsxs)("button",{
                     type:"button",
                     onClick:() => handleOpenReactionsList(post.id),
                     style:{background:"transparent",border:"none",cursor:"pointer",padding:0,color:"#38bdf8",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.35rem"},
                     title:"Lihat siapa saja yang memberi reaksi",
                     children:[
-                      "👍 ",post.total_reactions," reaksi"
+                      "👍 ",totalReactions," reaksi"
                     ]
                   })
                 ) : (
