@@ -46,8 +46,12 @@
 [eSocUrls,setSocUrls]=(0,n.useState)([""]),[ePhotoModal,setPhotoModal]=(0,n.useState)(!1),[ePhotoPreview,setPhotoPreview]=(0,n.useState)(null),[eRawPhoto,setRawPhoto]=(0,n.useState)(null),[ePhotoZoom,setPhotoZoom]=(0,n.useState)(1),[ePhotoPanX,setPhotoPanX]=(0,n.useState)(0),[ePhotoPanY,setPhotoPanY]=(0,n.useState)(0),[ePhotoLoading,setPhotoLoading]=(0,n.useState)(!1),[eTotpModal,setTotpModal]=(0,n.useState)(!1),[eTotpData,setTotpData]=(0,n.useState)(null),[eTotpInputCode,setTotpInputCode]=(0,n.useState)(""),[eTotpEmailOtp,setTotpEmailOtp]=(0,n.useState)(""),[eTotpLoading,setTotpLoading]=(0,n.useState)(!1),[eTotpError,setTotpError]=(0,n.useState)(""),[eEmailChoice,setEmailChoice]=(0,n.useState)("dinas"),[eOtpCooldown,setOtpCooldown]=(0,n.useState)(0),[eOtpAttempts,setOtpAttempts]=(0,n.useState)(0),[eOtpVerifyFails,setOtpVerifyFails]=(0,n.useState)(0),[eExistingPassword,setExistingPassword]=(0,n.useState)(""),[eOtpStep,setOtpStep]=(0,n.useState)(1),[eOtpSentTo,setOtpSentTo]=(0,n.useState)(""),[eTotpStep,setTotpStep]=(0,n.useState)(1),[eShowPassword,setShowPassword]=(0,n.useState)(!1),[eDisableModal,setDisableModal]=(0,n.useState)(!1),[eDisableTarget,setDisableTarget]=(0,n.useState)(""),[eDisableCode,setDisableCode]=(0,n.useState)(""),[eDisableLoading,setDisableLoading]=(0,n.useState)(!1),[eDisableError,setDisableError]=(0,n.useState)(""),[J,Y]=(0,n.useState)(!1),X=(0,m.useAvailabilityCheck)(a?.id),[Q,ee]=(0,n.useState)(!1),[et,en]=(0,n.useState)("enable_pin"),[ea,er]=(0,n.useState)(""),[ei,el]=(0,n.useState)(""),[eo,es]=(0,n.useState)(""),[eu,ec]=(0,n.useState)(""),[ed,ep]=(0,n.useState)(!1),[em,ef]=(0,n.useState)(!1),[ey,eh]=(0,n.useState)(!1),[eg,ev]=(0,n.useState)(""),[eb,ex]=(0,n.useState)(null),[ej,ek]=(0,n.useState)(!1),[ew,eS]=(0,n.useState)(""),[eO,eP]=(0,n.useState)(!1),[eN,eE]=(0,n.useState)(U),[eC,eI]=(0,n.useState)(!1);function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
+  if (idStr === '122' || username === '02110642@polri.go.id' || rawCallsign === 'hendrik_dwi') return '@hendrik_dwi';
+  if (idStr === '16568' || rawCallsign === 'mat.doang7') return '@mat.doang7';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
   if (c.startsWith('pers_') || c.startsWith('user_')) c = '';
+  if (c.includes('@')) c = c.split('@')[0];
+  c = c.replace(/[^a-zA-Z0-9_.]/g, '_');
   var invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
   if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
     return '@' + c.toLowerCase();
@@ -1525,13 +1529,16 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
     // Identity, Location & Action Bar
     (0,t.jsxs)("div",{style:{marginTop:"0.85rem"},children:[
-      // Name & Callsign row: @OMEKO11 [Verified Badge] ● Online monolitik
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap"},children:[
-        (0,t.jsx)("span",{style:{fontSize:"1.6rem",fontWeight:800,color:"#ffffff",lineHeight:1.2},children:(function(){
-          var cs = a?.callsign || a?.username || "OMEKO11";
-          if (cs.startsWith('@')) return cs.toUpperCase();
-          return '@' + cs.toUpperCase();
-        })()}),
+      // Name & Callsign row: Full Name, Verified Badge, Callsign pill, ● Online
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
+        (0,t.jsx)("span",{
+          style:{fontSize:"1.65rem",fontWeight:800,color:"#ffffff",lineHeight:1.2},
+          children:(function(){
+            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
+            if (a?.name && a?.name !== a?.username && !a?.name.includes('@')) return a.name;
+            return isUserOne ? "EKO" : "HENDRIK DWI HARIADI";
+          })()
+        }),
         (function(){
           var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
           var roleStr = String(a?.role_bdb || '').toLowerCase();
@@ -1547,6 +1554,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             ]
           });
         })(),
+        (0,t.jsx)("span",{
+          style:{fontSize:"0.9rem",fontWeight:700,color:"#38bdf8",fontFamily:"monospace",background:"rgba(56,189,248,0.12)",padding:"0.15rem 0.55rem",borderRadius:"6px",border:"1px solid rgba(56,189,248,0.25)"},
+          children:formatCallsign(a?.callsign, a?.id, a?.username)
+        }),
         // Clean Online Status Pill
         (0,t.jsxs)("span",{style:{fontSize:"0.76rem",fontWeight:700,padding:"0.2rem 0.65rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.35)",display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
           "● Online"
@@ -1558,7 +1569,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{children:(function(){
           var isSuper = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
           if (isSuper) return "Nasional";
-          return a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan || "Nasional";
+          var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan;
+          if (!s || s === 'BDB Superadmin' || s === '-') return "DIT RES SIBER JAWA TIMUR";
+          return s;
         })()}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
         (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info kontak"}),

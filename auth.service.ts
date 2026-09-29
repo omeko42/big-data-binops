@@ -47,12 +47,12 @@ export class AuthService {
 
     private normalizeRequestedRole(role?: string): string {
         const value = String(role || '').trim().toLowerCase();
-        return ['admin_binops', 'operator', 'viewer'].includes(value) ? value : 'viewer';
+        return ['admin_binops', 'operator', 'viewer', 'sharese'].includes(value) ? value : 'viewer';
     }
 
     private normalizeBdbRole(role?: string): string {
         const value = String(role || '').trim().toLowerCase();
-        return ['superadmin', 'admin_binops', 'operator', 'viewer'].includes(value) ? value : 'viewer';
+        return ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'].includes(value) ? value : 'viewer';
     }
 
     private cleanOptionalText(value: any): string | null {
@@ -719,33 +719,40 @@ export class AuthService {
         }
         console.timeEnd('Step 6: Resolve Satker');
 
-        const [scopeRows, policeRows] = await Promise.all([
-            this.dataSource.query(
-                `
+        const [scopeRowsMaster, policeRows] = await Promise.all([
+            this.dataSource.query(`
                 select id, satker_key, nama_satker_canonical, level, full_path
                 from bdb_satker_master
                 where ($1::bigint is not null and id = $1::bigint)
                    or ($2::text is not null and satker_key = $2::text)
                 order by id asc
                 limit 1
-                `,
-                [user.scope_satker_id ? Number(user.scope_satker_id) : null, user.scope_satker_key || null]
-            ),
-            this.dataSource.query(
-                `
+                `, [user.scope_satker_id ? Number(user.scope_satker_id) : null, user.scope_satker_key || null]),
+            this.dataSource.query(`
                 select nrp, nama, satuan, no_hp, pangkat, jabatan, email, foto, is_pns, social_media
                 from trb_police
                 where lower(email) = any($1::text[])
                 order by id desc
                 limit 1
-                `,
-                [[this.normalizeEmail(user.email), this.normalizeEmail(user.email_polri)].filter(Boolean)]
-            )
+                `, [[this.normalizeEmail(user.email), this.normalizeEmail(user.email_polri)].filter(Boolean)])
         ]);
-
-        const scopeRow = scopeRows[0];
+        let scopeRow = scopeRowsMaster[0];
+        if (!scopeRow) {
+            const bdbSatkerRows = await this.dataSource.query(`
+                select id, kode as satker_key, coalesce(deskripsi, nama_singkat) as nama_satker_canonical, tipe_satker as level, coalesce(deskripsi, nama_singkat) as full_path
+                from bdb_satker
+                where ($1::bigint is not null and id = $1::bigint)
+                   or ($2::text is not null and kode = $2::text)
+                order by id asc
+                limit 1
+            `, [user.scope_satker_id ? Number(user.scope_satker_id) : null, user.scope_satker_key || null]);
+            scopeRow = bdbSatkerRows[0];
+        }
         const policeProfile = policeRows[0];
         const roleBdb = this.normalizeBdbRole(user.role_bdb);
+        if (scopeRow?.nama_satker_canonical && roleBdb !== 'superadmin') {
+            satker = scopeRow.nama_satker_canonical;
+        }
         const scopeAccessDisplay = roleBdb === 'superadmin'
             ? 'Nasional'
             : scopeRow?.nama_satker_canonical
@@ -762,6 +769,7 @@ export class AuthService {
             email_google: user.email_google,
             email_polri: user.email_polri,
             username: user.username,
+            callsign: user.callsign,
             login_method: user.login_method,
             local_password_enabled: user.local_password_enabled,
             role_bdb: user.role_bdb,
@@ -1009,7 +1017,7 @@ export class AuthService {
         // sebelumnya cuma OrganisasiRole yg diisi, role_bdb tak pernah disentuh. Dibatasi CHECK
         // constraint ke 4 role baku (auth_users_role_bdb_check) -- role CUSTOM sengaja tak dipaksa
         // isi (bakal gagal krn constraint), biarkan default apa adanya.
-        const BAKU_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer'];
+        const BAKU_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
         const roleBdbForInvite = BAKU_ROLES.includes(String(role.role_name || '').trim().toLowerCase()) ? String(role.role_name).trim().toLowerCase() : undefined;
         try {
             await queryRunner.startTransaction();

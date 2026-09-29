@@ -723,34 +723,19 @@ e.s(["default",0,function() {
         marginBottom:"1.25rem"
       },
       children:(0,t.jsxs)("div",{children:[
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
-          (0,t.jsx)("h1",{
-            style:{
-              fontSize:"1.65rem",
-              fontWeight:900,
-              margin:0,
-              background:"linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%)",
-              WebkitBackgroundClip:"text",
-              WebkitTextFillColor:"transparent",
-              letterSpacing:"0.06em",
-              textTransform:"uppercase"
-            },
-            children:"SHARESE"
-          }),
-          (0,t.jsx)("span",{
-            style:{
-              fontSize:"0.65rem",
-              background:"rgba(56,189,248,0.15)",
-              color:"#38bdf8",
-              border:"1px solid rgba(56,189,248,0.35)",
-              padding:"0.15rem 0.55rem",
-              borderRadius:"999px",
-              fontWeight:800,
-              letterSpacing:"0.05em"
-            },
-            children:"BARESKRIM POLRI"
-          })
-        ]}),
+        (0,t.jsx)("h1",{
+          style:{
+            fontSize:"1.65rem",
+            fontWeight:900,
+            margin:0,
+            background:"linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%)",
+            WebkitBackgroundClip:"text",
+            WebkitTextFillColor:"transparent",
+            letterSpacing:"0.06em",
+            textTransform:"uppercase"
+          },
+          children:"SHARESE"
+        }),
         (0,t.jsx)("p",{
           style:{margin:"0.35rem 0 0",fontSize:"0.84rem",color:"var(--cas-text-secondary, #94a3b8)",lineHeight:1.45},
           children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal"
