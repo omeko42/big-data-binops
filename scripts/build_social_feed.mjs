@@ -666,7 +666,7 @@ e.s(["default",0,function() {
       } else if (feedCategory === 'saved') {
         if (!post.is_bookmarked) return false;
       } else if (feedCategory === 'mine') {
-        var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id) || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
+        var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
         if (!isAuthor) return false;
       } else if (feedCategory === 'official') {
         if (!post.is_official_jukrah) return false;
@@ -1014,7 +1014,7 @@ e.s(["default",0,function() {
         paginatedPosts.map(post => {
           var postReactions = post.reaction_counts || {};
           var currentReact = post.user_reaction || post.my_reaction;
-          var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id) || post.author_username === 'omeko11';
+          var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
           var canEdit = isAuthor || isOfficialRole || post.can_edit;
           var authorAvatar = post.author_photo_url || post.author_photo || null;
           
