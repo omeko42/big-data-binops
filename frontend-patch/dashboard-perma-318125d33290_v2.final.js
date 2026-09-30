@@ -916,12 +916,13 @@ children:[
       (0,t.jsx)("div",{
         style:{display:"flex",flexDirection:"column",gap:"0.4rem"},
         children:casFeed.slice(0, 5).map(item => {
-          let isSuper = String(item.author_id) === '1' || item.author_username === 'omeko11' || item.author_callsign === 'omeko11' || String(item.author_role).toLowerCase() === 'superadmin';
+          let isUserOne = String(item.author_id) === '1' || item.author_username === 'omeko11' || item.author_callsign === 'omeko11';
+          let isSuper = isUserOne || String(item.author_role || '').toLowerCase() === 'superadmin';
           let roleStr = String(item.author_role || '').toLowerCase();
-          let callsign = isSuper ? '@omeko11' : (item.author_callsign ? ('@' + String(item.author_callsign).replace(/^@/, '')) : ('@' + (item.author_username || 'anak_serse')));
+          let callsign = isUserOne ? '@omeko11' : (item.author_callsign ? ('@' + String(item.author_callsign).replace(/^@/, '')) : (item.author_username ? ('@' + item.author_username) : '@user_' + String(item.author_id || 'polri').slice(-4)));
           let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
           let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
-          let satker = item.satker_name || item.satker || (isSuper ? 'Nasional' : 'Bareskrim');
+          let satker = item.satker_name || item.satker || (isUserOne ? 'Nasional' : 'Mabes Bareskrim');
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
             key:item.id,
