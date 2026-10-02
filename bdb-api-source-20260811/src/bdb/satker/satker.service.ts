@@ -1047,6 +1047,9 @@ export class SatkerService implements OnModuleInit {
                 "where s.is_synthetic = false " +
                 "and s.organization_domain = 'INTERNAL_POLRI' " +
                 "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                (actorDomain !== 'ALL'
+                    ? " and not (s.depth = 2 and s.parent_id = $" + pTerr + " and s.id <> $" + pActor + ") and not (s.id = $" + pTerr + " and s.depth = 1)"
+                    : "") +
                 "), ";
         } else {
             // Akses Nasional (Mabes / Superadmin / Admin Binops)
