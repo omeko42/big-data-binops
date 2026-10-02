@@ -77,7 +77,7 @@ if (typeof globalThis !== 'undefined') {
 
 async function eT() {
   var sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  var uToken = sp ? (sp.get('u') || sp.get('uid')) : null;
+  var uToken = sp ? (sp.get('u') || sp.get('id') || sp.get('uid')) : null;
   var myUser = null;
   try {
     var myRes = await c.apiAuth.get("/Authentication/user");
@@ -86,14 +86,16 @@ async function eT() {
 
   if (uToken) {
     var targetId = null;
-    try {
-      var decoded = atob(uToken);
-      var parts = decoded.split(':');
-      if (parts[0] === 'cas' && parts[1] === 'pers' && parts[2]) {
-        targetId = parts[2];
-      }
-    } catch(err) {
-      if (/^\d+$/.test(uToken)) targetId = uToken;
+    if (/^\d+$/.test(uToken)) {
+      targetId = uToken;
+    } else {
+      try {
+        var decoded = atob(uToken);
+        var parts = decoded.split(':');
+        if (parts[0] === 'cas' && parts[1] === 'pers' && parts[2]) {
+          targetId = parts[2];
+        }
+      } catch(err) {}
     }
 
     if (targetId && (!myUser?.id || String(myUser.id) !== String(targetId))) {
