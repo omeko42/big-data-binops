@@ -1032,10 +1032,15 @@ export class SatkerService implements OnModuleInit {
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
                 "case " +
-                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
-                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
-                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
-                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when s.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when s.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when s.id in (1, 13) or s.tipe_satker = 'MABES' then 'MABES' " +
+                "when p.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when p.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when p.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when p.id in (1, 13) or p.tipe_satker = 'MABES' then 'MABES' " +
+                "else coalesce(s.tipe_satker, p.tipe_satker, 'MABES') " +
                 "end as tipe_satker " +
                 "from sub s " +
                 "left join bdb_satker p on p.id = s.parent_id " +
@@ -1051,10 +1056,15 @@ export class SatkerService implements OnModuleInit {
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
                 "case " +
-                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
-                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
-                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
-                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when s.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when s.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when s.id in (1, 13) or s.tipe_satker = 'MABES' then 'MABES' " +
+                "when p.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when p.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when p.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when p.id in (1, 13) or p.tipe_satker = 'MABES' then 'MABES' " +
+                "else coalesce(s.tipe_satker, p.tipe_satker, 'MABES') " +
                 "end as tipe_satker " +
                 "from bdb_satker s " +
                 "left join bdb_satker p on p.id = s.parent_id " +
