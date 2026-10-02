@@ -662,7 +662,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
   },
   children:[
     (0,t.jsxs)("div",{children:[
-      (0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.6rem",fontWeight:800,letterSpacing:"-0.02em",color:"#f8fafc"},children:"Profil Saya"}),
+      (0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.6rem",fontWeight:800,letterSpacing:"-0.02em",color:"var(--cas-text-primary, #0f172a)"},children:"Profil Saya"}),
       (0,t.jsx)("p",{className:"cms-page-sub",style:{margin:"0.2rem 0 0",fontSize:"0.84rem",color:"#94a3b8"},children:"Informasi akun, data personil, dan keamanan."})
     ]}),
 
@@ -676,9 +676,9 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
           "aria-label":"Pengaturan Profil dan Keamanan",
           onClick:()=>setDropdownOpen(v => !v),
           style:{
-            background:"rgba(15,23,42,0.8)",
-            color:"#f8fafc",
-            border:"1px solid rgba(56,189,248,0.3)",
+            background:"var(--cas-card-bg, rgba(15,23,42,0.8))",
+            color:"var(--cas-text-primary, #f8fafc)",
+            border:"1px solid var(--cas-border, rgba(56,189,248,0.3))",
             borderRadius:"24px",
             padding:"0.5rem 1.25rem",
             fontSize:"0.84rem",
@@ -835,7 +835,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     ]}),
     (0,t.jsxs)("div",{style:{background:"rgba(0,0,0,0.25)",padding:"0.85rem",borderRadius:"10px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
       (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",fontWeight:700,letterSpacing:"0.05em"},children:"NOMOR TELEPON / WHATSAPP"}),
-      (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"#f8fafc",marginTop:"0.2rem",fontWeight:600},children:a?.no_hp||"Belum diatur"})
+      (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"var(--cas-text-primary, #f8fafc)",marginTop:"0.2rem",fontWeight:600},children:a?.no_hp||"Belum diatur"})
     ]}),
     (0,t.jsxs)("div",{style:{background:"rgba(0,0,0,0.25)",padding:"0.85rem",borderRadius:"10px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
       (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",fontWeight:700,letterSpacing:"0.05em"},children:"SATUAN KERJA (SATKER)"}),
@@ -1532,7 +1532,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       // Name & Callsign row: Full Name, Verified Badge, Callsign pill, ● Online
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
         (0,t.jsx)("span",{
-          style:{fontSize:"1.65rem",fontWeight:800,color:"#ffffff",lineHeight:1.2},
+          style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
             var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
             if (a?.name && a?.name !== a?.username && !a?.name.includes('@')) return a.name;
@@ -1748,7 +1748,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             (0,t.jsxs)("select",{
               value:ePostAudience,
               onChange:ev => setPostAudience(ev.target.value),
-              style:{fontSize:"0.76rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"rgba(0,0,0,0.3)",color:"var(--cas-text-primary, #f8fafc)"},
+              style:{fontSize:"0.76rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.06))",color:"var(--cas-text-primary, #f8fafc)"},
               children:[
                 (0,t.jsx)("option",{value:"public",children:"🌐 Publik"}),
                 (0,t.jsx)("option",{value:"followers",children:"👥 Pengikut / Teman Dekat / Satker tertentu"}),
@@ -1986,7 +1986,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     // Card 1: Bahasa profil
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"#fff"},children:"Bahasa profil"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary, #0f172a)"},children:"Bahasa profil"}),
         !isReadOnlyMode && (0,t.jsx)("button",{
           type:"button",
           "aria-label":"Edit bahasa profil",
@@ -2002,7 +2002,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     // Card 2: Profil publik dan URL
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"#fff"},children:"Profil publik dan URL"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary, #0f172a)"},children:"Profil publik dan URL"}),
         !isReadOnlyMode && (0,t.jsx)("button",{
           type:"button",
           "aria-label":"Edit Profil publik dan URL",
@@ -2013,7 +2013,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         })
       ]}),
       (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.65rem"},children:"Identitas Callsign terverifikasi di jaringan CAS:"}),
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(0,0,0,0.3)",padding:"0.55rem 0.85rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.08)"},children:[
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.06))",padding:"0.55rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
         (0,t.jsx)("span",{style:{fontSize:"0.86rem",fontWeight:800,color:"#38bdf8",fontFamily:"monospace"},children:formatCallsign(a?.callsign, a?.id, a?.username)}),
         (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#4ade80",fontWeight:700},children:"✓ Terverifikasi"})
       ]}),
@@ -2024,7 +2024,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           if (navigator.clipboard) navigator.clipboard.writeText(cs);
           e.current?.show({severity:'success',summary:'Callsign Disalin',detail:'Callsign ' + cs + ' berhasil disalin.'});
         },
-        style:{width:"100%",marginTop:"0.65rem",padding:"0.45rem",borderRadius:"8px",background:"transparent",border:"1px solid rgba(255,255,255,0.15)",color:"#cbd5e1",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",textAlign:"center"},
+        style:{width:"100%",marginTop:"0.65rem",padding:"0.45rem",borderRadius:"8px",background:"transparent",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",color:"var(--cas-text-primary, #cbd5e1)",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",textAlign:"center"},
         children:"Salin Callsign"
       })
     ]}),
@@ -2032,7 +2032,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     // Card 3: Orang yang Mungkin Anda Kenal
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"#fff"},children:"Orang yang Mungkin Anda Kenal"}),
+        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary, #0f172a)"},children:"Orang yang Mungkin Anda Kenal"}),
         (0,t.jsx)("span",{style:{fontSize:"1.1rem",color:"#38bdf8"},children:"👥"})
       ]}),
       (0,t.jsx)("div",{style:{display:"grid",gap:"0.85rem"},children:
@@ -2043,7 +2043,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               children:pers.name.charAt(0)
             }),
             (0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.82rem",color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.name}),
+              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.82rem",color:"var(--cas-text-primary, #0f172a)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.name}),
               (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem"},children:[
                 (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:700},children:'@' + pers.callsign}),
                 (0,t.jsx)("span",{
