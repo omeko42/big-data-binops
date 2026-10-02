@@ -88,7 +88,7 @@ async function doSearchSatker(q, fd, lvls, pageNum) {
         let params = {
             q: (queryStr || "").trim(),
             page: pNum,
-            limit: 10,
+            limit: 5,
             functionDomain: domain,
             level: (curLvls && curLvls.length > 0 && curLvls.length < 4) ? curLvls.join(",") : ""
         };
@@ -1116,7 +1116,7 @@ async function eq(e){ew(e),eO(null);try{let t=await L.apiAuth.get(`/bdb/laporan-
                             ]
                         }),
                         (()=>{
-                            let pageSize = 10;
+                            let pageSize = 5;
                             let total = satkerTotal;
                             let totalPages = Math.max(1, Math.ceil(total / pageSize));
                             let curPage = satkerPage;
@@ -1125,7 +1125,7 @@ async function eq(e){ew(e),eO(null);try{let t=await L.apiAuth.get(`/bdb/laporan-
                             return (0,t.jsxs)("div",{
                                 children:[
                                     (0,t.jsx)("div",{
-                                        style:{border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",background:"#fff",minHeight:"8.5rem",maxHeight:"22rem",overflowY:"auto"},
+                                        style:{border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",background:"#fff",minHeight:"8.5rem"},
                                         children:satkerLoading?(0,t.jsx)("div",{style:{padding:"1.5rem",textAlign:"center",color:"#64748b",fontSize:"0.8rem"},children:"Mencari satker…"}):paged.length===0?(0,t.jsx)("div",{style:{padding:"1.5rem",textAlign:"center",color:"#94a3b8",fontSize:"0.8rem"},children:"Tidak ada satker ditemukan. Coba ketik kata kunci lain."}):(0,t.jsx)("div",{
                                             style:{display:"grid"},
                                             children:paged.map(item=>{
@@ -1147,10 +1147,7 @@ async function eq(e){ew(e),eO(null);try{let t=await L.apiAuth.get(`/bdb/laporan-
                                                     children:[
                                                         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0},children:[
                                                             (0,t.jsx)("input",{id:"satker-radio-"+item.id,name:"satker_radio",type:"radio",checked:isSelected,readOnly:!0,style:{cursor:"pointer"}}),
-                                                            (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",minWidth:0},children:[
-                                                                (0,t.jsx)("label",{htmlFor:"satker-radio-"+item.id,style:{fontSize:"0.8rem",fontWeight:isSelected?700:500,color:isSelected?"#15803d":"#1e293b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"},children:item.deskripsi}),
-                                                                item.jalur&&item.jalur.includes(" > ")?(0,t.jsx)("span",{style:{fontSize:"0.68rem",color:"#64748b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:item.jalur.split(" > ").slice(1,-1).join(" > ")||item.jalur.split(" > ")[0]}):null
-                                                            ]})
+                                                            (0,t.jsx)("label",{htmlFor:"satker-radio-"+item.id,style:{fontSize:"0.8rem",fontWeight:isSelected?700:500,color:isSelected?"#15803d":"#1e293b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"},children:item.deskripsi})
                                                         ]}),
                                                         (()=>{
                                                             let isDit=item.deskripsi&&(item.deskripsi.startsWith("DIT ") || item.deskripsi.startsWith("DITTIPID") || item.deskripsi.includes("DIREKTORAT"));
