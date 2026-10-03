@@ -874,26 +874,17 @@ function openImportModal(){
     setImportModalVisible(!0);
     setImportStep(1);
     setImportPreviewData(null);
-    setImportSatker(eTargetSatker||null);
-    setImportSatkerQuery("");
-    setImportSatkerResults([]);
-    setImportSatkerDropdownOpen(!1);
-    applyImportPeriodPreset("month_current");
 }
 
 async function downloadImportTemplate(){
-    if(importFromDate&&importToDate&&importFromDate>importToDate){
-        return void e.current?.show({severity:"warn",summary:"Periode Tidak Valid",detail:"Tanggal awal tidak boleh melebihi tanggal akhir."});
-    }
     setImportDownloading(!0);
     try {
-        let params={};
-        if(importFromDate) params.from=importFromDate;
-        if(importToDate) params.to=importToDate;
-        if(!importFromDate&&!importToDate&&importYear) params.year=importYear;
-        
-        let targetId=importSatker?.id||eTargetSatker?.id;
-        if(targetId) params.target_satker_id=targetId;
+        let params = {};
+        if (eAP.from) params.from = eAP.from;
+        if (eAP.to) params.to = eAP.to;
+        let targetId = eTargetSatker?.id || eAP.targetSatkerId;
+        if (targetId) params.target_satker_id = targetId;
+        if (eAP.jenisKejahatanIds || eCrime) params.jenis_kejahatan_ids = eAP.jenisKejahatanIds || eCrime;
 
         let res = await L.apiAuth.get("/bdb/laporan-polisi/bulk-import/template", {
             params: params,
@@ -909,7 +900,7 @@ async function downloadImportTemplate(){
             fname = String(res.headers["x-suggested-filename"] || res.headers["X-Suggested-Filename"]).trim();
         }
         if (!fname || fname.includes("template_status") || !fname.startsWith("cas_")) {
-            let uId = String(targetId || 1) + "_" + String(importFromDate || importYear || "all");
+            let uId = String(targetId || 1) + "_" + String(eAP.from || "all");
             let rand = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
             let rawStr = uId + ":" + rand;
             let enc = "";
@@ -929,9 +920,16 @@ async function downloadImportTemplate(){
         a.click();
         a.remove();
         window.URL.revokeObjectURL(url);
-        e.current?.show({ severity: "success", summary: "Unduh Berhasil", detail: "File " + fname + " berhasil diunduh.", life: 4e3 });
+        e.current?.show({ severity: "success", summary: "Unduh Berhasil", detail: "File " + fname + " berhasil diunduh (" + (Z || 0).toLocaleString("id-ID") + " LP).", life: 4e3 });
     } catch(err) {
-        e.current?.show({ severity: "error", summary: "Gagal Mengunduh", detail: err.response?.data?.message || "Gagal mengunduh template.", life: 5e3 });
+        console.error("Gagal unduh template:", err);
+        let msg = "Gagal mengunduh file template Excel.";
+        if (err.response?.status === 403) {
+            msg = err.response?.data?.message || "Anda tidak memiliki kewenangan mengakses satker ini (pembatasan hirarki Tipid).";
+        } else if (err.response?.data?.message) {
+            msg = err.response.data.message;
+        }
+        e.current?.show({ severity: "error", summary: "Gagal Mengunduh", detail: msg, life: 5e3 });
     } finally {
         setImportDownloading(!1);
     }
@@ -2193,111 +2191,61 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
             ]})
         ]}),
         importStep===1?(0,t.jsxs)("div",{style:{display:"grid",gap:"1.25rem"},children:[
-            (0,t.jsxs)("div",{style:{border:"1px solid #e2e8f0",borderRadius:8,padding:"1rem",background:"#ffffff"},children:[
-                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.6rem"},children:[
-                    (0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"22px",height:"22px",borderRadius:"50%",background:"#059669",color:"#fff",fontSize:"0.75rem",fontWeight:700},children:"1"}),
-                    (0,t.jsx)("strong",{style:{fontSize:"0.9rem",color:"#1e293b"},children:"Unduh Template Data LP Satker"})
-                ]}),
-                (0,t.jsx)("p",{style:{fontSize:"0.82rem",color:"#64748b",marginBottom:"0.85rem",lineHeight:1.45},children:"Unduh file Excel resmi berisikan data LP. Kolom Tindak Pidana terisi otomatis dari klasifikasi kejahatan. Buka file, pilih Status Baru pada dropdown, isi data dokumen, dan simpan."}),
-                (0,t.jsxs)("div",{style:{marginBottom:"0.85rem",position:"relative"},children:[
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.3rem"},children:[
-                        (0,t.jsx)("label",{style:{fontSize:"0.8rem",fontWeight:600,color:"#334155"},children:"Filter Satker (Hirarkis):"}),
-                        importSatker&&(0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:"#059669",background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:4,padding:"0.1rem 0.4rem",display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
-                            (0,t.jsx)("strong",{children:importSatker.deskripsi}),
-                            (0,t.jsx)("button",{type:"button",onClick:clearImportSatker,style:{background:"none",border:"none",color:"#059669",cursor:"pointer",fontWeight:700,fontSize:"0.85rem",padding:0,lineHeight:1},children:"×"})
-                        ]})
+            (0,t.jsxs)("div",{style:{border:"1px solid #e2e8f0",borderRadius:10,padding:"1.25rem",background:"#ffffff",boxShadow:"0 1px 3px 0 rgba(0, 0, 0, 0.05)"},children:[
+                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1rem",flexWrap:"wrap",gap:"0.5rem"},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+                        (0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"24px",height:"24px",borderRadius:"50%",background:"#059669",color:"#fff",fontSize:"0.8rem",fontWeight:700},children:"1"}),
+                        (0,t.jsx)("strong",{style:{fontSize:"0.95rem",color:"#0f172a"},children:"Unduh Template Data LP Sesuai Filter Halaman"})
                     ]}),
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-                        (0,t.jsxs)("div",{style:{position:"relative",flex:1},children:[
-                            (0,t.jsx)(l.InputText,{
-                                value:importSatker ? importSatker.deskripsi : importSatkerQuery,
-                                placeholder:"Ketik nama satker / polda / polres (cth: Metro Jaya, Jakpus, Medan, Siber)...",
-                                onChange:e=>{
-                                    if(importSatker) setImportSatker(null);
-                                    let v = e.target.value;
-                                    setImportSatkerQuery(v);
-                                    if(window._impStkTimer) clearTimeout(window._impStkTimer);
-                                    window._impStkTimer = setTimeout(()=>searchImportSatker(v), 260);
-                                },
-                                onFocus:()=>{ if(importSatkerResults.length>0) setImportSatkerDropdownOpen(!0); },
-                                style:{width:"100%",fontSize:"0.82rem"}
-                            }),
-                            (importSatker || importSatkerQuery)&&(0,t.jsx)("button",{
-                                type:"button",
-                                onClick:clearImportSatker,
-                                style:{position:"absolute",right:"0.6rem",top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:"1rem"},
-                                children:"×"
-                            })
+                    (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:20,padding:"0.2rem 0.65rem",fontSize:"0.75rem",color:"#047857",fontWeight:600},children:[
+                        (0,t.jsx)("i",{className:"pi pi-check-circle"}),
+                        (0,t.jsx)("span",{children:"Filter Tersinkronisasi"})
+                    ]})
+                ]}),
+                (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))",gap:"0.75rem",marginBottom:"1rem"},children:[
+                    (0,t.jsxs)("div",{style:{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"0.75rem"},children:[
+                        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",marginBottom:"0.35rem",color:"#64748b",fontSize:"0.72rem",fontWeight:700,textTransform:"uppercase"},children:[
+                            (0,t.jsx)("i",{className:"pi pi-building",style:{color:"#2563eb"}}),
+                            (0,t.jsx)("span",{children:"Satuan Kerja"})
                         ]}),
-                        (0,t.jsx)(o.Button,{
-                            icon:importSatkerLoading?"pi pi-spin pi-spinner":"pi pi-search",
-                            size:"small",
-                            onClick:()=>searchImportSatker(importSatkerQuery),
-                            style:{padding:"0.45rem 0.75rem",fontSize:"0.8rem"}
-                        })
+                        (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#1e293b",lineHeight:1.3,marginBottom:"0.2rem"},children:eTargetSatker ? eTargetSatker.deskripsi : (eG?.isSuperadmin ? "Seluruh Satker (Tingkat Nasional)" : (u?.satker_nama || "Satker Kewenangan Anda"))}),
+                        (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#64748b"},children:eTargetSatker?.jalur || (eG?.isSuperadmin && !eTargetSatker ? "Seluruh Wilayah Hukum RI" : "Hirarki Tipid Unit Induk & Bawahan")})
                     ]}),
-                    importSatkerDropdownOpen&&importSatkerResults.length>0&&(0,t.jsx)("div",{
-                        style:{position:"absolute",top:"100%",left:0,right:0,zIndex:999,background:"#fff",border:"1px solid #cbd5e1",borderRadius:6,boxShadow:"0 10px 15px -3px rgba(0,0,0,0.1)",maxHeight:"14rem",overflowY:"auto",marginTop:"0.25rem"},
-                        children:importSatkerResults.map(item=>(0,t.jsxs)("div",{
-                            key:item.id,
-                            onClick:()=>selectImportSatker(item),
-                            style:{padding:"0.45rem 0.75rem",borderBottom:"1px solid #f1f5f9",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem"},
-                            onMouseEnter:e=>e.currentTarget.style.background="#f0fdf4",
-                            onMouseLeave:e=>e.currentTarget.style.background="#fff",
-                            children:[
-                                (0,t.jsxs)("div",{style:{minWidth:0},children:[
-                                    (0,t.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:600,color:"#1e293b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:item.deskripsi}),
-                                    item.jalur&&(0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#64748b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:item.jalur})
-                                ]}),
-                                (0,t.jsx)("span",{style:{fontSize:"0.65rem",fontWeight:700,color:"#047857",background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:4,padding:"0.1rem 0.35rem",flexShrink:0},children:item.tipe_satker||"SATKER"})
-                            ]
-                        }))
-                    })
+                    (0,t.jsxs)("div",{style:{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"0.75rem"},children:[
+                        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",marginBottom:"0.35rem",color:"#64748b",fontSize:"0.72rem",fontWeight:700,textTransform:"uppercase"},children:[
+                            (0,t.jsx)("i",{className:"pi pi-calendar",style:{color:"#059669"}}),
+                            (0,t.jsx)("span",{children:"Periode Laporan"})
+                        ]}),
+                        (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#1e293b",lineHeight:1.3,marginBottom:"0.2rem"},children:mainPeriodLabel || "Semua Periode"}),
+                        (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#64748b"},children:(eAP.from && eAP.to) ? (eAP.from + " s/d " + eAP.to) : "Rentang tanggal aktif"})
+                    ]}),
+                    (0,t.jsxs)("div",{style:{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"0.75rem"},children:[
+                        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",marginBottom:"0.35rem",color:"#64748b",fontSize:"0.72rem",fontWeight:700,textTransform:"uppercase"},children:[
+                            (0,t.jsx)("i",{className:"pi pi-file-excel",style:{color:"#d97706"}}),
+                            (0,t.jsx)("span",{children:"Estimasi Baris Data"})
+                        ]}),
+                        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"1.1rem",color:"#059669",lineHeight:1.2,marginBottom:"0.2rem"},children:(Z || 0).toLocaleString('id-ID') + " LP"}),
+                        (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#64748b"},children:"Tanpa batasan 5.000 LP"})
+                    ]})
                 ]}),
-                (0,t.jsxs)("div",{style:{display:"grid",gap:"0.45rem",marginBottom:"1rem"},children:[
-                    (0,t.jsx)("label",{style:{fontSize:"0.8rem",fontWeight:600,color:"#334155"},children:"Periode LP (Rentang Tanggal Laporan):"}),
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
-                        (0,t.jsxs)("select",{
-                            value:importPeriodPreset,
-                            onChange:e=>applyImportPeriodPreset(e.target.value),
-                            style:{padding:"0.4rem 0.65rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",fontWeight:600,color:"#334155",outline:"none",minWidth:"13rem"},
-                            children:[
-                                (0,t.jsx)("option",{value:"month_current",children:"Bulan Berjalan Ini (Bulan Ini)"}),
-                                (0,t.jsx)("option",{value:"month_prev",children:"Bulan Sebelumnya"}),
-                                (0,t.jsx)("option",{value:"year_2026",children:"Sepanjang Tahun 2026"}),
-                                (0,t.jsx)("option",{value:"year_2025",children:"Sepanjang Tahun 2025"}),
-                                (0,t.jsx)("option",{value:"year_2024",children:"Sepanjang Tahun 2024"}),
-                                (0,t.jsx)("option",{value:"custom",children:"Rentang Tanggal Custom (Pilih Sendiri)"}),
-                                (0,t.jsx)("option",{value:"all",children:"Semua Periode (Tanpa Batasan Tanggal)"})
-                            ]
-                        }),
-                        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-                            (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#64748b"},children:"Dari:"}),
-                            (0,t.jsx)("input",{
-                                type:"date",
-                                value:importFromDate,
-                                onChange:e=>{ setImportFromDate(e.target.value); setImportPeriodPreset("custom"); },
-                                style:{padding:"0.35rem 0.5rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",color:"#334155"}
-                            }),
-                            (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#64748b"},children:"s/d"}),
-                            (0,t.jsx)("input",{
-                                type:"date",
-                                value:importToDate,
-                                onChange:e=>{ setImportToDate(e.target.value); setImportPeriodPreset("custom"); },
-                                style:{padding:"0.35rem 0.5rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",color:"#334155"}
-                            })
-                        ]})
+                (0,t.jsxs)("div",{style:{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"0.75rem 1rem",marginBottom:"1.1rem",display:"flex",alignItems:"flex-start",gap:"0.65rem"},children:[
+                    (0,t.jsx)("i",{className:"pi pi-info-circle",style:{color:"#2563eb",fontSize:"1.1rem",marginTop:"0.15rem",flexShrink:0}}),
+                    (0,t.jsxs)("div",{style:{fontSize:"0.78rem",color:"#1e40af",lineHeight:1.5},children:[
+                        (0,t.jsx)("span",{style:{fontWeight:600},children:"Petunjuk Sinkronisasi Filter: "}),
+                        "Data template Excel ini otomatis mengikuti filter Satuan Kerja dan Periode yang sedang aktif pada toolbar halaman utama. Jika Anda ingin mengunduh cakupan data lain (misal: satker bawahan spesifik atau rentang bulan/tahun tertentu), silakan sesuaikan terlebih dahulu filter pada bilah menu halaman sebelum mengunduh template."
                     ]})
                 ]}),
                 (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
-                    (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#64748b"},children:"Tanpa batasan 5.000 LP. Volume besar akan terunduh lengkap sesuai rentang periode."}),
+                    (0,t.jsxs)("div",{style:{fontSize:"0.75rem",color:"#64748b",display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+                        (0,t.jsx)("i",{className:"pi pi-lock",style:{color:"#059669"}}),
+                        (0,t.jsx)("span",{children:"Nama file terenkripsi cas_*.xlsx & berproteksi audit forensik."})
+                    ]}),
                     (0,t.jsx)(o.Button,{
-                        label:"Unduh Template Excel (.xlsx)",
-                        icon:"pi pi-download",
+                        label:"Unduh Template Excel (" + (Z || 0).toLocaleString('id-ID') + " LP)",
+                        icon:importDownloading ? "pi pi-spin pi-spinner" : "pi pi-download",
                         onClick:downloadImportTemplate,
                         loading:importDownloading,
-                        size:"small",
-                        style:{background:"#059669",borderColor:"#059669",color:"#ffffff",fontWeight:600}
+                        style:{background:"#059669",borderColor:"#059669",color:"#ffffff",fontWeight:700,padding:"0.55rem 1.25rem"}
                     })
                 ]})
             ]}),

@@ -2609,39 +2609,23 @@ export class LaporanPolisiService {
         year?: string,
         targetSatkerId?: number,
         fromDate?: string,
-        toDate?: string
+        toDate?: string,
+        jenisKejahatanIds?: string
     ): Promise<{ buffer: Buffer; filename: string }> {
         const scope = await resolveScope(this.dataSource, userId);
-        let satkerId = scope.satkerId;
-        if (scope.isSuper && targetSatkerId) {
-            satkerId = targetSatkerId;
-        } else if (!scope.isSuper && targetSatkerId && targetSatkerId !== scope.satkerId) {
-            // Operator / regional: validasi satker bawahan dalam pohon hirarki
-            if (scope.satkerId) {
-                const check = await this.dataSource.query(`
-                    with recursive satker_tree as (
-                        select id from bdb_satker where id = $1
-                        union all
-                        select s.id from bdb_satker s join satker_tree st on s.parent_id = st.id
-                    )
-                    select 1 from satker_tree where id = $2
-                `, [scope.satkerId, targetSatkerId]);
-                if (check.length) {
-                    satkerId = targetSatkerId;
-                } else {
-                    throw new ForbiddenException('Akses ditolak: Satuan Kerja yang dipilih berada di luar kewenangan Anda.');
-                }
-            }
-        }
-
-        if (!scope.all && !satkerId) {
+        if (!scope.all && !scope.satkerId) {
             throw new ForbiddenException('Akses ditolak: Akun Anda tidak terikat dengan Satuan Kerja manapun.');
         }
 
+        // Guard kewenangan: validasi hirarki dan isolasi Tipid (mis. Sat Reskrim tidak bisa buka Sat Narkoba)
+        const plan = await this.monitoring.plan(userId, targetSatkerId);
+
         let satkerNama = 'Seluruh Satker (Nasional)';
         let satkerKode = 'MABES';
-        if (satkerId) {
-            const sRows = await this.dataSource.query('select id, deskripsi, kode from bdb_satker where id = $1', [satkerId]);
+        let effectiveSatkerId = targetSatkerId || scope.satkerId;
+
+        if (effectiveSatkerId) {
+            const sRows = await this.dataSource.query('select id, deskripsi, kode from bdb_satker where id = $1', [effectiveSatkerId]);
             if (sRows.length) {
                 satkerNama = sRows[0].deskripsi || sRows[0].kode || 'Satker';
                 satkerKode = sRows[0].kode || 'SATKER';
@@ -2650,17 +2634,48 @@ export class LaporanPolisiService {
 
         const where: string[] = [
             'lp.deleted_at is null',
-            'coalesce(lp.dilimpahkan_eksternal, false) = false'
+            'coalesce(lp.dilimpahkan_eksternal, false) = false',
+            'coalesce(lp.unit_satker_id, lp.satker_id) is not null'
         ];
         const params: any[] = [];
-        let useSatkerTree = false;
 
-        if (satkerId) {
-            params.push(satkerId);
-            useSatkerTree = true;
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (select id from satker_tree)`);
+        // 1. Guard Satker & Tipid Kewenangan
+        if (!plan.all) {
+            // Operator / Non-Superadmin
+            if (plan.own) {
+                // Satkernya sendiri dan unit bawahan langsungnya
+                params.push(plan.actorSatkerId);
+                where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                    with recursive own_tree as (
+                        select id from bdb_satker where id = $${params.length}
+                        union all
+                        select s.id from bdb_satker s join own_tree ot on s.parent_id = ot.id
+                    )
+                    select id from own_tree
+                )`);
+            } else {
+                // Satker bawahan yang dipilih
+                params.push(plan.ownerIds.length ? plan.ownerIds : [-1]);
+                where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length})`);
+                if (plan.crimeIds && plan.crimeIds.length) {
+                    params.push(plan.crimeIds);
+                    where.push(`lp.jenis_kejahatan_id = any($${params.length})`);
+                }
+            }
+        } else if (targetSatkerId) {
+            // Superadmin dengan Satker Spesifik (Hirarki Rekursif Penuh)
+            params.push(targetSatkerId);
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                with recursive satker_tree as (
+                    select id from bdb_satker where id = $${params.length}
+                    union all
+                    select s.id from bdb_satker s join satker_tree st on s.parent_id = st.id
+                )
+                select id from satker_tree
+            )`);
         }
 
+        // 2. Filter Tanggal (dari filter halaman aktif)
         const cleanFrom = String(fromDate || '').trim();
         const cleanTo = String(toDate || '').trim();
         const cleanYear = String(year || '').trim();
@@ -2678,18 +2693,19 @@ export class LaporanPolisiService {
             where.push(`extract(year from parse_tgl_laporan(lp.tgl_laporan)) = $${params.length}`);
         }
 
+        // 3. Filter Jenis Kejahatan (opsional jika aktif di filter halaman)
+        if (jenisKejahatanIds) {
+            const cIds = String(jenisKejahatanIds).split(',').map(x => Number(x.trim())).filter(x => Number.isInteger(x) && x > 0);
+            if (cIds.length) {
+                params.push(cIds);
+                where.push(`lp.jenis_kejahatan_id = any($${params.length})`);
+            }
+        }
+
         const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-        const cteSql = useSatkerTree
-            ? `with recursive satker_tree as (
-                    select id from bdb_satker where id = $1
-                    union all
-                    select s.id from bdb_satker s join satker_tree st on s.parent_id = st.id
-               ) `
-            : '';
 
         // Query LP aktif milik satker terurut dari terbaru ke terlama (tanpa batas 5000 LP)
         const lpRows = await this.dataSource.query(`
-            ${cteSql}
             select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama,
                    coalesce(
                        (select string_agg(distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'kategori_kejahatan','')), ', ')
@@ -2715,7 +2731,7 @@ export class LaporanPolisiService {
         // Forensic Trace Token (Obfuscated & Reversible di server)
         const timestamp = Date.now();
         const periodDesc = (cleanFrom && cleanTo) ? `${cleanFrom}_${cleanTo}` : (cleanYear || 'all');
-        const tracePayload = `${userId || 0}:${satkerId || 0}:${periodDesc}:${timestamp}`;
+        const tracePayload = `${userId || 0}:${effectiveSatkerId || 0}:${periodDesc}:${timestamp}`;
         const traceToken = encodeId(tracePayload);
         const filename = `cas_${traceToken}.xlsx`;
 
@@ -2898,7 +2914,7 @@ export class LaporanPolisiService {
         auditSheet.state = 'veryHidden';
         const metaObj = {
             trace_id: traceToken,
-            satker_id: satkerId,
+            satker_id: effectiveSatkerId,
             satker_nama: satkerNama,
             user_id: userId,
             period_from: cleanFrom || null,
@@ -2916,7 +2932,7 @@ export class LaporanPolisiService {
                 entity: 'laporan_polisi',
                 meta: {
                     trace_id: traceToken,
-                    satker_id: satkerId,
+                    satker_id: effectiveSatkerId,
                     period_from: cleanFrom || null,
                     period_to: cleanTo || null,
                     year: cleanYear || 'all',
