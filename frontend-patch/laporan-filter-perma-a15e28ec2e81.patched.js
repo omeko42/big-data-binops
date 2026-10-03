@@ -801,11 +801,26 @@ async function downloadImportTemplate(){
             params: params,
             responseType: "blob"
         });
-        let fname = "cas_template_status.xlsx";
+        let fname = "";
         let disp = res.headers ? (res.headers["content-disposition"] || res.headers["Content-Disposition"]) : null;
         if (disp) {
-            let m = disp.match(/filename="?([^";]+)"?/);
-            if (m && m[1]) fname = m[1];
+            let m = disp.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?/i);
+            if (m && m[1]) fname = decodeURIComponent(m[1].trim());
+        }
+        if (!fname && res.headers && (res.headers["x-suggested-filename"] || res.headers["X-Suggested-Filename"])) {
+            fname = String(res.headers["x-suggested-filename"] || res.headers["X-Suggested-Filename"]).trim();
+        }
+        if (!fname || fname.includes("template_status") || !fname.startsWith("cas_")) {
+            let uId = String(eTargetSatker?.id || 1) + "_" + String(importYear || "all");
+            let rand = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+            let rawStr = uId + ":" + rand;
+            let enc = "";
+            try {
+                enc = btoa(rawStr).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+            } catch(e) {
+                enc = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+            }
+            fname = "cas_" + enc + ".xlsx";
         }
         let blob = new Blob([res.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
         let url = window.URL.createObjectURL(blob);

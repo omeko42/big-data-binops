@@ -189,6 +189,8 @@ export class LaporanPolisiController {
         const result = await this.service.buildBulkImportTemplate(userId, year, targetId);
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Suggested-Filename');
+        res.setHeader('X-Suggested-Filename', result.filename);
         return res.send(result.buffer);
     }
 
