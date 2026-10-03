@@ -2610,7 +2610,13 @@ export class LaporanPolisiService {
         targetSatkerId?: number,
         fromDate?: string,
         toDate?: string,
-        jenisKejahatanIds?: string
+        jenisKejahatanIds?: string,
+        functionDomain?: string,
+        organizationDomain?: string,
+        level?: string,
+        model?: string,
+        status?: string,
+        search?: string
     ): Promise<{ buffer: Buffer; filename: string }> {
         const scope = await resolveScope(this.dataSource, userId);
         if (!scope.all && !scope.satkerId) {
@@ -2632,9 +2638,10 @@ export class LaporanPolisiService {
             }
         }
 
+        const isEksternalPolri = String(functionDomain || organizationDomain || '').toUpperCase().includes('EKSTERNAL_POLRI');
         const where: string[] = [
             'lp.deleted_at is null',
-            'coalesce(lp.dilimpahkan_eksternal, false) = false',
+            isEksternalPolri ? 'coalesce(lp.dilimpahkan_eksternal, false) = true' : 'coalesce(lp.dilimpahkan_eksternal, false) = false',
             'coalesce(lp.unit_satker_id, lp.satker_id) is not null'
         ];
         const params: any[] = [];
@@ -2675,30 +2682,92 @@ export class LaporanPolisiService {
             )`);
         }
 
-        // 2. Filter Tanggal (dari filter halaman aktif)
+        // 2. Taxonomy Domain (Reserse vs Non-Reserse) & LANTAS / Non-Reserse Exclusion
+        const effectiveFunctionDomain = functionDomain || 'INTERNAL_RESERSE';
+        const effectiveOrgDomain = organizationDomain || 'INTERNAL_POLRI';
+        const taxonomy = this.lpTaxonomy(effectiveFunctionDomain, effectiveOrgDomain);
+
+        if (taxonomy) {
+            params.push(taxonomy.organizationDomain);
+            const orgParam = `$${params.length}`;
+            if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
+                params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+            } else {
+                params.push([taxonomy.functionDomain]);
+            }
+            const fnParam = `$${params.length}`;
+            where.push(`exists (
+                select 1 from bdb_satker_taxonomy_r11 tx
+                 where tx.source_table = 'BDB_SATKER'
+                   and tx.entity_id = coalesce(lp.unit_satker_id, lp.satker_id)
+                   and tx.organization_domain = ${orgParam}
+                   and tx.function_domain = any(${fnParam})
+            )`);
+            if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
+                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)')`);
+            }
+        }
+
+        // 3. Level Filter (Mabes, Polda, Polres, Polsek)
+        const parseLevels = (val?: string): string[] => {
+            const valid = ['Mabes', 'Polda', 'Polres', 'Polsek'];
+            const inp = String(val || '').split(',').map((x) => x.trim().toLowerCase());
+            return valid.filter((v) => inp.includes(v.toLowerCase()));
+        };
+        if (level) {
+            const requestedLevels = parseLevels(level);
+            if (requestedLevels.length === 1) {
+                params.push(requestedLevels[0]);
+                where.push(`lp.penanganan_level = $${params.length}`);
+            } else if (requestedLevels.length > 1) {
+                params.push(requestedLevels);
+                where.push(`lp.penanganan_level = any($${params.length})`);
+            }
+        }
+
+        // 4. Model LP (lp_model_a, lp_model_b)
+        if (model) {
+            params.push(model);
+            where.push(`lp.model_lp = $${params.length}`);
+        }
+
+        // 5. Status LP (LP, LIDIK, SIDIK, dll)
+        if (status) {
+            params.push(status);
+            where.push(`coalesce((select sm.code from bdb_status_master sm where sm.id=lp.status_id),'LP') = $${params.length}`);
+        }
+
+        // 6. Search Query
+        if (search) {
+            params.push(`%${search}%`);
+            where.push(`(lp.no_laporan ilike $${params.length} or lp.satker_nama ilike $${params.length} or exists (select 1 from bdb_lp_pelimpahan px where px.lp_id=lp.id and px.satker_eksternal_id is not null and px.satker_eksternal_nama ilike $${params.length}))`);
+        }
+
+        // 7. Filter Tanggal (dari filter halaman aktif)
         const cleanFrom = String(fromDate || '').trim();
         const cleanTo = String(toDate || '').trim();
         const cleanYear = String(year || '').trim();
 
         if (cleanFrom && /^\d{4}-\d{2}-\d{2}$/.test(cleanFrom)) {
             params.push(cleanFrom);
-            where.push(`parse_tgl_laporan(lp.tgl_laporan) >= $${params.length}::date`);
+            where.push(`${LaporanPolisiService.DATE_EXPR} >= $${params.length}::date`);
         }
         if (cleanTo && /^\d{4}-\d{2}-\d{2}$/.test(cleanTo)) {
             params.push(cleanTo);
-            where.push(`parse_tgl_laporan(lp.tgl_laporan) <= $${params.length}::date`);
+            where.push(`${LaporanPolisiService.DATE_EXPR} <= $${params.length}::date`);
         }
         if (!cleanFrom && !cleanTo && cleanYear && cleanYear !== 'all' && /^\d{4}$/.test(cleanYear)) {
             params.push(parseInt(cleanYear, 10));
-            where.push(`extract(year from parse_tgl_laporan(lp.tgl_laporan)) = $${params.length}`);
+            where.push(`extract(year from ${LaporanPolisiService.DATE_EXPR}) = $${params.length}`);
         }
 
-        // 3. Filter Jenis Kejahatan (opsional jika aktif di filter halaman)
+        // 8. Filter Jenis Kejahatan (opsional jika aktif di filter halaman)
         if (jenisKejahatanIds) {
-            const cIds = String(jenisKejahatanIds).split(',').map(x => Number(x.trim())).filter(x => Number.isInteger(x) && x > 0);
-            if (cIds.length) {
-                params.push(cIds);
-                where.push(`lp.jenis_kejahatan_id = any($${params.length})`);
+            const requestedCrimeIds = this.csvNumbers(jenisKejahatanIds);
+            if (requestedCrimeIds.length) {
+                const effectiveCrimeIds = plan.all || plan.own ? requestedCrimeIds : requestedCrimeIds.filter((id) => plan.crimeIds.includes(id));
+                const ids = effectiveCrimeIds.length ? effectiveCrimeIds.join(',') : '-1';
+                where.push(`(lp.jenis_kejahatan_id in (${ids}) or exists (select 1 from bdb_lp_tindak_pidana_dors tp where tp.laporan_polisi_id = lp.id and tp.jenis_kejahatan_id in (${ids})))`);
             }
         }
 
@@ -2960,10 +3029,29 @@ export class LaporanPolisiService {
         const sheet = wb.worksheets[0];
         if (!sheet) throw new BadRequestException('File Excel tidak memiliki lembar kerja (worksheet).');
 
+        const extractCellText = (cell: any): string => {
+            if (!cell) return '';
+            const val = cell.value;
+            if (val === null || val === undefined) return '';
+            if (typeof val === 'string') return val.trim();
+            if (typeof val === 'number' || typeof val === 'boolean') return String(val).trim();
+            if (val instanceof Date) {
+                const y = val.getUTCFullYear();
+                const m = String(val.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(val.getUTCDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            if (typeof val === 'object') {
+                if (val.text) return String(val.text).trim();
+                if (val.result !== undefined && val.result !== null) return String(val.result).trim();
+                if (Array.isArray(val.richText)) return val.richText.map((rt: any) => rt.text || '').join('').trim();
+            }
+            return String(cell.text || '').trim();
+        };
+
         // Verify Header Signature (Guard Lapis 2)
-        const cellText = (r: number, c: number) => String(sheet.getCell(r, c).text || '').trim();
-        const hNoLp = (cellText(1, 3) || cellText(1, 1)).toLowerCase();
-        const hStatus = (cellText(1, 7) || cellText(1, 6)).toLowerCase();
+        const hNoLp = (extractCellText(sheet.getCell(1, 3)) || extractCellText(sheet.getCell(1, 1))).toLowerCase();
+        const hStatus = (extractCellText(sheet.getCell(1, 7)) || extractCellText(sheet.getCell(1, 6))).toLowerCase();
 
         if (!hNoLp.includes('laporan') && !hNoLp.includes('no lp') && !hStatus.includes('status')) {
             throw new BadRequestException('Format template Excel tidak valid atau kolom telah diubah. Harap gunakan template resmi CAS.');
@@ -2972,21 +3060,22 @@ export class LaporanPolisiService {
         const rawRows: any[] = [];
         sheet.eachRow((row: any, rowNumber: number) => {
             if (rowNumber === 1) return;
-            const noUrut = row.getCell(1).value;
-            const idLp = Number(row.getCell(2).value) || null;
-            const noLaporan = String(row.getCell(3).text || '').trim();
+            const noUrut = extractCellText(row.getCell(1));
+            const idVal = row.getCell(2).value;
+            const idLp = typeof idVal === 'number' ? idVal : (parseInt(extractCellText(row.getCell(2)), 10) || null);
+            const noLaporan = extractCellText(row.getCell(3));
             if (!noLaporan && !idLp) return;
 
-            const tglLpText = String(row.getCell(4).text || '').trim();
-            const tindakPidana = String(row.getCell(5).text || '').trim();
-            const statusLama = String(row.getCell(6).text || '').trim();
-            const statusBaruRaw = String(row.getCell(7).text || '').trim();
-            const nomorSurat = String(row.getCell(8).text || '').trim();
+            const tglLpText = extractCellText(row.getCell(4));
+            const tindakPidana = extractCellText(row.getCell(5));
+            const statusLama = extractCellText(row.getCell(6));
+            const statusBaruRaw = extractCellText(row.getCell(7));
+            const nomorSurat = extractCellText(row.getCell(8));
 
             const tglVal = row.getCell(9).value;
-            const tglText = String(row.getCell(9).text || '').trim();
-            const alasanPenghentian = String(row.getCell(10).text || '').trim();
-            const kategoriPerma = String(row.getCell(11).text || '').trim();
+            const tglText = extractCellText(row.getCell(9));
+            const alasanPenghentian = extractCellText(row.getCell(10));
+            const kategoriPerma = extractCellText(row.getCell(11));
 
             rawRows.push({
                 row_num: rowNumber,
@@ -3062,8 +3151,17 @@ export class LaporanPolisiService {
         let readyCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
+        let untouchedCount = 0;
 
         for (const row of rawRows) {
+            // Jika kolom Status Baru kosong sama sekali, ini baris tanpa perubahan (untouched)
+            // Dilewati tanpa dimasukkan ke processedRows agar payload ringan dan UI instan
+            if (!row.status_baru_raw) {
+                skippedCount++;
+                untouchedCount++;
+                continue;
+            }
+
             const dbLp = (row.id_lp ? lpIdMap.get(row.id_lp) : null) || lpNoMap.get(row.no_laporan.toUpperCase());
 
             if (!dbLp) {
@@ -3088,18 +3186,6 @@ export class LaporanPolisiService {
                     });
                     continue;
                 }
-            }
-
-            if (!row.status_baru_raw) {
-                skippedCount++;
-                processedRows.push({
-                    ...row,
-                    lp_id: dbLp.id,
-                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
-                    status_verifikasi: 'SKIPPED',
-                    pesan: 'Kolom Status Baru kosong (dilewati).'
-                });
-                continue;
             }
 
             const targetStat = statusMap.get(row.status_baru.toUpperCase());
@@ -3355,6 +3441,7 @@ export class LaporanPolisiService {
                 total: rawRows.length,
                 ready: readyCount,
                 skipped: skippedCount,
+                untouched: untouchedCount,
                 error: errorCount,
                 original_filename: originalFilename || 'import_status.xlsx'
             },

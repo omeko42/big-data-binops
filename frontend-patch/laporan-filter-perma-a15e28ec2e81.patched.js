@@ -885,6 +885,12 @@ async function downloadImportTemplate(){
         let targetId = eTargetSatker?.id || eAP.targetSatkerId;
         if (targetId) params.target_satker_id = targetId;
         if (eAP.jenisKejahatanIds || eCrime) params.jenis_kejahatan_ids = eAP.jenisKejahatanIds || eCrime;
+        params.functionDomain = eAP.functionDomain || eFD || "INTERNAL_RESERSE";
+        params.organizationDomain = "INTERNAL_POLRI";
+        if (eAP.level || eo) params.level = eAP.level || eo;
+        if (eAP.model || ed) params.model = eAP.model || ed;
+        if (eAP.status || eu) params.status = eAP.status || eu;
+        if (eAP.search || eh.trim()) params.search = eAP.search || eh.trim();
 
         let res = await L.apiAuth.get("/bdb/laporan-polisi/bulk-import/template", {
             params: params,
@@ -945,11 +951,15 @@ async function handleImportFileUpload(event){
         let res = await L.apiAuth.post("/bdb/laporan-polisi/bulk-import/preview", fd, {
             headers: { "Content-Type": "multipart/form-data" }
         });
-        setImportPreviewData(res.data?.data);
+        let preview = res.data?.data || res.data;
+        if (!preview || !preview.summary) {
+            throw new Error("Gagal membaca hasil pratinjau file.");
+        }
+        setImportPreviewData(preview);
         setImportStep(2);
-        e.current?.show({ severity: "info", summary: "Pratinjau Siap", detail: "Periksa hasil validasi sebelum menerapkan pembaruan.", life: 4e3 });
+        e.current?.show({ severity: "info", summary: "Pratinjau Siap", detail: "Ditemukan " + (preview.summary.ready || 0) + " baris siap diperbarui.", life: 4e3 });
     } catch(err) {
-        e.current?.show({ severity: "error", summary: "Gagal Validasi", detail: err.response?.data?.message || "Format file tidak sesuai atau gagal dibaca.", life: 6e3 });
+        e.current?.show({ severity: "error", summary: "Gagal Validasi", detail: err.response?.data?.message || err.message || "Format file tidak sesuai atau gagal dibaca.", life: 6e3 });
     } finally {
         setImportUploading(!1);
         if (event.target) event.target.value = "";
@@ -971,10 +981,11 @@ async function handleCommitImport(){
             rows: importPreviewData.rows,
             token: importPreviewData.token
         });
+        let msg = res.data?.message || res.data?.data?.message || (readyCount + " LP berhasil diperbarui.");
         e.current?.show({
             severity: "success",
             summary: "Impor Status Berhasil",
-            detail: res.data?.message || (readyCount + " LP berhasil diperbarui."),
+            detail: msg,
             life: 6e3
         });
         setImportModalVisible(!1);
@@ -2272,7 +2283,7 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
                     (0,t.jsx)("div",{style:{fontSize:"1.1rem",fontWeight:700,color:"#059669"},children:importPreviewData?.summary?.ready||0})
                 ]}),
                 (0,t.jsxs)("div",{style:{flex:1,minWidth:"120px",background:"#f1f5f9",border:"1px solid #cbd5e1",borderRadius:6,padding:"0.5rem 0.75rem"},children:[
-                    (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#475569",textTransform:"uppercase"},children:"Dilewati (Identik / CC)"}),
+                    (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#475569",textTransform:"uppercase"},children:"Dilewati (Tanpa Ubahan / CC)"}),
                     (0,t.jsx)("div",{style:{fontSize:"1.1rem",fontWeight:700,color:"#64748b"},children:importPreviewData?.summary?.skipped||0})
                 ]}),
                 (0,t.jsxs)("div",{style:{flex:1,minWidth:"120px",background:"#fef2f2",border:"1px solid #fecaca",borderRadius:6,padding:"0.5rem 0.75rem"},children:[
@@ -2291,7 +2302,7 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
                             (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"left",color:"#475569"},children:"Status Verifikasi"})
                         ]})
                     }),
-                    (0,t.jsx)("tbody",{children:(importPreviewData?.rows||[]).map((row,rIdx)=>{
+                    (0,t.jsx)("tbody",{children:(!importPreviewData?.rows || importPreviewData.rows.length === 0) ? (0,t.jsx)("tr",{children:(0,t.jsx)("td",{colSpan:6,style:{textAlign:"center",padding:"2rem",color:"#64748b"},children:"Tidak ada baris yang diubah pada file yang diunggah. Pastikan kolom STATUS BARU telah diisi pada baris LP yang ingin diperbarui."})}) : (importPreviewData?.rows||[]).map((row,rIdx)=>{
                         let bg = row.status_verifikasi === 'READY' ? '#f0fdf4' : row.status_verifikasi === 'ERROR' ? '#fef2f2' : '#ffffff';
                         let badgeBg = row.status_verifikasi === 'READY' ? '#dcfce7' : row.status_verifikasi === 'ERROR' ? '#fee2e2' : '#f1f5f9';
                         let badgeColor = row.status_verifikasi === 'READY' ? '#15803d' : row.status_verifikasi === 'ERROR' ? '#b91c1c' : '#475569';

@@ -185,11 +185,30 @@ export class LaporanPolisiController {
         @Query('target_satker_id') targetSatkerId?: string,
         @Query('from') from?: string,
         @Query('to') to?: string,
-        @Query('jenis_kejahatan_ids') jenisKejahatanIds?: string
+        @Query('jenis_kejahatan_ids') jenisKejahatanIds?: string,
+        @Query('functionDomain') functionDomain?: string,
+        @Query('organizationDomain') organizationDomain?: string,
+        @Query('level') level?: string,
+        @Query('model') model?: string,
+        @Query('status') status?: string,
+        @Query('search') search?: string
     ) {
         const userId = req?.user?.id ? Number(req.user.id) : undefined;
         const targetId = targetSatkerId ? Number(targetSatkerId) : undefined;
-        const result = await this.service.buildBulkImportTemplate(userId, year, targetId, from, to, jenisKejahatanIds);
+        const result = await this.service.buildBulkImportTemplate(
+            userId,
+            year,
+            targetId,
+            from,
+            to,
+            jenisKejahatanIds,
+            functionDomain,
+            organizationDomain,
+            level,
+            model,
+            status,
+            search
+        );
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
         res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Suggested-Filename');
@@ -207,7 +226,8 @@ export class LaporanPolisiController {
     ) {
         if (!file || !file.buffer) throw new BadRequestException('File Excel (.xlsx) wajib diunggah.');
         const userId = req?.user?.id ? Number(req.user.id) : undefined;
-        return this.service.previewBulkImport(file.buffer, userId, file.originalname);
+        const result = await this.service.previewBulkImport(file.buffer, userId, file.originalname);
+        return { status: 1, data: result };
     }
 
     /** Eksekusi commit bulk update status LP dari baris yang valid. */
@@ -219,7 +239,8 @@ export class LaporanPolisiController {
         @Body() body: { rows?: any[]; token?: string }
     ) {
         const userId = req?.user?.id ? Number(req.user.id) : undefined;
-        return this.service.commitBulkImport(body?.rows || [], userId, body?.token);
+        const result = await this.service.commitBulkImport(body?.rows || [], userId, body?.token);
+        return { status: 1, data: result, message: result.message };
     }
 
     /** Pencarian global No. LP / nama / NIK pihak terlibat, dedup per LP. Min. 5 karakter.
