@@ -2604,11 +2604,34 @@ export class LaporanPolisiService {
      * Unduh template Excel bulk import status LP khusus satker operator.
      * Nama file: cas_<token>.xlsx (terenkripsi, anonymized & traceable).
      */
-    async buildBulkImportTemplate(userId?: number, year?: string, targetSatkerId?: number): Promise<{ buffer: Buffer; filename: string }> {
+    async buildBulkImportTemplate(
+        userId?: number,
+        year?: string,
+        targetSatkerId?: number,
+        fromDate?: string,
+        toDate?: string
+    ): Promise<{ buffer: Buffer; filename: string }> {
         const scope = await resolveScope(this.dataSource, userId);
         let satkerId = scope.satkerId;
         if (scope.isSuper && targetSatkerId) {
             satkerId = targetSatkerId;
+        } else if (!scope.isSuper && targetSatkerId && targetSatkerId !== scope.satkerId) {
+            // Operator / regional: validasi satker bawahan dalam pohon hirarki
+            if (scope.satkerId) {
+                const check = await this.dataSource.query(`
+                    with recursive satker_tree as (
+                        select id from bdb_satker where id = $1
+                        union all
+                        select s.id from bdb_satker s join satker_tree st on s.parent_id = st.id
+                    )
+                    select 1 from satker_tree where id = $2
+                `, [scope.satkerId, targetSatkerId]);
+                if (check.length) {
+                    satkerId = targetSatkerId;
+                } else {
+                    throw new ForbiddenException('Akses ditolak: Satuan Kerja yang dipilih berada di luar kewenangan Anda.');
+                }
+            }
         }
 
         if (!scope.all && !satkerId) {
@@ -2630,26 +2653,52 @@ export class LaporanPolisiService {
             'coalesce(lp.dilimpahkan_eksternal, false) = false'
         ];
         const params: any[] = [];
+        let useSatkerTree = false;
 
-        if (!scope.all) {
+        if (satkerId) {
             params.push(satkerId);
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
-        } else if (targetSatkerId) {
-            params.push(targetSatkerId);
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+            useSatkerTree = true;
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (select id from satker_tree)`);
         }
 
+        const cleanFrom = String(fromDate || '').trim();
+        const cleanTo = String(toDate || '').trim();
         const cleanYear = String(year || '').trim();
-        if (cleanYear && cleanYear !== 'all' && /^\d{4}$/.test(cleanYear)) {
+
+        if (cleanFrom && /^\d{4}-\d{2}-\d{2}$/.test(cleanFrom)) {
+            params.push(cleanFrom);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) >= $${params.length}::date`);
+        }
+        if (cleanTo && /^\d{4}-\d{2}-\d{2}$/.test(cleanTo)) {
+            params.push(cleanTo);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) <= $${params.length}::date`);
+        }
+        if (!cleanFrom && !cleanTo && cleanYear && cleanYear !== 'all' && /^\d{4}$/.test(cleanYear)) {
             params.push(parseInt(cleanYear, 10));
             where.push(`extract(year from parse_tgl_laporan(lp.tgl_laporan)) = $${params.length}`);
         }
 
         const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+        const cteSql = useSatkerTree
+            ? `with recursive satker_tree as (
+                    select id from bdb_satker where id = $1
+                    union all
+                    select s.id from bdb_satker s join satker_tree st on s.parent_id = st.id
+               ) `
+            : '';
 
-        // Query LP aktif milik satker terurut dari terbaru ke terlama
+        // Query LP aktif milik satker terurut dari terbaru ke terlama (tanpa batas 5000 LP)
         const lpRows = await this.dataSource.query(`
-            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama, lp.uraian_singkat,
+            ${cteSql}
+            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama,
+                   coalesce(
+                       (select string_agg(distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'kategori_kejahatan','')), ', ')
+                        from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                        where nullif(tp->>'nama_kategori_kejahatan','') is not null or nullif(tp->>'kategori_kejahatan','') is not null),
+                       (select jk.keterangan from cm_jenis_kejahatan jk where jk.id = lp.jenis_kejahatan_id),
+                       nullif(lp.kategori, ''),
+                       '-'
+                   ) as tindak_pidana,
                    sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
                    (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
                     where d.lp_id = lp.id and dt.status_target_id = lp.status_id
@@ -2661,12 +2710,12 @@ export class LaporanPolisiService {
             left join bdb_status_master sm on sm.id = lp.status_id
             ${whereSql}
             order by parse_tgl_laporan(lp.tgl_laporan) desc nulls last, lp.id desc
-            limit 5000
         `, params);
 
         // Forensic Trace Token (Obfuscated & Reversible di server)
         const timestamp = Date.now();
-        const tracePayload = `${userId || 0}:${satkerId || 0}:${cleanYear || 'all'}:${timestamp}`;
+        const periodDesc = (cleanFrom && cleanTo) ? `${cleanFrom}_${cleanTo}` : (cleanYear || 'all');
+        const tracePayload = `${userId || 0}:${satkerId || 0}:${periodDesc}:${timestamp}`;
         const traceToken = encodeId(tracePayload);
         const filename = `cas_${traceToken}.xlsx`;
 
@@ -2684,7 +2733,7 @@ export class LaporanPolisiService {
             { header: 'ID LP', key: 'id_lp', width: 10 },
             { header: 'NO LP', key: 'no_laporan', width: 38 },
             { header: 'TGL LP', key: 'tgl_laporan', width: 18 },
-            { header: 'TINDAK PIDANA', key: 'uraian_singkat', width: 32 },
+            { header: 'TINDAK PIDANA', key: 'uraian_singkat', width: 36 },
             { header: 'STATUS LAMA', key: 'status_saat_ini', width: 20 },
             { header: 'STATUS BARU', key: 'status_baru', width: 22 },
             { header: 'NO DOKUMEN', key: 'nomor_surat', width: 26 },
@@ -2713,7 +2762,7 @@ export class LaporanPolisiService {
                 id_lp: r.id,
                 no_laporan: r.no_laporan,
                 tgl_laporan: tglLpDisplay,
-                uraian_singkat: r.uraian_singkat || '-',
+                uraian_singkat: r.tindak_pidana || '-',
                 status_saat_ini: r.status_nama || r.status_code || 'Belum Update',
                 status_baru: '',
                 nomor_surat: '',
@@ -2852,6 +2901,8 @@ export class LaporanPolisiService {
             satker_id: satkerId,
             satker_nama: satkerNama,
             user_id: userId,
+            period_from: cleanFrom || null,
+            period_to: cleanTo || null,
             year: cleanYear || 'all',
             row_count: lpRows.length,
             generated_at: new Date().toISOString()
@@ -2866,6 +2917,8 @@ export class LaporanPolisiService {
                 meta: {
                     trace_id: traceToken,
                     satker_id: satkerId,
+                    period_from: cleanFrom || null,
+                    period_to: cleanTo || null,
                     year: cleanYear || 'all',
                     total_rows: lpRows.length,
                     filename

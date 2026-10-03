@@ -1,29 +1,17 @@
-import { copyFileToBE, runBE } from './be_exec.mjs';
+import { runBE, copyFileToBE } from './be_exec.mjs';
 
-function main() {
-    console.log("=== 1. Copying user.service.ts and auth.service.ts to BE ===");
-    copyFileToBE('user.service.ts', '/tmp/user.service.ts');
-    copyFileToBE('auth.service.ts', '/tmp/auth.service.ts');
+console.log('1. Copying service and controller to BE host...');
+copyFileToBE('backend-patch/laporan-polisi.service.ts', '/home/clouduser/laporan-polisi.service.ts');
+copyFileToBE('backend-patch/laporan-polisi.controller.ts', '/home/clouduser/laporan-polisi.controller.ts');
 
-    console.log("=== 2. Replacing files in bdb-api container and building ===");
-    const res = runBE(`
-        docker exec bdb-api cp /usr/src/app/src/app_core/auth/user/user.service.ts /usr/src/app/src/app_core/auth/user/user.service.ts.bak-$(date +%s)
-        docker exec bdb-api cp /usr/src/app/src/app_core/auth/auth.service.ts /usr/src/app/src/app_core/auth/auth.service.ts.bak-$(date +%s)
-        
-        docker cp /tmp/user.service.ts bdb-api:/usr/src/app/src/app_core/auth/user/user.service.ts
-        docker cp /tmp/auth.service.ts bdb-api:/usr/src/app/src/app_core/auth/auth.service.ts
-        
-        rm -f /tmp/user.service.ts /tmp/auth.service.ts
-        
-        echo "Building bdb-api..."
-        docker exec bdb-api npm run build
-        
-        echo "Restarting bdb-api..."
-        docker restart bdb-api
-        sleep 5
-        docker ps --filter "name=bdb-api"
-    `);
-    console.log(res);
-}
+console.log('2. Copying files to bdb-api container...');
+runBE('docker cp /home/clouduser/laporan-polisi.service.ts bdb-api:/usr/src/app/src/bdb/laporan-polisi/laporan-polisi.service.ts && rm /home/clouduser/laporan-polisi.service.ts');
+runBE('docker cp /home/clouduser/laporan-polisi.controller.ts bdb-api:/usr/src/app/src/bdb/laporan-polisi/laporan-polisi.controller.ts && rm /home/clouduser/laporan-polisi.controller.ts');
 
-main();
+console.log('3. Running nest build inside bdb-api...');
+const buildOut = runBE('docker exec bdb-api npm run build');
+console.log('Build Output:', buildOut);
+
+console.log('4. Restarting bdb-api...');
+runBE('docker restart bdb-api');
+console.log('Backend deployed and restarted successfully!');
