@@ -58,15 +58,15 @@ function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
-  var invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
-  if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
-    return '@' + c.toLowerCase();
-  }
-  var seed = idStr || username || 'polri';
+  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+  if (c && !invalid.includes(c.toLowerCase())) return '@' + c;
+  var u = String(username || '').trim().replace(/^@/, '');
+  if (u && !invalid.includes(u.toLowerCase())) return '@' + u;
+  var seed = idStr || 'polri';
   var num = 0;
   for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
   var code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-  return '@user_' + code;
+  return '@user_' + (idStr || '0') + code;
 }
 
 function toTitleCase(str) {
@@ -999,21 +999,27 @@ e.s(["default",0,function() {
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.75rem",marginBottom:"0.85rem"},children:[
                 (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center"},children:[
                   (0,t.jsx)("div",{
-                    onClick:() => handleOpenUserProfile(post.author_id, post),
+                    onClick:() => {
+                      var isTargetOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
+                      window.location.href = isTargetOne ? '/cms/profile' : ('/cms/profile?id=' + post.author_id);
+                    },
                     style:{cursor:"pointer",display:"inline-flex",transition:"transform 0.15s ease"},
                     onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.05)',
                     onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
-                    title:"Klik untuk melihat profil personil",
+                    title:"Klik untuk membuka profil " + (authorNameDisplay || authorHandle),
                     children:renderCornerAvatar(authorAvatar, authorInitials, authorBadge, 2.5, 15, 8.5)
                   }),
                   (0,t.jsxs)("div",{children:[
                     (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
                       (0,t.jsx)("span",{
-                        onClick:() => handleOpenUserProfile(post.author_id, post),
+                        onClick:() => {
+                          var isTargetOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
+                          window.location.href = isTargetOne ? '/cms/profile' : ('/cms/profile?id=' + post.author_id);
+                        },
                         style:{fontWeight:800,fontSize:"0.92rem",color:"#38bdf8",letterSpacing:"-0.01em",cursor:"pointer",transition:"all 0.15s ease"},
                         onMouseEnter:e => { e.currentTarget.style.color = '#93c5fd'; e.currentTarget.style.textDecoration = 'underline'; },
                         onMouseLeave:e => { e.currentTarget.style.color = '#38bdf8'; e.currentTarget.style.textDecoration = 'none'; },
-                        title:"Klik untuk melihat profil personil",
+                        title:"Klik untuk membuka profil " + (authorNameDisplay || authorHandle),
                         children:authorHandle
                       })
                     ]}),

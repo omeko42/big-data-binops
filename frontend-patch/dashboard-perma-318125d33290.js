@@ -919,10 +919,23 @@ children:[
           let isUserOne = String(item.author_id) === '1' || item.author_username === 'omeko11' || item.author_callsign === 'omeko11';
           let isSuper = isUserOne || String(item.author_role || '').toLowerCase() === 'superadmin';
           let roleStr = String(item.author_role || '').toLowerCase();
-          let callsign = isUserOne ? '@omeko11' : (item.author_callsign ? ('@' + String(item.author_callsign).replace(/^@/, '')) : (item.author_username ? ('@' + item.author_username) : '@user_' + String(item.author_id || 'polri').slice(-4)));
+          let callsign = (function() {
+            let idStr = String(item.author_id || '');
+            if (idStr === '1' || item.author_username === 'omeko11' || item.author_callsign === 'omeko11') return '@omeko11';
+            let c = String(item.author_callsign || '').trim().replace(/^@/, '');
+            let invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+            if (c && !invalid.includes(c.toLowerCase())) return '@' + c;
+            let u = String(item.author_username || '').trim().replace(/^@/, '');
+            if (u && !invalid.includes(u.toLowerCase())) return '@' + u;
+            let seed = idStr || 'polri';
+            let num = 0;
+            for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+            let code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+            return '@user_' + (idStr || '0') + code;
+          })();
           let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
-          let satker = item.satker_name || item.satker || (isUserOne ? 'Nasional' : 'Mabes Bareskrim');
+          let bTitle = isSuper ? 'Superadmin Terverifikasi' : 'Personil Terverifikasi';
+          let satker = isUserOne ? 'Nasional' : (item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || 'Polri');
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
             key:item.id,
