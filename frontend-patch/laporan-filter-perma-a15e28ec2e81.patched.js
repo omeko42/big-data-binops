@@ -2134,7 +2134,7 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
                             (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"center",color:"#475569"},children:"Status Lama"}),
                             (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"center",color:"#475569"},children:"Status Baru"}),
                             (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"center",color:"#475569"},children:"Tgl Status"}),
-                            (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"left",color:"#475569"},children:"Alasan (SP3) / Dokumen"}),
+                            (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"left",color:"#475569"},children:"Alasan Henti / Kategori Perma / Dokumen"}),
                             (0,t.jsx)("th",{style:{padding:"0.5rem",textAlign:"left",color:"#475569"},children:"Status Verifikasi"})
                         ]})
                     }),
@@ -2149,8 +2149,9 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
                             (0,t.jsx)("td",{style:{padding:"0.45rem 0.5rem",textAlign:"center"},children:row.tgl_status||"-"}),
                             (0,t.jsxs)("td",{style:{padding:"0.45rem 0.5rem"},children:[
                                 row.alasan_penghentian?(0,t.jsx)("div",{style:{fontWeight:600,color:"#dc2626"},children:row.alasan_penghentian}):null,
-                                row.nomor_surat?(0,t.jsx)("div",{style:{color:"#475569",fontSize:"0.72rem"},children:row.nomor_surat}):null,
-                                !row.alasan_penghentian&&!row.nomor_surat?"-":null
+                                row.kategori_perma?(0,t.jsx)("div",{style:{fontWeight:600,color:"#059669"},children:"Perma: "+row.kategori_perma}):null,
+                                row.nomor_surat?(0,t.jsx)("div",{style:{color:"#475569",fontSize:"0.72rem"},children:"No: "+row.nomor_surat}):null,
+                                !row.alasan_penghentian&&!row.kategori_perma&&!row.nomor_surat?"-":null
                             ]}),
                             (0,t.jsxs)("td",{style:{padding:"0.45rem 0.5rem"},children:[
                                 (0,t.jsx)("span",{style:{display:"inline-block",padding:"0.15rem 0.45rem",borderRadius:4,background:badgeBg,color:badgeColor,fontWeight:700,fontSize:"0.72rem"},children:row.status_verifikasi}),
