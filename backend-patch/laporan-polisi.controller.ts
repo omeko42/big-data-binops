@@ -182,11 +182,13 @@ export class LaporanPolisiController {
         @Res() res: Response,
         @Req() req: any,
         @Query('year') year?: string,
-        @Query('target_satker_id') targetSatkerId?: string
+        @Query('target_satker_id') targetSatkerId?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string
     ) {
         const userId = req?.user?.id ? Number(req.user.id) : undefined;
         const targetId = targetSatkerId ? Number(targetSatkerId) : undefined;
-        const result = await this.service.buildBulkImportTemplate(userId, year, targetId);
+        const result = await this.service.buildBulkImportTemplate(userId, year, targetId, from, to);
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
         res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Suggested-Filename');

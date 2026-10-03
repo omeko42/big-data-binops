@@ -71,6 +71,14 @@
 let eBulkRole=(0,E.deriveRoles)((0,E.getUser)()),eBulkAllowed=!eBulkRole?.isViewer&&!eG?.isViewer&&(eV||"operator"===String(eBulkRole?.label||"").toLowerCase());
 let[importModalVisible,setImportModalVisible]=(0,n.useState)(!1),
 [importYear,setImportYear]=(0,n.useState)("2026"),
+[importFromDate,setImportFromDate]=(0,n.useState)(""),
+[importToDate,setImportToDate]=(0,n.useState)(""),
+[importPeriodPreset,setImportPeriodPreset]=(0,n.useState)("month_current"),
+[importSatker,setImportSatker]=(0,n.useState)(null),
+[importSatkerQuery,setImportSatkerQuery]=(0,n.useState)(""),
+[importSatkerResults,setImportSatkerResults]=(0,n.useState)([]),
+[importSatkerLoading,setImportSatkerLoading]=(0,n.useState)(!1),
+[importSatkerDropdownOpen,setImportSatkerDropdownOpen]=(0,n.useState)(!1),
 [importDownloading,setImportDownloading]=(0,n.useState)(!1),
 [importUploading,setImportUploading]=(0,n.useState)(!1),
 [importPreviewData,setImportPreviewData]=(0,n.useState)(null),
@@ -792,11 +800,101 @@ function bulkApplyPeriod(){let from="",to="",label="";if("month"===bulkPeriodMod
 function bulkResetPeriod(){setBulkFrom(""),setBulkTo(""),setBulkPeriodLabel("Semua Periode"),setBulkPeriodOpen(!1)}
 
 
+function applyImportPeriodPreset(preset){
+    setImportPeriodPreset(preset);
+    let now=new Date();
+    let y=now.getFullYear();
+    let m=now.getMonth()+1;
+    if(preset==="month_current"){
+        let mStr=String(m).padStart(2,"0");
+        let lastDay=new Date(y,m,0).getDate();
+        setImportFromDate(y+"-"+mStr+"-01");
+        setImportToDate(y+"-"+mStr+"-"+String(lastDay).padStart(2,"0"));
+        setImportYear(String(y));
+    }else if(preset==="month_prev"){
+        let prevM=m-1,prevY=y;
+        if(prevM===0){prevM=12;prevY=y-1;}
+        let mStr=String(prevM).padStart(2,"0");
+        let lastDay=new Date(prevY,prevM,0).getDate();
+        setImportFromDate(prevY+"-"+mStr+"-01");
+        setImportToDate(prevY+"-"+mStr+"-"+String(lastDay).padStart(2,"0"));
+        setImportYear(String(prevY));
+    }else if(preset==="year_2026"){
+        setImportFromDate("2026-01-01");
+        setImportToDate("2026-12-31");
+        setImportYear("2026");
+    }else if(preset==="year_2025"){
+        setImportFromDate("2025-01-01");
+        setImportToDate("2025-12-31");
+        setImportYear("2025");
+    }else if(preset==="year_2024"){
+        setImportFromDate("2024-01-01");
+        setImportToDate("2024-12-31");
+        setImportYear("2024");
+    }else if(preset==="all"){
+        setImportFromDate("");
+        setImportToDate("");
+        setImportYear("all");
+    }
+}
+
+async function searchImportSatker(q){
+    let query=String(q||"").trim();
+    if(!query||query.length<2){
+        setImportSatkerResults([]);
+        return;
+    }
+    setImportSatkerLoading(!0);
+    try{
+        let res=await L.apiAuth.get("/bdb/satker/search",{params:{q:query,limit:15}});
+        setImportSatkerResults(res.data?.data||[]);
+        setImportSatkerDropdownOpen(!0);
+    }catch(e){
+        setImportSatkerResults([]);
+    }finally{
+        setImportSatkerLoading(!1);
+    }
+}
+
+function selectImportSatker(item){
+    setImportSatker(item);
+    setImportSatkerQuery("");
+    setImportSatkerResults([]);
+    setImportSatkerDropdownOpen(!1);
+}
+
+function clearImportSatker(){
+    setImportSatker(null);
+    setImportSatkerQuery("");
+    setImportSatkerResults([]);
+    setImportSatkerDropdownOpen(!1);
+}
+
+function openImportModal(){
+    setImportModalVisible(!0);
+    setImportStep(1);
+    setImportPreviewData(null);
+    setImportSatker(eTargetSatker||null);
+    setImportSatkerQuery("");
+    setImportSatkerResults([]);
+    setImportSatkerDropdownOpen(!1);
+    applyImportPeriodPreset("month_current");
+}
+
 async function downloadImportTemplate(){
+    if(importFromDate&&importToDate&&importFromDate>importToDate){
+        return void e.current?.show({severity:"warn",summary:"Periode Tidak Valid",detail:"Tanggal awal tidak boleh melebihi tanggal akhir."});
+    }
     setImportDownloading(!0);
     try {
-        let params = { year: importYear };
-        if (eTargetSatker?.id) params.target_satker_id = eTargetSatker.id;
+        let params={};
+        if(importFromDate) params.from=importFromDate;
+        if(importToDate) params.to=importToDate;
+        if(!importFromDate&&!importToDate&&importYear) params.year=importYear;
+        
+        let targetId=importSatker?.id||eTargetSatker?.id;
+        if(targetId) params.target_satker_id=targetId;
+
         let res = await L.apiAuth.get("/bdb/laporan-polisi/bulk-import/template", {
             params: params,
             responseType: "blob"
@@ -811,7 +909,7 @@ async function downloadImportTemplate(){
             fname = String(res.headers["x-suggested-filename"] || res.headers["X-Suggested-Filename"]).trim();
         }
         if (!fname || fname.includes("template_status") || !fname.startsWith("cas_")) {
-            let uId = String(eTargetSatker?.id || 1) + "_" + String(importYear || "all");
+            let uId = String(targetId || 1) + "_" + String(importFromDate || importYear || "all");
             let rand = Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
             let rawStr = uId + ":" + rand;
             let enc = "";
@@ -909,7 +1007,7 @@ function bulkRenderInput(row,field){let id=bulkLpId(row),data=bulkData[id]||{};i
 function bulkEditor(){let doc=bulkTypeDoc(),fields=bulkFields(doc),rows=bulkPageSize||25,pages=Math.max(1,Math.ceil(bulkSelected.length/rows)),page=Math.min(bulkEditPage,pages),start=(page-1)*rows,pageRows=bulkSelected.slice(start,start+rows),th={padding:"0.5rem",textAlign:"left",fontSize:"0.72rem",background:"#f8fafc",borderBottom:"1px solid #e2e8f0",whiteSpace:"nowrap",position:"sticky",top:0,zIndex:2},td={padding:"0.45rem",borderBottom:"1px solid #e2e8f0",verticalAlign:"top",fontSize:"0.78rem"};return(0,t.jsxs)("div",{style:{display:"grid",gap:"0.6rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"0.7rem",flexWrap:"wrap",fontSize:"0.78rem",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:8,padding:"0.55rem 0.7rem"},children:[(0,t.jsxs)("span",{children:["Dokumen: ",(0,t.jsx)("strong",{children:doc?.nama||"—"})," · ",bulkSelected.length," LP"]}),(0,t.jsx)("span",{style:{color:"#64748b"},children:"No. Dokumen kosong = PREMEMORY · Tanggal kosong = hari ini"})]}),(0,t.jsx)("div",{style:{overflow:"auto",border:"1px solid #e2e8f0",borderRadius:8,maxHeight:bulkExpanded?"calc(100vh - 250px)":"50vh"},children:(0,t.jsxs)("table",{style:{borderCollapse:"collapse",width:"100%",minWidth:Math.max(850,430+210*fields.length)+"px"},children:[(0,t.jsx)("thead",{children:(0,t.jsxs)("tr",{children:[(0,t.jsx)("th",{style:{...th,left:0,zIndex:4,width:"3.5rem"},children:"No"}),(0,t.jsx)("th",{style:{...th,left:"3.5rem",zIndex:4,minWidth:"19rem"},children:"No. LP"}),...fields.map(f=>(0,t.jsx)("th",{style:th,children:"nomor_dokumen"===f.field_key?"No. Dokumen":"tanggal_dokumen"===f.field_key?"Tgl. Dokumen":f.label||f.field_key},f.field_key))]})}),(0,t.jsx)("tbody",{children:pageRows.map((row,idx)=>(0,t.jsxs)("tr",{children:[(0,t.jsx)("td",{style:{...td,position:"sticky",left:0,background:"var(--cas-bg-surface, #fff)",zIndex:1,fontWeight:700},children:start+idx+1}),(0,t.jsx)("td",{style:{...td,position:"sticky",left:"3.5rem",background:"var(--cas-bg-surface, #fff)",zIndex:1,minWidth:"19rem",fontWeight:600},children:row.no_laporan||("LP #"+bulkLpId(row))}),...fields.map(f=>(0,t.jsx)("td",{style:td,children:bulkRenderInput(row,f)},f.field_key))]},bulkLpId(row)))})]})}),bulkPager(page,bulkSelected.length,rows,p=>setBulkEditPage(p),newSize=>{setBulkPageSize(newSize);setBulkEditPage(1)})]})}
 
 async function bulkSubmit(){let doc=bulkTypeDoc();if(!doc)return;let fields=bulkFields(doc),today=bulkToday(),prepared=[],invalid=[];for(let row of bulkSelected){let id=bulkLpId(row),data={...(bulkData[id]||{})};bulkEmpty(data.nomor_dokumen)&&(data.nomor_dokumen="PREMEMORY"),bulkEmpty(data.tanggal_dokumen)&&(data.tanggal_dokumen=today);let _lpR=row.tgl_laporan||row.tgl_lp,_lpD=null;if(_lpR){let _s=String(_lpR).trim(),_m=_s.match(/^(\d{2})-(\d{2})-(\d{4})/);if(_m)_lpD=`${_m[3]}-${_m[2]}-${_m[1]}`;else{let _m2=_s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(_m2)_lpD=`${_m2[1]}-${_m2[2]}-${_m2[3]}`}}let missing=fields.filter(f=>bulkVisibleField(f,data)&&"nomor_dokumen"!==f.field_key&&"tanggal_dokumen"!==f.field_key&&bulkEmpty(data[f.field_key]));if(_lpD&&data.tanggal_dokumen&&String(data.tanggal_dokumen).slice(0,10)<_lpD)invalid.push((row.no_laporan||("LP #"+id))+": Tanggal dokumen ("+String(data.tanggal_dokumen).slice(0,10)+") tidak boleh lebih awal dari tanggal LP ("+_lpD+")");else if(missing.length)invalid.push((row.no_laporan||("LP #"+id))+": "+missing.map(f=>f.label||f.field_key).join(", "));else prepared.push({row,id,data})}if(invalid.length)return void e.current?.show({severity:"warn",summary:"Data wajib belum lengkap",detail:invalid.slice(0,3).join(" | ")+(invalid.length>3?" | +"+(invalid.length-3)+" lainnya":""),life:8e3});if(!await (0,T.confirmAction)("Update "+prepared.length+" LP menggunakan "+doc.nama+"?",{header:"Konfirmasi Update Status Massal",acceptLabel:"Proses Update"}))return;setBulkBusy(!0);let failed=[];try{for(let item of prepared){try{let form=new FormData;form.append("document_type_id",String(doc.id)),form.append("data",JSON.stringify(item.data)),await L.apiAuth.post("/bdb/wf/lp/"+item.id+"/dokumen",form,{headers:{"Content-Type":void 0}})}catch(err){failed.push({row:item.row,message:Array.isArray(err.response?.data?.message)?err.response.data.message.join(", "):err.response?.data?.message||"Gagal menyimpan."})}}await Promise.all([eZ(),eQ()]);if(failed.length){setBulkSelected(failed.map(x=>x.row)),setBulkEditPage(1),e.current?.show({severity:"warn",summary:"Update massal sebagian berhasil",detail:(prepared.length-failed.length)+" berhasil · "+failed.length+" gagal. "+failed.slice(0,2).map(x=>(x.row.no_laporan||("LP #"+bulkLpId(x.row)))+": "+x.message).join(" | "),life:1e4})}else{bulkCache.current.clear(),e.current?.show({severity:"success",summary:"Update status massal selesai",detail:prepared.length+" LP berhasil diperbarui.",life:6e3}),setBulkVisible(!1),setBulkStep(1),setBulkSelected([]),setBulkType(null),setBulkData({}),setBulkExpanded(!1),setBulkEditPage(1)}}finally{setBulkBusy(!1)}}
-async function eq(e){ew(e),eO(null);try{let t=await L.apiAuth.get(`/bdb/laporan-polisi/${e.id}`),n=t.data?.data;eO(n?.payload_json||null)}catch{eO(null)}}async function eY(e){let t=e.query?.trim();if(!t||t.length<2)return void eN([]);try{let e=await L.apiAuth.get("/bdb/satker/search",{params:{q:t,limit:25}});eN(e.data?.data||[])}catch{eN([])}}async function eJ(){if(!eC||!eL)return void e.current?.show({severity:"warn",summary:"Pilih satker",detail:"Pilih satker tujuan dulu."});if(await (0,T.confirmAction)(`Ubah satker penanganan LP "${eC.no_laporan}" dari "${eC.satker_nama||"—"}" ke "${eL.deskripsi}"? Ini koreksi mapping langsung (bukan pelimpahan) dan tercatat di log audit.`,{danger:!0,acceptLabel:"Ubah Satker"})){eR(!0);try{(0,L.assertOk)(await L.apiAuth.post(`/bdb/laporan-polisi/${eC.id}/correct-satker`,{satker_id:eL.id,keterangan:eA||void 0})),e.current?.show({severity:"success",summary:"Diperbarui",detail:`Satker penanganan diubah ke ${eL.deskripsi}.`}),eI(null),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal mengubah satker."})}finally{eR(!1)}}}async function eX(){if(eB){if(!eH.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Keterangan/alasan hapus wajib diisi."});if(await (0,T.confirmAction)(`Hapus LP "${eB.no_laporan}"? LP akan disembunyikan dari daftar (masih tersimpan di database, bisa ditelusuri lewat log audit).`,{danger:!0,acceptLabel:"Ya, Hapus"})){eW(!0);try{(0,L.assertOk)(await L.apiAuth.post(`/bdb/laporan-polisi/${eB.id}/soft-delete`,{keterangan:eH})),e.current?.show({severity:"success",summary:"Dihapus",detail:`LP "${eB.no_laporan}" dihapus.`}),ez(null),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menghapus LP."})}finally{eW(!1)}}}}let eZ=(0,n.useCallback)(async()=>{try{let e=await L.apiAuth.get("/bdb/laporan-polisi/stats",{params:{...eAP.level?{level:eAP.level}:{},...eAP.model?{model:eAP.model}:{},...eAP.from?{from:eAP.from}:{},...eAP.to?{to:eAP.to}:{},...eAP.search?{search:eAP.search}:{},...eAP.functionDomain?{functionDomain:eAP.functionDomain,organizationDomain:"INTERNAL_POLRI"}:{},...eAP.jenisKejahatanIds?{jenis_kejahatan_ids:eAP.jenisKejahatanIds}:{},...eAP.targetSatkerId?{target_satker_id:eAP.targetSatkerId}:{}}});er(e.data?.data||null)}catch{}},[eAP]),eQ=(0,n.useCallback)(async()=>{let t=++en.current;et(!0);try{let e=Math.floor(ev/ej)+1,n=await L.apiAuth.get("/bdb/laporan-polisi",{params:{...eAP.level?{level:eAP.level}:{},...eAP.model?{model:eAP.model}:{},...eAP.status?{status:eAP.status}:{},...eAP.from?{from:eAP.from}:{},...eAP.to?{to:eAP.to}:{},...eAP.search?{search:eAP.search}:{},...eAP.functionDomain?{functionDomain:eAP.functionDomain,organizationDomain:"INTERNAL_POLRI"}:{},...eAP.jenisKejahatanIds?{jenis_kejahatan_ids:eAP.jenisKejahatanIds}:{},...eAP.targetSatkerId?{target_satker_id:eAP.targetSatkerId}:{},page:e,row:ej}});if(t!==en.current)return;let a=n.data;X(Array.isArray(a?.data)?a.data:[]),Q(a?.total||0)}catch(n){if(t!==en.current)return;e.current?.show({severity:"error",summary:"Gagal memuat ulang",detail:n?.response?.data?.message||"Data sebelumnya tetap ditampilkan. Coba lagi.",life:6e3})}finally{t===en.current&&et(!1)}},[ev,ej,eAP]);async function e0(){if(await (0,T.confirmAction)("Petakan LP DORS terbaru ke Laporan Polisi? Hanya LP yang kode Pusiknas-nya cocok dengan satker yang disalin.")){ei(!0);try{let t=await L.apiAuth.post("/bdb/laporan-polisi/map",{}),n=t.data?.data;e.current?.show({severity:"success",summary:"Pemetaan selesai",detail:`${n?.mapped_baru??0} LP baru dipetakan \xb7 ${n?.belum_termapping??0} belum termapping`,life:6e3}),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal memetakan"})}finally{ei(!1)}}}(0,n.useEffect)(()=>{eZ()},[eZ]),(0,n.useEffect)(()=>{eQ()},[eQ]);let e1=ea?.per_level||{},e2=[{label:"Semua satker",value:""},{label:`Mabes (${e1.Mabes??0})`,value:"Mabes"},{label:`Polda (${e1.Polda??0})`,value:"Polda"},{label:`Polres (${e1.Polres??0})`,value:"Polres"},{label:`Polsek (${e1.Polsek??0})`,value:"Polsek"}],e4=[{label:"Semua status",value:""},...(ea?.per_status||[]).map(e=>({label:`${e.nama} (${e.jumlah})`,value:e.code}))];return(0,t.jsxs)("div",{children:[(0,t.jsx)(c.Toast,{ref:e}),(0,t.jsx)(d.ConfirmDialog,{}),eTargetSatker&&(0,t.jsxs)("div",{style:{marginBottom:"1rem",padding:"0.75rem 1.25rem",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem"},children:[(0,t.jsx)("i",{className:"pi pi-shield",style:{fontSize:"1.4rem",color:"#f87171",flex:"0 0 auto"}}),(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.92rem",color:"#1e3a8a"},children:["Mode Supervisi / Monitoring Satker Regional: ",eTargetSatker.deskripsi||eTargetSatker.name]}),(0,t.jsx)("div",{style:{fontSize:"0.8rem",color:"#94a3b8"},children:"Anda sedang memantau Daftar LP satker bawahan. Seluruh akses dan tindakan terikat pernyataan pertanggungjawaban kedinasan."})]})]}),(0,t.jsx)(o.Button,{label:"Kembali ke Satker Saya",icon:"pi pi-refresh",size:"small",severity:"secondary",onClick:handleResetSatker,style:{whiteSpace:"nowrap"}})]}),(0,t.jsxs)("div",{className:"cms-sticky-top",children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"},children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("h1",{className:"cms-page-title",children:"Laporan Polisi"}),(0,t.jsx)("p",{className:"cms-page-sub",children:"LP dari DORS yang sudah termapping ke satker — siap untuk aktivitas berikutnya."})]}),eBulkAllowed&&(0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",alignItems:"center",marginTop:"0.25rem",flexWrap:"wrap"},children:[eBulkAllowed&&(0,t.jsx)(o.Button,{label:"Impor Status Massal",icon:"pi pi-file-excel",onClick:()=>{setImportModalVisible(!0);setImportStep(1);setImportPreviewData(null);},className:"att-btn",style:{background:"#059669",borderColor:"#059669",color:"#ffffff"}}),
+async function eq(e){ew(e),eO(null);try{let t=await L.apiAuth.get(`/bdb/laporan-polisi/${e.id}`),n=t.data?.data;eO(n?.payload_json||null)}catch{eO(null)}}async function eY(e){let t=e.query?.trim();if(!t||t.length<2)return void eN([]);try{let e=await L.apiAuth.get("/bdb/satker/search",{params:{q:t,limit:25}});eN(e.data?.data||[])}catch{eN([])}}async function eJ(){if(!eC||!eL)return void e.current?.show({severity:"warn",summary:"Pilih satker",detail:"Pilih satker tujuan dulu."});if(await (0,T.confirmAction)(`Ubah satker penanganan LP "${eC.no_laporan}" dari "${eC.satker_nama||"—"}" ke "${eL.deskripsi}"? Ini koreksi mapping langsung (bukan pelimpahan) dan tercatat di log audit.`,{danger:!0,acceptLabel:"Ubah Satker"})){eR(!0);try{(0,L.assertOk)(await L.apiAuth.post(`/bdb/laporan-polisi/${eC.id}/correct-satker`,{satker_id:eL.id,keterangan:eA||void 0})),e.current?.show({severity:"success",summary:"Diperbarui",detail:`Satker penanganan diubah ke ${eL.deskripsi}.`}),eI(null),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal mengubah satker."})}finally{eR(!1)}}}async function eX(){if(eB){if(!eH.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Keterangan/alasan hapus wajib diisi."});if(await (0,T.confirmAction)(`Hapus LP "${eB.no_laporan}"? LP akan disembunyikan dari daftar (masih tersimpan di database, bisa ditelusuri lewat log audit).`,{danger:!0,acceptLabel:"Ya, Hapus"})){eW(!0);try{(0,L.assertOk)(await L.apiAuth.post(`/bdb/laporan-polisi/${eB.id}/soft-delete`,{keterangan:eH})),e.current?.show({severity:"success",summary:"Dihapus",detail:`LP "${eB.no_laporan}" dihapus.`}),ez(null),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menghapus LP."})}finally{eW(!1)}}}}let eZ=(0,n.useCallback)(async()=>{try{let e=await L.apiAuth.get("/bdb/laporan-polisi/stats",{params:{...eAP.level?{level:eAP.level}:{},...eAP.model?{model:eAP.model}:{},...eAP.from?{from:eAP.from}:{},...eAP.to?{to:eAP.to}:{},...eAP.search?{search:eAP.search}:{},...eAP.functionDomain?{functionDomain:eAP.functionDomain,organizationDomain:"INTERNAL_POLRI"}:{},...eAP.jenisKejahatanIds?{jenis_kejahatan_ids:eAP.jenisKejahatanIds}:{},...eAP.targetSatkerId?{target_satker_id:eAP.targetSatkerId}:{}}});er(e.data?.data||null)}catch{}},[eAP]),eQ=(0,n.useCallback)(async()=>{let t=++en.current;et(!0);try{let e=Math.floor(ev/ej)+1,n=await L.apiAuth.get("/bdb/laporan-polisi",{params:{...eAP.level?{level:eAP.level}:{},...eAP.model?{model:eAP.model}:{},...eAP.status?{status:eAP.status}:{},...eAP.from?{from:eAP.from}:{},...eAP.to?{to:eAP.to}:{},...eAP.search?{search:eAP.search}:{},...eAP.functionDomain?{functionDomain:eAP.functionDomain,organizationDomain:"INTERNAL_POLRI"}:{},...eAP.jenisKejahatanIds?{jenis_kejahatan_ids:eAP.jenisKejahatanIds}:{},...eAP.targetSatkerId?{target_satker_id:eAP.targetSatkerId}:{},page:e,row:ej}});if(t!==en.current)return;let a=n.data;X(Array.isArray(a?.data)?a.data:[]),Q(a?.total||0)}catch(n){if(t!==en.current)return;e.current?.show({severity:"error",summary:"Gagal memuat ulang",detail:n?.response?.data?.message||"Data sebelumnya tetap ditampilkan. Coba lagi.",life:6e3})}finally{t===en.current&&et(!1)}},[ev,ej,eAP]);async function e0(){if(await (0,T.confirmAction)("Petakan LP DORS terbaru ke Laporan Polisi? Hanya LP yang kode Pusiknas-nya cocok dengan satker yang disalin.")){ei(!0);try{let t=await L.apiAuth.post("/bdb/laporan-polisi/map",{}),n=t.data?.data;e.current?.show({severity:"success",summary:"Pemetaan selesai",detail:`${n?.mapped_baru??0} LP baru dipetakan \xb7 ${n?.belum_termapping??0} belum termapping`,life:6e3}),await Promise.all([eZ(),eQ()])}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal memetakan"})}finally{ei(!1)}}}(0,n.useEffect)(()=>{eZ()},[eZ]),(0,n.useEffect)(()=>{eQ()},[eQ]);let e1=ea?.per_level||{},e2=[{label:"Semua satker",value:""},{label:`Mabes (${e1.Mabes??0})`,value:"Mabes"},{label:`Polda (${e1.Polda??0})`,value:"Polda"},{label:`Polres (${e1.Polres??0})`,value:"Polres"},{label:`Polsek (${e1.Polsek??0})`,value:"Polsek"}],e4=[{label:"Semua status",value:""},...(ea?.per_status||[]).map(e=>({label:`${e.nama} (${e.jumlah})`,value:e.code}))];return(0,t.jsxs)("div",{children:[(0,t.jsx)(c.Toast,{ref:e}),(0,t.jsx)(d.ConfirmDialog,{}),eTargetSatker&&(0,t.jsxs)("div",{style:{marginBottom:"1rem",padding:"0.75rem 1.25rem",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem"},children:[(0,t.jsx)("i",{className:"pi pi-shield",style:{fontSize:"1.4rem",color:"#f87171",flex:"0 0 auto"}}),(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.92rem",color:"#1e3a8a"},children:["Mode Supervisi / Monitoring Satker Regional: ",eTargetSatker.deskripsi||eTargetSatker.name]}),(0,t.jsx)("div",{style:{fontSize:"0.8rem",color:"#94a3b8"},children:"Anda sedang memantau Daftar LP satker bawahan. Seluruh akses dan tindakan terikat pernyataan pertanggungjawaban kedinasan."})]})]}),(0,t.jsx)(o.Button,{label:"Kembali ke Satker Saya",icon:"pi pi-refresh",size:"small",severity:"secondary",onClick:handleResetSatker,style:{whiteSpace:"nowrap"}})]}),(0,t.jsxs)("div",{className:"cms-sticky-top",children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"1rem",flexWrap:"wrap"},children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("h1",{className:"cms-page-title",children:"Laporan Polisi"}),(0,t.jsx)("p",{className:"cms-page-sub",children:"LP dari DORS yang sudah termapping ke satker — siap untuk aktivitas berikutnya."})]}),eBulkAllowed&&(0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",alignItems:"center",marginTop:"0.25rem",flexWrap:"wrap"},children:[eBulkAllowed&&(0,t.jsx)(o.Button,{label:"Impor Status Massal",icon:"pi pi-file-excel",onClick:openImportModal,className:"att-btn",style:{background:"#059669",borderColor:"#059669",color:"#ffffff"}}),
 eBulkAllowed&&(0,t.jsx)(o.Button,{label:"Update Status Massal",icon:"pi pi-pencil",onClick:bulkShow,className:"att-btn"}),eG.isSuperadmin&&(0,t.jsxs)(o.Button,{onClick:e0,loading:el,className:"att-btn",outlined:!0,children:[(0,t.jsx)(h.RefreshCw,{size:16,style:{marginRight:"0.4rem"}})," ",el?"Memetakan…":"Petakan LP Terbaru"]})]})]}),(0,t.jsxs)("div",{className:"lp-status-cards",children:[(0,t.jsxs)("button",{type:"button",className:`lp-stat total${""===eu?" active":""}`,onClick:()=>{ec(""),ex(0),eSetAP({level:eo,status:"",model:ed,from:em,to:eg,search:eh.trim(),functionDomain:eFD,jenisKejahatanIds:eCrime||"",targetSatkerId:eTargetSatker?.id?String(eTargetSatker.id):""})},children:[(0,t.jsx)("div",{className:"n",children:(ea?.total??0).toLocaleString("id-ID")}),(0,t.jsx)("div",{className:"l",children:"Semua LP"})]}),(ea?.per_status||[]).map(e=>{let n;return(0,t.jsxs)("button",{type:"button",className:`lp-stat ${"CC"===e.kategori?"cc":"ct"}${eu===e.code?" active":""}`,onClick:()=>{let t=eu===e.code?"":e.code;ec(t),ex(0),eSetAP({level:eo,status:t,model:ed,from:em,to:eg,search:eh.trim(),functionDomain:eFD,jenisKejahatanIds:eCrime||"",targetSatkerId:eTargetSatker?.id?String(eTargetSatker.id):""})},title:e.nama,children:[(0,t.jsx)("div",{className:"n",children:e.jumlah.toLocaleString("id-ID")}),(0,t.jsx)("div",{className:"l",children:"PERMA"===e.code?"PERMA":G[n=e.code]||n.replace(/_/g," ")})]},e.code)})]})]}),(0,t.jsxs)("div",{className:"cms-card",style:{padding:0,overflow:(mainPeriodOpen||satkerOpen||crimeOpen)?"visible":"hidden"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap",padding:"0.75rem 1rem",borderBottom:"1px solid #e2e8f0"},children:[(0,t.jsxs)("div",{
     style:{position:"relative",flex:"0 0 auto"},
     children:[
@@ -2072,7 +2170,7 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
     ]}),
     visible:importModalVisible,
     onHide:()=>{if(!importCommitting&&!importUploading){setImportModalVisible(!1);setImportStep(1);setImportPreviewData(null);}},
-    style:{width:importStep===2?"76rem":"44rem",maxWidth:"96vw"},
+    style:{width:importStep===2?"76rem":"48rem",maxWidth:"96vw"},
     modal:!0,
     footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[
         (0,t.jsx)("div",{children:importStep===2&&(0,t.jsx)(o.Button,{label:"Unggah File Lain",icon:"pi pi-arrow-left",text:!0,size:"small",onClick:()=>{setImportStep(1);setImportPreviewData(null);},disabled:importCommitting})}),
@@ -2084,10 +2182,13 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
     children:(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",padding:"0.25rem 0"},children:[
         (0,t.jsxs)("div",{style:{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:8,padding:"0.75rem 1rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"1rem"},children:[
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem"},children:[
-                (0,t.jsx)("i",{className:"pi pi-shield",style:{color:"#16a34a",fontSize:"1.2rem"}}),
+                (0,t.jsx)("i",{className:"pi pi-shield",style:{color:"#16a34a",fontSize:"1.3rem"}}),
                 (0,t.jsxs)("div",{children:[
-                    (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#166534"},children:["Satuan Kerja: ",eTargetSatker?.deskripsi||eTargetSatker?.name||"Satker Kewenangan Anda"]}),
-                    (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#15803d"},children:"File Excel terenkripsi dengan identitas digital dan watermark forensik kedinasan."})
+                    (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#166534"},children:[
+                        "Satuan Kerja: ",
+                        importSatker ? importSatker.deskripsi : (eTargetSatker?.deskripsi || eTargetSatker?.name || (eG?.isSuperadmin ? "Seluruh Satker (Nasional)" : "Satker Kewenangan Anda"))
+                    ]}),
+                    (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#15803d"},children:"Mencakup seluruh satuan kerja / unit bawahan secara otomatis (hirarkis). File Excel terenkripsi forensik."})
                 ]})
             ]})
         ]}),
@@ -2097,18 +2198,107 @@ bulkPager(bulkLpPage,bulkLpTotal,bulkPageSize||25,bulkGoLp,newSize=>{setBulkPage
                     (0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"22px",height:"22px",borderRadius:"50%",background:"#059669",color:"#fff",fontSize:"0.75rem",fontWeight:700},children:"1"}),
                     (0,t.jsx)("strong",{style:{fontSize:"0.9rem",color:"#1e293b"},children:"Unduh Template Data LP Satker"})
                 ]}),
-                (0,t.jsx)("p",{style:{fontSize:"0.82rem",color:"#64748b",marginBottom:"0.75rem",lineHeight:1.45},children:"Unduh file Excel resmi yang sudah otomatis terisi nomor LP satker Anda. Buka file, pilih Status Baru pada dropdown, dan simpan."}),
-                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem",flexWrap:"wrap"},children:[
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-                        (0,t.jsx)("label",{style:{fontSize:"0.8rem",fontWeight:600,color:"#475569"},children:"Periode LP:"}),
-                        (0,t.jsxs)("select",{value:importYear,onChange:e=>setImportYear(e.target.value),style:{padding:"0.35rem 0.6rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",fontWeight:600,color:"#334155",outline:"none"},children:[
-                            (0,t.jsx)("option",{value:"2026",children:"Tahun Berjalan (2026)"}),
-                            (0,t.jsx)("option",{value:"2025",children:"Tahun 2025"}),
-                            (0,t.jsx)("option",{value:"2024",children:"Tahun 2024"}),
-                            (0,t.jsx)("option",{value:"all",children:"Semua Periode (Keseluruhan)"})
+                (0,t.jsx)("p",{style:{fontSize:"0.82rem",color:"#64748b",marginBottom:"0.85rem",lineHeight:1.45},children:"Unduh file Excel resmi berisikan data LP. Kolom Tindak Pidana terisi otomatis dari klasifikasi kejahatan. Buka file, pilih Status Baru pada dropdown, isi data dokumen, dan simpan."}),
+                (0,t.jsxs)("div",{style:{marginBottom:"0.85rem",position:"relative"},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.3rem"},children:[
+                        (0,t.jsx)("label",{style:{fontSize:"0.8rem",fontWeight:600,color:"#334155"},children:"Filter Satker (Hirarkis):"}),
+                        importSatker&&(0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:"#059669",background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:4,padding:"0.1rem 0.4rem",display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
+                            (0,t.jsx)("strong",{children:importSatker.deskripsi}),
+                            (0,t.jsx)("button",{type:"button",onClick:clearImportSatker,style:{background:"none",border:"none",color:"#059669",cursor:"pointer",fontWeight:700,fontSize:"0.85rem",padding:0,lineHeight:1},children:"×"})
                         ]})
                     ]}),
-                    (0,t.jsx)(o.Button,{label:"Unduh Template Excel (.xlsx)",icon:"pi pi-download",onClick:downloadImportTemplate,loading:importDownloading,size:"small",style:{background:"#059669",borderColor:"#059669",color:"#ffffff"}})
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+                        (0,t.jsxs)("div",{style:{position:"relative",flex:1},children:[
+                            (0,t.jsx)(l.InputText,{
+                                value:importSatker ? importSatker.deskripsi : importSatkerQuery,
+                                placeholder:"Ketik nama satker / polda / polres (cth: Metro Jaya, Jakpus, Medan, Siber)...",
+                                onChange:e=>{
+                                    if(importSatker) setImportSatker(null);
+                                    let v = e.target.value;
+                                    setImportSatkerQuery(v);
+                                    if(window._impStkTimer) clearTimeout(window._impStkTimer);
+                                    window._impStkTimer = setTimeout(()=>searchImportSatker(v), 260);
+                                },
+                                onFocus:()=>{ if(importSatkerResults.length>0) setImportSatkerDropdownOpen(!0); },
+                                style:{width:"100%",fontSize:"0.82rem"}
+                            }),
+                            (importSatker || importSatkerQuery)&&(0,t.jsx)("button",{
+                                type:"button",
+                                onClick:clearImportSatker,
+                                style:{position:"absolute",right:"0.6rem",top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",fontSize:"1rem"},
+                                children:"×"
+                            })
+                        ]}),
+                        (0,t.jsx)(o.Button,{
+                            icon:importSatkerLoading?"pi pi-spin pi-spinner":"pi pi-search",
+                            size:"small",
+                            onClick:()=>searchImportSatker(importSatkerQuery),
+                            style:{padding:"0.45rem 0.75rem",fontSize:"0.8rem"}
+                        })
+                    ]}),
+                    importSatkerDropdownOpen&&importSatkerResults.length>0&&(0,t.jsx)("div",{
+                        style:{position:"absolute",top:"100%",left:0,right:0,zIndex:999,background:"#fff",border:"1px solid #cbd5e1",borderRadius:6,boxShadow:"0 10px 15px -3px rgba(0,0,0,0.1)",maxHeight:"14rem",overflowY:"auto",marginTop:"0.25rem"},
+                        children:importSatkerResults.map(item=>(0,t.jsxs)("div",{
+                            key:item.id,
+                            onClick:()=>selectImportSatker(item),
+                            style:{padding:"0.45rem 0.75rem",borderBottom:"1px solid #f1f5f9",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem"},
+                            onMouseEnter:e=>e.currentTarget.style.background="#f0fdf4",
+                            onMouseLeave:e=>e.currentTarget.style.background="#fff",
+                            children:[
+                                (0,t.jsxs)("div",{style:{minWidth:0},children:[
+                                    (0,t.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:600,color:"#1e293b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:item.deskripsi}),
+                                    item.jalur&&(0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#64748b",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:item.jalur})
+                                ]}),
+                                (0,t.jsx)("span",{style:{fontSize:"0.65rem",fontWeight:700,color:"#047857",background:"#ecfdf5",border:"1px solid #a7f3d0",borderRadius:4,padding:"0.1rem 0.35rem",flexShrink:0},children:item.tipe_satker||"SATKER"})
+                            ]
+                        }))
+                    })
+                ]}),
+                (0,t.jsxs)("div",{style:{display:"grid",gap:"0.45rem",marginBottom:"1rem"},children:[
+                    (0,t.jsx)("label",{style:{fontSize:"0.8rem",fontWeight:600,color:"#334155"},children:"Periode LP (Rentang Tanggal Laporan):"}),
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
+                        (0,t.jsxs)("select",{
+                            value:importPeriodPreset,
+                            onChange:e=>applyImportPeriodPreset(e.target.value),
+                            style:{padding:"0.4rem 0.65rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",fontWeight:600,color:"#334155",outline:"none",minWidth:"13rem"},
+                            children:[
+                                (0,t.jsx)("option",{value:"month_current",children:"Bulan Berjalan Ini (Bulan Ini)"}),
+                                (0,t.jsx)("option",{value:"month_prev",children:"Bulan Sebelumnya"}),
+                                (0,t.jsx)("option",{value:"year_2026",children:"Sepanjang Tahun 2026"}),
+                                (0,t.jsx)("option",{value:"year_2025",children:"Sepanjang Tahun 2025"}),
+                                (0,t.jsx)("option",{value:"year_2024",children:"Sepanjang Tahun 2024"}),
+                                (0,t.jsx)("option",{value:"custom",children:"Rentang Tanggal Custom (Pilih Sendiri)"}),
+                                (0,t.jsx)("option",{value:"all",children:"Semua Periode (Tanpa Batasan Tanggal)"})
+                            ]
+                        }),
+                        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+                            (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#64748b"},children:"Dari:"}),
+                            (0,t.jsx)("input",{
+                                type:"date",
+                                value:importFromDate,
+                                onChange:e=>{ setImportFromDate(e.target.value); setImportPeriodPreset("custom"); },
+                                style:{padding:"0.35rem 0.5rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",color:"#334155"}
+                            }),
+                            (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#64748b"},children:"s/d"}),
+                            (0,t.jsx)("input",{
+                                type:"date",
+                                value:importToDate,
+                                onChange:e=>{ setImportToDate(e.target.value); setImportPeriodPreset("custom"); },
+                                style:{padding:"0.35rem 0.5rem",borderRadius:6,border:"1px solid #cbd5e1",fontSize:"0.82rem",color:"#334155"}
+                            })
+                        ]})
+                    ]})
+                ]}),
+                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
+                    (0,t.jsx)("div",{style:{fontSize:"0.76rem",color:"#64748b"},children:"Tanpa batasan 5.000 LP. Volume besar akan terunduh lengkap sesuai rentang periode."}),
+                    (0,t.jsx)(o.Button,{
+                        label:"Unduh Template Excel (.xlsx)",
+                        icon:"pi pi-download",
+                        onClick:downloadImportTemplate,
+                        loading:importDownloading,
+                        size:"small",
+                        style:{background:"#059669",borderColor:"#059669",color:"#ffffff",fontWeight:600}
+                    })
                 ]})
             ]}),
             (0,t.jsxs)("div",{style:{border:"1px dashed #94a3b8",borderRadius:8,padding:"1.5rem 1rem",background:"#f8fafc",textAlign:"center"},children:[
