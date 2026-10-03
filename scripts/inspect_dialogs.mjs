@@ -1,17 +1,9 @@
 import fs from 'fs';
 
-const content = fs.readFileSync('3def3ti6rk0vr.patched.js', 'utf8');
-
-function findDialog(str) {
-    let idx = content.indexOf(str);
-    if (idx !== -1) {
-        console.log('=== Dialog with', str, 'at', idx, '===');
-        console.log(content.substring(idx - 50, idx + 1000));
-    } else {
-        console.log('NOT FOUND:', str);
-    }
+const c = fs.readFileSync('frontend-patch/3def3ti6rk0vr.patched.js', 'utf8');
+let idx = 0;
+while ((idx = c.indexOf('r.Dialog', idx)) !== -1) {
+  console.log('Dialog at', idx, ':\n', c.slice(idx, idx + 250));
+  console.log('-------------------------------------------');
+  idx += 8;
 }
-
-findDialog('eTotpModal');
-findDialog('eDisableModal');
-findDialog('Konfirmasi Nonaktifkan');

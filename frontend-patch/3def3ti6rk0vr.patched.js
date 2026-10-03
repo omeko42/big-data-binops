@@ -29,6 +29,9 @@
 [eNetworkSatkerFilter,setNetworkSatkerFilter]=(0,n.useState)('all'),
 [eNetworkUsers,setNetworkUsers]=(0,n.useState)([]),
 [eNetworkLoading,setNetworkLoading]=(0,n.useState)(!1),
+[eNetworkPage,setNetworkPage]=(0,n.useState)(1),
+[eNetworkTotal,setNetworkTotal]=(0,n.useState)(0),
+[eNetworkTotalPages,setNetworkTotalPages]=(0,n.useState)(1),
 [eProfilePreviewModal,setProfilePreviewModal]=(0,n.useState)(!1),
 [ePreviewUser,setPreviewUser]=(0,n.useState)(null),
 
@@ -203,38 +206,38 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
   }
 }, [eDropdownOpen]);
 
-let defaultPersonnel = [
-  { id: 101, name: "AKBP Denny S., S.I.K., M.Si.", callsign: "denny_siber", nrp: "82040112", pangkat: "AKBP", jabatan: "Kasubdit III Tindak Pidana Siber", satker: "Bareskrim Polri", role: "Kasubdit", online: true, photo: null, email_polri: "denny.s@polri.go.id", hp: "0812-8888-101", bio: "Spesialis Investigasi Kejahatan Finansial Siber, Malware Analysis, & Incident Response Bareskrim." },
-  { id: 102, name: "Kompol Rizky Pratama, S.H., S.I.K.", callsign: "rizky_analis", nrp: "85070234", pangkat: "Kompol", jabatan: "Kanit 1 Subdit Analis Digital", satker: "Dittipidum Bareskrim", role: "Kanit", online: true, photo: null, email_polri: "rizky.pratama@polri.go.id", hp: "0813-7777-202", bio: "Manajemen Data Perkara Tindak Pidana Umum & Analitik Intelijen Investigasi Terpadu CAS." },
-  { id: 103, name: "Iptu Sarah Amanda, S.Tr.K.", callsign: "sarah_reskrim", nrp: "92110567", pangkat: "Iptu", jabatan: "Penyidik Pratama Tipideksus", satker: "Dittipideksus Bareskrim", role: "Penyidik", online: true, photo: null, email_polri: "sarah.amanda@polri.go.id", hp: "0821-6666-303", bio: "Penyidikan Tindak Pidana Ekonomi Khusus, Money Laundering, & Aset Tracing." },
-  { id: 104, name: "AKP Budi Setiawan, S.Sos.", callsign: "budi_resmob", nrp: "87030890", pangkat: "AKP", jabatan: "Panit 2 Unit Resmob Ditreskrimum", satker: "Polda Metro Jaya", role: "Penyidik", online: false, photo: null, email_polri: "budi.setiawan@polri.go.id", hp: "0811-5555-404", bio: "Operasional Taktis Reserse Mobile, Penindakan Kejahatan Jalanan, & Koordinasi Satker Polda Metro." },
-  { id: 105, name: "Brigadir Eko Saputra, S.Kom.", callsign: "eko_sumut", nrp: "94060123", pangkat: "Brigadir", jabatan: "Bintara Operator Big Data Binops", satker: "Ditreskrimsus Polda Sumut", role: "Operator", online: true, photo: null, email_polri: "eko.saputra@polri.go.id", hp: "0852-4444-505", bio: "Pengelolaan Laporan Polisi, Integrasi DORS, dan Distribusi Perkara Ditreskrimsus Polda Sumut." },
-  { id: 106, name: "Kompol Hendra Wijaya, S.I.K., M.H.", callsign: "hendra_surabaya", nrp: "84090456", pangkat: "Kompol", jabatan: "Kasat Reskrim Polrestabes", satker: "Polrestabes Surabaya", role: "Kasat", online: false, photo: null, email_polri: "hendra.wijaya@polri.go.id", hp: "0812-3333-606", bio: "Komando dan Pengawasan Penyidikan Tingkat Polres/Polrestabes jajaran Polda Jawa Timur." },
-  { id: 107, name: "Iptu Diana Lestari, S.Psi.", callsign: "diana_intel", nrp: "91020789", pangkat: "Iptu", jabatan: "Analis Profiling Reskrim", satker: "Bareskrim Polri", role: "Analis", online: true, photo: null, email_polri: "diana.lestari@polri.go.id", hp: "0813-2222-707", bio: "Profiling Pelaku Kejahatan, Behavioral Analysis, dan Intelijen Kriminal Terintegrasi." },
-  { id: 108, name: "Ipda Fajar Nugraha, S.Kom.", callsign: "fajar_forensik", nrp: "96080345", pangkat: "Ipda", jabatan: "Pemeriksa Forensik Digital", satker: "Pusiknas Bareskrim", role: "Forensik", online: true, photo: null, email_polri: "fajar.nugraha@polri.go.id", hp: "0878-1111-808", bio: "Pemeriksaan Barang Bukti Elektronik, Ekstraksi Mobile Forensics, dan Standarisasi Lab Siber." }
-];
+let defaultPersonnel = [];
 
-let fetchNetworkDirectory = async (search, satker) => {
+let fetchNetworkDirectory = async (search, satker, targetPage) => {
   setNetworkLoading(!0);
+  let p = targetPage || 1;
+  setNetworkPage(p);
   try {
-    let res = await c.apiAuth.get('/bdb/jukrah/network/users', {
-      params: { search: search || '', satker: satker === 'all' ? '' : (satker || '') }
-    });
-    let list = res.data?.data;
-    if (Array.isArray(list) && list.length > 0) {
-      setNetworkUsers(list);
-    } else {
-      setNetworkUsers(defaultPersonnel);
+    let sVal = search !== void 0 ? search : eNetworkSearch;
+    let satVal = satker !== void 0 ? satker : eNetworkSatkerFilter;
+    let qParams = {
+      search: sVal || '',
+      satker: satVal === 'all' ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
+      page: p,
+      limit: 8
+    };
+    if (satVal === 'my_satker' && a?.scope_satker_id) {
+      qParams.satker_id = a.scope_satker_id;
     }
+    let res = await c.apiAuth.get('/bdb/jukrah/network/users', { params: qParams });
+    let list = res.data?.data || [];
+    setNetworkUsers(list);
+    setNetworkTotal(res.data?.total || list.length);
+    setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total || list.length) / 8) || 1);
   } catch (err) {
-    setNetworkUsers(defaultPersonnel);
+    setNetworkUsers([]);
   } finally {
     setNetworkLoading(!1);
   }
 };
 
 (0,n.useEffect)(() => {
-  fetchNetworkDirectory('', 'all');
+  fetchNetworkDirectory('', 'all', 1);
 }, []);
 
 let handleOpenProfilePreview = async (user) => {
@@ -318,8 +321,22 @@ let defaultExperiences = [
 ];
 
 let getActiveExperiences = () => {
-  if (Array.isArray(a?.social_media?.experiences)) return a.social_media.experiences;
-  return defaultExperiences;
+  if (Array.isArray(a?.social_media?.experiences) && a.social_media.experiences.length > 0) return a.social_media.experiences;
+  var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+  if (isUserOne) return defaultExperiences;
+  var satkerTitle = a?.satker_nama || a?.satker || a?.scope_satker_name || a?.satuan || 'Kepolisian Negara Republik Indonesia';
+  var jabatanTitle = a?.jabatan || (a?.role_name ? ('Personil ' + String(a.role_name).toUpperCase()) : 'Penyidik Reserse');
+  var pangkatTitle = a?.pangkat ? (a.pangkat + ' - ') : '';
+  return [
+    {
+      id: 1,
+      title: pangkatTitle + jabatanTitle,
+      company: satkerTitle,
+      period: "Aktif Kedinasan",
+      location: a?.satuan || satkerTitle,
+      description: "Penugasan kedinasan operasional dan penegakan hukum di lingkungan " + satkerTitle + "."
+    }
+  ];
 };
 
 let openAddExp = () => {
@@ -405,8 +422,29 @@ let defaultEducation = [
 ];
 
 let getActiveEducation = () => {
-  if (Array.isArray(a?.social_media?.education)) return a.social_media.education;
-  return defaultEducation;
+  if (Array.isArray(a?.social_media?.education) && a.social_media.education.length > 0) return a.social_media.education;
+  var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+  if (isUserOne) return defaultEducation;
+  if (Array.isArray(a?.dikjur_polri) && a.dikjur_polri.length > 0) {
+    return a.dikjur_polri.map((d, idx) => ({
+      id: idx + 1,
+      school: "Lembaga Pendidikan & Pelatihan Polri",
+      degree: "Pendidikan Kejuruan (Dikjur)",
+      field: d,
+      year: "-",
+      description: "Pengembangan spesialisasi teknis kedinasan Polri"
+    }));
+  }
+  return [
+    {
+      id: 1,
+      school: "Pendidikan Kepolisian Republik Indonesia",
+      degree: "Pendidikan Pembentukan / Kejuruan",
+      field: "Fungsi Teknis Kepolisian",
+      year: "-",
+      description: "Pendidikan kedinasan dasar dan kejuruan spesialisasi Polri"
+    }
+  ];
 };
 
 let openAddEdu = () => {
@@ -523,24 +561,25 @@ let fetchPersonalFeed = (0,n.useCallback)(async (tab) => {
   setLoadingFeed(!0);
   try {
     let params = { filter: tab || eFeedTab };
-    if (isReadOnlyMode && a?.id) {
+    if (a?.id) {
       params.author_id = a.id;
     }
     let res = await c.apiAuth.get('/bdb/jukrah/feed', { params });
-    let raw = res.data?.data || [];
-    let mapped = raw.map(p => ({
+    let raw = Array.isArray(res.data?.data) ? res.data.data : (res.data?.data?.posts || []);
+    let filtered = a?.id ? raw.filter(p => String(p.author_id) === String(a.id)) : raw;
+    let mapped = filtered.map(p => ({
       ...p,
-      author_callsign: p.author_callsign || p.author_username || (p.raw_author_name ? p.raw_author_name.toLowerCase().replace(/\s+/g, '_') : (a?.username || 'anak_serse')),
-      author_handle: p.author_handle || ('@' + (p.author_callsign || a?.username || 'anak_serse')),
-      satker_name: p.satker_name || p.author_satker || K(a?.scope_satker_name) || 'Bareskrim'
+      author_callsign: p.author_callsign || p.author_username || (p.raw_author_name ? p.raw_author_name.toLowerCase().replace(/\s+/g, '_') : (a?.username || 'personil')),
+      author_handle: p.author_handle || ('@' + (p.author_callsign || a?.username || 'personil')),
+      satker_name: p.satker_name || p.author_satker || K(a?.scope_satker_name) || 'Polri'
     }));
     setPersonalPosts(mapped);
   } catch (err) {
-    setPersonalPosts(prev => prev.length ? prev : []);
+    setPersonalPosts([]);
   } finally {
     setLoadingFeed(!1);
   }
-}, [eFeedTab, a, isReadOnlyMode]);
+}, [eFeedTab, a?.id, isReadOnlyMode]);
 
 (0,n.useEffect)(() => {
   fetchPersonalFeed(eFeedTab);
@@ -1265,7 +1304,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
     (0,t.jsx)("span",{style:{fontSize:"1.2rem"},children:"👥"}),
     (0,t.jsx)("span",{style:{fontWeight:800},children:"Jaringan & Koneksi Personil CAS"}),
-    (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:"4.120+ Personil"})
+    (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:eNetworkTotal + " Personil"})
   ]}),
   visible:eNetworkModal,
   onHide:()=>setNetworkModal(!1),
@@ -1294,7 +1333,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         },
         style:{fontSize:"0.82rem",padding:"0.45rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(0,0,0,0.3)",color:"#fff"},
         children:[
-          (0,t.jsx)("option",{value:"all",children:"Semua Satker / Nasional"}),
+          (0,t.jsx)("option",{value:"all",children:"Semua Personil CAS (Nasional)"}),
+          (0,t.jsx)("option",{value:"my_satker",children:"Satu Satker / Wilayah (" + (a?.satker_nama || a?.satker || "Satker") + ")"}),
           (0,t.jsx)("option",{value:"Bareskrim",children:"Mabes Bareskrim Polri"}),
           (0,t.jsx)("option",{value:"Polda Metro Jaya",children:"Polda Metro Jaya"}),
           (0,t.jsx)("option",{value:"Polda Jatim",children:"Polda Jawa Timur"}),
@@ -1356,8 +1396,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",marginTop:"0.25rem"},children:[
                 (0,t.jsx)("button",{
                   type:"button",
-                  onClick:() => handleOpenProfilePreview(user),
-                  style:{flex:1,padding:"0.35rem",borderRadius:"6px",background:"transparent",border:"1px solid rgba(56,189,248,0.35)",color:"#38bdf8",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
+                  onClick:() => window.location.href = '/cms/profile?u=' + user.id,
+                  style:{flex:1,padding:"0.35rem",borderRadius:"6px",background:"rgba(56,189,248,0.15)",border:"1px solid rgba(56,189,248,0.35)",color:"#38bdf8",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
                   children:"Lihat Profil"
                 }),
                 (0,t.jsx)("button",{
@@ -1373,7 +1413,31 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           });
         })
       })
-    )
+    ),
+    // Pagination Controls
+    (0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"0.75rem 0.5rem 0",borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:"0.5rem"},children:[
+      (0,t.jsx)("button",{
+        type:"button",
+        disabled:eNetworkPage <= 1,
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1),
+        style:{background:eNetworkPage <= 1 ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage <= 1 ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage <= 1 ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage <= 1 ? "not-allowed" : "pointer"},
+        children:"◀ Sebelumnya"
+      }),
+      (0,t.jsxs)("span",{style:{fontSize:"0.8rem",color:"#94a3b8",fontWeight:600},children:[
+        "Halaman ",
+        (0,t.jsx)("strong",{style:{color:"#fff"},children:eNetworkPage}),
+        " dari ",
+        (0,t.jsx)("strong",{style:{color:"#fff"},children:eNetworkTotalPages}),
+        " (Total " + eNetworkTotal + " Personil)"
+      ]}),
+      (0,t.jsx)("button",{
+        type:"button",
+        disabled:eNetworkPage >= eNetworkTotalPages,
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1),
+        style:{background:eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage >= eNetworkTotalPages ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage >= eNetworkTotalPages ? "not-allowed" : "pointer"},
+        children:"Selanjutnya ▶"
+      })
+    ]})
   ]})
 }),
 
@@ -1531,39 +1595,55 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
     // Identity, Location & Action Bar
     (0,t.jsxs)("div",{style:{marginTop:"0.85rem"},children:[
-      // Name & Callsign row: Full Name, Verified Badge, Callsign pill, ● Online
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
+      // 1. Name Row: Full Name
+      (0,t.jsx)("div",{children:[
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
-            if (a?.name && a?.name !== a?.username && !a?.name.includes('@')) return a.name;
-            return isUserOne ? "EKO" : "HENDRIK DWI HARIADI";
+            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+            if (isUserOne) return "EKO";
+            return a?.name || a?.username || "Personil CAS";
           })()
-        }),
+        })
+      ]}),
+
+      // 2. Online Indicator Line: [verified] @Username alias @Callsign [Online]
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.4rem"},children:[
+        // [verified]
         (function(){
-          var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || String(a?.role_bdb).toLowerCase() === 'superadmin';
+          var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
           var roleStr = String(a?.role_bdb || '').toLowerCase();
           var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+          var bLabel = isUserOne ? 'Superadmin Terverifikasi' : 'Personil Terverifikasi';
           return (0,t.jsx)("span",{
             title:bLabel,
-            style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"20px",height:"20px",borderRadius:"50%",background:bColor,boxShadow:"0 1px 4px rgba(0,0,0,0.3)"},
-            children:[
-              (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:12,height:12,children:[
-                (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
-              ]})
-            ]
+            style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"18px",height:"18px",borderRadius:"50%",background:bColor,boxShadow:"0 1px 4px rgba(0,0,0,0.3)",flexShrink:0},
+            children:(0,t.jsx)("svg",{viewBox:"0 0 24 24",width:11,height:11,children:(0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})})
           });
         })(),
+        // @Username alias @Callsign
         (0,t.jsx)("span",{
-          style:{fontSize:"0.9rem",fontWeight:700,color:"#38bdf8",fontFamily:"monospace",background:"rgba(56,189,248,0.12)",padding:"0.15rem 0.55rem",borderRadius:"6px",border:"1px solid rgba(56,189,248,0.25)"},
-          children:formatCallsign(a?.callsign, a?.id, a?.username)
+          style:{fontSize:"0.9rem",fontWeight:700,color:"#38bdf8",fontFamily:"monospace"},
+          children:(function(){
+            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+            var getSOP = function(authorId) {
+              var idStr = String(authorId || '');
+              var seed = idStr || 'polri';
+              var num = 0;
+              for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+              var code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+              return 'user_' + (idStr || '0') + code;
+            };
+            var uName = isUserOne ? 'omeko11' : (a?.username ? String(a.username).replace(/^@/, '') : getSOP(a?.id));
+            var cSign = isUserOne ? 'omeko11' : (a?.callsign ? String(a.callsign).replace(/^@/, '') : uName);
+            return '@' + uName + ' alias @' + cSign;
+          })()
         }),
-        // Clean Online Status Pill
-        (0,t.jsxs)("span",{style:{fontSize:"0.76rem",fontWeight:700,padding:"0.2rem 0.65rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.35)",display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
-          "● Online"
-        ]})
+        // [Online]
+        (0,t.jsx)("span",{
+          style:{fontSize:"0.76rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.35)",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+          children:"● Online"
+        })
       ]}),
 
       // Subline: Nasional • Info kontak • 4.120+ koneksi
@@ -1588,9 +1668,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           children:[
             (function(){
               if (a?.connections_count) return a.connections_count + " koneksi";
-              var u = String(a?.username || '').toLowerCase();
-              if (u === 'omeko11' || !u) return "4.120+ koneksi";
-              return "38 koneksi";
+              var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+              if (isUserOne) return "39 koneksi";
+              return (eNetworkTotal ? eNetworkTotal + " personil" : "Koneksi CAS");
             })()
           ]
         })
@@ -1627,19 +1707,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               (0,t.jsx)("span",{children:"Profil Terverifikasi (Mode Kedinasan)"})
             ]
           }),
-          (0,t.jsx)("button",{
-            type:"button",
-            onClick:()=>{
-              let cs = formatCallsign(a?.callsign, a?.id, a?.username);
-              if(navigator.clipboard) navigator.clipboard.writeText(cs);
-              e.current?.show({severity:'success',summary:'Callsign Disalin',detail:'Callsign ' + cs + ' berhasil disalin ke clipboard.'});
-            },
-            style:{background:"rgba(255,255,255,0.06)",color:"#f8fafc",border:"1px solid rgba(255,255,255,0.2)",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
-            children:[
-              (0,t.jsx)("span",{children:"📋"}),
-              (0,t.jsx)("span",{children:"Salin Callsign"})
-            ]
-          }),
+
           (0,t.jsx)("button",{
             type:"button",
             onClick:()=>e.current?.show({severity:'info',summary:'Ruang Koordinasi',detail:'Menghubungkan ke ruang koordinasi taktis perkara dengan ' + (a?.name || 'Personil CAS')}),
@@ -2001,36 +2069,6 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8"},children:"Bahasa Indonesia"})
     ]}),
 
-    // Card 2: Profil publik dan URL
-    (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.5rem"},children:[
-        (0,t.jsx)("h4",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary, #0f172a)"},children:"Profil publik dan URL"}),
-        !isReadOnlyMode && (0,t.jsx)("button",{
-          type:"button",
-          "aria-label":"Edit Profil publik dan URL",
-          title:"Kelola Identitas Callsign",
-          onClick:openEditIntro,
-          style:{background:"transparent",border:"none",cursor:"pointer",fontSize:"1rem",color:"#f97316"},
-          children:"✏️"
-        })
-      ]}),
-      (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginBottom:"0.65rem"},children:"Identitas Callsign terverifikasi di jaringan CAS:"}),
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.06))",padding:"0.55rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
-        (0,t.jsx)("span",{style:{fontSize:"0.86rem",fontWeight:800,color:"#38bdf8",fontFamily:"monospace"},children:formatCallsign(a?.callsign, a?.id, a?.username)}),
-        (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#4ade80",fontWeight:700},children:"✓ Terverifikasi"})
-      ]}),
-      (0,t.jsx)("button",{
-        type:"button",
-        onClick:()=>{
-          let cs = formatCallsign(a?.callsign, a?.id, a?.username);
-          if (navigator.clipboard) navigator.clipboard.writeText(cs);
-          e.current?.show({severity:'success',summary:'Callsign Disalin',detail:'Callsign ' + cs + ' berhasil disalin.'});
-        },
-        style:{width:"100%",marginTop:"0.65rem",padding:"0.45rem",borderRadius:"8px",background:"transparent",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",color:"var(--cas-text-primary, #cbd5e1)",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",textAlign:"center"},
-        children:"Salin Callsign"
-      })
-    ]}),
-
     // Card 3: Orang yang Mungkin Anda Kenal
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.25rem",borderRadius:"14px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.75rem"},children:[
@@ -2038,31 +2076,32 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{style:{fontSize:"1.1rem",color:"#38bdf8"},children:"👥"})
       ]}),
       (0,t.jsx)("div",{style:{display:"grid",gap:"0.85rem"},children:
-        defaultPersonnel.slice(0, 3).map(pers => (
+        (eNetworkUsers && eNetworkUsers.length ? eNetworkUsers.filter(u => String(u.id) !== String(a?.id)).slice(0, 3) : []).map(pers => (
           (0,t.jsxs)("div",{key:pers.id,style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
             (0,t.jsx)("div",{
-              style:{width:"38px",height:"38px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #38bdf8",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.95rem",color:"#fff",flexShrink:0},
-              children:pers.name.charAt(0)
+              onClick:() => window.location.href = '/cms/profile?u=' + pers.id,
+              style:{width:"36px",height:"36px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #38bdf8",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.9rem",color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"},
+              children:pers.photo ? (0,t.jsx)("img",{src:pers.photo,alt:pers.name,style:{width:"100%",height:"100%",objectFit:"cover"}}) : (pers.name || 'P').charAt(0).toUpperCase()
             }),
-            (0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-              (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.82rem",color:"var(--cas-text-primary, #0f172a)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.name}),
-              (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem"},children:[
-                (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:700},children:'@' + pers.callsign}),
-                (0,t.jsx)("span",{
-                  title:"Personil Terverifikasi",
-                  style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:"#38bdf8",flexShrink:0},
-                  children:[
-                    (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:[
-                      (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
-                    ]})
-                  ]
-                })
-              ]}),
-              (0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.satker})
-            ]}),
+            (0,t.jsxs)("div",{
+              onClick:() => window.location.href = '/cms/profile?u=' + pers.id,
+              style:{minWidth:0,flex:1,cursor:"pointer"},
+              children:[
+                (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.82rem",color:"var(--cas-text-primary, #0f172a)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.name}),
+                (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem"},children:[
+                  (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"#38bdf8",fontWeight:700},children:'@' + (pers.callsign || pers.username || ('pers_' + pers.id))}),
+                  (0,t.jsx)("span",{
+                    title:"Personil Terverifikasi",
+                    style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:"#38bdf8",flexShrink:0},
+                    children:(0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:(0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})})
+                  })
+                ]}),
+                (0,t.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pers.satker || pers.satker_nama || 'Mabes Polri'})
+              ]
+            }),
             (0,t.jsx)("button",{
               type:"button",
-              onClick:() => handleOpenProfilePreview(pers),
+              onClick:() => window.location.href = '/cms/profile?u=' + pers.id,
               style:{background:"transparent",border:"1px solid rgba(56,189,248,0.5)",color:"#38bdf8",borderRadius:"6px",padding:"0.25rem 0.65rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer",flexShrink:0},
               children:"Lihat"
             })
