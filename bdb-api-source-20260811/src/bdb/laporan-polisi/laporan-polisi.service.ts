@@ -2700,6 +2700,133 @@ export class LaporanPolisiService {
     // =========================================================================
 
     /**
+     * Helper parser tanggal fleksibel (mendukung Date object, Excel serial number,
+     * format ISO YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY, dan format nama bulan misal '12-Sep-2026').
+     */
+    private parseFlexibleDate(val: any): { dateStr: string; dateObj: Date; displayDmy: string } | null {
+        if (!val) return null;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+        if (val instanceof Date) {
+            if (isNaN(val.getTime())) return null;
+            const y = val.getUTCFullYear();
+            const m = val.getUTCMonth();
+            const d = val.getUTCDate();
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+            return { dateStr, dateObj: new Date(Date.UTC(y, m, d)), displayDmy };
+        }
+
+        if (typeof val === 'number') {
+            const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+            if (isNaN(date.getTime())) return null;
+            const y = date.getUTCFullYear();
+            const m = date.getUTCMonth();
+            const d = date.getUTCDate();
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+            return { dateStr, dateObj: date, displayDmy };
+        }
+
+        const s = String(val).trim();
+        if (!s) return null;
+
+        const isoMatch = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+        if (isoMatch) {
+            const y = parseInt(isoMatch[1], 10);
+            const m = parseInt(isoMatch[2], 10) - 1;
+            const d = parseInt(isoMatch[3], 10);
+            const dt = new Date(Date.UTC(y, m, d));
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+            return { dateStr, dateObj: dt, displayDmy };
+        }
+
+        const dmyMatch = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+        if (dmyMatch) {
+            const d = parseInt(dmyMatch[1], 10);
+            const m = parseInt(dmyMatch[2], 10) - 1;
+            const y = parseInt(dmyMatch[3], 10);
+            const dt = new Date(Date.UTC(y, m, d));
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+            return { dateStr, dateObj: dt, displayDmy };
+        }
+
+        const monthNames: Record<string, number> = {
+            jan: 0, januari: 0, january: 0,
+            feb: 1, februari: 1, february: 1,
+            mar: 2, maret: 2, march: 2,
+            apr: 3, april: 3,
+            mei: 4, may: 4,
+            jun: 5, juni: 5, june: 5,
+            jul: 6, juli: 6, july: 6,
+            agu: 7, ags: 7, agustus: 7, aug: 7, august: 7,
+            sep: 8, september: 8,
+            okt: 9, oktober: 9, oct: 9, october: 9,
+            nov: 10, november: 10,
+            des: 11, desember: 11, dec: 11, december: 11
+        };
+
+        const namedDmyMatch = s.match(/^(\d{1,2})[\s\-/.递]+([a-zA-Z]+)[\s\-/.递]+(\d{4})/);
+        if (namedDmyMatch) {
+            const d = parseInt(namedDmyMatch[1], 10);
+            const monthStr = namedDmyMatch[2].toLowerCase();
+            const y = parseInt(namedDmyMatch[3], 10);
+            const m = monthNames[monthStr];
+            if (m !== undefined) {
+                const dt = new Date(Date.UTC(y, m, d));
+                const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+                return { dateStr, dateObj: dt, displayDmy };
+            }
+        }
+
+        const namedYmdMatch = s.match(/^(\d{4})[\s\-/.递]+([a-zA-Z]+)[\s\-/.递]+(\d{1,2})/);
+        if (namedYmdMatch) {
+            const y = parseInt(namedYmdMatch[1], 10);
+            const monthStr = namedYmdMatch[2].toLowerCase();
+            const d = parseInt(namedYmdMatch[3], 10);
+            const m = monthNames[monthStr];
+            if (m !== undefined) {
+                const dt = new Date(Date.UTC(y, m, d));
+                const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const displayDmy = `${String(d).padStart(2, '0')}-${months[m] || 'Jan'}-${y}`;
+                return { dateStr, dateObj: dt, displayDmy };
+            }
+        }
+
+        return null;
+    }
+
+    private formatDmy(iso: string): string {
+        if (!iso) return '';
+        const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return iso;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const monthIdx = parseInt(m[2], 10) - 1;
+        return `${m[3]}-${months[monthIdx] || m[2]}-${m[1]}`;
+    }
+
+    /**
+     * Normalisasi status kode agar fleksibel menerima input singkatan dan nama tahapan.
+     */
+    private normalizeStatusCode(raw: string): string {
+        const s = String(raw || '').trim().toUpperCase().replace(/[\s\-_/]+/g, '_');
+        if (['SP2_LID', 'SP2LID', 'SP2_LIDIK', 'SP2LIDIK', 'HENTI_LIDIK', 'HENTI_LIDIK_SP2LID', 'SP3_LIDIK', 'SP3LIDIK'].includes(s)) return 'SP2_LID';
+        if (['SP3', 'SP_3', 'HENTI_SIDIK', 'HENTI_SIDIK_SP3'].includes(s)) return 'SP3';
+        if (['TAHAP_2', 'TAHAP_II', 'TAHAP2'].includes(s)) return 'TAHAP_II';
+        if (['TAHAP_1', 'TAHAP_I', 'TAHAP1'].includes(s)) return 'TAHAP_I';
+        if (['LIDIK', 'PENYELIDIKAN', 'SP_LIDIK'].includes(s)) return 'PENYELIDIKAN';
+        if (['SIDIK', 'PENYIDIKAN', 'SP_SIDIK'].includes(s)) return 'PENYIDIKAN';
+        if (['SPDP', 'KIRIM_SPDP'].includes(s)) return 'SPDP';
+        if (['P19', 'P_19'].includes(s)) return 'P19';
+        if (['P21', 'P_21'].includes(s)) return 'P21';
+        if (['PERMA', 'RESTORATIVE_JUSTICE', 'RJ'].includes(s)) return 'PERMA';
+        return s;
+    }
+
+    /**
      * Unduh template Excel bulk import status LP khusus satker operator.
      * Nama file: cas_<token>.xlsx (terenkripsi, anonymized & traceable).
      */
@@ -2846,16 +2973,18 @@ export class LaporanPolisiService {
             select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama,
                    coalesce(
                      (select string_agg(x.txt, '; ') from (
-                       select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), '(tanpa kategori)')
+                       select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'kategori_kejahatan',''))
                            || case when coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) is not null
                                    then ' — ' || coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) else '' end as txt
                        from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                       where nullif(tp->>'nama_kategori_kejahatan','') is not null or nullif(tp->>'kategori_kejahatan','') is not null
                      ) x),
+                     (select jk.keterangan from cm_jenis_kejahatan jk where jk.id = lp.jenis_kejahatan_id),
+                     (select string_agg(distinct coalesce(jk2.keterangan, tp2.nama_kategori_kejahatan), '; ') from bdb_lp_tindak_pidana_dors tp2 left join cm_jenis_kejahatan jk2 on jk2.id = tp2.jenis_kejahatan_id where tp2.laporan_polisi_id = lp.id),
                      nullif(lp.payload_json->'kategori_gk'->>'keterangan', ''),
-                     nullif(regexp_replace(lp.payload_json->>'apa_terjadi', '^[-—\\s]+', ''), ''),
-                     nullif(lp.kategori, ''),
-                     '(Belum Terkategori)'
-                   ) as dugaan_tindak_pidana,
+                     case when lp.kategori not ilike 'lp_model%' and lp.kategori not ilike 'pelanggaran%' then nullif(lp.kategori, '') else null end,
+                     '-'
+                   ) as tindak_pidana,
                    sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
                    (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
                     where d.lp_id = lp.id and dt.status_target_id = lp.status_id
@@ -2872,7 +3001,8 @@ export class LaporanPolisiService {
 
         // Forensic Trace Token (Obfuscated & Reversible di server)
         const timestamp = Date.now();
-        const tracePayload = `${userId || 0}:${satkerId || 0}:${cleanYear || 'all'}:${timestamp}`;
+        const periodDesc = (from && to) ? `${from}_${to}` : (cleanYear || 'all');
+        const tracePayload = `${userId || 0}:${satkerId || 0}:${periodDesc}:${timestamp}`;
         const traceToken = encodeId(tracePayload);
         const filename = `cas_${traceToken}.xlsx`;
 
@@ -2883,20 +3013,24 @@ export class LaporanPolisiService {
         wb.created = new Date();
         wb.modified = new Date();
 
-        // 1. Sheet Utama: Update Status LP
+        // 1. Sheet Utama: Update Status LP (11 Kolom Sesuai Format Resmi)
         const sheet = wb.addWorksheet('Update Status LP');
         sheet.columns = [
-            { header: 'No. Laporan Polisi', key: 'no_laporan', width: 38 },
-            { header: 'Satker Penanganan', key: 'satker_nama', width: 32 },
-            { header: 'Tanggal LP', key: 'tgl_laporan', width: 16 },
-            { header: 'Dugaan Tindak Pidana', key: 'dugaan_tindak_pidana', width: 36 },
-            { header: 'Status Saat Ini', key: 'status_saat_ini', width: 18 },
-            { header: 'Status Baru *', key: 'status_baru', width: 20 },
-            { header: 'Tanggal Status (YYYY-MM-DD) *', key: 'tgl_status', width: 26 },
-            { header: 'Nomor Dokumen / Surat', key: 'nomor_surat', width: 26 },
-            { header: 'Alasan Penghentian (Khusus SP3)', key: 'alasan_penghentian', width: 36 },
-            { header: 'Keterangan Tambahan', key: 'keterangan', width: 28 }
+            { header: 'NO', key: 'no_urut', width: 6 },
+            { header: 'ID LP', key: 'id_lp', width: 10 },
+            { header: 'NO LP', key: 'no_laporan', width: 38 },
+            { header: 'TGL LP', key: 'tgl_laporan', width: 18 },
+            { header: 'TINDAK PIDANA', key: 'uraian_singkat', width: 36 },
+            { header: 'STATUS LAMA', key: 'status_saat_ini', width: 20 },
+            { header: 'STATUS BARU', key: 'status_baru', width: 22 },
+            { header: 'NO DOKUMEN', key: 'nomor_surat', width: 26 },
+            { header: 'TGL DOKUMEN', key: 'tgl_status', width: 22 },
+            { header: 'ALASAN HENTI (KHUSUS SP3/SP2LID)', key: 'alasan_penghentian', width: 42 },
+            { header: 'KATEGORI PERMA (KHUSUS PERMA)', key: 'kategori_perma', width: 28 }
         ];
+
+        // Column 2 (ID LP) hidden untuk proteksi data dan referensi sistem
+        sheet.getColumn(2).hidden = true;
 
         // Header Styling (Dark Blue Solid)
         const headerRow = sheet.getRow(1);
@@ -2906,61 +3040,132 @@ export class LaporanPolisiService {
         headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
         sheet.views = [{ state: 'frozen', ySplit: 1 }];
 
-        const STATUS_OPTIONS = ['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA'];
-        const ALASAN_OPTIONS = [
-            'Tidak Cukup Bukti',
-            'Bukan Tindak Pidana',
-            'Demi Hukum - Tersangka Meninggal',
-            'Demi Hukum - Ne Bis In Idem',
-            'Demi Hukum - Daluwarsa',
-            'Demi Hukum - Pengaduan Dicabut',
-            'Restorative Justice (RJ)'
-        ];
-
         // Populate rows
         lpRows.forEach((r: any, idx: number) => {
             const rowNumber = idx + 2;
+            const parsedLp = this.parseFlexibleDate(r.tgl_laporan);
+            const tglLpDisplay = parsedLp ? parsedLp.displayDmy : (r.tgl_laporan ? String(r.tgl_laporan).split(' ')[0] : '-');
+            
             sheet.addRow({
+                no_urut: idx + 1,
+                id_lp: r.id,
                 no_laporan: r.no_laporan,
-                satker_nama: r.satker_nama || satkerNama,
-                tgl_laporan: r.tgl_laporan || '-',
-                dugaan_tindak_pidana: r.dugaan_tindak_pidana || '-',
+                tgl_laporan: tglLpDisplay,
+                uraian_singkat: r.tindak_pidana || '-',
                 status_saat_ini: r.status_nama || r.status_code || 'Belum Update',
                 status_baru: '',
-                tgl_status: '',
                 nomor_surat: '',
+                tgl_status: '',
                 alasan_penghentian: '',
-                keterangan: ''
+                kategori_perma: ''
             });
 
-            // Cell protections: Locked for A-E, Unlocked for F-J
-            ['A', 'B', 'C', 'D', 'E'].forEach(col => {
+            sheet.getCell(`A${rowNumber}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`D${rowNumber}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`F${rowNumber}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`G${rowNumber}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`I${rowNumber}`).alignment = { horizontal: 'center' };
+            sheet.getCell(`I${rowNumber}`).numFmt = 'DD-MMM-YYYY';
+
+            // Cell protections: Locked for A-F (Cols 1-6), Unlocked for G-K (Cols 7-11)
+            ['A', 'B', 'C', 'D', 'E', 'F'].forEach(col => {
                 sheet.getCell(`${col}${rowNumber}`).protection = { locked: true };
             });
-            ['F', 'G', 'H', 'I', 'J'].forEach(col => {
+            ['G', 'H', 'I', 'J', 'K'].forEach(col => {
                 sheet.getCell(`${col}${rowNumber}`).protection = { locked: false };
             });
         });
 
-        // Set Data Validation
+        // 2. Sheet Petunjuk & Referensi
+        const refSheet = wb.addWorksheet('Petunjuk & Referensi');
+        refSheet.columns = [
+            { header: 'KODE STATUS', key: 'code', width: 18 },
+            { header: 'NAMA TAHAPAN PERKARA', key: 'nama', width: 32 },
+            { header: 'KATEGORI', key: 'kategori', width: 14 },
+            { header: 'KETERANGAN & SYARAT', key: 'desc', width: 60 },
+            { header: '', key: 'blank', width: 4 },
+            { header: 'REF_STATUS', key: 'ref_status', width: 18 },
+            { header: 'REF_ALASAN', key: 'ref_alasan', width: 45 },
+            { header: 'REF_PERMA', key: 'ref_perma', width: 22 }
+        ];
+        const gHeader = refSheet.getRow(1);
+        gHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        gHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D9488' } };
+        refSheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+        refSheet.addRow({ code: 'LIDIK', nama: 'Penyelidikan (Sprinlidik)', kategori: 'CT (Beban)', desc: 'Tahap penyelidikan perkara awal.' });
+        refSheet.addRow({ code: 'SIDIK', nama: 'Penyidikan (Sprindik)', kategori: 'CT (Beban)', desc: 'Tahap penyidikan tindak pidana.' });
+        refSheet.addRow({ code: 'SPDP', nama: 'Pemberitahuan Dimulainya Penyidikan', kategori: 'CT (Beban)', desc: 'Pengiriman SPDP ke Kejaksaan.' });
+        refSheet.addRow({ code: 'TAHAP_I', nama: 'Penyerahan Berkas Perkara', kategori: 'CT (Beban)', desc: 'Pengiriman berkas perkara ke JPU.' });
+        refSheet.addRow({ code: 'P19', nama: 'Pengembalian Berkas Perkara', kategori: 'CT (Beban)', desc: 'Petunjuk jaksa untuk melengkapi berkas.' });
+        refSheet.addRow({ code: 'P21', nama: 'Pemberitahuan Berkas Lengkap', kategori: 'CT (Beban)', desc: 'Berkas dinyatakan lengkap oleh JPU.' });
+        refSheet.addRow({ code: 'TAHAP_II', nama: 'Penyerahan Tersangka & BB', kategori: 'CC (Selesai)', desc: 'Pelimpahan Tsk & Barang Bukti ke Jaksa (Perkara tuntas).' });
+        refSheet.addRow({ code: 'SP3', nama: 'Penghentian Penyidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
+        refSheet.addRow({ code: 'SP2_LID', nama: 'Penghentian Penyelidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
+        refSheet.addRow({ code: 'PERMA', nama: 'Putusan Pengadilan / Perma', kategori: 'CC (Selesai)', desc: 'Wajib memilih Kategori Perma (Tipiring / LHA PPATK).' });
+
+        const STATUS_OPTIONS = ['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP2_LID', 'PERMA'];
+        const ALASAN_OPTIONS = [
+            'Tidak terdapat cukup alat bukti',
+            'Peristiwa bukan merupakan tindak pidana',
+            'Penyelesaian luar proses peradilan / Restorative Justice',
+            'Ditariknya pengaduan',
+            'Putusan tetap / Ne Bis in Idem',
+            'Tersangka meninggal dunia',
+            'Kedaluwarsa',
+            'Amnesti atau abolisi',
+            'Maksimum denda dibayar sukarela',
+            'Diversi'
+        ];
+        const PERMA_OPTIONS = ['Tipiring', 'LHA PPATK'];
+
+        STATUS_OPTIONS.forEach((v, i) => { refSheet.getCell(`F${i + 2}`).value = v; });
+        ALASAN_OPTIONS.forEach((v, i) => { refSheet.getCell(`G${i + 2}`).value = v; });
+        PERMA_OPTIONS.forEach((v, i) => { refSheet.getCell(`H${i + 2}`).value = v; });
+
+        // Set Data Validation pada Sheet Utama
         const totalRows = Math.max(lpRows.length + 1, 100);
         for (let i = 2; i <= totalRows; i++) {
-            sheet.getCell(`F${i}`).dataValidation = {
+            // Dropdown Status Baru (Col G)
+            sheet.getCell(`G${i}`).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: [`"${STATUS_OPTIONS.join(',')}"`],
+                formulae: ["'Petunjuk & Referensi'!$F$2:$F$11"],
                 showErrorMessage: true,
                 errorTitle: 'Pilihan Status Tidak Valid',
-                error: 'Pilih status resmi dari daftar dropdown.'
+                error: 'Pilih status dari daftar dropdown.'
             };
-            sheet.getCell(`G${i}`).numFmt = 'yyyy-mm-dd';
+
+            // Format & Validasi Tanggal Dokumen (Col I)
+            sheet.getCell(`I${i}`).numFmt = 'DD-MMM-YYYY';
             sheet.getCell(`I${i}`).dataValidation = {
+                type: 'date',
+                operator: 'between',
+                formulae: ['1970-01-01', new Date().toISOString().slice(0, 10)],
+                promptTitle: 'Format Tanggal Dokumen',
+                prompt: 'Contoh: 12-Sep-2026 atau 12/09/2026. Tanggal tidak boleh mendahului tanggal LP dan tidak boleh melebihi hari ini.',
+                showInputMessage: true,
+                allowBlank: true
+            };
+
+            // Dropdown Alasan Penghentian (Col J)
+            sheet.getCell(`J${i}`).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: [`"${ALASAN_OPTIONS.join(',')}"`],
+                formulae: ["'Petunjuk & Referensi'!$G$2:$G$11"],
                 showErrorMessage: true,
                 errorTitle: 'Alasan Tidak Valid',
-                error: 'Pilih alasan penghentian resmi dari daftar dropdown.'
+                error: 'Pilih alasan penghentian dari daftar dropdown.'
+            };
+
+            // Dropdown Kategori Perma (Col K)
+            sheet.getCell(`K${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ["'Petunjuk & Referensi'!$H$2:$H$3"],
+                showErrorMessage: true,
+                errorTitle: 'Kategori Perma Tidak Valid',
+                error: 'Pilih Kategori Perma (Tipiring atau LHA PPATK).'
             };
         }
 
@@ -2977,30 +3182,6 @@ export class LaporanPolisiService {
             deleteRows: false
         });
 
-        // 2. Sheet Petunjuk & Referensi
-        const guideSheet = wb.addWorksheet('Petunjuk & Referensi');
-        guideSheet.columns = [
-            { header: 'KODE STATUS', key: 'code', width: 18 },
-            { header: 'NAMA TAHAPAN PERKARA', key: 'nama', width: 32 },
-            { header: 'KATEGORI', key: 'kategori', width: 14 },
-            { header: 'KETERANGAN & SYARAT', key: 'desc', width: 60 }
-        ];
-        const gHeader = guideSheet.getRow(1);
-        gHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        gHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D9488' } };
-        guideSheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-        guideSheet.addRow({ code: 'LIDIK', nama: 'Penyelidikan (Sprinlidik)', kategori: 'CT (Beban)', desc: 'Tahap penyelidikan perkara awal.' });
-        guideSheet.addRow({ code: 'SIDIK', nama: 'Penyidikan (Sprindik)', kategori: 'CT (Beban)', desc: 'Tahap penyidikan tindak pidana.' });
-        guideSheet.addRow({ code: 'SPDP', nama: 'Pemberitahuan Dimulainya Penyidikan', kategori: 'CT (Beban)', desc: 'Pengiriman SPDP ke Kejaksaan.' });
-        guideSheet.addRow({ code: 'TAHAP_I', nama: 'Penyerahan Berkas Perkara', kategori: 'CT (Beban)', desc: 'Pengiriman berkas perkara ke JPU.' });
-        guideSheet.addRow({ code: 'P19', nama: 'Pengembalian Berkas Perkara', kategori: 'CT (Beban)', desc: 'Petunjuk jaksa untuk melengkapi berkas.' });
-        guideSheet.addRow({ code: 'P21', nama: 'Pemberitahuan Berkas Lengkap', kategori: 'CT (Beban)', desc: 'Berkas dinyatakan lengkap oleh JPU.' });
-        guideSheet.addRow({ code: 'TAHAP_II', nama: 'Penyerahan Tersangka & BB', kategori: 'CC (Selesai)', desc: 'Pelimpahan Tsk & Barang Bukti ke Jaksa (Perkara tuntas).' });
-        guideSheet.addRow({ code: 'SP3', nama: 'Penghentian Penyidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
-        guideSheet.addRow({ code: 'SP3_LIDIK', nama: 'Penghentian Penyelidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
-        guideSheet.addRow({ code: 'PERMA', nama: 'Keadilan Restoratif (RJ)', kategori: 'CC (Selesai)', desc: 'Penyelesaian perkara via Restorative Justice (Perkara tuntas).' });
-
         // 3. Very Hidden Sheet Forensic Audit
         const auditSheet = wb.addWorksheet('_CAS_TRACE_META_');
         auditSheet.state = 'veryHidden';
@@ -3009,6 +3190,8 @@ export class LaporanPolisiService {
             satker_id: satkerId,
             satker_nama: satkerNama,
             user_id: userId,
+            period_from: from || null,
+            period_to: to || null,
             year: cleanYear || 'all',
             row_count: lpRows.length,
             generated_at: new Date().toISOString()
@@ -3023,6 +3206,8 @@ export class LaporanPolisiService {
                 meta: {
                     trace_id: traceToken,
                     satker_id: satkerId,
+                    period_from: from || null,
+                    period_to: to || null,
                     year: cleanYear || 'all',
                     total_rows: lpRows.length,
                     filename
@@ -3048,50 +3233,95 @@ export class LaporanPolisiService {
         const sheet = wb.worksheets[0];
         if (!sheet) throw new BadRequestException('File Excel tidak memiliki lembar kerja (worksheet).');
 
-        // Verify Header Signature (Guard Lapis 2)
-        const cellText = (r: number, c: number) => String(sheet.getCell(r, c).text || '').trim();
-        const hNoLp = cellText(1, 1).toLowerCase();
-        const hStatus = cellText(1, 6).toLowerCase();
-        const hTanggal = cellText(1, 7).toLowerCase();
+        const extractCellText = (cell: any): string => {
+            if (!cell) return '';
+            const val = cell.value;
+            if (val === null || val === undefined) return '';
+            if (typeof val === 'string') return val.trim();
+            if (typeof val === 'number' || typeof val === 'boolean') return String(val).trim();
+            if (val instanceof Date) {
+                const y = val.getUTCFullYear();
+                const m = String(val.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(val.getUTCDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            if (typeof val === 'object') {
+                if (val.text) return String(val.text).trim();
+                if (val.result !== undefined && val.result !== null) return String(val.result).trim();
+                if (Array.isArray(val.richText)) return val.richText.map((rt: any) => rt.text || '').join('').trim();
+            }
+            return String(cell.text || '').trim();
+        };
 
-        if (!hNoLp.includes('laporan') || !hStatus.includes('status') || !hTanggal.includes('tanggal')) {
+        // Verify Header Signature (Guard Lapis 2)
+        const hNoLp = (extractCellText(sheet.getCell(1, 3)) || extractCellText(sheet.getCell(1, 1))).toLowerCase();
+        const hStatus = (extractCellText(sheet.getCell(1, 7)) || extractCellText(sheet.getCell(1, 6))).toLowerCase();
+
+        if (!hNoLp.includes('laporan') && !hNoLp.includes('no lp') && !hStatus.includes('status')) {
             throw new BadRequestException('Format template Excel tidak valid atau kolom telah diubah. Harap gunakan template resmi CAS.');
         }
+
+        const is11Col = sheet.columnCount >= 11 || (extractCellText(sheet.getCell(1, 3)).toLowerCase().includes('lp') || extractCellText(sheet.getCell(1, 2)).toLowerCase().includes('id'));
 
         const rawRows: any[] = [];
         sheet.eachRow((row: any, rowNumber: number) => {
             if (rowNumber === 1) return;
-            const noLaporan = String(row.getCell(1).text || '').trim();
-            if (!noLaporan) return;
 
-            const statusLama = String(row.getCell(5).text || '').trim();
-            const statusBaru = String(row.getCell(6).text || '').trim().toUpperCase().replace(/\s+/g, '_');
-            
-            let tglStatus = '';
-            const tglVal = row.getCell(7).value;
-            const normTgl = this.normalizeDateInput(tglVal);
-            if (normTgl) {
-                tglStatus = normTgl;
-            } else if (typeof tglVal === 'string' && tglVal.trim()) {
-                tglStatus = this.normalizeDateInput(tglVal.trim()) || tglVal.trim();
+            let idLp: number | null = null;
+            let noLaporan = '';
+            let tglLpText = '';
+            let tindakPidana = '';
+            let statusLama = '';
+            let statusBaruRaw = '';
+            let nomorSurat = '';
+            let tglVal: any = null;
+            let tglText = '';
+            let alasanPenghentian = '';
+            let kategoriPerma = '';
+
+            if (is11Col) {
+                const idVal = row.getCell(2).value;
+                idLp = typeof idVal === 'number' ? idVal : (parseInt(extractCellText(row.getCell(2)), 10) || null);
+                noLaporan = extractCellText(row.getCell(3));
+                tglLpText = extractCellText(row.getCell(4));
+                tindakPidana = extractCellText(row.getCell(5));
+                statusLama = extractCellText(row.getCell(6));
+                statusBaruRaw = extractCellText(row.getCell(7));
+                nomorSurat = extractCellText(row.getCell(8));
+                tglVal = row.getCell(9).value;
+                tglText = extractCellText(row.getCell(9));
+                alasanPenghentian = extractCellText(row.getCell(10));
+                kategoriPerma = extractCellText(row.getCell(11));
             } else {
-                const txt = String(row.getCell(7).text || '').trim();
-                tglStatus = this.normalizeDateInput(txt) || txt;
+                noLaporan = extractCellText(row.getCell(1));
+                tglLpText = extractCellText(row.getCell(3));
+                tindakPidana = extractCellText(row.getCell(4));
+                statusLama = extractCellText(row.getCell(5));
+                statusBaruRaw = extractCellText(row.getCell(6));
+                tglVal = row.getCell(7).value;
+                tglText = extractCellText(row.getCell(7));
+                nomorSurat = extractCellText(row.getCell(8));
+                alasanPenghentian = extractCellText(row.getCell(9));
+                kategoriPerma = extractCellText(row.getCell(10));
             }
 
-            const nomorSurat = String(row.getCell(8).text || '').trim();
-            const alasanPenghentian = String(row.getCell(9).text || '').trim();
-            const keterangan = String(row.getCell(10).text || '').trim();
+            if (!noLaporan && !idLp) return;
 
             rawRows.push({
                 row_num: rowNumber,
+                id_lp: idLp,
                 no_laporan: noLaporan,
+                tgl_lp_text: tglLpText,
+                tindak_pidana: tindakPidana,
                 status_lama: statusLama,
-                status_baru: statusBaru,
-                tgl_status: tglStatus,
+                status_baru_raw: statusBaruRaw,
+                status_baru: this.normalizeStatusCode(statusBaruRaw),
                 nomor_surat: nomorSurat,
+                tgl_dokumen_val: tglVal,
+                tgl_dokumen_text: tglText,
+                tgl_status: tglText || (tglVal instanceof Date ? tglVal.toISOString().slice(0, 10) : String(tglVal || '')),
                 alasan_penghentian: alasanPenghentian,
-                keterangan: keterangan
+                kategori_perma: kategoriPerma
             });
         });
 
@@ -3112,9 +3342,11 @@ export class LaporanPolisiService {
             allowedSatkerIds = new Set(treeRows.map((r: any) => Number(r.id)));
         }
 
-        const noLpList = Array.from(new Set(rawRows.map(r => r.no_laporan)));
+        const idList = Array.from(new Set(rawRows.map(r => r.id_lp).filter((id): id is number => typeof id === 'number' && id > 0)));
+        const noLpList = Array.from(new Set(rawRows.map(r => r.no_laporan).filter(Boolean)));
+
         const dbLpRows = await this.dataSource.query(`
-            select lp.id, lp.no_laporan, lp.satker_id, lp.unit_satker_id, lp.status_id,
+            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_id, lp.unit_satker_id, lp.status_id,
                    sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
                    (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
                     where d.lp_id = lp.id and dt.status_target_id = lp.status_id
@@ -3124,30 +3356,61 @@ export class LaporanPolisiService {
                     order by d.tanggal_dokumen desc, d.id desc limit 1) as no_dokumen
             from bdb_laporan_polisi lp
             left join bdb_status_master sm on sm.id = lp.status_id
-            where lp.no_laporan = ANY($1) and lp.deleted_at is null
-        `, [noLpList]);
+            where (lp.id = ANY($1) or lp.no_laporan = ANY($2)) and lp.deleted_at is null
+        `, [idList.length ? idList : [-1], noLpList.length ? noLpList : ['']]);
 
-        const lpMap = new Map<string, any>();
-        dbLpRows.forEach((r: any) => lpMap.set(r.no_laporan.toUpperCase(), r));
+        const lpIdMap = new Map<number, any>();
+        const lpNoMap = new Map<string, any>();
+        dbLpRows.forEach((r: any) => {
+            lpIdMap.set(Number(r.id), r);
+            if (r.no_laporan) lpNoMap.set(String(r.no_laporan).trim().toUpperCase(), r);
+        });
 
-        const STATUS_WHITELIST = new Set(['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA']);
-        const ALASAN_WHITELIST = new Set([
-            'Tidak Cukup Bukti',
-            'Bukan Tindak Pidana',
-            'Demi Hukum - Tersangka Meninggal',
-            'Demi Hukum - Ne Bis In Idem',
-            'Demi Hukum - Daluwarsa',
-            'Demi Hukum - Pengaduan Dicabut',
-            'Restorative Justice (RJ)'
-        ]);
+        const statusMasterRows = await this.dataSource.query('select id, code, nama, kategori from bdb_status_master');
+        const statusMap = new Map<string, any>();
+        statusMasterRows.forEach((s: any) => {
+            statusMap.set(s.code.toUpperCase(), s);
+            statusMap.set(s.nama.toUpperCase(), s);
+            if (s.code === 'PENYELIDIKAN') statusMap.set('LIDIK', s);
+            if (s.code === 'PENYIDIKAN') statusMap.set('SIDIK', s);
+            if (s.code === 'SP2_LID') {
+                statusMap.set('SP2LID', s);
+                statusMap.set('SP3_LIDIK', s);
+            }
+        });
+
+        const ALASAN_OPTIONS = [
+            'Tidak terdapat cukup alat bukti',
+            'Peristiwa bukan merupakan tindak pidana',
+            'Penyelesaian luar proses peradilan / Restorative Justice',
+            'Ditariknya pengaduan',
+            'Putusan tetap / Ne Bis in Idem',
+            'Tersangka meninggal dunia',
+            'Kedaluwarsa',
+            'Amnesti atau abolisi',
+            'Maksimum denda dibayar sukarela',
+            'Diversi'
+        ];
+        const PERMA_OPTIONS = ['Tipiring', 'LHA PPATK'];
+
+        const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }); // YYYY-MM-DD
 
         const processedRows: any[] = [];
         let readyCount = 0;
         let skippedCount = 0;
         let errorCount = 0;
+        let untouchedCount = 0;
 
         for (const row of rawRows) {
-            const dbLp = lpMap.get(row.no_laporan.toUpperCase());
+            // Jika kolom Status Baru kosong sama sekali, ini baris tanpa perubahan (untouched)
+            // Dilewati tanpa dimasukkan ke processedRows agar payload ringan dan UI instan
+            if (!row.status_baru_raw) {
+                skippedCount++;
+                untouchedCount++;
+                continue;
+            }
+
+            const dbLp = (row.id_lp ? lpIdMap.get(row.id_lp) : null) || lpNoMap.get(row.no_laporan.toUpperCase());
 
             if (!dbLp) {
                 errorCount++;
@@ -3173,31 +3436,25 @@ export class LaporanPolisiService {
                 }
             }
 
-            if (!row.status_baru) {
-                skippedCount++;
-                processedRows.push({
-                    ...row,
-                    lp_id: dbLp.id,
-                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
-                    status_verifikasi: 'SKIPPED',
-                    pesan: 'Kolom Status Baru kosong (dilewati).'
-                });
-                continue;
-            }
-
-            if (!STATUS_WHITELIST.has(row.status_baru)) {
+            const targetStat = statusMap.get(row.status_baru.toUpperCase()) || statusMap.get(row.status_baru_raw.toUpperCase());
+            if (!targetStat) {
                 errorCount++;
                 processedRows.push({
                     ...row,
                     lp_id: dbLp.id,
                     status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
                     status_verifikasi: 'ERROR',
-                    pesan: `Status "${row.status_baru}" tidak terdaftar dalam pilihan resmi.`
+                    pesan: `Status "${row.status_baru_raw}" tidak terdaftar dalam pilihan resmi.`
                 });
                 continue;
             }
 
-            if (row.status_baru === 'SP3' || row.status_baru === 'SP3_LIDIK') {
+            const targetCode = targetStat.code.toUpperCase();
+            const isSp3OrSp2Lid = ['SP3', 'SP2_LID'].includes(targetCode);
+            const isPerma = targetCode === 'PERMA';
+
+            // Guard Opsi ke-2 untuk CC (SP3/SP2Lid & PERMA)
+            if (isSp3OrSp2Lid) {
                 if (!row.alasan_penghentian) {
                     errorCount++;
                     processedRows.push({
@@ -3205,11 +3462,11 @@ export class LaporanPolisiService {
                         lp_id: dbLp.id,
                         status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
                         status_verifikasi: 'ERROR',
-                        pesan: 'Wajib memilih Alasan Penghentian untuk SP3 / SP3 Lidik.'
+                        pesan: 'Wajib memilih Alasan Penghentian untuk status SP3 / SP2Lid.'
                     });
                     continue;
                 }
-                const matchAlasan = Array.from(ALASAN_WHITELIST).find(a => a.toLowerCase() === row.alasan_penghentian.toLowerCase());
+                const matchAlasan = ALASAN_OPTIONS.find(a => a.toLowerCase() === row.alasan_penghentian.toLowerCase());
                 if (!matchAlasan) {
                     errorCount++;
                     processedRows.push({
@@ -3222,12 +3479,132 @@ export class LaporanPolisiService {
                     continue;
                 }
                 row.alasan_penghentian = matchAlasan;
+
+                if (row.kategori_perma) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: `Status "${row.status_baru_raw}" adalah SP3/SP2Lid, kolom Kategori Perma harus dikosongkan.`
+                    });
+                    continue;
+                }
+            } else if (isPerma) {
+                if (!row.kategori_perma) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Wajib memilih Kategori Perma (Tipiring atau LHA PPATK) untuk status PERMA.'
+                    });
+                    continue;
+                }
+                const matchPerma = PERMA_OPTIONS.find(p => p.toLowerCase() === row.kategori_perma.toLowerCase());
+                if (!matchPerma) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Kategori Perma wajib bernilai Tipiring atau LHA PPATK.'
+                    });
+                    continue;
+                }
+                row.kategori_perma = matchPerma;
+
+                if (row.alasan_penghentian) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Status PERMA tidak boleh mengisi kolom Alasan Penghentian.'
+                    });
+                    continue;
+                }
+            } else {
+                // Status bukan SP3/SP2Lid dan bukan PERMA (misal Tahap II, Sidik, Lidik, dll)
+                if (row.alasan_penghentian) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: `Status "${row.status_baru_raw}" bukan SP3/SP2Lid, kolom Alasan Henti harus dikosongkan.`
+                    });
+                    continue;
+                }
+                if (row.kategori_perma) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: `Status "${row.status_baru_raw}" bukan PERMA, kolom Kategori Perma harus dikosongkan.`
+                    });
+                    continue;
+                }
             }
 
+            // Guard Batasan Tanggal Dokumen
+            const parsedDok = this.parseFlexibleDate(row.tgl_dokumen_val || row.tgl_dokumen_text);
+            if (parsedDok) {
+                row.tgl_status = parsedDok.displayDmy;
+                row.tgl_status_iso = parsedDok.dateStr;
+            }
+            if (!parsedDok) {
+                errorCount++;
+                processedRows.push({
+                    ...row,
+                    lp_id: dbLp.id,
+                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                    status_verifikasi: 'ERROR',
+                    pesan: 'Tanggal dokumen wajib diisi (Contoh: 12-Sep-2026 atau 12/09/2026).'
+                });
+                continue;
+            }
+
+            const parsedLp = this.parseFlexibleDate(dbLp.tgl_laporan);
+            if (parsedLp && parsedDok.dateStr < parsedLp.dateStr) {
+                errorCount++;
+                processedRows.push({
+                    ...row,
+                    lp_id: dbLp.id,
+                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                    status_verifikasi: 'ERROR',
+                    pesan: `Tanggal dokumen (${parsedDok.displayDmy}) tidak boleh lebih lampau dari tanggal LP (${parsedLp.displayDmy}).`
+                });
+                continue;
+            }
+
+            if (parsedDok.dateStr > todayWib) {
+                errorCount++;
+                processedRows.push({
+                    ...row,
+                    lp_id: dbLp.id,
+                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                    status_verifikasi: 'ERROR',
+                    pesan: `Tanggal dokumen (${parsedDok.displayDmy}) tidak boleh melampaui hari ini (${this.formatDmy(todayWib)}).`
+                });
+                continue;
+            }
+
+            row.tgl_status = parsedDok.displayDmy;
+            row.tgl_status_iso = parsedDok.dateStr;
+
+            // CC Downgrade & Idempotency Check
             const isDbCC = dbLp.status_kategori === 'CC';
-            const isNewCC = ['TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA'].includes(row.status_baru);
-            const isSameStatus = (dbLp.status_code || '').toUpperCase() === row.status_baru;
-            const hasDateChange = row.tgl_status && row.tgl_status !== String(dbLp.tgl_status || '').slice(0, 10);
+            const isNewCC = targetStat.kategori === 'CC';
+            const isSameStatus = Number(dbLp.status_id) === Number(targetStat.id);
+            const hasDateChange = row.tgl_status_iso && row.tgl_status_iso !== String(dbLp.tgl_status || '').slice(0, 10);
             const hasDocChange = row.nomor_surat && row.nomor_surat !== String(dbLp.no_dokumen || '');
 
             if (isDbCC) {
@@ -3237,6 +3614,7 @@ export class LaporanPolisiService {
                         processedRows.push({
                             ...row,
                             lp_id: dbLp.id,
+                            target_status_id: targetStat.id,
                             status_saat_ini: dbLp.status_nama || dbLp.status_code,
                             status_verifikasi: 'READY',
                             pesan: 'Pembaruan tanggal / nomor dokumen perkara CC.'
@@ -3265,9 +3643,10 @@ export class LaporanPolisiService {
                     processedRows.push({
                         ...row,
                         lp_id: dbLp.id,
+                        target_status_id: targetStat.id,
                         status_saat_ini: dbLp.status_nama || dbLp.status_code,
                         status_verifikasi: 'READY',
-                        pesan: `Update status CC ke ${row.status_baru}.`
+                        pesan: `Update status CC ke ${targetStat.nama}.`
                     });
                 }
                 continue;
@@ -3279,6 +3658,7 @@ export class LaporanPolisiService {
                     processedRows.push({
                         ...row,
                         lp_id: dbLp.id,
+                        target_status_id: targetStat.id,
                         status_saat_ini: dbLp.status_nama || dbLp.status_code,
                         status_verifikasi: 'READY',
                         pesan: 'Pembaruan tanggal / nomor dokumen.'
@@ -3300,9 +3680,10 @@ export class LaporanPolisiService {
             processedRows.push({
                 ...row,
                 lp_id: dbLp.id,
+                target_status_id: targetStat.id,
                 status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
                 status_verifikasi: 'READY',
-                pesan: `Siap diperbarui ke status ${row.status_baru}.`
+                pesan: `Siap diperbarui ke status ${targetStat.nama}.`
             });
         }
 
@@ -3313,6 +3694,7 @@ export class LaporanPolisiService {
                 total: rawRows.length,
                 ready: readyCount,
                 skipped: skippedCount,
+                untouched: untouchedCount,
                 error: errorCount,
                 original_filename: originalFilename || 'import_status.xlsx'
             },
@@ -3349,7 +3731,16 @@ export class LaporanPolisiService {
 
         const statusRows = await this.dataSource.query('select id, code, nama, kategori from bdb_status_master');
         const statusMap = new Map<string, any>();
-        statusRows.forEach((s: any) => statusMap.set(s.code.toUpperCase(), s));
+        statusRows.forEach((s: any) => {
+            statusMap.set(s.code.toUpperCase(), s);
+            statusMap.set(s.nama.toUpperCase(), s);
+            if (s.code === 'PENYELIDIKAN') statusMap.set('LIDIK', s);
+            if (s.code === 'PENYIDIKAN') statusMap.set('SIDIK', s);
+            if (s.code === 'SP2_LID') {
+                statusMap.set('SP2LID', s);
+                statusMap.set('SP3_LIDIK', s);
+            }
+        });
 
         const docTypes = await this.dataSource.query('select id, code, nama, status_target_id from bdb_document_type_master where aktif = true');
         const docTypeMap = new Map<number, any>();
@@ -3366,7 +3757,8 @@ export class LaporanPolisiService {
         let updatedCount = 0;
         try {
             for (const item of readyRows) {
-                const targetStat = statusMap.get(item.status_baru.toUpperCase());
+                const normStatus = this.normalizeStatusCode(item.status_baru);
+                const targetStat = statusMap.get(normStatus) || statusMap.get(item.status_baru.toUpperCase());
                 if (!targetStat) continue;
 
                 if (!scope.all && allowedSatkerIds) {
@@ -3380,12 +3772,12 @@ export class LaporanPolisiService {
 
                 const docType = docTypeMap.get(targetStat.id);
                 const docTypeId = docType?.id || 1;
-                const rawTgl = item.tgl_status ? String(item.tgl_status).trim() : null;
-                const tglDokumen = this.normalizeDateInput(rawTgl) || rawTgl;
+                const parsedDok = this.parseFlexibleDate(item.tgl_status_iso || item.tgl_status);
+                const tglDokumen = parsedDok ? parsedDok.dateStr : null;
                 const noDokumen = item.nomor_surat || null;
                 const docData = {
                     alasan_penghentian: item.alasan_penghentian || null,
-                    keterangan: item.keterangan || null,
+                    kategori_perma: item.kategori_perma || null,
                     imported_via: 'BULK_IMPORT_EXCEL',
                     imported_at: new Date().toISOString()
                 };
@@ -3451,5 +3843,4 @@ export class LaporanPolisiService {
             message: `Berhasil memperbarui ${updatedCount} Laporan Polisi.`
         };
     }
-
 }
