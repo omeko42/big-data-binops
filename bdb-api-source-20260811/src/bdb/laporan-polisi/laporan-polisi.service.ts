@@ -1574,6 +1574,21 @@ export class LaporanPolisiService {
         return Array.from(new Set(String(value || '').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean)));
     }
 
+    private normalizeDateInput(val?: any): string | null {
+        if (!val) return null;
+        if (val instanceof Date) {
+            const y = val.getFullYear();
+            const m = String(val.getMonth() + 1).padStart(2, '0');
+            const d = String(val.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        const s = String(val).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const m = s.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+        return null;
+    }
+
     private lpTaxonomy(
         functionDomain?: string,
         organizationDomain?: string
@@ -2730,10 +2745,24 @@ export class LaporanPolisiService {
 
         if (!scope.all) {
             params.push(satkerId);
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                with recursive s_tree as (
+                    select id from bdb_satker where id = $${params.length}
+                    union
+                    select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
+                )
+                select id from s_tree
+            )`);
         } else if (targetSatkerId) {
             params.push(targetSatkerId);
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
+                with recursive s_tree as (
+                    select id from bdb_satker where id = $${params.length}
+                    union
+                    select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
+                )
+                select id from s_tree
+            )`);
         }
 
         const cleanYear = String(year || '').trim();
@@ -2741,17 +2770,56 @@ export class LaporanPolisiService {
             params.push(parseInt(cleanYear, 10));
             where.push(`extract(year from parse_tgl_laporan(lp.tgl_laporan)) = $${params.length}`);
         }
-        if (from) {
-            params.push(from);
-            where.push(`parse_tgl_laporan(lp.tgl_laporan) >= parse_tgl_laporan($${params.length})`);
+        const normFrom = this.normalizeDateInput(from);
+        if (normFrom) {
+            params.push(normFrom);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) >= $${params.length}::date`);
         }
-        if (to) {
-            params.push(to);
-            where.push(`parse_tgl_laporan(lp.tgl_laporan) <= (parse_tgl_laporan($${params.length}) + interval '1 day')`);
+        const normTo = this.normalizeDateInput(to);
+        if (normTo) {
+            params.push(normTo);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) <= $${params.length}::date`);
         }
+
+        const taxonomy = this.lpTaxonomy(
+            functionDomain,
+            organizationDomain
+        );
+        if (taxonomy) {
+            params.push(taxonomy.organizationDomain);
+            const orgParam = `$${params.length}`;
+            if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
+                params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+            } else {
+                params.push([taxonomy.functionDomain]);
+            }
+            const fnParam = `$${params.length}`;
+            where.push(`exists (
+                select 1 from bdb_satker_taxonomy_r11 tx
+                 where tx.source_table = 'BDB_SATKER'
+                   and tx.entity_id = coalesce(lp.unit_satker_id, lp.satker_id)
+                   and tx.organization_domain = ${orgParam}
+                   and tx.function_domain = any(${fnParam})
+            )`);
+            if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
+                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)')`);
+            }
+        }
+
+        const parseLevels = (val?: string): string[] => {
+            const valid = ['Mabes', 'Polda', 'Polres', 'Polsek'];
+            const inp = String(val || '').split(',').map((x) => x.trim().toLowerCase());
+            return valid.filter((v) => inp.includes(v.toLowerCase()));
+        };
         if (level) {
-            params.push(level);
-            where.push(`lower(lp.penanganan_level) = lower($${params.length})`);
+            const requestedLevels = parseLevels(level);
+            if (requestedLevels.length === 1) {
+                params.push(requestedLevels[0]);
+                where.push(`lower(lp.penanganan_level) = lower($${params.length})`);
+            } else if (requestedLevels.length > 1) {
+                params.push(requestedLevels.map(l => l.toLowerCase()));
+                where.push(`lower(lp.penanganan_level) = any($${params.length})`);
+            }
         }
         if (model) {
             params.push(model);
@@ -2759,17 +2827,16 @@ export class LaporanPolisiService {
         }
         if (status) {
             params.push(status);
-            where.push(`(lower(sm.nama) = lower($${params.length}) or lower(sm.code) = lower($${params.length}))`);
+            where.push(`(lower(sm.nama) = lower($${params.length}) or lower(sm.code) = lower($${params.length}) or lower(coalesce(sm.code, 'LP')) = lower($${params.length}))`);
         }
         if (search) {
             params.push(`%${search}%`);
-            where.push(`(lp.no_laporan ilike $${params.length} or lp.satker_nama ilike $${params.length})`);
+            where.push(`(lp.no_laporan ilike $${params.length} or lp.satker_nama ilike $${params.length} or exists (select 1 from bdb_lp_pelimpahan px where px.lp_id=lp.id and px.satker_eksternal_id is not null and px.satker_eksternal_nama ilike $${params.length}))`);
         }
-        if (jenisKejahatanIds) {
-            const ids = jenisKejahatanIds.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s));
-            if (ids.length) {
-                where.push(`lp.jenis_kejahatan_id IN (${ids.join(',')})`);
-            }
+        const crimeIds = this.csvNumbers(jenisKejahatanIds);
+        if (crimeIds.length) {
+            const ids = crimeIds.join(',');
+            where.push(`(lp.jenis_kejahatan_id in (${ids}) or exists (select 1 from bdb_lp_tindak_pidana_dors tp where tp.laporan_polisi_id = lp.id and tp.jenis_kejahatan_id in (${ids})))`);
         }
 
         const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
@@ -2990,12 +3057,14 @@ export class LaporanPolisiService {
             
             let tglStatus = '';
             const tglVal = row.getCell(7).value;
-            if (tglVal instanceof Date) {
-                tglStatus = tglVal.toISOString().split('T')[0];
+            const normTgl = this.normalizeDateInput(tglVal);
+            if (normTgl) {
+                tglStatus = normTgl;
             } else if (typeof tglVal === 'string' && tglVal.trim()) {
-                tglStatus = tglVal.trim();
+                tglStatus = this.normalizeDateInput(tglVal.trim()) || tglVal.trim();
             } else {
-                tglStatus = String(row.getCell(7).text || '').trim();
+                const txt = String(row.getCell(7).text || '').trim();
+                tglStatus = this.normalizeDateInput(txt) || txt;
             }
 
             const nomorSurat = String(row.getCell(8).text || '').trim();
@@ -3019,6 +3088,17 @@ export class LaporanPolisiService {
         }
 
         const scope = await resolveScope(this.dataSource, userId);
+        let allowedSatkerIds: Set<number> | null = null;
+        if (!scope.all && scope.satkerId) {
+            const treeRows = await this.dataSource.query(`
+                with recursive s_tree as (
+                    select id from bdb_satker where id = $1
+                    union
+                    select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
+                ) select id from s_tree
+            `, [scope.satkerId]);
+            allowedSatkerIds = new Set(treeRows.map((r: any) => Number(r.id)));
+        }
 
         const noLpList = Array.from(new Set(rawRows.map(r => r.no_laporan)));
         const dbLpRows = await this.dataSource.query(`
@@ -3067,9 +3147,9 @@ export class LaporanPolisiService {
                 continue;
             }
 
-            if (!scope.all) {
+            if (!scope.all && allowedSatkerIds) {
                 const lpSatker = Number(dbLp.unit_satker_id || dbLp.satker_id);
-                if (lpSatker !== scope.satkerId) {
+                if (!allowedSatkerIds.has(lpSatker)) {
                     errorCount++;
                     processedRows.push({
                         ...row,
@@ -3243,6 +3323,17 @@ export class LaporanPolisiService {
         }
 
         const scope = await resolveScope(this.dataSource, userId);
+        let allowedSatkerIds: number[] | null = null;
+        if (!scope.all && scope.satkerId) {
+            const treeRows = await this.dataSource.query(`
+                with recursive s_tree as (
+                    select id from bdb_satker where id = $1
+                    union
+                    select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
+                ) select id from s_tree
+            `, [scope.satkerId]);
+            allowedSatkerIds = treeRows.map((r: any) => Number(r.id));
+        }
 
         const statusRows = await this.dataSource.query('select id, code, nama, kategori from bdb_status_master');
         const statusMap = new Map<string, any>();
@@ -3266,18 +3357,19 @@ export class LaporanPolisiService {
                 const targetStat = statusMap.get(item.status_baru.toUpperCase());
                 if (!targetStat) continue;
 
-                if (!scope.all) {
+                if (!scope.all && allowedSatkerIds) {
                     const check = await runner.query(
                         `select id from bdb_laporan_polisi 
-                         where id = $1 and coalesce(unit_satker_id, satker_id) = $2 and deleted_at is null`,
-                        [item.lp_id, scope.satkerId]
+                         where id = $1 and coalesce(unit_satker_id, satker_id) = any($2) and deleted_at is null`,
+                        [item.lp_id, allowedSatkerIds]
                     );
                     if (!check.length) continue;
                 }
 
                 const docType = docTypeMap.get(targetStat.id);
                 const docTypeId = docType?.id || 1;
-                const tglDokumen = item.tgl_status ? item.tgl_status : null;
+                const rawTgl = item.tgl_status ? String(item.tgl_status).trim() : null;
+                const tglDokumen = this.normalizeDateInput(rawTgl) || rawTgl;
                 const noDokumen = item.nomor_surat || null;
                 const docData = {
                     alasan_penghentian: item.alasan_penghentian || null,
