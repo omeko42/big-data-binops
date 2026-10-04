@@ -414,6 +414,9 @@ export class LaporanPolisiService {
               on upper(regexp_replace(coalesce(r.payload_json->'unit'->>'unit',''),'[^A-Za-z0-9]','','g')) = cfg.dors
             join bdb_satker s
               on regexp_replace(upper(s.deskripsi),'[^A-Z0-9]','','g') like '%' || cfg.kw || '%'
+             and (s.kode like '060.01.00%' or s.kode_canonical like '060.01.00%' or s.parent_id = 1 or upper(coalesce(s.tipe_satker,'')) = 'MABES')
+             and coalesce(s.is_synthetic, false) = false
+             and s.dors_mapping_aktif = true
             where jsonb_typeof(r.payload_json->'polda')='object' and r.payload_json->'polda'->>'nama' ilike '%mabes%'
             order by r.dors_lp_id, r.model_lp, s.id
             on conflict (dors_lp_id, model_lp) do nothing
@@ -613,10 +616,30 @@ export class LaporanPolisiService {
                  and s.dors_mapping_aktif = true
                  and upper(coalesce(s.tipe_satker,'')) = upper(t.target_level)
                  and (
-                     t.target_level <> 'polda'
-                     or nullif(t.raw_payload#>>'{polda,nama}','') is null
-                     or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                     or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                     (
+                         t.target_level = 'polda'
+                         and (
+                             nullif(t.raw_payload#>>'{polda,nama}','') is null
+                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                         )
+                     )
+                     or (
+                         t.target_level = 'polres'
+                         and (
+                             nullif(t.raw_payload#>>'{polres,nama}','') is null
+                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                         )
+                     )
+                     or (
+                         t.target_level = 'polsek'
+                         and (
+                             nullif(t.raw_payload#>>'{polsek,nama}','') is null
+                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                         )
+                     )
                  )
                 left join lateral (
                     -- parent-aware exact-KP conflict guard
@@ -710,40 +733,74 @@ export class LaporanPolisiService {
                 left join bdb_satker parent on parent.id=territory.parent_id
                 left join bdb_satker grandparent on grandparent.id=parent.parent_id
                 where (
-                    t.target_level='polda'
-                    and (
-                        nullif(t.raw_payload#>>'{polda,nama}','') is null
-                        or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                        or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                    )
-                )
-                   or (
-                    upper(parent.tipe_satker)=t.target_parent_level
-                    and parent.dors_mapping_aktif=true and not coalesce(parent.is_synthetic,false)
-                    and (
-                        (t.target_parent_kp is not null and (parent.kode=t.target_parent_kp or parent.kode_canonical=t.target_parent_kp))
-                        or (t.target_parent_kp is null and t.target_parent_nama is not null and
-                            (upper(trim(parent.deskripsi))=t.target_parent_nama or upper(trim(parent.nama_satker_dors))=t.target_parent_nama))
-                    )
-                    and (
-                        nullif(t.raw_payload#>>'{polda,nama}','') is null
-                        or regexp_replace(upper(parent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                        or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(parent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                    )
-                    and (t.target_level<>'polsek' or (
-                        upper(grandparent.tipe_satker)='POLDA' and grandparent.dors_mapping_aktif=true
-                        and not coalesce(grandparent.is_synthetic,false)
-                        and ((nullif(t.raw_payload#>>'{polda,kode_pusiknas}','') is not null and
-                              (grandparent.kode=t.raw_payload#>>'{polda,kode_pusiknas}' or grandparent.kode_canonical=t.raw_payload#>>'{polda,kode_pusiknas}'))
-                            or (nullif(t.raw_payload#>>'{polda,kode_pusiknas}','') is null and
-                              (upper(trim(grandparent.deskripsi))=upper(trim(t.raw_payload#>>'{polda,nama}')) or
-                               upper(trim(grandparent.nama_satker_dors))=upper(trim(t.raw_payload#>>'{polda,nama}')))))
+                    -- Tier 2: Polda
+                    (
+                        t.target_level='polda'
+                        and upper(coalesce(territory.tipe_satker,'')) = 'POLDA'
                         and (
                             nullif(t.raw_payload#>>'{polda,nama}','') is null
-                            or regexp_replace(upper(grandparent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                            or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(grandparent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                         )
-                    ))
+                    )
+                    -- Tier 3: Polres (verifikasi wilayah Polres + induk Polda)
+                    or (
+                        t.target_level='polres'
+                        and upper(coalesce(territory.tipe_satker,'')) = 'POLRES'
+                        and upper(coalesce(parent.tipe_satker,'')) = 'POLDA'
+                        and parent.dors_mapping_aktif = true and not coalesce(parent.is_synthetic, false)
+                        and (
+                            (t.target_parent_kp is not null and (parent.kode=t.target_parent_kp or parent.kode_canonical=t.target_parent_kp))
+                            or (t.target_parent_kp is null and t.target_parent_nama is not null and
+                                (upper(trim(parent.deskripsi))=t.target_parent_nama or upper(trim(parent.nama_satker_dors))=t.target_parent_nama))
+                            or t.target_parent_nama is null
+                        )
+                        and (
+                            nullif(t.raw_payload#>>'{polda,nama}','') is null
+                            or regexp_replace(upper(parent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(parent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                        )
+                        and (
+                            nullif(t.raw_payload#>>'{polres,nama}','') is null
+                            or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                        )
+                    )
+                    -- Tier 4: Polsek (verifikasi wilayah Polsek + induk Polres + kakek Polda)
+                    or (
+                        t.target_level='polsek'
+                        and upper(coalesce(territory.tipe_satker,'')) = 'POLSEK'
+                        and upper(coalesce(parent.tipe_satker,'')) = 'POLRES'
+                        and parent.dors_mapping_aktif = true and not coalesce(parent.is_synthetic, false)
+                        and (
+                            (t.target_parent_kp is not null and (parent.kode=t.target_parent_kp or parent.kode_canonical=t.target_parent_kp))
+                            or (t.target_parent_kp is null and t.target_parent_nama is not null and
+                                (upper(trim(parent.deskripsi))=t.target_parent_nama or upper(trim(parent.nama_satker_dors))=t.target_parent_nama))
+                            or t.target_parent_nama is null
+                        )
+                        and (
+                            nullif(t.raw_payload#>>'{polres,nama}','') is null
+                            or regexp_replace(upper(parent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(parent.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                        )
+                        and (
+                            grandparent.id is null
+                            or (
+                                upper(coalesce(grandparent.tipe_satker,'')) = 'POLDA'
+                                and grandparent.dors_mapping_aktif = true and not coalesce(grandparent.is_synthetic, false)
+                                and (
+                                    nullif(t.raw_payload#>>'{polda,nama}','') is null
+                                    or regexp_replace(upper(grandparent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                                    or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(grandparent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                                )
+                            )
+                        )
+                        and (
+                            nullif(t.raw_payload#>>'{polsek,nama}','') is null
+                            or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                        )
+                    )
                 )
             ),
             territory_coverage as materialized (
@@ -1009,6 +1066,78 @@ export class LaporanPolisiService {
                 left join bdb_satker p on p.id=s.parent_id
                 left join bdb_satker gp on gp.id=p.parent_id
                 where r.target_level in ('Polda','Polres','Polsek')
+                  -- Guard Tier 2: Polda
+                  and (
+                      r.target_level <> 'Polda'
+                      or (
+                          nullif(r.payload_json#>>'{polda,nama}','') is null
+                          or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          or regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                      )
+                  )
+                  -- Guard Tier 3: Polres (verifikasi satker Polres + induk Polda)
+                  and (
+                      r.target_level <> 'Polres'
+                      or (
+                          p.id is not null
+                          and upper(coalesce(p.tipe_satker,'')) = 'POLDA'
+                          and (
+                              nullif(r.payload_json#>>'{polda,nama}','') is null
+                              or regexp_replace(upper(p.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(p.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          )
+                          and (
+                              nullif(r.payload_json#>>'{polres,nama}','') is null
+                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                          )
+                      )
+                  )
+                  -- Guard Tier 4: Polsek (verifikasi satker Polsek + induk Polres + kakek Polda)
+                  and (
+                      r.target_level <> 'Polsek'
+                      or (
+                          p.id is not null
+                          and upper(coalesce(p.tipe_satker,'')) = 'POLRES'
+                          and (
+                              nullif(r.payload_json#>>'{polres,nama}','') is null
+                              or regexp_replace(upper(p.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(p.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                          )
+                          and (
+                              gp.id is null
+                              or nullif(r.payload_json#>>'{polda,nama}','') is null
+                              or regexp_replace(upper(gp.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(gp.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          )
+                          and (
+                              nullif(r.payload_json#>>'{polsek,nama}','') is null
+                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                          )
+                      )
+                  )
+                  -- Cross-check No Laporan: jika nomor laporan menyebut nama POLDA, satker (atau leluhurnya) wajib sesuai
+                  and (
+                      r.no_laporan not ilike '%POLDA%'
+                      or (
+                          case
+                              when r.target_level = 'Polda' then s.deskripsi
+                              when r.target_level = 'Polres' then p.deskripsi
+                              when r.target_level = 'Polsek' then coalesce(gp.deskripsi, p.deskripsi)
+                          end is null
+                          or regexp_replace(upper(case
+                              when r.target_level = 'Polda' then s.deskripsi
+                              when r.target_level = 'Polres' then p.deskripsi
+                              when r.target_level = 'Polsek' then coalesce(gp.deskripsi, p.deskripsi)
+                          end), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(substring(upper(r.no_laporan) from 'POLDA\\s+([A-Z\\s]+)'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          or regexp_replace(substring(upper(r.no_laporan) from 'POLDA\\s+([A-Z\\s]+)'), '(POLDA|[^A-Z0-9])', '', 'g') like '%' || regexp_replace(upper(case
+                              when r.target_level = 'Polda' then s.deskripsi
+                              when r.target_level = 'Polres' then p.deskripsi
+                              when r.target_level = 'Polsek' then coalesce(gp.deskripsi, p.deskripsi)
+                          end), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                      )
+                  )
                   and (
                       -- 1. Exact code match (prioritas tertinggi: child_kp atau child_dkode)
                       (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
