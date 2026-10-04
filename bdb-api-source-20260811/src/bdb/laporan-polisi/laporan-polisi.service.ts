@@ -970,6 +970,23 @@ export class LaporanPolisiService {
                           )
                       )
                   )
+                  -- Anti-misrouting Guard: Jika payload DORS membawa nama Polda eksplisit,
+                  -- pastikan satker yang cocok (atau induk polda-nya) tidak bertentangan dengan nama wilayah tersebut.
+                  and (
+                      nullif(r.payload_json->'polda'->>'nama', '') is null
+                      or case
+                          when r.target_level = 'Polda' then
+                              regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          when r.target_level = 'Polres' then
+                              regexp_replace(upper(coalesce(p.deskripsi, '')), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(coalesce(p.deskripsi, '')), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          when r.target_level = 'Polsek' then
+                              regexp_replace(upper(coalesce(gp.deskripsi, '')), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(coalesce(gp.deskripsi, '')), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                          else true
+                      end
+                  )
             ), candidate_ranked as (
                 select c.*, max(c.signal_rank) over (partition by c.id) as best_signal_rank
                 from candidate_base c
