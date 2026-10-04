@@ -1,4 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import * as ExcelJS from 'exceljs';
+import * as crypto from 'crypto';
 import { KinerjaPerkaraService } from '../kinerja-perkara/kinerja-perkara.service';
 import { DataSource } from 'typeorm';
 import { readFileSync } from 'fs';
@@ -389,6 +391,14 @@ export class LaporanPolisiService {
         const valuesSql = pairs.map(([d, k]) => `('${d}','${k}')`).join(',');
         const KP = LaporanPolisiService.KP_SQL;
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (
+                    select 1 from bdb_laporan_polisi lp
+                    where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
+                )
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -398,13 +408,13 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    'Mabes', ${KP}, s.id, s.deskripsi,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             join (values ${valuesSql}) cfg(dors, kw)
               on upper(regexp_replace(coalesce(r.payload_json->'unit'->>'unit',''),'[^A-Za-z0-9]','','g')) = cfg.dors
             join bdb_satker s
               on regexp_replace(upper(s.deskripsi),'[^A-Z0-9]','','g') like '%' || cfg.kw || '%'
             where jsonb_typeof(r.payload_json->'polda')='object' and r.payload_json->'polda'->>'nama' ilike '%mabes%'
-              and not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
             order by r.dors_lp_id, r.model_lp, s.id
             on conflict (dors_lp_id, model_lp) do nothing
             returning id
@@ -597,11 +607,17 @@ export class LaporanPolisiService {
             territory_candidates as materialized (
                 select t.id as lp_id, coalesce(pa.id,s.id) as territory_id
                 from target t
-                join bdb_satker s
+                 join bdb_satker s
                   on (s.kode = t.target_kp or s.kode_canonical = t.target_kp)
                  and coalesce(s.is_synthetic,false) = false
                  and s.dors_mapping_aktif = true
                  and upper(coalesce(s.tipe_satker,'')) = upper(t.target_level)
+                 and (
+                     t.target_level <> 'polda'
+                     or nullif(t.raw_payload#>>'{polda,nama}','') is null
+                     or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                     or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                 )
                 left join lateral (
                     -- parent-aware exact-KP conflict guard
                     select min(child.id)::bigint as id
@@ -630,6 +646,27 @@ export class LaporanPolisiService {
                     having count(distinct child.id)=1
                 ) pa on true
                 where t.target_kp is not null
+
+                union
+
+                select t.id, s.id
+                from target t
+                join bdb_satker s
+                  on upper(coalesce(s.tipe_satker,'')) = 'POLDA'
+                 and coalesce(s.is_synthetic,false) = false
+                 and s.dors_mapping_aktif = true
+                 and (
+                     upper(trim(s.deskripsi)) = t.target_nama
+                     or upper(trim(coalesce(s.nama_satker_dors,''))) = t.target_nama
+                     or (
+                         nullif(t.raw_payload#>>'{polda,nama}','') is not null
+                         and (
+                             regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g')
+                             or regexp_replace(upper(coalesce(s.nama_satker_dors,'')), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g')
+                         )
+                     )
+                 )
+                where t.target_level = 'polda'
 
                 union
 
@@ -672,7 +709,14 @@ export class LaporanPolisiService {
                 join bdb_satker territory on territory.id=tc.territory_id
                 left join bdb_satker parent on parent.id=territory.parent_id
                 left join bdb_satker grandparent on grandparent.id=parent.parent_id
-                where t.target_level='polda'
+                where (
+                    t.target_level='polda'
+                    and (
+                        nullif(t.raw_payload#>>'{polda,nama}','') is null
+                        or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                        or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                    )
+                )
                    or (
                     upper(parent.tipe_satker)=t.target_parent_level
                     and parent.dors_mapping_aktif=true and not coalesce(parent.is_synthetic,false)
@@ -680,6 +724,11 @@ export class LaporanPolisiService {
                         (t.target_parent_kp is not null and (parent.kode=t.target_parent_kp or parent.kode_canonical=t.target_parent_kp))
                         or (t.target_parent_kp is null and t.target_parent_nama is not null and
                             (upper(trim(parent.deskripsi))=t.target_parent_nama or upper(trim(parent.nama_satker_dors))=t.target_parent_nama))
+                    )
+                    and (
+                        nullif(t.raw_payload#>>'{polda,nama}','') is null
+                        or regexp_replace(upper(parent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                        or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(parent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                     )
                     and (t.target_level<>'polsek' or (
                         upper(grandparent.tipe_satker)='POLDA' and grandparent.dors_mapping_aktif=true
@@ -689,6 +738,11 @@ export class LaporanPolisiService {
                             or (nullif(t.raw_payload#>>'{polda,kode_pusiknas}','') is null and
                               (upper(trim(grandparent.deskripsi))=upper(trim(t.raw_payload#>>'{polda,nama}')) or
                                upper(trim(grandparent.nama_satker_dors))=upper(trim(t.raw_payload#>>'{polda,nama}')))))
+                        and (
+                            nullif(t.raw_payload#>>'{polda,nama}','') is null
+                            or regexp_replace(upper(grandparent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                            or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(grandparent.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                        )
                     ))
                 )
             ),
@@ -858,53 +912,77 @@ export class LaporanPolisiService {
         await this.ensureTable();
         const started = Date.now();
         const ret = await this.dataSource.query(`
-            with raw_target as materialized (
-                select r.*,
-                       ${LaporanPolisiService.LEVEL_SQL} as target_level,
-                       ${LaporanPolisiService.KP_SQL} as child_kp,
-                       ${LaporanPolisiService.DORS_KODE_SQL} as child_dkode,
-                       case
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                then r.payload_json->'polres'->>'kode_pusiknas'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
-                                then r.payload_json->'polda'->>'kode_pusiknas'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                then r.payload_json->'polres'->>'kode_pusiknas'
-                           when jsonb_typeof(r.payload_json->'polres')='object'
-                                then r.payload_json->'polda'->>'kode_pusiknas'
-                       end as parent_kp,
-                       case
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                then r.payload_json->'polres'->>'kode'
-                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
-                                then r.payload_json->'polda'->>'kode'
-                           when jsonb_typeof(r.payload_json->'polsek')='object'
-                                then r.payload_json->'polres'->>'kode'
-                           when jsonb_typeof(r.payload_json->'polres')='object'
-                                then r.payload_json->'polda'->>'kode'
-                       end as parent_dkode,
-                       case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                  or jsonb_typeof(r.payload_json->'polsek')='object'
-                            then r.payload_json->'polda'->>'kode_pusiknas' end as grandparent_kp,
-                       case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
-                                  or jsonb_typeof(r.payload_json->'polsek')='object'
-                            then r.payload_json->'polda'->>'kode' end as grandparent_dkode
+            with unmapped_ids as materialized (
+                select r.id
                 from bdb_dors_raw_lp r
                 where not exists (
                     select 1 from bdb_laporan_polisi lp
-                    where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp
+                    where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
                 )
-                and not (
-                    coalesce(r.payload_json->>'dilimpahkan', '0') = '1'
-                    and exists (
+            ),
+            raw_target as materialized (
+                select r.id, r.dors_lp_id, r.model_lp, r.no_laporan, r.data_scope, r.payload_json,
+                       case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then 'Polsek'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then 'Polres'
+                           when jsonb_typeof(r.payload_json->'polda')='object' and r.payload_json->'polda'->>'nama' ilike '%mabes%' then 'Mabes'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then 'Polda'
+                           else 'Mabes'
+                       end as target_level,
+                       upper(trim(coalesce(
+                           r.payload_json->'polsek'->>'nama',
+                           r.payload_json->'polres'->>'nama',
+                           r.payload_json->'polda'->>'nama'
+                       ))) as target_nama,
+                       nullif(trim(regexp_replace(replace(case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polda')='object' and (r.payload_json->'polda'->>'kode' = '060.09' or r.payload_json->'polda'->>'nama' ilike '%lampung%') then '060.01.11'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then r.payload_json->'polda'->>'kode_pusiknas'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as child_kp,
+                       nullif(trim(regexp_replace(replace(case
+                           when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polda')='object' then r.payload_json->'polda'->>'kode'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as child_dkode,
+                       nullif(trim(regexp_replace(replace(case
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                then r.payload_json->'polres'->>'kode_pusiknas'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
+                                then r.payload_json->'polda'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                and r.payload_json->'polres'->>'kode'='060.30.22' then '060.01.30.35'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                then r.payload_json->'polres'->>'kode_pusiknas'
+                           when jsonb_typeof(r.payload_json->'polres')='object'
+                                then r.payload_json->'polda'->>'kode_pusiknas'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as parent_kp,
+                       nullif(trim(regexp_replace(replace(case
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                then r.payload_json->'polres'->>'kode'
+                           when lower(coalesce(r.payload_json->'unit'->>'level',''))='polres'
+                                then r.payload_json->'polda'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polsek')='object'
+                                then r.payload_json->'polres'->>'kode'
+                           when jsonb_typeof(r.payload_json->'polres')='object'
+                                then r.payload_json->'polda'->>'kode'
+                       end, chr(160), ''), '\\s+', '', 'g')), '') as parent_dkode,
+                       nullif(trim(regexp_replace(replace(case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                  or jsonb_typeof(r.payload_json->'polsek')='object'
+                            then r.payload_json->'polda'->>'kode_pusiknas' end, chr(160), ''), '\\s+', '', 'g')), '') as grandparent_kp,
+                       nullif(trim(regexp_replace(replace(case when lower(coalesce(r.payload_json->'unit'->>'level',''))='polsek'
+                                  or jsonb_typeof(r.payload_json->'polsek')='object'
+                            then r.payload_json->'polda'->>'kode' end, chr(160), ''), '\\s+', '', 'g')), '') as grandparent_dkode
+                from unmapped_ids u
+                join bdb_dors_raw_lp r on r.id = u.id
+                where (
+                    coalesce(r.payload_json->>'dilimpahkan', '0') <> '1'
+                    or not exists (
                         select 1 from bdb_laporan_polisi lp2
                         where lp2.deleted_at is null
                           and lp2.no_laporan is not null
-                          and trim(lp2.no_laporan) <> ''
                           and trim(lp2.no_laporan) = trim(r.no_laporan)
                     )
                 )
@@ -913,9 +991,9 @@ export class LaporanPolisiService {
                        s.deskripsi as resolved_satker_nama,
                        coalesce(s.kode,r.child_kp) as resolved_kode,
                        case
-                           when nullif(${LaporanPolisiService.normKode('r.child_dkode')},'') is not null
-                            and ${LaporanPolisiService.normKode('s.dors_kode')}=${LaporanPolisiService.normKode('r.child_dkode')}
-                           then 2 else 1
+                           when r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp) then 3
+                           when r.child_dkode is not null and s.dors_kode = r.child_dkode then 2
+                           else 1
                        end as signal_rank
                 from raw_target r
                 join bdb_satker s
@@ -924,68 +1002,55 @@ export class LaporanPolisiService {
                  and coalesce(s.kinerja_aktif,true)=true
                  and s.dors_mapping_aktif=true
                  and (
-                      (nullif(${LaporanPolisiService.normKode('r.child_kp')},'') is not null and (
-                           ${LaporanPolisiService.normKode('s.kode')}=${LaporanPolisiService.normKode('r.child_kp')}
-                           or ${LaporanPolisiService.normKode('s.kode_canonical')}=${LaporanPolisiService.normKode('r.child_kp')}
-                      ))
-                      or (nullif(${LaporanPolisiService.normKode('r.child_dkode')},'') is not null
-                          and ${LaporanPolisiService.normKode('s.dors_kode')}=${LaporanPolisiService.normKode('r.child_dkode')})
+                      (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
+                      or (r.child_kp is null and upper(trim(s.deskripsi)) = upper(trim(r.target_nama)))
                  )
                 left join bdb_satker p on p.id=s.parent_id
                 left join bdb_satker gp on gp.id=p.parent_id
                 where r.target_level in ('Polda','Polres','Polsek')
                   and (
-                      r.target_level='Polda'
+                      -- 1. Exact code match (prioritas tertinggi: child_kp atau child_dkode)
+                      (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
+                      -- 2. Tanpa kode pusiknas (child_kp is null) -> WAJIB nama persis + induk cocok
                       or (
-                          p.id is not null
-                          and upper(coalesce(p.tipe_satker,''))=case when r.target_level='Polsek' then 'POLRES' else 'POLDA' end
-                          and coalesce(p.is_synthetic,false)=false
-                          and coalesce(p.kinerja_aktif,true)=true
-                          and p.dors_mapping_aktif=true
+                          r.child_kp is null
+                          and upper(trim(s.deskripsi)) = upper(trim(r.target_nama))
                           and (
-                               (nullif(${LaporanPolisiService.normKode('r.parent_kp')},'') is not null and (
-                                    ${LaporanPolisiService.normKode('p.kode')}=${LaporanPolisiService.normKode('r.parent_kp')}
-                                    or ${LaporanPolisiService.normKode('p.kode_canonical')}=${LaporanPolisiService.normKode('r.parent_kp')}
-                               ))
-                               or (nullif(${LaporanPolisiService.normKode('r.parent_dkode')},'') is not null
-                                   and ${LaporanPolisiService.normKode('p.dors_kode')}=${LaporanPolisiService.normKode('r.parent_dkode')})
+                              (r.target_level = 'Polsek' and p.id is not null and (
+                                  (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                  or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              ))
+                              or (r.target_level = 'Polres' and p.id is not null and (
+                                  (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                  or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              ))
+                              or (r.target_level = 'Polda')
                           )
                       )
-                  )
-                  and (
-                      r.target_level<>'Polsek'
+                      -- 3. Fallback hierarki restrukturisasi jika ada child_kp
                       or (
-                          gp.id is not null
+                          r.child_kp is not null
+                          and (
+                              p.id is not null
+                              and upper(coalesce(p.tipe_satker,''))=case when r.target_level='Polsek' then 'POLRES' else 'POLDA' end
+                              and coalesce(p.is_synthetic,false)=false
+                              and coalesce(p.kinerja_aktif,true)=true
+                              and p.dors_mapping_aktif=true
+                              and (
+                                   (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                                   or (r.parent_dkode is not null and p.dors_kode = r.parent_dkode)
+                              )
+                          )
+                      )
+                      or (
+                          r.child_kp is not null
+                          and r.target_level='Polsek'
+                          and gp.id is not null
                           and upper(coalesce(gp.tipe_satker,''))='POLDA'
-                          and coalesce(gp.is_synthetic,false)=false
-                          and coalesce(gp.kinerja_aktif,true)=true
-                          and gp.dors_mapping_aktif=true
-                          and (
-                               (nullif(${LaporanPolisiService.normKode('r.grandparent_kp')},'') is not null and (
-                                    ${LaporanPolisiService.normKode('gp.kode')}=${LaporanPolisiService.normKode('r.grandparent_kp')}
-                                    or ${LaporanPolisiService.normKode('gp.kode_canonical')}=${LaporanPolisiService.normKode('r.grandparent_kp')}
-                               ))
-                               or (nullif(${LaporanPolisiService.normKode('r.grandparent_dkode')},'') is not null
-                                   and ${LaporanPolisiService.normKode('gp.dors_kode')}=${LaporanPolisiService.normKode('r.grandparent_dkode')})
-                          )
+                          and (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
                       )
-                  )
-                  -- Anti-misrouting Guard: Jika payload DORS membawa nama Polda eksplisit,
-                  -- pastikan satker yang cocok (atau induk polda-nya) tidak bertentangan dengan nama wilayah tersebut.
-                  and (
-                      nullif(r.payload_json->'polda'->>'nama', '') is null
-                      or case
-                          when r.target_level = 'Polda' then
-                              regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                          when r.target_level = 'Polres' then
-                              regexp_replace(upper(coalesce(p.deskripsi, '')), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(coalesce(p.deskripsi, '')), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                          when r.target_level = 'Polsek' then
-                              regexp_replace(upper(coalesce(gp.deskripsi, '')), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json->'polda'->>'nama'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                              or regexp_replace(upper(r.payload_json->'polda'->>'nama'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(coalesce(gp.deskripsi, '')), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
-                          else true
-                      end
                   )
             ), candidate_ranked as (
                 select c.*, max(c.signal_rank) over (partition by c.id) as best_signal_rank
@@ -1038,6 +1103,7 @@ export class LaporanPolisiService {
         await this.linkMasterData();
         const ownershipSync = await this.syncPelimpahanOwnershipFromDors();
         const reconciledDups = await this.reconcilePelimpahanDuplicates();
+        this.kinerjaPerkara.refreshSnapshot().catch((e) => this.logger.warn('refreshSnapshot post-map error: ' + (e?.message || e)));
         this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, dups reconciled ${reconciledDups}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
         return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync, dups_reconciled: reconciledDups }, message: `${mapped + mabes + viaAlias + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, nama ${viaName}).` };
     }
@@ -1049,6 +1115,13 @@ export class LaporanPolisiService {
             where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
         `);
         return r[0]?.c || 0;
+    }
+
+    /** Segarkan snapshot Kinerja Perkara agar perubahan mapping langsung tampil di menu Kinerja Perkara. */
+    public async refreshKinerjaPerkaraSnapshot() {
+        if (this.kinerjaPerkara?.refreshSnapshot) {
+            await this.kinerjaPerkara.refreshSnapshot().catch((e) => this.logger.warn('refreshSnapshot error: ' + (e?.message || e)));
+        }
     }
 
     /** Ambil rantai satker dari nomor laporan: [terdalam, induk, ...] (setelah segmen SPKT). */
@@ -1217,6 +1290,11 @@ export class LaporanPolisiService {
     private async applyUnitAliases() {
         await this.ensureAliasTable();
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -1226,7 +1304,8 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    ${LaporanPolisiService.LEVEL_SQL}, ${LaporanPolisiService.KP_SQL}, a.satker_id, a.satker_nama,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             join bdb_dors_satker_map a
               on a.unit_nama is not null
                  and a.dors_kode_pusiknas is not null
@@ -1244,6 +1323,11 @@ export class LaporanPolisiService {
     private async applyGroupAliases() {
         await this.ensureAliasTable();
         const ret = await this.dataSource.query(`
+            with unmapped as materialized (
+                select r.id
+                from bdb_dors_raw_lp r
+                where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
+            )
             insert into bdb_laporan_polisi
                 (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
                  penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
@@ -1253,7 +1337,8 @@ export class LaporanPolisiService {
                    coalesce(r.payload_json->>'uraian_singkat_kejadian', r.payload_json->>'uraian_kejadian'),
                    ${LaporanPolisiService.LEVEL_SQL}, ${LaporanPolisiService.KP_SQL}, a.satker_id, a.satker_nama,
                    r.payload_json->'unit'->>'unit', r.payload_json->'unit'->>'level', r.data_scope, r.payload_json, now()
-            from bdb_dors_raw_lp r
+            from unmapped u
+            join bdb_dors_raw_lp r on r.id = u.id
             cross join lateral (select
                 case when jsonb_typeof(r.payload_json->'polsek')='object' then r.payload_json->'polsek'->>'nama'
                      when jsonb_typeof(r.payload_json->'polres')='object' then r.payload_json->'polres'->>'nama'
@@ -2465,4 +2550,673 @@ export class LaporanPolisiService {
         }
         return staleRows.length;
     }
+
+    // =========================================================================
+    // FITUR: IMPOR STATUS MASSAL LAPORAN POLISI (EXCEL BULK IMPORT & TRACE)
+    // =========================================================================
+
+    /**
+     * Unduh template Excel bulk import status LP khusus satker operator.
+     * Nama file: cas_<token>.xlsx (terenkripsi, anonymized & traceable).
+     */
+    async buildBulkImportTemplate(
+        userId?: number,
+        year?: string,
+        targetSatkerId?: number,
+        from?: string,
+        to?: string,
+        jenisKejahatanIds?: string,
+        functionDomain?: string,
+        organizationDomain?: string,
+        level?: string,
+        model?: string,
+        status?: string,
+        search?: string
+    ): Promise<{ buffer: Buffer; filename: string }> {
+        const scope = await resolveScope(this.dataSource, userId);
+        let satkerId = scope.satkerId;
+        if (scope.isSuper && targetSatkerId) {
+            satkerId = targetSatkerId;
+        }
+
+        if (!scope.all && !satkerId) {
+            throw new ForbiddenException('Akses ditolak: Akun Anda tidak terikat dengan Satuan Kerja manapun.');
+        }
+
+        let satkerNama = 'Seluruh Satker (Nasional)';
+        let satkerKode = 'MABES';
+        if (satkerId) {
+            const sRows = await this.dataSource.query('select id, deskripsi, kode from bdb_satker where id = $1', [satkerId]);
+            if (sRows.length) {
+                satkerNama = sRows[0].deskripsi || sRows[0].kode || 'Satker';
+                satkerKode = sRows[0].kode || 'SATKER';
+            }
+        }
+
+        const where: string[] = [
+            'lp.deleted_at is null',
+            'coalesce(lp.dilimpahkan_eksternal, false) = false'
+        ];
+        const params: any[] = [];
+
+        if (!scope.all) {
+            params.push(satkerId);
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+        } else if (targetSatkerId) {
+            params.push(targetSatkerId);
+            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+        }
+
+        const cleanYear = String(year || '').trim();
+        if (cleanYear && cleanYear !== 'all' && /^\d{4}$/.test(cleanYear)) {
+            params.push(parseInt(cleanYear, 10));
+            where.push(`extract(year from parse_tgl_laporan(lp.tgl_laporan)) = $${params.length}`);
+        }
+        if (from) {
+            params.push(from);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) >= parse_tgl_laporan($${params.length})`);
+        }
+        if (to) {
+            params.push(to);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) <= (parse_tgl_laporan($${params.length}) + interval '1 day')`);
+        }
+        if (level) {
+            params.push(level);
+            where.push(`lower(lp.penanganan_level) = lower($${params.length})`);
+        }
+        if (model) {
+            params.push(model);
+            where.push(`lower(lp.model_lp) = lower($${params.length})`);
+        }
+        if (status) {
+            params.push(status);
+            where.push(`(lower(sm.nama) = lower($${params.length}) or lower(sm.code) = lower($${params.length}))`);
+        }
+        if (search) {
+            params.push(`%${search}%`);
+            where.push(`(lp.no_laporan ilike $${params.length} or lp.satker_nama ilike $${params.length})`);
+        }
+        if (jenisKejahatanIds) {
+            const ids = jenisKejahatanIds.split(',').map(s => s.trim()).filter(s => /^\d+$/.test(s));
+            if (ids.length) {
+                where.push(`lp.jenis_kejahatan_id IN (${ids.join(',')})`);
+            }
+        }
+
+        const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+        // Query LP aktif milik satker terurut dari terbaru ke terlama
+        const lpRows = await this.dataSource.query(`
+            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama, lp.uraian_singkat,
+                   sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
+                   (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
+                    where d.lp_id = lp.id and dt.status_target_id = lp.status_id
+                    order by d.tanggal_dokumen desc, d.id desc limit 1) as tgl_status,
+                   (select d.nomor_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
+                    where d.lp_id = lp.id and dt.status_target_id = lp.status_id
+                    order by d.tanggal_dokumen desc, d.id desc limit 1) as no_dokumen
+            from bdb_laporan_polisi lp
+            left join bdb_status_master sm on sm.id = lp.status_id
+            ${whereSql}
+            order by parse_tgl_laporan(lp.tgl_laporan) desc nulls last, lp.id desc
+            limit 50000
+        `, params);
+
+        // Forensic Trace Token (Obfuscated & Reversible di server)
+        const timestamp = Date.now();
+        const tracePayload = `${userId || 0}:${satkerId || 0}:${cleanYear || 'all'}:${timestamp}`;
+        const traceToken = encodeId(tracePayload);
+        const filename = `cas_${traceToken}.xlsx`;
+
+        // Build Excel Workbook
+        const wb = new ExcelJS.Workbook();
+        wb.creator = `Bareskrim Polri - CAS BDB (Trace ID: ${traceToken})`;
+        wb.lastModifiedBy = `User ${userId || 0}`;
+        wb.created = new Date();
+        wb.modified = new Date();
+
+        // 1. Sheet Utama: Update Status LP
+        const sheet = wb.addWorksheet('Update Status LP');
+        sheet.columns = [
+            { header: 'No. Laporan Polisi', key: 'no_laporan', width: 38 },
+            { header: 'Satker Penanganan', key: 'satker_nama', width: 32 },
+            { header: 'Tanggal LP', key: 'tgl_laporan', width: 16 },
+            { header: 'Dugaan Tindak Pidana', key: 'uraian_singkat', width: 30 },
+            { header: 'Status Saat Ini', key: 'status_saat_ini', width: 18 },
+            { header: 'Status Baru *', key: 'status_baru', width: 20 },
+            { header: 'Tanggal Status (YYYY-MM-DD) *', key: 'tgl_status', width: 26 },
+            { header: 'Nomor Dokumen / Surat', key: 'nomor_surat', width: 26 },
+            { header: 'Alasan Penghentian (Khusus SP3)', key: 'alasan_penghentian', width: 36 },
+            { header: 'Keterangan Tambahan', key: 'keterangan', width: 28 }
+        ];
+
+        // Header Styling (Dark Blue Solid)
+        const headerRow = sheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10 };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+        headerRow.height = 28;
+        headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+        sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+        const STATUS_OPTIONS = ['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA'];
+        const ALASAN_OPTIONS = [
+            'Tidak Cukup Bukti',
+            'Bukan Tindak Pidana',
+            'Demi Hukum - Tersangka Meninggal',
+            'Demi Hukum - Ne Bis In Idem',
+            'Demi Hukum - Daluwarsa',
+            'Demi Hukum - Pengaduan Dicabut',
+            'Restorative Justice (RJ)'
+        ];
+
+        // Populate rows
+        lpRows.forEach((r: any, idx: number) => {
+            const rowNumber = idx + 2;
+            sheet.addRow({
+                no_laporan: r.no_laporan,
+                satker_nama: r.satker_nama || satkerNama,
+                tgl_laporan: r.tgl_laporan || '-',
+                uraian_singkat: r.uraian_singkat || '-',
+                status_saat_ini: r.status_nama || r.status_code || 'Belum Update',
+                status_baru: '',
+                tgl_status: '',
+                nomor_surat: '',
+                alasan_penghentian: '',
+                keterangan: ''
+            });
+
+            // Cell protections: Locked for A-E, Unlocked for F-J
+            ['A', 'B', 'C', 'D', 'E'].forEach(col => {
+                sheet.getCell(`${col}${rowNumber}`).protection = { locked: true };
+            });
+            ['F', 'G', 'H', 'I', 'J'].forEach(col => {
+                sheet.getCell(`${col}${rowNumber}`).protection = { locked: false };
+            });
+        });
+
+        // Set Data Validation
+        const totalRows = Math.max(lpRows.length + 1, 100);
+        for (let i = 2; i <= totalRows; i++) {
+            sheet.getCell(`F${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${STATUS_OPTIONS.join(',')}"`],
+                showErrorMessage: true,
+                errorTitle: 'Pilihan Status Tidak Valid',
+                error: 'Pilih status resmi dari daftar dropdown.'
+            };
+            sheet.getCell(`G${i}`).numFmt = 'yyyy-mm-dd';
+            sheet.getCell(`I${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: [`"${ALASAN_OPTIONS.join(',')}"`],
+                showErrorMessage: true,
+                errorTitle: 'Alasan Tidak Valid',
+                error: 'Pilih alasan penghentian resmi dari daftar dropdown.'
+            };
+        }
+
+        // Sheet Protection with internal password
+        await sheet.protect('cas-binops-protect-2026', {
+            selectLockedCells: true,
+            selectUnlockedCells: true,
+            formatCells: false,
+            formatColumns: false,
+            formatRows: false,
+            insertColumns: false,
+            deleteColumns: false,
+            insertRows: false,
+            deleteRows: false
+        });
+
+        // 2. Sheet Petunjuk & Referensi
+        const guideSheet = wb.addWorksheet('Petunjuk & Referensi');
+        guideSheet.columns = [
+            { header: 'KODE STATUS', key: 'code', width: 18 },
+            { header: 'NAMA TAHAPAN PERKARA', key: 'nama', width: 32 },
+            { header: 'KATEGORI', key: 'kategori', width: 14 },
+            { header: 'KETERANGAN & SYARAT', key: 'desc', width: 60 }
+        ];
+        const gHeader = guideSheet.getRow(1);
+        gHeader.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        gHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D9488' } };
+        guideSheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+        guideSheet.addRow({ code: 'LIDIK', nama: 'Penyelidikan (Sprinlidik)', kategori: 'CT (Beban)', desc: 'Tahap penyelidikan perkara awal.' });
+        guideSheet.addRow({ code: 'SIDIK', nama: 'Penyidikan (Sprindik)', kategori: 'CT (Beban)', desc: 'Tahap penyidikan tindak pidana.' });
+        guideSheet.addRow({ code: 'SPDP', nama: 'Pemberitahuan Dimulainya Penyidikan', kategori: 'CT (Beban)', desc: 'Pengiriman SPDP ke Kejaksaan.' });
+        guideSheet.addRow({ code: 'TAHAP_I', nama: 'Penyerahan Berkas Perkara', kategori: 'CT (Beban)', desc: 'Pengiriman berkas perkara ke JPU.' });
+        guideSheet.addRow({ code: 'P19', nama: 'Pengembalian Berkas Perkara', kategori: 'CT (Beban)', desc: 'Petunjuk jaksa untuk melengkapi berkas.' });
+        guideSheet.addRow({ code: 'P21', nama: 'Pemberitahuan Berkas Lengkap', kategori: 'CT (Beban)', desc: 'Berkas dinyatakan lengkap oleh JPU.' });
+        guideSheet.addRow({ code: 'TAHAP_II', nama: 'Penyerahan Tersangka & BB', kategori: 'CC (Selesai)', desc: 'Pelimpahan Tsk & Barang Bukti ke Jaksa (Perkara tuntas).' });
+        guideSheet.addRow({ code: 'SP3', nama: 'Penghentian Penyidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
+        guideSheet.addRow({ code: 'SP3_LIDIK', nama: 'Penghentian Penyelidikan', kategori: 'CC (Selesai)', desc: 'Wajib memilih Alasan Penghentian sah (Perkara tuntas).' });
+        guideSheet.addRow({ code: 'PERMA', nama: 'Keadilan Restoratif (RJ)', kategori: 'CC (Selesai)', desc: 'Penyelesaian perkara via Restorative Justice (Perkara tuntas).' });
+
+        // 3. Very Hidden Sheet Forensic Audit
+        const auditSheet = wb.addWorksheet('_CAS_TRACE_META_');
+        auditSheet.state = 'veryHidden';
+        const metaObj = {
+            trace_id: traceToken,
+            satker_id: satkerId,
+            satker_nama: satkerNama,
+            user_id: userId,
+            year: cleanYear || 'all',
+            row_count: lpRows.length,
+            generated_at: new Date().toISOString()
+        };
+        auditSheet.getCell('A1').value = JSON.stringify(metaObj);
+
+        try {
+            await this.audit.log({
+                userId,
+                action: 'BULK_IMPORT_TEMPLATE_DOWNLOAD',
+                entity: 'laporan_polisi',
+                meta: {
+                    trace_id: traceToken,
+                    satker_id: satkerId,
+                    year: cleanYear || 'all',
+                    total_rows: lpRows.length,
+                    filename
+                }
+            });
+        } catch {}
+
+        const buffer = await wb.xlsx.writeBuffer();
+        return { buffer: Buffer.from(buffer), filename };
+    }
+
+    /**
+     * Preview dan validasi file Excel bulk import (Dry-Run).
+     */
+    async previewBulkImport(buffer: Buffer, userId?: number, originalFilename?: string): Promise<{ summary: any; rows: any[]; token: string }> {
+        const wb = new ExcelJS.Workbook();
+        try {
+            await wb.xlsx.load(buffer as any);
+        } catch (e: any) {
+            throw new BadRequestException('File yang diunggah rusak atau bukan format Excel (.xlsx) yang valid.');
+        }
+
+        const sheet = wb.worksheets[0];
+        if (!sheet) throw new BadRequestException('File Excel tidak memiliki lembar kerja (worksheet).');
+
+        // Verify Header Signature (Guard Lapis 2)
+        const cellText = (r: number, c: number) => String(sheet.getCell(r, c).text || '').trim();
+        const hNoLp = cellText(1, 1).toLowerCase();
+        const hStatus = cellText(1, 6).toLowerCase();
+        const hTanggal = cellText(1, 7).toLowerCase();
+
+        if (!hNoLp.includes('laporan') || !hStatus.includes('status') || !hTanggal.includes('tanggal')) {
+            throw new BadRequestException('Format template Excel tidak valid atau kolom telah diubah. Harap gunakan template resmi CAS.');
+        }
+
+        const rawRows: any[] = [];
+        sheet.eachRow((row: any, rowNumber: number) => {
+            if (rowNumber === 1) return;
+            const noLaporan = String(row.getCell(1).text || '').trim();
+            if (!noLaporan) return;
+
+            const statusLama = String(row.getCell(5).text || '').trim();
+            const statusBaru = String(row.getCell(6).text || '').trim().toUpperCase().replace(/\s+/g, '_');
+            
+            let tglStatus = '';
+            const tglVal = row.getCell(7).value;
+            if (tglVal instanceof Date) {
+                tglStatus = tglVal.toISOString().split('T')[0];
+            } else if (typeof tglVal === 'string' && tglVal.trim()) {
+                tglStatus = tglVal.trim();
+            } else {
+                tglStatus = String(row.getCell(7).text || '').trim();
+            }
+
+            const nomorSurat = String(row.getCell(8).text || '').trim();
+            const alasanPenghentian = String(row.getCell(9).text || '').trim();
+            const keterangan = String(row.getCell(10).text || '').trim();
+
+            rawRows.push({
+                row_num: rowNumber,
+                no_laporan: noLaporan,
+                status_lama: statusLama,
+                status_baru: statusBaru,
+                tgl_status: tglStatus,
+                nomor_surat: nomorSurat,
+                alasan_penghentian: alasanPenghentian,
+                keterangan: keterangan
+            });
+        });
+
+        if (!rawRows.length) {
+            throw new BadRequestException('Tidak ada baris data Laporan Polisi yang ditemukan di dalam file Excel.');
+        }
+
+        const scope = await resolveScope(this.dataSource, userId);
+
+        const noLpList = Array.from(new Set(rawRows.map(r => r.no_laporan)));
+        const dbLpRows = await this.dataSource.query(`
+            select lp.id, lp.no_laporan, lp.satker_id, lp.unit_satker_id, lp.status_id,
+                   sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
+                   (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
+                    where d.lp_id = lp.id and dt.status_target_id = lp.status_id
+                    order by d.tanggal_dokumen desc, d.id desc limit 1) as tgl_status,
+                   (select d.nomor_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
+                    where d.lp_id = lp.id and dt.status_target_id = lp.status_id
+                    order by d.tanggal_dokumen desc, d.id desc limit 1) as no_dokumen
+            from bdb_laporan_polisi lp
+            left join bdb_status_master sm on sm.id = lp.status_id
+            where lp.no_laporan = ANY($1) and lp.deleted_at is null
+        `, [noLpList]);
+
+        const lpMap = new Map<string, any>();
+        dbLpRows.forEach((r: any) => lpMap.set(r.no_laporan.toUpperCase(), r));
+
+        const STATUS_WHITELIST = new Set(['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA']);
+        const ALASAN_WHITELIST = new Set([
+            'Tidak Cukup Bukti',
+            'Bukan Tindak Pidana',
+            'Demi Hukum - Tersangka Meninggal',
+            'Demi Hukum - Ne Bis In Idem',
+            'Demi Hukum - Daluwarsa',
+            'Demi Hukum - Pengaduan Dicabut',
+            'Restorative Justice (RJ)'
+        ]);
+
+        const processedRows: any[] = [];
+        let readyCount = 0;
+        let skippedCount = 0;
+        let errorCount = 0;
+
+        for (const row of rawRows) {
+            const dbLp = lpMap.get(row.no_laporan.toUpperCase());
+
+            if (!dbLp) {
+                errorCount++;
+                processedRows.push({
+                    ...row,
+                    status_verifikasi: 'ERROR',
+                    pesan: 'Nomor LP tidak ditemukan di database CAS.'
+                });
+                continue;
+            }
+
+            if (!scope.all) {
+                const lpSatker = Number(dbLp.unit_satker_id || dbLp.satker_id);
+                if (lpSatker !== scope.satkerId) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Ditolak: Nomor LP di luar wewenang Satker Anda.'
+                    });
+                    continue;
+                }
+            }
+
+            if (!row.status_baru) {
+                skippedCount++;
+                processedRows.push({
+                    ...row,
+                    lp_id: dbLp.id,
+                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                    status_verifikasi: 'SKIPPED',
+                    pesan: 'Kolom Status Baru kosong (dilewati).'
+                });
+                continue;
+            }
+
+            if (!STATUS_WHITELIST.has(row.status_baru)) {
+                errorCount++;
+                processedRows.push({
+                    ...row,
+                    lp_id: dbLp.id,
+                    status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                    status_verifikasi: 'ERROR',
+                    pesan: `Status "${row.status_baru}" tidak terdaftar dalam pilihan resmi.`
+                });
+                continue;
+            }
+
+            if (row.status_baru === 'SP3' || row.status_baru === 'SP3_LIDIK') {
+                if (!row.alasan_penghentian) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Wajib memilih Alasan Penghentian untuk SP3 / SP3 Lidik.'
+                    });
+                    continue;
+                }
+                const matchAlasan = Array.from(ALASAN_WHITELIST).find(a => a.toLowerCase() === row.alasan_penghentian.toLowerCase());
+                if (!matchAlasan) {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: 'Alasan penghentian tidak sesuai daftar pilihan resmi.'
+                    });
+                    continue;
+                }
+                row.alasan_penghentian = matchAlasan;
+            }
+
+            const isDbCC = dbLp.status_kategori === 'CC';
+            const isNewCC = ['TAHAP_II', 'SP3', 'SP3_LIDIK', 'PERMA'].includes(row.status_baru);
+            const isSameStatus = (dbLp.status_code || '').toUpperCase() === row.status_baru;
+            const hasDateChange = row.tgl_status && row.tgl_status !== String(dbLp.tgl_status || '').slice(0, 10);
+            const hasDocChange = row.nomor_surat && row.nomor_surat !== String(dbLp.no_dokumen || '');
+
+            if (isDbCC) {
+                if (isSameStatus) {
+                    if (hasDateChange || hasDocChange) {
+                        readyCount++;
+                        processedRows.push({
+                            ...row,
+                            lp_id: dbLp.id,
+                            status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                            status_verifikasi: 'READY',
+                            pesan: 'Pembaruan tanggal / nomor dokumen perkara CC.'
+                        });
+                    } else {
+                        skippedCount++;
+                        processedRows.push({
+                            ...row,
+                            lp_id: dbLp.id,
+                            status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                            status_verifikasi: 'SKIPPED',
+                            pesan: 'Perkara sudah tuntas (CC) dan data identik (dilewati).'
+                        });
+                    }
+                } else if (!isNewCC) {
+                    skippedCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                        status_verifikasi: 'SKIPPED',
+                        pesan: 'Perkara sudah tuntas (CC), tidak dapat diturunkan kembali ke tahap CT.'
+                    });
+                } else {
+                    readyCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                        status_verifikasi: 'READY',
+                        pesan: `Update status CC ke ${row.status_baru}.`
+                    });
+                }
+                continue;
+            }
+
+            if (isSameStatus) {
+                if (hasDateChange || hasDocChange) {
+                    readyCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                        status_verifikasi: 'READY',
+                        pesan: 'Pembaruan tanggal / nomor dokumen.'
+                    });
+                } else {
+                    skippedCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code,
+                        status_verifikasi: 'SKIPPED',
+                        pesan: 'Status sama dengan data sistem saat ini (dilewati).'
+                    });
+                }
+                continue;
+            }
+
+            readyCount++;
+            processedRows.push({
+                ...row,
+                lp_id: dbLp.id,
+                status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                status_verifikasi: 'READY',
+                pesan: `Siap diperbarui ke status ${row.status_baru}.`
+            });
+        }
+
+        const previewToken = encodeId(`PREVIEW:${userId || 0}:${Date.now()}:${readyCount}`);
+
+        return {
+            summary: {
+                total: rawRows.length,
+                ready: readyCount,
+                skipped: skippedCount,
+                error: errorCount,
+                original_filename: originalFilename || 'import_status.xlsx'
+            },
+            rows: processedRows,
+            token: previewToken
+        };
+    }
+
+    /**
+     * Eksekusi simpan massal (Commit) baris-baris LP yang status_verifikasi === 'READY'.
+     */
+    async commitBulkImport(rows: any[], userId?: number, token?: string): Promise<{ updated: number; message: string }> {
+        if (!Array.isArray(rows) || !rows.length) {
+            throw new BadRequestException('Tidak ada data baris yang dikirim.');
+        }
+
+        const readyRows = rows.filter(r => r.status_verifikasi === 'READY' && r.lp_id && r.status_baru);
+        if (!readyRows.length) {
+            throw new BadRequestException('Tidak ada baris yang memenuhi syarat untuk diperbarui.');
+        }
+
+        const scope = await resolveScope(this.dataSource, userId);
+
+        const statusRows = await this.dataSource.query('select id, code, nama, kategori from bdb_status_master');
+        const statusMap = new Map<string, any>();
+        statusRows.forEach((s: any) => statusMap.set(s.code.toUpperCase(), s));
+
+        const docTypes = await this.dataSource.query('select id, code, nama, status_target_id from bdb_document_type_master where aktif = true');
+        const docTypeMap = new Map<number, any>();
+        docTypes.forEach((d: any) => {
+            if (d.status_target_id && !docTypeMap.has(d.status_target_id)) {
+                docTypeMap.set(d.status_target_id, d);
+            }
+        });
+
+        const runner = this.dataSource.createQueryRunner();
+        await runner.connect();
+        await runner.startTransaction();
+
+        let updatedCount = 0;
+        try {
+            for (const item of readyRows) {
+                const targetStat = statusMap.get(item.status_baru.toUpperCase());
+                if (!targetStat) continue;
+
+                if (!scope.all) {
+                    const check = await runner.query(
+                        `select id from bdb_laporan_polisi 
+                         where id = $1 and coalesce(unit_satker_id, satker_id) = $2 and deleted_at is null`,
+                        [item.lp_id, scope.satkerId]
+                    );
+                    if (!check.length) continue;
+                }
+
+                const docType = docTypeMap.get(targetStat.id);
+                const docTypeId = docType?.id || 1;
+                const tglDokumen = item.tgl_status ? item.tgl_status : null;
+                const noDokumen = item.nomor_surat || null;
+                const docData = {
+                    alasan_penghentian: item.alasan_penghentian || null,
+                    keterangan: item.keterangan || null,
+                    imported_via: 'BULK_IMPORT_EXCEL',
+                    imported_at: new Date().toISOString()
+                };
+
+                await runner.query(
+                    `insert into bdb_dokumen (lp_id, document_type_id, nomor_dokumen, tanggal_dokumen, data, lampiran, created_by)
+                     values ($1, $2, $3, $4::date, $5::jsonb, '[]'::jsonb, $6)`,
+                    [item.lp_id, docTypeId, noDokumen, tglDokumen, JSON.stringify(docData), userId || null]
+                );
+
+                if (targetStat.kategori === 'CC') {
+                    await runner.query(
+                        `update bdb_laporan_polisi
+                         set status_id = $2,
+                             tanggal_selesai = coalesce($3::date, current_date),
+                             updated_at = now()
+                         where id = $1`,
+                        [item.lp_id, targetStat.id, tglDokumen]
+                    );
+                } else {
+                    await runner.query(
+                        `update bdb_laporan_polisi
+                         set status_id = $2,
+                             tanggal_selesai = null,
+                             updated_at = now()
+                         where id = $1`,
+                        [item.lp_id, targetStat.id]
+                    );
+                }
+
+                updatedCount++;
+            }
+
+            await runner.commitTransaction();
+        } catch (e: any) {
+            await runner.rollbackTransaction();
+            this.logger.error('Error saat commit bulk import status: ' + (e?.message || e));
+            throw new BadRequestException('Gagal menerapkan pembaruan status massal: ' + (e?.message || e));
+        } finally {
+            await runner.release();
+        }
+
+        try {
+            await this.audit.log({
+                userId,
+                action: 'BULK_IMPORT_STATUS_COMMIT',
+                entity: 'laporan_polisi',
+                meta: {
+                    updated_count: updatedCount,
+                    token
+                }
+            });
+        } catch {}
+
+        try {
+            if (this.kinerjaPerkara && typeof (this.kinerjaPerkara as any).reconcileSnapshot === 'function') {
+                (this.kinerjaPerkara as any).reconcileSnapshot().catch(() => {});
+            }
+        } catch {}
+
+        return {
+            updated: updatedCount,
+            message: `Berhasil memperbarui ${updatedCount} Laporan Polisi.`
+        };
+    }
+
 }
