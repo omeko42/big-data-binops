@@ -2843,7 +2843,19 @@ export class LaporanPolisiService {
 
         // Query LP aktif milik satker terurut dari terbaru ke terlama
         const lpRows = await this.dataSource.query(`
-            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama, lp.uraian_singkat,
+            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_nama,
+                   coalesce(
+                     (select string_agg(x.txt, '; ') from (
+                       select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), '(tanpa kategori)')
+                           || case when coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) is not null
+                                   then ' — ' || coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) else '' end as txt
+                       from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                     ) x),
+                     nullif(lp.payload_json->'kategori_gk'->>'keterangan', ''),
+                     nullif(regexp_replace(lp.payload_json->>'apa_terjadi', '^[-—\\s]+', ''), ''),
+                     nullif(lp.kategori, ''),
+                     '(Belum Terkategori)'
+                   ) as dugaan_tindak_pidana,
                    sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
                    (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
                     where d.lp_id = lp.id and dt.status_target_id = lp.status_id
@@ -2877,7 +2889,7 @@ export class LaporanPolisiService {
             { header: 'No. Laporan Polisi', key: 'no_laporan', width: 38 },
             { header: 'Satker Penanganan', key: 'satker_nama', width: 32 },
             { header: 'Tanggal LP', key: 'tgl_laporan', width: 16 },
-            { header: 'Dugaan Tindak Pidana', key: 'uraian_singkat', width: 30 },
+            { header: 'Dugaan Tindak Pidana', key: 'dugaan_tindak_pidana', width: 36 },
             { header: 'Status Saat Ini', key: 'status_saat_ini', width: 18 },
             { header: 'Status Baru *', key: 'status_baru', width: 20 },
             { header: 'Tanggal Status (YYYY-MM-DD) *', key: 'tgl_status', width: 26 },
@@ -2912,7 +2924,7 @@ export class LaporanPolisiService {
                 no_laporan: r.no_laporan,
                 satker_nama: r.satker_nama || satkerNama,
                 tgl_laporan: r.tgl_laporan || '-',
-                uraian_singkat: r.uraian_singkat || '-',
+                dugaan_tindak_pidana: r.dugaan_tindak_pidana || '-',
                 status_saat_ini: r.status_nama || r.status_code || 'Belum Update',
                 status_baru: '',
                 tgl_status: '',
