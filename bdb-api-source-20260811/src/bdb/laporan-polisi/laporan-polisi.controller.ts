@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { LaporanPolisiService } from './laporan-polisi.service';
@@ -11,8 +13,40 @@ export class LaporanPolisiController {
     @UseGuards(AuthGuard)
     @UseInterceptors(CurrentUserInterceptor)
     @Get('stats')
-    stats(@Req() req: any) {
-        return this.service.stats(req?.user?.id ? Number(req.user.id) : undefined);
+    stats(
+        @Req() req: any,
+        @Query('target_satker_id') targetSatkerId?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+        @Query('functionDomain') functionDomain?: string,
+        @Query('organizationDomain') organizationDomain?: string,
+        @Query('search') search?: string,
+        @Query('level') level?: string,
+        @Query('model') model?: string,
+        @Query('status') status?: string,
+        @Query('jenis_kejahatan_ids') jenisKejahatanIds?: string
+    ) {
+        return this.service.stats(
+            req?.user?.id ? Number(req.user.id) : undefined,
+            targetSatkerId ? Number(targetSatkerId) : undefined,
+            from,
+            to,
+            functionDomain,
+            organizationDomain,
+            search,
+            level,
+            model,
+            status,
+            jenisKejahatanIds
+        );
+    }
+
+    /** Pilihan satker bawahan + dimensi filter yang sudah dibatasi domain fungsi akun. */
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    @Get('monitoring-options')
+    monitoringOptions(@Req() req: any) {
+        return this.service.monitoringOptions(req?.user?.id ? Number(req.user.id) : undefined);
     }
 
     /** Petakan LP DORS -> Laporan Polisi (yang kode_pusiknas-nya cocok satker). */
@@ -66,29 +100,62 @@ export class LaporanPolisiController {
         return this.service.deleteAllUnmapped({ search: body?.search }, req?.user?.id ? Number(req.user.id) : undefined);
     }
 
+    /** Catat pernyataan akses supervisi/impersonate masuk ke satker bawahan. */
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    @Post('acknowledge-satker-access')
+    acknowledgeSatkerAccess(
+        @Body() body: { target_satker_id: number; pernyataan: string; alasan?: string },
+        @Req() req: any
+    ) {
+        return this.service.recordSatkerAccessStatement({
+            userId: Number(req?.user?.id),
+            targetSatkerId: Number(body?.target_satker_id),
+            pernyataan: body?.pernyataan,
+            alasan: body?.alasan,
+            ipAddress: req?.ip || req?.headers?.['x-forwarded-for'],
+            userAgent: req?.headers?.['user-agent']
+        });
+    }
+
     /** Set tingkat kesulitan LP. */
     @UseGuards(AuthGuard)
     @UseInterceptors(CurrentUserInterceptor)
     @Post(':id/tingkat-kesulitan')
-    setTingkatKesulitan(@Param('id') id: string, @Body() body: { tingkat_kesulitan?: string }, @Req() req: any) {
-        return this.service.setTingkatKesulitan(parseInt(id, 10), body?.tingkat_kesulitan, req?.user?.id ? Number(req.user.id) : undefined);
+    setTingkatKesulitan(@Param('id') id: string, @Body() body: { tingkat_kesulitan?: string; pernyataan_tindakan?: string; alasan_tindakan?: string }, @Req() req: any) {
+        return this.service.setTingkatKesulitan(
+            parseInt(id, 10),
+            body?.tingkat_kesulitan,
+            req?.user?.id ? Number(req.user.id) : undefined,
+            { pernyataan: body?.pernyataan_tindakan, alasan: body?.alasan_tindakan }
+        );
     }
 
     /** Set Sub Dit/Unit yang menangani (freetext manual). */
     @UseGuards(AuthGuard)
     @UseInterceptors(CurrentUserInterceptor)
     @Post(':id/sub-dit-penanganan')
-    setSubDitPenanganan(@Param('id') id: string, @Body() body: { sub_dit_penanganan?: string }, @Req() req: any) {
-        return this.service.setSubDitPenanganan(parseInt(id, 10), body?.sub_dit_penanganan, req?.user?.id ? Number(req.user.id) : undefined);
+    setSubDitPenanganan(@Param('id') id: string, @Body() body: { sub_dit_penanganan?: string; pernyataan_tindakan?: string; alasan_tindakan?: string }, @Req() req: any) {
+        return this.service.setSubDitPenanganan(
+            parseInt(id, 10),
+            body?.sub_dit_penanganan,
+            req?.user?.id ? Number(req.user.id) : undefined,
+            { pernyataan: body?.pernyataan_tindakan, alasan: body?.alasan_tindakan }
+        );
     }
 
     /** Tag/lepas LP ke operasi/satgas (harus berstatus AKTIF, atau null untuk melepas). */
     @UseGuards(AuthGuard)
     @UseInterceptors(CurrentUserInterceptor)
     @Post(':id/operasi-satgas')
-    setOperasiSatgas(@Param('id') id: string, @Body() body: { operasi_satgas_id?: number | null }, @Req() req: any) {
+    setOperasiSatgas(@Param('id') id: string, @Body() body: { operasi_satgas_id?: number | null; pernyataan_tindakan?: string; alasan_tindakan?: string }, @Req() req: any) {
         const v = body?.operasi_satgas_id;
-        return this.service.setOperasiSatgas(parseInt(id, 10), v === undefined || v === null || v === ('' as any) ? null : Number(v), req?.user?.id ? Number(req.user.id) : undefined);
+        return this.service.setOperasiSatgas(
+            parseInt(id, 10),
+            v === undefined || v === null || v === ('' as any) ? null : Number(v),
+            req?.user?.id ? Number(req.user.id) : undefined,
+            { pernyataan: body?.pernyataan_tindakan, alasan: body?.alasan_tindakan }
+        );
     }
 
     /** Hapus (soft delete) LP -- wajib keterangan alasan. Superadmin-only. */
@@ -105,6 +172,75 @@ export class LaporanPolisiController {
     @Post(':id/correct-satker')
     correctSatker(@Param('id') id: string, @Body() body: { satker_id?: number; keterangan?: string }, @Req() req: any) {
         return this.service.correctSatker(parseInt(id, 10), Number(body?.satker_id), body?.keterangan, req?.user?.id ? Number(req.user.id) : undefined);
+    }
+
+    /** Unduh template Excel bulk import status LP khusus satker operator. */
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    @Get('bulk-import/template')
+    async bulkImportTemplate(
+        @Res() res: Response,
+        @Req() req: any,
+        @Query('year') year?: string,
+        @Query('target_satker_id') targetSatkerId?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+        @Query('jenis_kejahatan_ids') jenisKejahatanIds?: string,
+        @Query('functionDomain') functionDomain?: string,
+        @Query('organizationDomain') organizationDomain?: string,
+        @Query('level') level?: string,
+        @Query('model') model?: string,
+        @Query('status') status?: string,
+        @Query('search') search?: string
+    ) {
+        const userId = req?.user?.id ? Number(req.user.id) : undefined;
+        const targetId = targetSatkerId ? Number(targetSatkerId) : undefined;
+        const result = await this.service.buildBulkImportTemplate(
+            userId,
+            year,
+            targetId,
+            from,
+            to,
+            jenisKejahatanIds,
+            functionDomain,
+            organizationDomain,
+            level,
+            model,
+            status,
+            search
+        );
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+        res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition, X-Suggested-Filename');
+        res.setHeader('X-Suggested-Filename', result.filename);
+        return res.send(result.buffer);
+    }
+
+    /** Preview dan validasi file Excel bulk import sebelum disimpan (dry-run). */
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor, FileInterceptor('file'))
+    @Post('bulk-import/preview')
+    async bulkImportPreview(
+        @Req() req: any,
+        @UploadedFile() file: any
+    ) {
+        if (!file || !file.buffer) throw new BadRequestException('File Excel (.xlsx) wajib diunggah.');
+        const userId = req?.user?.id ? Number(req.user.id) : undefined;
+        const result = await this.service.previewBulkImport(file.buffer, userId, file.originalname);
+        return { status: 1, data: result };
+    }
+
+    /** Eksekusi commit bulk update status LP dari baris yang valid. */
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    @Post('bulk-import/commit')
+    async bulkImportCommit(
+        @Req() req: any,
+        @Body() body: { rows?: any[]; token?: string }
+    ) {
+        const userId = req?.user?.id ? Number(req.user.id) : undefined;
+        const result = await this.service.commitBulkImport(body?.rows || [], userId, body?.token);
+        return { status: 1, data: result, message: result.message };
     }
 
     /** Pencarian global No. LP / nama / NIK pihak terlibat, dedup per LP. Min. 5 karakter.
@@ -137,9 +273,15 @@ export class LaporanPolisiController {
         @Query('status') status?: string,
         @Query('from') from?: string,
         @Query('to') to?: string,
+        @Query('target_satker_id') targetSatkerId?: string,
+        @Query('jenis_kejahatan_ids') jenisKejahatanIds?: string,
+        @Query('golongan_kejahatan_ids') golonganKejahatanIds?: string,
+        @Query('monitoring_tags') monitoringTags?: string,
+        @Query('functionDomain') functionDomain?: string,
+        @Query('organizationDomain') organizationDomain?: string,
         @Query('page') page?: string,
         @Query('row') row?: string
     ) {
-        return this.service.list({ search, level, model, status, from, to, page: page ? parseInt(page, 10) : 1, row: row ? parseInt(row, 10) : 25 }, req?.user?.id ? Number(req.user.id) : undefined);
+        return this.service.list({ search, level, model, status, from, to, targetSatkerId, jenisKejahatanIds, golonganKejahatanIds, monitoringTags, functionDomain, organizationDomain, page: page ? parseInt(page, 10) : 1, row: row ? parseInt(row, 10) : 25 }, req?.user?.id ? Number(req.user.id) : undefined);
     }
 }
