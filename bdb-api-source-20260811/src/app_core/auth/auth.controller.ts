@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Patch, Post, Req, Request, Res, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Req, Request, Res, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { receivedInvitation, RefreshTokenDto, Register, RegisterTOTP, UserDto, verifyTOTP } from './user/dto/user.dto';
@@ -241,5 +241,64 @@ export class AuthController {
     @UseInterceptors(CurrentUserInterceptor)
     async resetPassword(@Body() updateUserDto: ResetPasswordDto, @CurrentUser() authUser, @Res() res, @Req() req) {
         return res.sendSuccess(await this.authService.resetPassword(updateUserDto, authUser, req));
+    }
+
+    @Get('passkey/register-options')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    async passkeyRegisterOptions(@CurrentUser() authUser, @Res() res) {
+        return res.sendSuccess(await this.authService.passkeyRegisterOptions(authUser));
+    }
+
+    @Post('passkey/register-verify')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    async passkeyRegisterVerify(@CurrentUser() authUser, @Body() dto: any, @Headers('user-agent') userAgent: string, @Res() res) {
+        const parser = new UAParserLib.UAParser(userAgent);
+        const result = parser.getResult();
+        return res.sendSuccess(await this.authService.passkeyRegisterVerify(authUser, dto, result));
+    }
+
+    @Get('passkey/devices')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    async passkeyGetDevices(@CurrentUser() authUser, @Res() res) {
+        return res.sendSuccess(await this.authService.passkeyGetDevices(authUser));
+    }
+
+    @Delete('passkey/devices/:id')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    async passkeyDeleteDevice(@CurrentUser() authUser, @Param('id') id: string, @Body() body: any, @Query() query: any, @Req() req, @Res() res) {
+        const dto = Object.assign({}, req?.body || {}, body || {}, query || {});
+        return res.sendSuccess(await this.authService.passkeyDeleteDevice(authUser, parseInt(id, 10), dto));
+    }
+
+    @Get('passkey/login-options')
+    async passkeyLoginOptions(@Query('username') username: string, @Res() res) {
+        return res.sendSuccess(await this.authService.passkeyLoginOptions(username));
+    }
+
+    @Post('passkey/login-verify')
+    async passkeyLoginVerify(@Body() dto: any, @Headers('user-agent') userAgent: string, @Req() req, @Res() res) {
+        const parser = new UAParserLib.UAParser(userAgent);
+        const result = parser.getResult();
+        try {
+            const data = await this.authService.passkeyLoginVerify(dto, result);
+            const payload: any = data?.access_token ? this.jwtService.decode(data.access_token) : null;
+            if (payload && data?.access_token) {
+                const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+                res.cookie('token', data.access_token, {
+                    expires: expiresAt,
+                    httpOnly: true,
+                    path: '/',
+                    sameSite: 'none',
+                    secure: true
+                });
+            }
+            return res.sendSuccess(data);
+        } catch (error) {
+            return res.sendBadRequest(error.message, error.response);
+        }
     }
 }
