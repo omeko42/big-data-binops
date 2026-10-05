@@ -1205,12 +1205,21 @@ export class SatkerService implements OnModuleInit {
         if (functionDomain) {
             const fd = functionDomain.trim().toUpperCase();
             if (fd === 'INTERNAL_RESERSE') {
-                params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
-                whereClauses.push('s.function_domain = any($' + params.length + ')');
+                if (scope.isViewer) {
+                    params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+                    whereClauses.push('s.function_domain = any($' + params.length + ')');
+                } else {
+                    params.push(['INTERNAL_RESERSE']);
+                    whereClauses.push('s.function_domain = any($' + params.length + ')');
+                    whereClauses.push('s.id not in (1, 13)');
+                    whereClauses.push("s.deskripsi not in ('BARESKRIM POLRI', 'POLRI (MABES POLRI)')");
+                }
             } else if (fd === 'EKSTERNAL_RESERSE') {
                 params.push(['EKSTERNAL_RESERSE']);
                 whereClauses.push('s.function_domain = any($' + params.length + ')');
             }
+        } else if (!scope.isViewer) {
+            whereClauses.push("not (s.id in (1, 13) or s.function_domain = 'STRUCTURAL' or s.deskripsi in ('BARESKRIM POLRI', 'POLRI (MABES POLRI)'))");
         }
 
         if (level) {
