@@ -292,14 +292,14 @@ export class AuthService {
     }
 
     private async createLoginSession(user: User, result: any, method: string, impersonatedBy?: { id: number; name: string }) {
-        const { password, security_pin_hash, totp_secret, photo_url, foto, ...userWithoutPassword } = user as any;
+        const compactUser: any = { id: user.id, name: user.name, username: user.username, email: user.email, role_bdb: user.role_bdb, role_name: user.role_name, organisasi_id: (user as any).organisasi_id || (user as any).organisasiId || (user as any).Organisasi?.id || 1, scope_satker_id: (user as any).scope_satker_id, scope_satker_key: (user as any).scope_satker_key };
         const device = await this.deviceService.create(user.id, result.device.model || 'Unknown Device', result.device.vendor || 'Unknown Token', result.os.name || 'Unknown OS', result.browser.name + result.browser.version || 'unknown browser');
         const payload: any = {
             id: user.id,
             username: user.name,
             device_id: device.id,
             device_token: device.device_token,
-            user: userWithoutPassword
+            user: compactUser
         };
         if (impersonatedBy) payload.impersonated_by = impersonatedBy;
         const accessToken = await this.jwtService.signAsync(payload, {
@@ -993,7 +993,7 @@ export class AuthService {
                 errors: { totp_token: ['Masukkan 6 digit kode authenticator'] }
             });
         }
-        authenticator.options = { window: 1 };
+        authenticator.options = { window: [4, 4] };
         const isValid = authenticator.check(String(verifyTotp.totp_token).trim(), user.totp_secret);
         if (!isValid) {
             throw new BadRequestException({
