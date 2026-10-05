@@ -1,0 +1,63 @@
+
+/* ========================================================================= */
+/* UNIVERSAL Z-INDEX & MODAL STACKING FIX (CAS POLRI)                        */
+/* ========================================================================= */
+.p-dropdown-panel,
+.p-multiselect-panel,
+.p-autocomplete-panel,
+.p-datepicker,
+.p-overlaypanel,
+.p-tieredmenu,
+.p-menu,
+.p-contextmenu,
+.p-tooltip {
+  z-index: 99999 !important;
+}
+
+/* Stacking for Dialogs & Modals: Primary Modal */
+.p-dialog-mask {
+  z-index: 2600 !important;
+}
+.p-dialog {
+  z-index: 2601 !important;
+}
+
+/* Secondary Dialogs / Modals (Confirmations, Child Dialogs, Alert Modals over Primary Modal) */
+.p-dialog-mask ~ .p-dialog-mask,
+.p-dialog-mask:nth-of-type(n+2),
+.p-confirm-dialog-mask,
+.p-dialog-mask:has(.p-confirm-dialog),
+.p-confirm-dialog {
+  z-index: 3000 !important;
+}
+.p-dialog-mask ~ .p-dialog-mask .p-dialog,
+.p-dialog-mask:nth-of-type(n+2) .p-dialog,
+.p-confirm-dialog-mask .p-dialog,
+.p-dialog-mask:has(.p-confirm-dialog) .p-dialog {
+  z-index: 3001 !important;
+}
+
+/* Tertiary Dialogs (Deeply nested modals) */
+.p-dialog-mask ~ .p-dialog-mask ~ .p-dialog-mask,
+.p-dialog-mask:nth-of-type(n+3) {
+  z-index: 3500 !important;
+}
+.p-dialog-mask ~ .p-dialog-mask ~ .p-dialog-mask .p-dialog,
+.p-dialog-mask:nth-of-type(n+3) .p-dialog {
+  z-index: 3501 !important;
+}
+
+/* Ensure inline elements inside dialog content are never hidden under dialog footer */
+.p-dialog .p-dialog-content {
+  position: relative !important;
+  z-index: 10 !important;
+}
+.p-dialog .p-dialog-footer {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.p-toast,
+.global-loader {
+  z-index: 10000 !important;
+}
