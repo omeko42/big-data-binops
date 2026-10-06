@@ -420,6 +420,9 @@ let JukrahService = class JukrahService {
                 created_at: r.created_at,
                 author_id: Number(r.author_id),
                 author_handle: handle,
+                author_callsign: (handle.startsWith('@') ? handle.slice(1) : handle),
+                author_username: r.username || (handle.startsWith('@') ? handle.slice(1) : handle),
+                author_role: r.role_bdb,
                 author_name: canSeeReal ? (r.raw_name || handle) : handle,
                 author_satker: r.satker || 'Mabes',
                 author_photo: r.photo_url,
@@ -1091,10 +1094,24 @@ let JukrahService = class JukrahService {
     }
 
     async getNetworkProfile(user, targetId) {
-        const uRes = await this.dataSource.query(
-            'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE u.id = $1 LIMIT 1',
-            [targetId]
-        );
+        const cleanTarget = String(targetId || '').replace(/^@/, '').trim();
+        let targetUid = null;
+        if (/^\d+$/.test(cleanTarget)) {
+            targetUid = Number(cleanTarget);
+        } else if (/^user_(\d+)/i.test(cleanTarget)) {
+            targetUid = Number(cleanTarget.match(/^user_(\d+)/i)[1]);
+        }
+
+        let sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id ';
+        let params = [];
+        if (targetUid) {
+            sql += 'WHERE u.id = $1 LIMIT 1';
+            params = [targetUid];
+        } else {
+            sql += 'WHERE lower(u.username) = $1 OR lower(u.callsign) = $1 LIMIT 1';
+            params = [cleanTarget.toLowerCase()];
+        }
+        const uRes = await this.dataSource.query(sql, params);
         if (!uRes || !uRes.length) throw new common_1.NotFoundException('Personil tidak ditemukan');
         const target = uRes[0];
         let policeProfile = null;
