@@ -104,7 +104,20 @@ export class JukrahService {
             const stream = await this.minio.getObjectStream(verified.key);
             res.setHeader('Content-Type', verified.mime || 'application/octet-stream');
             res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-            res.setHeader('Content-Disposition', 'inline');
+            const reqUrl = res?.req?.originalUrl || res?.req?.url || '';
+            const isDownload = reqUrl.includes('download=1');
+            if (isDownload) {
+                let dlFilename = 'berkas-lampiran';
+                const matchName = reqUrl.match(/[?&]filename=([^&]+)/);
+                if (matchName && matchName[1]) {
+                    dlFilename = decodeURIComponent(matchName[1]);
+                } else if (verified.key) {
+                    dlFilename = verified.key.split('/').pop() || 'berkas-lampiran';
+                }
+                res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(dlFilename)}"`);
+            } else {
+                res.setHeader('Content-Disposition', 'inline');
+            }
             stream.pipe(res);
         } catch (e: any) {
             this.logger.error(`Stream error key ${verified.key}: ${e.message}`);
@@ -117,7 +130,7 @@ export class JukrahService {
     // =========================================================================
 
     /** Ambil feed linimasa sosial dengan filter audiens dan penyamaran identitas canonical. */
-    async getFeed(user: any, opts: { page?: number; limit?: number; filter?: string; type?: string; search?: string; tag?: string; satker_id?: number }) {
+    async getFeed(user: any, opts: { page?: number; limit?: number; filter?: string; type?: string; search?: string; tag?: string; satker_id?: number; author_id?: number | string }) {
         await this.ensureTable();
         const uid = Number(user?.id || 0);
         const userSatkerId = Number(user?.scope_satker_id || 0);
@@ -135,12 +148,17 @@ export class JukrahService {
         let audienceFilter = `(
             p.author_id = $1
             OR p.audience_type = 'public'
-            OR (p.audience_type = 'regional' AND ($2 = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR ${isGlobalAdmin ? 'true' : 'false'}))
-            OR (p.audience_type = 'friends' AND (p.author_id = $1 OR u.scope_satker_id = $2))
+            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR ${isGlobalAdmin ? 'true' : 'false'}))
+            OR (p.audience_type = 'friends' AND (p.author_id = $1 OR u.scope_satker_id = $2::int))
         )`;
         conditions.push(audienceFilter);
 
         // Filter tab medsos (semua, tersimpan, postingan saya, regional, jukrah)
+        if (opts.author_id) {
+            params.push(Number(opts.author_id));
+            conditions.push("p.author_id = $" + params.length);
+        }
+
         const filterType = String(opts.type || opts.filter || 'all').toLowerCase();
         if (filterType === 'saved') {
             conditions.push(`EXISTS (SELECT 1 FROM bdb_social_bookmarks bm_f WHERE bm_f.post_id = p.id AND bm_f.user_id = $1)`);
@@ -184,6 +202,7 @@ export class JukrahService {
                 u.name as raw_author_name,
                 u.username as author_username,
                 u.callsign as author_callsign,
+                u.email_polri as author_email_polri,
                 u.role_bdb as author_role,
                 u.photo_url as author_photo,
                 u.scope_satker_id as author_satker_id,
@@ -211,15 +230,31 @@ export class JukrahService {
         // Transform data: Canonical Handle, penyamaran identitas, dan media tokenized stream
         const posts = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
-            const canSeeRealName = isGlobalAdmin || isSelf;
-
             const isUserOne = Number(r.author_id) === 1 || r.author_username === 'omeko11' || r.author_callsign === 'omeko11';
-            const handle = isUserOne ? '@omeko11' : (r.author_callsign ? `@${r.author_callsign}` : (r.author_username ? `@${r.author_username}` : `@pers_${r.author_id}`));
-            const displayName = isUserOne ? 'EKO' : canSeeRealName ? (r.raw_author_name || handle) : handle;
+
+            const nrpMatch = (r.author_email_polri || '').match(/^(\d+)@/);
+            const derivedNrp = nrpMatch ? nrpMatch[1] : (r.author_username && r.author_username.replace(/^Nrp\./i, '')) || '';
+
+            const formatSOPHandle = (rawCallsign: string, authorId: any, username: string) => {
+                const idStr = String(authorId || '');
+                if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
+                const c = String(rawCallsign || '').trim().replace(/^@/, '');
+                const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+                if (c && !invalidPlaceholders.includes(c.toLowerCase())) return '@' + c;
+                const u = String(username || '').trim().replace(/^@/, '');
+                if (u && !invalidPlaceholders.includes(u.toLowerCase())) return '@' + u;
+                let num = 0;
+                for (let i = 0; i < idStr.length; i++) num = (num * 31 + idStr.charCodeAt(i)) % 100000;
+                const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+                return '@user_' + (idStr || '0') + code;
+            };
+
+            const handle = formatSOPHandle(r.author_callsign, r.author_id, r.author_username);
+            const displayName = isUserOne ? 'EKO' : (r.raw_author_name || (derivedNrp ? `Personil CAS (${derivedNrp})` : handle));
+            const authorSatker = isUserOne ? 'Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
             const isVerified = isUserOne ? true : (r.author_role && r.author_role !== 'sharese');
             const authorRole = isUserOne ? 'superadmin' : r.author_role;
 
-            // Tokenized media URLs
             const media = (r.media_urls || []).map((m: any) => ({
                 ...m,
                 stream_url: m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid)}` : null
@@ -230,12 +265,15 @@ export class JukrahService {
                 author_id: Number(r.author_id),
                 author_name: displayName,
                 author_handle: handle,
-                author_callsign: isUserOne ? 'omeko11' : r.author_callsign,
-                author_username: isUserOne ? 'omeko11' : r.author_username,
-                raw_name: isUserOne ? 'EKO' : canSeeRealName ? r.raw_author_name : null,
+                author_callsign: isUserOne ? 'omeko11' : (r.author_callsign ? String(r.author_callsign).replace(/^@/, '') : null),
+                author_username: isUserOne ? 'omeko11' : (r.author_username ? String(r.author_username).replace(/^@/, '') : null),
+                author_nrp: derivedNrp,
+                raw_name: isUserOne ? 'EKO' : r.raw_author_name,
                 author_role: authorRole,
                 author_photo: r.author_photo,
-                author_satker: isUserOne ? 'Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Mabes Bareskrim'),
+                author_satker: authorSatker,
+                satker_name: authorSatker,
+                satker: authorSatker,
                 is_verified: isVerified,
                 audience_type: r.audience_type,
                 target_satker_ids: r.target_satker_ids,
@@ -586,46 +624,133 @@ export class JukrahService {
     }
 
     /** Ambil direktori personil Polri real dari database untuk jejaring CAS. */
-    async getNetworkUsers(user: any, q: { search?: string; satker?: string }) {
+    async getNetworkUsers(user: any, q: { search?: string; satker?: string; satker_id?: number; target_user_id?: number; scope?: string; page?: number; limit?: number }) {
+        const uid = Number(user?.id || 1);
         const search = (q.search || '').trim();
         const satker = (q.satker || '').trim();
+        const page = Math.max(1, Number(q.page) || 1);
+        const limit = Math.min(50, Math.max(1, Number(q.limit) || 10));
+        const offset = (page - 1) * limit;
+
         const params: any[] = [];
-        const conds: string[] = ["u.status = 'active'"];
+        const conds: string[] = ["(u.status = 'AKTIF' OR u.status = 'active')"];
 
         if (search) {
-            params.push(`%${search}%`);
-            conds.push(`(u.name ILIKE $${params.length} OR u.callsign ILIKE $${params.length} OR u.username ILIKE $${params.length})`);
+            params.push('%' + search + '%');
+            conds.push('(u.name ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ' OR u.username ILIKE $' + params.length + ')');
         }
         if (satker && satker !== 'all') {
-            params.push(`%${satker}%`);
-            conds.push(`(s.nama_singkat ILIKE $${params.length} OR s.deskripsi ILIKE $${params.length})`);
+            params.push('%' + satker + '%');
+            conds.push('(s.nama_singkat ILIKE $' + params.length + ' OR s.deskripsi ILIKE $' + params.length + ')');
         }
+        if (q.satker_id) {
+            params.push(Number(q.satker_id));
+            conds.push('u.scope_satker_id = $' + params.length);
+        }
+
+        const whereSql = conds.join(' AND ');
+
+        const countRes = await this.dataSource.query(
+            `SELECT COUNT(*)::int as total
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE ${whereSql}`,
+            params
+        );
+        const total = Number(countRes[0]?.total || 0);
+
+        const limitParams = [...params, limit, offset];
+        const pLimit = '$' + (limitParams.length - 1);
+        const pOffset = '$' + limitParams.length;
 
         const sql = `
             SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
-                   s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
-                   u.last_login_at
+                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
+                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
+                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
             FROM auth_users u
             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            WHERE ${conds.join(' AND ')}
-            ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST
-            LIMIT 50
+            WHERE ${whereSql}
+            ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
+            LIMIT ${pLimit} OFFSET ${pOffset}
         `;
-        const rows = await this.dataSource.query(sql, params);
+        const rows = await this.dataSource.query(sql, limitParams);
         const list = rows.map((r: any) => {
             const isUserOne = Number(r.id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
+            const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
+            const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
+
             return {
                 id: Number(r.id),
                 name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko11' : r.username,
-                callsign: isUserOne ? 'omeko11' : (r.callsign || r.username),
+                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
+                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
+                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
                 satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
+                scope_satker_name: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                scope_access_display: isUserOne ? 'Badan Reserse Kriminal Polri (Bareskrim)' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                nrp: derivedNrp,
                 role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
                 online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
-                photo: r.photo_url || null
+                photo: r.photo_url || null,
+                connections_count: Number(r.conn_count || 0)
             };
         });
-        return { status: 1, data: list };
+
+        return { 
+            status: 1, 
+            data: list, 
+            total, 
+            page, 
+            limit, 
+            total_pages: Math.ceil(total / limit) || 1 
+        };
+    }
+
+    /** Ambil profil detail personil CAS (real data tanpa dummy). */
+    async getNetworkProfile(user: any, targetId: number) {
+        const rows = await this.dataSource.query(
+            `SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
+                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
+                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
+                   (SELECT COUNT(*)::int FROM bdb_social_posts p WHERE p.author_id = u.id AND p.status = 'active') as post_count,
+                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
+            FROM auth_users u
+            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+            WHERE u.id = $1`,
+            [targetId]
+        );
+        if (!rows.length) throw new NotFoundException('Personil CAS tidak ditemukan.');
+        const r = rows[0];
+        const isUserOne = Number(r.id) === 1 || r.username === 'omeko11';
+        const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
+        const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
+
+        return {
+            status: 1,
+            data: {
+                id: Number(r.id),
+                name: isUserOne ? 'EKO' : r.name,
+                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
+                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
+                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
+                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
+                satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
+                scope_satker_name: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                scope_access_display: isUserOne ? 'Badan Reserse Kriminal Polri (Bareskrim)' : (r.satker_singkat || r.satker_nama || 'Polri'),
+                nrp: derivedNrp,
+                online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
+                photo: r.photo_url || null,
+                post_count: Number(r.post_count || 0),
+                connections_count: Number(r.conn_count || 0)
+            }
+        };
     }
 
     /** Ambil komentar sebuah postingan. */
@@ -938,21 +1063,6 @@ export class JukrahService {
     // WIDGET 1 BARIS DASHBOARD UTAMA (/cms/dashboard/main)
     // =========================================================================
 
-    private formatCallsign(rawCallsign?: string, authorId?: any, username?: string): string {
-        const idStr = String(authorId || '');
-        if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
-        const c = String(rawCallsign || '').trim().replace(/^@/, '');
-        const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
-        if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
-            return '@' + c.toLowerCase();
-        }
-        const seed = idStr || username || 'polri';
-        let num = 0;
-        for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
-        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-        return '@user_' + code;
-    }
-
     /** Ambil data 3 card horizontal widget medsos di dashboard utama. */
     async getDashboardWidgets(user: any) {
         const uid = Number(user?.id || 0);
@@ -981,7 +1091,7 @@ export class JukrahService {
         // 2. Card 2: Top Trending Discussion
         const trendingRows = await this.dataSource.query(
             `SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.id as author_id, u.username as author_username, u.callsign, s.nama_singkat as satker,
+                    u.callsign, s.nama_singkat as satker,
                     (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
@@ -993,7 +1103,7 @@ export class JukrahService {
         const topTrending = trendingRows.length ? {
             id: Number(trendingRows[0].id),
             snippet: trendingRows[0].content.slice(0, 85),
-            author_handle: this.formatCallsign(trendingRows[0].callsign, trendingRows[0].author_id, trendingRows[0].author_username),
+            author_handle: trendingRows[0].callsign ? `@${trendingRows[0].callsign}` : '@pers_reskrim',
             satker: trendingRows[0].satker || 'Polda',
             comments_count: Number(trendingRows[0].comments_count || 0),
             reaction_counts: trendingRows[0].reaction_counts || {}
@@ -1002,14 +1112,14 @@ export class JukrahService {
         // 3. Card 3: Quick Stats Akun Saya
         const userStats = await this.dataSource.query(
             `SELECT 
-                u.id, u.username, u.callsign,
+                u.callsign,
                 (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') as my_posts,
                 (SELECT COUNT(*)::int FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false AND category = 'dinas') as unread_dinas
              FROM auth_users u WHERE u.id = $1`,
             [uid]
         );
         const quickStats = {
-            callsign: this.formatCallsign(userStats[0]?.callsign, userStats[0]?.id, userStats[0]?.username),
+            callsign: userStats[0]?.callsign ? `@${userStats[0].callsign}` : null,
             my_posts: Number(userStats[0]?.my_posts || 0),
             unread_dinas: Number(userStats[0]?.unread_dinas || 0)
         };
