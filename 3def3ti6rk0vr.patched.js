@@ -575,20 +575,6 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
 
 (0,n.useEffect)(() => {
   fetchNetworkDirectory('', 'all', 1);
-  if (typeof window !== 'undefined') {
-    if (window.location.search && (window.location.search.includes('u=') || window.location.search.includes('id='))) {
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState({}, '', '/cms/profile');
-      }
-    }
-    setTimeout(() => {
-      if (typeof window !== 'undefined' && window.location.search && (window.location.search.includes('u=') || window.location.search.includes('id='))) {
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState({}, '', '/cms/profile');
-        }
-      }
-    }, 150);
-  }
 }, []);
 
 let handleOpenProfilePreview = async (user) => {

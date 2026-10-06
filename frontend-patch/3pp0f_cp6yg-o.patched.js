@@ -21,6 +21,18 @@ var IconSearch=iconF("search",[["circle",{cx:"11",cy:"11",r:"8",key:"1m05t"}],["
 var IconChevronLeft=iconF("chevron-left",[["path",{d:"m15 18-6-6 6-6",key:"1wnfg3"}]]);
 var IconChevronRight=iconF("chevron-right",[["path",{d:"m9 18 6-6-6-6",key:"31am7a"}]]);
 var IconBuilding=iconF("building",[["rect",{width:"16",height:"20",x:"4",y:"2",rx:"2",ry:"2",key:"12h41q"}],["path",{d:"M9 22v-4h6v4",key:"1129b8"}],["path",{d:"M8 6h.01",key:"11z4z7"}],["path",{d:"M16 6h.01",key:"1h0b7k"}],["path",{d:"M8 10h.01",key:"18s31z"}],["path",{d:"M16 10h.01",key:"5h61f4"}],["path",{d:"M8 14h.01",key:"g64r3z"}],["path",{d:"M16 14h.01",key:"1k8t0j"}]]);
+var IconHeart=iconF("heart",[["path",{d:"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z",key:"heart"}]]);
+
+function formatCount(num) {
+  var n = Number(num || 0);
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+if (typeof globalThis !== 'undefined') {
+  globalThis.formatCount = formatCount;
+}
+
 
 const REACTIONS = [
   { type: 'like', label: 'Suka', emoji: '👍', color: '#3b82f6' },
@@ -44,8 +56,9 @@ function timeAgo(dateStr) {
   return d + ' hari lalu';
 }
 
-function getVerificationBadge(role, isUserOne) {
-  if (isUserOne) return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
+function getVerificationBadge(role, isUserOne, userId, username) {
+  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+  if (isUserOne || SUPER_IDS.includes(String(userId)) || username === 'omeko11' || username === 'Yud08') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   var r = String(role || '').toLowerCase().trim();
   if (r === 'superadmin') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#10b981', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
@@ -59,9 +72,9 @@ function formatCallsign(rawCallsign, authorId, username) {
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
   var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-  if (c && !invalid.includes(c.toLowerCase())) return '@' + c;
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) return '@' + c;
   var u = String(username || '').trim().replace(/^@/, '');
-  if (u && !invalid.includes(u.toLowerCase())) return '@' + u;
+  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) return '@' + u;
   var seed = idStr || 'polri';
   var num = 0;
   for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
@@ -197,6 +210,9 @@ e.s(["default",0,function() {
   var [feedCategory, setFeedCategory] = (0,n.useState)('all'); // 'all', 'repost', 'saved', 'mine', 'official'
   var [visibilityFilter, setVisibilityFilter] = (0,n.useState)('all'); // 'all', 'public', 'regional', 'friends', 'private'
   var [currentPage, setCurrentPage] = (0,n.useState)(1);
+  var [lightboxImage, setLightboxImage] = (0,n.useState)(null);
+  var [carouselIndices, setCarouselIndices] = (0,n.useState)({});
+  var [expandedPosts, setExpandedPosts] = (0,n.useState)({});
 
   // Composer states
   var [content, setContent] = (0,n.useState)('');
@@ -258,16 +274,36 @@ e.s(["default",0,function() {
     if (audienceType === 'regional') {
       loadSatkers();
     }
+    if (typeof window !== 'undefined' && window.location.search && window.location.search.includes('post=')) {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, '', '/cms/broadcaster');
+      }
+    }
   }, [audienceType, loadSatkers]);
 
   var handleOpenUserProfile = (authorId, postContext) => {
     if (!authorId && !postContext) return;
     var targetId = authorId || postContext?.author_id || postContext?.id || postContext?.user_id;
-    if (!targetId) return;
-    if (String(targetId) === String(currentUser?.id || currentUser?.user_id)) {
+    var targetUsername = postContext?.author_username || postContext?.username || '';
+    var targetCallsign = postContext?.author_callsign || postContext?.callsign || '';
+    var isSelf = (currentUser?.id && String(targetId) === String(currentUser.id)) ||
+                 (currentUser?.username && targetUsername && String(targetUsername).toLowerCase() === String(currentUser.username).toLowerCase()) ||
+                 String(targetId) === '1' || targetUsername === 'omeko11';
+    if (isSelf) {
+      try { sessionStorage.removeItem('cas_view_user'); } catch(e) {}
       window.location.href = '/cms/profile';
     } else {
-      window.location.href = '/cms/profile?u=' + targetId;
+      var handle = targetCallsign || targetUsername || ('user_' + targetId);
+      handle = String(handle).replace(/^@/, '');
+      try {
+        sessionStorage.setItem('cas_view_user', JSON.stringify({
+          id: targetId,
+          handle: '@' + handle,
+          username: targetUsername || handle,
+          callsign: targetCallsign || handle
+        }));
+      } catch(e) {}
+      window.location.href = '/cms/profile';
     }
   };
 
@@ -516,16 +552,16 @@ e.s(["default",0,function() {
       return;
     }
     setActiveCommentsPostId(postId);
-    if (!postComments[postId]) {
-      setLoadingComments(!0);
-      try {
-        var res = await k.apiAuth.get('/bdb/jukrah/post/' + postId + '/comments');
-        setPostComments(prev => ({ ...prev, [postId]: res.data?.data || [] }));
-      } catch (err) {
-        setPostComments(prev => ({ ...prev, [postId]: [] }));
-      } finally {
-        setLoadingComments(!1);
-      }
+    setLoadingComments(!0);
+    try {
+      var res = await k.apiAuth.get('/bdb/jukrah/post/' + postId + '/comments');
+      var list = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
+      setPostComments(prev => ({ ...prev, [postId]: list }));
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+      setPostComments(prev => ({ ...prev, [postId]: prev[postId] || [] }));
+    } finally {
+      setLoadingComments(!1);
     }
   };
 
@@ -669,7 +705,7 @@ e.s(["default",0,function() {
   var userInitials = String(currentUser?.name || currentUser?.username || 'P').charAt(0).toUpperCase();
   var myHandle = formatCallsign(currentUser?.callsign, currentUser?.id, currentUser?.username);
 
-  return (0,t.jsxs)("div",{style:{maxWidth:"54rem",margin:"0 auto",paddingBottom:"3rem"},children:[
+  return (0,t.jsxs)("div",{style:{maxWidth:"74rem",margin:"0 auto",paddingBottom:"3.5rem"},children:[
     (0,t.jsx)(d.Toast,{ref:toastRef}),
     (0,t.jsx)(m.ConfirmDialog,{}),
 
@@ -703,7 +739,82 @@ e.s(["default",0,function() {
       ]})
     }),
 
-    // Interactive Quick Composer Card
+    
+    // Sticky Search Box Header
+    (0,t.jsxs)("div",{
+      style:{
+        position:"sticky",
+        top:"calc(var(--cms-header-h, 4rem) + 0.5rem)",
+        zIndex:30,
+        background:"var(--cas-bg-surface, #ffffff)",
+        backdropFilter:"blur(12px)",
+        boxShadow:"var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))",
+        borderRadius:"12px",
+        border:"1px solid var(--cas-border, #cbd5e1)",
+        padding:"0.75rem 1rem",
+        marginBottom:"1.25rem",
+        display:"flex",
+        alignItems:"center",
+        gap:"0.65rem"
+      },
+      children:[
+        (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex",alignItems:"center"},children:[
+          (0,t.jsx)("div",{style:{position:"absolute",left:"0.75rem",color:"#64748b",display:"flex",alignItems:"center",pointerEvents:"none"},children:(0,t.jsx)(IconSearch,{size:15})}),
+          (0,t.jsx)(i.InputText,{
+            value:searchQuery,
+            onChange:e => { setSearchQuery(e.target.value); setCurrentPage(1); },
+            onKeyDown:e => e.key === 'Enter' && fetchFeed(),
+            placeholder:"Cari postingan, tagar #modus, penyidik, koordinasi perkara...",
+            style:{width:"100%",paddingLeft:"2.25rem",fontSize:"0.84rem",height:"2.35rem",borderRadius:"8px"}
+          })
+        ]}),
+        (searchQuery || feedCategory !== 'all' || visibilityFilter !== 'all') && (0,t.jsxs)("button",{
+          type:"button",
+          onClick:() => {
+            setSearchQuery('');
+            setFeedCategory('all');
+            setVisibilityFilter('all');
+            setCurrentPage(1);
+          },
+          title:"Kembalikan semua filter ke awal",
+          style:{
+            background:"rgba(239,68,68,0.12)",
+            border:"1px solid rgba(239,68,68,0.3)",
+            borderRadius:"8px",
+            color:"#f87171",
+            padding:"0 0.85rem",
+            height:"2.35rem",
+            fontSize:"0.8rem",
+            fontWeight:700,
+            cursor:"pointer",
+            display:"inline-flex",
+            alignItems:"center",
+            gap:"0.35rem",
+            whiteSpace:"nowrap",
+            transition:"all 0.15s ease"
+          },
+          children:["✕ Reset Filter"]
+        }),
+        (0,t.jsx)(c.Button,{
+          icon:"pi pi-refresh",
+          label:"Segarkan",
+          outlined:!0,
+          onClick:fetchFeed,
+          loading:loading,
+          style:{height:"2.35rem",fontSize:"0.8rem",borderRadius:"8px",whiteSpace:"nowrap",padding:"0 0.85rem"}
+        })
+      ]
+    }),
+
+    // 2-Column Responsive Container: Feed on Left, Filters on Right
+    (0,t.jsxs)("div",{
+      className:"feed-layout-container",
+      children:[
+        // Left Column: Composer + Feed Posts Stream + Static Pagination
+        (0,t.jsxs)("div",{
+          className:"feed-left-col",
+          children:[
+            // Interactive Quick Composer Card
     (0,t.jsxs)("div",{className:"cms-card",style:{padding:"1.1rem",borderRadius:"12px",marginBottom:"1.25rem",border:"1px solid var(--cas-border, rgba(255,255,255,0.12))"},children:[
       (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"flex-start"},children:[
         (0,t.jsx)("div",{
@@ -792,9 +903,9 @@ e.s(["default",0,function() {
 
       // Action toolbar: attachment buttons, audience selector, official broadcast toggle, submit button
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.85rem",paddingTop:"0.75rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.75rem"},children:[
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap",maxWidth:"100%"},children:[
           (0,t.jsx)("input",{ref:fileInputRef,type:"file",multiple:!0,accept:"image/png,image/jpeg,image/webp,video/mp4,application/pdf",style:{display:"none"},onChange:handleFileSelect}),
-          (0,t.jsxs)("button",{type:"button",onClick:() => fileInputRef.current?.click(),style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"transparent",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"6px",padding:"0.35rem 0.65rem",fontSize:"0.78rem",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer"},children:[
+          (0,t.jsxs)("button",{type:"button",onClick:() => fileInputRef.current?.click(),style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"transparent",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"6px",padding:"0.35rem 0.65rem",fontSize:"0.78rem",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap"},children:[
             (0,t.jsx)(h.Paperclip,{size:14})," Lampirkan Berkas"
           ]}),
           // Audience selector
@@ -810,7 +921,7 @@ e.s(["default",0,function() {
             style:{fontSize:"0.78rem"}
           }),
           // Official Jukrah checkbox (superadmin/admin only)
-          canBroadcastOfficial && (0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.75rem",color:"#f59e0b",cursor:"pointer",fontWeight:600},children:[
+          canBroadcastOfficial && (0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.75rem",color:"#f59e0b",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"},children:[
             (0,t.jsx)("input",{type:"checkbox",checked:isOfficialJukrah,onChange:e => setIsOfficialJukrah(e.target.checked)}),
             "📢 Jukrah Resmi"
           ]})
@@ -826,141 +937,7 @@ e.s(["default",0,function() {
         })
       ]})
     ]}),
-
-    // Dedicated Full-Width Filter & Search Card (Exact Match with Composer & Feed width)
-    (0,t.jsxs)("div",{
-      className:"cms-card",
-      style:{
-        padding:"1rem 1.25rem",
-        borderRadius:"12px",
-        marginBottom:"1.25rem",
-        border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
-        display:"flex",
-        flexDirection:"column",
-        gap:"0.85rem"
-      },
-      children:[
-        // Top Row: Flexible Full-Width Search Input + Reset + Segarkan
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",width:"100%"},children:[
-          (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex",alignItems:"center"},children:[
-            (0,t.jsx)("div",{style:{position:"absolute",left:"0.75rem",color:"#64748b",display:"flex",alignItems:"center",pointerEvents:"none"},children:(0,t.jsx)(IconSearch,{size:15})}),
-            (0,t.jsx)(i.InputText,{
-              value:searchQuery,
-              onChange:e => { setSearchQuery(e.target.value); setCurrentPage(1); },
-              onKeyDown:e => e.key === 'Enter' && fetchFeed(),
-              placeholder:"Cari postingan, tagar #modus, penyidik, atau koordinasi perkara...",
-              style:{width:"100%",paddingLeft:"2.25rem",fontSize:"0.84rem",height:"2.4rem",borderRadius:"8px"}
-            })
-          ]}),
-          (searchQuery || feedCategory !== 'all' || visibilityFilter !== 'all') && (0,t.jsxs)("button",{
-            type:"button",
-            onClick:() => {
-              setSearchQuery('');
-              setFeedCategory('all');
-              setVisibilityFilter('all');
-              setCurrentPage(1);
-            },
-            title:"Kembalikan semua filter ke awal",
-            style:{
-              background:"rgba(239,68,68,0.12)",
-              border:"1px solid rgba(239,68,68,0.3)",
-              borderRadius:"8px",
-              color:"#f87171",
-              padding:"0 0.85rem",
-              height:"2.4rem",
-              fontSize:"0.8rem",
-              fontWeight:700,
-              cursor:"pointer",
-              display:"inline-flex",
-              alignItems:"center",
-              gap:"0.35rem",
-              whiteSpace:"nowrap",
-              transition:"all 0.15s ease"
-            },
-            children:["✕ Reset"]
-          }),
-          (0,t.jsx)(c.Button,{
-            icon:"pi pi-refresh",
-            label:"Segarkan",
-            outlined:!0,
-            onClick:fetchFeed,
-            loading:loading,
-            style:{height:"2.4rem",fontSize:"0.8rem",borderRadius:"8px",whiteSpace:"nowrap",padding:"0 0.85rem"}
-          })
-        ]}),
-
-        // Divider
-        (0,t.jsx)("div",{style:{borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.07))"}}),
-
-        // Row 1: Content Category Filter Pills
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
-          (0,t.jsx)("span",{style:{fontSize:"0.74rem",color:"#94a3b8",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",minWidth:"5.8rem"},children:"Kategori:"}),
-          (0,t.jsxs)("div",{style:{display:"flex",gap:"0.35rem",flexWrap:"wrap",flex:1},children:[
-            [
-              { id: 'all', label: '📝 Semua Postingan' },
-              { id: 'repost', label: '🔁 Repost' },
-              { id: 'saved', label: '🔖 Tersimpan' },
-              { id: 'mine', label: '👤 Postingan Saya' },
-              { id: 'official', label: '📢 Jukrah Kedinasan' }
-            ].map(cat => (0,t.jsx)("button",{
-              key:cat.id,
-              type:"button",
-              onClick:() => { setFeedCategory(cat.id); setCurrentPage(1); },
-              style:{
-                background:feedCategory === cat.id ? '#2563eb' : 'rgba(255,255,255,0.04)',
-                color:feedCategory === cat.id ? '#ffffff' : 'var(--cas-text-secondary, #94a3b8)',
-                border:feedCategory === cat.id ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.08)',
-                borderRadius:"6px",
-                padding:"0.35rem 0.75rem",
-                fontSize:"0.78rem",
-                fontWeight:feedCategory === cat.id ? 800 : 600,
-                cursor:"pointer",
-                transition:"all 0.15s ease",
-                display:"inline-flex",
-                alignItems:"center",
-                gap:"0.35rem"
-              },
-              children:cat.label
-            }))
-          ]})
-        ]}),
-
-        // Row 2: Visibility Filter Pills
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem",flexWrap:"wrap"},children:[
-          (0,t.jsx)("span",{style:{fontSize:"0.74rem",color:"#94a3b8",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",minWidth:"5.8rem"},children:"Visibilitas:"}),
-          (0,t.jsxs)("div",{style:{display:"flex",gap:"0.35rem",flexWrap:"wrap",flex:1},children:[
-            [
-              { id: 'all', label: '🌐 Semua Visibilitas' },
-              { id: 'public', label: '🌍 Publik' },
-              { id: 'regional', label: '🏛️ Regional' },
-              { id: 'friends', label: '👥 Rekan Terhubung' },
-              { id: 'private', label: '🔒 Privat' }
-            ].map(vis => (0,t.jsx)("button",{
-              key:vis.id,
-              type:"button",
-              onClick:() => { setVisibilityFilter(vis.id); setCurrentPage(1); },
-              style:{
-                background:visibilityFilter === vis.id ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.04)',
-                color:visibilityFilter === vis.id ? '#34d399' : 'var(--cas-text-secondary, #94a3b8)',
-                border:visibilityFilter === vis.id ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.08)',
-                borderRadius:"6px",
-                padding:"0.35rem 0.75rem",
-                fontSize:"0.78rem",
-                fontWeight:visibilityFilter === vis.id ? 800 : 600,
-                cursor:"pointer",
-                transition:"all 0.15s ease",
-                display:"inline-flex",
-                alignItems:"center",
-                gap:"0.35rem"
-              },
-              children:vis.label
-            }))
-          ]})
-        ]})
-      ]
-    }),
-
-    // Feed Posts List
+            // Feed Posts List
     loading ? (
       (0,t.jsx)("div",{style:{textAlign:"center",padding:"3rem",color:"#94a3b8"},children:"Memuat ruang kolaborasi…"})
     ) : paginatedPosts.length === 0 ? (
@@ -976,12 +953,13 @@ e.s(["default",0,function() {
           var currentReact = post.user_reaction || post.my_reaction;
           var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
           var canEdit = isAuthor || isOfficialRole || post.can_edit;
-          var authorAvatar = post.author_photo_url || post.author_photo || null;
+          var isAuthorEko = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
+          var authorAvatar = (isAuthorEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (post.author_photo_url || post.author_photo || null);
           
-          var isUserOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
+          var isUserSuper = isAuthorEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
           var authorHandle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
-          var authorBadge = getVerificationBadge(post.author_role, isUserOne);
-          var authorNameDisplay = isUserOne ? 'EKO' : post.author_name;
+          var authorBadge = getVerificationBadge(post.author_role, isUserSuper, post.author_id, post.author_username);
+          var authorNameDisplay = isAuthorEko ? 'EKO' : post.author_name;
           var authorInitials = String(authorNameDisplay || authorHandle || 'P').charAt(0).toUpperCase();
 
           return (0,t.jsxs)("div",{
@@ -997,12 +975,9 @@ e.s(["default",0,function() {
             children:[
               // Post Header
               (0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.75rem",marginBottom:"0.85rem"},children:[
-                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center"},children:[
+                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center",minWidth:0,flex:1},children:[
                   (0,t.jsx)("div",{
-                    onClick:() => {
-                      var isTargetOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
-                      window.location.href = isTargetOne ? '/cms/profile' : ('/cms/profile?id=' + post.author_id);
-                    },
+                    onClick:() => handleOpenUserProfile(post.author_id, post),
                     style:{cursor:"pointer",display:"inline-flex",transition:"transform 0.15s ease"},
                     onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.05)',
                     onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
@@ -1012,10 +987,7 @@ e.s(["default",0,function() {
                   (0,t.jsxs)("div",{children:[
                     (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
                       (0,t.jsx)("span",{
-                        onClick:() => {
-                          var isTargetOne = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
-                          window.location.href = isTargetOne ? '/cms/profile' : ('/cms/profile?id=' + post.author_id);
-                        },
+                        onClick:() => handleOpenUserProfile(post.author_id, post),
                         style:{fontWeight:800,fontSize:"0.92rem",color:"#38bdf8",letterSpacing:"-0.01em",cursor:"pointer",transition:"all 0.15s ease"},
                         onMouseEnter:e => { e.currentTarget.style.color = '#93c5fd'; e.currentTarget.style.textDecoration = 'underline'; },
                         onMouseLeave:e => { e.currentTarget.style.color = '#38bdf8'; e.currentTarget.style.textDecoration = 'none'; },
@@ -1095,56 +1067,142 @@ e.s(["default",0,function() {
                 )
               ]}),
 
-              // Post Body Content
-              (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.6",whiteSpace:"pre-wrap",wordBreak:"break-word",marginBottom:"0.85rem"},children:
-                renderPostContent(post.content, (tag) => {
-                  setFeedCategory('all');
-                  setSearchQuery(tag);
-                  setCurrentPage(1);
-                  window.scrollTo({ top: 380, behavior: 'smooth' });
-                  toastRef.current?.show({ severity: 'info', summary: 'Filter Tagar', detail: 'Menampilkan postingan dengan tagar ' + tag });
-                })
-              }),
+              // Post Body Content with 3-line clamp & Lihat selengkapnya
+              (()=>{
+                var isExpanded = Boolean(expandedPosts[post.id]);
+                var textStr = String(post.content || '');
+                var isLong = textStr.length > 180 || textStr.split('\n').length > 3;
 
-              // Media Attachments Viewer (Support post.media & post.media_urls with preview & download)
+                return (0,t.jsxs)("div",{style:{marginBottom:"0.85rem"},children:[
+                  (0,t.jsx)("div",{
+                    style:{
+                      fontSize:"0.9rem",
+                      color:"var(--cas-text-primary, #e2e8f0)",
+                      lineHeight:"1.6",
+                      whiteSpace:"pre-wrap",
+                      wordBreak:"break-word",
+                      display:(!isExpanded && isLong) ? "-webkit-box" : "block",
+                      WebkitLineClamp:(!isExpanded && isLong) ? 3 : "unset",
+                      WebkitBoxOrient:(!isExpanded && isLong) ? "vertical" : "unset",
+                      overflow:(!isExpanded && isLong) ? "hidden" : "visible"
+                    },
+                    children:renderPostContent(post.content, (tag) => {
+                      setFeedCategory('all');
+                      setSearchQuery(tag);
+                      setCurrentPage(1);
+                      window.scrollTo({ top: 380, behavior: 'smooth' });
+                      toastRef.current?.show({ severity: 'info', summary: 'Filter Tagar', detail: 'Menampilkan postingan dengan tagar ' + tag });
+                    })
+                  }),
+                  isLong && (0,t.jsx)("button",{
+                    type:"button",
+                    onClick:() => setExpandedPosts(p => ({ ...p, [post.id]: !p[post.id] })),
+                    style:{background:"transparent",border:"none",color:"#38bdf8",fontSize:"0.78rem",fontWeight:700,cursor:"pointer",padding:"0.2rem 0",display:"inline-flex",alignItems:"center",gap:"0.25rem",marginTop:"0.15rem"},
+                    children:isExpanded ? "▲ Sembunyikan" : "▼ Lihat selengkapnya"
+                  })
+                ]});
+              })(),
+
+              // Media Attachments Viewer (Lightbox popup, Instagram-style carousel, encrypted safe filenames)
               (()=>{
                 var mediaList = (post.media && post.media.length > 0) ? post.media : (post.media_urls || []);
                 if (!mediaList || mediaList.length === 0) return null;
-                return (0,t.jsx)("div",{style:{display:"grid",gap:"0.6rem",marginBottom:"0.85rem"},children:
-                  mediaList.map((m, mIdx) => {
-                    var mUrl = m.stream_url || (m.token ? ('/api/bdb/jukrah/stream/' + m.token) : m.url) || '';
-                    var mime = String(m.mime || m.type || '').toLowerCase();
-                    var fileName = m.name || (m.key ? m.key.split('/').pop() : 'Berkas Terlampir');
-                    var isImage = mime.startsWith('image/') || fileName.match(/.(png|jpe?g|webp|gif)$/i);
-                    var isVideo = mime.startsWith('video/') || fileName.match(/.(mp4|webm|mkv)$/i);
-                    var isPdf = mime === 'application/pdf' || fileName.match(/.pdf$/i);
 
-                    if (isImage) {
-                      return (0,t.jsxs)("div",{key:mIdx,style:{borderRadius:"8px",overflow:"hidden",maxHeight:"24rem",background:"#0f172a",display:"flex",flexDirection:"column",alignItems:"center",position:"relative",border:"1px solid rgba(255,255,255,0.08)"},children:[
-                        (0,t.jsx)("img",{src:mUrl,alt:fileName,style:{maxWidth:"100%",maxHeight:"22rem",objectFit:"contain",cursor:"pointer"},onClick:()=>window.open(mUrl, '_blank')}),
-                        (0,t.jsxs)("div",{style:{width:"100%",padding:"0.35rem 0.65rem",background:"rgba(15,23,42,0.9)",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"0.72rem",color:"#94a3b8"},children:[
-                          (0,t.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"70%"},children:fileName}),
-                          (0,t.jsxs)("a",{href:mUrl + (mUrl.includes('?') ? '&' : '?') + 'download=1&filename=' + encodeURIComponent(fileName),download:fileName,target:"_blank",rel:"noreferrer",style:{color:"#38bdf8",fontWeight:700,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:[
-                            "⬇️ Unduh"
-                          ]})
+                var images = [];
+                var others = [];
+                mediaList.forEach((m, idx) => {
+                  var mUrl = m.stream_url || (m.token ? ('/api/bdb/jukrah/stream/' + m.token) : m.url) || '';
+                  var mime = String(m.mime || m.type || '').toLowerCase();
+                  var rawName = m.name || (m.key ? m.key.split('/').pop() : 'Berkas');
+                  var isImage = mime.startsWith('image/') || rawName.match(/\.(png|jpe?g|webp|gif)$/i);
+                  var isVideo = mime.startsWith('video/') || rawName.match(/\.(mp4|webm|mkv)$/i);
+                  var isPdf = mime === 'application/pdf' || rawName.match(/\.pdf$/i);
+                  var extMatch = rawName.match(/\.([a-zA-Z0-9]+)$/);
+                  var ext = extMatch ? ('.' + extMatch[1].toLowerCase()) : (isPdf ? '.pdf' : isImage ? '.jpg' : isVideo ? '.mp4' : '.bin');
+                  var safeDlName = 'CAS_Lampiran_' + (isImage ? 'Gambar' : isVideo ? 'Video' : 'Dokumen') + '_' + post.id + '_' + (idx + 1) + ext;
+
+                  var item = { ...m, url: mUrl, safeDlName, isImage, isVideo, isPdf, ext };
+                  if (isImage) images.push(item);
+                  else others.push(item);
+                });
+
+                var activeIdx = carouselIndices[post.id] || 0;
+                if (activeIdx >= images.length) activeIdx = 0;
+
+                return (0,t.jsxs)("div",{style:{display:"grid",gap:"0.65rem",marginBottom:"0.85rem"},children:[
+                  // Image / Carousel Section
+                  images.length > 0 && (
+                    (0,t.jsxs)("div",{
+                      style:{
+                        position:"relative",
+                        borderRadius:"10px",
+                        overflow:"hidden",
+                        background:"#0a0f1d",
+                        border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",
+                        display:"flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        minHeight:"14rem",
+                        maxHeight:"26rem"
+                      },
+                      children:[
+                        // Active Image (Click opens Lightbox Modal!)
+                        (0,t.jsx)("img",{
+                          src:images[activeIdx].url,
+                          alt:images[activeIdx].safeDlName,
+                          onClick:() => setLightboxImage({ url: images[activeIdx].url, name: images[activeIdx].safeDlName }),
+                          style:{maxWidth:"100%",maxHeight:"26rem",objectFit:"contain",cursor:"zoom-in",transition:"opacity 0.2s ease"}
+                        }),
+
+                        // Instagram-style Nav Arrows if > 1 image
+                        images.length > 1 && (0,t.jsxs)(t.Fragment,{children:[
+                          (activeIdx > 0) && (0,t.jsx)("button",{
+                            type:"button",
+                            onClick:(ev)=>{ ev.stopPropagation(); setCarouselIndices(prev => ({...prev, [post.id]: Math.max(0, activeIdx - 1)})); },
+                            style:{position:"absolute",left:"10px",top:"50%",transform:"translateY(-50%)",width:"34px",height:"34px",borderRadius:"50%",background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.25)",color:"#fff",fontSize:"1.1rem",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.5)",zIndex:10},
+                            children:"❮"
+                          }),
+                          (activeIdx < images.length - 1) && (0,t.jsx)("button",{
+                            type:"button",
+                            onClick:(ev)=>{ ev.stopPropagation(); setCarouselIndices(prev => ({...prev, [post.id]: Math.min(images.length - 1, activeIdx + 1)})); },
+                            style:{position:"absolute",right:"10px",top:"50%",transform:"translateY(-50%)",width:"34px",height:"34px",borderRadius:"50%",background:"rgba(15,23,42,0.8)",border:"1px solid rgba(255,255,255,0.25)",color:"#fff",fontSize:"1.1rem",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 4px 12px rgba(0,0,0,0.5)",zIndex:10},
+                            children:"❯"
+                          }),
+                          // Badge: 1 / 3
+                          (0,t.jsxs)("div",{
+                            style:{position:"absolute",top:"10px",right:"10px",background:"rgba(15,23,42,0.8)",color:"#fff",padding:"0.2rem 0.6rem",borderRadius:"999px",fontSize:"0.72rem",fontWeight:700,backdropFilter:"blur(4px)"},
+                            children:[(activeIdx + 1), " / ", images.length]
+                          }),
+                          // Bottom indicator dots
+                          (0,t.jsx)("div",{
+                            style:{position:"absolute",bottom:"8px",left:"50%",transform:"translateX(-50%)",display:"flex",gap:"0.35rem",zIndex:10},
+                            children:images.map((_, dotIdx) => (0,t.jsx)("span",{
+                              key:dotIdx,
+                              onClick:(ev)=>{ ev.stopPropagation(); setCarouselIndices(prev => ({...prev, [post.id]: dotIdx})); },
+                              style:{width:activeIdx === dotIdx ? "16px" : "6px",height:"6px",borderRadius:"999px",background:activeIdx === dotIdx ? "#38bdf8" : "rgba(255,255,255,0.4)",cursor:"pointer",transition:"all 0.2s ease"}
+                            }))
+                          })
                         ]})
-                      ]});
-                    }
-                    if (isVideo) {
+                      ]
+                    })
+                  ),
+
+                  // Videos and Documents list with encrypted filename download
+                  others.map((m, mIdx) => {
+                    var downloadUrl = m.url ? (m.url + (m.url.includes('?') ? '&' : '?') + 'download=1&filename=' + encodeURIComponent(m.safeDlName)) : '#';
+                    var sizeStr = m.size ? (' (' + (m.size > 1048576 ? (m.size / 1048576).toFixed(1) + ' MB' : Math.round(m.size / 1024) + ' KB') + ')') : '';
+
+                    if (m.isVideo) {
                       return (0,t.jsxs)("div",{key:mIdx,style:{borderRadius:"8px",overflow:"hidden",maxHeight:"24rem",background:"#000",border:"1px solid rgba(255,255,255,0.08)"},children:[
-                        (0,t.jsx)("video",{src:mUrl,controls:!0,style:{width:"100%",maxHeight:"22rem"}}),
+                        (0,t.jsx)("video",{src:m.url,controls:!0,style:{width:"100%",maxHeight:"22rem"}}),
                         (0,t.jsxs)("div",{style:{padding:"0.35rem 0.65rem",background:"rgba(15,23,42,0.9)",display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:"0.72rem",color:"#94a3b8"},children:[
-                          (0,t.jsx)("span",{children:fileName}),
-                          (0,t.jsxs)("a",{href:mUrl + (mUrl.includes('?') ? '&' : '?') + 'download=1&filename=' + encodeURIComponent(fileName),download:fileName,target:"_blank",rel:"noreferrer",style:{color:"#38bdf8",fontWeight:700,textDecoration:"none"},children:[
+                          (0,t.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"70%"},children:m.safeDlName}),
+                          (0,t.jsxs)("a",{href:downloadUrl,download:m.safeDlName,target:"_blank",rel:"noreferrer",style:{color:"#38bdf8",fontWeight:700,textDecoration:"none",flexShrink:0},children:[
                             "⬇️ Unduh Video"
                           ]})
                         ]})
                       ]});
                     }
-
-                    // Document / PDF / Berkas
-                    var downloadUrl = mUrl ? (mUrl + (mUrl.includes('?') ? '&' : '?') + 'download=1&filename=' + encodeURIComponent(fileName)) : '#';
-                    var sizeStr = m.size ? (' (' + (m.size > 1048576 ? (m.size / 1048576).toFixed(1) + ' MB' : Math.round(m.size / 1024) + ' KB') + ')') : '';
 
                     return (0,t.jsxs)("div",{
                       key:mIdx,
@@ -1153,38 +1211,38 @@ e.s(["default",0,function() {
                         alignItems:"center",
                         justifyContent:"space-between",
                         gap:"0.75rem",
-                        background:"rgba(15, 23, 42, 0.65)",
-                        border:"1px solid rgba(56, 189, 248, 0.25)",
-                        borderRadius:"10px",
-                        padding:"0.65rem 0.85rem",
+                        background:"var(--cas-bg-surface, rgba(15, 23, 42, 0.6))",
+                        border:"1px solid var(--cas-border, rgba(56, 189, 248, 0.25))",
+                        borderRadius:"8px",
+                        padding:"0.55rem 0.8rem",
                         flexWrap:"wrap"
                       },
                       children:[
                         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",minWidth:0,flex:"1 1 14rem"},children:[
-                          (0,t.jsx)("div",{style:{fontSize:"1.6rem",flexShrink:0},children:isPdf ? "📄" : "📁"}),
+                          (0,t.jsx)("div",{style:{fontSize:"1.5rem",flexShrink:0},children:m.isPdf ? "📄" : "📁"}),
                           (0,t.jsxs)("div",{style:{minWidth:0},children:[
-                            (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"#f8fafc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:fileName,children:fileName}),
-                            (0,t.jsxs)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",display:"flex",gap:"0.4rem"},children:[
-                              (0,t.jsx)("span",{children:(isPdf ? "Dokumen PDF" : "Berkas Lampiran") + sizeStr})
+                            (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"var(--cas-text-primary, #f8fafc)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:m.safeDlName,children:m.safeDlName}),
+                            (0,t.jsxs)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-secondary, #94a3b8)",display:"flex",gap:"0.4rem"},children:[
+                              (0,t.jsx)("span",{children:(m.isPdf ? "Dokumen PDF" : "Berkas Lampiran") + sizeStr})
                             ]})
                           ]})
                         ]}),
                         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexShrink:0},children:[
-                          isPdf && (0,t.jsxs)("button",{
+                          m.isPdf && (0,t.jsxs)("button",{
                             type:"button",
-                            onClick:() => setPreviewPdf({ url: mUrl, name: fileName }),
+                            onClick:() => setPreviewPdf({ url: m.url, name: m.safeDlName }),
                             style:{
                               background:"rgba(56, 189, 248, 0.15)",
                               color:"#38bdf8",
                               border:"1px solid rgba(56, 189, 248, 0.35)",
                               borderRadius:"6px",
-                              padding:"0.4rem 0.75rem",
-                              fontSize:"0.76rem",
+                              padding:"0.35rem 0.65rem",
+                              fontSize:"0.74rem",
                               fontWeight:700,
                               cursor:"pointer",
                               display:"inline-flex",
                               alignItems:"center",
-                              gap:"0.35rem"
+                              gap:"0.3rem"
                             },
                             children:[
                               "👁️ Pratinjau"
@@ -1192,7 +1250,7 @@ e.s(["default",0,function() {
                           }),
                           (0,t.jsxs)("a",{
                             href:downloadUrl,
-                            download:fileName,
+                            download:m.safeDlName,
                             target:"_blank",
                             rel:"noreferrer",
                             style:{
@@ -1200,217 +1258,180 @@ e.s(["default",0,function() {
                               color:"#ffffff",
                               border:"none",
                               borderRadius:"6px",
-                              padding:"0.4rem 0.85rem",
-                              fontSize:"0.76rem",
+                              padding:"0.35rem 0.75rem",
+                              fontSize:"0.74rem",
                               fontWeight:700,
                               textDecoration:"none",
                               display:"inline-flex",
                               alignItems:"center",
-                              gap:"0.35rem",
+                              gap:"0.3rem",
                               cursor:"pointer"
                             },
                             children:[
-                              "⬇️ Unduh Berkas"
+                              "⬇️ Unduh"
                             ]
                           })
                         ]})
                       ]
                     });
                   })
-                });
+                ]});
               })(),
 
-              // Redesigned Direct Action Footer (No redundant stats text row above)
-              (0,t.jsxs)("div",{
+              // Instagram-Style Action Footer (Clean icons, no bulky boxes)
+              (0,t.jsx)("div",{
                 style:{
-                  display:"flex",
-                  alignItems:"center",
-                  justifyContent:"space-between",
                   paddingTop:"0.75rem",
                   borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",
-                  marginTop:"0.5rem",
-                  flexWrap:"wrap",
-                  gap:"0.5rem"
+                  marginTop:"0.65rem"
                 },
-                children:[
-                  // Left group: [👍/emot] [n Jml Suka]
-                  (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",position:"relative"},children:[
-                    // React / Emoji Trigger button
+                children:(0,t.jsxs)("div",{
+                  style:{display:"flex",alignItems:"center",justifyContent:"space-between"},
+                  children:[
+                    // Left Action Group: Like, Comment, Repost
                     (0,t.jsxs)("div",{
-                      style:{position:"relative"},
-                      onMouseEnter:() => setHoverReactionPostId(post.id),
-                      onMouseLeave:() => setTimeout(() => setHoverReactionPostId(id => (id === post.id ? null : id)), 400),
+                      style:{display:"flex",alignItems:"center",gap:"1rem"},
                       children:[
-                        (0,t.jsx)("button",{
-                          type:"button",
-                          onClick:() => handleReact(post.id, currentReact ? currentReact : 'like'),
-                          style:{
-                            display:"inline-flex",
-                            alignItems:"center",
-                            justifyContent:"center",
-                            background:currentReact ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.05)',
-                            border:currentReact ? '1px solid rgba(56,189,248,0.35)' : '1px solid rgba(255,255,255,0.1)',
-                            borderRadius:"6px",
-                            padding:"0.4rem 0.65rem",
-                            cursor:"pointer",
-                            transition:"all 0.15s ease",
-                            fontSize:"1rem"
-                          },
-                          title:currentReact ? (REACTIONS.find(r => r.type === currentReact)?.label || 'Suka') : 'Beri Reaksi',
-                          children:currentReact ? (
-                            (0,t.jsx)("span",{children:REACTIONS.find(r => r.type === currentReact)?.emoji || '👍'})
-                          ) : (
-                            (0,t.jsx)(IconThumbsUp,{size:15,style:{color:"#94a3b8"}})
-                          )
+                        // Like (Heart + Text) button
+                        (0,t.jsxs)("div",{
+                          style:{display:"inline-flex",alignItems:"center",gap:"0.2rem"},
+                          children:[
+                            (0,t.jsx)("button",{
+                              type:"button",
+                              onClick:() => handleReact(post.id, currentReact ? 'unlike' : 'like'),
+                              style:{
+                                background:"transparent",
+                                border:"none",
+                                cursor:"pointer",
+                                padding:"0.3rem 0.2rem",
+                                display:"inline-flex",
+                                alignItems:"center",
+                                color:currentReact ? '#ef4444' : 'var(--cas-text-primary, #cbd5e1)',
+                                transition:"transform 0.15s ease"
+                              },
+                              onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.15)',
+                              onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
+                              title:currentReact ? 'Batalkan Suka' : 'Suka',
+                              children:(0,t.jsx)(IconHeart,{
+                                size:20,
+                                style:{
+                                  fill:currentReact ? '#ef4444' : 'none',
+                                  stroke:currentReact ? '#ef4444' : 'currentColor',
+                                  strokeWidth:2
+                                }
+                              })
+                            }),
+                            (0,t.jsx)("button",{
+                              type:"button",
+                              onClick:() => handleOpenReactionsList(post.id),
+                              style:{
+                                background:"transparent",
+                                border:"none",
+                                cursor:"pointer",
+                                padding:"0.3rem 0.2rem",
+                                fontSize:"0.84rem",
+                                fontWeight:600,
+                                color:currentReact ? '#ef4444' : 'var(--cas-text-primary, #cbd5e1)',
+                                transition:"color 0.15s ease",
+                                textDecoration:"none"
+                              },
+                              onMouseEnter:e => e.currentTarget.style.textDecoration = 'underline',
+                              onMouseLeave:e => e.currentTarget.style.textDecoration = 'none',
+                              title:"Lihat daftar personil yang menyukai",
+                              children:(post.total_reactions > 0 ? (formatCount(post.total_reactions) + " Suka") : "Suka")
+                            })
+                          ]
                         }),
 
-                        // Floating Reaction Palette (Ala FB/LinkedIn)
-                        hoverReactionPostId === post.id && (0,t.jsx)("div",{
+                        // Comment button
+                        (0,t.jsxs)("button",{
+                          type:"button",
+                          onClick:() => toggleComments(post.id),
                           style:{
-                            position:"absolute",
-                            bottom:"100%",
-                            left:"0",
-                            transform:"translateY(-8px)",
-                            background:"rgba(15,23,42,0.96)",
-                            backdropFilter:"blur(12px)",
-                            border:"1px solid rgba(255,255,255,0.18)",
-                            boxShadow:"0 8px 24px rgba(0,0,0,0.5)",
-                            borderRadius:"999px",
-                            padding:"0.35rem 0.6rem",
-                            display:"flex",
+                            background:"transparent",
+                            border:"none",
+                            cursor:"pointer",
+                            padding:"0.3rem 0.4rem",
+                            display:"inline-flex",
                             alignItems:"center",
-                            gap:"0.45rem",
-                            zIndex:100
+                            gap:"0.4rem",
+                            color:activeCommentsPostId === post.id ? '#38bdf8' : 'var(--cas-text-secondary, #94a3b8)',
+                            transition:"transform 0.15s ease"
                           },
-                          children:REACTIONS.map(r => (0,t.jsx)("button",{
-                            key:r.type,
-                            type:"button",
-                            onClick:() => handleReact(post.id, r.type),
-                            title:r.label,
-                            style:{
-                              background:"transparent",
-                              border:"none",
-                              fontSize:"1.3rem",
-                              cursor:"pointer",
-                              padding:"0.2rem",
-                              transition:"transform 0.15s ease",
-                              display:"flex",
-                              alignItems:"center",
-                              justifyContent:"center"
-                            },
-                            onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.35)',
-                            onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
-                            children:r.emoji
-                          }))
+                          onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.1)',
+                          onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
+                          title:"Komentar",
+                          children:[
+                            (0,t.jsx)(IconMessageSquare,{size:19}),
+                            Boolean(post.comments_count > 0) && (0,t.jsx)("span",{
+                              style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)"},
+                              children:post.comments_count
+                            })
+                          ]
+                        }),
+
+                        // Repost button
+                        (0,t.jsxs)("button",{
+                          type:"button",
+                          onClick:() => {
+                            var authorRef = formatCallsign(post.author_callsign, post.author_id, post.author_username);
+                            setContent('🔁 Diteruskan dari ' + authorRef + ':\n\"' + (post.content || '').substring(0, 100) + '...\"');
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            toastRef.current?.show({ severity: 'info', summary: 'Siap Dibagikan', detail: 'Teks kutipan dimuat ke formulir postingan di atas.' });
+                          },
+                          style:{
+                            background:"transparent",
+                            border:"none",
+                            cursor:"pointer",
+                            padding:"0.3rem 0.4rem",
+                            display:"inline-flex",
+                            alignItems:"center",
+                            gap:"0.4rem",
+                            color:'var(--cas-text-secondary, #94a3b8)',
+                            transition:"transform 0.15s ease"
+                          },
+                          onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.1)',
+                          onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
+                          title:"Teruskan postingan ini",
+                          children:[
+                            (0,t.jsx)(IconRepeat,{size:19}),
+                            Boolean(post.repost_count > 0) && (0,t.jsx)("span",{
+                              style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)"},
+                              children:post.repost_count
+                            })
+                          ]
                         })
                       ]
                     }),
 
-                    // [n Jml Suka] button -> opens Reactions modal ("Siapa saja yg ngelike")
-                    (0,t.jsxs)("button",{
-                      type:"button",
-                      onClick:() => handleOpenReactionsList(post.id),
-                      style:{
-                        display:"inline-flex",
-                        alignItems:"center",
-                        gap:"0.3rem",
-                        background:post.total_reactions > 0 ? "rgba(56,189,248,0.1)" : "rgba(255,255,255,0.04)",
-                        border:post.total_reactions > 0 ? "1px solid rgba(56,189,248,0.25)" : "1px solid rgba(255,255,255,0.08)",
-                        borderRadius:"6px",
-                        padding:"0.4rem 0.65rem",
-                        fontSize:"0.78rem",
-                        fontWeight:700,
-                        color:post.total_reactions > 0 ? "#38bdf8" : "#94a3b8",
-                        cursor:"pointer",
-                        transition:"all 0.15s ease"
-                      },
-                      title:"Klik untuk melihat daftar personil yang menyukai",
-                      children:[
-                        (0,t.jsx)("span",{style:{fontWeight:800},children:post.total_reactions || 0}),
-                        (0,t.jsx)("span",{children:"Suka"})
-                      ]
-                    })
-                  ]}),
-
-                  // Center / Right actions: [💬 n Komentar] [🔁 n Repost] [🔖 Bookmark]
-                  (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem"},children:[
-                    // Comment Button
-                    (0,t.jsxs)("button",{
-                      type:"button",
-                      onClick:() => toggleComments(post.id),
-                      style:{
-                        display:"inline-flex",
-                        alignItems:"center",
-                        gap:"0.35rem",
-                        background:activeCommentsPostId === post.id ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.04)',
-                        border:activeCommentsPostId === post.id ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                        borderRadius:"6px",
-                        color:activeCommentsPostId === post.id ? '#38bdf8' : 'var(--cas-text-secondary, #94a3b8)',
-                        cursor:"pointer",
-                        padding:"0.4rem 0.65rem",
-                        fontWeight:700,
-                        fontSize:"0.78rem",
-                        transition:"all 0.15s ease"
-                      },
-                      title:"Buka tanggapan komentar",
-                      children:[
-                        (0,t.jsx)(IconMessageSquare,{size:14}),
-                        (0,t.jsxs)("span",{children:[post.comments_count || 0," Komentar"]})
-                      ]
-                    }),
-
-                    // Repost Button
-                    (0,t.jsxs)("button",{
-                      type:"button",
-                      onClick:() => {
-                        var authorRef = formatCallsign(post.author_callsign, post.author_id, post.author_username);
-                        setContent('🔁 Diteruskan dari ' + authorRef + ':\n\"' + post.content.substring(0, 100) + '...\"');
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        toastRef.current?.show({ severity: 'info', summary: 'Siap Dibagikan', detail: 'Teks kutipan dimuat ke formulir postingan di atas.' });
-                      },
-                      style:{
-                        display:"inline-flex",
-                        alignItems:"center",
-                        gap:"0.35rem",
-                        background:"rgba(255,255,255,0.04)",
-                        border:"1px solid rgba(255,255,255,0.08)",
-                        borderRadius:"6px",
-                        color:'var(--cas-text-secondary, #94a3b8)',
-                        cursor:"pointer",
-                        padding:"0.4rem 0.65rem",
-                        fontWeight:700,
-                        fontSize:"0.78rem",
-                        transition:"all 0.15s ease"
-                      },
-                      title:"Teruskan postingan ini",
-                      children:[
-                        (0,t.jsx)(IconRepeat,{size:14}),
-                        (0,t.jsxs)("span",{children:[post.repost_count || 0," Repost"]})
-                      ]
-                    }),
-
-                    // Bookmark / Simpan Button
+                    // Right Action: Bookmark
                     (0,t.jsx)("button",{
                       type:"button",
                       onClick:() => handleToggleBookmark(post),
                       style:{
+                        background:"transparent",
+                        border:"none",
+                        cursor:"pointer",
+                        padding:"0.3rem 0.4rem",
                         display:"inline-flex",
                         alignItems:"center",
-                        justifyContent:"center",
-                        background:post.is_bookmarked ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.04)',
-                        border:post.is_bookmarked ? '1px solid rgba(56,189,248,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                        borderRadius:"6px",
                         color:post.is_bookmarked ? '#38bdf8' : 'var(--cas-text-secondary, #94a3b8)',
-                        cursor:"pointer",
-                        padding:"0.4rem 0.65rem",
-                        fontSize:"0.78rem",
-                        transition:"all 0.15s ease"
+                        transition:"transform 0.15s ease"
                       },
+                      onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.1)',
+                      onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
                       title:post.is_bookmarked ? 'Hapus dari Tersimpan' : 'Simpan Postingan',
-                      children:(0,t.jsx)(IconBookmark,{size:15,style:{fill:post.is_bookmarked ? '#38bdf8' : 'none'}})
+                      children:(0,t.jsx)(IconBookmark,{
+                        size:20,
+                        style:{
+                          fill:post.is_bookmarked ? '#38bdf8' : 'none',
+                          stroke:post.is_bookmarked ? '#38bdf8' : 'currentColor',
+                          strokeWidth:2
+                        }
+                      })
                     })
-                  ]})
-                ]
+                  ]
+                })
               }),
 
               // Expandable Comment Thread Section
@@ -1442,11 +1463,12 @@ e.s(["default",0,function() {
                   (0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem"},children:
                     (postComments[post.id] || []).map(cm => {
                       var isCmAuthor = String(cm.user_id || cm.author_id) === String(currentUser?.id || currentUser?.user_id);
-                      var isCmOne = String(cm.author_id) === '1' || cm.author_username === 'omeko11';
-                      var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmOne);
+                      var isCmEko = String(cm.author_id || cm.user_id) === '1' || cm.author_username === 'omeko11' || cm.author_callsign === 'omeko11';
+                      var isCmSuper = isCmEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cm.author_id || cm.user_id)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
+                      var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cm.author_id || cm.user_id, cm.author_username);
                       var cmHandle = formatCallsign(cm.author_callsign, cm.author_id || cm.user_id, cm.author_username);
                       var cmInitials = String(cm.author_name || cmHandle || 'P').charAt(0).toUpperCase();
-                      var cmAvatar = cm.author_photo_url || cm.author_photo || null;
+                      var cmAvatar = (isCmEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (cm.author_photo_url || cm.author_photo || null);
 
                       return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
@@ -1457,7 +1479,7 @@ e.s(["default",0,function() {
                           title:"Klik untuk melihat profil personil",
                           children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5)
                         }),
-                        (0,t.jsxs)("div",{style:{flex:1},children:[
+                        (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
                           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.2rem"},children:[
                             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
                               (0,t.jsx)("span",{
@@ -1497,8 +1519,7 @@ e.s(["default",0,function() {
         })
       })
     ),
-
-    // Feed Pagination Navigation Bar
+            // Feed Pagination Navigation Bar
     totalPages > 1 && (0,t.jsxs)("div",{
       className:"cms-card",
       style:{
@@ -1507,8 +1528,10 @@ e.s(["default",0,function() {
         justifyContent:"space-between",
         padding:"0.85rem 1.25rem",
         borderRadius:"12px",
-        marginTop:"1.25rem",
-        border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
+        position:"relative",
+        background:"var(--cas-bg-surface, #ffffff)",
+        marginTop:"1.5rem",
+        border:"1px solid var(--cas-border, #cbd5e1)",
         flexWrap:"wrap",
         gap:"0.75rem"
       },
@@ -1601,6 +1624,146 @@ e.s(["default",0,function() {
         ]})
       ]
     }),
+          ]
+        }),
+
+        // Side Filters Column (Kategori & Visibilitas)
+      (0,t.jsxs)("div",{
+        className:"feed-right-col",
+        children:[
+          // Card 1: Filter Kategori
+          (0,t.jsxs)("div",{
+            className:"cms-card",
+            style:{
+              padding:"1rem",
+              borderRadius:"12px",
+              border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
+              background:"var(--cas-bg-card, #1e293b)",
+              display:"flex",
+              flexDirection:"column",
+              gap:"0.4rem"
+            },
+            children:[
+              (0,t.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
+                children:[
+                  (0,t.jsx)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)"},children:"📁 Kategori Konten"}),
+                  feedCategory !== 'all' && (0,t.jsx)("button",{
+                    type:"button",
+                    onClick:()=>{ setFeedCategory('all'); setCurrentPage(1); },
+                    style:{fontSize:"0.68rem",background:"none",border:"none",color:"#60a5fa",cursor:"pointer",fontWeight:600},
+                    children:"Reset"
+                  })
+                ]
+              }),
+              [
+                { id: 'all', label: 'Semua Postingan', icon: '📝' },
+                { id: 'repost', label: 'Repost Perkara', icon: '🔁' },
+                { id: 'saved', label: 'Tersimpan', icon: '🔖' },
+                { id: 'mine', label: 'Postingan Saya', icon: '👤' },
+                { id: 'official', label: 'Jukrah Kedinasan', icon: '📢' }
+              ].map(cat => {
+                var active = feedCategory === cat.id;
+                return (0,t.jsxs)("button",{
+                  key:cat.id,
+                  type:"button",
+                  onClick:()=>{ setFeedCategory(cat.id); setCurrentPage(1); },
+                  style:{
+                    display:"flex",
+                    alignItems:"center",
+                    justifyContent:"space-between",
+                    width:"100%",
+                    padding:"0.55rem 0.75rem",
+                    borderRadius:"8px",
+                    fontSize:"0.8rem",
+                    fontWeight:active ? 800 : 500,
+                    background:active ? "rgba(37,99,235,0.18)" : "transparent",
+                    color:active ? "#60a5fa" : "var(--cas-text-secondary, #94a3b8)",
+                    border:active ? "1px solid rgba(59,130,246,0.5)" : "1px solid transparent",
+                    cursor:"pointer",
+                    textAlign:"left",
+                    transition:"all 0.15s ease"
+                  },
+                  children:[
+                    (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+                      (0,t.jsx)("span",{children:cat.icon}),
+                      cat.label
+                    ]}),
+                    active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#3b82f6"}})
+                  ]
+                });
+              })
+            ]
+          }),
+
+          // Card 2: Filter Visibilitas
+          (0,t.jsxs)("div",{
+            className:"cms-card",
+            style:{
+              padding:"1rem",
+              borderRadius:"12px",
+              border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
+              background:"var(--cas-bg-card, #1e293b)",
+              display:"flex",
+              flexDirection:"column",
+              gap:"0.4rem"
+            },
+            children:[
+              (0,t.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
+                children:[
+                  (0,t.jsx)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)"},children:"👁️ Visibilitas"}),
+                  visibilityFilter !== 'all' && (0,t.jsx)("button",{
+                    type:"button",
+                    onClick:()=>{ setVisibilityFilter('all'); setCurrentPage(1); },
+                    style:{fontSize:"0.68rem",background:"none",border:"none",color:"#34d399",cursor:"pointer",fontWeight:600},
+                    children:"Reset"
+                  })
+                ]
+              }),
+              [
+                { id: 'all', label: 'Semua Visibilitas', icon: '🌐' },
+                { id: 'public', label: 'Publik (Nasional)', icon: '🌍' },
+                { id: 'regional', label: 'Regional (Polda)', icon: '🏛️' },
+                { id: 'friends', label: 'Rekan Terhubung', icon: '👥' },
+                { id: 'private', label: 'Privat (Hanya Saya)', icon: '🔒' }
+              ].map(vis => {
+                var active = visibilityFilter === vis.id;
+                return (0,t.jsxs)("button",{
+                  key:vis.id,
+                  type:"button",
+                  onClick:()=>{ setVisibilityFilter(vis.id); setCurrentPage(1); },
+                  style:{
+                    display:"flex",
+                    alignItems:"center",
+                    justifyContent:"space-between",
+                    width:"100%",
+                    padding:"0.55rem 0.75rem",
+                    borderRadius:"8px",
+                    fontSize:"0.8rem",
+                    fontWeight:active ? 800 : 500,
+                    background:active ? "rgba(16,185,129,0.18)" : "transparent",
+                    color:active ? "#34d399" : "var(--cas-text-secondary, #94a3b8)",
+                    border:active ? "1px solid rgba(16,185,129,0.5)" : "1px solid transparent",
+                    cursor:"pointer",
+                    textAlign:"left",
+                    transition:"all 0.15s ease"
+                  },
+                  children:[
+                    (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+                      (0,t.jsx)("span",{children:vis.icon}),
+                      vis.label
+                    ]}),
+                    active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#10b981"}})
+                  ]
+                });
+              })
+            ]
+          })
+        ]
+      })
+      ]
+    }),
 
     // Modal: Siapa Saja yang Ngelike ("Reaksi Personil")
     (0,t.jsx)(u.Dialog,{
@@ -1622,10 +1785,12 @@ e.s(["default",0,function() {
           reactionsList.map(rx => {
             var usr = rx.user || {};
             var reactObj = REACTIONS.find(r => r.type === rx.reaction_type) || { emoji: '👍', label: 'Suka' };
-            var isUsrOne = String(usr.id) === '1' || usr.username === 'omeko11';
-            var usrBadge = getVerificationBadge(usr.role_bdb, isUsrOne);
+            var isUsrEko = String(usr.id) === '1' || usr.username === 'omeko11';
+            var isUsrSuper = isUsrEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
+            var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
+            var usrPhoto = (isUsrEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (usr.photo_url || usr.foto || null);
 
             return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
@@ -1633,7 +1798,7 @@ e.s(["default",0,function() {
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
                 title:"Klik untuk melihat profil personil",
                 children:[
-                  renderCornerAvatar(usr.photo_url, initials, usrBadge, 2.2, 14, 8),
+                  renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8),
                   (0,t.jsxs)("div",{children:[
                     (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"#fff",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
                       usr.pangkat && usr.pangkat !== '-' ? usr.pangkat + ' ' : '',
@@ -1828,7 +1993,7 @@ e.s(["default",0,function() {
               renderCornerAvatar(
                 previewUser.photo_url || previewUser.foto,
                 String(previewUser.name || 'P').charAt(0).toUpperCase(),
-                getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko11'),
+                getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko11' || String(previewUser.role_bdb).toLowerCase() === 'superadmin'),
                 4.2,
                 22,
                 12
@@ -1839,15 +2004,19 @@ e.s(["default",0,function() {
           // Identity Meta
           (0,t.jsxs)("div",{style:{marginTop:"1.8rem",padding:"0 0.5rem"},children:[
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap"},children:[
-              (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#fff"},children:previewUser.name}),
+              (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#38bdf8"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
               (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
             ]}),
-            (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#38bdf8",fontWeight:700,marginTop:"0.2rem"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
+            previewUser.name ? (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8",fontWeight:600,marginTop:"0.2rem"},children:previewUser.name}) : null,
             (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"#e2e8f0",marginTop:"0.25rem",fontWeight:600},children:[
               previewUser.pangkat && previewUser.pangkat !== '-' ? previewUser.pangkat + " • " : "",
               previewUser.jabatan || previewUser.role || "Penyidik Reserse Polri"
             ]}),
-            (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri")})
+            (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:(function(){
+  var isSuper = String(previewUser.id) === '1' || previewUser.username === 'omeko11' || String(previewUser.role_bdb || '').toLowerCase() === 'superadmin';
+  if (isSuper) return "Robinopsnal Bareskrim Polri";
+  return toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri");
+})()})
           ]}),
 
           // Details Grid (NRP, Status Kedinasan, Email Dinas, Bio)
@@ -1891,7 +2060,7 @@ e.s(["default",0,function() {
               (0,t.jsx)("button",{
                 type:"button",
                 onClick:() => {
-                  window.location.href = '/cms/profile?u=' + previewUser.id;
+                  handleOpenUserProfile(previewUser.id, previewUser);
                 },
                 style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 1.15rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
                 children:"👤 Buka Profil Lengkap"
@@ -1900,6 +2069,40 @@ e.s(["default",0,function() {
           ]})
         ]})
       ) : null
+    }),
+  
+    // Modal: Lightbox Image Popup (In-app popup, safe download)
+    (0,t.jsx)(u.Dialog,{
+      header:lightboxImage?.name || "Pratinjau Foto CAS",
+      visible:Boolean(lightboxImage),
+      onHide:() => setLightboxImage(null),
+      style:{width:"48rem",maxWidth:"95vw"},
+      modal:!0,
+      dismissableMask:!0,
+      children:lightboxImage && (0,t.jsxs)("div",{
+        style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1rem",padding:"0.5rem 0"},
+        children:[
+          (0,t.jsx)("img",{
+            src:lightboxImage.url,
+            alt:lightboxImage.name || "Foto",
+            style:{maxWidth:"100%",maxHeight:"75vh",borderRadius:"8px",objectFit:"contain",boxShadow:"0 8px 30px rgba(0,0,0,0.5)"}
+          }),
+          (0,t.jsxs)("div",{
+            style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.1))",paddingTop:"0.75rem"},
+            children:[
+              (0,t.jsx)("span",{style:{fontSize:"0.78rem",color:"#94a3b8",wordBreak:"break-all"},children:lightboxImage.name}),
+              (0,t.jsx)("a",{
+                href:lightboxImage.url,
+                download:lightboxImage.name || "CAS_Foto.jpg",
+                target:"_blank",
+                rel:"noopener noreferrer",
+                style:{background:"#2563eb",color:"#fff",textDecoration:"none",padding:"0.4rem 0.85rem",borderRadius:"6px",fontSize:"0.78rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+                children:"⬇️ Unduh Foto"
+              })
+            ]
+          })
+        ]
+      })
     })
   ]});
 }])}]);
