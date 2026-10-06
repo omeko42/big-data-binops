@@ -155,6 +155,7 @@ let JukrahService = class JukrahService {
                 p.updated_at,
                 u.name as raw_author_name,
                 u.callsign as author_callsign,
+                u.username as author_username,
                 u.role_bdb as author_role,
                 u.photo_url as author_photo,
                 u.scope_satker_id as author_satker_id,
@@ -401,7 +402,7 @@ let JukrahService = class JukrahService {
         const uid = Number(user?.id);
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
         const rows = await this.dataSource.query(`SELECT c.id, c.parent_id, c.content, c.created_at,
-                    u.id as author_id, u.name as raw_name, u.callsign, u.role_bdb, u.photo_url,
+                    u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url,
                     s.nama_singkat as satker
              FROM bdb_social_comments c
              JOIN auth_users u ON u.id = c.user_id
@@ -764,16 +765,23 @@ let JukrahService = class JukrahService {
         const idStr = String(authorId || '');
         if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
         let c = String(rawCallsign || '').trim().replace(/^@/, '');
-        if (c.startsWith('pers_') || c.startsWith('user_')) c = '';
+        if (c.startsWith('pers_') || (c.startsWith('user_') && !/^[a-zA-Z0-9_]{15,}$/.test(c))) c = '';
         const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
-        if (c && /^[a-zA-Z0-9_.]{3,20}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && !c.startsWith('user_')) {
             return '@' + c.toLowerCase();
         }
-        const seed = idStr || username || 'polri';
+        let u = String(username || '').trim().replace(/^@/, '');
+        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && !u.startsWith('user_')) {
+            return '@' + u.toLowerCase();
+        }
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
+            return '@' + c.toLowerCase();
+        }
+        const seed = idStr || 'polri';
         let num = 0;
         for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
         const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-        return '@user_' + code;
+        return '@user_' + (idStr || '0') + code;
     }
     async getDashboardWidgets(user) {
         const uid = Number(user?.id || 0);
