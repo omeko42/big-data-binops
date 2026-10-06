@@ -2295,7 +2295,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var targetUid = a?.id;
             var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
             setNetworkUsers([]);
-            setNetworkTotal(0);
+            setNetworkTotal(typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0));
             setNetworkConnectedTarget(targetUid);
             setNetworkSatkerFilter('connected');
             setNetworkSearch('');
