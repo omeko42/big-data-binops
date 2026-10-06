@@ -1,16 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
-export type NotifEntity = 'jukrah' | 'satgas' | 'operasi';
-const ENTITY_LABEL: Record<NotifEntity, string> = { jukrah: 'Pengumuman', satgas: 'Satgas', operasi: 'Operasi' };
-const ALL_ENTITIES: NotifEntity[] = ['jukrah', 'satgas', 'operasi'];
-const ENTITY_LINK: Record<NotifEntity, string> = { jukrah: '/cms/pengumuman', satgas: '/cms/master/operasi-satgas', operasi: '/cms/master/operasi-satgas' };
+export type NotifEntity = 'social' | 'koneksi' | 'satgas' | 'operasi' | 'kerma' | 'pelimpahan' | 'kasus_atensi' | 'jukrah';
+
+const ENTITY_LABEL: Record<NotifEntity, string> = {
+    social: 'Sebutan & Interaksi',
+    koneksi: 'Koneksi Personil',
+    satgas: 'Satgas Operasi',
+    operasi: 'Operasi Kepolisian',
+    kerma: 'Kerjasama (Kerma)',
+    pelimpahan: 'Pelimpahan LP',
+    kasus_atensi: 'Kasus Menonjol',
+    jukrah: 'Pengumuman (Jukrah)'
+};
+
+const ALL_ENTITIES: NotifEntity[] = [
+    'social',
+    'koneksi',
+    'satgas',
+    'operasi',
+    'kerma',
+    'pelimpahan',
+    'kasus_atensi',
+    'jukrah'
+];
+
+const ENTITY_LINK: Record<NotifEntity, string> = {
+    social: '/cms/broadcaster',
+    koneksi: '/cms/profile',
+    satgas: '/cms/master/operasi-satgas',
+    operasi: '/cms/master/operasi-satgas',
+    kerma: '/cms/master/kerma',
+    pelimpahan: '/cms/laporan-polisi',
+    kasus_atensi: '/cms/dashboard/main',
+    jukrah: '/cms/pengumuman'
+};
 
 /**
- * Notifikasi topbar: "Ada X Baru dari Robinops Bareskrim Polri" utk Pengumuman (Jukrah), Satgas,
- * dan Operasi. Bukan tabel per-item (spt bdb_jukrah_view) -- cukup 1 checkpoint "terakhir dilihat"
- * per user per jenis, krn yg dibutuhkan cuma "ada yg baru sejak terakhir dibuka", bukan status
- * baca per-item individual.
+ * Notifikasi topbar terpusat menyeluruh:
+ * - Sebutan & Interaksi (Mentions/Comments/Reactions dari Linimasa)
+ * - Koneksi Personil (Permintaan / persetujuan koneksi jejaring CAS)
+ * - Satgas & Operasi Baru dari Robinops Bareskrim
+ * - Kerja Sama (Kerma) Baru
+ * - Pelimpahan Laporan Polisi (LP)
+ * - Kasus Menonjol & Kasus Atensi Pimpinan
+ * - Petunjuk Arah & Pengumuman (Jukrah)
  */
 @Injectable()
 export class NotificationsService {
@@ -29,68 +63,244 @@ export class NotificationsService {
         this.ready = true;
     }
 
-    /** Satgas/Operasi cuma utk role admin (menu-nya pun ADMIN-only) -- Pengumuman utk semua role. */
     private entitiesFor(authUser: any): NotifEntity[] {
-        const role = String(authUser?.role_bdb || '').toLowerCase();
-        const isAdmin = role === 'superadmin' || role === 'admin_binops';
-        return isAdmin ? ALL_ENTITIES : ['jukrah'];
+        return ALL_ENTITIES;
     }
 
-    /** Checkpoint per user+entity -- kalau belum ada, dibuat dgn now() supaya backlog lama tak
-     *  langsung dianggap "baru semua" pas fitur ini baru rilis; hanya item SETELAH ini yg menotifikasi. */
     private async getCheckpoints(userId: number, entities: NotifEntity[]): Promise<Map<NotifEntity, Date>> {
         await this.ensureTable();
-        const rows = await this.dataSource.query('select entity, last_seen_at from bdb_notification_checkpoint where user_id=$1 and entity = any($2)', [userId, entities]);
-        const map = new Map<NotifEntity, Date>(rows.map((r: any) => [r.entity as NotifEntity, r.last_seen_at]));
+        const rows = await this.dataSource.query(
+            'select entity, last_seen_at from bdb_notification_checkpoint where user_id=$1 and entity = any($2)',
+            [userId, entities]
+        );
+        const map = new Map<NotifEntity, Date>(rows.map((r: any) => [r.entity as NotifEntity, new Date(r.last_seen_at)]));
         const missing = entities.filter((e) => !map.has(e));
         if (missing.length) {
-            const now = new Date();
+            // Default initial checkpoint 48 jam yang lalu agar event terkini langsung muncul (red alert badge aktif)
+            const defaultSince = new Date(Date.now() - 48 * 3600 * 1000);
             for (const e of missing) {
-                await this.dataSource.query('insert into bdb_notification_checkpoint (user_id, entity, last_seen_at) values ($1,$2,$3) on conflict (user_id, entity) do nothing', [userId, e, now]);
-                map.set(e, now);
+                await this.dataSource.query(
+                    'insert into bdb_notification_checkpoint (user_id, entity, last_seen_at) values ($1,$2,$3) on conflict (user_id, entity) do nothing',
+                    [userId, e, defaultSince]
+                );
+                map.set(e, defaultSince);
             }
         }
         return map;
     }
 
-    private async countNew(entity: NotifEntity, since: Date): Promise<number> {
-        if (entity === 'jukrah') {
-            // bdb_jukrah dibuat lazy oleh JukrahService.ensureTable() saat fitur Jukrah pertama
-            // diakses -- di deploy fresh, belum tentu tabelnya sudah ada. 42P01 = undefined_table.
-            try {
-                const r = await this.dataSource.query(`select count(*)::int c from bdb_jukrah where aktif=true and tanggal_publish <= current_date and created_at > $1`, [since]);
-                return r[0]?.c || 0;
-            } catch (e: any) {
-                if (e?.code === '42P01') return 0;
-                throw e;
+    private async countNew(entity: NotifEntity, since: Date, authUser: any): Promise<number> {
+        const userId = Number(authUser?.id || 0);
+        const satkerId = Number(authUser?.scope_satker_id || 0);
+        const role = String(authUser?.role_bdb || '').toLowerCase();
+        const isAdmin = role === 'superadmin' || role === 'admin_binops';
+
+        try {
+            switch (entity) {
+                case 'social': {
+                    const r = await this.dataSource.query(
+                        'SELECT count(*)::int as c FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false',
+                        [userId]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'koneksi': {
+                    const r = await this.dataSource.query(
+                        `SELECT count(*)::int as c FROM user_connections uc 
+                         WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED'))
+                           AND uc.updated_at > $2`,
+                        [userId, since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'satgas': {
+                    const r = await this.dataSource.query(
+                        "SELECT count(*)::int as c FROM bdb_operasi_satgas WHERE deleted_at IS NULL AND jenis = 'SATGAS' AND created_at > $1",
+                        [since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'operasi': {
+                    const r = await this.dataSource.query(
+                        "SELECT count(*)::int as c FROM bdb_operasi_satgas WHERE deleted_at IS NULL AND jenis = 'OPERASI' AND created_at > $1",
+                        [since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'kerma': {
+                    const r = await this.dataSource.query(
+                        'SELECT count(*)::int as c FROM bdb_kerma_master WHERE deleted_at IS NULL AND created_at > $1',
+                        [since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'pelimpahan': {
+                    if (isAdmin) {
+                        const r = await this.dataSource.query(
+                            'SELECT count(*)::int as c FROM bdb_lp_pelimpahan WHERE created_at > $1',
+                            [since]
+                        );
+                        return Number(r[0]?.c || 0);
+                    } else {
+                        const r = await this.dataSource.query(
+                            'SELECT count(*)::int as c FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $2 OR satker_asal_id = $2) AND created_at > $1',
+                            [since, satkerId]
+                        );
+                        return Number(r[0]?.c || 0);
+                    }
+                }
+                case 'kasus_atensi': {
+                    const r = await this.dataSource.query(
+                        'SELECT count(*)::int as c FROM bdb_kasus_menonjol WHERE deleted_at IS NULL AND created_at > $1',
+                        [since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                case 'jukrah': {
+                    const r = await this.dataSource.query(
+                        'SELECT count(*)::int as c FROM bdb_jukrah WHERE aktif = true AND tanggal_publish <= current_date AND created_at > $1',
+                        [since]
+                    );
+                    return Number(r[0]?.c || 0);
+                }
+                default:
+                    return 0;
             }
+        } catch {
+            return 0;
         }
-        const jenis = entity === 'satgas' ? 'SATGAS' : 'OPERASI';
-        const r = await this.dataSource.query(`select count(*)::int c from bdb_operasi_satgas where deleted_at is null and jenis=$1 and created_at > $2`, [jenis, since]);
-        return r[0]?.c || 0;
     }
 
-    private async fetchNew(entity: NotifEntity, since: Date, limit: number): Promise<{ id: number; title: string; created_at: string }[]> {
-        if (entity === 'jukrah') {
-            try {
-                return await this.dataSource.query(
-                    `select id, nama as title, created_at from bdb_jukrah
-                     where aktif=true and tanggal_publish <= current_date and created_at > $1
-                     order by created_at desc limit $2`,
-                    [since, limit]
-                );
-            } catch (e: any) {
-                if (e?.code === '42P01') return [];
-                throw e;
+    private async fetchNew(entity: NotifEntity, since: Date, limit: number, authUser: any): Promise<{ id: number | string; title: string; message: string; created_at: string; link: string }[]> {
+        const userId = Number(authUser?.id || 0);
+        const satkerId = Number(authUser?.scope_satker_id || 0);
+        const role = String(authUser?.role_bdb || '').toLowerCase();
+        const isAdmin = role === 'superadmin' || role === 'admin_binops';
+
+        try {
+            switch (entity) {
+                case 'social': {
+                    const rows = await this.dataSource.query(
+                        'SELECT n.id, n.title, n.message, n.created_at, n.post_id FROM bdb_social_notifications n WHERE n.recipient_id = $1 AND n.is_read = false ORDER BY n.created_at DESC LIMIT $2',
+                        [userId, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title || 'Sebutan & Interaksi',
+                        message: r.message || 'Ada interaksi baru di linimasa',
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.social
+                    }));
+                }
+                case 'koneksi': {
+                    const rows = await this.dataSource.query(
+                        `SELECT uc.id, uc.status, uc.updated_at as created_at,
+                                u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign
+                         FROM user_connections uc
+                         JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
+                         WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED'))
+                           AND uc.updated_at > $2
+                         ORDER BY uc.updated_at DESC LIMIT $3`,
+                        [userId, since, limit]
+                    );
+                    return rows.map((r: any) => {
+                        const targetHandle = r.other_callsign || r.other_username || ('user_' + r.other_id);
+                        return {
+                            id: r.id,
+                            title: 'Personil: ' + (r.other_name || targetHandle),
+                            message: r.status === 'PENDING' 
+                                ? 'Mengajukan koneksi dengan Anda (@' + targetHandle + ')' 
+                                : 'Anda sekarang terkoneksi dengan @' + targetHandle,
+                            created_at: r.created_at,
+                            link: ENTITY_LINK.koneksi
+                        };
+                    });
+                }
+                case 'satgas': {
+                    const rows = await this.dataSource.query(
+                        "SELECT id, nama as title, created_at FROM bdb_operasi_satgas WHERE deleted_at IS NULL AND jenis = 'SATGAS' AND created_at > $1 ORDER BY created_at DESC LIMIT $2",
+                        [since, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title,
+                        message: 'Ada Satgas Operasi Baru dari Robinops Bareskrim',
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.satgas
+                    }));
+                }
+                case 'operasi': {
+                    const rows = await this.dataSource.query(
+                        "SELECT id, nama as title, created_at FROM bdb_operasi_satgas WHERE deleted_at IS NULL AND jenis = 'OPERASI' AND created_at > $1 ORDER BY created_at DESC LIMIT $2",
+                        [since, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title,
+                        message: 'Ada Operasi Kepolisian Baru dari Bareskrim',
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.operasi
+                    }));
+                }
+                case 'kerma': {
+                    const rows = await this.dataSource.query(
+                        'SELECT id, institusi, tentang as title, created_at FROM bdb_kerma_master WHERE deleted_at IS NULL AND created_at > $1 ORDER BY created_at DESC LIMIT $2',
+                        [since, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title,
+                        message: 'Kerjasama (Kerma) Baru dengan ' + (r.institusi || 'Mitra'),
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.kerma
+                    }));
+                }
+                case 'pelimpahan': {
+                    const sql = isAdmin
+                        ? 'SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE created_at > $1 ORDER BY created_at DESC LIMIT $2'
+                        : 'SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $3 OR satker_asal_id = $3) AND created_at > $1 ORDER BY created_at DESC LIMIT $2';
+                    const params = isAdmin ? [since, limit] : [since, limit, satkerId];
+                    const rows = await this.dataSource.query(sql, params);
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: 'Pelimpahan ke ' + (r.satker_tujuan_nama || 'Satker Terkait'),
+                        message: 'LP #' + r.lp_id + ' dilimpahkan dari ' + (r.satker_asal_nama || 'Satker Asal'),
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.pelimpahan
+                    }));
+                }
+                case 'kasus_atensi': {
+                    const rows = await this.dataSource.query(
+                        'SELECT id, judul as title, skala_viral, created_at FROM bdb_kasus_menonjol WHERE deleted_at IS NULL AND created_at > $1 ORDER BY created_at DESC LIMIT $2',
+                        [since, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title,
+                        message: 'Kasus Menonjol Baru (' + (r.skala_viral || 'Atensi Pimpinan') + ')',
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.kasus_atensi
+                    }));
+                }
+                case 'jukrah': {
+                    const rows = await this.dataSource.query(
+                        'SELECT id, nama as title, created_at FROM bdb_jukrah WHERE aktif = true AND tanggal_publish <= current_date AND created_at > $1 ORDER BY created_at DESC LIMIT $2',
+                        [since, limit]
+                    );
+                    return rows.map((r: any) => ({
+                        id: r.id,
+                        title: r.title,
+                        message: 'Ada Petunjuk Arah (Jukrah) Baru dari Robinops',
+                        created_at: r.created_at,
+                        link: ENTITY_LINK.jukrah
+                    }));
+                }
+                default:
+                    return [];
             }
+        } catch {
+            return [];
         }
-        const jenis = entity === 'satgas' ? 'SATGAS' : 'OPERASI';
-        return this.dataSource.query(
-            `select id, nama as title, created_at from bdb_operasi_satgas
-             where deleted_at is null and jenis=$1 and created_at > $2
-             order by created_at desc limit $3`,
-            [jenis, since, limit]
-        );
     }
 
     /** Ringkasan (badge angka topbar) -- jumlah item baru per jenis sejak terakhir ditandai dilihat. */
@@ -101,7 +311,7 @@ export class NotificationsService {
         const perEntity: { entity: NotifEntity; label: string; count: number }[] = [];
         let total = 0;
         for (const e of entities) {
-            const count = await this.countNew(e, checkpoints.get(e)!);
+            const count = await this.countNew(e, checkpoints.get(e)!, authUser);
             perEntity.push({ entity: e, label: ENTITY_LABEL[e], count });
             total += count;
         }
@@ -113,28 +323,49 @@ export class NotificationsService {
         const userId = Number(authUser?.id);
         const entities = this.entitiesFor(authUser);
         const checkpoints = await this.getCheckpoints(userId, entities);
-        const items: { entity: NotifEntity; id: number; title: string; message: string; created_at: string; link: string }[] = [];
+        const items: { entity: NotifEntity; id: number | string; title: string; message: string; created_at: string; link: string }[] = [];
         for (const e of entities) {
-            const rows = await this.fetchNew(e, checkpoints.get(e)!, limit);
+            const rows = await this.fetchNew(e, checkpoints.get(e)!, limit, authUser);
             for (const r of rows) {
-                items.push({ entity: e, id: r.id, title: r.title, message: `Ada ${ENTITY_LABEL[e]} Baru dari Robinops Bareskrim Polri`, created_at: r.created_at, link: ENTITY_LINK[e] });
+                items.push({ entity: e, id: r.id, title: r.title, message: r.message, created_at: r.created_at, link: r.link });
             }
         }
         items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        // Jika tidak ada item baru sejak checkpoint, tampilkan beberapa highlight terkini sistem agar dropdown tidak hampa
+        if (items.length === 0) {
+            const fallbackSince = new Date(0);
+            for (const e of ['satgas', 'kerma', 'kasus_atensi', 'koneksi'] as NotifEntity[]) {
+                const rows = await this.fetchNew(e, fallbackSince, 2, authUser);
+                for (const r of rows) {
+                    items.push({ entity: e, id: r.id, title: r.title, message: r.message, created_at: r.created_at, link: r.link });
+                }
+            }
+            items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+
         return { status: 1, data: items.slice(0, limit) };
     }
 
-    /** Tandai sudah dilihat (semua jenis, atau 1 jenis tertentu) -- dipanggil saat dropdown notifikasi dibuka. */
+    /** Tandai sudah dilihat -- dipanggil saat dropdown notifikasi dibuka. */
     async markSeen(authUser: any, entity?: string) {
         const userId = Number(authUser?.id);
         await this.ensureTable();
-        const entities: NotifEntity[] = entity && (ALL_ENTITIES as string[]).includes(entity) ? [entity as NotifEntity] : this.entitiesFor(authUser);
+        const entities: NotifEntity[] = entity && (ALL_ENTITIES as string[]).includes(entity)
+            ? [entity as NotifEntity]
+            : this.entitiesFor(authUser);
         const now = new Date();
         for (const e of entities) {
             await this.dataSource.query(
                 `insert into bdb_notification_checkpoint (user_id, entity, last_seen_at) values ($1,$2,$3)
                  on conflict (user_id, entity) do update set last_seen_at=$3`,
                 [userId, e, now]
+            );
+        }
+        if (!entity || entity === 'social') {
+            await this.dataSource.query(
+                'UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1 AND is_read = false',
+                [userId]
             );
         }
         return { status: 1, message: 'Ditandai sudah dilihat.' };

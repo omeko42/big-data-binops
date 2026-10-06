@@ -308,6 +308,30 @@ let JukrahService = class JukrahService {
         if (isOfficial) {
             await this.broadcastDinasNotification(newPostId, user, content);
         }
+        // Scan for @mentions in post content
+        const mentionMatches = content.match(/@([a-z0-9_.]{3,30})/gi);
+        if (mentionMatches && mentionMatches.length) {
+            const handles = Array.from(new Set(mentionMatches.map(m => m.slice(1).toLowerCase())));
+            try {
+                const taggedUsers = await this.dataSource.query(
+                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    [handles, uid]
+                );
+                for (const tu of taggedUsers) {
+                    await this.createNotification({
+                        recipientId: Number(tu.id),
+                        senderId: uid,
+                        category: 'social',
+                        type: 'mention',
+                        postId: newPostId,
+                        title: 'Sebutan Baru (Mention)',
+                        message: `Seseorang menyebut Anda dalam sebuah postingan: "${content.slice(0, 75)}..."`
+                    });
+                }
+            } catch (err) {
+                this.logger.error('Failed to dispatch mention notifications: ' + err.message);
+            }
+        }
         if (dto.parent_post_id) {
             const orig = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [dto.parent_post_id]);
             if (orig.length && Number(orig[0].author_id) !== uid) {
@@ -412,6 +436,30 @@ let JukrahService = class JukrahService {
         if (!post.length)
             throw new common_1.NotFoundException('Postingan tidak ditemukan.');
         const r = await this.dataSource.query('INSERT INTO bdb_social_comments (post_id, user_id, parent_id, content) VALUES ($1, $2, $3, $4) RETURNING id, created_at', [postId, uid, parentId ? Number(parentId) : null, text]);
+        // Scan for @mentions in comment text
+        const cMentionMatches = text.match(/@([a-z0-9_.]{3,30})/gi);
+        if (cMentionMatches && cMentionMatches.length) {
+            const cHandles = Array.from(new Set(cMentionMatches.map(m => m.slice(1).toLowerCase())));
+            try {
+                const cTaggedUsers = await this.dataSource.query(
+                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    [cHandles, uid]
+                );
+                for (const tu of cTaggedUsers) {
+                    await this.createNotification({
+                        recipientId: Number(tu.id),
+                        senderId: uid,
+                        category: 'social',
+                        type: 'mention',
+                        postId,
+                        title: 'Sebutan Baru di Komentar',
+                        message: `Seseorang menyebut Anda dalam sebuah komentar: "${text.slice(0, 75)}..."`
+                    });
+                }
+            } catch (err) {
+                this.logger.error('Failed to dispatch comment mention notifications: ' + err.message);
+            }
+        }
         if (Number(post[0].author_id) !== uid) {
             await this.createNotification({
                 recipientId: Number(post[0].author_id),
@@ -524,42 +572,180 @@ let JukrahService = class JukrahService {
     }
     async getNotifications(user, category) {
         const uid = Number(user?.id);
+        const satkerId = Number(user?.scope_satker_id || 0);
+        const role = String(user?.role_bdb || '').toLowerCase();
+        const isAdmin = role === 'superadmin' || role === 'admin_binops';
         const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
-        const whereCat = cat ? 'AND n.category = $2' : '';
-        const params = cat ? [uid, cat] : [uid];
-        const rows = await this.dataSource.query(`SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
-                    u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
-             FROM bdb_social_notifications n
-             LEFT JOIN auth_users u ON u.id = n.sender_id
-             WHERE n.recipient_id = $1 ${whereCat}
-             ORDER BY n.created_at DESC
-             LIMIT 30`, params);
-        const unreadCounts = await this.dataSource.query(`SELECT category, count(*)::int as c 
-             FROM bdb_social_notifications 
-             WHERE recipient_id = $1 AND is_read = false 
-             GROUP BY category`, [uid]);
-        let unreadDinas = 0;
-        let unreadSocial = 0;
-        unreadCounts.forEach((r) => {
-            if (r.category === 'dinas')
-                unreadDinas = Number(r.c);
-            if (r.category === 'social')
-                unreadSocial = Number(r.c);
-        });
-        return {
-            status: 1,
-            data: rows.map((r) => ({
+
+        let items = [];
+
+        if (!cat || cat === 'social') {
+            // Social notifications (reactions, comments, mentions)
+            const rows = await this.dataSource.query(
+                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                 FROM bdb_social_notifications n
+                 LEFT JOIN auth_users u ON u.id = n.sender_id
+                 WHERE n.recipient_id = $1 AND n.category = 'social'
+                 ORDER BY n.created_at DESC
+                 LIMIT 25`,
+                [uid]
+            );
+            items.push(...rows.map(r => ({
                 id: Number(r.id),
-                category: r.category,
+                category: 'social',
                 type: r.type,
                 post_id: r.post_id ? Number(r.post_id) : null,
                 title: r.title,
                 message: r.message,
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
-                sender_handle: r.sender_callsign ? `@${r.sender_callsign}` : null,
-                sender_photo: r.sender_photo
-            })),
+                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_photo: r.sender_photo,
+                link: '/cms/broadcaster'
+            })));
+
+            // Connections
+            const connRows = await this.dataSource.query(
+                `SELECT uc.id, uc.status, uc.updated_at as created_at,
+                        u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                 FROM user_connections uc
+                 JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
+                 WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED'))
+                 ORDER BY uc.updated_at DESC
+                 LIMIT 15`,
+                [uid]
+            );
+            items.push(...connRows.map(r => {
+                const handle = r.other_callsign || r.other_username || ('user_' + r.other_id);
+                return {
+                    id: 'conn_' + r.id,
+                    category: 'social',
+                    type: 'connection',
+                    post_id: null,
+                    title: 'Jejaring: ' + (r.other_name || handle),
+                    message: r.status === 'PENDING' ? `Mengajukan koneksi dengan Anda (@${handle})` : `Anda sekarang terkoneksi dengan @${handle}`,
+                    is_read: true,
+                    created_at: r.created_at,
+                    sender_handle: '@' + handle,
+                    sender_photo: r.other_photo,
+                    link: '/cms/profile'
+                };
+            }));
+        }
+
+        if (!cat || cat === 'dinas') {
+            // Official dinas broadcasts from bdb_social_notifications
+            const dinasRows = await this.dataSource.query(
+                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                 FROM bdb_social_notifications n
+                 LEFT JOIN auth_users u ON u.id = n.sender_id
+                 WHERE n.recipient_id = $1 AND n.category = 'dinas'
+                 ORDER BY n.created_at DESC
+                 LIMIT 15`,
+                [uid]
+            );
+            items.push(...dinasRows.map(r => ({
+                id: Number(r.id),
+                category: 'dinas',
+                type: r.type,
+                post_id: r.post_id ? Number(r.post_id) : null,
+                title: r.title,
+                message: r.message,
+                is_read: Boolean(r.is_read),
+                created_at: r.created_at,
+                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_photo: r.sender_photo,
+                link: '/cms/broadcaster'
+            })));
+
+            // Satgas & Operasi
+            const satgasRows = await this.dataSource.query(
+                `SELECT id, jenis, nama as title, deskripsi, created_at
+                 FROM bdb_operasi_satgas
+                 WHERE deleted_at IS NULL
+                 ORDER BY created_at DESC
+                 LIMIT 6`
+            );
+            items.push(...satgasRows.map(r => ({
+                id: 'satgas_' + r.id,
+                category: 'dinas',
+                type: r.jenis.toLowerCase(),
+                post_id: null,
+                title: r.title,
+                message: `Ada ${r.jenis === 'SATGAS' ? 'Satgas Operasi' : 'Operasi Kepolisian'} Baru dari Robinops Bareskrim`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@bareskrim',
+                sender_photo: null,
+                link: '/cms/master/operasi-satgas'
+            })));
+
+            // Kerma Baru
+            const kermaRows = await this.dataSource.query(
+                `SELECT id, institusi, tentang as title, created_at
+                 FROM bdb_kerma_master
+                 WHERE deleted_at IS NULL
+                 ORDER BY created_at DESC
+                 LIMIT 5`
+            );
+            items.push(...kermaRows.map(r => ({
+                id: 'kerma_' + r.id,
+                category: 'dinas',
+                type: 'kerma',
+                post_id: null,
+                title: r.title,
+                message: `Kerjasama (Kerma) Baru dengan ${r.institusi}`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@kerma_polri',
+                sender_photo: null,
+                link: '/cms/master/kerma'
+            })));
+
+            // Pelimpahan LP
+            const lpSql = isAdmin
+                ? `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan ORDER BY created_at DESC LIMIT 6`
+                : `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $1 OR satker_asal_id = $1) ORDER BY created_at DESC LIMIT 6`;
+            const lpParams = isAdmin ? [] : [satkerId];
+            const lpRows = await this.dataSource.query(lpSql, lpParams);
+            items.push(...lpRows.map(r => ({
+                id: 'lp_' + r.id,
+                category: 'dinas',
+                type: 'pelimpahan',
+                post_id: null,
+                title: `Pelimpahan ke ${r.satker_tujuan_nama || 'Satker Terkait'}`,
+                message: `LP #${r.lp_id} dilimpahkan dari ${r.satker_asal_nama || 'Satker Asal'}`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@robinops',
+                sender_photo: null,
+                link: '/cms/laporan-polisi'
+            })));
+        }
+
+        // Sort combined items newest first
+        items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+        const unreadCounts = await this.dataSource.query(
+            `SELECT category, count(*)::int as c 
+             FROM bdb_social_notifications 
+             WHERE recipient_id = $1 AND is_read = false 
+             GROUP BY category`,
+            [uid]
+        );
+
+        let unreadDinas = 0;
+        let unreadSocial = 0;
+        unreadCounts.forEach(r => {
+            if (r.category === 'dinas') unreadDinas = Number(r.c);
+            if (r.category === 'social') unreadSocial = Number(r.c);
+        });
+
+        return {
+            status: 1,
+            data: items.slice(0, 30),
             unread_dinas: unreadDinas,
             unread_social: unreadSocial
         };
