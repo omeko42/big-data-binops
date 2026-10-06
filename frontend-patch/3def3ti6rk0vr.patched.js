@@ -240,10 +240,11 @@ async function eT() {
         if (targetData) {
           setIsReadOnlyMode(!0);
           try {
+            var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
+            cleanHandle = String(cleanHandle).replace(/^@/, '');
+            sessionStorage.setItem('cas_view_user', JSON.stringify({ id: targetData.id, username: targetData.username, callsign: targetData.callsign, handle: cleanHandle }));
             if (window.history && window.history.replaceState) {
-              var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
-              cleanHandle = String(cleanHandle).replace(/^@/, '');
-              window.history.replaceState({}, '', '/cms/profile?u=' + encodeURIComponent(cleanHandle));
+              window.history.replaceState({}, '', '/cms/profile');
             }
           } catch(e) {}
           y(targetData);
@@ -1824,13 +1825,31 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center"},children:[
                 (0,t.jsx)("div",{
                   style:{display:"inline-flex",cursor:"pointer"},
-                  onClick:() => window.location.href = isTargetSelf ? '/cms/profile' : ('/cms/profile?u=' + (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'')),
+                  onClick:() => {
+                    if (isTargetSelf) {
+                      try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                    } else {
+                      try {
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                      } catch(e){}
+                    }
+                    window.location.href = '/cms/profile';
+                  },
                   children:renderCornerAvatar(userPhoto, userInitials, userBadge, 2.8, 15, 8.5)
                 }),
                 (0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[
                   (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"4px"},children:[
                     (0,t.jsx)("span",{
-                      onClick:() => window.location.href = isTargetSelf ? '/cms/profile' : ('/cms/profile?u=' + (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'')),
+                      onClick:() => {
+                    if (isTargetSelf) {
+                      try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                    } else {
+                      try {
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                      } catch(e){}
+                    }
+                    window.location.href = '/cms/profile';
+                  },
                       style:{fontWeight:800,fontSize:"0.9rem",color:isUserSuper ? "#f59e0b" : "#38bdf8",letterSpacing:"-0.01em",cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
                       children:userCallsign
                     })
@@ -1927,7 +1946,16 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               (0,t.jsx)("div",{style:{marginTop:"0.25rem"},children:[
                 (0,t.jsx)("button",{
                   type:"button",
-                  onClick:() => window.location.href = isTargetSelf ? '/cms/profile' : ('/cms/profile?u=' + (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'')),
+                  onClick:() => {
+                    if (isTargetSelf) {
+                      try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                    } else {
+                      try {
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                      } catch(e){}
+                    }
+                    window.location.href = '/cms/profile';
+                  },
                   style:{width:"100%",padding:"0.45rem",borderRadius:"8px",background:"rgba(56,189,248,0.15)",border:"1px solid rgba(56,189,248,0.35)",color:"#38bdf8",fontSize:"0.78rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",transition:"all 0.15s ease"},
                   onMouseEnter:e => e.currentTarget.style.background = 'rgba(56,189,248,0.25)',
                   onMouseLeave:e => e.currentTarget.style.background = 'rgba(56,189,248,0.15)',
@@ -1953,7 +1981,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("strong",{style:{color:"#fff"},children:eNetworkPage}),
         " dari ",
         (0,t.jsx)("strong",{style:{color:"#fff"},children:eNetworkTotalPages}),
-        " (Total " + eNetworkTotal + " Personil)"
+        " (Total " + (eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi)" : " Personil)")
       ]}),
       (0,t.jsx)("button",{
         type:"button",
@@ -2173,6 +2201,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           onClick:()=>{
             var targetUid = a?.id;
             var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
+            setNetworkUsers([]);
+            setNetworkTotal(0);
             setNetworkConnectedTarget(targetUid);
             setNetworkSatkerFilter('connected');
             setNetworkSearch('');
@@ -2944,12 +2974,22 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         }).slice(0, 5) : []).map(pers => (
           (0,t.jsxs)("div",{key:pers.id,style:{display:"flex",alignItems:"center",gap:"0.55rem",minWidth:0,width:"100%"},children:[
             (0,t.jsx)("div",{
-              onClick:() => window.location.href = '/cms/profile?u=' + formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, ''),
+              onClick:() => {
+                try {
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                } catch(e){}
+                window.location.href = '/cms/profile';
+              },
               style:{width:"36px",height:"36px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #38bdf8",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.88rem",color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"},
               children:pers.photo ? (0,t.jsx)("img",{src:pers.photo,alt:formatCallsign(pers.callsign, pers.id, pers.username),style:{width:"100%",height:"100%",objectFit:"cover"}}) : String(formatCallsign(pers.callsign, pers.id, pers.username) || '@P').replace(/^@/,'').charAt(0).toUpperCase()
             }),
             (0,t.jsxs)("div",{
-              onClick:() => window.location.href = '/cms/profile?u=' + formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, ''),
+              onClick:() => {
+                try {
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                } catch(e){}
+                window.location.href = '/cms/profile';
+              },
               style:{minWidth:0,flex:1,cursor:"pointer"},
               children:[
                 (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",minWidth:0,overflow:"hidden"},children:[
@@ -2965,7 +3005,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             }),
             (0,t.jsx)("button",{
               type:"button",
-              onClick:() => window.location.href = '/cms/profile?u=' + formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, ''),
+              onClick:() => {
+                try {
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                } catch(e){}
+                window.location.href = '/cms/profile';
+              },
               style:{background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.4)",color:"#38bdf8",borderRadius:"6px",padding:"0.25rem 0.55rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"},
               children:"Lihat"
             })
@@ -3239,7 +3284,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
                     try {
                       sessionStorage.setItem('cas_view_user', JSON.stringify({ id: usr.id, handle: usrHandle, username: usr.username || h }));
                     } catch(e) {}
-                    window.location.href = '/cms/profile?u=' + encodeURIComponent(h);
+                    window.location.href = '/cms/profile';
                   }
                 },
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
