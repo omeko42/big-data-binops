@@ -939,7 +939,45 @@ e.s(["default",0,function() {
     ]}),
             // Feed Posts List
     loading ? (
-      (0,t.jsx)("div",{style:{textAlign:"center",padding:"3rem",color:"#94a3b8"},children:"Memuat ruang kolaborasi…"})
+      (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"1.1rem"},children:[
+        (0,t.jsx)("style",{children:`
+          @keyframes casShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          .cas-skeleton-shimmer {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.03) 75%) !important;
+            background-size: 200% 100% !important;
+            animation: casShimmer 1.5s infinite ease-in-out !important;
+            display: inline-block;
+          }
+        `}),
+        [1, 2, 3].map(i => (
+          (0,t.jsxs)("div",{key:i,className:"cms-card",style:{borderRadius:"12px",padding:"1.25rem",display:"flex",flexDirection:"column",gap:"0.9rem"},children:[
+            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
+              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.8rem"},children:[
+                (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"42px",height:"42px",borderRadius:"50%",flexShrink:0}}),
+                (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.4rem"},children:[
+                  (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i === 1 ? "140px" : i === 2 ? "180px" : "120px",height:"14px",borderRadius:"4px"}}),
+                  (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i === 1 ? "220px" : i === 2 ? "170px" : "240px",height:"11px",borderRadius:"4px"}})
+                ]})
+              ]}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"70px",height:"12px",borderRadius:"4px"}})
+            ]}),
+            (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem",marginTop:"0.2rem"},children:[
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"13px",borderRadius:"4px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i % 2 === 0 ? "88%" : "95%",height:"13px",borderRadius:"4px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i % 2 === 0 ? "62%" : "74%",height:"13px",borderRadius:"4px"}})
+            ]}),
+            i === 1 && (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"160px",borderRadius:"8px",marginTop:"0.25rem"}}),
+            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.8rem",paddingTop:"0.6rem",borderTop:"1px solid rgba(255, 255, 255, 0.05)"},children:[
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"65px",height:"24px",borderRadius:"6px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"85px",height:"24px",borderRadius:"6px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"60px",height:"24px",borderRadius:"6px",marginLeft:"auto"}})
+            ]})
+          ]})
+        ))
+      ]})
     ) : paginatedPosts.length === 0 ? (
       (0,t.jsxs)("div",{className:"cms-card",style:{textAlign:"center",padding:"3rem",borderRadius:"12px"},children:[
         (0,t.jsx)(IconMessageSquare,{size:36,style:{color:"#64748b",marginBottom:"0.6rem",opacity:0.7}}),

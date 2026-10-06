@@ -4890,3 +4890,21 @@ div[style*="margin-top:-1.6rem"] > span {
     order: 2 !important;
   }
 }
+
+/* CAS Skeleton Loaders with Fluid Shimmer */
+@keyframes casShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.cas-skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.03) 75%) !important;
+  background-size: 200% 100% !important;
+  animation: casShimmer 1.5s infinite ease-in-out !important;
+  display: inline-block;
+}
+

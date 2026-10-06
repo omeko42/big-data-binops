@@ -1038,7 +1038,45 @@ let handleAddPersonalComment = async (pId) => {
     setSubmittingComment(!1);
   }
 };
-if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||"").toLowerCase();L.includes(t)&&await eD()}finally{E(!1)}})()},[]),N)return(0,t.jsxs)("div",{children:[(0,t.jsx)("h1",{className:"cms-page-title",children:"Profil Saya"}),(0,t.jsx)("p",{className:"cms-page-sub",children:"Memuat profil…"}),(0,t.jsx)("div",{className:"cms-card",style:{height:"9rem"}})]});if(!a)return(0,t.jsx)("p",{className:"cms-page-sub",children:"Profil tidak tersedia."});let eB=String(a.name||a.email||"?").charAt(0).toUpperCase(),eH=String(a.role_bdb||"viewer").toLowerCase(),eK=B[eH]||"#64748b",eR="AKTIF"===String(a.status||"").toUpperCase(),eU=[a.local_password_enabled,a.email_otp_required,a.pin_required].filter(Boolean).length;return(0,t.jsxs)("div",{children:[(0,t.jsx)(s.Toast,{ref:e}),(0,t.jsx)(u.ConfirmDialog,{}),
+if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||"").toLowerCase();L.includes(t)&&await eD()}finally{E(!1)}})()},[]),N)return(0,t.jsxs)("div",{children:[
+  (0,t.jsx)("style",{children:`
+    @keyframes casShimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .cas-skeleton-shimmer {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.03) 75%) !important;
+      background-size: 200% 100% !important;
+      animation: casShimmer 1.5s infinite ease-in-out !important;
+      display: inline-block;
+    }
+  `}),
+  (0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.6rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Profil Personil CAS"}),
+  (0,t.jsx)("p",{className:"cms-page-sub",style:{margin:"0.2rem 0 1rem",fontSize:"0.84rem",color:"#94a3b8"},children:"Memuat informasi akun, data kedinasan, dan otorisasi…"}),
+  (0,t.jsxs)("div",{className:"cms-card",style:{borderRadius:"12px",overflow:"hidden",padding:0,marginBottom:"1.25rem"},children:[
+    (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"130px",display:"block"}}),
+    (0,t.jsxs)("div",{style:{padding:"1.25rem",display:"flex",gap:"1.25rem",alignItems:"flex-start",flexWrap:"wrap"},children:[
+      (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"84px",height:"84px",borderRadius:"50%",marginTop:"-2.5rem",border:"3px solid #0f172a",flexShrink:0}}),
+      (0,t.jsxs)("div",{style:{flex:1,display:"flex",flexDirection:"column",gap:"0.5rem"},children:[
+        (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"220px",height:"20px",borderRadius:"4px"}}),
+        (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"320px",height:"14px",borderRadius:"4px"}}),
+        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",marginTop:"0.25rem"},children:[
+          (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"22px",borderRadius:"999px"}}),
+          (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100px",height:"22px",borderRadius:"999px"}})
+        ]})
+      ]})
+    ]})
+  ]}),
+  (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:"1rem"},children:[
+    [1, 2, 3].map(i => (
+      (0,t.jsxs)("div",{key:i,className:"cms-card",style:{borderRadius:"10px",padding:"1.25rem",display:"flex",flexDirection:"column",gap:"0.75rem"},children:[
+        (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"120px",height:"16px",borderRadius:"4px"}}),
+        (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"12px",borderRadius:"4px"}}),
+        (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"75%",height:"12px",borderRadius:"4px"}})
+      ]})
+    ))
+  ]})
+]});if(!a)return(0,t.jsx)("p",{className:"cms-page-sub",children:"Profil tidak tersedia."});let eB=String(a.name||a.email||"?").charAt(0).toUpperCase(),eH=String(a.role_bdb||"viewer").toLowerCase(),eK=B[eH]||"#64748b",eR="AKTIF"===String(a.status||"").toUpperCase(),eU=[a.local_password_enabled,a.email_otp_required,a.pin_required].filter(Boolean).length;return(0,t.jsxs)("div",{children:[(0,t.jsx)(s.Toast,{ref:e}),(0,t.jsx)(u.ConfirmDialog,{}),
 // 1. PAGE HEADER ROW: Title on Left, Dropdown [ ⚙️ Pengaturan ▾ ] on Far Right (Pojok Kanan Atas)
 (0,t.jsxs)("div",{
   style:{
@@ -1796,7 +1834,23 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
     // Personnel Cards Grid
     eNetworkLoading ? (
-      (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"#94a3b8"},children:"Memuat direktori personil CAS…"})
+      (0,t.jsx)("div",{
+        style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem"},
+        children:[1,2,3,4,5,6].map(i => (
+          (0,t.jsxs)("div",{
+            key:i,
+            className:"cms-card",
+            style:{padding:"1.1rem",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",gap:"0.55rem",background:"var(--cas-bg-surface, rgba(255,255,255,0.03))"},
+            children:[
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"52px",height:"52px",borderRadius:"50%"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"130px",height:"14px",borderRadius:"4px",marginTop:"0.2rem"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"170px",height:"11px",borderRadius:"4px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"140px",height:"10px",borderRadius:"4px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"28px",borderRadius:"6px",marginTop:"0.5rem"}})
+            ]
+          })
+        ))
+      })
     ) : (
       (0,t.jsx)("div",{
         style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:"60vh",overflowY:"auto",paddingRight:"0.25rem"},
@@ -2455,7 +2509,21 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
       // Personal Posts List
       eLoadingFeed ? (
-        (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"#94a3b8"},children:"Memuat linimasa…"})
+        (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"1rem"},children:[
+          [1, 2].map(i => (
+            (0,t.jsxs)("div",{key:i,className:"cms-card",style:{borderRadius:"10px",padding:"1.1rem",display:"flex",flexDirection:"column",gap:"0.75rem"},children:[
+              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem"},children:[
+                (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"38px",height:"38px",borderRadius:"50%",flexShrink:0}}),
+                (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.35rem"},children:[
+                  (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"130px",height:"13px",borderRadius:"4px"}}),
+                  (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"180px",height:"10px",borderRadius:"4px"}})
+                ]})
+              ]}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"100%",height:"12px",borderRadius:"4px"}}),
+              (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80%",height:"12px",borderRadius:"4px"}})
+            ]})
+          ))
+        ]})
       ) : ePersonalPosts.length === 0 ? (
         (0,t.jsxs)("div",{style:{textAlign:"center",padding:"2.5rem",borderRadius:"12px",background:"rgba(0,0,0,0.12)",border:"1px dashed rgba(255,255,255,0.1)"},children:[
           (0,t.jsx)("div",{style:{fontSize:"2.2rem",marginBottom:"0.4rem"},children:"📭"}),
