@@ -72,9 +72,10 @@ function formatCallsign(rawCallsign, authorId, username) {
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
   var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) return '@' + c;
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c) && !c.startsWith('user_')) return '@' + c;
   var u = String(username || '').trim().replace(/^@/, '');
-  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) return '@' + u;
+  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u) && !u.startsWith('user_')) return '@' + u;
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) return '@' + c;
   var seed = idStr || 'polri';
   var num = 0;
   for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;

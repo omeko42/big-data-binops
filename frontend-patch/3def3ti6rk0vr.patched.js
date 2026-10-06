@@ -74,7 +74,7 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
   var idStr = String(authorId || '');
   if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
-  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
   if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c) && !c.startsWith('user_')) {
     return '@' + c;
   }
@@ -82,14 +82,12 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
   if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u) && !u.startsWith('user_')) {
     return '@' + u;
   }
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) {
+    return '@' + c;
+  }
   if (!idStr && !rawCallsign && !username) {
-    try {
-      var lu = JSON.parse(localStorage.getItem('user') || '{}');
-      if (lu.username === 'omeko11' || String(lu.id) === '1' || String(lu.role_bdb||'').toLowerCase().includes('super')) return '@omeko11';
-      if (lu.callsign) return '@' + String(lu.callsign).replace(/^@/, '');
-      if (lu.username) return '@' + String(lu.username).replace(/^@/, '');
-    } catch(e) {}
-    return '@omeko11';
+    if (!isReadOnlyMode) return '@omeko11';
+    return '@personil';
   }
   var seed = idStr || 'polri';
   var num = 0;
@@ -547,13 +545,18 @@ let n="disable_email_otp"===t?"Nonaktifkan OTP email saat login? Kode verifikasi
 if("enable_pin"===et||"change_pin"===et){if(eo.length<6)return void ev("PIN minimal 6 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sesuai.");ef(!0),ev("");try{let payload={enabled:!0,action:et,otp_id:ea,otp_token:ei,pin:eo,pin_confirmation:eu,password:eExistingPassword};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",payload));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);e.current?.show({severity:"success",summary:"Berhasil",detail:"PIN keamanan berhasil disimpan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP salah atau kedaluwarsa.")}finally{ef(!1)}return}
 if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/email-otp",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`OTP email saat login berhasil ${t?"diaktifkan":"dinonaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}return}let t="disable_pin"!==et;if(t){if(!/^\d{6,8}$/.test(eo))return void ev("PIN wajib 6-8 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sama.")}ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};t&&(n.pin=eo,n.pin_confirmation=eu),(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`PIN keamanan berhasil ${"disable_pin"===et?"dinonaktifkan":"change_pin"===et?"diubah":"diaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}}(0,n.useEffect)(()=>{let timer;if(eOtpCooldown>0){timer=setInterval(()=>setOtpCooldown(c=>Math.max(0,c-1)),1000)}return()=>{if(timer)clearInterval(timer)}},[eOtpCooldown]);
 (0,n.useEffect)(() => {
-  if (a?.social_media) {
-    let soc = a.social_media;
-    if (typeof soc.bio === 'string' && soc.bio) setBio(soc.bio);
-    if (typeof soc.banner_theme === 'string' && soc.banner_theme) setBannerTheme(soc.banner_theme);
+  if (a) {
+    let soc = a.social_media || {};
+    if (typeof soc === 'string') {
+      try { soc = JSON.parse(soc); } catch(e) {}
+    }
+    var targetBio = (typeof a?.bio === 'string' && a.bio) ? a.bio : (typeof soc?.bio === 'string' ? soc.bio : '');
+    setBio(targetBio);
+
+    var defaultGrad = 'linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)';
+    var targetBanner = (typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : (typeof soc?.banner_theme === 'string' ? soc.banner_theme : defaultGrad);
+    setBannerTheme(targetBanner);
   }
-  if (typeof a?.bio === 'string' && a.bio) setBio(a.bio);
-  if (typeof a?.banner_theme === 'string' && a.banner_theme) setBannerTheme(a.banner_theme);
 }, [a]);
 
 (0,n.useEffect)(() => {
@@ -2207,14 +2210,21 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||a?.photo||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
             style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-bg-surface, #ffffff)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff",cursor:isReadOnlyMode?"default":"pointer",transition:"transform 0.15s ease"},
             children:
-            (a?.photo_url||a?.foto||a?.photo||mySelf?.photo_url||(typeof localStorage!=='undefined'&&JSON.parse(localStorage.getItem('user')||'{}')?.photo_url))?(0,t.jsx)("img",{src:a?.photo_url||a?.foto||a?.photo||mySelf?.photo_url||(typeof localStorage!=='undefined'&&JSON.parse(localStorage.getItem('user')||'{}')?.photo_url),alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):eB
+            (function(){
+              var photoSrc = isReadOnlyMode ? (a?.photo_url || a?.foto || a?.photo || null) : (a?.photo_url || a?.foto || a?.photo || mySelf?.photo_url || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.photo_url) || null);
+              if (photoSrc) {
+                return (0,t.jsx)("img",{src:photoSrc,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}});
+              }
+              return eB;
+            })()
           }),
           // Tiered Verified Badge (Gold: Superadmin, Emerald: Admin Binops, Cyan Blue: Personil CAS)
           (function(){
-            var isUserOne = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin' || (!isReadOnlyMode && (String(mySelf?.id) === '1' || mySelf?.username === 'omeko11' || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.username === 'omeko11')));
-            var roleStr = isUserOne ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
-            var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-            var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+            var isTargetSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+            var isUserOne = !isReadOnlyMode || isTargetSuper;
+            var roleStr = isReadOnlyMode ? String(a?.role_bdb || a?.role || '').toLowerCase() : 'superadmin';
+            var bColor = (roleStr === 'superadmin' || isUserOne) ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
+            var bLabel = (roleStr === 'superadmin' || isUserOne) ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
             return (0,t.jsxs)("div",{
               title:bLabel,
               style:{position:"absolute",bottom:"4px",right:"4px",width:"32px",height:"32px",borderRadius:"50%",background:bColor,border:"3px solid #1e293b",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)",cursor:isReadOnlyMode?"default":"pointer"},
@@ -2237,10 +2247,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap"},children:[
         // [verified]
         (function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+          var isSuper = (!isReadOnlyMode) || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
           var roleStr = isSuper ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
           var bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          var bLabel = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+          var bLabel = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
           return (0,t.jsx)("span",{
             title:bLabel,
             style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"22px",height:"22px",borderRadius:"50%",background:bColor,boxShadow:"0 1px 4px rgba(0,0,0,0.3)",flexShrink:0},
@@ -2251,8 +2261,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || (!isReadOnlyMode && (String(mySelf?.id) === '1' || mySelf?.username === 'omeko11' || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.username === 'omeko11')));
-            if (isUserOne) return "@omeko11";
+            if (!isReadOnlyMode) return "@omeko11";
+            if (String(a?.id) === '1' || a?.username === 'omeko11') return "@omeko11";
             return formatCallsign(a?.callsign, a?.id, a?.username);
           })()
         }),
@@ -2266,7 +2276,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       // Subline: Nasional • Info kontak • 4.120+ koneksi
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",color:"#94a3b8"},children:[
         (0,t.jsx)("span",{children:(function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+          var isSuper = (!isReadOnlyMode) || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
           if (isSuper) return "Robinopsnal Bareskrim Polri";
           var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan;
           if (!s || s === 'BDB Superadmin' || s === '-') s = "Bareskrim Polri";
@@ -2898,7 +2908,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   })
                 ]}),
                 (ePostComments[p.id] || []).map(cm => (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.03)",borderRadius:"6px",padding:"0.45rem 0.65rem",fontSize:"0.78rem",marginBottom:"0.35rem"},children:[
-                  (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",marginRight:"0.4rem"},children:'@' + (cm.author_callsign || 'anak_serse')}),
+                  (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",marginRight:"0.4rem"},children:formatCallsign(cm.author_callsign, cm.author_id, cm.author_username)}),
                   (0,t.jsx)("span",{style:{color:"#cbd5e1"},children:cm.content})
                 ]}))
               ]})
