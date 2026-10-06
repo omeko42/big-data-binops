@@ -939,7 +939,7 @@ children:[
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
             key:item.id,
-            onClick:()=>e.push("/cms/broadcaster?post=" + item.id),
+            onClick:()=>e.push("/cms/broadcaster"),
             title:"Klik untuk membuka postingan ini di Ruang Kolaborasi",
             style:{
               display:"flex",
