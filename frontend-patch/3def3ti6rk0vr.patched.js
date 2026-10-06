@@ -586,7 +586,7 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
   try {
     let sVal = search !== void 0 ? search : eNetworkSearch;
     let satVal = satker !== void 0 ? satker : eNetworkSatkerFilter;
-    let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : eNetworkConnectedTarget;
+    let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : (satVal === 'connected' ? (eNetworkConnectedTarget || a?.id || mySelf?.id) : null);
     let qParams = {
       search: sVal || '',
       satker: (satVal === 'all' || satVal === 'connected') ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
@@ -594,7 +594,12 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
       limit: 9
     };
     if (satVal === 'connected' || connTo) {
-      qParams.connected_to = connTo || a?.id;
+      var activeConnId = connTo || eNetworkConnectedTarget || a?.id || mySelf?.id;
+      if (activeConnId) {
+        qParams.connected_to = activeConnId;
+        qParams.target_user_id = activeConnId;
+      }
+      qParams.filter = 'connected';
     }
     if (satVal === 'my_satker' && a?.scope_satker_id) {
       qParams.satker_id = a.scope_satker_id;
@@ -606,6 +611,8 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
     setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total !== undefined ? res.data.total : list.length) / 9) || 1);
   } catch (err) {
     setNetworkUsers([]);
+    setNetworkTotal(0);
+    setNetworkTotalPages(1);
   } finally {
     setNetworkLoading(!1);
   }
@@ -1835,7 +1842,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           value:eNetworkSearch,
           onChange:ev=>{
             setNetworkSearch(ev.target.value);
-            fetchNetworkDirectory(ev.target.value, eNetworkSatkerFilter);
+            fetchNetworkDirectory(ev.target.value, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id);
           },
           placeholder:"🔍 Cari personil berdasarkan nama, NRP, callsign, atau fungsi…",
           style:{width:"100%",fontSize:"0.85rem",padding:"0.5rem 0.75rem"}
@@ -1846,19 +1853,19 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         onChange:ev=>{
           var val = ev.target.value;
           setNetworkSatkerFilter(val);
-          var connTo = val === 'connected' ? (eNetworkConnectedTarget || a?.id) : null;
+          var connTo = val === 'connected' ? (eNetworkConnectedTarget || a?.id || mySelf?.id) : null;
           if (val !== 'connected') {
             setNetworkConnectedTarget(null);
             setNetworkModalTitle('Jaringan & Direktori Personil CAS');
           } else {
-            setNetworkConnectedTarget(a?.id);
+            setNetworkConnectedTarget(connTo);
             setNetworkModalTitle('Daftar Koneksi ' + (a?.name || a?.callsign || 'Personil'));
           }
           fetchNetworkDirectory(eNetworkSearch, val, 1, connTo);
         },
         style:{fontSize:"0.82rem",padding:"0.45rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(0,0,0,0.3)",color:"#fff"},
         children:[
-          Boolean(a?.id) && (0,t.jsx)("option",{value:"connected",children:"Koneksi @" + formatCallsign(a?.callsign, a?.id, a?.username).replace(/^@/, '') + " (" + (a?.connections_count || 1) + ")"}),
+          Boolean(a?.id) && (0,t.jsx)("option",{value:"connected",children:"Koneksi @" + formatCallsign(a?.callsign, a?.id, a?.username).replace(/^@/, '') + " (" + (typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0)) + ")"}),
           (0,t.jsx)("option",{value:"all",children:"Semua Personil CAS (Nasional)"}),
           (0,t.jsx)("option",{value:"my_satker",children:"Satu Satker / Wilayah (" + (a?.satker_nama || a?.satker || "Satker") + ")"}),
           (0,t.jsx)("option",{value:"Bareskrim",children:"Mabes Bareskrim Polri"}),
@@ -2064,7 +2071,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         disabled:eNetworkPage <= 1,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1),
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
         style:{background:eNetworkPage <= 1 ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage <= 1 ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage <= 1 ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage <= 1 ? "not-allowed" : "pointer"},
         children:"◀ Sebelumnya"
       }),
@@ -2078,7 +2085,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         disabled:eNetworkPage >= eNetworkTotalPages,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1),
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
         style:{background:eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage >= eNetworkTotalPages ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage >= eNetworkTotalPages ? "not-allowed" : "pointer"},
         children:"Selanjutnya ▶"
       })
@@ -2301,10 +2308,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsxs)("button",{
           type:"button",
           onClick:()=>{
-            var targetUid = a?.id;
+            var targetUid = a?.id || mySelf?.id;
             var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
+            var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
             setNetworkUsers([]);
-            setNetworkTotal(typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0));
+            setNetworkTotal(cCount);
             setNetworkConnectedTarget(targetUid);
             setNetworkSatkerFilter('connected');
             setNetworkSearch('');

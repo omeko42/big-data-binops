@@ -987,7 +987,12 @@ let JukrahService = class JukrahService {
             params.push(opts.satker_id);
             whereClauses.push('u.scope_satker_id = $' + params.length);
         }
-        const connectedTo = opts.connected_to ? Number(opts.connected_to) : (opts.filter === 'connected' ? (Number(opts.target_user_id) || uid) : null);
+        let rawConn = opts.connected_to;
+        if (rawConn === 'undefined' || rawConn === 'null' || rawConn === '') rawConn = null;
+        let connectedTo = (rawConn && !isNaN(Number(rawConn))) ? Number(rawConn) : null;
+        if (!connectedTo && (opts.filter === 'connected' || opts.satker === 'connected')) {
+            connectedTo = Number(opts.target_user_id) || uid;
+        }
         if (connectedTo) {
             params.push(connectedTo);
             whereClauses.push('u.id IN (SELECT CASE WHEN requester_id = $' + params.length + ' THEN addressee_id ELSE requester_id END FROM user_connections WHERE (requester_id = $' + params.length + ' OR addressee_id = $' + params.length + ') AND status = \'ACCEPTED\')');
