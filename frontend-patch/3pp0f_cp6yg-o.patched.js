@@ -149,36 +149,126 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
 
 function renderPostContent(text, onHashtagClick) {
   if (!text) return null;
-  var parts = String(text).split(/(#[a-zA-Z0-9_]+)/g);
+  var parts = String(text).split(/(https?:\/\/[^\s]+|#[a-zA-Z0-9_]+|@[a-zA-Z0-9_.]+)/g);
   return parts.map((part, idx) => {
+    if (!part) return null;
+    if (part.startsWith('http://') || part.startsWith('https://')) {
+      var cleanUrl = part;
+      var urlTrail = '';
+      var mUrl = part.match(/([.,!?:;]+)$/);
+      if (mUrl) {
+        cleanUrl = part.slice(0, -mUrl[1].length);
+        urlTrail = mUrl[1];
+      }
+      var linkEl = (0,t.jsx)("a", {
+        href: cleanUrl,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        onClick: (e) => {
+          e.stopPropagation();
+        },
+        style: {
+          color: "#38bdf8",
+          fontWeight: 600,
+          textDecoration: "underline",
+          textUnderlineOffset: "3px",
+          cursor: "pointer",
+          borderRadius: "4px",
+          padding: "0.05rem 0.25rem",
+          transition: "all 0.15s ease",
+          wordBreak: "break-all"
+        },
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#7dd3fc';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.15)';
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#38bdf8';
+          e.currentTarget.style.background = 'transparent';
+        },
+        title: "Buka tautan di tab baru: " + cleanUrl,
+        children: cleanUrl
+      });
+      return urlTrail ? (0,t.jsxs)("span", { key: idx, children: [linkEl, urlTrail] }) : (0,t.jsx)("span", { key: idx, children: linkEl });
+    }
+    if (part.startsWith('@') && part.length > 1) {
+      var cleanMention = part;
+      var menTrail = '';
+      var mMen = part.match(/([.,!?:;]+)$/);
+      if (mMen) {
+        cleanMention = part.slice(0, -mMen[1].length);
+        menTrail = mMen[1];
+      }
+      var mentionEl = (0,t.jsx)("span", {
+        onClick: (e) => {
+          e.stopPropagation();
+          var handle = cleanMention.replace(/^@/, '');
+          try {
+            sessionStorage.setItem('cas_view_user', JSON.stringify({
+              handle: '@' + handle,
+              username: handle
+            }));
+          } catch(err) {}
+          window.location.href = '/cms/profile';
+        },
+        style: {
+          color: "#38bdf8",
+          fontWeight: 700,
+          cursor: "pointer",
+          borderRadius: "6px",
+          padding: "0.1rem 0.4rem",
+          margin: "0 0.1rem",
+          transition: "all 0.15s ease",
+          background: "rgba(56,189,248,0.12)",
+          border: "1px solid rgba(56,189,248,0.3)",
+          display: "inline-flex",
+          alignItems: "center"
+        },
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#bae6fd';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.28)';
+          e.currentTarget.style.borderColor = 'rgba(56,189,248,0.6)';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#38bdf8';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.12)';
+          e.currentTarget.style.borderColor = 'rgba(56,189,248,0.3)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        },
+        title: "Buka profil " + cleanMention,
+        children: cleanMention
+      });
+      return menTrail ? (0,t.jsxs)("span", { key: idx, children: [mentionEl, menTrail] }) : (0,t.jsx)("span", { key: idx, children: mentionEl });
+    }
     if (part.startsWith('#') && part.length > 1) {
-      return (0,t.jsx)("span",{
-        key:idx,
-        onClick:(e) => {
+      return (0,t.jsx)("span", {
+        key: idx,
+        onClick: (e) => {
           e.stopPropagation();
           if (onHashtagClick) onHashtagClick(part);
         },
-        style:{
-          color:"#60a5fa",
-          fontWeight:600,
-          cursor:"pointer",
-          borderRadius:"4px",
-          padding:"0.1rem 0.3rem",
-          transition:"all 0.15s ease",
-          background:"rgba(59,130,246,0.12)"
+        style: {
+          color: "#818cf8",
+          fontWeight: 600,
+          cursor: "pointer",
+          borderRadius: "4px",
+          padding: "0.1rem 0.3rem",
+          transition: "all 0.15s ease",
+          background: "rgba(99,102,241,0.12)"
         },
-        onMouseEnter:(e) => {
-          e.currentTarget.style.color = '#93c5fd';
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#a5b4fc';
           e.currentTarget.style.textDecoration = 'underline';
-          e.currentTarget.style.background = 'rgba(59,130,246,0.25)';
+          e.currentTarget.style.background = 'rgba(99,102,241,0.25)';
         },
-        onMouseLeave:(e) => {
-          e.currentTarget.style.color = '#60a5fa';
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#818cf8';
           e.currentTarget.style.textDecoration = 'none';
-          e.currentTarget.style.background = 'rgba(59,130,246,0.12)';
+          e.currentTarget.style.background = 'rgba(99,102,241,0.12)';
         },
-        title:"Klik untuk melihat postingan terkait " + part,
-        children:part
+        title: "Klik untuk melihat postingan terkait " + part,
+        children: part
       });
     }
     return part;
