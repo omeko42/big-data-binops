@@ -963,7 +963,7 @@ children:[
             return '@user_' + (idStr || '0') + code;
           })();
           let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          let bTitle = isSuper ? 'Superadmin Terverifikasi' : 'Personil Terverifikasi';
+          let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
           let satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : toTitleCase(item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || 'Mabes Bareskrim');
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
