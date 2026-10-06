@@ -69,6 +69,24 @@ export function copyFileToBE(localPath, remotePath) {
     throw lastErr;
 }
 
+export function copyFileFromBE(remotePath, localPath) {
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            return cp.execFileSync(pscpPath, [
+                '-batch', '-hostkey', beHostKey,
+                '-pw', config.CAS_SSH_PASSWORD,
+                `${targetBE}:${remotePath}`,
+                localPath
+            ], { timeout: 60000 }).toString();
+        } catch (e) {
+            lastErr = e;
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+        }
+    }
+    throw lastErr;
+}
+
 
 if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('be_exec.mjs') && process.argv[2]) {
     console.log(runBE(process.argv[2]));
