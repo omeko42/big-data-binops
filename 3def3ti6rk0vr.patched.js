@@ -575,6 +575,20 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
 
 (0,n.useEffect)(() => {
   fetchNetworkDirectory('', 'all', 1);
+  if (typeof window !== 'undefined') {
+    if (window.location.search && (window.location.search.includes('u=') || window.location.search.includes('id='))) {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, '', '/cms/profile');
+      }
+    }
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && window.location.search && (window.location.search.includes('u=') || window.location.search.includes('id='))) {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, '', '/cms/profile');
+        }
+      }
+    }, 150);
+  }
 }, []);
 
 let handleOpenProfilePreview = async (user) => {
@@ -1804,7 +1818,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id)) || user.username === 'omeko11' || String(user.role_bdb || user.role || '').toLowerCase() === 'superadmin';
           var isTargetSelf = mySelf ? (String(user.id) === String(mySelf.id)) : (String(user.id) === String(a?.id));
           var userCallsign = formatCallsign(user.callsign, user.id, user.username);
-          var userPhoto = isTargetSelf ? (a?.photo_url || a?.foto || a?.photo || user.photo_url || user.foto) : (user.photo_url || user.foto || user.photo);
+          var userPhoto = user.photo_url || user.foto || user.photo || (isTargetSelf ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo) : null);
           var userBadge = getVerificationBadge(user.role_bdb || user.role, isUserSuper, user.id, user.username);
           var userInitials = String(userCallsign.replace(/^@/, '') || 'P').charAt(0).toUpperCase();
           var userSatker = isUserSuper ? 'Robinopsnal Bareskrim Polri' : (user.satker_nama || user.satker || user.satuan || 'Polri');
@@ -2478,7 +2492,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var isAuthorSuper = isAuthorEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(p.author_id)) || String(p.author_role || '').toLowerCase() === 'superadmin';
             var pBadge = getVerificationBadge(p.author_role || a?.role, isAuthorSuper, p.author_id || a?.id, p.author_username || a?.username);
             var pHandle = formatCallsign(p.author_callsign || a?.callsign, p.author_id || a?.id, p.author_username || a?.username);
-            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (a?.photo_url || a?.foto || a?.photo) : null);
+            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo || a?.photo_url) : null);
             var pInitials = String(p.author_name || a?.name || pHandle || 'P').charAt(0).toUpperCase();
             var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama || 'Polri');
             var audLabel = p.audience_type === 'private' ? '🔒 Privat' : (p.audience_type === 'followers' ? '👥 Satker' : '🌐 Publik');
@@ -3269,7 +3283,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = isUsrEko ? '@omeko11' : (usr.callsign ? (String(usr.callsign).startsWith('@') ? usr.callsign : '@' + usr.callsign) : (usr.username ? (String(usr.username).startsWith('@') ? usr.username : '@' + usr.username) : '@personil'));
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
-            var usrPhoto = (isUsrEko && (a?.photo_url || a?.foto || a?.photo)) ? (a.photo_url || a.foto || a.photo) : (usr.photo_url || usr.foto || usr.photo || null);
+            var usrPhoto = usr.photo_url || usr.foto || usr.photo || (isUsrEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo) : null);
 
             return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
