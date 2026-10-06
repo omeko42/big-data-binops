@@ -104,7 +104,7 @@ let JukrahService = class JukrahService {
         const userRole = String(user?.role_bdb || 'sharese').toLowerCase();
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
         const page = Math.max(1, Number(opts.page) || 1);
-        const limit = Math.min(50, Math.max(1, Number(opts.limit) || 15));
+        const limit = Math.min(200, Math.max(1, Number(opts.limit) || 100));
         const offset = (page - 1) * limit;
         const params = [uid, userSatkerId];
         const conditions = ["p.status = 'active'"];
@@ -131,7 +131,7 @@ let JukrahService = class JukrahService {
         const effectiveSearch = (opts.search || opts.tag || '').trim();
         if (effectiveSearch) {
             params.push('%' + effectiveSearch.replace(/^#/, '') + '%');
-            conditions.push('(p.content ILIKE $' + params.length + ' OR u.name ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ')');
+            conditions.push('(p.content ILIKE $' + params.length + ' OR u.name ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ' OR u.username ILIKE $' + params.length + ')');
         }
         const whereClause = 'WHERE ' + conditions.join(' AND ');
         const sql = `
@@ -245,7 +245,9 @@ let JukrahService = class JukrahService {
                 }
             }
         }
-        return { status: 1, data: posts, page, limit };
+        const countRes = await this.dataSource.query('SELECT count(*)::int as total FROM bdb_social_posts p JOIN auth_users u ON u.id = p.author_id LEFT JOIN bdb_social_bookmarks bm ON bm.post_id = p.id AND bm.user_id = $1 ' + whereClause, params);
+        const total = Number(countRes[0]?.total || posts.length);
+        return { status: 1, data: posts, total, total_pages: Math.ceil(total / limit) || 1, page, limit };
     }
     async createSocialPost(user, dto, files = []) {
         await this.ensureTable();
@@ -971,7 +973,9 @@ let JukrahService = class JukrahService {
 
     async getNetworkUsers(user, opts) {
         const uid = Number(user?.id || 0);
+        const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
+        const offset = (page - 1) * limit;
         const search = (opts.search || '').trim();
         let whereClauses = ["u.status = 'AKTIF'"];
         let params = [];
@@ -983,13 +987,21 @@ let JukrahService = class JukrahService {
             params.push(opts.satker_id);
             whereClauses.push('u.scope_satker_id = $' + params.length);
         }
+        const connectedTo = opts.connected_to ? Number(opts.connected_to) : (opts.filter === 'connected' ? (Number(opts.target_user_id) || uid) : null);
+        if (connectedTo) {
+            params.push(connectedTo);
+            whereClauses.push('u.id IN (SELECT CASE WHEN requester_id = $' + params.length + ' THEN addressee_id ELSE requester_id END FROM user_connections WHERE (requester_id = $' + params.length + ' OR addressee_id = $' + params.length + ') AND status = \'ACCEPTED\')');
+        }
         const countRes = await this.dataSource.query(
             'SELECT count(*)::int as total FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE ' + whereClauses.join(' AND '),
             params
         );
         const total = countRes[0]?.total || 0;
         params.push(limit);
-        const sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id LEFT JOIN trb_police tp ON (lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))) WHERE ' + whereClauses.join(' AND ') + ' ORDER BY u.last_login_at DESC NULLS LAST, u.id ASC LIMIT $' + params.length;
+        const limitIdx = params.length;
+        params.push(offset);
+        const offsetIdx = params.length;
+        const sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id LEFT JOIN trb_police tp ON (lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))) WHERE ' + whereClauses.join(' AND ') + ' ORDER BY u.last_login_at DESC NULLS LAST, u.id ASC LIMIT $' + limitIdx + ' OFFSET $' + offsetIdx;
         const rows = await this.dataSource.query(sql, params);
         const isSuperadmin = String(user?.role_bdb || '').toLowerCase() === 'superadmin';
         const data = rows.map((r) => {
@@ -1008,11 +1020,11 @@ let JukrahService = class JukrahService {
                 nrp: r.nrp || nrpFallback,
                 no_hp: r.no_hp || null,
                 photo_url: r.photo_url,
-                is_connected: isSuperadmin || Number(r.id) === uid,
+                is_connected: Boolean(connectedTo) || isSuperadmin || Number(r.id) === uid,
                 last_login_at: r.last_login_at
             };
         });
-        return { status: 1, data, total, is_superadmin: isSuperadmin };
+        return { status: 1, data, total, total_pages: Math.ceil(total / limit) || 1, page, limit, is_superadmin: isSuperadmin };
     }
     
     async getReactions(user, postId) {
@@ -1115,12 +1127,20 @@ let JukrahService = class JukrahService {
         if (!uRes || !uRes.length) throw new common_1.NotFoundException('Personil tidak ditemukan');
         const target = uRes[0];
         let policeProfile = null;
+        let connectionsCount = 0;
         try {
             const pRes = await this.dataSource.query(
                 'SELECT nrp, nama, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
                 [[target.email, target.email_polri].filter(Boolean)]
             );
             if (pRes && pRes.length) policeProfile = pRes[0];
+        } catch(e) {}
+        try {
+            const cRes = await this.dataSource.query(
+                "SELECT count(*)::int as c FROM user_connections WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED'",
+                [Number(target.id)]
+            );
+            connectionsCount = Number(cRes[0]?.c || 0);
         } catch(e) {}
         return {
             status: 1,
@@ -1139,6 +1159,7 @@ let JukrahService = class JukrahService {
                 no_hp: policeProfile?.no_hp || null,
                 photo_url: target.photo_url || policeProfile?.foto || null,
                 role_bdb: target.role_bdb,
+                connections_count: connectionsCount,
                 social_media: target.social_media || policeProfile?.social_media || {},
                 last_login_at: target.last_login_at
             }
