@@ -621,11 +621,12 @@ e.s(["default", 0, function() {
                                 (0, t.jsx)("span", {
                                   style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--text-color, #0f172a)" },
                                   children: (function(item){
-                                    if (!item) return "@anak_serse";
+                                    if (!item) return "@personil";
                                     if (String(item.author_id)==='1' || item.author_username==='omeko11' || item.author_callsign==='omeko11') return "@omeko11";
-                                    if (item.author_callsign) return "@" + String(item.author_callsign).replace(/^@/, '');
-                                    if (item.author_username) return "@" + item.author_username;
-                                    return item.author_handle || (item.author_name ? ("@" + String(item.author_name).toLowerCase().replace(/[^a-z0-9]/g, '')) : "@anak_serse");
+                                    if (item.author_callsign && !String(item.author_callsign).startsWith('user_')) return "@" + String(item.author_callsign).replace(/^@/, '');
+                                    if (item.author_name && String(item.author_name).trim()) return item.author_name;
+                                    if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + item.author_username;
+                                    return item.author_handle || formatCallsign(item.author_callsign, item.author_id, item.author_username);
                                   })(post)
                                 }),
                                 (function(item){
@@ -1056,11 +1057,12 @@ e.s(["default", 0, function() {
                             (0, t.jsx)("span", {
                               style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" },
                               children: (function(item){
-                                if (!item) return "@anak_serse";
+                                if (!item) return "@personil";
                                 if (String(item.author_id)==='1' || item.author_username==='omeko11' || item.author_callsign==='omeko11') return "@omeko11";
-                                if (item.author_callsign) return "@" + String(item.author_callsign).replace(/^@/, '');
-                                if (item.author_username) return "@" + item.author_username;
-                                return item.author_handle || (item.author_name ? ("@" + String(item.author_name).toLowerCase().replace(/[^a-z0-9]/g, '')) : "@anak_serse");
+                                if (item.author_callsign && !String(item.author_callsign).startsWith('user_')) return "@" + String(item.author_callsign).replace(/^@/, '');
+                                if (item.author_name && String(item.author_name).trim()) return item.author_name;
+                                if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + item.author_username;
+                                return item.author_handle || formatCallsign(item.author_callsign, item.author_id, item.author_username);
                               })(p)
                             }),
                             (function(item){

@@ -979,10 +979,10 @@ let handleCreatePersonalPost = async () => {
       id: res.data?.data?.id || ('temp_' + Date.now()),
       content: contentToSend,
       audience_type: audienceToSend,
-      author_id: a?.id || 1,
-      author_name: a?.name || (a?.username || 'omeko11'),
-      author_callsign: a?.username || a?.nrp || 'omeko11',
-      author_handle: '@' + (a?.username || a?.nrp || 'omeko11'),
+      author_id: a?.id || null,
+      author_name: a?.name || a?.username || 'Personil',
+      author_callsign: a?.callsign || a?.username || (a?.id ? 'user_' + a.id : 'personil'),
+      author_handle: formatCallsign(a?.callsign, a?.id, a?.username),
       author_satker: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
       satker_name: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
       created_at: new Date().toISOString(),
@@ -2594,7 +2594,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var isAuthorSuper = isAuthorEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(p.author_id)) || String(p.author_role || '').toLowerCase() === 'superadmin';
             var pBadge = getVerificationBadge(p.author_role || a?.role, isAuthorSuper, p.author_id || a?.id, p.author_username || a?.username);
             var pHandle = formatCallsign(p.author_callsign || a?.callsign, p.author_id || a?.id, p.author_username || a?.username);
-            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo || a?.photo_url) : null);
+            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (a?.photo_url || a?.foto || null) : null);
             var pInitials = String(p.author_name || a?.name || pHandle || 'P').charAt(0).toUpperCase();
             var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama || 'Polri');
             var audLabel = p.audience_type === 'private' ? '🔒 Privat' : (p.audience_type === 'followers' ? '👥 Satker' : '🌐 Publik');
@@ -3385,7 +3385,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = isUsrEko ? '@omeko11' : (usr.callsign ? (String(usr.callsign).startsWith('@') ? usr.callsign : '@' + usr.callsign) : (usr.username ? (String(usr.username).startsWith('@') ? usr.username : '@' + usr.username) : '@personil'));
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
-            var usrPhoto = usr.photo_url || usr.foto || usr.photo || (isUsrEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo) : null);
+            var usrPhoto = usr.photo_url || usr.foto || usr.photo || null;
 
             return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
