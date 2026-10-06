@@ -409,7 +409,8 @@ e.s(["default",0,function() {
       var res = await k.apiAuth.get('/bdb/jukrah/feed', {
         params: {
           type: apiType,
-          search: searchQuery || void 0
+          search: searchQuery || void 0,
+          limit: 100
         }
       });
       setPosts(res.data?.data || []);
