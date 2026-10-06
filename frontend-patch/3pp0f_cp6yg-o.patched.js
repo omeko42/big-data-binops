@@ -2179,7 +2179,7 @@ e.s(["default",0,function() {
               style:{background:"transparent",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"0.45rem 1rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer"},
               children:"Tutup"
             }),
-            (String(previewUser.id) === String(currentUser?.id || currentUser?.user_id) || previewUser.username === 'omeko11') ? (
+            (String(previewUser.id) === String(currentUser?.id || currentUser?.user_id)) ? (
               (0,t.jsx)("button",{
                 type:"button",
                 onClick:() => { window.location.href = '/cms/profile'; },
