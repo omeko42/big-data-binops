@@ -132,7 +132,7 @@ let JukrahController = class JukrahController {
         return this.service.getNetworkUsers(req?.user, q || {});
     }
     getNetworkProfile(req, id) {
-        return this.service.getNetworkProfile(req?.user, parseInt(id, 10));
+        return this.service.getNetworkProfile(req?.user, id);
     }
 };
 exports.JukrahController = JukrahController;
