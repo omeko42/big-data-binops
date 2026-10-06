@@ -209,6 +209,14 @@ async function eT() {
   try {
     var myRes = await c.apiAuth.get("/user/me/profile");
     myUser = myRes.data?.data || myRes.data || null;
+    try {
+      var authRes = await c.apiAuth.get("/Authentication/user");
+      var authData = authRes.data?.data || null;
+      if (authData) myUser = Object.assign({}, authData, myUser, {
+        pin_required: Boolean(authData.pin_required || myUser?.pin_required),
+        local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
+      });
+    } catch(eAuth) {}
     if (myUser) setMySelf(myUser);
   } catch(e) {}
 
@@ -892,7 +900,7 @@ let fetchPersonalFeed = (0,n.useCallback)(async (tab) => {
       ...p,
       author_callsign: p.author_callsign || p.author_username || (p.raw_author_name ? p.raw_author_name.toLowerCase().replace(/\s+/g, '_') : (a?.username || 'personil')),
       author_handle: p.author_handle || ('@' + (p.author_callsign || a?.username || 'personil')),
-      satker_name: p.satker_name || p.author_satker || K(a?.scope_satker_name) || 'Polri'
+      satker_name: p.satker_name || p.author_satker || K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || 'Polri'
     }));
     setPersonalPosts(mapped);
   } catch (err) {
@@ -930,8 +938,8 @@ let handleCreatePersonalPost = async () => {
       author_name: a?.name || (a?.username || 'omeko11'),
       author_callsign: a?.username || a?.nrp || 'omeko11',
       author_handle: '@' + (a?.username || a?.nrp || 'omeko11'),
-      author_satker: K(a?.scope_satker_name) || K(a?.satuan) || 'Bareskrim Polri',
-      satker_name: K(a?.scope_satker_name) || K(a?.satuan) || 'Bareskrim Polri',
+      author_satker: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
+      satker_name: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
       created_at: new Date().toISOString(),
       total_reactions: 0,
       user_reaction: null,
@@ -1213,7 +1221,18 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     ]}),
     (0,t.jsxs)("div",{style:{background:"rgba(0,0,0,0.25)",padding:"0.85rem",borderRadius:"10px",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
       (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",fontWeight:700,letterSpacing:"0.05em"},children:"SATUAN KERJA (SATKER)"}),
-      (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"#f8fafc",marginTop:"0.2rem",fontWeight:600},children:K(a?.scope_satker_name)||K(a?.scope_access_display)||"Badan Reserse Kriminal Polri (Bareskrim)"})
+      (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"#f8fafc",marginTop:"0.2rem",fontWeight:600},children:(function(){
+        var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+        if (isSuper) return "Badan Reserse Kriminal Polri (Bareskrim)";
+        var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan || a?.scope_access_display;
+        if (!s || s === 'BDB Superadmin' || s === '-') return "Badan Reserse Kriminal Polri (Bareskrim)";
+        var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
+        sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
+        sClean = sClean.replace(/\bRES\s+/gi, 'Polres ');
+        sClean = sClean.toLowerCase().replace(/(?:^|\s|-|\/)[a-z]/g, function(c){return c.toUpperCase();});
+        sClean = sClean.replace(/\bDit\s*Res\b/gi, 'Dit Res').replace(/\bDitres\b/gi, 'Dit Res').replace(/\bSat\s*Res\b/gi, 'Sat Res').replace(/\bSatres\b/gi, 'Sat Res').replace(/\bUnit\s*Res\b/gi, 'Unit Res').replace(/\bUnitres\b/gi, 'Unit Res').replace(/\bPolri\b/gi, 'Polri').replace(/\bPolda\b/gi, 'Polda').replace(/\bPolres\b/gi, 'Polres');
+        return sClean;
+      })()})
     ]}),
     !isReadOnlyMode && (0,t.jsx)("button",{
       type:"button",
@@ -2123,7 +2142,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
           if (isSuper) return "Robinopsnal Bareskrim Polri";
           var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan;
-          if (!s || s === 'BDB Superadmin' || s === '-') s = "Dit Res Siber Polda Jatim";
+          if (!s || s === 'BDB Superadmin' || s === '-') s = "Bareskrim Polri";
           var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
           sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
           sClean = sClean.toLowerCase().replace(/(?:^|\s|-|\/)[a-z]/g, function(c){return c.toUpperCase();});
@@ -2409,7 +2428,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var pHandle = formatCallsign(p.author_callsign || a?.callsign, p.author_id || a?.id, p.author_username || a?.username);
             var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (a?.photo_url || a?.foto || a?.photo) : null);
             var pInitials = String(p.author_name || a?.name || pHandle || 'P').charAt(0).toUpperCase();
-            var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || 'Polri');
+            var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama || 'Polri');
             var audLabel = p.audience_type === 'private' ? '🔒 Privat' : (p.audience_type === 'followers' ? '👥 Satker' : '🌐 Publik');
 
             return (0,t.jsxs)("div",{
@@ -3124,7 +3143,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
   ["enable_email_otp","enable_pin","change_pin"].includes(et)&&(0,t.jsxs)("div",{style:{display:"grid",gap:"0.35rem"},children:[
     (0,t.jsxs)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"#e2e8f0"},children:["Password Akun Saat Ini ",(0,t.jsx)("span",{style:{color:"#ef4444"},children:"*"})]}),
     (0,t.jsxs)("div",{style:{position:"relative",display:"flex",alignItems:"center"},children:[
-      (0,t.jsx)(i.InputText,{type:eShowPassword?"text":"password",placeholder:"Masukkan password akun Anda",value:eExistingPassword,onChange:ev=>{setExistingPassword(ev.target.value);ev("");},style:{width:"100%",fontSize:"0.85rem",paddingRight:"2.5rem"}}),
+      (0,t.jsx)(i.InputText,{type:eShowPassword?"text":"password",placeholder:"Masukkan password akun Anda",value:eExistingPassword,onChange:e=>{setExistingPassword(e.target.value);ev("");},style:{width:"100%",fontSize:"0.85rem",paddingRight:"2.5rem"}}),
       (0,t.jsx)("i",{className:eShowPassword?"pi pi-eye-slash":"pi pi-eye",style:{position:"absolute",right:"0.75rem",color:"#94a3b8",cursor:"pointer",fontSize:"0.95rem"},onClick:()=>setShowPassword(!eShowPassword)})
     ]}),
     (0,t.jsx)("small",{style:{fontSize:"0.68rem",color:"#94a3b8"},children:"Verifikasi password diperlukan untuk mengonfirmasi kepemilikan akun sebelum OTP dikirim."})
