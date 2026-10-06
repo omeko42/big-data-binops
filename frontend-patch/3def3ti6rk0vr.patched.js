@@ -7,9 +7,10 @@ let IconTrash2=(0,y.default)("trash-2",[["path",{d:"M10 11v6",key:"nco0om"}],["p
 let IconLock=(0,y.default)("lock",[["rect",{width:"18",height:"11",x:"3",y:"11",rx:"2",ry:"2",key:"1w4ew1"}],["path",{d:"M7 11V7a5 5 0 0 1 10 0v4",key:"fwvmzm"}]]);
 let IconGlobe=(0,y.default)("globe",[["circle",{cx:"12",cy:"12",r:"10",key:"1mglay"}],["path",{d:"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20",key:"13o1zl"}],["path",{d:"M2 12h20",key:"9i4pu4"}]]);
 let IconEdit=(0,y.default)("edit",[["path",{d:"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",key:"10e17c"}],["path",{d:"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",key:"1k3h2b"}]]);
-var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1d4ed8",viewer:"#0f766e"},H={superadmin:"Superadmin",admin_binops:"Admin/Binops",operator:"Operator",viewer:"Viewer"};function K(e){let t=(e||"").trim();return t&&"-"!==t?t:void 0}let R={name:"",email:"",nrp:"",pangkat:"",jabatan:"",satuan:"",no_hp:"",email_polri:"",username:"",is_pns:!1,social_media:{},photo_url:""},U={alamat:"",provinsi:"",kabupaten_kota:"",kecamatan:"",desa:"",kode_pos:"",longitude:"",latitude:"",jumlah_penduduk:""},L=["operator","admin_binops"];function F({label:e,required:n,hint:a,htmlFor:h,children:r}){let fId=h||(Array.isArray(r)?(r[0]?.props?.inputId||r[0]?.props?.id):(r?.props?.inputId||r?.props?.id));return(0,t.jsxs)("div",{children:[(0,t.jsxs)("label",{htmlFor:fId,style:{display:"block",marginBottom:"0.25rem",fontSize:"0.8rem",fontWeight:700,color:"var(--cas-text-primary, #f1f5f9)"},children:[e," ",n&&(0,t.jsx)("span",{style:{color:"#dc2626"},children:"*"})," ",a&&(0,t.jsxs)("span",{style:{color:"#94a3b8",fontWeight:400},children:["(",a,")"]})]}),r]})}function W({icon:e,label:n,value:a,last:r}){return(0,t.jsxs)("div",{className:"profile-row",style:{borderBottom:r?"none":"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[(0,t.jsx)("span",{className:"profile-row-icon",style:{background:"rgba(56,189,248,0.1)",color:"#38bdf8"},children:e}),(0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[(0,t.jsx)("div",{className:"profile-row-label",style:{color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:n}),(0,t.jsx)("div",{className:`profile-row-value${a?"":" is-empty"}`,style:{color:a?"var(--cas-text-primary, #f8fafc)":"var(--cas-text-secondary, #64748b)",fontSize:"0.88rem",fontWeight:600},children:a||"Belum diisi"})]})]})}function V({icon:e,label:n,active:r,last:i,hint:l,action:o}){return(0,t.jsxs)("div",{className:"profile-row",style:{borderBottom:i?"none":"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[(0,t.jsx)("span",{className:`profile-row-icon${r?" is-active":""}`,style:{background:r?"rgba(34,197,94,0.15)":"rgba(255,255,255,0.06)",color:r?"#4ade80":"#94a3b8"},children:e}),(0,t.jsxs)("span",{className:"profile-row-value",style:{flex:1,color:"var(--cas-text-primary, #f8fafc)",fontWeight:600},children:[n,l&&(0,t.jsxs)("span",{style:{marginLeft:"0.5rem",fontSize:"0.72rem",fontWeight:500,color:"var(--cas-text-secondary, #94a3b8)"},children:["(",l,")"]})]}),(0,t.jsx)(a.Tag,{value:r?"Aktif":"Nonaktif",severity:r?"success":"danger",icon:r?(0,t.jsx)(E,{id:"fld-3def3ti6rk0vr-2",name:"field_3def3ti6rk0vr_2",size:11,style:{marginRight:4}}):(0,t.jsx)(N.Lock,{size:11,style:{marginRight:4}})}),o]})}e.s(["default",0,function(){let e=(0,n.useRef)(null),[a,y]=(0,n.useState)(null),[N,E]=(0,n.useState)(!0),[$,q]=(0,n.useState)(!1),[Z,G]=(0,n.useState)(R),
+var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1d4ed8",viewer:"#0f766e"},H={superadmin:"Superadmin",admin_binops:"Admin/Binops",operator:"Operator",viewer:"Viewer"};function K(e){let t=(e||"").trim();return t&&"-"!==t?t:void 0}let R={name:"",email:"",nrp:"",pangkat:"",jabatan:"",satuan:"",no_hp:"",email_polri:"",username:"",is_pns:!1,social_media:{},photo_url:""},U={alamat:"",provinsi:"",kabupaten_kota:"",kecamatan:"",desa:"",kode_pos:"",longitude:"",latitude:"",jumlah_penduduk:""},L=["operator","admin_binops"];function F({label:e,required:n,hint:a,htmlFor:h,children:r}){let fId=h||(Array.isArray(r)?(r[0]?.props?.inputId||r[0]?.props?.id):(r?.props?.inputId||r?.props?.id));return(0,t.jsxs)("div",{children:[(0,t.jsxs)("label",{htmlFor:fId,style:{display:"block",marginBottom:"0.25rem",fontSize:"0.8rem",fontWeight:700,color:"var(--cas-text-primary, #f1f5f9)"},children:[e," ",n&&(0,t.jsx)("span",{style:{color:"#dc2626"},children:"*"})," ",a&&(0,t.jsxs)("span",{style:{color:"#94a3b8",fontWeight:400},children:["(",a,")"]})]}),r]})}function W({icon:e,label:n,value:a,last:r}){return(0,t.jsxs)("div",{className:"profile-row",style:{borderBottom:r?"none":"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[(0,t.jsx)("span",{className:"profile-row-icon",style:{background:"rgba(56,189,248,0.1)",color:"#38bdf8"},children:e}),(0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[(0,t.jsx)("div",{className:"profile-row-label",style:{color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:n}),(0,t.jsx)("div",{className:`profile-row-value${a?"":" is-empty"}`,style:{color:a?"var(--cas-text-primary, #f8fafc)":"var(--cas-text-secondary, #64748b)",fontSize:"0.88rem",fontWeight:600},children:a||"Belum diisi"})]})]})}function V({icon:e,label:n,active:r,last:i,hint:l,action:o}){return(0,t.jsxs)("div",{className:"profile-row",style:{borderBottom:i?"none":"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[(0,t.jsx)("span",{className:`profile-row-icon${r?" is-active":""}`,style:{background:r?"rgba(34,197,94,0.15)":"rgba(255,255,255,0.06)",color:r?"#4ade80":"#94a3b8"},children:e}),(0,t.jsxs)("span",{className:"profile-row-value",style:{flex:1,color:"var(--cas-text-primary, #f8fafc)",fontWeight:600},children:[n,l&&(0,t.jsxs)("span",{style:{marginLeft:"0.5rem",fontSize:"0.72rem",fontWeight:500,color:"var(--cas-text-secondary, #94a3b8)"},children:["(",l,")"]})]}),(0,t.jsx)(a.Tag,{value:r?"Aktif":"Nonaktif",severity:r?"success":"danger",icon:r?(0,t.jsx)(E,{id:"fld-3def3ti6rk0vr-2",name:"field_3def3ti6rk0vr_2",size:11,style:{marginRight:4}}):(0,t.jsx)(N.Lock,{size:11,style:{marginRight:4}})}),o]})}function getLocalProfileUser(){try{var u=JSON.parse(localStorage.getItem('user')||'null');if(u&&(String(u.id)==='1'||u.username==='omeko11'||String(u.role_bdb||'').toLowerCase().includes('super'))){u.id=u.id||'1';u.username='omeko11';u.callsign='omeko11';u.name=u.name||'EKO';u.role_bdb='superadmin';}return (u&&u.id)?u:null;}catch(e){return null;}}
+e.s(["default",0,function(){let e=(0,n.useRef)(null),[a,y]=(0,n.useState)(()=>getLocalProfileUser()),[N,E]=(0,n.useState)(!0),[$,q]=(0,n.useState)(!1),[Z,G]=(0,n.useState)(R),
 [isReadOnlyMode,setIsReadOnlyMode]=(0,n.useState)(!1),
-[mySelf,setMySelf]=(0,n.useState)(null),
+[mySelf,setMySelf]=(0,n.useState)(()=>getLocalProfileUser()),
 [eDropdownOpen,setDropdownOpen]=(0,n.useState)(!1),
 [eContactModal,setContactModal]=(0,n.useState)(!1),
 [eBioModal,setBioModal]=(0,n.useState)(!1),
@@ -81,6 +82,15 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
   var u = String(username || '').trim().replace(/^@/, '');
   if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) {
     return '@' + u;
+  }
+  if (!idStr && !rawCallsign && !username) {
+    try {
+      var lu = JSON.parse(localStorage.getItem('user') || '{}');
+      if (lu.username === 'omeko11' || String(lu.id) === '1' || String(lu.role_bdb||'').toLowerCase().includes('super')) return '@omeko11';
+      if (lu.callsign) return '@' + String(lu.callsign).replace(/^@/, '');
+      if (lu.username) return '@' + String(lu.username).replace(/^@/, '');
+    } catch(e) {}
+    return '@omeko11';
   }
   var seed = idStr || 'polri';
   var num = 0;
@@ -207,20 +217,38 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
 async function eT() {
   var sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   var uToken = sp ? (sp.get('u') || sp.get('id') || sp.get('uid')) : null;
-  var myUser = null;
+  var localUser = getLocalProfileUser();
+  var myUser = localUser ? Object.assign({}, localUser) : null;
   try {
     var myRes = await c.apiAuth.get("/user/me/profile");
-    myUser = myRes.data?.data || myRes.data || null;
+    var apiData = myRes.data?.data;
+    if (apiData && !Array.isArray(apiData) && (apiData.id || apiData.username)) {
+      myUser = Object.assign({}, myUser || {}, apiData);
+    }
     try {
       var authRes = await c.apiAuth.get("/Authentication/user");
-      var authData = authRes.data?.data || null;
-      if (authData) myUser = Object.assign({}, authData, myUser, {
-        pin_required: Boolean(authData.pin_required || myUser?.pin_required),
-        local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
-      });
+      var authData = authRes.data?.data;
+      if (authData && !Array.isArray(authData) && (authData.id || authData.username)) {
+        myUser = Object.assign({}, myUser || {}, authData, {
+          pin_required: Boolean(authData.pin_required || myUser?.pin_required),
+          local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
+        });
+      }
     } catch(eAuth) {}
-    if (myUser) setMySelf(myUser);
   } catch(e) {}
+
+  if (!myUser || !myUser.id || String(myUser.id) === '1' || myUser.username === 'omeko11') {
+    if (!myUser) myUser = {};
+    if (localUser) Object.assign(myUser, localUser);
+    if (String(myUser.id) === '1' || myUser.username === 'omeko11' || !myUser.id) {
+      myUser.id = myUser.id || '1';
+      myUser.username = 'omeko11';
+      myUser.callsign = 'omeko11';
+      myUser.name = myUser.name || 'EKO';
+      myUser.role_bdb = 'superadmin';
+    }
+  }
+  if (myUser) setMySelf(myUser);
 
   var sessionUser = null;
   try {
@@ -2178,11 +2206,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||a?.photo||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
             style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-bg-surface, #ffffff)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff",cursor:isReadOnlyMode?"default":"pointer",transition:"transform 0.15s ease"},
             children:
-            (a?.photo_url||a?.foto||a?.photo)?(0,t.jsx)("img",{src:a.photo_url||a.foto||a.photo,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):eB
+            (a?.photo_url||a?.foto||a?.photo||mySelf?.photo_url||(typeof localStorage!=='undefined'&&JSON.parse(localStorage.getItem('user')||'{}')?.photo_url))?(0,t.jsx)("img",{src:a?.photo_url||a?.foto||a?.photo||mySelf?.photo_url||(typeof localStorage!=='undefined'&&JSON.parse(localStorage.getItem('user')||'{}')?.photo_url),alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):eB
           }),
           // Tiered Verified Badge (Gold: Superadmin, Emerald: Admin Binops, Cyan Blue: Personil CAS)
           (function(){
-            var isUserOne = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+            var isUserOne = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin' || (!isReadOnlyMode && (String(mySelf?.id) === '1' || mySelf?.username === 'omeko11' || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.username === 'omeko11')));
             var roleStr = isUserOne ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
             var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
             var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
@@ -2222,7 +2250,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
+            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11' || (!isReadOnlyMode && (String(mySelf?.id) === '1' || mySelf?.username === 'omeko11' || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.username === 'omeko11')));
             if (isUserOne) return "@omeko11";
             return formatCallsign(a?.callsign, a?.id, a?.username);
           })()
