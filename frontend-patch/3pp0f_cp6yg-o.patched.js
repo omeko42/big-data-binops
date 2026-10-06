@@ -210,7 +210,7 @@ function renderPostContent(text, onHashtagClick) {
               username: handle
             }));
           } catch(err) {}
-          window.location.href = '/cms/profile';
+          window.location.href = '/cms/profile?u=' + encodeURIComponent(handle);
         },
         style: {
           color: "#38bdf8",
@@ -394,7 +394,7 @@ e.s(["default",0,function() {
           callsign: targetCallsign || handle
         }));
       } catch(e) {}
-      window.location.href = '/cms/profile';
+      window.location.href = '/cms/profile?u=' + encodeURIComponent(handle);
     }
   };
 
