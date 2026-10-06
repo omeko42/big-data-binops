@@ -1085,7 +1085,7 @@ e.s(["default", 0, function() {
                             padding: "0.1rem 0.4rem",
                             borderRadius: "4px"
                           },
-                          children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin'; if (isSuper) return "Nasional"; return item?.author_satker || item?.satker_name || item?.satker || "Robinops Bareskrim"; })(p)
+                          children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(item?.author_id)); if (isSuper) return "Robinopsnal Bareskrim Polri"; return item?.author_satker || item?.satker_name || item?.satker || "Robinopsnal Bareskrim Polri"; })(p)
                         }),
                         (0, t.jsxs)("span", {
                           style: { fontSize: "0.72rem", color: "#64748b" },
