@@ -40,6 +40,8 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 [eSettingsTab,setSettingsTab]=(0,n.useState)('keamanan'),
 
 [eNetworkModal,setNetworkModal]=(0,n.useState)(!1),
+[eNetworkConnectedTarget,setNetworkConnectedTarget]=(0,n.useState)(null),
+[eNetworkModalTitle,setNetworkModalTitle]=(0,n.useState)(''),
 [eNetworkTab,setNetworkTab]=(0,n.useState)('connected'),
 [eNetworkSearch,setNetworkSearch]=(0,n.useState)(''),
 [eNetworkSatkerFilter,setNetworkSatkerFilter]=(0,n.useState)('all'),
@@ -538,27 +540,31 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
 
 let defaultPersonnel = [];
 
-let fetchNetworkDirectory = async (search, satker, targetPage) => {
+let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo) => {
   setNetworkLoading(!0);
   let p = targetPage || 1;
   setNetworkPage(p);
   try {
     let sVal = search !== void 0 ? search : eNetworkSearch;
     let satVal = satker !== void 0 ? satker : eNetworkSatkerFilter;
+    let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : eNetworkConnectedTarget;
     let qParams = {
       search: sVal || '',
-      satker: satVal === 'all' ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
+      satker: (satVal === 'all' || satVal === 'connected') ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
       page: p,
       limit: 9
     };
+    if (satVal === 'connected' || connTo) {
+      qParams.connected_to = connTo || a?.id;
+    }
     if (satVal === 'my_satker' && a?.scope_satker_id) {
       qParams.satker_id = a.scope_satker_id;
     }
     let res = await c.apiAuth.get('/bdb/jukrah/network/users', { params: qParams });
     let list = res.data?.data || [];
     setNetworkUsers(list);
-    setNetworkTotal(res.data?.total || list.length);
-    setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total || list.length) / 9) || 1);
+    setNetworkTotal(res.data?.total !== undefined ? res.data.total : list.length);
+    setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total !== undefined ? res.data.total : list.length) / 9) || 1);
   } catch (err) {
     setNetworkUsers([]);
   } finally {
@@ -1736,8 +1742,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 (0,t.jsx)(r.Dialog,{
   header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
     (0,t.jsx)("span",{style:{fontSize:"1.2rem"},children:"👥"}),
-    (0,t.jsx)("span",{style:{fontWeight:800},children:"Jaringan & Koneksi Personil CAS"}),
-    (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:eNetworkTotal + " Personil"})
+    (0,t.jsx)("span",{style:{fontWeight:800},children:eNetworkModalTitle || "Jaringan & Koneksi Personil CAS"}),
+    (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:(eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi" : " Personil")})
   ]}),
   visible:eNetworkModal,
   onHide:()=>setNetworkModal(!1),
@@ -1761,11 +1767,21 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsxs)("select",{
         value:eNetworkSatkerFilter,
         onChange:ev=>{
-          setNetworkSatkerFilter(ev.target.value);
-          fetchNetworkDirectory(eNetworkSearch, ev.target.value);
+          var val = ev.target.value;
+          setNetworkSatkerFilter(val);
+          var connTo = val === 'connected' ? (eNetworkConnectedTarget || a?.id) : null;
+          if (val !== 'connected') {
+            setNetworkConnectedTarget(null);
+            setNetworkModalTitle('Jaringan & Direktori Personil CAS');
+          } else {
+            setNetworkConnectedTarget(a?.id);
+            setNetworkModalTitle('Daftar Koneksi ' + (a?.name || a?.callsign || 'Personil'));
+          }
+          fetchNetworkDirectory(eNetworkSearch, val, 1, connTo);
         },
         style:{fontSize:"0.82rem",padding:"0.45rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(0,0,0,0.3)",color:"#fff"},
         children:[
+          Boolean(a?.id) && (0,t.jsx)("option",{value:"connected",children:"Koneksi @" + formatCallsign(a?.callsign, a?.id, a?.username).replace(/^@/, '') + " (" + (a?.connections_count || 1) + ")"}),
           (0,t.jsx)("option",{value:"all",children:"Semua Personil CAS (Nasional)"}),
           (0,t.jsx)("option",{value:"my_satker",children:"Satu Satker / Wilayah (" + (a?.satker_nama || a?.satker || "Satker") + ")"}),
           (0,t.jsx)("option",{value:"Bareskrim",children:"Mabes Bareskrim Polri"}),
@@ -1785,7 +1801,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:"60vh",overflowY:"auto",paddingRight:"0.25rem"},
         children:eNetworkUsers.map(user => {
           var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id)) || user.username === 'omeko11' || String(user.role_bdb || user.role || '').toLowerCase() === 'superadmin';
-          var isTargetSelf = String(user.id) === String(a?.id) || user.username === 'omeko11' || String(user.id) === '1';
+          var isTargetSelf = mySelf ? (String(user.id) === String(mySelf.id)) : (String(user.id) === String(a?.id));
           var userCallsign = formatCallsign(user.callsign, user.id, user.username);
           var userPhoto = isTargetSelf ? (a?.photo_url || a?.foto || a?.photo || user.photo_url || user.foto) : (user.photo_url || user.foto || user.photo);
           var userBadge = getVerificationBadge(user.role_bdb || user.role, isUserSuper, user.id, user.username);
@@ -2155,8 +2171,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsxs)("button",{
           type:"button",
           onClick:()=>{
+            var targetUid = a?.id;
+            var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
+            setNetworkConnectedTarget(targetUid);
+            setNetworkSatkerFilter('connected');
+            setNetworkSearch('');
+            setNetworkModalTitle('Daftar Koneksi ' + targetName);
             setNetworkModal(!0);
-            fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter);
+            fetchNetworkDirectory('', 'connected', 1, targetUid);
           },
           style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
           children:[
@@ -2953,8 +2975,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         onClick:()=>{
+          setNetworkConnectedTarget(null);
+          setNetworkSatkerFilter('all');
+          setNetworkSearch('');
+          setNetworkModalTitle('Direktori Jaringan Personil CAS');
           setNetworkModal(!0);
-          fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter);
+          fetchNetworkDirectory('', 'all', 1, null);
         },
         style:{width:"100%",marginTop:"0.85rem",padding:"0.45rem",borderRadius:"8px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",color:"#cbd5e1",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",textAlign:"center"},
         children:"Lihat Semua Rekan" + (eNetworkTotal ? " (" + eNetworkTotal.toLocaleString("id-ID") + ")" : "")

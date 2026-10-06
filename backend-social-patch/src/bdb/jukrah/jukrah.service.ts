@@ -647,6 +647,10 @@ export class JukrahService {
             params.push(Number(q.satker_id));
             conds.push('u.scope_satker_id = $' + params.length);
         }
+        if ((q as any).connected_to) {
+            params.push(Number((q as any).connected_to));
+            conds.push('(EXISTS (SELECT 1 FROM user_connections uc_f WHERE ((uc_f.requester_id = $' + params.length + ' AND uc_f.addressee_id = u.id) OR (uc_f.requester_id = u.id AND uc_f.addressee_id = $' + params.length + ')) AND uc_f.status = \'ACCEPTED\'))');
+        }
 
         const whereSql = conds.join(' AND ');
 
