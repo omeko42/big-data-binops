@@ -49,6 +49,24 @@ export function copyFileToFE(localPath, remotePath) {
     throw lastErr;
 }
 
+export function copyFileFromFE(remotePath, localPath) {
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            return cp.execFileSync('D:/Putty/pscp.exe', [
+                '-batch', '-hostkey', feHostKey,
+                '-pw', config.CAS_SSH_PASSWORD,
+                `${targetFE}:${remotePath}`,
+                localPath
+            ], { timeout: 60000 }).toString();
+        } catch (e) {
+            lastErr = e;
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+        }
+    }
+    throw lastErr;
+}
+
 if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('fe_exec.mjs') && process.argv[2]) {
     console.log(runFE(process.argv[2]));
 }
