@@ -797,20 +797,10 @@ export class WorkflowService {
                 const sumber = p?.sumber || (pasalId ? 'tambahan_manual' : 'tambahan_manual');
                 await runner.query('insert into bdb_dokumen_pasal (dokumen_id, pasal_id, nomor_pasal, sumber) values ($1,$2,$3,$4)', [dokumenId, pasalId, nomor, sumber]);
             }
-            // update status LP (satu-satunya jalur perubahan status)
+            // update status LP: hitung ulang status LP dari seluruh dokumen yang ada (status terjauh / prioritas CC)
+            // agar dokumen penyelesaian (CC seperti PERMA/SP3/Tahap II) tidak tertimpa dokumen non-CC susulan.
             if (dt.status_target_id) {
-                const statCat = await runner.query('select kategori from bdb_status_master where id=$1', [dt.status_target_id]);
-                if (statCat[0]?.kategori === 'CC') {
-                    // tanggal_selesai ditentukan dari tanggal dokumen CC ini (bukan tanggal sistem
-                    // memproses), sesuai Ketentuan Penghitungan CT/CP/CC/CR/Indeks -- fallback ke
-                    // hari ini kalau dokumennya entah kenapa tak punya tanggal_dokumen.
-                    await runner.query(
-                        'update bdb_laporan_polisi set status_id=$2, tanggal_selesai=case when $3::date > current_date then current_date else coalesce($3::date, current_date) end, updated_at=now() where id=$1',
-                        [lpId, dt.status_target_id, data.tanggal_dokumen || null]
-                    );
-                } else {
-                    await runner.query('update bdb_laporan_polisi set status_id=$2, tanggal_selesai=null, updated_at=now() where id=$1', [lpId, dt.status_target_id]);
-                }
+                await this.recomputeLpStatus(lpId, runner);
             }
             await runner.commitTransaction();
             if (dt.code === 'PERMA') {
@@ -1077,28 +1067,33 @@ export class WorkflowService {
         return { status: 1, message: 'Dokumen dihapus. Status LP disesuaikan.' };
     }
 
-    /** Hitung ulang status LP dari dokumen tersisa (status terjauh yang tercapai; jika tak ada → LP). */
-    private async recomputeLpStatus(lpId: number) {
-        const r = await this.dataSource.query(
+    /** Hitung ulang status LP dari dokumen tersisa/terbaru (prioritas CC / status terjauh yang tercapai; jika tak ada → LP). */
+    private async recomputeLpStatus(lpId: number, runner?: any) {
+        const db = runner || this.dataSource;
+        const r = await db.query(
             `select st.id, st.kategori, d.tanggal_dokumen from bdb_dokumen d
              join bdb_document_type_master t on t.id=d.document_type_id
              join bdb_status_master st on st.id=t.status_target_id
              where d.lp_id=$1 and t.status_target_id is not null
-             order by st.urutan desc, d.id desc limit 1`,
+             order by
+                 (case when st.kategori = 'CC' then 1 else 0 end) desc,
+                 st.urutan desc,
+                 d.id desc
+             limit 1`,
             [lpId]
         );
         let statusId = r[0]?.id;
         let isCc = r[0]?.kategori === 'CC';
         let ccDate = r[0]?.tanggal_dokumen || null;
         if (!statusId) {
-            const base = await this.dataSource.query("select id from bdb_status_master where code='LP' limit 1");
+            const base = await db.query("select id from bdb_status_master where code='LP' limit 1");
             statusId = base[0]?.id ?? null;
             isCc = false;
         }
         // tanggal_selesai ikut status terjauh yg tersisa: kosongkan kalau status hasil recompute
         // bukan lagi kategori CC (mis. dokumen CC-nya baru dihapus), isi dari tanggal_dokumen
         // dokumen ybs kalau statusnya CC.
-        await this.dataSource.query(
+        await db.query(
             'update bdb_laporan_polisi set status_id=$2, tanggal_selesai=case when $3::date > current_date then current_date else $3::date end, updated_at=now() where id=$1',
             [lpId, statusId, isCc ? (ccDate || this.getTodayWib()) : null]
         );
@@ -1145,7 +1140,10 @@ export class WorkflowService {
                     join bdb_document_type_master t on t.id = d.document_type_id
                     join bdb_status_master st on st.id = t.status_target_id
                     where d.lp_id = lp.id and t.status_target_id is not null
-                    order by st.urutan desc, d.id desc
+                    order by
+                        (case when st.kategori = 'CC' then 1 else 0 end) desc,
+                        st.urutan desc,
+                        d.id desc
                     limit 1
                 ) best on true
                 where lp.deleted_at is null
