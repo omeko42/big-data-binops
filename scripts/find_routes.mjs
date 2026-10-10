@@ -1,7 +1,4 @@
-import { runFE } from './fe_exec.mjs';
+import { runBE } from './be_exec.mjs';
 
-const cmd = `docker exec bdb-web sh -c "
-find /usr/src/app/.next/server/ -name '*.html' -o -name '*.js' | grep -v '\.bak' | head -n 40
-"`;
-
-console.log(runFE(cmd));
+const cmd = `docker exec bdb-api grep -rn "user" /usr/src/app/dist/controllers/ || docker exec bdb-api find /usr/src/app/dist -name "*controller*"`;
+console.log(runBE(cmd));

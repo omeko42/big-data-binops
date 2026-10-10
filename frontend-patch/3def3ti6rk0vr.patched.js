@@ -239,14 +239,14 @@ async function eT() {
     } catch(eAuth) {}
   } catch(e) {}
 
-  if (!myUser || !myUser.id || String(myUser.id) === '1' || myUser.username === 'omeko11') {
+  if (!myUser || !myUser.id) {
     try {
       var lu = JSON.parse(localStorage.getItem('user') || 'null');
       if (lu && lu.id) myUser = Object.assign({}, lu, myUser || {});
     } catch(e) {}
     if (!myUser) myUser = {};
-    if (String(myUser.id) === '1' || myUser.username === 'omeko11' || !myUser.id) {
-      myUser.id = myUser.id || '1';
+    if (String(myUser.id) === '1' && !myUser.username) {
+      myUser.id = '1';
       myUser.username = 'omeko11';
       myUser.callsign = 'omeko11';
       myUser.name = myUser.name || 'EKO';
@@ -255,36 +255,38 @@ async function eT() {
   }
   if (myUser) setMySelf(myUser);
 
-  var sessionUser = null;
-  try {
-    var sStr = sessionStorage.getItem('cas_view_user');
-    if (sStr) sessionUser = JSON.parse(sStr);
-  } catch(e) {}
+  // If there is no explicit query parameter (?u= or ?id=), ALWAYS display own profile!
+  if (!uToken) {
+    try {
+      sessionStorage.removeItem('cas_view_user');
+      if (window.history && window.history.replaceState && sp && (sp.has('u') || sp.has('id'))) {
+        window.history.replaceState({}, '', '/cms/profile');
+      }
+    } catch(e) {}
+    setIsReadOnlyMode(!1);
+    y(myUser);
+    return myUser;
+  }
 
-  var targetQuery = uToken || sessionUser?.handle || sessionUser?.username || sessionUser?.id || null;
-  if (targetQuery) {
-    var cleanTarget = String(targetQuery).replace(/^@/, '').trim();
-    var isSelf = (myUser && (String(myUser.id) === cleanTarget || String(myUser.username || '').toLowerCase() === cleanTarget.toLowerCase() || String(myUser.callsign || '').toLowerCase() === cleanTarget.toLowerCase())) || (String(myUser?.id) === '1' && cleanTarget === 'omeko11');
+  var targetQuery = uToken;
+  var cleanTarget = String(targetQuery).replace(/^@/, '').trim();
+  var isSelf = myUser && (String(myUser.id) === cleanTarget || String(myUser.username || '').toLowerCase() === cleanTarget.toLowerCase() || String(myUser.callsign || '').toLowerCase() === cleanTarget.toLowerCase());
 
-    if (!isSelf) {
-      try {
-        var targetRes = await c.apiAuth.get('/bdb/jukrah/network/profile/' + encodeURIComponent(cleanTarget));
-        var targetData = targetRes.data?.data || null;
-        if (targetData) {
-          setIsReadOnlyMode(!0);
-          try {
-            var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
-            cleanHandle = String(cleanHandle).replace(/^@/, '');
-            sessionStorage.setItem('cas_view_user', JSON.stringify({ id: targetData.id, username: targetData.username, callsign: targetData.callsign, handle: cleanHandle }));
-            if (window.history && window.history.replaceState) {
-              window.history.replaceState({}, '', '/cms/profile');
-            }
-          } catch(e) {}
-          y(targetData);
-          return targetData;
-        }
-      } catch(err) {}
-    }
+  if (!isSelf && cleanTarget) {
+    try {
+      var targetRes = await c.apiAuth.get('/bdb/jukrah/network/profile/' + encodeURIComponent(cleanTarget));
+      var targetData = targetRes.data?.data || null;
+      if (targetData) {
+        setIsReadOnlyMode(!0);
+        try {
+          var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
+          cleanHandle = String(cleanHandle).replace(/^@/, '');
+          sessionStorage.setItem('cas_view_user', JSON.stringify({ id: targetData.id, username: targetData.username, callsign: targetData.callsign, handle: cleanHandle }));
+        } catch(e) {}
+        y(targetData);
+        return targetData;
+      }
+    } catch(err) {}
   }
 
   try {
@@ -367,7 +369,7 @@ async function handleModalToggleConnect(targetUser) {
   }
 }
 
-async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),photo_url:Z.photo_url||"",foto:Z.photo_url||"",social_media:{urls:eSocUrls.map(u=>u.trim()).filter(Boolean)}};(0,c.assertOk)(await c.apiAuth.patch("/user/me/profile",payload)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
+async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),photo_url:Z.photo_url||"",foto:Z.photo_url||"",social_media:{urls:eSocUrls.map(u=>u.trim()).filter(Boolean)}};let patchRes=await c.apiAuth.patch("/user/me/profile",payload);(0,c.assertOk)(patchRes);try{let lu=JSON.parse(localStorage.getItem('user')||'{}');let newU={...lu,...(patchRes.data?.data||payload),username:Z.username,callsign:Z.username,name:Z.name};localStorage.setItem('user',JSON.stringify(newU));window.dispatchEvent(new CustomEvent('user-updated',{detail:newU}));}catch(e){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
 setTotpData(null);setTotpInputCode("");setTotpError("");setExistingPassword("");setTotpStep(1);setTotpModal(!0);
 }
 async function fetchTotpSetup(){
@@ -2273,12 +2275,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            if (String(a?.id) === '1' || a?.username === 'omeko11' || a?.callsign === 'omeko11') return "@omeko11";
+            var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
             var c = a?.callsign ? String(a.callsign).trim().replace(/^@/, '') : '';
+            if (u && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
             if (c && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
             if (a?.name && String(a.name).trim()) return a.name;
-            var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
-            if (u && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
+            if (String(a?.id) === '1') return "@omeko11";
             return formatCallsign(a?.callsign, a?.id, a?.username);
           })()
         }),
@@ -3399,16 +3401,13 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
               (0,t.jsxs)("div",{
                 onClick:() => {
                   setPersonalLikesModal(!1);
-                  var isSelf = isUsrEko || String(usr.id) === String(a?.id);
+                  var isSelf = String(usr.id) === String(mySelf?.id || a?.id);
                   if (isSelf) {
                     try { sessionStorage.removeItem('cas_view_user'); } catch(e) {}
                     window.location.href = '/cms/profile';
                   } else {
-                    var h = usrHandle.replace(/^@/, '');
-                    try {
-                      sessionStorage.setItem('cas_view_user', JSON.stringify({ id: usr.id, handle: usrHandle, username: usr.username || h }));
-                    } catch(e) {}
-                    window.location.href = '/cms/profile';
+                    var h = String(usr.username || usr.callsign || usr.id).replace(/^@/, '');
+                    window.location.href = '/cms/profile?u=' + encodeURIComponent(h);
                   }
                 },
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},

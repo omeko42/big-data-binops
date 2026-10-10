@@ -873,11 +873,14 @@ children:[
   className:"cms-card",
   style:{
     marginTop:"1rem",
-    padding:"1rem 1.25rem",
+    padding:"1rem 1.15rem",
     borderRadius:"12px",
     border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",
     background:"var(--cas-bg-card, #1e293b)",
-    boxShadow:"0 2px 10px rgba(0,0,0,0.1)"
+    boxShadow:"0 2px 10px rgba(0,0,0,0.1)",
+    maxWidth:"100%",
+    boxSizing:"border-box",
+    overflow:"hidden"
   },
   children:[
     // Header
@@ -972,58 +975,85 @@ children:[
             title:"Klik untuk membuka postingan ini di Ruang Kolaborasi",
             style:{
               display:"flex",
-              alignItems:"center",
-              justifyContent:"space-between",
-              gap:"0.75rem",
-              padding:"0.45rem 0.65rem",
-              borderRadius:"6px",
+              flexDirection:"column",
+              gap:"0.32rem",
+              padding:"0.55rem 0.75rem",
+              borderRadius:"8px",
               background:"rgba(255,255,255,0.02)",
-              border:"1px solid rgba(255,255,255,0.04)",
+              border:"1px solid rgba(255,255,255,0.05)",
               cursor:"pointer",
               fontSize:"0.82rem",
+              maxWidth:"100%",
+              boxSizing:"border-box",
+              overflow:"hidden",
               transition:"background 0.15s ease"
             },
             onMouseEnter:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.05)",
             onMouseLeave:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.02)",
             children:[
-              // Left: Author callsign & satker with verified badge
+              // Top row: Author & satker on left, reactions & time on right
               (0,t.jsxs)("div",{
-                style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",flexShrink:0},
+                style:{
+                  display:"flex",
+                  alignItems:"center",
+                  justifyContent:"space-between",
+                  gap:"0.5rem",
+                  width:"100%",
+                  minWidth:0
+                },
                 children:[
-                  (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8"},children:callsign}),
-                  (0,t.jsx)("span",{
-                    title:bTitle,
-                    style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:bColor,flexShrink:0},
+                  (0,t.jsxs)("div",{
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,overflow:"hidden"},
                     children:[
-                      (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:[
-                        (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
-                      ]})
+                      (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",whiteSpace:"nowrap"},children:callsign}),
+                      (0,t.jsx)("span",{
+                        title:bTitle,
+                        style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:bColor,flexShrink:0},
+                        children:[
+                          (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:[
+                            (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+                          ]})
+                        ]
+                      }),
+                      (0,t.jsx)("span",{
+                        style:{
+                          fontSize:"0.68rem",
+                          background:"rgba(255,255,255,0.08)",
+                          color:"#cbd5e1",
+                          padding:"0.05rem 0.35rem",
+                          borderRadius:"4px",
+                          maxWidth:"150px",
+                          overflow:"hidden",
+                          textOverflow:"ellipsis",
+                          whiteSpace:"nowrap"
+                        },
+                        children:satker
+                      })
                     ]
                   }),
-                  (0,t.jsx)("span",{style:{fontSize:"0.68rem",background:"rgba(255,255,255,0.08)",color:"#cbd5e1",padding:"0.05rem 0.35rem",borderRadius:"4px"},children:satker}),
-                  (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"•"})
+                  (0,t.jsxs)("div",{
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.45rem",flexShrink:0,color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.72rem"},
+                    children:[
+                      Boolean(item.total_reactions > 0) && (0,t.jsxs)("span",{style:{color:"#38bdf8",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.2rem",fontSize:"0.72rem"},children:["👍 ", item.total_reactions]}),
+                      (0,t.jsx)("span",{style:{whiteSpace:"nowrap"},children:timeStr}),
+                      (0,t.jsx)("span",{style:{color:"#60a5fa",fontWeight:800},children:"➔"})
+                    ]
+                  })
                 ]
               }),
-              // Middle: Truncated content with ellipsis
+              // Content row: Truncated without spilling out of card on mobile
               (0,t.jsx)("div",{
                 style:{
-                  flex:1,
+                  width:"100%",
                   minWidth:0,
                   overflow:"hidden",
                   textOverflow:"ellipsis",
                   whiteSpace:"nowrap",
-                  color:"var(--cas-text-primary, #e2e8f0)"
+                  color:"var(--cas-text-primary, #e2e8f0)",
+                  fontSize:"0.82rem",
+                  lineHeight:1.4
                 },
                 children:item.content || item.title || "-"
-              }),
-              // Right: Reactions, Time & arrow
-              (0,t.jsxs)("div",{
-                style:{display:"inline-flex",alignItems:"center",gap:"0.5rem",flexShrink:0,color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.72rem"},
-                children:[
-                  Boolean(item.total_reactions > 0) && (0,t.jsxs)("span",{style:{color:"#38bdf8",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.2rem",fontSize:"0.72rem"},children:["👍 ", item.total_reactions]}),
-                  (0,t.jsx)("span",{children:timeStr}),
-                  (0,t.jsx)("span",{style:{color:"#60a5fa",fontWeight:800},children:"➔"})
-                ]
               })
             ]
           });

@@ -732,6 +732,15 @@ let UserService = class UserService {
                     }
                 }
                 authUpdate.username = username || null;
+                authUpdate.callsign = username || null;
+            } else if (username && (!authUser.callsign || authUser.callsign.startsWith('user_'))) {
+                authUpdate.callsign = username;
+            }
+        }
+        if (dto.callsign !== undefined) {
+            const cs = String(dto.callsign || '').trim().replace(/^@/, '');
+            if (cs) {
+                authUpdate.callsign = cs;
             }
         }
         const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : authUser.email_polri;
@@ -759,7 +768,16 @@ let UserService = class UserService {
             social_media: dto.social_media,
             foto: dto.photo_url || dto.foto
         }, this.dataSource, authUser.email_polri);
-        return { status: 1, message: 'Profil berhasil diperbarui.' };
+        return {
+            status: 1,
+            message: 'Profil berhasil diperbarui.',
+            data: {
+                ...authUser,
+                ...authUpdate,
+                username: effectiveUsername,
+                callsign: authUpdate.callsign || effectiveUsername
+            }
+        };
     }
     async selfDeactivate(authUser, reason) {
         await this.userRepository.update(Number(authUser.id), {
