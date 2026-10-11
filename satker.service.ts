@@ -118,6 +118,96 @@ export class SatkerService implements OnModuleInit {
             ['060.01.02.16.10', '060.01.02.23'], // POLSEK SULTAN DAULAT
             ['060.01.02.16.15', '060.01.02.23'], // POLSEK LONGKIB
 
+            // POLRES PIDIE JAYA (060.01.02.22) - Relokasi 8 Polsek wilayah Pidie Jaya dari kode historis Polres Pidie (060.01.02.03)
+            ['060.01.02.03.10', '060.01.02.22'], // POLSEK BANDAR BARU
+            ['060.01.02.03.20', '060.01.02.22'], // POLSEK ULIM
+            ['060.01.02.03.21', '060.01.02.22'], // POLSEK BANDAR DUA
+            ['060.01.02.03.22', '060.01.02.22'], // POLSEK TRIENGGADENG
+            ['060.01.02.03.23', '060.01.02.22'], // POLSEK MEREUDU
+            ['060.01.02.03.27', '060.01.02.22'], // POLSEK MEURAH DUA
+            ['060.01.02.03.29', '060.01.02.22'], // POLSEK JANGKA BUYA
+            ['060.01.02.03.30', '060.01.02.22'], // POLSEK PANTERAJA
+
+            // POLRES MANGGARAI TIMUR (060.01.24.21) - Relokasi 4 Polsek dari kode historis Polres Manggarai (060.01.24.14)
+            ['060.01.24.14.01', '060.01.24.21'], // POLSEK BORONG
+            ['060.01.24.14.02', '060.01.24.21'], // POLSEK KOTA KOMBA
+            ['060.01.24.14.03', '060.01.24.21'], // POLSEK SAMBI RAMPAS
+            ['060.01.24.14.04', '060.01.24.21'], // POLSEK LAMBA LEDA
+
+            // POLRES BURU SELATAN (060.01.30.11) - Relokasi 5 Polsek dari kode historis Polres Pulau Buru (060.01.30.06)
+            ['060.01.30.06.06', '060.01.30.11'], // POLSEK NAMROLE
+            ['060.01.30.06.07', '060.01.30.11'], // POLSEK LEKSULA
+            ['060.01.30.06.08', '060.01.30.11'], // POLSEK AMBALAU
+            ['060.01.30.06.09', '060.01.30.11'], // POLSEK WAESAMA
+            ['060.01.30.06.10', '060.01.30.11'], // POLSEK KEPALA MADAN
+
+            // POLRES BUTON UTARA (060.01.26.12) - Relokasi 4 Polsek dari kode historis Polres Muna (060.01.26.10)
+            ['060.01.26.10.19', '060.01.26.12'], // POLSEK KULISUSU
+            ['060.01.26.10.20', '060.01.26.12'], // POLSEK WAKORUMBA
+            ['060.01.26.10.21', '060.01.26.12'], // POLSEK BONEGUNU
+            ['060.01.26.10.22', '060.01.26.12'], // POLSEK KULISUSU BARAT
+
+            // POLRES BUTON TENGAH (060.01.26.13) - Relokasi 7 Polsek dari kode historis Polres Baubau (060.01.26.06)
+            ['060.01.26.06.07', '060.01.26.13'], // POLSEK LAKUDO
+            ['060.01.26.06.08', '060.01.26.13'], // POLSEK GU
+            ['060.01.26.06.09', '060.01.26.13'], // POLSEK MAWASANGKA
+            ['060.01.26.06.12', '060.01.26.13'], // POLSEK MAWASANGKA TIMUR
+            ['060.01.26.06.13', '060.01.26.13'], // POLSEK MAWASANGKA TENGAH
+            ['060.01.26.06.14', '060.01.26.13'], // POLSEK SANGIAWAMBULU
+            ['060.01.26.06.15', '060.01.26.13'], // POLSEK TALAGA RAYA
+
+            // POLRES MOROWALI UTARA (060.01.27.12) - Relokasi 5 Polsek dari kode historis Polres Morowali (060.01.27.06)
+            ['060.01.27.06.03', '060.01.27.12'], // POLSEK LEMBO
+            ['060.01.27.06.04', '060.01.27.12'], // POLSEK MORI ATAS
+            ['060.01.27.06.05', '060.01.27.12'], // POLSEK PETASIA
+            ['060.01.27.06.06', '060.01.27.12'], // POLSEK BUNGKU UTARA
+            ['060.01.27.06.10', '060.01.27.12'], // POLSEK SOYO JAYA
+
+            // POLRES BOLAANG MONGONDOW SELATAN (060.01.28.14) - Relokasi 3 Polsek dari kode historis Polres Kotamobagu (060.01.28.04)
+            ['060.01.28.04.05', '060.01.28.14'], // POLSEK BOLAANG UKI
+            ['060.01.28.04.07', '060.01.28.14'], // POLSEK PINOLOSIAN
+            ['060.01.28.04.19', '060.01.28.14'], // POLSEK POSIGADAN
+
+            // POLRES BOLAANG MONGONDOW TIMUR (060.01.28.35) - Relokasi 2 Polsek dari kode historis Polres Kotamobagu (060.01.28.04)
+            ['060.01.28.04.04', '060.01.28.35'], // POLSEK KOTABUNAN
+            ['060.01.28.04.06', '060.01.28.35'], // POLSEK NUANGAN
+
+            // POLRES MAMUJU TENGAH (060.01.34.07) - Relokasi 4 Polsek dari kode historis Polresta Mamuju (060.01.34.04)
+            ['060.01.34.04.05', '060.01.34.07'], // POLSEK BUDONG-BUDONG
+            ['060.01.34.04.06', '060.01.34.07'], // POLSEK KAROSSA
+            ['060.01.34.04.08', '060.01.34.07'], // POLSEK TOPOYO
+            ['060.01.34.04.09', '060.01.34.07'], // POLSEK TOBADAK
+
+            // POLRES TANA TIDUNG (060.01.35.05) - Relokasi 3 Polsek dari kode historis Polresta Bulungan (060.01.35.01)
+            ['060.01.35.01.06', '060.01.35.05'], // POLSEK SESAYAP
+            ['060.01.35.01.07', '060.01.35.05'], // POLSEK SESAYAP HILIR
+            ['060.01.35.01.10', '060.01.35.05'], // POLSEK TANA LIA
+
+            // POLRES MAHAKAM ULU (060.01.21.10) - Relokasi 4 Polsek dari kode historis Polres Kutai Barat (060.01.21.08)
+            ['060.01.21.08.11', '060.01.21.10'], // POLSEK LONG APARI
+            ['060.01.21.08.12', '060.01.21.10'], // POLSEK LONG PAHANGAI
+            ['060.01.21.08.13', '060.01.21.10'], // POLSEK LONG BAGUN
+            ['060.01.21.08.14', '060.01.21.10'], // POLSEK LONG HUBUNG
+
+            // POLRES DEIYAI (060.01.37.22) - Relokasi Polsek Tigi dari kode historis Polres Paniai (060.01.32.17)
+            ['060.01.32.17.03', '060.01.37.22'], // POLSEK TIGI
+
+            // POLRES INTAN JAYA (060.01.37.101) - Relokasi Polsek dari kode historis Polres Paniai (060.01.32.17)
+            ['060.01.32.17.05', '060.01.37.101'], // POLSEK SUGAPA
+            ['060.01.32.17.06', '060.01.37.101'], // POLSEK HOMEYO
+
+            // POLRES MANOKWARI SELATAN (060.01.33.10) - Relokasi 2 Polsek dari kode historis Polresta Manokwari (060.01.33.01)
+            ['060.01.33.01.08', '060.01.33.10'], // POLSEK ORANSBARI
+            ['060.01.33.01.09', '060.01.33.10'], // POLSEK RANSIKI
+
+            // POLRES PEGUNUNGAN ARFAK (060.01.33.11) - Relokasi Polsek Anggi dari kode historis Polresta Manokwari (060.01.33.01)
+            ['060.01.33.01.12', '060.01.33.11'], // POLSEK ANGGI
+
+            // POLRES TAMBRAUW (060.01.36.28) - Relokasi Polsek Kebar & Moraid
+            ['060.01.33.01.11', '060.01.36.28'], // POLSEK KEBAR (dari Polresta Manokwari)
+            ['060.01.33.07.06', '060.01.36.28'], // POLSEK MORAID (dari Polres Sorong Selatan)
+
+
             ['060.01.32.26', '060.01.37'],
             ['060.01.32.15', '060.01.37'],
             ['060.01.32.17', '060.01.37'],
@@ -1032,16 +1122,24 @@ export class SatkerService implements OnModuleInit {
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
                 "case " +
-                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
-                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
-                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
-                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when s.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when s.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when s.id in (1, 13) or s.tipe_satker = 'MABES' then 'MABES' " +
+                "when p.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when p.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when p.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when p.id in (1, 13) or p.tipe_satker = 'MABES' then 'MABES' " +
+                "else coalesce(s.tipe_satker, p.tipe_satker, 'MABES') " +
                 "end as tipe_satker " +
                 "from sub s " +
                 "left join bdb_satker p on p.id = s.parent_id " +
                 "where s.is_synthetic = false " +
                 "and s.organization_domain = 'INTERNAL_POLRI' " +
                 "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                (actorDomain !== 'ALL'
+                    ? " and not (s.depth = 2 and s.parent_id = $" + pTerr + " and s.id <> $" + pActor + ") and not (s.id = $" + pTerr + " and s.depth = 1)"
+                    : "") +
                 "), ";
         } else {
             // Akses Nasional (Mabes / Superadmin / Admin Binops)
@@ -1051,10 +1149,15 @@ export class SatkerService implements OnModuleInit {
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
                 "case " +
-                "when s.depth <= 1 and (s.tipe_satker = 'MABES' or s.id in (1, 13) or p.id in (1, 13)) then 'MABES' " +
-                "when s.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then s.tipe_satker " +
-                "when p.tipe_satker in ('MABES', 'POLDA', 'POLRES', 'POLSEK') then p.tipe_satker " +
-                "else coalesce(p.tipe_satker, s.tipe_satker) " +
+                "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when s.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when s.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when s.id in (1, 13) or s.tipe_satker = 'MABES' then 'MABES' " +
+                "when p.tipe_satker = 'POLSEK' then 'POLSEK' " +
+                "when p.tipe_satker = 'POLRES' then 'POLRES' " +
+                "when p.tipe_satker = 'POLDA' then 'POLDA' " +
+                "when p.id in (1, 13) or p.tipe_satker = 'MABES' then 'MABES' " +
+                "else coalesce(s.tipe_satker, p.tipe_satker, 'MABES') " +
                 "end as tipe_satker " +
                 "from bdb_satker s " +
                 "left join bdb_satker p on p.id = s.parent_id " +
@@ -1103,7 +1206,7 @@ export class SatkerService implements OnModuleInit {
             const fd = functionDomain.trim().toUpperCase();
             if (fd === 'INTERNAL_RESERSE') {
                 params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
-                whereClauses.push('s.function_domain = any($' + params.length + ')');
+                whereClauses.push('(s.function_domain = any($' + params.length + ") or s.tipe_satker = 'POLSEK')");
             } else if (fd === 'EKSTERNAL_RESERSE') {
                 params.push(['EKSTERNAL_RESERSE']);
                 whereClauses.push('s.function_domain = any($' + params.length + ')');
