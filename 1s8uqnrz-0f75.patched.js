@@ -1223,7 +1223,10 @@ e.s(["default",0,function(){
         @media print {
           @page {
             size: A4 portrait;
-            margin: 0 !important;
+            margin-top: 2cm !important;
+            margin-right: 2cm !important;
+            margin-bottom: 2cm !important;
+            margin-left: 3cm !important;
           }
           html, body {
             width: 100% !important;
@@ -1307,21 +1310,21 @@ e.s(["default",0,function(){
             flex-direction: column !important;
             justify-content: space-between !important;
             box-sizing: border-box !important;
-            width: 210mm !important;
-            min-width: 210mm !important;
-            max-width: 210mm !important;
-            height: 297mm !important;
-            min-height: 297mm !important;
-            max-height: 297mm !important;
-            margin: 0 auto !important;
-            padding: 10mm 14mm 12mm 14mm !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: calc(297mm - 4.5cm) !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 0 3mm 0 !important;
             page-break-before: auto !important;
             break-before: auto !important;
             page-break-after: always !important;
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             position: relative !important;
             border: none !important;
             box-shadow: none !important;
@@ -1337,8 +1340,18 @@ e.s(["default",0,function(){
             flex: 1 1 auto !important;
             width: 100% !important;
             max-width: 100% !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             box-sizing: border-box !important;
+          }
+          .anev-page-break {
+            page-break-before: always !important;
+            break-before: page !important;
+            display: block !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            visibility: hidden !important;
           }
           .anev-page-footer {
             flex-shrink: 0 !important;
@@ -2839,8 +2852,26 @@ e.s(["default",0,function(){
                 ]}))
               })
             ]})
-]}),
-// Urutan: TABEL DATA -> NARASI -> GRAFIK
+          ]})
+          ]}),
+          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+            (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
+              (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
+              (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-footer-right",children:4})
+          ]})
+        ]}),
+          (0,t.jsxs)("div",{className:"anev-page-sheet anev-print-sheet",children:[
+          // Badge Penanda Corner Status (Draft vs Arsip)
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",zIndex:5},children:archiveLoadedInfo?("🔒 SALINAN ARSIP #"+archiveLoadedInfo.id):"📝 DRAFT NASKAH DINAS"}),
+          (0,t.jsxs)("div",{className:"anev-watermark-overlay",children:[
+            [1,2,3,4].map(i=>(0,t.jsx)("div",{key:i,className:"anev-watermark-line",children:watermarkText}))
+          ]}),
+          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
+          // ==============================================================
+          // BAGIAN IV. PENYELESAIAN PERKARA (CRIME CLEARANCE / CC)
+          // Urutan: TABEL DATA -> NARASI -> GRAFIK
           // ==============================================================
           (0,t.jsxs)("div",{children:[
             (0,t.jsx)("div",{className:"anev-section-title",children:"IV. PENYELESAIAN PERKARA (CRIME CLEARANCE / CC)"}),
@@ -2888,7 +2919,7 @@ e.s(["default",0,function(){
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
             ]}),
-            (0,t.jsx)("div",{className:"anev-footer-right",children:4})
+            (0,t.jsx)("div",{className:"anev-footer-right",children:5})
           ]})
         ]}),
           (0,t.jsxs)("div",{className:"anev-page-sheet anev-print-sheet",children:[
@@ -2982,7 +3013,7 @@ e.s(["default",0,function(){
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
             ]}),
-            (0,t.jsx)("div",{className:"anev-footer-right",children:5})
+            (0,t.jsx)("div",{className:"anev-footer-right",children:6})
           ]})
         ]}),
           (0,t.jsxs)("div",{className:"anev-page-sheet anev-print-sheet",children:[
@@ -3051,10 +3082,25 @@ e.s(["default",0,function(){
                 ]})
               ]})
             ]})
+          ]})
           ]}),
-
+          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+            (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
+              (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
+              (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-footer-right",children:7})
+          ]})
+        ]}),
+          (0,t.jsxs)("div",{className:"anev-page-sheet anev-print-sheet",children:[
+          // Badge Penanda Corner Status (Draft vs Arsip)
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",zIndex:5},children:archiveLoadedInfo?("🔒 SALINAN ARSIP #"+archiveLoadedInfo.id):"📝 DRAFT NASKAH DINAS"}),
+          (0,t.jsxs)("div",{className:"anev-watermark-overlay",children:[
+            [1,2,3,4].map(i=>(0,t.jsx)("div",{key:i,className:"anev-watermark-line",children:watermarkText}))
+          ]}),
+          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
           // ==============================================================
-          // BAGIAN VII. ASPEK EKONOMI & ASSET RECOVERY
+          // BAGIAN VII. ASPEK FINANSIAL & PENYELAMATAN ASET (ASSET RECOVERY)
           // Urutan: TABEL DATA -> NARASI -> GRAFIK
           // ==============================================================
           (0,t.jsxs)("div",{children:[
@@ -3115,8 +3161,23 @@ e.s(["default",0,function(){
                 centerSub: "RECOVERY RATE"
               })
             })
+          ]})
           ]}),
-
+          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+            (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
+              (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
+              (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-footer-right",children:8})
+          ]})
+        ]}),
+          (0,t.jsxs)("div",{className:"anev-page-sheet anev-print-sheet",children:[
+          // Badge Penanda Corner Status (Draft vs Arsip)
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",zIndex:5},children:archiveLoadedInfo?("🔒 SALINAN ARSIP #"+archiveLoadedInfo.id):"📝 DRAFT NASKAH DINAS"}),
+          (0,t.jsxs)("div",{className:"anev-watermark-overlay",children:[
+            [1,2,3,4].map(i=>(0,t.jsx)("div",{key:i,className:"anev-watermark-line",children:watermarkText}))
+          ]}),
+          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
           // ==============================================================
           // BAGIAN VIII. EVALUASI DAN REKOMENDASI TINDAK LANJUT
           // Urutan: TABEL DATA -> NARASI
@@ -3257,7 +3318,7 @@ e.s(["default",0,function(){
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
             ]}),
-            (0,t.jsx)("div",{className:"anev-footer-right",children:6})
+            (0,t.jsx)("div",{className:"anev-footer-right",children:9})
           ]})
         ]})
         ]})
