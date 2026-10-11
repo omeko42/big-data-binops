@@ -670,7 +670,7 @@ e.s(["default",0,function(){
       try {
         let { dStart, dEnd, pLabel } = computeDates();
         let effectiveSatkerId = (eScope === "scoped" && selSatkerId) ? selSatkerId : null;
-        let effectiveKelompok = (activeTipidCrime !== "ALL" ? activeTipidCrime : (activeKelompokCrime !== "ALL" ? activeKelompokCrime : (selKelompokHitung || undefined)));
+        let effectiveKelompok = (activeTipidCrime !== "ALL" ? activeTipidCrime : (activeKelompokCrime !== "ALL" ? activeKelompokCrime : (selKelompokHitung || "KRIMUM,KRIMSUS,NARKOBA")));
         let payload = {
           periodeTipe: (kpPeriodMode === "month" ? "BULANAN" : (kpPeriodMode === "year" ? "TAHUNAN" : "CUSTOM")),
           dateStart: dStart,
@@ -1865,7 +1865,7 @@ e.s(["default",0,function(){
                         (0,t.jsx)(l.Dropdown,{
                           value: activeKelompokCrime,
                           options: [
-                            { label: "Semua Kelompok", value: "ALL" },
+                            { label: "Semua Kelompok Reserse (Krimum, Krimsus, Narkoba)", value: "ALL" },
                             { label: "KRIMUM (Kriminal Umum)", value: "KRIMUM" },
                             { label: "KRIMSUS (Kriminal Khusus)", value: "KRIMSUS" },
                             { label: "NARKOBA (Narkotika)", value: "NARKOBA" }
@@ -2064,20 +2064,18 @@ e.s(["default",0,function(){
           ]})
         ]}),
 
-        // Active Badges Row (Chips Persis Kinerja Perkara)
-        activeFilterCount > 0 && (0,t.jsxs)("div",{style:{fontSize:"0.71rem",color:"#475569",display:"flex",alignItems:"center",gap:"0.4rem",background:"#f8fafc",padding:"0.3rem 0.75rem",borderRadius:"4px",borderTop:"1px solid #f1f5f9",flexWrap:"wrap"},children:[
+        (0,t.jsxs)("div",{style:{fontSize:"0.71rem",color:"#475569",display:"flex",alignItems:"center",gap:"0.4rem",background:"#f8fafc",padding:"0.3rem 0.75rem",borderRadius:"4px",borderTop:"1px solid #f1f5f9",flexWrap:"wrap"},children:[
           (0,t.jsx)("i",{className:"pi pi-sliders-h",style:{color:"#2563eb",fontSize:"0.72rem"}}),
           (0,t.jsx)("strong",{style:{color:"#0f172a"},children:"Filter Aktif:"}),
-          (kpPeriodMode !== "month" || selMonth !== defMonth || selYear !== defYear) && (0,t.jsxs)("span",{style:{background:"#dbeafe",color:"#1e40af",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Periode: ",computeDates().pLabel]}),
-          (eScope === "scoped" && selSatkerId) && (0,t.jsxs)("span",{style:{background:"#e0e7ff",color:"#3730a3",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Satker: ",satkerList.find(s=>s.id===selSatkerId)?.nama || selSatkerId]}),
-          (eFD !== "INTERNAL_RESERSE") && (0,t.jsx)("span",{style:{background:"#f1f5f9",color:"#334155",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:"Eksternal Reserse"}),
-          (activeKelompokCrime !== "ALL") && (0,t.jsxs)("span",{style:{background:"#dcfce7",color:"#166534",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Kelompok: ",activeKelompokCrime]}),
-          (activeTipidCrime !== "ALL") && (0,t.jsxs)("span",{style:{background:"#ccfbf1",color:"#115e59",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["TIPID: ",activeTipidCrime]}),
+          (0,t.jsxs)("span",{style:{background:"#dbeafe",color:"#1e40af",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Periode: ",computeDates().pLabel]}),
+          (eScope === "scoped" && selSatkerId) ? (0,t.jsxs)("span",{style:{background:"#e0e7ff",color:"#3730a3",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Satker: ",satkerList.find(s=>s.id===selSatkerId)?.nama || selSatkerId]}) : (0,t.jsx)("span",{style:{background:"#e0e7ff",color:"#3730a3",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:"Scope: Nasional"}),
+          (0,t.jsx)("span",{style:{background:"#ecfdf5",color:"#065f46",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:"Fungsi: Internal Reserse"}),
+          (0,t.jsxs)("span",{style:{background:"#dcfce7",color:"#166534",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Kejahatan: ", activeTipidCrime !== "ALL" ? activeTipidCrime : (activeKelompokCrime !== "ALL" ? activeKelompokCrime : "Reserse Kriminal (Krimum, Krimsus, Narkoba)")]}),
           (selGolonganId) && (0,t.jsxs)("span",{style:{background:"#fef3c7",color:"#92400e",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Golongan: ",selGolonganId]}),
           (acuanTanggal !== "both") && (0,t.jsxs)("span",{style:{background:"#ede9fe",color:"#5b21b6",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Acuan: Tgl ",acuanTanggal]}),
           (selModelLp) && (0,t.jsxs)("span",{style:{background:"#fce7f3",color:"#9d174d",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Model: ",selModelLp]}),
           (selClosureReason) && (0,t.jsxs)("span",{style:{background:"#e0e7ff",color:"#3730a3",padding:"1px 6px",borderRadius:"3px",fontWeight:700},children:["Penyelesaian: ",selClosureReason]}),
-          (0,t.jsx)("button",{
+          activeFilterCount > 0 && (0,t.jsx)("button",{
             type:"button",
             onClick:()=>{
               setKpPeriodMode("month");
