@@ -69,12 +69,13 @@ function getVerificationBadge(role, isUserOne, userId, username) {
 
 function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
-  if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
+  /* dynamic handle */
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
   var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) return '@' + c;
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c) && !c.startsWith('user_')) return '@' + c;
   var u = String(username || '').trim().replace(/^@/, '');
-  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) return '@' + u;
+  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u) && !u.startsWith('user_')) return '@' + u;
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) return '@' + c;
   var seed = idStr || 'polri';
   var num = 0;
   for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
@@ -149,36 +150,126 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
 
 function renderPostContent(text, onHashtagClick) {
   if (!text) return null;
-  var parts = String(text).split(/(#[a-zA-Z0-9_]+)/g);
+  var parts = String(text).split(/(https?:\/\/[^\s]+|#[a-zA-Z0-9_]+|@[a-zA-Z0-9_.]+)/g);
   return parts.map((part, idx) => {
+    if (!part) return null;
+    if (part.startsWith('http://') || part.startsWith('https://')) {
+      var cleanUrl = part;
+      var urlTrail = '';
+      var mUrl = part.match(/([.,!?:;]+)$/);
+      if (mUrl) {
+        cleanUrl = part.slice(0, -mUrl[1].length);
+        urlTrail = mUrl[1];
+      }
+      var linkEl = (0,t.jsx)("a", {
+        href: cleanUrl,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        onClick: (e) => {
+          e.stopPropagation();
+        },
+        style: {
+          color: "#38bdf8",
+          fontWeight: 600,
+          textDecoration: "underline",
+          textUnderlineOffset: "3px",
+          cursor: "pointer",
+          borderRadius: "4px",
+          padding: "0.05rem 0.25rem",
+          transition: "all 0.15s ease",
+          wordBreak: "break-all"
+        },
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#7dd3fc';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.15)';
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#38bdf8';
+          e.currentTarget.style.background = 'transparent';
+        },
+        title: "Buka tautan di tab baru: " + cleanUrl,
+        children: cleanUrl
+      });
+      return urlTrail ? (0,t.jsxs)("span", { key: idx, children: [linkEl, urlTrail] }) : (0,t.jsx)("span", { key: idx, children: linkEl });
+    }
+    if (part.startsWith('@') && part.length > 1) {
+      var cleanMention = part;
+      var menTrail = '';
+      var mMen = part.match(/([.,!?:;]+)$/);
+      if (mMen) {
+        cleanMention = part.slice(0, -mMen[1].length);
+        menTrail = mMen[1];
+      }
+      var mentionEl = (0,t.jsx)("span", {
+        onClick: (e) => {
+          e.stopPropagation();
+          var handle = cleanMention.replace(/^@/, '');
+          try {
+            sessionStorage.setItem('cas_view_user', JSON.stringify({
+              handle: '@' + handle,
+              username: handle
+            }));
+          } catch(err) {}
+          window.location.href = '/cms/profile?u=' + encodeURIComponent(handle);
+        },
+        style: {
+          color: "#38bdf8",
+          fontWeight: 700,
+          cursor: "pointer",
+          borderRadius: "6px",
+          padding: "0.1rem 0.4rem",
+          margin: "0 0.1rem",
+          transition: "all 0.15s ease",
+          background: "rgba(56,189,248,0.12)",
+          border: "1px solid rgba(56,189,248,0.3)",
+          display: "inline-flex",
+          alignItems: "center"
+        },
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#bae6fd';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.28)';
+          e.currentTarget.style.borderColor = 'rgba(56,189,248,0.6)';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#38bdf8';
+          e.currentTarget.style.background = 'rgba(56,189,248,0.12)';
+          e.currentTarget.style.borderColor = 'rgba(56,189,248,0.3)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        },
+        title: "Buka profil " + cleanMention,
+        children: cleanMention
+      });
+      return menTrail ? (0,t.jsxs)("span", { key: idx, children: [mentionEl, menTrail] }) : (0,t.jsx)("span", { key: idx, children: mentionEl });
+    }
     if (part.startsWith('#') && part.length > 1) {
-      return (0,t.jsx)("span",{
-        key:idx,
-        onClick:(e) => {
+      return (0,t.jsx)("span", {
+        key: idx,
+        onClick: (e) => {
           e.stopPropagation();
           if (onHashtagClick) onHashtagClick(part);
         },
-        style:{
-          color:"#60a5fa",
-          fontWeight:600,
-          cursor:"pointer",
-          borderRadius:"4px",
-          padding:"0.1rem 0.3rem",
-          transition:"all 0.15s ease",
-          background:"rgba(59,130,246,0.12)"
+        style: {
+          color: "#818cf8",
+          fontWeight: 600,
+          cursor: "pointer",
+          borderRadius: "4px",
+          padding: "0.1rem 0.3rem",
+          transition: "all 0.15s ease",
+          background: "rgba(99,102,241,0.12)"
         },
-        onMouseEnter:(e) => {
-          e.currentTarget.style.color = '#93c5fd';
+        onMouseEnter: (e) => {
+          e.currentTarget.style.color = '#a5b4fc';
           e.currentTarget.style.textDecoration = 'underline';
-          e.currentTarget.style.background = 'rgba(59,130,246,0.25)';
+          e.currentTarget.style.background = 'rgba(99,102,241,0.25)';
         },
-        onMouseLeave:(e) => {
-          e.currentTarget.style.color = '#60a5fa';
+        onMouseLeave: (e) => {
+          e.currentTarget.style.color = '#818cf8';
           e.currentTarget.style.textDecoration = 'none';
-          e.currentTarget.style.background = 'rgba(59,130,246,0.12)';
+          e.currentTarget.style.background = 'rgba(99,102,241,0.12)';
         },
-        title:"Klik untuk melihat postingan terkait " + part,
-        children:part
+        title: "Klik untuk melihat postingan terkait " + part,
+        children: part
       });
     }
     return part;
@@ -194,8 +285,7 @@ e.s(["default",0,function() {
     try {
       var u = JSON.parse(localStorage.getItem('user') || '{}');
       if (u.username === 'omeko11' || u.id === 1 || u.id === '1' || u.id === 'usr_superadmin') {
-        u.callsign = 'omeko11';
-        u.username = 'omeko11';
+        /* keep dynamic username & callsign */
         u.name = 'EKO';
         u.role_bdb = 'superadmin';
       }
@@ -287,8 +377,7 @@ e.s(["default",0,function() {
     var targetUsername = postContext?.author_username || postContext?.username || '';
     var targetCallsign = postContext?.author_callsign || postContext?.callsign || '';
     var isSelf = (currentUser?.id && String(targetId) === String(currentUser.id)) ||
-                 (currentUser?.username && targetUsername && String(targetUsername).toLowerCase() === String(currentUser.username).toLowerCase()) ||
-                 String(targetId) === '1' || targetUsername === 'omeko11';
+                 (currentUser?.username && targetUsername && String(targetUsername).toLowerCase() === String(currentUser.username).toLowerCase());
     if (isSelf) {
       try { sessionStorage.removeItem('cas_view_user'); } catch(e) {}
       window.location.href = '/cms/profile';
@@ -303,7 +392,7 @@ e.s(["default",0,function() {
           callsign: targetCallsign || handle
         }));
       } catch(e) {}
-      window.location.href = '/cms/profile';
+      window.location.href = '/cms/profile?id=' + encodeURIComponent(targetId) + '&u=' + encodeURIComponent(handle);
     }
   };
 
@@ -318,7 +407,8 @@ e.s(["default",0,function() {
       var res = await k.apiAuth.get('/bdb/jukrah/feed', {
         params: {
           type: apiType,
-          search: searchQuery || void 0
+          search: searchQuery || void 0,
+          limit: 100
         }
       });
       setPosts(res.data?.data || []);
@@ -991,13 +1081,11 @@ e.s(["default",0,function() {
           var currentReact = post.user_reaction || post.my_reaction;
           var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
           var canEdit = isAuthor || isOfficialRole || post.can_edit;
-          var isAuthorEko = String(post.author_id) === '1' || post.author_username === 'omeko11' || post.author_callsign === 'omeko11';
-          var authorAvatar = (isAuthorEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (post.author_photo_url || post.author_photo || null);
-          
-          var isUserSuper = isAuthorEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
+          var authorAvatar = isAuthor ? (currentUser?.photo_url || currentUser?.foto || post.author_photo_url || post.author_photo || null) : (post.author_photo_url || post.author_photo || null);
+          var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
           var authorHandle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
           var authorBadge = getVerificationBadge(post.author_role, isUserSuper, post.author_id, post.author_username);
-          var authorNameDisplay = isAuthorEko ? 'EKO' : post.author_name;
+          var authorNameDisplay = isAuthor ? (currentUser?.name || post.author_name || authorHandle) : (post.author_name || authorHandle);
           var authorInitials = String(authorNameDisplay || authorHandle || 'P').charAt(0).toUpperCase();
 
           return (0,t.jsxs)("div",{
@@ -1501,12 +1589,11 @@ e.s(["default",0,function() {
                   (0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem"},children:
                     (postComments[post.id] || []).map(cm => {
                       var isCmAuthor = String(cm.user_id || cm.author_id) === String(currentUser?.id || currentUser?.user_id);
-                      var isCmEko = String(cm.author_id || cm.user_id) === '1' || cm.author_username === 'omeko11' || cm.author_callsign === 'omeko11';
-                      var isCmSuper = isCmEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cm.author_id || cm.user_id)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
+                      var isCmSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cm.author_id || cm.user_id)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
                       var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cm.author_id || cm.user_id, cm.author_username);
                       var cmHandle = formatCallsign(cm.author_callsign, cm.author_id || cm.user_id, cm.author_username);
                       var cmInitials = String(cm.author_name || cmHandle || 'P').charAt(0).toUpperCase();
-                      var cmAvatar = (isCmEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (cm.author_photo_url || cm.author_photo || null);
+                      var cmAvatar = isCmAuthor ? (currentUser?.photo_url || currentUser?.foto || cm.author_photo_url || cm.author_photo || null) : (cm.author_photo_url || cm.author_photo || null);
 
                       return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
@@ -1823,12 +1910,12 @@ e.s(["default",0,function() {
           reactionsList.map(rx => {
             var usr = rx.user || {};
             var reactObj = REACTIONS.find(r => r.type === rx.reaction_type) || { emoji: '👍', label: 'Suka' };
-            var isUsrEko = String(usr.id) === '1' || usr.username === 'omeko11';
-            var isUsrSuper = isUsrEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
+            var isThisUserMe = String(usr.id) === String(currentUser?.id || currentUser?.user_id);
+            var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
-            var usrPhoto = (isUsrEko && (currentUser?.photo_url || currentUser?.foto)) ? (currentUser.photo_url || currentUser.foto) : (usr.photo_url || usr.foto || null);
+            var usrPhoto = isThisUserMe ? (currentUser?.photo_url || currentUser?.foto || usr.photo_url || usr.foto || null) : (usr.photo_url || usr.foto || null);
 
             return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
@@ -2087,7 +2174,7 @@ e.s(["default",0,function() {
               style:{background:"transparent",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"0.45rem 1rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer"},
               children:"Tutup"
             }),
-            (String(previewUser.id) === String(currentUser?.id || currentUser?.user_id) || previewUser.username === 'omeko11') ? (
+            (String(previewUser.id) === String(currentUser?.id || currentUser?.user_id)) ? (
               (0,t.jsx)("button",{
                 type:"button",
                 onClick:() => { window.location.href = '/cms/profile'; },

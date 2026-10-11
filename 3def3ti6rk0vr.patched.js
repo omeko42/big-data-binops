@@ -72,15 +72,28 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 [eSubmittingComment,setSubmittingComment]=(0,n.useState)(!1),
 [eSocUrls,setSocUrls]=(0,n.useState)([""]),[ePhotoModal,setPhotoModal]=(0,n.useState)(!1),[ePhotoPreview,setPhotoPreview]=(0,n.useState)(null),[eRawPhoto,setRawPhoto]=(0,n.useState)(null),[ePhotoZoom,setPhotoZoom]=(0,n.useState)(1),[ePhotoPanX,setPhotoPanX]=(0,n.useState)(0),[ePhotoPanY,setPhotoPanY]=(0,n.useState)(0),[ePhotoLoading,setPhotoLoading]=(0,n.useState)(!1),[eTotpModal,setTotpModal]=(0,n.useState)(!1),[ePasskeyDevices,setPasskeyDevices]=(0,n.useState)([]),[ePasskeyModal,setPasskeyModal]=(0,n.useState)(!1),[ePasskeyLoading,setPasskeyLoading]=(0,n.useState)(!1),[eRevokeTarget,setRevokeTarget]=(0,n.useState)(null),[eRevokeCode,setRevokeCode]=(0,n.useState)(""),[eRevokeError,setRevokeError]=(0,n.useState)(""),[eRevokeLoading,setRevokeLoading]=(0,n.useState)(!1),[eRevokeShowPass,setRevokeShowPass]=(0,n.useState)(!1),[eTotpData,setTotpData]=(0,n.useState)(null),[eTotpInputCode,setTotpInputCode]=(0,n.useState)(""),[eTotpEmailOtp,setTotpEmailOtp]=(0,n.useState)(""),[eTotpLoading,setTotpLoading]=(0,n.useState)(!1),[eTotpError,setTotpError]=(0,n.useState)(""),[eEmailChoice,setEmailChoice]=(0,n.useState)("dinas"),[eOtpCooldown,setOtpCooldown]=(0,n.useState)(0),[eOtpAttempts,setOtpAttempts]=(0,n.useState)(0),[eOtpVerifyFails,setOtpVerifyFails]=(0,n.useState)(0),[eExistingPassword,setExistingPassword]=(0,n.useState)(""),[eOtpStep,setOtpStep]=(0,n.useState)(1),[eOtpSentTo,setOtpSentTo]=(0,n.useState)(""),[eTotpStep,setTotpStep]=(0,n.useState)(1),[eShowPassword,setShowPassword]=(0,n.useState)(!1),[eDisableModal,setDisableModal]=(0,n.useState)(!1),[eDisableTarget,setDisableTarget]=(0,n.useState)(""),[eDisableCode,setDisableCode]=(0,n.useState)(""),[eDisableLoading,setDisableLoading]=(0,n.useState)(!1),[eDisableError,setDisableError]=(0,n.useState)(""),[J,Y]=(0,n.useState)(!1),X=(0,m.useAvailabilityCheck)(a?.id),[Q,ee]=(0,n.useState)(!1),[et,en]=(0,n.useState)("enable_pin"),[ea,er]=(0,n.useState)(""),[ei,el]=(0,n.useState)(""),[eo,es]=(0,n.useState)(""),[eu,ec]=(0,n.useState)(""),[ed,ep]=(0,n.useState)(!1),[em,ef]=(0,n.useState)(!1),[ey,eh]=(0,n.useState)(!1),[eg,ev]=(0,n.useState)(""),[eb,ex]=(0,n.useState)(null),[ej,ek]=(0,n.useState)(!1),[ew,eS]=(0,n.useState)(""),[eO,eP]=(0,n.useState)(!1),[eN,eE]=(0,n.useState)(U),[eC,eI]=(0,n.useState)(!1);function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
-  if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
+  /* dynamic handle */
   var c = String(rawCallsign || '').trim().replace(/^@/, '');
-  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) {
+  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c) && !c.startsWith('user_')) {
     return '@' + c;
   }
   var u = String(username || '').trim().replace(/^@/, '');
-  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) {
+  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u) && !u.startsWith('user_')) {
     return '@' + u;
+  }
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) {
+    return '@' + c;
+  }
+  if (!idStr && !rawCallsign && !username) {
+    try {
+      var lu = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('user') || '{}') : {};
+      /* dynamic handle */
+      if (lu.callsign && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
+      if (lu.name && String(lu.name).trim()) return lu.name;
+      if (lu.username && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
+    } catch(e) {}
+    return '@personil';
   }
   var seed = idStr || 'polri';
   var num = 0;
@@ -206,52 +219,92 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
 
 async function eT() {
   var sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  var uToken = sp ? (sp.get('u') || sp.get('id') || sp.get('uid')) : null;
+  var uToken = sp ? (sp.get('id') || sp.get('uid') || sp.get('u')) : null;
+  var viewedUser = null;
+  try {
+    var rawView = sessionStorage.getItem('cas_view_user');
+    if (rawView) viewedUser = JSON.parse(rawView);
+  } catch(e) {}
+
   var myUser = null;
   try {
     var myRes = await c.apiAuth.get("/user/me/profile");
-    myUser = myRes.data?.data || myRes.data || null;
+    var apiData = myRes.data?.data || myRes.data;
+    if (apiData && !Array.isArray(apiData) && (apiData.id || apiData.username)) {
+      myUser = Object.assign({}, apiData);
+    }
     try {
       var authRes = await c.apiAuth.get("/Authentication/user");
-      var authData = authRes.data?.data || null;
-      if (authData) myUser = Object.assign({}, authData, myUser, {
-        pin_required: Boolean(authData.pin_required || myUser?.pin_required),
-        local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
-      });
+      var authData = authRes.data?.data || authRes.data;
+      if (authData && !Array.isArray(authData) && (authData.id || authData.username)) {
+        myUser = Object.assign({}, authData, myUser || {}, {
+          pin_required: Boolean(authData.pin_required || myUser?.pin_required),
+          local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
+        });
+      }
     } catch(eAuth) {}
-    if (myUser) setMySelf(myUser);
   } catch(e) {}
 
-  var sessionUser = null;
-  try {
-    var sStr = sessionStorage.getItem('cas_view_user');
-    if (sStr) sessionUser = JSON.parse(sStr);
-  } catch(e) {}
+  if (!myUser || !myUser.id) {
+    try {
+      var lu = JSON.parse(localStorage.getItem('user') || 'null');
+      if (lu && lu.id) myUser = Object.assign({}, lu, myUser || {});
+    } catch(e) {}
+    if (!myUser) myUser = {};
+  }
+  if (myUser) {
+    try {
+      var cachedSoc = localStorage.getItem('cas_profile_social_' + myUser.id);
+      var cachedBanner = localStorage.getItem('cas_banner_' + myUser.id);
+      if (cachedSoc) {
+        var parsedSoc = JSON.parse(cachedSoc);
+        myUser.social_media = Object.assign({}, parsedSoc, myUser.social_media || {});
+      }
+      if (cachedBanner && (!myUser.social_media || !myUser.social_media.banner_theme)) {
+        myUser.social_media = myUser.social_media || {};
+        myUser.social_media.banner_theme = cachedBanner;
+      }
+    } catch(eCache) {}
+    setMySelf(myUser);
+  }
 
-  var targetQuery = uToken || sessionUser?.handle || sessionUser?.username || sessionUser?.id || null;
-  if (targetQuery) {
-    var cleanTarget = String(targetQuery).replace(/^@/, '').trim();
-    var isSelf = (myUser && (String(myUser.id) === cleanTarget || String(myUser.username).toLowerCase() === cleanTarget.toLowerCase() || String(myUser.callsign || '').toLowerCase() === cleanTarget.toLowerCase())) || cleanTarget === 'omeko11';
+  var targetQuery = uToken || (sp && (sp.has('u') || sp.has('id')) ? null : (viewedUser?.id || viewedUser?.handle || viewedUser?.username));
+  if (!targetQuery) {
+    try {
+      sessionStorage.removeItem('cas_view_user');
+      if (window.history && window.history.replaceState && sp && (sp.has('u') || sp.has('id'))) {
+        window.history.replaceState({}, '', '/cms/profile');
+      }
+    } catch(e) {}
+    setIsReadOnlyMode(!1);
+    y(myUser);
+    return myUser;
+  }
 
-    if (!isSelf) {
-      try {
-        var targetRes = await c.apiAuth.get('/bdb/jukrah/network/profile/' + encodeURIComponent(cleanTarget));
-        var targetData = targetRes.data?.data || null;
-        if (targetData) {
-          setIsReadOnlyMode(!0);
-          try {
-            var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
-            cleanHandle = String(cleanHandle).replace(/^@/, '');
-            sessionStorage.setItem('cas_view_user', JSON.stringify({ id: targetData.id, username: targetData.username, callsign: targetData.callsign, handle: cleanHandle }));
-            if (window.history && window.history.replaceState) {
-              window.history.replaceState({}, '', '/cms/profile');
-            }
-          } catch(e) {}
-          y(targetData);
-          return targetData;
-        }
-      } catch(err) {}
-    }
+  var cleanTarget = String(targetQuery).replace(/^@/, '').trim();
+  var isSelf = myUser && (String(myUser.id) === cleanTarget || 
+                         (myUser.username && String(myUser.username).toLowerCase() === cleanTarget.toLowerCase()) || 
+                         (myUser.callsign && String(myUser.callsign).toLowerCase() === cleanTarget.toLowerCase()));
+
+  if (!isSelf && cleanTarget) {
+    try {
+      var targetRes = await c.apiAuth.get('/bdb/jukrah/network/profile/' + encodeURIComponent(cleanTarget));
+      var targetData = targetRes.data?.data || null;
+      if (!targetData && viewedUser?.id && String(viewedUser.id) !== cleanTarget) {
+        targetRes = await c.apiAuth.get('/bdb/jukrah/network/profile/' + encodeURIComponent(viewedUser.id));
+        targetData = targetRes.data?.data || null;
+      }
+      if (targetData) {
+        setIsReadOnlyMode(!0);
+        try {
+          var cleanHandle = targetData.callsign || targetData.username || ('user_' + targetData.id);
+          cleanHandle = String(cleanHandle).replace(/^@/, '');
+          sessionStorage.setItem('cas_view_user', JSON.stringify({ id: targetData.id, username: targetData.username, callsign: targetData.callsign, handle: cleanHandle }));
+        } catch(e) {}
+        y(targetData);
+        return targetData;
+      }
+    } catch(err) {}
   }
 
   try {
@@ -334,7 +387,7 @@ async function handleModalToggleConnect(targetUser) {
   }
 }
 
-async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),photo_url:Z.photo_url||"",foto:Z.photo_url||"",social_media:{urls:eSocUrls.map(u=>u.trim()).filter(Boolean)}};(0,c.assertOk)(await c.apiAuth.patch("/user/me/profile",payload)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
+async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),photo_url:Z.photo_url||"",foto:Z.photo_url||"",social_media:{urls:eSocUrls.map(u=>u.trim()).filter(Boolean)}};let patchRes=await c.apiAuth.patch("/user/me/profile",payload);(0,c.assertOk)(patchRes);try{let lu=JSON.parse(localStorage.getItem('user')||'{}');let newU={...lu,...(patchRes.data?.data||payload),username:Z.username,callsign:Z.username,name:Z.name};localStorage.setItem('user',JSON.stringify(newU));window.dispatchEvent(new CustomEvent('user-updated',{detail:newU}));}catch(e){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
 setTotpData(null);setTotpInputCode("");setTotpError("");setExistingPassword("");setTotpStep(1);setTotpModal(!0);
 }
 async function fetchTotpSetup(){
@@ -518,13 +571,21 @@ let n="disable_email_otp"===t?"Nonaktifkan OTP email saat login? Kode verifikasi
 if("enable_pin"===et||"change_pin"===et){if(eo.length<6)return void ev("PIN minimal 6 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sesuai.");ef(!0),ev("");try{let payload={enabled:!0,action:et,otp_id:ea,otp_token:ei,pin:eo,pin_confirmation:eu,password:eExistingPassword};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",payload));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);e.current?.show({severity:"success",summary:"Berhasil",detail:"PIN keamanan berhasil disimpan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP salah atau kedaluwarsa.")}finally{ef(!1)}return}
 if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/email-otp",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`OTP email saat login berhasil ${t?"diaktifkan":"dinonaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}return}let t="disable_pin"!==et;if(t){if(!/^\d{6,8}$/.test(eo))return void ev("PIN wajib 6-8 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sama.")}ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};t&&(n.pin=eo,n.pin_confirmation=eu),(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`PIN keamanan berhasil ${"disable_pin"===et?"dinonaktifkan":"change_pin"===et?"diubah":"diaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}}(0,n.useEffect)(()=>{let timer;if(eOtpCooldown>0){timer=setInterval(()=>setOtpCooldown(c=>Math.max(0,c-1)),1000)}return()=>{if(timer)clearInterval(timer)}},[eOtpCooldown]);
 (0,n.useEffect)(() => {
-  if (a?.social_media) {
-    let soc = a.social_media;
-    if (typeof soc.bio === 'string' && soc.bio) setBio(soc.bio);
-    if (typeof soc.banner_theme === 'string' && soc.banner_theme) setBannerTheme(soc.banner_theme);
+  if (a) {
+    let soc = a.social_media || {};
+    if (typeof soc === 'string') {
+      try { soc = JSON.parse(soc); } catch(e) {}
+    }
+    var targetBio = (typeof a?.bio === 'string' && a.bio) ? a.bio : (typeof soc?.bio === 'string' ? soc.bio : '');
+    setBio(targetBio);
+
+    var defaultGrad = 'linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)';
+    var cachedBanner = (a?.id && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + a.id) : null;
+    var targetBanner = (typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : 
+                       (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme : 
+                       (cachedBanner || defaultGrad);
+    setBannerTheme(targetBanner);
   }
-  if (typeof a?.bio === 'string' && a.bio) setBio(a.bio);
-  if (typeof a?.banner_theme === 'string' && a.banner_theme) setBannerTheme(a.banner_theme);
 }, [a]);
 
 (0,n.useEffect)(() => {
@@ -548,7 +609,7 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
   try {
     let sVal = search !== void 0 ? search : eNetworkSearch;
     let satVal = satker !== void 0 ? satker : eNetworkSatkerFilter;
-    let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : eNetworkConnectedTarget;
+    let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : (satVal === 'connected' ? (eNetworkConnectedTarget || a?.id || mySelf?.id) : null);
     let qParams = {
       search: sVal || '',
       satker: (satVal === 'all' || satVal === 'connected') ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
@@ -556,7 +617,12 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
       limit: 9
     };
     if (satVal === 'connected' || connTo) {
-      qParams.connected_to = connTo || a?.id;
+      var activeConnId = connTo || eNetworkConnectedTarget || a?.id || mySelf?.id;
+      if (activeConnId) {
+        qParams.connected_to = activeConnId;
+        qParams.target_user_id = activeConnId;
+      }
+      qParams.filter = 'connected';
     }
     if (satVal === 'my_satker' && a?.scope_satker_id) {
       qParams.satker_id = a.scope_satker_id;
@@ -568,6 +634,8 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
     setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total !== undefined ? res.data.total : list.length) / 9) || 1);
   } catch (err) {
     setNetworkUsers([]);
+    setNetworkTotal(0);
+    setNetworkTotalPages(1);
   } finally {
     setNetworkLoading(!1);
   }
@@ -597,28 +665,16 @@ let persistSocialMedia = async (updates) => {
     ...updates,
     urls: (Array.isArray(currSoc.urls) ? currSoc.urls : (Array.isArray(eSocUrls) ? eSocUrls.map(u => typeof u === 'string' ? u.trim() : '').filter(Boolean) : []))
   };
-  let polriMail = typeof a?.email_polri === "string" ? a.email_polri.trim() : "";
-  let secMail = typeof a?.email === "string" ? a.email.trim() : "";
-  let payload = {
-    name: a?.name || "",
-    email: secMail || polriMail,
-    email_polri: polriMail,
-    nrp: a?.nrp || "",
-    pangkat: a?.pangkat || "",
-    jabatan: a?.jabatan || "",
-    satuan: a?.satuan || "",
-    no_hp: a?.no_hp || "",
-    username: a?.username || "",
-    is_pns: Boolean(a?.is_pns),
-    photo_url: a?.photo_url || a?.foto || "",
-    foto: a?.photo_url || a?.foto || "",
-    social_media: nextSoc
-  };
   try {
     try {
       localStorage.setItem('cas_profile_social_' + a?.id, JSON.stringify(nextSoc));
+      if (nextSoc.banner_theme) {
+        localStorage.setItem('cas_banner_' + a?.id, nextSoc.banner_theme);
+      }
     } catch(e) {}
-    (0, c.assertOk)(await c.apiAuth.patch("/user/me/profile", payload));
+    let patchRes = await c.apiAuth.patch("/user/me/profile", { social_media: nextSoc });
+    (0, c.assertOk)(patchRes);
+    y(prev => prev ? ({ ...prev, social_media: nextSoc, banner_theme: nextSoc.banner_theme }) : prev);
     await eT();
     return true;
   } catch (err) {
@@ -793,36 +849,31 @@ let handleSaveBanner = async () => {
     if (eRawBanner) {
       finalBanner = await new Promise(res => {
         let box = document.getElementById("cas-banner-crop-box");
-        let imgEl = document.getElementById("cas-banner-crop-img");
         let img = new Image();
         img.onload = function() {
-          if (box && imgEl) {
-            let boxRect = box.getBoundingClientRect();
-            let imgRect = imgEl.getBoundingClientRect();
-            let scaleX = img.naturalWidth / imgRect.width;
-            let scaleY = img.naturalHeight / imgRect.height;
-            let sx = (boxRect.left - imgRect.left) * scaleX;
-            let sy = (boxRect.top - imgRect.top) * scaleY;
-            let sw = boxRect.width * scaleX;
-            let sh = boxRect.height * scaleY;
-            let cv = document.createElement("canvas");
-            cv.width = 1200;
-            cv.height = Math.round(1200 * (boxRect.height / boxRect.width));
-            let cx = cv.getContext("2d");
-            cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
-            res(cv.toDataURL("image/jpeg", 0.85));
-          } else {
-            let cv = document.createElement("canvas");
-            cv.width = 1200;
-            cv.height = 250;
-            let cx = cv.getContext("2d");
-            let bs = Math.max(cv.width / img.width, cv.height / img.height) * eBannerZoom;
-            let dw = img.width * bs, dh = img.height * bs;
-            let dx = (cv.width - dw) / 2 + (eBannerPanX * 2.5);
-            let dy = (cv.height - dh) / 2 + (eBannerPanY * 2.5);
-            cx.drawImage(img, dx, dy, dw, dh);
-            res(cv.toDataURL("image/jpeg", 0.85));
-          }
+          let bw = box ? box.getBoundingClientRect().width : 500;
+          let bh = box ? box.getBoundingClientRect().height : 105;
+          let nw = img.naturalWidth || 1200;
+          let nh = img.naturalHeight || 250;
+          let cssScale = Math.max(bw / nw, bh / nh);
+          let renW = nw * cssScale;
+          let renH = nh * cssScale;
+          let zm = Math.max(1, eBannerZoom || 1);
+          let px = eBannerPanX || 0;
+          let py = eBannerPanY || 0;
+          let visLeft = (renW * zm) / 2 - bw / 2 - (px * zm);
+          let visTop = (renH * zm) / 2 - bh / 2 - (py * zm);
+          let b2n = 1 / (cssScale * zm);
+          let sx = visLeft * b2n;
+          let sy = visTop * b2n;
+          let sw = bw * b2n;
+          let sh = bh * b2n;
+          let cv = document.createElement("canvas");
+          cv.width = 1200;
+          cv.height = 250;
+          let cx = cv.getContext("2d");
+          cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+          res(cv.toDataURL("image/jpeg", 0.82));
         };
         img.onerror = () => res(eBannerTheme);
         img.src = eRawBanner;
@@ -941,10 +992,10 @@ let handleCreatePersonalPost = async () => {
       id: res.data?.data?.id || ('temp_' + Date.now()),
       content: contentToSend,
       audience_type: audienceToSend,
-      author_id: a?.id || 1,
-      author_name: a?.name || (a?.username || 'omeko11'),
-      author_callsign: a?.username || a?.nrp || 'omeko11',
-      author_handle: '@' + (a?.username || a?.nrp || 'omeko11'),
+      author_id: a?.id || null,
+      author_name: a?.name || a?.username || 'Personil',
+      author_callsign: a?.callsign || a?.username || (a?.id ? 'user_' + a.id : 'personil'),
+      author_handle: formatCallsign(a?.callsign, a?.id, a?.username),
       author_satker: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
       satker_name: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
       created_at: new Date().toISOString(),
@@ -1797,7 +1848,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           value:eNetworkSearch,
           onChange:ev=>{
             setNetworkSearch(ev.target.value);
-            fetchNetworkDirectory(ev.target.value, eNetworkSatkerFilter);
+            fetchNetworkDirectory(ev.target.value, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id);
           },
           placeholder:"🔍 Cari personil berdasarkan nama, NRP, callsign, atau fungsi…",
           style:{width:"100%",fontSize:"0.85rem",padding:"0.5rem 0.75rem"}
@@ -1808,19 +1859,19 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         onChange:ev=>{
           var val = ev.target.value;
           setNetworkSatkerFilter(val);
-          var connTo = val === 'connected' ? (eNetworkConnectedTarget || a?.id) : null;
+          var connTo = val === 'connected' ? (eNetworkConnectedTarget || a?.id || mySelf?.id) : null;
           if (val !== 'connected') {
             setNetworkConnectedTarget(null);
             setNetworkModalTitle('Jaringan & Direktori Personil CAS');
           } else {
-            setNetworkConnectedTarget(a?.id);
+            setNetworkConnectedTarget(connTo);
             setNetworkModalTitle('Daftar Koneksi ' + (a?.name || a?.callsign || 'Personil'));
           }
           fetchNetworkDirectory(eNetworkSearch, val, 1, connTo);
         },
         style:{fontSize:"0.82rem",padding:"0.45rem 0.75rem",borderRadius:"8px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(0,0,0,0.3)",color:"#fff"},
         children:[
-          Boolean(a?.id) && (0,t.jsx)("option",{value:"connected",children:"Koneksi @" + formatCallsign(a?.callsign, a?.id, a?.username).replace(/^@/, '') + " (" + (a?.connections_count || 1) + ")"}),
+          Boolean(a?.id) && (0,t.jsx)("option",{value:"connected",children:"Koneksi @" + formatCallsign(a?.callsign, a?.id, a?.username).replace(/^@/, '') + " (" + (typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0)) + ")"}),
           (0,t.jsx)("option",{value:"all",children:"Semua Personil CAS (Nasional)"}),
           (0,t.jsx)("option",{value:"my_satker",children:"Satu Satker / Wilayah (" + (a?.satker_nama || a?.satker || "Satker") + ")"}),
           (0,t.jsx)("option",{value:"Bareskrim",children:"Mabes Bareskrim Polri"}),
@@ -1882,12 +1933,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   onClick:() => {
                     if (isTargetSelf) {
                       try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                      window.location.href = '/cms/profile';
                     } else {
+                      var h = (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'');
                       try {
-                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: h }));
                       } catch(e){}
+                      window.location.href = '/cms/profile?id=' + encodeURIComponent(user.id) + '&u=' + encodeURIComponent(h);
                     }
-                    window.location.href = '/cms/profile';
                   },
                   children:renderCornerAvatar(userPhoto, userInitials, userBadge, 2.8, 15, 8.5)
                 }),
@@ -1897,12 +1950,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                       onClick:() => {
                     if (isTargetSelf) {
                       try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                      window.location.href = '/cms/profile';
                     } else {
+                      var h = (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'');
                       try {
-                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: h }));
                       } catch(e){}
+                      window.location.href = '/cms/profile?id=' + encodeURIComponent(user.id) + '&u=' + encodeURIComponent(h);
                     }
-                    window.location.href = '/cms/profile';
                   },
                       style:{fontWeight:800,fontSize:"0.9rem",color:isUserSuper ? "#f59e0b" : "#38bdf8",letterSpacing:"-0.01em",cursor:"pointer",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
                       children:userCallsign
@@ -2003,12 +2058,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   onClick:() => {
                     if (isTargetSelf) {
                       try { sessionStorage.removeItem('cas_view_user'); } catch(e){}
+                      window.location.href = '/cms/profile';
                     } else {
+                      var h = (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'');
                       try {
-                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: (user.callsign || user.username || ('user_' + user.id)).replace(/^@/,'') }));
+                        sessionStorage.setItem('cas_view_user', JSON.stringify({ id: user.id, username: user.username, callsign: user.callsign, handle: h }));
                       } catch(e){}
+                      window.location.href = '/cms/profile?id=' + encodeURIComponent(user.id) + '&u=' + encodeURIComponent(h);
                     }
-                    window.location.href = '/cms/profile';
                   },
                   style:{width:"100%",padding:"0.45rem",borderRadius:"8px",background:"rgba(56,189,248,0.15)",border:"1px solid rgba(56,189,248,0.35)",color:"#38bdf8",fontSize:"0.78rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",transition:"all 0.15s ease"},
                   onMouseEnter:e => e.currentTarget.style.background = 'rgba(56,189,248,0.25)',
@@ -2026,7 +2083,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         disabled:eNetworkPage <= 1,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1),
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
         style:{background:eNetworkPage <= 1 ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage <= 1 ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage <= 1 ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage <= 1 ? "not-allowed" : "pointer"},
         children:"◀ Sebelumnya"
       }),
@@ -2040,7 +2097,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         disabled:eNetworkPage >= eNetworkTotalPages,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1),
+        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
         style:{background:eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage >= eNetworkTotalPages ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage >= eNetworkTotalPages ? "not-allowed" : "pointer"},
         children:"Selanjutnya ▶"
       })
@@ -2178,14 +2235,20 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             onClick:()=>{if(!isReadOnlyMode){let f0=a?.photo_url||a?.foto||a?.photo||null;setPhotoPreview(f0);setRawPhoto(f0);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0);setPhotoModal(!0);}},
             style:{width:"100%",height:"100%",borderRadius:"50%",background:"var(--cas-bg-surface, #0f172a)",border:"4px solid var(--cas-bg-surface, #ffffff)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff",cursor:isReadOnlyMode?"default":"pointer",transition:"transform 0.15s ease"},
             children:
-            (a?.photo_url||a?.foto||a?.photo)?(0,t.jsx)("img",{src:a.photo_url||a.foto||a.photo,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}}):eB
+            (function(){
+              var photoSrc = isReadOnlyMode ? (a?.photo_url || a?.foto || a?.photo || null) : (a?.photo_url || a?.foto || a?.photo || mySelf?.photo_url || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.photo_url) || null);
+              if (photoSrc) {
+                return (0,t.jsx)("img",{src:photoSrc,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}});
+              }
+              return eB;
+            })()
           }),
           // Tiered Verified Badge (Gold: Superadmin, Emerald: Admin Binops, Cyan Blue: Personil CAS)
           (function(){
-            var isUserOne = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
-            var roleStr = isUserOne ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
-            var bColor = isUserOne ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-            var bLabel = isUserOne ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+            var isTargetSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || a?.callsign === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
+            var roleStr = isTargetSuper ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
+            var bColor = isTargetSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
+            var bLabel = isTargetSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
             return (0,t.jsxs)("div",{
               title:bLabel,
               style:{position:"absolute",bottom:"4px",right:"4px",width:"32px",height:"32px",borderRadius:"50%",background:bColor,border:"3px solid #1e293b",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.4)",cursor:isReadOnlyMode?"default":"pointer"},
@@ -2208,10 +2271,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexWrap:"wrap"},children:[
         // [verified]
         (function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || a?.callsign === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
           var roleStr = isSuper ? 'superadmin' : String(a?.role_bdb || a?.role || '').toLowerCase();
           var bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          var bLabel = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+          var bLabel = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
           return (0,t.jsx)("span",{
             title:bLabel,
             style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"22px",height:"22px",borderRadius:"50%",background:bColor,boxShadow:"0 1px 4px rgba(0,0,0,0.3)",flexShrink:0},
@@ -2222,8 +2285,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var isUserOne = String(a?.id) === '1' || a?.username === 'omeko11';
-            if (isUserOne) return "@omeko11";
+            var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
+            var c = a?.callsign ? String(a.callsign).trim().replace(/^@/, '') : '';
+            if (u && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
+            if (c && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
+            if (a?.name && String(a.name).trim()) return a.name;
+            /* dynamic handle */
             return formatCallsign(a?.callsign, a?.id, a?.username);
           })()
         }),
@@ -2237,7 +2304,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       // Subline: Nasional • Info kontak • 4.120+ koneksi
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",color:"#94a3b8"},children:[
         (0,t.jsx)("span",{children:(function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko11' || a?.callsign === 'omeko11' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
           if (isSuper) return "Robinopsnal Bareskrim Polri";
           var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan;
           if (!s || s === 'BDB Superadmin' || s === '-') s = "Bareskrim Polri";
@@ -2253,10 +2320,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsxs)("button",{
           type:"button",
           onClick:()=>{
-            var targetUid = a?.id;
+            var targetUid = a?.id || mySelf?.id;
             var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
+            var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
             setNetworkUsers([]);
-            setNetworkTotal(0);
+            setNetworkTotal(cCount);
             setNetworkConnectedTarget(targetUid);
             setNetworkSatkerFilter('connected');
             setNetworkSearch('');
@@ -2542,12 +2610,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             (0,t.jsx)("div",{style:{display:"grid",gap:"1rem"},children:
               pagedPosts.map(p => {
             var totRcts = p.total_reactions || 0;
-            var isAuthorEko = String(p.author_id) === '1' || p.author_username === 'omeko11' || p.author_callsign === 'omeko11' || (!p.author_id && (a?.id === '1' || a?.username === 'omeko11'));
-            var isAuthorSuper = isAuthorEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(p.author_id)) || String(p.author_role || '').toLowerCase() === 'superadmin';
+            var isAuthorThisProfile = String(p.author_id) === String(a?.id);
+            var isAuthorSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(p.author_id)) || String(p.author_role || '').toLowerCase() === 'superadmin';
             var pBadge = getVerificationBadge(p.author_role || a?.role, isAuthorSuper, p.author_id || a?.id, p.author_username || a?.username);
-            var pHandle = formatCallsign(p.author_callsign || a?.callsign, p.author_id || a?.id, p.author_username || a?.username);
-            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo || a?.photo_url) : null);
-            var pInitials = String(p.author_name || a?.name || pHandle || 'P').charAt(0).toUpperCase();
+            var pHandle = formatCallsign(p.author_callsign || (isAuthorThisProfile ? a?.callsign : null), p.author_id || a?.id, p.author_username || (isAuthorThisProfile ? a?.username : null));
+            var pAvatar = p.author_photo_url || p.photo_url || (isAuthorThisProfile ? (a?.photo_url || a?.foto || null) : null);
+            var pInitials = String(p.author_name || (isAuthorThisProfile ? a?.name : null) || pHandle || 'P').charAt(0).toUpperCase();
             var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama || 'Polri');
             var audLabel = p.audience_type === 'private' ? '🔒 Privat' : (p.audience_type === 'followers' ? '👥 Satker' : '🌐 Publik');
 
@@ -2869,7 +2937,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   })
                 ]}),
                 (ePostComments[p.id] || []).map(cm => (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.03)",borderRadius:"6px",padding:"0.45rem 0.65rem",fontSize:"0.78rem",marginBottom:"0.35rem"},children:[
-                  (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",marginRight:"0.4rem"},children:'@' + (cm.author_callsign || 'anak_serse')}),
+                  (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",marginRight:"0.4rem"},children:formatCallsign(cm.author_callsign, cm.author_id, cm.author_username)}),
                   (0,t.jsx)("span",{style:{color:"#cbd5e1"},children:cm.content})
                 ]}))
               ]})
@@ -3043,20 +3111,22 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           (0,t.jsxs)("div",{key:pers.id,style:{display:"flex",alignItems:"center",gap:"0.55rem",minWidth:0,width:"100%"},children:[
             (0,t.jsx)("div",{
               onClick:() => {
+                var h = formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '');
                 try {
-                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: h }));
                 } catch(e){}
-                window.location.href = '/cms/profile';
+                window.location.href = '/cms/profile?id=' + encodeURIComponent(pers.id) + '&u=' + encodeURIComponent(h);
               },
               style:{width:"36px",height:"36px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #38bdf8",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.88rem",color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"},
               children:pers.photo ? (0,t.jsx)("img",{src:pers.photo,alt:formatCallsign(pers.callsign, pers.id, pers.username),style:{width:"100%",height:"100%",objectFit:"cover"}}) : String(formatCallsign(pers.callsign, pers.id, pers.username) || '@P').replace(/^@/,'').charAt(0).toUpperCase()
             }),
             (0,t.jsxs)("div",{
               onClick:() => {
+                var h = formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '');
                 try {
-                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: h }));
                 } catch(e){}
-                window.location.href = '/cms/profile';
+                window.location.href = '/cms/profile?id=' + encodeURIComponent(pers.id) + '&u=' + encodeURIComponent(h);
               },
               style:{minWidth:0,flex:1,cursor:"pointer"},
               children:[
@@ -3074,10 +3144,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             (0,t.jsx)("button",{
               type:"button",
               onClick:() => {
+                var h = formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '');
                 try {
-                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: formatCallsign(pers.callsign, pers.id, pers.username).replace(/^@/, '') }));
+                  sessionStorage.setItem('cas_view_user', JSON.stringify({ id: pers.id, username: pers.username, callsign: pers.callsign, handle: h }));
                 } catch(e){}
-                window.location.href = '/cms/profile';
+                window.location.href = '/cms/profile?id=' + encodeURIComponent(pers.id) + '&u=' + encodeURIComponent(h);
               },
               style:{background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.4)",color:"#38bdf8",borderRadius:"6px",padding:"0.25rem 0.55rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"},
               children:"Lihat"
@@ -3332,27 +3403,23 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
         (0,t.jsx)("div",{style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
           ePersonalLikesList.map(rx => {
             var usr = rx.user || {};
-            var isUsrEko = String(usr.id) === '1' || usr.username === 'omeko11';
-            var isUsrSuper = isUsrEko || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
+            var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
-            var usrHandle = isUsrEko ? '@omeko11' : (usr.callsign ? (String(usr.callsign).startsWith('@') ? usr.callsign : '@' + usr.callsign) : (usr.username ? (String(usr.username).startsWith('@') ? usr.username : '@' + usr.username) : '@personil'));
+            var usrHandle = (usr.callsign ? (String(usr.callsign).startsWith('@') ? usr.callsign : '@' + usr.callsign) : (usr.username ? (String(usr.username).startsWith('@') ? usr.username : '@' + usr.username) : '@personil'));
             var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
-            var usrPhoto = usr.photo_url || usr.foto || usr.photo || (isUsrEko ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo) : null);
+            var usrPhoto = usr.photo_url || usr.foto || usr.photo || null;
 
             return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
               (0,t.jsxs)("div",{
                 onClick:() => {
                   setPersonalLikesModal(!1);
-                  var isSelf = isUsrEko || String(usr.id) === String(a?.id);
+                  var isSelf = String(usr.id) === String(mySelf?.id || a?.id);
                   if (isSelf) {
                     try { sessionStorage.removeItem('cas_view_user'); } catch(e) {}
                     window.location.href = '/cms/profile';
                   } else {
-                    var h = usrHandle.replace(/^@/, '');
-                    try {
-                      sessionStorage.setItem('cas_view_user', JSON.stringify({ id: usr.id, handle: usrHandle, username: usr.username || h }));
-                    } catch(e) {}
-                    window.location.href = '/cms/profile';
+                    var h = String(usr.username || usr.callsign || usr.id).replace(/^@/, '');
+                    window.location.href = '/cms/profile?u=' + encodeURIComponent(h);
                   }
                 },
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
