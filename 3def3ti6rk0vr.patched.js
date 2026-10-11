@@ -849,31 +849,36 @@ let handleSaveBanner = async () => {
     if (eRawBanner) {
       finalBanner = await new Promise(res => {
         let box = document.getElementById("cas-banner-crop-box");
+        let imgEl = document.getElementById("cas-banner-crop-img");
+        if (!box || !imgEl) return res(eBannerTheme);
+
+        let boxRect = box.getBoundingClientRect();
+        let imgRect = imgEl.getBoundingClientRect();
+
+        let cvWidth = 1600;
+        let cvHeight = Math.max(120, Math.round(cvWidth * (boxRect.height / boxRect.width)));
+        let cv = document.createElement("canvas");
+        cv.width = cvWidth;
+        cv.height = cvHeight;
+        let cx = cv.getContext("2d");
+
+        cx.fillStyle = "#090d16";
+        cx.fillRect(0, 0, cvWidth, cvHeight);
+
+        let scaleToCv = cvWidth / boxRect.width;
+        let dx = (imgRect.left - boxRect.left) * scaleToCv;
+        let dy = (imgRect.top - boxRect.top) * scaleToCv;
+        let dw = imgRect.width * scaleToCv;
+        let dh = imgRect.height * scaleToCv;
+
         let img = new Image();
         img.onload = function() {
-          let bw = box ? box.getBoundingClientRect().width : 500;
-          let bh = box ? box.getBoundingClientRect().height : 105;
-          let nw = img.naturalWidth || 1200;
-          let nh = img.naturalHeight || 250;
-          let cssScale = Math.max(bw / nw, bh / nh);
-          let renW = nw * cssScale;
-          let renH = nh * cssScale;
-          let zm = Math.max(1, eBannerZoom || 1);
-          let px = eBannerPanX || 0;
-          let py = eBannerPanY || 0;
-          let visLeft = (renW * zm) / 2 - bw / 2 - (px * zm);
-          let visTop = (renH * zm) / 2 - bh / 2 - (py * zm);
-          let b2n = 1 / (cssScale * zm);
-          let sx = visLeft * b2n;
-          let sy = visTop * b2n;
-          let sw = bw * b2n;
-          let sh = bh * b2n;
-          let cv = document.createElement("canvas");
-          cv.width = 1200;
-          cv.height = 250;
-          let cx = cv.getContext("2d");
-          cx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
-          res(cv.toDataURL("image/jpeg", 0.82));
+          try {
+            cx.drawImage(img, dx, dy, dw, dh);
+            res(cv.toDataURL("image/jpeg", 0.88));
+          } catch(eDraw) {
+            res(eBannerTheme);
+          }
         };
         img.onerror = () => res(eBannerTheme);
         img.src = eRawBanner;
@@ -1499,7 +1504,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   header:"Kustomisasi Banner Sampul Taktis",
   visible:Boolean(eBannerModal && !isReadOnlyMode),
   onHide:()=>setBannerModal(!1),
-  style:{width:"32rem",maxWidth:"95vw"},
+  style:{width:"38rem",maxWidth:"96vw"},
   modal:!0,
   dismissableMask:!0,
   footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"flex-end",gap:"0.5rem"},children:[
@@ -1602,27 +1607,42 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         ]
       }),
       ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem"},children:[
-        (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",height:"105px",width:"100%",border:"1.5px solid #38bdf8",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center"},children:[
-          (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{width:"100%",height:"100%",objectFit:"cover",transform:`scale(${eBannerZoom}) translate(${eBannerPanX}px, ${eBannerPanY}px)`,transformOrigin:"center center",pointerEvents:"none"}}),
-          (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.75)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.68rem",fontWeight:700},children:"Pratinjau Sampul Kustom"})
+        (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,minHeight:"85px",border:"1.5px solid #38bdf8",background:"#090d16",display:"flex",alignItems:"center",justifyContent:"center"},children:[
+          (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{position:"absolute",left:"50%",top:"50%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transform:`translate(-50%, -50%) translate(${eBannerPanX}px, ${eBannerPanY}px) scale(${eBannerZoom})`,transformOrigin:"center center",pointerEvents:"none"}}),
+          (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.75)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.68rem",fontWeight:700},children:"Pratinjau Sampul (100% Sesuai Hasil)"})
+        ]}),
+        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",justifyContent:"center",marginTop:"0.2rem"},children:[
+          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{flex:1,padding:"0.35rem 0.6rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#e2e8f0",cursor:"pointer"},children:"Muat Semua (Fit)"}),
+          (0,t.jsx)("button",{type:"button",onClick:()=>{
+            let box = document.getElementById("cas-banner-crop-box");
+            let img = document.getElementById("cas-banner-crop-img");
+            if (box && img && img.offsetWidth > 0 && img.offsetHeight > 0) {
+              let fz = Math.min(3, Math.max(1, Math.max(box.offsetWidth / img.offsetWidth, box.offsetHeight / img.offsetHeight)));
+              setBannerZoom(parseFloat(fz.toFixed(2)));
+            } else {
+              setBannerZoom(1.5);
+            }
+            setBannerPanX(0);
+            setBannerPanY(0);
+          },style:{flex:1,padding:"0.35rem 0.6rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(56,189,248,0.3)",background:"rgba(56,189,248,0.12)",color:"#38bdf8",cursor:"pointer"},children:"Isi Penuh (Fill)"}),
+          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{padding:"0.35rem 0.75rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#94a3b8",cursor:"pointer"},children:"Reset (100%)"})
         ]}),
         (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.4rem",background:"rgba(255,255,255,0.05)",padding:"0.6rem 0.8rem",borderRadius:"8px",fontSize:"0.74rem"},children:[
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
-            (0,t.jsx)("span",{children:"Perbesar (Zoom)"}),
+            (0,t.jsx)("span",{children:"Ukuran Gambar (Zoom)"}),
             (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8"},children:`${Math.round(eBannerZoom*100)}%`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"1",max:"3",step:"0.05",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
+          (0,t.jsx)("input",{type:"range",min:"0.3",max:"3",step:"0.05",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
             (0,t.jsx)("span",{children:"Geser Kiri / Kanan"}),
             (0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${eBannerPanX}px`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"-80",max:"80",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
+          (0,t.jsx)("input",{type:"range",min:"-200",max:"200",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
             (0,t.jsx)("span",{children:"Geser Atas / Bawah"}),
             (0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${eBannerPanY}px`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"-80",max:"80",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
-          (0,t.jsx)("button",{type:"button",style:{fontSize:"0.68rem",color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",alignSelf:"center",marginTop:"0.2rem"},onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},children:"Reset Posisi & Zoom"})
+          (0,t.jsx)("input",{type:"range",min:"-160",max:"160",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}})
         ]})
       ]}))
     ]})
@@ -2198,8 +2218,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
 // HERO CARD (Exact Pilihan B / Mockup media_1790609760611.png)
 (0,t.jsxs)("div",{className:"cms-card",style:{padding:0,overflow:"hidden",marginBottom:"1.25rem",borderRadius:"16px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",background:"var(--cas-bg-surface, #1e293b)",boxShadow:"0 8px 30px rgba(0,0,0,0.25)",WebkitMaskImage:"-webkit-radial-gradient(white, black)"},children:[
-  // 1. Cover Banner (Height: 200px)
-  (0,t.jsxs)("div",{style:{position:"relative",height:"200px",borderTopLeftRadius:"15px",borderTopRightRadius:"15px",background:(eBannerTheme && (eBannerTheme.startsWith("data:") || eBannerTheme.startsWith("http"))) ? ("url(\"" + eBannerTheme + "\") center/cover no-repeat") : (eBannerTheme || "linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)"),overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"1rem 1.5rem"},children:[
+  // 1. Cover Banner (Height: 220px, WYSIWYG matching modal)
+  (0,t.jsxs)("div",{id:"cas-profile-hero-banner",style:{position:"relative",height:"220px",borderTopLeftRadius:"15px",borderTopRightRadius:"15px",background:(eBannerTheme && (eBannerTheme.startsWith("data:") || eBannerTheme.startsWith("http"))) ? ("url(\"" + eBannerTheme + "\") center/cover no-repeat") : (eBannerTheme || "linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)"),overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"1rem 1.5rem"},children:[
 
 
     // Edit cover button (Top right of banner, coral/orange pencil icon)
@@ -2208,7 +2228,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       title:"Edit tema foto sampul",
       onClick:()=>{
         if(!isReadOnlyMode){
-          if(eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http'))){
+          if(!eRawBanner && eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http'))){
             setRawBanner(eBannerTheme);
           }
           setBannerZoom(1);
