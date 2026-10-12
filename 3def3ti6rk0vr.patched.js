@@ -1504,14 +1504,15 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   header:"Kustomisasi Banner Sampul Taktis",
   visible:Boolean(eBannerModal && !isReadOnlyMode),
   onHide:()=>setBannerModal(!1),
-  style:{width:"38rem",maxWidth:"96vw"},
+  style:{width:"34rem",maxWidth:"95vw"},
+  contentStyle:{overflowX:"hidden",padding:"1rem 1.25rem"},
   modal:!0,
   dismissableMask:!0,
   footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"flex-end",gap:"0.5rem"},children:[
     (0,t.jsx)("button",{
       type:"button",
       onClick:()=>setBannerModal(!1),
-      style:{background:"transparent",color:"#94a3b8",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"8px",padding:"0.5rem 1rem",fontSize:"0.82rem",fontWeight:700,cursor:"pointer"},
+      style:{background:"transparent",color:"#64748b",border:"1px solid #cbd5e1",borderRadius:"8px",padding:"0.5rem 1rem",fontSize:"0.82rem",fontWeight:700,cursor:"pointer"},
       children:"Batal"
     }),
     (0,t.jsx)("button",{
@@ -1521,10 +1522,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       children:"Terapkan Sampul"
     })
   ]}),
-  children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.5rem 0"},children:[
-    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"#cbd5e1",fontWeight:700},children:"Pilih Tema Taktis CAS:"}),
+  children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.85rem",width:"100%",boxSizing:"border-box",overflowX:"hidden"},children:[
+    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"#334155",fontWeight:700},children:"Pilih Tema Taktis CAS:"}),
     (0,t.jsx)("div",{
-      style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem"},
+      style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem",width:"100%",boxSizing:"border-box"},
       children:[
         { id: "cyber_blue", name: "Cyber Ops Blue", grad: "linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)" },
         { id: "stealth_dark", name: "Stealth Reskrim", grad: "linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e1b4b 100%)" },
@@ -1535,10 +1536,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         type:"button",
         onClick:()=>{setBannerTheme(thm.grad);setRawBanner(null);},
         style:{
-          height:"55px",
+          height:"50px",
           borderRadius:"8px",
           background:thm.grad,
-          border:eBannerTheme===thm.grad?"2px solid #38bdf8":"1px solid rgba(255,255,255,0.15)",
+          border:eBannerTheme===thm.grad?"2px solid #0284c7":"1px solid rgba(255,255,255,0.2)",
           color:"#fff",
           fontSize:"0.78rem",
           fontWeight:700,
@@ -1546,14 +1547,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           display:"flex",
           alignItems:"center",
           justifyContent:"center",
-          boxShadow:eBannerTheme===thm.grad?"0 0 10px rgba(56,189,248,0.5)":"none"
+          boxShadow:eBannerTheme===thm.grad?"0 0 10px rgba(2,132,199,0.5)":"none"
         },
         children:thm.name
       }))
     }),
-    (0,t.jsx)("div",{style:{borderTop:"1px solid rgba(255,255,255,0.08)",margin:"0.4rem 0"}}),
-    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"#cbd5e1",fontWeight:700},children:"Atau Unggah Foto Sampul Kustom Sendiri:"}),
-    (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.6rem"},children:[
+    (0,t.jsx)("div",{style:{borderTop:"1px solid #e2e8f0",margin:"0.2rem 0"}}),
+    (0,t.jsx)("label",{style:{fontSize:"0.8rem",color:"#334155",fontWeight:700},children:"Atau Unggah Foto Sampul Kustom Sendiri:"}),
+    (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.6rem",width:"100%",boxSizing:"border-box"},children:[
       (0,t.jsx)("input",{
         id:"custom-banner-file-input",
         type:"file",
@@ -1600,19 +1601,19 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         type:"button",
         disabled:eCustomBannerLoading,
         onClick:() => document.getElementById('custom-banner-file-input')?.click(),
-        style:{background:"rgba(59,130,246,0.12)",border:"1px dashed #3b82f6",borderRadius:"8px",padding:"0.65rem",color:"#60a5fa",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem"},
+        style:{background:"#eff6ff",border:"1px dashed #3b82f6",borderRadius:"8px",padding:"0.65rem",color:"#2563eb",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem",width:"100%",boxSizing:"border-box"},
         children:[
           (0,t.jsx)("span",{children:"📷"}),
           (0,t.jsx)("span",{children:eCustomBannerLoading ? "Mengompresi gambar..." : "Pilih Foto Sampul dari Perangkat"})
         ]
       }),
-      ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem"},children:[
-        (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,minHeight:"85px",border:"1.5px solid #38bdf8",background:"#090d16",display:"flex",alignItems:"center",justifyContent:"center"},children:[
+      ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem",width:"100%",boxSizing:"border-box"},children:[
+        (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",maxWidth:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,border:"1.5px solid #0284c7",background:"#090d16",display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box"},children:[
           (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{position:"absolute",left:"50%",top:"50%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transform:`translate(-50%, -50%) translate(${eBannerPanX}px, ${eBannerPanY}px) scale(${eBannerZoom})`,transformOrigin:"center center",pointerEvents:"none"}}),
           (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.75)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.68rem",fontWeight:700},children:"Pratinjau Sampul (100% Sesuai Hasil)"})
         ]}),
-        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",justifyContent:"center",marginTop:"0.2rem"},children:[
-          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{flex:1,padding:"0.35rem 0.6rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#e2e8f0",cursor:"pointer"},children:"Muat Semua (Fit)"}),
+        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",justifyContent:"center",width:"100%",boxSizing:"border-box"},children:[
+          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #cbd5e1",background:"#f1f5f9",color:"#1e293b",cursor:"pointer"},children:"Muat Semua (Fit)"}),
           (0,t.jsx)("button",{type:"button",onClick:()=>{
             let box = document.getElementById("cas-banner-crop-box");
             let img = document.getElementById("cas-banner-crop-img");
@@ -1624,25 +1625,25 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             }
             setBannerPanX(0);
             setBannerPanY(0);
-          },style:{flex:1,padding:"0.35rem 0.6rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(56,189,248,0.3)",background:"rgba(56,189,248,0.12)",color:"#38bdf8",cursor:"pointer"},children:"Isi Penuh (Fill)"}),
-          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{padding:"0.35rem 0.75rem",fontSize:"0.74rem",fontWeight:600,borderRadius:"6px",border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#94a3b8",cursor:"pointer"},children:"Reset (100%)"})
+          },style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #38bdf8",background:"#e0f2fe",color:"#0284c7",cursor:"pointer"},children:"Isi Penuh (Fill)"}),
+          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{padding:"0.4rem 0.8rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #cbd5e1",background:"#f8fafc",color:"#64748b",cursor:"pointer"},children:"Reset (100%)"})
         ]}),
-        (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.4rem",background:"rgba(255,255,255,0.05)",padding:"0.6rem 0.8rem",borderRadius:"8px",fontSize:"0.74rem"},children:[
+        (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem",background:"#f8fafc",border:"1px solid #e2e8f0",padding:"0.7rem 0.85rem",borderRadius:"8px",fontSize:"0.75rem",width:"100%",boxSizing:"border-box"},children:[
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
-            (0,t.jsx)("span",{children:"Ukuran Gambar (Zoom)"}),
-            (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8"},children:`${Math.round(eBannerZoom*100)}%`})
+            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Ukuran Gambar (Zoom)"}),
+            (0,t.jsx)("span",{style:{fontWeight:700,color:"#0284c7"},children:`${Math.round(eBannerZoom*100)}%`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"0.3",max:"3",step:"0.05",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
+          (0,t.jsx)("input",{type:"range",min:"0.3",max:"3",step:"0.05",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
-            (0,t.jsx)("span",{children:"Geser Kiri / Kanan"}),
-            (0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${eBannerPanX}px`})
+            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Kiri / Kanan"}),
+            (0,t.jsx)("span",{style:{fontWeight:600,color:"#64748b"},children:`${eBannerPanX}px`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"-200",max:"200",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}}),
+          (0,t.jsx)("input",{type:"range",min:"-200",max:"200",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
-            (0,t.jsx)("span",{children:"Geser Atas / Bawah"}),
-            (0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${eBannerPanY}px`})
+            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Atas / Bawah"}),
+            (0,t.jsx)("span",{style:{fontWeight:600,color:"#64748b"},children:`${eBannerPanY}px`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"-160",max:"160",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#38bdf8",cursor:"pointer"}})
+          (0,t.jsx)("input",{type:"range",min:"-160",max:"160",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}})
         ]})
       ]}))
     ]})
