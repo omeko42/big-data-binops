@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { getToolbarAndSheets, getAll13Sheets } from './build_full_word_sheets_13pages.mjs';
 
-console.log('Building official 13-page Word patch with dynamic Superadmin/Mabes support...');
+console.log('Building official 13-page Word patch with perfect Google Docs/Word engine...');
 
 let code = fs.readFileSync('1s8uqnrz-0f75.patched.step1.js', 'utf8');
 
@@ -33,27 +33,82 @@ const fnTarget = 'function handleAddTableRow(isAbove) {';
 if (!code.includes(fnTarget)) {
   throw new Error('fnTarget not found');
 }
-const newFns = `function runDocCmd(cmd, val) {
-      try {
-        document.execCommand(cmd, false, val);
-      } catch(e) {}
+
+const newFns = `var lastActiveCell = null;
+    var currentFontSizePt = 10;
+
+    function toggleDocDropdown(id) {
+      var d = document.getElementById(id);
+      if (!d) return;
+      var isOpen = d.classList.contains('open');
+      var allDd = document.querySelectorAll('.tb-dropdown');
+      for (var i = 0; i < allDd.length; i++) allDd[i].classList.remove('open');
+      if (!isOpen) d.classList.add('open');
     }
 
-    function handleDirectPrint() {
-      window.print();
+    function closeAllDocDropdowns() {
+      var allDd = document.querySelectorAll('.tb-dropdown');
+      for (var i = 0; i < allDd.length; i++) allDd[i].classList.remove('open');
     }
 
-    function handleInsertLogo() {
-      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:70px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
-      try {
-        document.execCommand('insertHTML', false, imgHtml);
-      } catch(e) {
-        var p1 = document.querySelector('.anev-page-content');
-        if (p1) p1.insertAdjacentHTML('afterbegin', imgHtml);
+    function setBtnActive(id, active) {
+      var b = document.getElementById(id);
+      if (b) {
+        if (active) b.classList.add('active');
+        else b.classList.remove('active');
       }
     }
 
-    function setDocFontSize(pt) {
+    function runDocCmd(cmd, val) {
+      try {
+        document.execCommand(cmd, false, val);
+        updateToolbarState();
+      } catch(e) {}
+    }
+
+    function updateToolbarState() {
+      try {
+        setBtnActive('tb-btn-bold', document.queryCommandState('bold'));
+        setBtnActive('tb-btn-italic', document.queryCommandState('italic'));
+        setBtnActive('tb-btn-underline', document.queryCommandState('underline'));
+        setBtnActive('tb-btn-strike', document.queryCommandState('strikeThrough'));
+
+        setBtnActive('tb-btn-align-left', document.queryCommandState('justifyLeft'));
+        setBtnActive('tb-btn-align-center', document.queryCommandState('justifyCenter'));
+        setBtnActive('tb-btn-align-right', document.queryCommandState('justifyRight'));
+        setBtnActive('tb-btn-align-justify', document.queryCommandState('justifyFull'));
+
+        updateDocStats();
+      } catch(e) {}
+    }
+
+    function updateDocStats() {
+      try {
+        var doc = document.getElementById('docEditor');
+        if (!doc) return;
+        var text = doc.innerText || '';
+        var words = text.trim() ? text.trim().split(/\\s+/).length : 0;
+        var chars = text.length;
+        var pages = document.querySelectorAll('.anev-page-sheet').length;
+        
+        var wEl = document.getElementById('statusWordInfo');
+        if (wEl) wEl.innerText = words.toLocaleString('id-ID') + ' kata • ' + chars.toLocaleString('id-ID') + ' karakter';
+        var pEl = document.getElementById('statusPageInfo');
+        if (pEl) pEl.innerText = pages + ' halaman';
+      } catch(e) {}
+    }
+
+    function setDocFontName(font) {
+      document.execCommand('fontName', false, font);
+      var lbl = document.getElementById('tb-font-label');
+      if (lbl) lbl.innerText = font;
+      closeAllDocDropdowns();
+    }
+
+    function setDocFontSizePt(pt) {
+      currentFontSizePt = pt;
+      var lbl = document.getElementById('tb-size-label');
+      if (lbl) lbl.innerText = pt;
       try {
         document.execCommand('fontSize', false, '7');
         var fonts = document.querySelectorAll('font[size="7"]');
@@ -65,16 +120,68 @@ const newFns = `function runDocCmd(cmd, val) {
           f.parentNode.replaceChild(span, f);
         }
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function stepDocFontSize(delta) {
+      var newPt = Math.max(6, Math.min(72, currentFontSizePt + delta));
+      setDocFontSizePt(newPt);
+    }
+
+    function setDocBlockFormat(tag, label) {
+      document.execCommand('formatBlock', false, tag);
+      var lbl = document.getElementById('tb-style-label');
+      if (lbl) lbl.innerText = label;
+      closeAllDocDropdowns();
+    }
+
+    function setDocTextColor(hex) {
+      document.execCommand('foreColor', false, hex);
+      closeAllDocDropdowns();
+    }
+
+    function setDocHighlightColor(col) {
+      document.execCommand('hiliteColor', false, col);
+      closeAllDocDropdowns();
     }
 
     function setDocLineSpacing(val) {
       try {
         var sel = window.getSelection();
-        if (!sel) return;
-        var node = sel.anchorNode;
-        var p = node ? (node.nodeType === 1 ? node : node.parentElement).closest('p, div, li, td, th') : null;
-        if (p) p.style.lineHeight = val;
+        if (sel && sel.rangeCount > 0) {
+          var node = sel.anchorNode;
+          var block = node ? (node.nodeType === 1 ? node : node.parentElement).closest('p, div, li, td, th, h1, h2, h3') : null;
+          if (block) block.style.lineHeight = val;
+        }
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function applyDocZoom(factor, label) {
+      var ws = document.getElementById('docEditor');
+      if (ws) {
+        ws.style.transform = 'scale(' + factor + ')';
+        ws.style.transformOrigin = 'top center';
+      }
+      var zLbl = document.getElementById('tb-zoom-label');
+      if (zLbl) zLbl.innerText = label;
+      var sZ = document.getElementById('statusZoom');
+      if (sZ) sZ.innerText = label;
+      closeAllDocDropdowns();
+    }
+
+    function handleDirectPrint() {
+      window.print();
+    }
+
+    function handleInsertLogo() {
+      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:70px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
+      try {
+        document.execCommand('insertHTML', false, imgHtml);
+      } catch(e) {
+        var p1 = document.querySelector('.anev-page-body');
+        if (p1) p1.insertAdjacentHTML('afterbegin', imgHtml);
+      }
     }
 
     function renumberDocPages() {
@@ -82,10 +189,14 @@ const newFns = `function runDocCmd(cmd, val) {
         var sheets = document.querySelectorAll('.anev-page-sheet');
         for (var i = 0; i < sheets.length; i++) {
           var s = sheets[i];
-          s.setAttribute('data-page', i + 1);
+          var num = i + 1;
+          s.setAttribute('data-page', num);
+          var h = s.querySelector('.anev-sheet-header');
+          if (h && num > 1) h.innerText = num;
           var disp = s.querySelector('.page-num-display');
-          if (disp) disp.innerText = i + 1;
+          if (disp) disp.innerText = num;
         }
+        updateDocStats();
       } catch(e) {}
     }
 
@@ -94,51 +205,148 @@ const newFns = `function runDocCmd(cmd, val) {
         var sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
         var node = sel.anchorNode;
-        var editor = node ? (node.nodeType === 1 ? node : node.parentElement).closest('.anev-doc-editor') : null;
-        if (!editor) return;
-        var sheet = editor.closest('.anev-page-sheet');
+        var pageBody = node ? (node.nodeType === 1 ? node : node.parentElement).closest('.anev-page-body') : null;
+        var sheet = pageBody ? pageBody.closest('.anev-page-sheet') : document.querySelector('.anev-page-sheet:last-child');
         if (!sheet) return;
+
         var pageNum = parseInt(sheet.getAttribute('data-page') || '1', 10);
-        var newSheet = sheet.cloneNode(true);
+        var newSheet = document.createElement('div');
         var newPageNum = pageNum + 1;
+        newSheet.className = 'anev-page-sheet anev-print-sheet gdocs-page';
         newSheet.setAttribute('data-page', newPageNum);
-        var newEditor = newSheet.querySelector('.anev-doc-editor');
-        if (newEditor) newEditor.innerHTML = '<p><br></p>';
-        var pageNumDisp = newSheet.querySelector('.page-num-display');
-        if (pageNumDisp) pageNumDisp.innerText = newPageNum;
-        
+
+        var header = document.createElement('div');
+        header.className = 'anev-sheet-header';
+        header.setAttribute('contenteditable', 'false');
+        header.style.textAlign = 'center';
+        header.style.fontWeight = '700';
+        header.style.fontSize = '10pt';
+        header.style.marginBottom = '14px';
+        header.style.userSelect = 'none';
+        header.innerText = newPageNum;
+        newSheet.appendChild(header);
+
+        var newBody = document.createElement('div');
+        newBody.className = 'anev-page-body';
+        newBody.innerHTML = '<p><br></p>';
+
         var currentBlock = (node.nodeType === 1 ? node : node.parentElement).closest('p, div, table, ol, ul, h1, h2, h3');
-        if (currentBlock && currentBlock.parentElement === editor && newEditor) {
-          var nextSib = currentBlock.nextElementSibling;
-          while (nextSib) {
-            var toMove = nextSib;
-            nextSib = nextSib.nextElementSibling;
-            newEditor.appendChild(toMove);
+        if (currentBlock && currentBlock.parentElement === pageBody) {
+          var next = currentBlock.nextElementSibling;
+          while (next) {
+            var toMove = next;
+            next = next.nextElementSibling;
+            newBody.appendChild(toMove);
           }
         }
+        newSheet.appendChild(newBody);
+
+        var catchword = document.createElement('div');
+        catchword.className = 'anev-sheet-catchword';
+        catchword.setAttribute('contenteditable', 'false');
+        catchword.style.textAlign = 'right';
+        catchword.style.fontSize = '8.5pt';
+        catchword.style.fontStyle = 'italic';
+        catchword.style.color = '#475569';
+        catchword.style.marginTop = '16px';
+        catchword.style.userSelect = 'none';
+        catchword.innerText = '[*First Next Line Char] + [……]';
+        newSheet.appendChild(catchword);
+
+        var footer = document.createElement('div');
+        footer.className = 'anev-page-footer';
+        footer.setAttribute('contenteditable', 'false');
+        footer.style.userSelect = 'none';
+        footer.innerHTML = '<div class="anev-footer-left anev-forensic-stamp"><span style="font-size:0.72rem;margin-right:4px;">🛡️</span><span style="font-family:monospace;font-size:0.66rem;font-weight:700;color:#475569;letter-spacing:0.4px;">' + docStamp + '</span></div><div class="anev-footer-right page-num-display">' + newPageNum + '</div>';
+        newSheet.appendChild(footer);
+
         sheet.after(newSheet);
         renumberDocPages();
-        if (newEditor) newEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch(e) {
         console.warn('Page break error:', e);
       }
     }
 
-    function insertCustomTable() {
-      var html = '<table class="anev-table-naskah"><thead><tr><th>No</th><th>Uraian / Indikator</th><th>Target</th><th>Keterangan</th></tr></thead><tbody><tr><td style="text-align:center;">1</td><td>Data baru</td><td style="text-align:center;">-</td><td>-</td></tr></tbody></table><p><br></p>';
+    function insertCustomTable(rows, cols) {
+      rows = rows || 3;
+      cols = cols || 4;
+      var html = '<table class="anev-table-naskah"><thead><tr>';
+      for (var c = 1; c <= cols; c++) html += '<th>Header ' + c + '</th>';
+      html += '</tr></thead><tbody>';
+      for (var r = 1; r <= rows; r++) {
+        html += '<tr>';
+        for (var c = 1; c <= cols; c++) html += '<td>Data ' + r + '.' + c + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table><p><br></p>';
       try {
         document.execCommand('insertHTML', false, html);
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function handleTableAction(act) {
+      var cell = lastActiveCell || (window.getSelection()?.anchorNode ? (window.getSelection().anchorNode.nodeType === 1 ? window.getSelection().anchorNode : window.getSelection().anchorNode.parentElement).closest('td, th') : null);
+      var table = cell ? cell.closest('table') : document.querySelector('.anev-table-naskah');
+      if (!table) return;
+
+      if (act === 'addRowAbove' || act === 'addRowBelow') {
+        var refTr = cell ? cell.closest('tr') : table.querySelector('tbody tr:last-child') || table.querySelector('tr:last-child');
+        var colCount = refTr ? refTr.children.length : 4;
+        var newTr = document.createElement('tr');
+        for (var i = 0; i < colCount; i++) {
+          var td = document.createElement('td');
+          td.style.border = '1px solid #000';
+          td.style.padding = '3px 5px';
+          td.innerHTML = '-';
+          newTr.appendChild(td);
+        }
+        if (act === 'addRowAbove' && refTr) refTr.before(newTr);
+        else if (refTr) refTr.after(newTr);
+        else table.appendChild(newTr);
+      } else if (act === 'delRow') {
+        var tr = cell ? cell.closest('tr') : null;
+        if (tr && tr.parentElement.children.length > 1) tr.remove();
+      } else if (act === 'addColLeft' || act === 'addColRight') {
+        var colIdx = cell ? cell.cellIndex : 0;
+        var rows = table.rows;
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          var isTh = row.firstElementChild && row.firstElementChild.tagName === 'TH';
+          var newCell = document.createElement(isTh ? 'th' : 'td');
+          newCell.style.border = '1px solid #000';
+          newCell.style.padding = '3px 5px';
+          if (isTh) { newCell.style.background = '#f1f5f9'; newCell.innerHTML = 'Kolom'; }
+          else newCell.innerHTML = '-';
+          if (colIdx >= 0 && colIdx < row.children.length) {
+            if (act === 'addColLeft') row.children[colIdx].before(newCell);
+            else row.children[colIdx].after(newCell);
+          } else row.appendChild(newCell);
+        }
+      } else if (act === 'delCol') {
+        var colIdx = cell ? cell.cellIndex : -1;
+        if (colIdx >= 0) {
+          var rows = table.rows;
+          if (rows.length > 0 && rows[0].children.length <= 1) { table.remove(); closeAllDocDropdowns(); return; }
+          for (var r = 0; r < rows.length; r++) {
+            if (colIdx < rows[r].children.length) rows[r].children[colIdx].remove();
+          }
+        }
+      } else if (act === 'delTable') {
+        table.remove();
+      }
+      closeAllDocDropdowns();
     }
 
     (0,a.useEffect)(() => {
       function onCtxMenu(e) {
-        let editor = e.target.closest('.anev-doc-editor');
+        var editor = e.target.closest('#docEditor');
         if (!editor) return;
         e.preventDefault();
-        let isImg = e.target.tagName === 'IMG';
-        let isTable = !!e.target.closest('table');
-        let type = isImg ? 'img' : (isTable ? 'table' : 'text');
+        var isImg = e.target.tagName === 'IMG';
+        var isTable = !!e.target.closest('table');
+        var type = isImg ? 'img' : (isTable ? 'table' : 'text');
         setContextMenu({
           x: Math.min(e.clientX, window.innerWidth - 220),
           y: Math.min(e.clientY, window.innerHeight - 280),
@@ -146,110 +354,99 @@ const newFns = `function runDocCmd(cmd, val) {
           target: e.target
         });
       }
+
       function onDocClick(e) {
-        if (!e.target.closest('.anev-context-menu')) {
-          setContextMenu(null);
+        if (!e.target.closest('.tb-dropdown')) {
+          closeAllDocDropdowns();
         }
+        var cell = e.target.closest('td, th');
+        if (cell) lastActiveCell = cell;
       }
+
+      function onDocInput() {
+        updateDocStats();
+      }
+
       function handleCrossPageKeys(e) {
-        let sel = window.getSelection();
+        var sel = window.getSelection();
         if (!sel || !sel.isCollapsed) return;
 
-        let targetEditor = sel.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('.anev-doc-editor') : null;
-        if (!targetEditor) return;
+        var anchor = sel.anchorNode;
+        var pageBody = anchor ? (anchor.nodeType === 1 ? anchor : anchor.parentElement).closest('.anev-page-body') : null;
+        if (!pageBody) return;
 
-        let currentSheet = targetEditor.closest('.anev-page-sheet');
-        let pageNum = parseInt(currentSheet?.getAttribute('data-page') || '1', 10);
+        var currentSheet = pageBody.closest('.anev-page-sheet');
+        var pageNum = parseInt(currentSheet?.getAttribute('data-page') || '1', 10);
 
         if (e.key === 'Backspace') {
-          let range = sel.getRangeAt(0);
-          let preRange = range.cloneRange();
-          preRange.selectNodeContents(targetEditor);
+          var range = sel.getRangeAt(0);
+          var preRange = range.cloneRange();
+          preRange.selectNodeContents(pageBody);
           preRange.setEnd(range.startContainer, range.startOffset);
 
-          // If cursor is at the very beginning of this page's editor
+          // If cursor is at the very beginning of this page's body
           if (preRange.toString().length === 0) {
             if (pageNum > 1) {
               e.preventDefault();
-              let prevSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum - 1) + '"]');
-              let prevEditor = prevSheet ? prevSheet.querySelector('.anev-doc-editor') : null;
-              if (prevEditor) {
-                let firstChild = targetEditor.firstElementChild;
-                if (firstChild) {
-                  prevEditor.appendChild(firstChild);
-                  let newRange = document.createRange();
-                  newRange.selectNodeContents(firstChild);
-                  newRange.collapse(true);
-                  sel.removeAllRanges();
-                  sel.addRange(newRange);
-                  firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                  let lastChild = prevEditor.lastElementChild || prevEditor;
-                  let newRange = document.createRange();
-                  newRange.selectNodeContents(lastChild);
-                  newRange.collapse(false);
-                  sel.removeAllRanges();
-                  sel.addRange(newRange);
-                  lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              var prevSheet = currentSheet.previousElementSibling;
+              while (prevSheet && !prevSheet.classList.contains('anev-page-sheet')) {
+                prevSheet = prevSheet.previousElementSibling;
+              }
+              if (prevSheet) {
+                var prevBody = prevSheet.querySelector('.anev-page-body');
+                if (prevBody) {
+                  var firstChild = pageBody.firstElementChild;
+                  var targetAttach = prevBody.lastElementChild || prevBody;
+                  if (firstChild) {
+                    prevBody.appendChild(firstChild);
+                    var newRange = document.createRange();
+                    newRange.selectNodeContents(firstChild);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  } else {
+                    var newRange = document.createRange();
+                    newRange.selectNodeContents(targetAttach);
+                    newRange.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    targetAttach.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }
+
+                  // If sheet body is now empty, remove current sheet
+                  var remainingText = pageBody.innerText.trim();
+                  if (pageBody.children.length === 0 || (!remainingText && pageBody.children.length <= 1)) {
+                    currentSheet.remove();
+                    renumberDocPages();
+                  }
                 }
               }
             }
           }
         } else if (e.key === 'Delete') {
-          let range = sel.getRangeAt(0);
-          let postRange = range.cloneRange();
-          postRange.selectNodeContents(targetEditor);
+          var range = sel.getRangeAt(0);
+          var postRange = range.cloneRange();
+          postRange.selectNodeContents(pageBody);
           postRange.setStart(range.endContainer, range.endOffset);
 
           if (postRange.toString().length === 0) {
-            let nextSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum + 1) + '"]');
-            let nextEditor = nextSheet ? nextSheet.querySelector('.anev-doc-editor') : null;
-            if (nextEditor && nextEditor.firstElementChild) {
-              e.preventDefault();
-              let moved = nextEditor.firstElementChild;
-              targetEditor.appendChild(moved);
+            var nextSheet = currentSheet.nextElementSibling;
+            while (nextSheet && !nextSheet.classList.contains('anev-page-sheet')) {
+              nextSheet = nextSheet.nextElementSibling;
             }
-          }
-        } else if (e.key === 'ArrowUp') {
-          let range = sel.getRangeAt(0);
-          let preRange = range.cloneRange();
-          preRange.selectNodeContents(targetEditor);
-          preRange.setEnd(range.startContainer, range.startOffset);
-
-          if (preRange.toString().indexOf('\\n') === -1 && preRange.toString().length < 30) {
-            if (pageNum > 1) {
-              let prevSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum - 1) + '"]');
-              let prevEditor = prevSheet ? prevSheet.querySelector('.anev-doc-editor') : null;
-              if (prevEditor) {
-                let lastChild = prevEditor.lastElementChild || prevEditor;
-                let newRange = document.createRange();
-                newRange.selectNodeContents(lastChild);
-                newRange.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-                lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (nextSheet) {
+              var nextBody = nextSheet.querySelector('.anev-page-body');
+              if (nextBody && nextBody.firstElementChild) {
                 e.preventDefault();
+                var moved = nextBody.firstElementChild;
+                pageBody.appendChild(moved);
+                var remainingNext = nextBody.innerText.trim();
+                if (nextBody.children.length === 0 || (!remainingNext && nextBody.children.length <= 1)) {
+                  nextSheet.remove();
+                  renumberDocPages();
+                }
               }
-            }
-          }
-        } else if (e.key === 'ArrowDown') {
-          let range = sel.getRangeAt(0);
-          let postRange = range.cloneRange();
-          postRange.selectNodeContents(targetEditor);
-          postRange.setStart(range.endContainer, range.endOffset);
-
-          if (postRange.toString().indexOf('\\n') === -1 && postRange.toString().length < 30) {
-            let nextSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum + 1) + '"]');
-            let nextEditor = nextSheet ? nextSheet.querySelector('.anev-doc-editor') : null;
-            if (nextEditor) {
-              let firstChild = nextEditor.firstElementChild || nextEditor;
-              let newRange = document.createRange();
-              newRange.selectNodeContents(firstChild);
-              newRange.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(newRange);
-              firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              e.preventDefault();
             }
           }
         } else if (e.key === 'Enter' && e.ctrlKey) {
@@ -258,17 +455,24 @@ const newFns = `function runDocCmd(cmd, val) {
         }
       }
 
+      document.addEventListener('selectionchange', updateToolbarState);
       document.addEventListener('contextmenu', onCtxMenu);
       document.addEventListener('click', onDocClick);
       document.addEventListener('keydown', handleCrossPageKeys);
+      document.addEventListener('input', onDocInput);
+      setTimeout(updateDocStats, 600);
+
       return () => {
+        document.removeEventListener('selectionchange', updateToolbarState);
         document.removeEventListener('contextmenu', onCtxMenu);
         document.removeEventListener('click', onDocClick);
         document.removeEventListener('keydown', handleCrossPageKeys);
+        document.removeEventListener('input', onDocInput);
       };
     }, []);
 
     function handleAddTableRow(isAbove) {`;
+
 code = code.replace(fnTarget, newFns);
 console.log('Helper functions and useEffect inserted!');
 
@@ -403,7 +607,7 @@ const completeResolveAutoTags = `function resolveAutoTags() {
           "[*count: X = (KB + KT) : (KM + KP) x 100%]": "X = (" + ccCurr.toLocaleString("id-ID") + ") : (" + ctCurr.toLocaleString("id-ID") + ") x 100% = " + crCurr + "%"
         };
 
-        var workspace = document.querySelector(".anev-pages-workspace");
+        var workspace = document.querySelector("#docEditor");
         if (workspace) {
           var walker = document.createTreeWalker(workspace, NodeFilter.SHOW_TEXT, null, false);
           var node;
@@ -476,6 +680,7 @@ const completeResolveAutoTags = `function resolveAutoTags() {
           }
         }
 
+        updateDocStats();
         toastRef.current?.show({ severity: "success", summary: "Data Tersinkron", detail: "Semua tag naskah dan tabel telah terhubung dengan data riil CAS.", life: 2500 });
       } catch(e) {
         console.error("resolveAutoTags error:", e);
@@ -551,19 +756,24 @@ const completeCss = `
             background: transparent !important;
           }
           .anev-docs-toolbar,
+          .gdocs-menubar,
           .gdocs-toolbar,
           .anev-ruler-bar,
           .anev-context-menu,
           .anev-sheet-corner-pill,
+          .gdocs-statusbar,
+          .tb-dropdown-menu,
           .anev-no-print {
             display: none !important;
           }
-          .anev-pages-workspace {
+          .anev-pages-workspace,
+          .gdocs-document-container {
             padding: 0 !important;
             margin: 0 !important;
             background: transparent !important;
             gap: 0 !important;
             overflow: visible !important;
+            transform: none !important;
           }
           .anev-page-sheet {
             display: flex !important;
@@ -594,7 +804,7 @@ const completeCss = `
             page-break-after: auto !important;
             break-after: auto !important;
           }
-          .anev-page-content {
+          .anev-page-body {
             flex: 1 1 auto !important;
             width: 100% !important;
             max-width: 100% !important;
@@ -611,11 +821,21 @@ const completeCss = `
         }
         .anev-pages-workspace {
           background: #cbd5e1;
-          padding: 24px 0 60px 0;
+          padding: 24px 0 70px 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 25px;
+          min-height: calc(100vh - 120px);
+        }
+        .gdocs-document-container {
+          outline: none;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 25px;
+          transition: transform 0.15s ease-out;
         }
         .anev-page-sheet {
           background: #ffffff;
@@ -623,7 +843,7 @@ const completeCss = `
           width: 210mm;
           min-height: 297mm;
           padding: 2cm 2cm 2cm 3cm; /* 2cm top, 2cm right, 2cm bottom, 3cm left matching @page! */
-          margin: 0 auto 24px auto;
+          margin: 0 auto;
           box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
           border-radius: 2px;
           position: relative;
@@ -638,14 +858,9 @@ const completeCss = `
         }
 
         /* TYPOGRAPHY: DEFAULT JUSTIFY */
-        .anev-page-content, .anev-doc-editor {
-          flex: 1 1 auto;
-          outline: none;
-          text-align: justify;
-          text-justify: inter-word;
-          color: #000000;
-        }
-        .anev-page-content p, .anev-page-content li, .anev-doc-editor p, .anev-doc-editor li {
+        .anev-page-sheet p,
+        .anev-page-sheet div,
+        .anev-page-sheet li {
           text-align: justify;
           text-justify: inter-word;
           margin: 0.35rem 0;
@@ -743,27 +958,58 @@ const completeCss = `
           z-index: 10;
         }
 
-        /* GOOGLE DOCS STICKY TOOLBAR */
-        .anev-docs-toolbar {
-          position: sticky;
-          top: 0;
-          z-index: 1000;
+        /* GOOGLE DOCS MENUBAR */
+        .gdocs-menubar {
           background: #ffffff;
+          border-bottom: 1px solid #e2e8f0;
+          padding: 3px 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.80rem;
+        }
+        .gdocs-menu-title {
+          font-weight: 800;
+          color: #1e293b;
+          margin-right: 10px;
+          display: flex;
+          align-items: center;
+        }
+        .gdocs-menu-btn {
+          background: none;
+          border: none;
+          padding: 2px 7px;
+          border-radius: 4px;
+          font-size: 0.78rem;
+          color: #334155;
+          cursor: pointer;
+        }
+        .gdocs-menu-btn:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+        }
+
+        /* GOOGLE DOCS STICKY TOOLBAR */
+        .gdocs-toolbar, .anev-docs-toolbar {
+          position: sticky;
+          top: var(--cms-header-h, 0px);
+          z-index: 1000;
+          background: #f8fafc;
           border-bottom: 1px solid #cbd5e1;
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
           padding: 4px 14px;
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: 2px;
           flex-wrap: wrap;
         }
-        .anev-tool-btn {
+        .anev-tool-btn, .tb-btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           min-width: 28px;
           height: 28px;
-          padding: 2px 7px;
+          padding: 2px 6px;
           border-radius: 4px;
           border: 1px solid transparent;
           background: transparent;
@@ -772,79 +1018,96 @@ const completeCss = `
           font-weight: 700;
           cursor: pointer;
           user-select: none;
+          transition: background 0.1s;
         }
-        .anev-tool-btn:hover {
-          background: #f1f5f9;
+        .anev-tool-btn:hover, .tb-btn:hover {
+          background: #e2e8f0;
           color: #0f172a;
         }
-        .anev-tool-separator {
+        .anev-tool-btn.active, .tb-btn.active {
+          background: #dbeafe !important;
+          color: #1d4ed8 !important;
+          border-color: #93c5fd !important;
+        }
+        .anev-tool-separator, .tb-sep {
           width: 1px;
           height: 20px;
           background: #cbd5e1;
           margin: 0 4px;
         }
-        .anev-tool-select {
+        .tb-select-btn {
           height: 28px;
           border: 1px solid #cbd5e1;
           border-radius: 4px;
-          padding: 0 6px;
-          font-size: 0.78rem;
+          padding: 0 8px;
+          font-size: 0.80rem;
+          font-weight: 600;
           background: #ffffff;
           color: #334155;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          user-select: none;
         }
-        .anev-palette-dropdown {
+        .tb-select-btn:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+        }
+
+        /* DROPDOWNS */
+        .tb-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+        .tb-dropdown-menu {
+          display: none;
           position: absolute;
           top: 100%;
           left: 0;
-          margin-top: 4px;
+          margin-top: 3px;
           background: #ffffff;
           border: 1px solid #cbd5e1;
           border-radius: 6px;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-          padding: 6px;
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 5px;
-          z-index: 120;
-          min-width: 110px;
-        }
-        .anev-color-swatch {
-          width: 24px;
-          height: 24px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .anev-color-swatch:hover {
-          transform: scale(1.15);
-        }
-        .anev-menu-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          margin-top: 4px;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+          z-index: 1200;
           padding: 4px 0;
-          z-index: 120;
-          min-width: 195px;
+          min-width: 150px;
         }
-        .anev-menu-item {
-          padding: 6px 12px;
-          font-size: 0.78rem;
-          font-weight: 600;
+        .tb-dropdown.open .tb-dropdown-menu {
+          display: block;
+        }
+        .tb-menu-item {
+          padding: 6px 14px;
+          font-size: 0.80rem;
           color: #334155;
           cursor: pointer;
           display: flex;
           align-items: center;
           gap: 8px;
-          transition: background 0.1s;
+          user-select: none;
         }
-        .anev-menu-item:hover {
+        .tb-menu-item:hover {
           background: #f1f5f9;
           color: #0f172a;
+        }
+
+        /* STATUS BAR BOTTOM */
+        .gdocs-statusbar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #ffffff;
+          border-top: 1px solid #cbd5e1;
+          padding: 5px 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.75rem;
+          color: #475569;
+          z-index: 1000;
+          box-shadow: 0 -2px 6px rgba(0,0,0,0.04);
         }
 
         /* GOOGLE DOCS HORIZONTAL RULER */
@@ -983,7 +1246,7 @@ if (tbIdx === -1 || arIdx === -1) {
   throw new Error('tbIdx or arIdx not found: tb=' + tbIdx + ' ar=' + arIdx);
 }
 
-// Assemble full JSX: Context Menu + Toolbar + Workspace + 13 Sheets
+// Assemble full JSX: Context Menu + Toolbar + Workspace + 13 Sheets + Statusbar
 const contextMenuJsx = `
       // CONTEXT MENU (KLIK KANAN)
       contextMenu && (0,t.jsxs)("div",{
@@ -1006,15 +1269,15 @@ const contextMenuJsx = `
           }),
           contextMenu.type === "table" && (0,t.jsxs)(t.Fragment, {
             children: [
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableRow(true); setContextMenu(null); },children:"⬆️ Sisipkan Baris di Atas"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableRow(false); setContextMenu(null); },children:"⬇️ Sisipkan Baris di Bawah"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleDeleteTableRow(); setContextMenu(null); },children:"❌ Hapus Baris"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addRowAbove"); setContextMenu(null); },children:"⬆️ Sisipkan Baris di Atas"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addRowBelow"); setContextMenu(null); },children:"⬇️ Sisipkan Baris di Bawah"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("delRow"); setContextMenu(null); },children:"❌ Hapus Baris"}),
               (0,t.jsx)("div",{className:"anev-context-separator"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableCol(true); setContextMenu(null); },children:"⬅️ Sisipkan Kolom di Kiri"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableCol(false); setContextMenu(null); },children:"➡️ Sisipkan Kolom di Kanan"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleDeleteTableCol(); setContextMenu(null); },children:"❌ Hapus Kolom"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addColLeft"); setContextMenu(null); },children:"⬅️ Sisipkan Kolom di Kiri"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addColRight"); setContextMenu(null); },children:"➡️ Sisipkan Kolom di Kanan"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("delCol"); setContextMenu(null); },children:"❌ Hapus Kolom"}),
               (0,t.jsx)("div",{className:"anev-context-separator"}),
-              (0,t.jsx)("div",{className:"anev-context-item",style:{color:"#dc2626"},onClick:() => { handleDeleteTable(); setContextMenu(null); },children:"🗑️ Hapus Tabel"})
+              (0,t.jsx)("div",{className:"anev-context-item",style:{color:"#dc2626"},onClick:() => { handleTableAction("delTable"); setContextMenu(null); },children:"🗑️ Hapus Tabel"})
             ]
           }),
           contextMenu.type === "text" && (0,t.jsxs)(t.Fragment, {
@@ -1041,7 +1304,17 @@ const contextMenuJsx = `
 const toolbarAndWorkspace = getToolbarAndSheets();
 const allSheets = getAll13Sheets();
 
-const fullSection = contextMenuJsx + '\n' + toolbarAndWorkspace + '\n' + allSheets + '\n      ]})' + '\n    ]}),\n\n      ';
+const statusbarJsx = `
+          (0,t.jsxs)("div",{className:"gdocs-statusbar anev-no-print",children:[
+            (0,t.jsx)("div",{id:"statusPageInfo",children:"13 halaman"}),
+            (0,t.jsx)("div",{id:"statusWordInfo",children:"Memuat statistik dokumen..."}),
+            (0,t.jsxs)("div",{children:[
+              "Zoom: ",(0,t.jsx)("span",{id:"statusZoom",children:"100%"})," • Margin: 3cm / 2cm • A4 Portrait"
+            ]})
+          ]})
+`;
+
+const fullSection = contextMenuJsx + '\n' + toolbarAndWorkspace + '\n' + allSheets + '\n          ]}),\n' + statusbarJsx + '\n        ]})\n      ]}),\n\n      ';
 
 code = code.slice(0, tbIdx) + fullSection + code.slice(arIdx);
 
