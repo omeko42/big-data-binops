@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { getToolbarAndSheets, getAll13Sheets } from './build_full_word_sheets_13pages.mjs';
 
-console.log('Building official 13-page Word patch with perfect Google Docs/Word engine...');
+console.log('Building perfected Google Docs / Word editing experience (13 Pages Perkap)...');
 
 let code = fs.readFileSync('1s8uqnrz-0f75.patched.step1.js', 'utf8');
 
@@ -81,6 +81,34 @@ const newFns = `var lastActiveCell = null;
     function jumpToSection(id) {
       var el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleDocKop(enable) {
+      var kop = document.getElementById('docKopSurat');
+      var bOn = document.getElementById('btn-kop-header-on');
+      var bOff = document.getElementById('btn-kop-header-off');
+      var cOn = document.getElementById('btnCommentKopOn');
+      var cOff = document.getElementById('btnCommentKopOff');
+      if (kop) kop.style.display = enable ? 'block' : 'none';
+      if (bOn) { if (enable) bOn.classList.add('active'); else bOn.classList.remove('active'); }
+      if (bOff) { if (!enable) bOff.classList.add('active'); else bOff.classList.remove('active'); }
+      if (cOn) { if (enable) cOn.classList.add('active'); else cOn.classList.remove('active'); }
+      if (cOff) { if (!enable) cOff.classList.add('active'); else cOff.classList.remove('active'); }
+    }
+
+    function setDocSignerType(type) {
+      var elRank = document.getElementById('sigRankId');
+      var bPolri = document.getElementById('btn-ttd-polri');
+      var bPns = document.getElementById('btn-ttd-pns');
+      if (type === 'pns') {
+        if (elRank) elRank.innerText = 'PEMBINA UTAMA NIP 196909021991031001';
+        if (bPns) bPns.classList.add('active');
+        if (bPolri) bPolri.classList.remove('active');
+      } else {
+        if (elRank) elRank.innerText = 'KOMISARIS JENDERAL POLISI NRP 69090291';
+        if (bPolri) bPolri.classList.add('active');
+        if (bPns) bPns.classList.remove('active');
+      }
     }
 
     function toggleFindReplace(showReplace) {
@@ -291,7 +319,7 @@ const newFns = `var lastActiveCell = null;
     }
 
     function handleInsertLogo() {
-      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:70px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
+      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:75px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
       try {
         document.execCommand('insertHTML', false, imgHtml);
       } catch(e) {
@@ -308,7 +336,18 @@ const newFns = `var lastActiveCell = null;
           var num = i + 1;
           s.setAttribute('data-page', num);
           var h = s.querySelector('.anev-sheet-header');
-          if (h && num > 1) h.innerText = num;
+          if (h) {
+            if (num === 1) {
+              h.innerText = '';
+              h.style.height = '16px';
+            } else {
+              h.innerText = num;
+              h.style.textAlign = 'right';
+              h.style.fontWeight = '700';
+              h.style.fontSize = '10pt';
+              h.style.marginBottom = '14px';
+            }
+          }
           var disp = s.querySelector('.page-num-display');
           if (disp) disp.innerText = num;
         }
@@ -331,10 +370,29 @@ const newFns = `var lastActiveCell = null;
         newSheet.className = 'anev-page-sheet anev-print-sheet gdocs-page';
         newSheet.setAttribute('data-page', newPageNum);
 
+        var watermark = document.createElement('div');
+        watermark.className = 'anev-watermark-overlay';
+        watermark.setAttribute('contenteditable', 'false');
+        watermark.style.position = 'absolute';
+        watermark.style.top = '50%';
+        watermark.style.left = '50%';
+        watermark.style.transform = 'translate(-50%, -50%) rotate(-35deg)';
+        watermark.style.fontSize = '5.5rem';
+        watermark.style.fontWeight = '900';
+        watermark.style.color = '#000000';
+        watermark.style.opacity = '0.042';
+        watermark.style.letterSpacing = '6px';
+        watermark.style.pointerEvents = 'none';
+        watermark.style.userSelect = 'none';
+        watermark.style.zIndex = '1';
+        watermark.style.fontFamily = 'Arial, sans-serif';
+        watermark.innerText = activeNrp;
+        newSheet.appendChild(watermark);
+
         var header = document.createElement('div');
         header.className = 'anev-sheet-header';
         header.setAttribute('contenteditable', 'false');
-        header.style.textAlign = 'center';
+        header.style.textAlign = 'right';
         header.style.fontWeight = '700';
         header.style.fontSize = '10pt';
         header.style.marginBottom = '14px';
@@ -366,7 +424,7 @@ const newFns = `var lastActiveCell = null;
         catchword.style.color = '#475569';
         catchword.style.marginTop = '16px';
         catchword.style.userSelect = 'none';
-        catchword.innerText = '[*First Next Line Char] + [……]';
+        catchword.innerText = 'dst......';
         newSheet.appendChild(catchword);
 
         var footer = document.createElement('div');
@@ -642,7 +700,7 @@ const completeResolveAutoTags = `function resolveAutoTags() {
 
         var rawSatkerNama = repSatkerNama 
           ? repSatkerNama.toUpperCase() 
-          : (isMabes ? "BARESKRIM POLRI DAN JAJARAN" : (currentUser?.satker_nama ? currentUser.satker_nama.toUpperCase() : "BARESKRIM POLRI DAN JAJARAN"));
+          : (isMabes ? "BARESKRIM POLRI DAN POLDA JAJARAN" : (currentUser?.satker_nama ? currentUser.satker_nama.toUpperCase() : "BARESKRIM POLRI DAN POLDA JAJARAN"));
 
         var locSatker = isMabes 
           ? "" 
@@ -663,12 +721,12 @@ const completeResolveAutoTags = `function resolveAutoTags() {
           : (sTipe === "POLDA" ? "KAPOLDA " + locSatker : (sTipe === "POLRES" ? "KAPOLRES " + locSatker : "KAPOLSEK " + locSatker));
 
         var dates = computeDates();
-        var tAwal = dates.dStart ? new Date(dates.dStart).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : (reportData?.meta?.dateStart || "01 September 2026");
-        var tAkhir = dates.dEnd ? new Date(dates.dEnd).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" }) : (reportData?.meta?.dateEnd || "30 September 2026");
+        var tAwal = dates.dStart ? new Date(dates.dStart).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : (reportData?.meta?.dateStart || "1 Agustus 2026");
+        var tAkhir = dates.dEnd ? new Date(dates.dEnd).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : (reportData?.meta?.dateEnd || "31 Agustus 2026");
         var pMode = kpPeriodMode === "month" ? "BULANAN" : (kpPeriodMode === "year" ? "TAHUNAN" : "PERIODIK");
-        var detPeriod = reportData?.meta?.periodeLabel ? reportData.meta.periodeLabel.toUpperCase() : (dates.pLabel ? dates.pLabel.toUpperCase() : "SEPTEMBER 2026");
-        var prevPeriod = reportData?.meta?.prevPeriodeLabel ? reportData.meta.prevPeriodeLabel.toUpperCase() : "AGUSTUS 2026";
-        var todayFormatted = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+        var detPeriod = reportData?.meta?.periodeLabel ? reportData.meta.periodeLabel.toUpperCase() : (dates.pLabel ? dates.pLabel.toUpperCase() : "AGUSTUS 2026");
+        var prevPeriod = reportData?.meta?.prevPeriodeLabel ? reportData.meta.prevPeriodeLabel.toUpperCase() : "JULI 2026";
+        var todayFormatted = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
         var ctPrev = reportData?.kamtibmas?.ct?.prev || 38586;
         var ctCurr = reportData?.kamtibmas?.ct?.current || 39849;
@@ -903,6 +961,9 @@ const completeCss = `
           .tb-dropdown-menu,
           .gdocs-find-replace-box,
           .doc-outline-panel,
+          .gdocs-floating-outline-pill,
+          .gdocs-comment-bubble,
+          .anev-sticky-header,
           .anev-no-print {
             display: none !important;
           }
@@ -959,20 +1020,33 @@ const completeCss = `
           }
         }
 
-        /* SCREEN STYLING: EXACT 1:1 MATCH TO A4 SHEET */
+        /* SLIM CMS HEADER IN LAMPIRAN TAB */
+        .anev-sticky-header {
+          padding: 3px 16px !important;
+          background: #ffffff !important;
+          border-bottom: 1px solid #e2e8f0 !important;
+          box-shadow: none !important;
+        }
+        .anev-sticky-top-bar {
+          margin-bottom: 0 !important;
+          min-height: 32px !important;
+        }
+
+        /* SCREEN STYLING: EXACT 1:1 MATCH TO GOOGLE DOCS A4 CANVAS */
         .anev-wrapper {
           width: 100%;
           min-height: 100vh;
-          background: #f1f5f9;
+          background: #f0f4f9;
         }
         .anev-pages-workspace {
-          background: #cbd5e1;
-          padding: 24px 0 70px 0;
+          background: #f0f4f9;
+          padding: 20px 0 80px 0;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 25px;
+          gap: 26px;
           min-height: calc(100vh - 120px);
+          position: relative;
         }
         .gdocs-document-container {
           outline: none;
@@ -980,7 +1054,7 @@ const completeCss = `
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 25px;
+          gap: 26px;
           transition: transform 0.15s ease-out;
         }
         .anev-page-sheet {
@@ -988,28 +1062,28 @@ const completeCss = `
           box-sizing: border-box;
           width: 210mm;
           min-height: 297mm;
-          padding: 2cm 2cm 2cm 3cm; /* 2cm top, 2cm right, 2cm bottom, 3cm left matching @page! */
+          padding: 20mm 20mm 20mm 30mm; /* 2cm top, 2cm right, 2cm bottom, 3cm left */
           margin: 0 auto;
-          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
-          border-radius: 2px;
+          box-shadow: 0 1px 3px 1px rgba(60,64,67,.15), 0 1px 2px 0 rgba(60,64,67,.3);
+          border-radius: 0;
           position: relative;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           overflow: hidden;
           font-size: 10pt;
-          line-height: 1.45;
+          line-height: 1.5;
           color: #000000;
           font-family: Arial, "Times New Roman", Calibri, sans-serif;
         }
 
-        /* TYPOGRAPHY: DEFAULT JUSTIFY */
+        /* TYPOGRAPHY */
         .anev-page-sheet p,
         .anev-page-sheet div,
         .anev-page-sheet li {
           text-align: justify;
           text-justify: inter-word;
-          margin: 0.35rem 0;
+          margin: 0.3rem 0;
         }
 
         /* LOGO RESMI RESERSE (DELETABLE & MOVEABLE) */
@@ -1023,39 +1097,7 @@ const completeCss = `
           outline-offset: 3px;
         }
 
-        /* SECURITY STAMP & WATERMARK */
-        .anev-security-stamp {
-          border: 2px solid #dc2626;
-          color: #dc2626;
-          font-weight: 900;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          padding: 2px 14px;
-          border-radius: 4px;
-          font-size: 0.80rem;
-          display: inline-block;
-          margin-bottom: 6px;
-        }
-        .anev-watermark-overlay {
-          position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          pointer-events: none;
-          user-select: none;
-          z-index: 5;
-          opacity: 0.045;
-          transform: rotate(-25deg) scale(1.15);
-        }
-        .anev-watermark-line {
-          font-size: 1.15rem;
-          font-weight: 900;
-          font-family: monospace;
-          letter-spacing: 3px;
-          color: #000;
-          white-space: nowrap;
-          text-align: center;
-        }
-
-        /* TABLES: OFFICIAL BORDER & SPACING */
+        /* TABLES */
         .anev-table-naskah {
           width: 100%;
           border-collapse: collapse;
@@ -1079,7 +1121,7 @@ const completeCss = `
           font-weight: 800;
           font-size: 11pt;
           text-transform: uppercase;
-          margin: 10px 0 4px 0;
+          margin: 12px 0 4px 0;
           text-align: center;
           color: #000000;
         }
@@ -1093,7 +1135,7 @@ const completeCss = `
 
         /* PAGE FOOTER */
         .anev-page-footer {
-          border-top: 1px solid #cbd5e1;
+          border-top: 1px solid #e2e8f0;
           padding-top: 4px;
           margin-top: 8px;
           display: flex;
@@ -1108,12 +1150,12 @@ const completeCss = `
         .gdocs-root-app {
           width: 100%;
           min-height: 100vh;
-          background: #cbd5e1;
+          background: #f0f4f9;
         }
         .gdocs-top-header {
           background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
-          padding: 6px 16px;
+          border-bottom: 1px solid #dadce0;
+          padding: 6px 18px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1151,7 +1193,7 @@ const completeCss = `
           border-radius: 4px;
           padding: 1px 6px;
           background: transparent;
-          min-width: 340px;
+          min-width: 440px;
           outline: none;
           transition: border 0.15s, background 0.15s;
         }
@@ -1179,14 +1221,14 @@ const completeCss = `
         }
         .gdocs-cloud-status {
           font-size: 0.72rem;
-          color: #64748b;
+          color: #5f6368;
           display: inline-flex;
           align-items: center;
           margin-left: 6px;
           user-select: none;
         }
 
-        /* GOOGLE DOCS MENUBAR */
+        /* MENUBAR */
         .gdocs-menubar {
           display: flex;
           align-items: center;
@@ -1220,7 +1262,7 @@ const completeCss = `
           left: 0;
           margin-top: 2px;
           background: #ffffff;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #dadce0;
           border-radius: 6px;
           box-shadow: 0 8px 24px rgba(0,0,0,0.15);
           z-index: 2100;
@@ -1257,77 +1299,95 @@ const completeCss = `
           margin: 4px 0;
         }
 
-        /* TOP RIGHT ACTION BUTTONS */
+        /* TOP RIGHT ACTION CONTROLS */
         .gdocs-top-right {
           display: flex;
           align-items: center;
           gap: 8px;
         }
-        .gdocs-outline-btn {
-          height: 30px;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          padding: 0 10px;
-          font-size: 0.78rem;
-          font-weight: 600;
-          background: #ffffff;
-          color: #334155;
-          cursor: pointer;
+        .gdocs-ctrl-group {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          transition: background 0.1s;
-        }
-        .gdocs-outline-btn:hover {
-          background: #f1f5f9;
-          border-color: #94a3b8;
-        }
-        .gdocs-action-btn-outline {
-          height: 30px;
-          border: 1px solid #cbd5e1;
+          gap: 3px;
+          background: #f1f3f4;
+          padding: 2px 4px;
           border-radius: 6px;
-          padding: 0 12px;
-          font-size: 0.78rem;
+        }
+        .gdocs-ctrl-label {
+          font-size: 0.70rem;
+          font-weight: 700;
+          color: #5f6368;
+          margin: 0 3px;
+        }
+        .gdocs-pill-toggle {
+          height: 24px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: #475569;
+          font-size: 0.70rem;
+          font-weight: 600;
+          padding: 0 7px;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.12s;
+        }
+        .gdocs-pill-toggle:hover {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .gdocs-pill-toggle.active {
+          background: #ffffff;
+          border-color: #cbd5e1;
+          color: #1d4ed8;
+          font-weight: 800;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+
+        .gdocs-action-btn-outline {
+          height: 28px;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          padding: 0 10px;
+          font-size: 0.76rem;
           font-weight: 700;
           background: #ffffff;
-          color: #1e293b;
+          color: #3c4043;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 5px;
           transition: background 0.1s;
         }
         .gdocs-action-btn-outline:hover {
-          background: #f1f5f9;
-          border-color: #94a3b8;
+          background: #f1f3f4;
         }
         .gdocs-action-btn-primary {
-          height: 30px;
-          border: 1px solid #1d4ed8;
-          border-radius: 6px;
-          padding: 0 14px;
-          font-size: 0.78rem;
-          font-weight: 800;
-          background: #2563eb;
+          height: 28px;
+          border: 1px solid #1a73e8;
+          border-radius: 4px;
+          padding: 0 12px;
+          font-size: 0.76rem;
+          font-weight: 700;
+          background: #1a73e8;
           color: #ffffff;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+          gap: 5px;
+          box-shadow: 0 1px 2px rgba(26,115,232,0.3);
           transition: background 0.1s;
         }
         .gdocs-action-btn-primary:hover {
-          background: #1d4ed8;
+          background: #1557b0;
         }
 
         /* FLOATING FIND & REPLACE BOX */
         .gdocs-find-replace-box {
           position: fixed;
-          top: 120px;
+          top: 110px;
           right: 24px;
           background: #ffffff;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #dadce0;
           border-radius: 8px;
           box-shadow: 0 10px 30px rgba(0,0,0,0.18);
           padding: 12px 14px;
@@ -1344,21 +1404,21 @@ const completeCss = `
           outline: none;
         }
         .gdocs-find-input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 1.5px rgba(37,99,235,0.2);
+          border-color: #1a73e8;
+          box-shadow: 0 0 0 1.5px rgba(26,115,232,0.2);
         }
         .gdocs-btn-icon {
           background: none;
           border: none;
           cursor: pointer;
           font-size: 0.82rem;
-          color: #64748b;
+          color: #5f6368;
           padding: 2px 6px;
           border-radius: 4px;
         }
         .gdocs-btn-icon:hover {
-          background: #e2e8f0;
-          color: #0f172a;
+          background: #f1f3f4;
+          color: #202124;
         }
 
         /* GOOGLE DOCS WORKSPACE & OUTLINE LAYOUT */
@@ -1368,22 +1428,47 @@ const completeCss = `
           min-height: calc(100vh - 120px);
           position: relative;
         }
-        .doc-outline-panel {
-          width: 250px;
-          min-width: 250px;
+        .gdocs-floating-outline-pill {
+          position: fixed;
+          left: 14px;
+          top: 155px;
+          z-index: 1010;
           background: #ffffff;
-          border-right: 1px solid #cbd5e1;
-          height: calc(100vh - 130px);
-          position: sticky;
-          top: 130px;
+          border: 1px solid #dadce0;
+          box-shadow: 0 1px 4px rgba(60,64,67,0.25);
+          border-radius: 20px;
+          padding: 5px 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #3c4043;
+          transition: all 0.15s;
+        }
+        .gdocs-floating-outline-pill:hover {
+          background: #f1f3f4;
+          color: #1a73e8;
+          box-shadow: 0 2px 8px rgba(60,64,67,0.3);
+        }
+        .doc-outline-panel {
+          position: fixed;
+          left: 0;
+          top: 120px;
+          bottom: 0;
+          width: 250px;
+          background: #ffffff;
+          border-right: 1px solid #dadce0;
+          box-shadow: 4px 0 16px rgba(60,64,67,0.15);
+          z-index: 1020;
+          padding: 14px 12px;
           overflow-y: auto;
-          padding: 12px 10px;
-          box-shadow: 2px 0 8px rgba(0,0,0,0.03);
-          z-index: 990;
-          transition: width 0.2s, margin 0.2s;
+          transition: transform 0.2s ease-in-out;
         }
         .doc-outline-panel.collapsed {
-          display: none;
+          transform: translateX(-100%);
+          display: block;
         }
         .doc-outline-header {
           display: flex;
@@ -1423,15 +1508,103 @@ const completeCss = `
           color: #475569;
         }
 
+        /* REAL GOOGLE DOCS COMMENT BUBBLE (AGUNG KRISDIANTO) */
+        .gdocs-comment-bubble {
+          position: absolute;
+          top: 55px;
+          left: calc(50% + 112mm);
+          width: 235px;
+          background: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(60,64,67,0.18), 0 1px 3px rgba(60,64,67,0.12);
+          border: 1px solid #dadce0;
+          padding: 10px 12px;
+          z-index: 100;
+          user-select: none;
+        }
+        @media (max-width: 1400px) {
+          .gdocs-comment-bubble {
+            right: 16px;
+            left: auto;
+          }
+        }
+        .gdocs-comment-bubble-head {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+        }
+        .gdocs-comment-avatar {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: #1a73e8;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.70rem;
+          font-weight: 700;
+        }
+        .gdocs-comment-info {
+          display: flex;
+          flex-direction: column;
+        }
+        .gdocs-comment-author {
+          font-size: 0.76rem;
+          font-weight: 700;
+          color: #202124;
+        }
+        .gdocs-comment-time {
+          font-size: 0.66rem;
+          color: #5f6368;
+        }
+        .gdocs-comment-msg {
+          font-size: 0.80rem;
+          font-weight: 700;
+          color: #1e293b;
+          background: #fef08a;
+          padding: 4px 8px;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          border-left: 3px solid #eab308;
+        }
+        .gdocs-comment-btn-group {
+          display: flex;
+          gap: 6px;
+        }
+        .gdocs-comment-action-btn {
+          flex: 1;
+          height: 25px;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          background: #f8f9fa;
+          font-size: 0.70rem;
+          font-weight: 700;
+          color: #3c4043;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .gdocs-comment-action-btn:hover {
+          background: #e8f0fe;
+          border-color: #1a73e8;
+          color: #1a73e8;
+        }
+        .gdocs-comment-action-btn.active {
+          background: #1a73e8;
+          border-color: #1a73e8;
+          color: #ffffff;
+        }
+
         /* GOOGLE DOCS STICKY TOOLBAR */
         .gdocs-toolbar, .anev-docs-toolbar {
           position: sticky;
           top: var(--cms-header-h, 0px);
           z-index: 1000;
-          background: #f8fafc;
-          border-bottom: 1px solid #cbd5e1;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 4px 14px;
+          background: #edf2fa;
+          border-bottom: 1px solid #dadce0;
+          box-shadow: 0 1px 3px rgba(60,64,67,0.08);
+          padding: 3px 14px;
           display: flex;
           align-items: center;
           gap: 2px;
@@ -1441,52 +1614,51 @@ const completeCss = `
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          min-width: 28px;
-          height: 28px;
-          padding: 2px 6px;
+          min-width: 26px;
+          height: 26px;
+          padding: 2px 5px;
           border-radius: 4px;
           border: 1px solid transparent;
           background: transparent;
-          color: #334155;
-          font-size: 0.82rem;
+          color: #3c4043;
+          font-size: 0.80rem;
           font-weight: 700;
           cursor: pointer;
           user-select: none;
           transition: background 0.1s;
         }
         .anev-tool-btn:hover, .tb-btn:hover {
-          background: #e2e8f0;
-          color: #0f172a;
+          background: #e0e6ed;
+          color: #202124;
         }
         .anev-tool-btn.active, .tb-btn.active {
-          background: #dbeafe !important;
-          color: #1d4ed8 !important;
-          border-color: #93c5fd !important;
+          background: #d3e3fd !important;
+          color: #041e49 !important;
+          border-color: #a8c7fa !important;
         }
         .anev-tool-separator, .tb-sep {
           width: 1px;
-          height: 20px;
-          background: #cbd5e1;
-          margin: 0 4px;
+          height: 18px;
+          background: #dadce0;
+          margin: 0 3px;
         }
         .tb-select-btn {
-          height: 28px;
-          border: 1px solid #cbd5e1;
+          height: 26px;
+          border: 1px solid transparent;
           border-radius: 4px;
-          padding: 0 8px;
-          font-size: 0.80rem;
+          padding: 0 6px;
+          font-size: 0.78rem;
           font-weight: 600;
-          background: #ffffff;
-          color: #334155;
+          background: transparent;
+          color: #3c4043;
           cursor: pointer;
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           user-select: none;
         }
         .tb-select-btn:hover {
-          background: #f8fafc;
-          border-color: #94a3b8;
+          background: #e0e6ed;
         }
 
         /* DROPDOWNS */
@@ -1501,7 +1673,7 @@ const completeCss = `
           left: 0;
           margin-top: 3px;
           background: #ffffff;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #dadce0;
           border-radius: 6px;
           box-shadow: 0 8px 24px rgba(0,0,0,0.14);
           z-index: 1200;
@@ -1533,48 +1705,47 @@ const completeCss = `
           left: 0;
           right: 0;
           background: #ffffff;
-          border-top: 1px solid #cbd5e1;
+          border-top: 1px solid #dadce0;
           padding: 5px 24px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-size: 0.75rem;
-          color: #475569;
+          color: #5f6368;
           z-index: 1000;
-          box-shadow: 0 -2px 6px rgba(0,0,0,0.04);
+          box-shadow: 0 -1px 4px rgba(60,64,67,0.08);
         }
 
-        /* GOOGLE DOCS HORIZONTAL RULER */
+        /* HORIZONTAL RULER */
         .anev-ruler-bar {
           display: flex;
           justify-content: center;
-          background: #cbd5e1;
-          padding: 4px 0;
-          border-bottom: 1px solid #94a3b8;
+          background: #f0f4f9;
+          padding: 2px 0 6px 0;
           position: sticky;
-          top: 36px;
+          top: 32px;
           z-index: 999;
         }
         .anev-ruler {
           width: 210mm;
-          height: 24px;
+          height: 22px;
           background: #ffffff;
-          border: 1px solid #94a3b8;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          border: 1px solid #dadce0;
+          box-shadow: 0 1px 3px rgba(60,64,67,0.1);
           display: flex;
           position: relative;
           user-select: none;
         }
         .anev-ruler-left-margin {
           width: 30mm;
-          background: #e2e8f0;
-          border-right: 1.5px solid #64748b;
+          background: #e8eaed;
+          border-right: 1.5px solid #5f6368;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 7.5pt;
           font-weight: 700;
-          color: #64748b;
+          color: #5f6368;
         }
         .anev-ruler-body {
           width: 160mm;
@@ -1586,14 +1757,14 @@ const completeCss = `
         }
         .anev-ruler-right-margin {
           width: 20mm;
-          background: #e2e8f0;
-          border-left: 1.5px solid #64748b;
+          background: #e8eaed;
+          border-left: 1.5px solid #5f6368;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 7.5pt;
           font-weight: 700;
-          color: #64748b;
+          color: #5f6368;
         }
         .gdocs-ruler-marker-top {
           position: absolute;
@@ -1603,7 +1774,7 @@ const completeCss = `
           height: 0;
           border-left: 5px solid transparent;
           border-right: 5px solid transparent;
-          border-top: 6px solid #2563eb;
+          border-top: 6px solid #1a73e8;
           cursor: ew-resize;
           z-index: 5;
         }
@@ -1615,7 +1786,7 @@ const completeCss = `
           height: 0;
           border-left: 5px solid transparent;
           border-right: 5px solid transparent;
-          border-bottom: 6px solid #2563eb;
+          border-bottom: 6px solid #1a73e8;
           cursor: ew-resize;
           z-index: 5;
         }
@@ -1627,16 +1798,16 @@ const completeCss = `
           height: 0;
           border-left: 5px solid transparent;
           border-right: 5px solid transparent;
-          border-top: 6px solid #2563eb;
+          border-top: 6px solid #1a73e8;
           cursor: ew-resize;
           z-index: 5;
         }
 
-        /* CONTEXT MENU (KLIK KANAN) */
+        /* CONTEXT MENU */
         .anev-context-menu {
           position: fixed;
           background: #ffffff;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #dadce0;
           border-radius: 6px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
           min-width: 200px;

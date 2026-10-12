@@ -17,5 +17,11 @@ http.get('http://10.0.0.x:3000/_next/static/chunks/1s8uqnrz-0f75.js', res => {
     console.log('Contains docFindReplaceBox:', d.includes('docFindReplaceBox'));
     console.log('Contains gdocs-menubar:', d.includes('gdocs-menubar'));
     console.log('Contains statusWordInfo:', d.includes('statusWordInfo'));
+    console.log('Contains DRAFT FORMAT title:', d.includes('DRAFT FORMAT LAPORAN HARIAN - MINGGUAN RESERSE - SHARE'));
+    console.log('Contains docKopSurat:', d.includes('docKopSurat'));
+    console.log('Contains gdocsCommentKop (KALO PAKE KOP):', d.includes('KALO PAKE KOP'));
+    console.log('Contains Opsi TTD (btn-ttd-polri):', d.includes('btn-ttd-polri'));
+    console.log('Contains BIRO PEMBINAAN OPERASIONAL:', d.includes('BIRO PEMBINAAN OPERASIONAL'));
+    console.log('Contains Top Right Page Numbering logic:', d.includes('textAlign:"right",fontWeight:700,fontSize:"10pt"'));
   });
 });
