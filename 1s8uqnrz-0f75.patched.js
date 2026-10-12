@@ -411,6 +411,122 @@ e.s(["default",0,function(){
 
     var lastActiveCell = null;
     var currentFontSizePt = 10;
+    var activeMenubarId = null;
+
+    function toggleMenubar(id) {
+      var m = document.getElementById(id);
+      if (!m) return;
+      var isOpen = m.classList.contains('open');
+      closeAllMenubars();
+      if (!isOpen) {
+        m.classList.add('open');
+        activeMenubarId = id;
+      } else {
+        activeMenubarId = null;
+      }
+    }
+
+    function hoverMenubar(id) {
+      if (activeMenubarId && activeMenubarId !== id) {
+        closeAllMenubars();
+        var m = document.getElementById(id);
+        if (m) {
+          m.classList.add('open');
+          activeMenubarId = id;
+        }
+      }
+    }
+
+    function closeAllMenubars() {
+      var allM = document.querySelectorAll('.gdocs-menu-item.open');
+      for (var i = 0; i < allM.length; i++) allM[i].classList.remove('open');
+      activeMenubarId = null;
+    }
+
+    function toggleDocOutline() {
+      var p = document.getElementById('docOutlinePanel');
+      if (p) p.classList.toggle('collapsed');
+    }
+
+    function toggleDocRuler() {
+      var r = document.querySelector('.anev-ruler-bar');
+      if (r) r.style.display = (r.style.display === 'none') ? 'flex' : 'none';
+    }
+
+    function jumpToSection(id) {
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleFindReplace(showReplace) {
+      var box = document.getElementById('docFindReplaceBox');
+      if (!box) return;
+      var rf = document.getElementById('replaceFields');
+      if (rf) rf.style.display = showReplace ? 'flex' : 'none';
+      box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+      if (box.style.display === 'block') {
+        var inp = document.getElementById('docFindInput');
+        if (inp) { inp.focus(); inp.select(); }
+      }
+    }
+
+    function closeFindReplace() {
+      var box = document.getElementById('docFindReplaceBox');
+      if (box) box.style.display = 'none';
+    }
+
+    function handleDocFind(text, forward) {
+      if (!text) return;
+      if (window.find) {
+        var found = window.find(text, false, !forward, true, false, true, false);
+        var countEl = document.getElementById('findMatchCount');
+        if (countEl) countEl.innerText = found ? 'Ditemukan' : 'Tidak ada';
+        return found;
+      }
+    }
+
+    function handleDocReplace(findText, replaceText) {
+      if (!findText) return;
+      var sel = window.getSelection();
+      if (sel && sel.toString().toLowerCase() === findText.toLowerCase()) {
+        document.execCommand('insertText', false, replaceText);
+      }
+      handleDocFind(findText, true);
+    }
+
+    function handleDocReplaceAll(findText, replaceText) {
+      var editor = document.getElementById('docEditor');
+      if (!editor || !findText) return;
+      var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+      var node, count = 0;
+      var nodes = [];
+      while ((node = walker.nextNode())) nodes.push(node);
+      var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      nodes.forEach(function(n) {
+        if (regex.test(n.nodeValue)) {
+          n.nodeValue = n.nodeValue.replace(regex, replaceText);
+          count++;
+        }
+      });
+      updateDocStats();
+      var countEl = document.getElementById('findMatchCount');
+      if (countEl) countEl.innerText = count + ' diganti';
+      alert('Berhasil mengganti ' + count + ' teks.');
+    }
+
+    function handleCopyDocumentText() {
+      var editor = document.getElementById('docEditor');
+      if (editor && navigator.clipboard) {
+        navigator.clipboard.writeText(editor.innerText).then(function() {
+          alert('Naskah dinas berhasil disalin ke papan klip (clipboard).');
+        });
+      }
+    }
+
+    function handleInsertSecurityStamp() {
+      var html = '<div style="text-align:center;margin:6px 0;"><span class="anev-security-stamp">KLASIFIKASI: RAHASIA</span></div>';
+      try { document.execCommand('insertHTML', false, html); } catch(e) {}
+    }
 
     function toggleDocDropdown(id) {
       var d = document.getElementById(id);
@@ -734,6 +850,9 @@ e.s(["default",0,function(){
         if (!e.target.closest('.tb-dropdown')) {
           closeAllDocDropdowns();
         }
+        if (!e.target.closest('.gdocs-menu-item')) {
+          closeAllMenubars();
+        }
         var cell = e.target.closest('td, th');
         if (cell) lastActiveCell = cell;
       }
@@ -743,6 +862,24 @@ e.s(["default",0,function(){
       }
 
       function handleCrossPageKeys(e) {
+        if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
+          e.preventDefault();
+          toggleFindReplace(false);
+          return;
+        }
+        if (e.ctrlKey && (e.key === 'h' || e.key === 'H')) {
+          e.preventDefault();
+          toggleFindReplace(true);
+          return;
+        }
+        if (e.key === 'Escape') {
+          closeFindReplace();
+          closeAllMenubars();
+          closeAllDocDropdowns();
+          setContextMenu(null);
+          return;
+        }
+
         var sel = window.getSelection();
         if (!sel || !sel.isCollapsed) return;
 
@@ -1985,6 +2122,7 @@ e.s(["default",0,function(){
             background: transparent !important;
           }
           .anev-docs-toolbar,
+          .gdocs-top-header,
           .gdocs-menubar,
           .gdocs-toolbar,
           .anev-ruler-bar,
@@ -1992,8 +2130,16 @@ e.s(["default",0,function(){
           .anev-sheet-corner-pill,
           .gdocs-statusbar,
           .tb-dropdown-menu,
+          .gdocs-find-replace-box,
+          .doc-outline-panel,
           .anev-no-print {
             display: none !important;
+          }
+          .gdocs-editor-layout-wrapper {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .anev-pages-workspace,
           .gdocs-document-container {
@@ -2187,35 +2333,323 @@ e.s(["default",0,function(){
           z-index: 10;
         }
 
-        /* GOOGLE DOCS MENUBAR */
-        .gdocs-menubar {
+        /* GOOGLE DOCS TOP HEADER & MENUS */
+        .gdocs-root-app {
+          width: 100%;
+          min-height: 100vh;
+          background: #cbd5e1;
+        }
+        .gdocs-top-header {
           background: #ffffff;
           border-bottom: 1px solid #e2e8f0;
-          padding: 3px 16px;
+          padding: 6px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          position: sticky;
+          top: 0;
+          z-index: 1100;
+        }
+        .gdocs-top-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .gdocs-app-icon {
+          font-size: 1.8rem;
+          line-height: 1;
+          user-select: none;
+          cursor: pointer;
+        }
+        .gdocs-doc-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .gdocs-title-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .gdocs-title-input {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #1e293b;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 1px 6px;
+          background: transparent;
+          min-width: 340px;
+          outline: none;
+          transition: border 0.15s, background 0.15s;
+        }
+        .gdocs-title-input:hover {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+        }
+        .gdocs-title-input:focus {
+          border-color: #2563eb;
+          background: #ffffff;
+          box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+        }
+        .gdocs-star-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.9rem;
+          padding: 2px;
+          opacity: 0.7;
+          transition: opacity 0.15s;
+        }
+        .gdocs-star-btn:hover {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        .gdocs-cloud-status {
+          font-size: 0.72rem;
+          color: #64748b;
+          display: inline-flex;
+          align-items: center;
+          margin-left: 6px;
+          user-select: none;
+        }
+
+        /* GOOGLE DOCS MENUBAR */
+        .gdocs-menubar {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .gdocs-menu-item {
+          position: relative;
+          display: inline-block;
+        }
+        .gdocs-menu-trigger {
+          background: none;
+          border: none;
+          font-size: 0.82rem;
+          font-weight: 500;
+          color: #334155;
+          padding: 2px 7px;
+          border-radius: 4px;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.1s;
+        }
+        .gdocs-menu-trigger:hover,
+        .gdocs-menu-item.open .gdocs-menu-trigger {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .gdocs-menu-dropdown {
+          display: none;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          margin-top: 2px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          z-index: 2100;
+          min-width: 220px;
+          padding: 4px 0;
+        }
+        .gdocs-menu-item.open .gdocs-menu-dropdown {
+          display: block;
+        }
+        .gdocs-dropdown-entry {
+          padding: 6px 14px;
+          font-size: 0.80rem;
+          color: #334155;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          user-select: none;
+          gap: 12px;
+        }
+        .gdocs-dropdown-entry:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+        }
+        .gdocs-shortcut-badge {
+          font-size: 0.70rem;
+          color: #94a3b8;
+          font-family: monospace;
+          font-weight: 600;
+        }
+        .gdocs-dropdown-separator {
+          height: 1px;
+          background: #e2e8f0;
+          margin: 4px 0;
+        }
+
+        /* TOP RIGHT ACTION BUTTONS */
+        .gdocs-top-right {
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 0.80rem;
         }
-        .gdocs-menu-title {
-          font-weight: 800;
-          color: #1e293b;
-          margin-right: 10px;
-          display: flex;
-          align-items: center;
-        }
-        .gdocs-menu-btn {
-          background: none;
-          border: none;
-          padding: 2px 7px;
-          border-radius: 4px;
+        .gdocs-outline-btn {
+          height: 30px;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 0 10px;
           font-size: 0.78rem;
+          font-weight: 600;
+          background: #ffffff;
           color: #334155;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.1s;
         }
-        .gdocs-menu-btn:hover {
+        .gdocs-outline-btn:hover {
           background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+        .gdocs-action-btn-outline {
+          height: 30px;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 0 12px;
+          font-size: 0.78rem;
+          font-weight: 700;
+          background: #ffffff;
+          color: #1e293b;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.1s;
+        }
+        .gdocs-action-btn-outline:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+        .gdocs-action-btn-primary {
+          height: 30px;
+          border: 1px solid #1d4ed8;
+          border-radius: 6px;
+          padding: 0 14px;
+          font-size: 0.78rem;
+          font-weight: 800;
+          background: #2563eb;
+          color: #ffffff;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+          transition: background 0.1s;
+        }
+        .gdocs-action-btn-primary:hover {
+          background: #1d4ed8;
+        }
+
+        /* FLOATING FIND & REPLACE BOX */
+        .gdocs-find-replace-box {
+          position: fixed;
+          top: 120px;
+          right: 24px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+          padding: 12px 14px;
+          z-index: 2500;
+          width: 340px;
+        }
+        .gdocs-find-input {
+          flex: 1;
+          height: 28px;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          padding: 0 8px;
+          font-size: 0.78rem;
+          outline: none;
+        }
+        .gdocs-find-input:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 1.5px rgba(37,99,235,0.2);
+        }
+        .gdocs-btn-icon {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.82rem;
+          color: #64748b;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+        .gdocs-btn-icon:hover {
+          background: #e2e8f0;
           color: #0f172a;
+        }
+
+        /* GOOGLE DOCS WORKSPACE & OUTLINE LAYOUT */
+        .gdocs-editor-layout-wrapper {
+          display: flex;
+          width: 100%;
+          min-height: calc(100vh - 120px);
+          position: relative;
+        }
+        .doc-outline-panel {
+          width: 250px;
+          min-width: 250px;
+          background: #ffffff;
+          border-right: 1px solid #cbd5e1;
+          height: calc(100vh - 130px);
+          position: sticky;
+          top: 130px;
+          overflow-y: auto;
+          padding: 12px 10px;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+          z-index: 990;
+          transition: width 0.2s, margin 0.2s;
+        }
+        .doc-outline-panel.collapsed {
+          display: none;
+        }
+        .doc-outline-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 8px;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #e2e8f0;
+          font-weight: 800;
+          color: #1e293b;
+        }
+        .doc-outline-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .outline-item {
+          padding: 5px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.78rem;
+          color: #334155;
+          transition: background 0.1s, color 0.1s;
+        }
+        .outline-item:hover {
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+        .outline-level-1 {
+          font-weight: 700;
+          margin-top: 6px;
+          color: #0f172a;
+        }
+        .outline-level-2 {
+          padding-left: 18px;
+          font-size: 0.74rem;
+          color: #475569;
         }
 
         /* GOOGLE DOCS STICKY TOOLBAR */
@@ -2881,6 +3315,11 @@ e.s(["default",0,function(){
           })
         ]}),
 
+      // Close anev-sticky-header
+      null
+      ]}),
+
+      
       // CONTEXT MENU (KLIK KANAN)
       contextMenu && (0,t.jsxs)("div",{
         className: "anev-context-menu anev-no-print",
@@ -2934,258 +3373,533 @@ e.s(["default",0,function(){
       }),
 
 
+      
         // TAB 1: NASKAH DINAS (EDITOR WYSIWYG)
-        // GOOGLE DOCS / MS WORD MENUBAR
-        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"gdocs-menubar anev-no-print",children:[
-          (0,t.jsxs)("div",{className:"gdocs-menu-title",children:[
-            (0,t.jsx)("span",{style:{color:"#2563eb",fontSize:"1.1rem",marginRight:"4px"},children:"📄"}),
-            " Google Docs / MS Word Editor"
-          ]}),
-          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();window.print()},children:"File (Cetak)"}),
-          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();runDocCmd("undo")},children:"Edit (Undo)"}),
-          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak()},children:"Sisipkan (Page Break)"}),
-          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();runDocCmd("bold")},children:"Format (Tebal)"}),
-          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",style:{color:"#2563eb",fontWeight:700},onMouseDown:e=>{e.preventDefault();resolveAutoTags()},children:"Alat (Sinkron Data CAS)"})
-        ]}),
+        // GOOGLE DOCS / MS WORD ROOT CONTAINER
+        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"gdocs-root-app",children:[
 
-        // BARIS 3: MS WORD / GOOGLE DOCS TOOLBAR
-        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"gdocs-toolbar anev-docs-toolbar anev-no-print",children:[
-          // 1. Undo, Redo, Print, RemoveFormat
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Urungkan (Ctrl+Z)",onMouseDown:e=>{e.preventDefault();runDocCmd("undo")},children:"↶"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Ulangi (Ctrl+Y)",onMouseDown:e=>{e.preventDefault();runDocCmd("redo")},children:"↷"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Cetak Naskah (Ctrl+P)",onMouseDown:e=>{e.preventDefault();window.print()},children:"🖨️"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Hapus Format (Clear Formatting)",onMouseDown:e=>{e.preventDefault();runDocCmd("removeFormat")},children:"🧹"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+          // BARIS 1: GOOGLE DOCS TOP HEADER (APP ICON, TITLE INPUT, STAR, CLOUD STATUS, AUTHENTIC MENUBAR & ACTIONS)
+          (0,t.jsxs)("div",{className:"gdocs-top-header anev-no-print",children:[
+            (0,t.jsxs)("div",{className:"gdocs-top-left",children:[
+              (0,t.jsx)("div",{className:"gdocs-app-icon",title:"Google Docs / Word Editor - Bareskrim Polri",children:"📄"}),
+              (0,t.jsxs)("div",{className:"gdocs-doc-info",children:[
+                (0,t.jsxs)("div",{className:"gdocs-title-row",children:[
+                  (0,t.jsx)("input",{
+                    id:"docTitleInput",
+                    className:"gdocs-title-input",
+                    defaultValue:"LAPORAN BULANAN ANEV PUSAT DAN JAJARAN",
+                    title:"Klik untuk mengganti nama dokumen",
+                    spellCheck:false
+                  }),
+                  (0,t.jsx)("button",{type:"button",className:"gdocs-star-btn",title:"Bintang (Favorit)",children:"⭐"}),
+                  (0,t.jsxs)("span",{className:"gdocs-cloud-status",children:[
+                    (0,t.jsx)("span",{style:{marginRight:"4px"},children:"☁️"}),
+                    "Tersimpan di Cloud CAS"
+                  ]})
+                ]}),
+                // AUTHENTIC GOOGLE DOCS MENUBAR DROPDOWNS
+                (0,t.jsxs)("div",{className:"gdocs-menubar",children:[
+                  // 1. FILE MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-file",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-file")},onMouseEnter:()=>hoverMenubar("menu-file"),children:"File"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();window.print();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🖨️ Cetak Dokumen"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+P"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📄 Halaman Baru (Page Break)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+Enter"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();resolveAutoTags();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{style:{color:"#2563eb",fontWeight:700},children:"✨ Sinkronkan Data dari CAS"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Auto"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();handleCopyDocumentText();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📋 Salin Seluruh Naskah"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+A"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();alert("Standar Naskah Dinas Polri:\n• Ukuran Kertas: A4 (210 x 297 mm)\n• Orientasi: Portrait\n• Margin Kiri: 3 cm\n• Margin Kanan, Atas & Bawah: 2 cm\n• Huruf Default: Arial / Times New Roman 10pt\n• Spasi: 1.45 Standar Perkap");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"⚙️ Penataan Halaman (A4 Portrait)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"3cm / 2cm"})
+                      ]})
+                    ]})
+                  ]}),
 
-          // 2. Zoom Dropdown
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"zoomDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("zoomDropdown")},children:[
-              (0,t.jsx)("span",{id:"tb-zoom-label",children:"100%"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"100px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.75,"75%")},children:"75%"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.90,"90%")},children:"90%"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.00,"100%")},children:"100%"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.25,"125%")},children:"125%"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.50,"150%")},children:"150%"})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+                  // 2. EDIT MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-edit",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-edit")},onMouseEnter:()=>hoverMenubar("menu-edit"),children:"Edit"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("undo");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"↶ Urungkan"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+Z"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("redo");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"↷ Ulangi"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+Y"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("selectAll");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔲 Pilih Semua"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+A"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();toggleFindReplace(false);closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔍 Temukan (Cari Teks)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+F"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();toggleFindReplace(true);closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔁 Temukan dan Ganti"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+H"})
+                      ]})
+                    ]})
+                  ]}),
 
-          // 3. Paragraph Style Dropdown
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"styleDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("styleDropdown")},children:[
-              (0,t.jsx)("span",{id:"tb-style-label",children:"Teks normal"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("p","Teks normal")},children:(0,t.jsx)("span",{style:{fontSize:"10pt"},children:"Teks normal"})}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h1","Judul Utama")},children:(0,t.jsx)("b",{style:{fontSize:"13pt"},children:"Judul Utama"})}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h2","Subjudul")},children:(0,t.jsx)("b",{style:{fontSize:"11.5pt"},children:"Subjudul"})}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h3","Tajuk 3")},children:(0,t.jsx)("b",{style:{fontSize:"10.5pt"},children:"Tajuk 3"})})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+                  // 3. TAMPILAN MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-view",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-view")},onMouseEnter:()=>hoverMenubar("menu-view"),children:"Tampilan"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"✓ Tata Letak Cetak (Print Layout)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Aktif"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();toggleDocRuler();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📏 Tampilkan Penggaris (Ruler)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Toggle"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();toggleDocOutline();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📑 Tampilkan Kerangka Naskah"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Toggle"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.0,"100%");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔍 Perbesaran 100%"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Normal"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.25,"125%");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔍 Perbesaran 125%"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Besar"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.75,"75%");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🔍 Perbesaran 75%"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Kecil"})
+                      ]})
+                    ]})
+                  ]}),
 
-          // 4. Font Family Dropdown
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"fontDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"95px"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("fontDropdown")},children:[
-              (0,t.jsx)("span",{id:"tb-font-label",children:"Arial"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"160px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Arial"},onMouseDown:e=>{e.preventDefault();setDocFontName("Arial")},children:"Arial"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Times New Roman'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Times New Roman")},children:"Times New Roman"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Calibri"},onMouseDown:e=>{e.preventDefault();setDocFontName("Calibri")},children:"Calibri"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Georgia"},onMouseDown:e=>{e.preventDefault();setDocFontName("Georgia")},children:"Georgia"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Courier New'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Courier New")},children:"Courier New"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Verdana"},onMouseDown:e=>{e.preventDefault();setDocFontName("Verdana")},children:"Verdana"})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+                  // 4. SISIPKAN MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-insert",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-insert")},onMouseEnter:()=>hoverMenubar("menu-insert"),children:"Sisipkan"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();handleInsertLogo();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🖼️ Lambang Reserse Polri"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Gambar"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();insertCustomTable(3, 4);closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📊 Tabel Data (3x4)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Tabel"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📄 Pemisah Halaman (Page Break)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+Enter"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("insertHorizontalRule");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"➖ Garis Horizontal"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Garis"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();handleInsertSecurityStamp();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🛡️ Cap Klasifikasi RAHASIA"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Perkap"})
+                      ]})
+                    ]})
+                  ]}),
 
-          // 5. Font Size Decrement, Dropdown, Increment
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kecilkan Huruf (Font Size -)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(-1)},children:"−"}),
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"sizeDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"48px",justifyContent:"center"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("sizeDropdown")},children:[
-              (0,t.jsx)("span",{id:"tb-size-label",children:"10"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"65px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(8)},children:"8"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(9)},children:"9"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(10)},children:"10"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(11)},children:"11"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(12)},children:"12"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(14)},children:"14"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(16)},children:"16"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(18)},children:"18"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(20)},children:"20"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(24)},children:"24"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(32)},children:"32"})
-            ]})
-          ]}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Besarkan Huruf (Font Size +)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(1)},children:"+"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+                  // 5. FORMAT MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-format",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-format")},onMouseEnter:()=>hoverMenubar("menu-format"),children:"Format"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("bold");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"B Tebal"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+B"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("italic");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"I Miring"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+I"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("underline");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"U Garis Bawah"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+U"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("strikeThrough");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"S Coretan"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Strike"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyFull");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"≡ Rata Justify (Kanan-Kiri)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Standar"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyLeft");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"⇤ Rata Kiri"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Left"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyCenter");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"⇎ Rata Tengah"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Center"})
+                      ]}),
+                      (0,t.jsx)("div",{className:"gdocs-dropdown-separator"}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.45");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"↕ Spasi 1.45 (Standar Polri)"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Perkap"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();runDocCmd("removeFormat");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🧹 Hapus Format"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Ctrl+Clear"})
+                      ]})
+                    ]})
+                  ]}),
 
-          // 6. Bold, Italic, Underline, Strike
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-bold",className:"anev-tool-btn",title:"Tebal (Ctrl+B)",onMouseDown:e=>{e.preventDefault();runDocCmd("bold")},children:(0,t.jsx)("b",{children:"B"})}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-italic",className:"anev-tool-btn",title:"Miring (Ctrl+I)",onMouseDown:e=>{e.preventDefault();runDocCmd("italic")},children:(0,t.jsx)("i",{children:"I"})}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-underline",className:"anev-tool-btn",title:"Garis Bawah (Ctrl+U)",onMouseDown:e=>{e.preventDefault();runDocCmd("underline")},children:(0,t.jsx)("u",{children:"U"})}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-strike",className:"anev-tool-btn",title:"Coretan (Strike)",onMouseDown:e=>{e.preventDefault();runDocCmd("strikeThrough")},children:(0,t.jsx)("s",{children:"S"})}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 7. Text Color Palette
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"textColorDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Teks",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("textColorDropdown")},children:[
-              (0,t.jsx)("span",{style:{color:"#dc2626",fontWeight:900,textDecoration:"underline"},children:"A"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#000000",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#000000")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#475569",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#475569")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#dc2626",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#dc2626")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ea580c",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ea580c")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ca8a04",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ca8a04")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#16a34a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#16a34a")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#0284c7",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#0284c7")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#2563eb",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#2563eb")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#7c3aed",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#7c3aed")}}),
-              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#db2777",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#db2777")}})
-            ]})
-          ]}),
-
-          // 8. Highlight Color Palette
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"bgColorDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Sorotan (Stabilo)",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("bgColorDropdown")},children:[
-              (0,t.jsx)("span",{style:{background:"#fef08a",padding:"0 3px",border:"1px solid #ca8a04",borderRadius:"2px"},children:"🖊️"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
-              (0,t.jsx)("div",{title:"Kuning",style:{width:"20px",height:"20px",background:"#fef08a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fef08a")}}),
-              (0,t.jsx)("div",{title:"Hijau",style:{width:"20px",height:"20px",background:"#bbf7d0",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bbf7d0")}}),
-              (0,t.jsx)("div",{title:"Biru",style:{width:"20px",height:"20px",background:"#bae6fd",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bae6fd")}}),
-              (0,t.jsx)("div",{title:"Oranye",style:{width:"20px",height:"20px",background:"#fed7aa",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fed7aa")}}),
-              (0,t.jsx)("div",{title:"Pink",style:{width:"20px",height:"20px",background:"#fbcfe8",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fbcfe8")}}),
-              (0,t.jsx)("div",{title:"Tanpa Warna",style:{width:"20px",height:"20px",background:"transparent",border:"1px dashed #64748b",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("transparent")}})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 9. Alignments
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-left",className:"anev-tool-btn",title:"Rata Kiri (Left)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyLeft")},children:"⇤"}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-center",className:"anev-tool-btn",title:"Rata Tengah (Center)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyCenter")},children:"⇎"}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-right",className:"anev-tool-btn",title:"Rata Kanan (Right)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyRight")},children:"⇥"}),
-          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-justify",className:"anev-tool-btn active",title:"Rata Justify (Kanan-Kiri Penuh)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyFull")},children:"≡"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 10. Line Spacing Dropdown
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"spacingDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("spacingDropdown")},children:[
-              (0,t.jsx)("span",{children:"↕ Spasi"}),
-              " ▾"
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.0")},children:"1.0 (Tunggal)"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.15")},children:"1.15"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.35")},children:"1.35"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.45")},children:"1.45 (Standar Polri)"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.5")},children:"1.5"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("2.0")},children:"2.0 (Ganda)"})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 11. Bullets & Indentation
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Butir (Bullets)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertUnorderedList")},children:"•≡"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Nomor (Numbered)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertOrderedList")},children:"1≡"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kurangi Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("outdent")},children:"⇤"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Tambah Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("indent")},children:"⇥"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 12. Table Menu Dropdown
-          (0,t.jsxs)("div",{className:"tb-dropdown",id:"tableDropdown",children:[
-            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{color:"#1d4ed8",fontWeight:700,background:"#eff6ff",borderColor:"#bfdbfe"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("tableDropdown")},children:[
-              "📊 ",
-              (0,t.jsx)("span",{children:"Tabel ▾"})
-            ]}),
-            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"190px"},children:[
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();insertCustomTable(3, 4)},children:"➕ Sisipkan Tabel Baru"}),
-              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowAbove")},children:"⬆️ Sisipkan Baris di Atas"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowBelow")},children:"⬇️ Sisipkan Baris di Bawah"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delRow")},children:"❌ Hapus Baris"}),
-              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColLeft")},children:"⬅️ Sisipkan Kolom di Kiri"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColRight")},children:"➡️ Sisipkan Kolom di Kanan"}),
-              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delCol")},children:"❌ Hapus Kolom"}),
-              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
-              (0,t.jsx)("div",{className:"tb-menu-item",style:{color:"#dc2626"},onMouseDown:e=>{e.preventDefault();handleTableAction("delTable")},children:"🗑️ Hapus Tabel"})
-            ]})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 13. Page Break
-          (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{fontWeight:700},title:"Pemisah Halaman (Page Break / Ctrl+Enter)",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak()},children:[
-            "📄+ ",
-            (0,t.jsx)("span",{children:"Page Break"})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 14. Logo Reserse
-          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{gap:"4px",color:"#475569"},onMouseDown:e=>{e.preventDefault();handleInsertLogo()},title:"Sisipkan kembali lambang Reserse Polri",children:[
-            "🖼️ ",
-            (0,t.jsx)("span",{children:"Logo"})
-          ]}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 15. Sinkron Data CAS
-          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{background:"#2563eb",color:"#ffffff",border:"1px solid #1d4ed8",borderRadius:"4px",padding:"2px 10px",fontWeight:800,gap:"4px"},onMouseDown:e=>{e.preventDefault();resolveAutoTags()},title:"Gantikan semua tag dinamis dan tabel dengan data satker dan periode terkini dari database CAS",children:[
-            "✨ ",
-            (0,t.jsx)("span",{children:"Sinkron Data CAS"})
-          ]})
-        ]}),
-
-        // HORIZONTAL RULER (PENGGARIS DOKUMEN GOOGLE DOCS / MS WORD)
-        activeTab === "lampiran" && (0,t.jsx)("div",{className:"anev-ruler-bar anev-no-print",children:[
-          (0,t.jsxs)("div",{className:"anev-ruler",children:[
-            (0,t.jsx)("div",{className:"anev-ruler-left-margin",title:"Batas Margin Kiri (3 cm)",children:(0,t.jsx)("span",{children:"3 cm"})}),
-            (0,t.jsxs)("div",{className:"anev-ruler-body",title:"Area Cetak Lembar Kerja (16 cm)",children:[
-              (0,t.jsx)("div",{className:"gdocs-ruler-marker-top",title:"Indentasi Baris Pertama (First-line indent)"}),
-              (0,t.jsx)("div",{className:"gdocs-ruler-marker-bottom",title:"Indentasi Kiri (Left indent)"}),
-              (0,t.jsx)("div",{className:"gdocs-ruler-marker-right",title:"Margin Kanan"}),
-              (0,t.jsx)("svg",{style:{width:"100%",height:"100%",display:"block"},viewBox:"0 0 605 24",preserveAspectRatio:"none",children:[
-                (0,t.jsxs)("g",{fontSize:"9",fill:"#475569",fontFamily:"Arial, sans-serif",textAnchor:"middle",children:[
-                  (0,t.jsx)("line",{x1:"37.8",y1:"14",x2:"37.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"37.8",y:"11",children:"1"}),
-                  (0,t.jsx)("line",{x1:"75.6",y1:"14",x2:"75.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"75.6",y:"11",children:"2"}),
-                  (0,t.jsx)("line",{x1:"113.4",y1:"14",x2:"113.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"113.4",y:"11",children:"3"}),
-                  (0,t.jsx)("line",{x1:"151.2",y1:"14",x2:"151.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"151.2",y:"11",children:"4"}),
-                  (0,t.jsx)("line",{x1:"189.0",y1:"14",x2:"189.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"189.0",y:"11",children:"5"}),
-                  (0,t.jsx)("line",{x1:"226.8",y1:"14",x2:"226.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"226.8",y:"11",children:"6"}),
-                  (0,t.jsx)("line",{x1:"264.6",y1:"14",x2:"264.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"264.6",y:"11",children:"7"}),
-                  (0,t.jsx)("line",{x1:"302.4",y1:"14",x2:"302.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"302.4",y:"11",children:"8"}),
-                  (0,t.jsx)("line",{x1:"340.2",y1:"14",x2:"340.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"340.2",y:"11",children:"9"}),
-                  (0,t.jsx)("line",{x1:"378.0",y1:"14",x2:"378.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"378.0",y:"11",children:"10"}),
-                  (0,t.jsx)("line",{x1:"415.8",y1:"14",x2:"415.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"415.8",y:"11",children:"11"}),
-                  (0,t.jsx)("line",{x1:"453.6",y1:"14",x2:"453.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"453.6",y:"11",children:"12"}),
-                  (0,t.jsx)("line",{x1:"491.4",y1:"14",x2:"491.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"491.4",y:"11",children:"13"}),
-                  (0,t.jsx)("line",{x1:"529.2",y1:"14",x2:"529.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"529.2",y:"11",children:"14"}),
-                  (0,t.jsx)("line",{x1:"567.0",y1:"14",x2:"567.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"567.0",y:"11",children:"15"}),
-                  (0,t.jsx)("line",{x1:"604.8",y1:"14",x2:"604.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"604.8",y:"11",children:"16"})
+                  // 6. ALAT MENU
+                  (0,t.jsxs)("div",{className:"gdocs-menu-item",id:"menu-tools",children:[
+                    (0,t.jsx)("button",{type:"button",className:"gdocs-menu-trigger",onMouseDown:e=>{e.preventDefault();toggleMenubar("menu-tools")},onMouseEnter:()=>hoverMenubar("menu-tools"),children:"Alat"}),
+                    (0,t.jsxs)("div",{className:"gdocs-menu-dropdown",children:[
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();resolveAutoTags();closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{style:{color:"#2563eb",fontWeight:700},children:"✨ Sinkronkan Seluruh Data CAS"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Otomatis"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();updateDocStats();alert(document.getElementById("statusWordInfo")?.innerText + " • " + document.getElementById("statusPageInfo")?.innerText);closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"📊 Statistik Kata & Karakter"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"Hitung"})
+                      ]}),
+                      (0,t.jsxs)("div",{className:"gdocs-dropdown-entry",onMouseDown:e=>{e.preventDefault();alert("Format Naskah Dinas Terverifikasi:\n• Struktur: BAB I s.d. BAB V Lengkap\n• Penomoran Otomatis: 1 s.d. 13 Halaman\n• Lambang Reserse: Aktif\n• Security Watermark: Aktif");closeAllMenubars()},children:[
+                        (0,t.jsx)("span",{children:"🛡️ Verifikasi Kesesuaian Perkap"}),
+                        (0,t.jsx)("span",{className:"gdocs-shortcut-badge",children:"OK"})
+                      ]})
+                    ]})
+                  ]})
                 ]})
               ]})
             ]}),
-            (0,t.jsx)("div",{className:"anev-ruler-right-margin",title:"Batas Margin Kanan (2 cm)",children:(0,t.jsx)("span",{children:"2 cm"})})
-          ]})
-        ]}),
 
-        // WORKSPACE A4 UNIFIED GOOGLE DOCS / MS WORD ROOT
-        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"anev-pages-workspace",id:"docWorkspace",children:[
-          (0,t.jsxs)("div",{className:"gdocs-document-container anev-unified-editor",id:"docEditor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
+            // TOP RIGHT ACTIONS
+            (0,t.jsxs)("div",{className:"gdocs-top-right",children:[
+              (0,t.jsxs)("button",{type:"button",className:"gdocs-outline-btn",onClick:()=>toggleDocOutline(),title:"Tampilkan / Sembunyikan Kerangka Naskah",children:[
+                "📑 ",
+                (0,t.jsx)("span",{children:"Kerangka Naskah"})
+              ]}),
+              (0,t.jsxs)("button",{type:"button",className:"gdocs-action-btn-outline",onClick:()=>window.print(),title:"Cetak Naskah (Ctrl+P)",children:[
+                "🖨️ ",
+                (0,t.jsx)("span",{children:"Cetak A4"})
+              ]}),
+              (0,t.jsxs)("button",{type:"button",className:"gdocs-action-btn-primary",onClick:()=>resolveAutoTags(),title:"Gantikan semua tag dan tabel dinamis dengan data terkini",children:[
+                "✨ ",
+                (0,t.jsx)("span",{children:"Sinkron Data CAS"})
+              ]})
+            ]})
+          ]}),
+
+          // BARIS 2: GOOGLE DOCS STICKY TOOLBAR (ACTION TOOLS, STYLES, FONTS, SIZES, COLORS, ALIGNMENT, SPACING, LISTS, TABLES)
+          (0,t.jsxs)("div",{className:"gdocs-toolbar anev-docs-toolbar anev-no-print",children:[
+            // 1. Undo, Redo, Print, RemoveFormat
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Urungkan (Ctrl+Z)",onMouseDown:e=>{e.preventDefault();runDocCmd("undo")},children:"↶"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Ulangi (Ctrl+Y)",onMouseDown:e=>{e.preventDefault();runDocCmd("redo")},children:"↷"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Cetak Naskah (Ctrl+P)",onMouseDown:e=>{e.preventDefault();window.print()},children:"🖨️"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Hapus Format (Clear Formatting)",onMouseDown:e=>{e.preventDefault();runDocCmd("removeFormat")},children:"🧹"}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 2. Zoom Dropdown
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"zoomDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("zoomDropdown")},children:[
+                (0,t.jsx)("span",{id:"tb-zoom-label",children:"100%"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"100px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.75,"75%")},children:"75%"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.90,"90%")},children:"90%"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.00,"100%")},children:"100%"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.25,"125%")},children:"125%"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.50,"150%")},children:"150%"})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 3. Paragraph Style Dropdown
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"styleDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("styleDropdown")},children:[
+                (0,t.jsx)("span",{id:"tb-style-label",children:"Teks normal"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("p","Teks normal")},children:(0,t.jsx)("span",{style:{fontSize:"10pt"},children:"Teks normal"})}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h1","Judul Utama")},children:(0,t.jsx)("b",{style:{fontSize:"13pt"},children:"Judul Utama"})}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h2","Subjudul")},children:(0,t.jsx)("b",{style:{fontSize:"11.5pt"},children:"Subjudul"})}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h3","Tajuk 3")},children:(0,t.jsx)("b",{style:{fontSize:"10.5pt"},children:"Tajuk 3"})})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 4. Font Family Dropdown
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"fontDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"95px"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("fontDropdown")},children:[
+                (0,t.jsx)("span",{id:"tb-font-label",children:"Arial"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"160px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Arial"},onMouseDown:e=>{e.preventDefault();setDocFontName("Arial")},children:"Arial"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Times New Roman'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Times New Roman")},children:"Times New Roman"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Calibri"},onMouseDown:e=>{e.preventDefault();setDocFontName("Calibri")},children:"Calibri"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Georgia"},onMouseDown:e=>{e.preventDefault();setDocFontName("Georgia")},children:"Georgia"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Courier New'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Courier New")},children:"Courier New"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Verdana"},onMouseDown:e=>{e.preventDefault();setDocFontName("Verdana")},children:"Verdana"})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 5. Font Size Decrement, Dropdown, Increment
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kecilkan Huruf (Font Size -)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(-1)},children:"−"}),
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"sizeDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"48px",justifyContent:"center"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("sizeDropdown")},children:[
+                (0,t.jsx)("span",{id:"tb-size-label",children:"10"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"65px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(8)},children:"8"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(9)},children:"9"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(10)},children:"10"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(11)},children:"11"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(12)},children:"12"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(14)},children:"14"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(16)},children:"16"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(18)},children:"18"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(20)},children:"20"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(24)},children:"24"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(32)},children:"32"})
+              ]})
+            ]}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Besarkan Huruf (Font Size +)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(1)},children:"+"}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 6. Bold, Italic, Underline, Strike
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-bold",className:"anev-tool-btn",title:"Tebal (Ctrl+B)",onMouseDown:e=>{e.preventDefault();runDocCmd("bold")},children:(0,t.jsx)("b",{children:"B"})}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-italic",className:"anev-tool-btn",title:"Miring (Ctrl+I)",onMouseDown:e=>{e.preventDefault();runDocCmd("italic")},children:(0,t.jsx)("i",{children:"I"})}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-underline",className:"anev-tool-btn",title:"Garis Bawah (Ctrl+U)",onMouseDown:e=>{e.preventDefault();runDocCmd("underline")},children:(0,t.jsx)("u",{children:"U"})}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-strike",className:"anev-tool-btn",title:"Coretan (Strike)",onMouseDown:e=>{e.preventDefault();runDocCmd("strikeThrough")},children:(0,t.jsx)("s",{children:"S"})}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 7. Text Color Palette
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"textColorDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Teks",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("textColorDropdown")},children:[
+                (0,t.jsx)("span",{style:{color:"#dc2626",fontWeight:900,textDecoration:"underline"},children:"A"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#000000",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#000000")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#475569",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#475569")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#dc2626",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#dc2626")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ea580c",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ea580c")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ca8a04",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ca8a04")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#16a34a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#16a34a")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#0284c7",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#0284c7")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#2563eb",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#2563eb")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#7c3aed",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#7c3aed")}}),
+                (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#db2777",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#db2777")}})
+              ]})
+            ]}),
+
+            // 8. Highlight Color Palette
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"bgColorDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Sorotan (Stabilo)",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("bgColorDropdown")},children:[
+                (0,t.jsx)("span",{style:{background:"#fef08a",padding:"0 3px",border:"1px solid #ca8a04",borderRadius:"2px"},children:"🖊️"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
+                (0,t.jsx)("div",{title:"Kuning",style:{width:"20px",height:"20px",background:"#fef08a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fef08a")}}),
+                (0,t.jsx)("div",{title:"Hijau",style:{width:"20px",height:"20px",background:"#bbf7d0",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bbf7d0")}}),
+                (0,t.jsx)("div",{title:"Biru",style:{width:"20px",height:"20px",background:"#bae6fd",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bae6fd")}}),
+                (0,t.jsx)("div",{title:"Oranye",style:{width:"20px",height:"20px",background:"#fed7aa",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fed7aa")}}),
+                (0,t.jsx)("div",{title:"Pink",style:{width:"20px",height:"20px",background:"#fbcfe8",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fbcfe8")}}),
+                (0,t.jsx)("div",{title:"Tanpa Warna",style:{width:"20px",height:"20px",background:"transparent",border:"1px dashed #64748b",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("transparent")}})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 9. Alignments
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-align-left",className:"anev-tool-btn",title:"Rata Kiri (Left)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyLeft")},children:"⇤"}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-align-center",className:"anev-tool-btn",title:"Rata Tengah (Center)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyCenter")},children:"⇎"}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-align-right",className:"anev-tool-btn",title:"Rata Kanan (Right)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyRight")},children:"⇥"}),
+            (0,t.jsx)("button",{type:"button",id:"tb-btn-align-justify",className:"anev-tool-btn active",title:"Rata Justify (Kanan-Kiri Penuh)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyFull")},children:"≡"}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 10. Line Spacing Dropdown
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"spacingDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("spacingDropdown")},children:[
+                (0,t.jsx)("span",{children:"↕ Spasi"}),
+                " ▾"
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.0")},children:"1.0 (Tunggal)"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.15")},children:"1.15"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.35")},children:"1.35"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.45")},children:"1.45 (Standar Polri)"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.5")},children:"1.5"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("2.0")},children:"2.0 (Ganda)"})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 11. Bullets & Indentation
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Butir (Bullets)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertUnorderedList")},children:"•≡"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Nomor (Numbered)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertOrderedList")},children:"1≡"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kurangi Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("outdent")},children:"⇤"}),
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Tambah Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("indent")},children:"⇥"}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 12. Table Menu Dropdown
+            (0,t.jsxs)("div",{className:"tb-dropdown",id:"tableDropdown",children:[
+              (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{color:"#1d4ed8",fontWeight:700,background:"#eff6ff",borderColor:"#bfdbfe"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("tableDropdown")},children:[
+                "📊 ",
+                (0,t.jsx)("span",{children:"Tabel ▾"})
+              ]}),
+              (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"190px"},children:[
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();insertCustomTable(3, 4)},children:"➕ Sisipkan Tabel Baru"}),
+                (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowAbove")},children:"⬆️ Sisipkan Baris di Atas"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowBelow")},children:"⬇️ Sisipkan Baris di Bawah"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delRow")},children:"❌ Hapus Baris"}),
+                (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColLeft")},children:"⬅️ Sisipkan Kolom di Kiri"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColRight")},children:"➡️ Sisipkan Kolom di Kanan"}),
+                (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delCol")},children:"❌ Hapus Kolom"}),
+                (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+                (0,t.jsx)("div",{className:"tb-menu-item",style:{color:"#dc2626"},onMouseDown:e=>{e.preventDefault();handleTableAction("delTable")},children:"🗑️ Hapus Tabel"})
+              ]})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 13. Page Break
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{fontWeight:700},title:"Pemisah Halaman (Page Break / Ctrl+Enter)",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak()},children:[
+              "📄+ ",
+              (0,t.jsx)("span",{children:"Page Break"})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 14. Find and Replace Button
+            (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Temukan dan Ganti (Ctrl+F / Ctrl+H)",onMouseDown:e=>{e.preventDefault();toggleFindReplace(true)},children:"🔍"}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 15. Logo Reserse
+            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{gap:"4px",color:"#475569"},onMouseDown:e=>{e.preventDefault();handleInsertLogo()},title:"Sisipkan kembali lambang Reserse Polri",children:[
+              "🖼️ ",
+              (0,t.jsx)("span",{children:"Logo"})
+            ]}),
+            (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+            // 16. Sinkron Data CAS
+            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{background:"#2563eb",color:"#ffffff",border:"1px solid #1d4ed8",borderRadius:"4px",padding:"2px 10px",fontWeight:800,gap:"4px"},onMouseDown:e=>{e.preventDefault();resolveAutoTags()},title:"Gantikan semua tag dinamis dan tabel dengan data satker dan periode terkini dari database CAS",children:[
+              "✨ ",
+              (0,t.jsx)("span",{children:"Sinkron Data CAS"})
+            ]})
+          ]}),
+
+          // FLOATING GOOGLE DOCS FIND & REPLACE BOX
+          (0,t.jsxs)("div",{id:"docFindReplaceBox",className:"gdocs-find-replace-box anev-no-print",style:{display:"none"},children:[
+            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"8px",marginBottom:"6px"},children:[
+              (0,t.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem",color:"#1e293b"},children:"🔍 Temukan & Ganti"}),
+              (0,t.jsx)("span",{id:"findMatchCount",style:{fontSize:"0.72rem",color:"#64748b",marginLeft:"auto"},children:""}),
+              (0,t.jsx)("button",{type:"button",className:"gdocs-btn-icon",onMouseDown:e=>{e.preventDefault();closeFindReplace()},title:"Tutup (Esc)",children:"✕"})
+            ]}),
+            (0,t.jsxs)("div",{style:{display:"flex",gap:"6px",alignItems:"center",marginBottom:"6px"},children:[
+              (0,t.jsx)("input",{id:"docFindInput",type:"text",placeholder:"Cari dalam naskah...",className:"gdocs-find-input",onKeyDown:e=>{if(e.key==="Enter")handleDocFind(e.target.value,!e.shiftKey)}}),
+              (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Sebelumnya (Shift+Enter)",onMouseDown:e=>{e.preventDefault();handleDocFind(document.getElementById("docFindInput").value,false)},children:"▲"}),
+              (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Berikutnya (Enter)",onMouseDown:e=>{e.preventDefault();handleDocFind(document.getElementById("docFindInput").value,true)},children:"▼"})
+            ]}),
+            (0,t.jsxs)("div",{id:"replaceFields",style:{display:"flex",gap:"6px",alignItems:"center"},children:[
+              (0,t.jsx)("input",{id:"docReplaceInput",type:"text",placeholder:"Ganti dengan...",className:"gdocs-find-input"}),
+              (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",style:{fontSize:"0.72rem",padding:"2px 8px"},onMouseDown:e=>{e.preventDefault();handleDocReplace(document.getElementById("docFindInput").value,document.getElementById("docReplaceInput").value)},children:"Ganti"}),
+              (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",style:{fontSize:"0.72rem",padding:"2px 8px",fontWeight:700,color:"#2563eb"},onMouseDown:e=>{e.preventDefault();handleDocReplaceAll(document.getElementById("docFindInput").value,document.getElementById("docReplaceInput").value)},children:"Ganti Semua"})
+            ]})
+          ]}),
+
+          // GOOGLE DOCS EDITOR LAYOUT (COLLAPSIBLE OUTLINE + WORKSPACE)
+          (0,t.jsxs)("div",{className:"gdocs-editor-layout-wrapper",children:[
+
+            // LEFT SIDEBAR: DOCUMENT OUTLINE (RINGKASAN DOKUMEN BAB I - V)
+            (0,t.jsxs)("div",{id:"docOutlinePanel",className:"doc-outline-panel anev-no-print",children:[
+              (0,t.jsxs)("div",{className:"doc-outline-header",children:[
+                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"6px"},children:[
+                  (0,t.jsx)("span",{children:"📑"}),
+                  (0,t.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem"},children:"Kerangka Naskah"})
+                ]}),
+                (0,t.jsx)("button",{type:"button",className:"gdocs-btn-icon",onClick:()=>toggleDocOutline(),title:"Tutup Kerangka Naskah",children:"«"})
+              ]}),
+              (0,t.jsxs)("div",{className:"doc-outline-content",children:[
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-1"),children:"📌 Kop Dinas & Klasifikasi"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-1"),children:"📖 BAB I. PENDAHULUAN"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-1"),children:"• A. Umum"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-1"),children:"• B. Maksud dan Tujuan"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-2"),children:"• C. Dasar Hukum"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-2"),children:"• D. Ruang Lingkup"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-3"),children:"• E. IKU & Tabel 1.1"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-4"),children:"📊 BAB II. TUGAS & KAMTIBMAS"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-4"),children:"• A. Tugas Utama"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-4"),children:"• B. Situasi Kamtibmas"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-5"),children:"• Tabel 2.1 & 2.2 Trend"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-6"),children:"• Perbandingan Perkara"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-7"),children:"• Restorative Justice"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-8"),children:"• Barang Bukti"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-9"),children:"• C. Kekuatan Personel"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-10"),children:"• D. Anggaran Satker"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-2",onClick:()=>jumpToSection("sheet-page-11"),children:"• E. Kasus Menonjol"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-12"),children:"🏆 BAB III. HASIL CAPAIAN"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-12"),children:"💡 BAB IV. KESIMPULAN & SARAN"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-12"),children:"🏁 BAB V. PENUTUP"}),
+                (0,t.jsx)("div",{className:"outline-item outline-level-1",onClick:()=>jumpToSection("sheet-page-13"),children:"🖋️ Lembar Pengesahan Pejabat"})
+              ]})
+            ]}),
+
+            // MAIN DOCUMENT WORKSPACE & RULER & UNIFIED EDITOR ROOT
+            (0,t.jsxs)("div",{className:"anev-pages-workspace",id:"docWorkspace",children:[
+
+              // HORIZONTAL RULER (PENGGARIS DOKUMEN GOOGLE DOCS / MS WORD)
+              (0,t.jsx)("div",{className:"anev-ruler-bar anev-no-print",children:[
+                (0,t.jsxs)("div",{className:"anev-ruler",children:[
+                  (0,t.jsx)("div",{className:"anev-ruler-left-margin",title:"Batas Margin Kiri (3 cm)",children:(0,t.jsx)("span",{children:"3 cm"})}),
+                  (0,t.jsxs)("div",{className:"anev-ruler-body",title:"Area Cetak Lembar Kerja (16 cm)",children:[
+                    (0,t.jsx)("div",{className:"gdocs-ruler-marker-top",title:"Indentasi Baris Pertama (First-line indent)"}),
+                    (0,t.jsx)("div",{className:"gdocs-ruler-marker-bottom",title:"Indentasi Kiri (Left indent)"}),
+                    (0,t.jsx)("div",{className:"gdocs-ruler-marker-right",title:"Margin Kanan"}),
+                    (0,t.jsx)("svg",{style:{width:"100%",height:"100%",display:"block"},viewBox:"0 0 605 24",preserveAspectRatio:"none",children:[
+                      (0,t.jsxs)("g",{fontSize:"9",fill:"#475569",fontFamily:"Arial, sans-serif",textAnchor:"middle",children:[
+                        (0,t.jsx)("line",{x1:"37.8",y1:"14",x2:"37.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"37.8",y:"11",children:"1"}),
+                        (0,t.jsx)("line",{x1:"75.6",y1:"14",x2:"75.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"75.6",y:"11",children:"2"}),
+                        (0,t.jsx)("line",{x1:"113.4",y1:"14",x2:"113.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"113.4",y:"11",children:"3"}),
+                        (0,t.jsx)("line",{x1:"151.2",y1:"14",x2:"151.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"151.2",y:"11",children:"4"}),
+                        (0,t.jsx)("line",{x1:"189.0",y1:"14",x2:"189.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"189.0",y:"11",children:"5"}),
+                        (0,t.jsx)("line",{x1:"226.8",y1:"14",x2:"226.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"226.8",y:"11",children:"6"}),
+                        (0,t.jsx)("line",{x1:"264.6",y1:"14",x2:"264.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"264.6",y:"11",children:"7"}),
+                        (0,t.jsx)("line",{x1:"302.4",y1:"14",x2:"302.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"302.4",y:"11",children:"8"}),
+                        (0,t.jsx)("line",{x1:"340.2",y1:"14",x2:"340.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"340.2",y:"11",children:"9"}),
+                        (0,t.jsx)("line",{x1:"378.0",y1:"14",x2:"378.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"378.0",y:"11",children:"10"}),
+                        (0,t.jsx)("line",{x1:"415.8",y1:"14",x2:"415.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"415.8",y:"11",children:"11"}),
+                        (0,t.jsx)("line",{x1:"453.6",y1:"14",x2:"453.6",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"453.6",y:"11",children:"12"}),
+                        (0,t.jsx)("line",{x1:"491.4",y1:"14",x2:"491.4",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"491.4",y:"11",children:"13"}),
+                        (0,t.jsx)("line",{x1:"529.2",y1:"14",x2:"529.2",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"529.2",y:"11",children:"14"}),
+                        (0,t.jsx)("line",{x1:"567.0",y1:"14",x2:"567.0",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"567.0",y:"11",children:"15"}),
+                        (0,t.jsx)("line",{x1:"604.8",y1:"14",x2:"604.8",y2:"24",stroke:"#94a3b8",strokeWidth:"1"}),(0,t.jsx)("text",{x:"604.8",y:"11",children:"16"})
+                      ]})
+                    ]})
+                  ]}),
+                  (0,t.jsx)("div",{className:"anev-ruler-right-margin",title:"Batas Margin Kanan (2 cm)",children:(0,t.jsx)("span",{children:"2 cm"})})
+                ]})
+              ]}),
+
+              // WORKSPACE A4 UNIFIED GOOGLE DOCS / MS WORD ROOT
+              (0,t.jsxs)("div",{className:"gdocs-document-container anev-unified-editor",id:"docEditor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
   
-
-        (0,t.jsxs)("div",{"data-page":1,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+      
+        (0,t.jsxs)("div",{id:"sheet-page-1","data-page":1,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3246,7 +3960,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":2,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-2","data-page":2,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3295,7 +4009,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":3,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-3","data-page":3,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3374,7 +4088,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":4,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-4","data-page":4,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3421,7 +4135,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":5,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-5","data-page":5,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3533,7 +4247,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":6,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-6","data-page":6,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3616,7 +4330,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":7,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-7","data-page":7,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3764,7 +4478,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":8,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-8","data-page":8,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3849,7 +4563,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":9,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-9","data-page":9,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3925,7 +4639,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":10,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-10","data-page":10,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -3971,7 +4685,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":11,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-11","data-page":11,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -4020,7 +4734,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":12,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-12","data-page":12,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -4072,7 +4786,7 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":13,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
+        (0,t.jsxs)("div",{id:"sheet-page-13","data-page":13,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
           (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
           // Watermark Overlay
@@ -4126,8 +4840,10 @@ e.s(["default",0,function(){
           ]})
         ]})
   
+            ]}),
           ]}),
-
+        ]}),
+        
           (0,t.jsxs)("div",{className:"gdocs-statusbar anev-no-print",children:[
             (0,t.jsx)("div",{id:"statusPageInfo",children:"13 halaman"}),
             (0,t.jsx)("div",{id:"statusWordInfo",children:"Memuat statistik dokumen..."}),
@@ -4136,7 +4852,6 @@ e.s(["default",0,function(){
             ]})
           ]})
 
-        ]})
       ]}),
 
       // TAB 2: ARSIP DOKUMEN TERENKRIPSI DENGAN TOMBOL KEMBALI JELAS & PEMBEDA DRAFT

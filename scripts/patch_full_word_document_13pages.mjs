@@ -36,6 +36,122 @@ if (!code.includes(fnTarget)) {
 
 const newFns = `var lastActiveCell = null;
     var currentFontSizePt = 10;
+    var activeMenubarId = null;
+
+    function toggleMenubar(id) {
+      var m = document.getElementById(id);
+      if (!m) return;
+      var isOpen = m.classList.contains('open');
+      closeAllMenubars();
+      if (!isOpen) {
+        m.classList.add('open');
+        activeMenubarId = id;
+      } else {
+        activeMenubarId = null;
+      }
+    }
+
+    function hoverMenubar(id) {
+      if (activeMenubarId && activeMenubarId !== id) {
+        closeAllMenubars();
+        var m = document.getElementById(id);
+        if (m) {
+          m.classList.add('open');
+          activeMenubarId = id;
+        }
+      }
+    }
+
+    function closeAllMenubars() {
+      var allM = document.querySelectorAll('.gdocs-menu-item.open');
+      for (var i = 0; i < allM.length; i++) allM[i].classList.remove('open');
+      activeMenubarId = null;
+    }
+
+    function toggleDocOutline() {
+      var p = document.getElementById('docOutlinePanel');
+      if (p) p.classList.toggle('collapsed');
+    }
+
+    function toggleDocRuler() {
+      var r = document.querySelector('.anev-ruler-bar');
+      if (r) r.style.display = (r.style.display === 'none') ? 'flex' : 'none';
+    }
+
+    function jumpToSection(id) {
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleFindReplace(showReplace) {
+      var box = document.getElementById('docFindReplaceBox');
+      if (!box) return;
+      var rf = document.getElementById('replaceFields');
+      if (rf) rf.style.display = showReplace ? 'flex' : 'none';
+      box.style.display = (box.style.display === 'none' || !box.style.display) ? 'block' : 'none';
+      if (box.style.display === 'block') {
+        var inp = document.getElementById('docFindInput');
+        if (inp) { inp.focus(); inp.select(); }
+      }
+    }
+
+    function closeFindReplace() {
+      var box = document.getElementById('docFindReplaceBox');
+      if (box) box.style.display = 'none';
+    }
+
+    function handleDocFind(text, forward) {
+      if (!text) return;
+      if (window.find) {
+        var found = window.find(text, false, !forward, true, false, true, false);
+        var countEl = document.getElementById('findMatchCount');
+        if (countEl) countEl.innerText = found ? 'Ditemukan' : 'Tidak ada';
+        return found;
+      }
+    }
+
+    function handleDocReplace(findText, replaceText) {
+      if (!findText) return;
+      var sel = window.getSelection();
+      if (sel && sel.toString().toLowerCase() === findText.toLowerCase()) {
+        document.execCommand('insertText', false, replaceText);
+      }
+      handleDocFind(findText, true);
+    }
+
+    function handleDocReplaceAll(findText, replaceText) {
+      var editor = document.getElementById('docEditor');
+      if (!editor || !findText) return;
+      var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+      var node, count = 0;
+      var nodes = [];
+      while ((node = walker.nextNode())) nodes.push(node);
+      var regex = new RegExp(findText.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\$&'), 'gi');
+      nodes.forEach(function(n) {
+        if (regex.test(n.nodeValue)) {
+          n.nodeValue = n.nodeValue.replace(regex, replaceText);
+          count++;
+        }
+      });
+      updateDocStats();
+      var countEl = document.getElementById('findMatchCount');
+      if (countEl) countEl.innerText = count + ' diganti';
+      alert('Berhasil mengganti ' + count + ' teks.');
+    }
+
+    function handleCopyDocumentText() {
+      var editor = document.getElementById('docEditor');
+      if (editor && navigator.clipboard) {
+        navigator.clipboard.writeText(editor.innerText).then(function() {
+          alert('Naskah dinas berhasil disalin ke papan klip (clipboard).');
+        });
+      }
+    }
+
+    function handleInsertSecurityStamp() {
+      var html = '<div style="text-align:center;margin:6px 0;"><span class="anev-security-stamp">KLASIFIKASI: RAHASIA</span></div>';
+      try { document.execCommand('insertHTML', false, html); } catch(e) {}
+    }
 
     function toggleDocDropdown(id) {
       var d = document.getElementById(id);
@@ -359,6 +475,9 @@ const newFns = `var lastActiveCell = null;
         if (!e.target.closest('.tb-dropdown')) {
           closeAllDocDropdowns();
         }
+        if (!e.target.closest('.gdocs-menu-item')) {
+          closeAllMenubars();
+        }
         var cell = e.target.closest('td, th');
         if (cell) lastActiveCell = cell;
       }
@@ -368,6 +487,24 @@ const newFns = `var lastActiveCell = null;
       }
 
       function handleCrossPageKeys(e) {
+        if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
+          e.preventDefault();
+          toggleFindReplace(false);
+          return;
+        }
+        if (e.ctrlKey && (e.key === 'h' || e.key === 'H')) {
+          e.preventDefault();
+          toggleFindReplace(true);
+          return;
+        }
+        if (e.key === 'Escape') {
+          closeFindReplace();
+          closeAllMenubars();
+          closeAllDocDropdowns();
+          setContextMenu(null);
+          return;
+        }
+
         var sel = window.getSelection();
         if (!sel || !sel.isCollapsed) return;
 
@@ -473,7 +610,7 @@ const newFns = `var lastActiveCell = null;
 
     function handleAddTableRow(isAbove) {`;
 
-code = code.replace(fnTarget, newFns);
+code = code.replace(fnTarget, () => newFns);
 console.log('Helper functions and useEffect inserted!');
 
 // 4. Replace resolveAutoTags with complete CAS Data Sync Engine (SUPERADMIN & MULTI-SATKER AWARE)
@@ -756,6 +893,7 @@ const completeCss = `
             background: transparent !important;
           }
           .anev-docs-toolbar,
+          .gdocs-top-header,
           .gdocs-menubar,
           .gdocs-toolbar,
           .anev-ruler-bar,
@@ -763,8 +901,16 @@ const completeCss = `
           .anev-sheet-corner-pill,
           .gdocs-statusbar,
           .tb-dropdown-menu,
+          .gdocs-find-replace-box,
+          .doc-outline-panel,
           .anev-no-print {
             display: none !important;
+          }
+          .gdocs-editor-layout-wrapper {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
           .anev-pages-workspace,
           .gdocs-document-container {
@@ -958,35 +1104,323 @@ const completeCss = `
           z-index: 10;
         }
 
-        /* GOOGLE DOCS MENUBAR */
-        .gdocs-menubar {
+        /* GOOGLE DOCS TOP HEADER & MENUS */
+        .gdocs-root-app {
+          width: 100%;
+          min-height: 100vh;
+          background: #cbd5e1;
+        }
+        .gdocs-top-header {
           background: #ffffff;
           border-bottom: 1px solid #e2e8f0;
-          padding: 3px 16px;
+          padding: 6px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          position: sticky;
+          top: 0;
+          z-index: 1100;
+        }
+        .gdocs-top-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .gdocs-app-icon {
+          font-size: 1.8rem;
+          line-height: 1;
+          user-select: none;
+          cursor: pointer;
+        }
+        .gdocs-doc-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .gdocs-title-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .gdocs-title-input {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #1e293b;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 1px 6px;
+          background: transparent;
+          min-width: 340px;
+          outline: none;
+          transition: border 0.15s, background 0.15s;
+        }
+        .gdocs-title-input:hover {
+          border-color: #cbd5e1;
+          background: #f8fafc;
+        }
+        .gdocs-title-input:focus {
+          border-color: #2563eb;
+          background: #ffffff;
+          box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+        }
+        .gdocs-star-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.9rem;
+          padding: 2px;
+          opacity: 0.7;
+          transition: opacity 0.15s;
+        }
+        .gdocs-star-btn:hover {
+          opacity: 1;
+          transform: scale(1.1);
+        }
+        .gdocs-cloud-status {
+          font-size: 0.72rem;
+          color: #64748b;
+          display: inline-flex;
+          align-items: center;
+          margin-left: 6px;
+          user-select: none;
+        }
+
+        /* GOOGLE DOCS MENUBAR */
+        .gdocs-menubar {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .gdocs-menu-item {
+          position: relative;
+          display: inline-block;
+        }
+        .gdocs-menu-trigger {
+          background: none;
+          border: none;
+          font-size: 0.82rem;
+          font-weight: 500;
+          color: #334155;
+          padding: 2px 7px;
+          border-radius: 4px;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.1s;
+        }
+        .gdocs-menu-trigger:hover,
+        .gdocs-menu-item.open .gdocs-menu-trigger {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .gdocs-menu-dropdown {
+          display: none;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          margin-top: 2px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          z-index: 2100;
+          min-width: 220px;
+          padding: 4px 0;
+        }
+        .gdocs-menu-item.open .gdocs-menu-dropdown {
+          display: block;
+        }
+        .gdocs-dropdown-entry {
+          padding: 6px 14px;
+          font-size: 0.80rem;
+          color: #334155;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          user-select: none;
+          gap: 12px;
+        }
+        .gdocs-dropdown-entry:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+        }
+        .gdocs-shortcut-badge {
+          font-size: 0.70rem;
+          color: #94a3b8;
+          font-family: monospace;
+          font-weight: 600;
+        }
+        .gdocs-dropdown-separator {
+          height: 1px;
+          background: #e2e8f0;
+          margin: 4px 0;
+        }
+
+        /* TOP RIGHT ACTION BUTTONS */
+        .gdocs-top-right {
           display: flex;
           align-items: center;
           gap: 8px;
-          font-size: 0.80rem;
         }
-        .gdocs-menu-title {
-          font-weight: 800;
-          color: #1e293b;
-          margin-right: 10px;
-          display: flex;
-          align-items: center;
-        }
-        .gdocs-menu-btn {
-          background: none;
-          border: none;
-          padding: 2px 7px;
-          border-radius: 4px;
+        .gdocs-outline-btn {
+          height: 30px;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 0 10px;
           font-size: 0.78rem;
+          font-weight: 600;
+          background: #ffffff;
           color: #334155;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.1s;
         }
-        .gdocs-menu-btn:hover {
+        .gdocs-outline-btn:hover {
           background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+        .gdocs-action-btn-outline {
+          height: 30px;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 0 12px;
+          font-size: 0.78rem;
+          font-weight: 700;
+          background: #ffffff;
+          color: #1e293b;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.1s;
+        }
+        .gdocs-action-btn-outline:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+        .gdocs-action-btn-primary {
+          height: 30px;
+          border: 1px solid #1d4ed8;
+          border-radius: 6px;
+          padding: 0 14px;
+          font-size: 0.78rem;
+          font-weight: 800;
+          background: #2563eb;
+          color: #ffffff;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+          transition: background 0.1s;
+        }
+        .gdocs-action-btn-primary:hover {
+          background: #1d4ed8;
+        }
+
+        /* FLOATING FIND & REPLACE BOX */
+        .gdocs-find-replace-box {
+          position: fixed;
+          top: 120px;
+          right: 24px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+          padding: 12px 14px;
+          z-index: 2500;
+          width: 340px;
+        }
+        .gdocs-find-input {
+          flex: 1;
+          height: 28px;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          padding: 0 8px;
+          font-size: 0.78rem;
+          outline: none;
+        }
+        .gdocs-find-input:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 1.5px rgba(37,99,235,0.2);
+        }
+        .gdocs-btn-icon {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.82rem;
+          color: #64748b;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+        .gdocs-btn-icon:hover {
+          background: #e2e8f0;
           color: #0f172a;
+        }
+
+        /* GOOGLE DOCS WORKSPACE & OUTLINE LAYOUT */
+        .gdocs-editor-layout-wrapper {
+          display: flex;
+          width: 100%;
+          min-height: calc(100vh - 120px);
+          position: relative;
+        }
+        .doc-outline-panel {
+          width: 250px;
+          min-width: 250px;
+          background: #ffffff;
+          border-right: 1px solid #cbd5e1;
+          height: calc(100vh - 130px);
+          position: sticky;
+          top: 130px;
+          overflow-y: auto;
+          padding: 12px 10px;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+          z-index: 990;
+          transition: width 0.2s, margin 0.2s;
+        }
+        .doc-outline-panel.collapsed {
+          display: none;
+        }
+        .doc-outline-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 8px;
+          margin-bottom: 8px;
+          border-bottom: 1px solid #e2e8f0;
+          font-weight: 800;
+          color: #1e293b;
+        }
+        .doc-outline-content {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .outline-item {
+          padding: 5px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.78rem;
+          color: #334155;
+          transition: background 0.1s, color 0.1s;
+        }
+        .outline-item:hover {
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+        .outline-level-1 {
+          font-weight: 700;
+          margin-top: 6px;
+          color: #0f172a;
+        }
+        .outline-level-2 {
+          padding-left: 18px;
+          font-size: 0.74rem;
+          color: #475569;
         }
 
         /* GOOGLE DOCS STICKY TOOLBAR */
@@ -1314,7 +1748,22 @@ const statusbarJsx = `
           ]})
 `;
 
-const fullSection = contextMenuJsx + '\n' + toolbarAndWorkspace + '\n' + allSheets + '\n          ]}),\n' + statusbarJsx + '\n        ]})\n      ]}),\n\n      ';
+const fullSection = `
+      // Close anev-sticky-header
+      null
+      ]}),
+
+      ${contextMenuJsx}
+
+      ${toolbarAndWorkspace}
+      ${allSheets}
+            ]}),
+          ]}),
+        ]}),
+        ${statusbarJsx}
+      ]}),
+
+      `;
 
 code = code.slice(0, tbIdx) + fullSection + code.slice(arIdx);
 

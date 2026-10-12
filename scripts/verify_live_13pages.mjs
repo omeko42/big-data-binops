@@ -10,6 +10,12 @@ http.get('http://10.0.0.x:3000/_next/static/chunks/1s8uqnrz-0f75.js', res => {
     console.log('Contains BARESKRIM POLRI:', d.includes('BARESKRIM POLRI'));
     console.log('Contains Horizontal Ruler:', d.includes('anev-ruler-bar'));
     console.log('Contains Cross-page Backspace engine:', d.includes('handleCrossPageKeys'));
-    console.log('Contains SetDocFontSize:', d.includes('setDocFontSize'));
+    console.log('Contains SetDocFontSize:', d.includes('setDocFontSizePt'));
+    console.log('Contains gdocs-root-app:', d.includes('gdocs-root-app'));
+    console.log('Contains gdocs-top-header:', d.includes('gdocs-top-header'));
+    console.log('Contains docOutlinePanel:', d.includes('docOutlinePanel'));
+    console.log('Contains docFindReplaceBox:', d.includes('docFindReplaceBox'));
+    console.log('Contains gdocs-menubar:', d.includes('gdocs-menubar'));
+    console.log('Contains statusWordInfo:', d.includes('statusWordInfo'));
   });
 });
