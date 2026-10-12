@@ -409,27 +409,81 @@ e.s(["default",0,function(){
       }
     }
 
-    function runDocCmd(cmd, val) {
-      try {
-        document.execCommand(cmd, false, val);
-      } catch(e) {}
+    var lastActiveCell = null;
+    var currentFontSizePt = 10;
+
+    function toggleDocDropdown(id) {
+      var d = document.getElementById(id);
+      if (!d) return;
+      var isOpen = d.classList.contains('open');
+      var allDd = document.querySelectorAll('.tb-dropdown');
+      for (var i = 0; i < allDd.length; i++) allDd[i].classList.remove('open');
+      if (!isOpen) d.classList.add('open');
     }
 
-    function handleDirectPrint() {
-      window.print();
+    function closeAllDocDropdowns() {
+      var allDd = document.querySelectorAll('.tb-dropdown');
+      for (var i = 0; i < allDd.length; i++) allDd[i].classList.remove('open');
     }
 
-    function handleInsertLogo() {
-      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:70px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
-      try {
-        document.execCommand('insertHTML', false, imgHtml);
-      } catch(e) {
-        var p1 = document.querySelector('.anev-page-content');
-        if (p1) p1.insertAdjacentHTML('afterbegin', imgHtml);
+    function setBtnActive(id, active) {
+      var b = document.getElementById(id);
+      if (b) {
+        if (active) b.classList.add('active');
+        else b.classList.remove('active');
       }
     }
 
-    function setDocFontSize(pt) {
+    function runDocCmd(cmd, val) {
+      try {
+        document.execCommand(cmd, false, val);
+        updateToolbarState();
+      } catch(e) {}
+    }
+
+    function updateToolbarState() {
+      try {
+        setBtnActive('tb-btn-bold', document.queryCommandState('bold'));
+        setBtnActive('tb-btn-italic', document.queryCommandState('italic'));
+        setBtnActive('tb-btn-underline', document.queryCommandState('underline'));
+        setBtnActive('tb-btn-strike', document.queryCommandState('strikeThrough'));
+
+        setBtnActive('tb-btn-align-left', document.queryCommandState('justifyLeft'));
+        setBtnActive('tb-btn-align-center', document.queryCommandState('justifyCenter'));
+        setBtnActive('tb-btn-align-right', document.queryCommandState('justifyRight'));
+        setBtnActive('tb-btn-align-justify', document.queryCommandState('justifyFull'));
+
+        updateDocStats();
+      } catch(e) {}
+    }
+
+    function updateDocStats() {
+      try {
+        var doc = document.getElementById('docEditor');
+        if (!doc) return;
+        var text = doc.innerText || '';
+        var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        var chars = text.length;
+        var pages = document.querySelectorAll('.anev-page-sheet').length;
+        
+        var wEl = document.getElementById('statusWordInfo');
+        if (wEl) wEl.innerText = words.toLocaleString('id-ID') + ' kata • ' + chars.toLocaleString('id-ID') + ' karakter';
+        var pEl = document.getElementById('statusPageInfo');
+        if (pEl) pEl.innerText = pages + ' halaman';
+      } catch(e) {}
+    }
+
+    function setDocFontName(font) {
+      document.execCommand('fontName', false, font);
+      var lbl = document.getElementById('tb-font-label');
+      if (lbl) lbl.innerText = font;
+      closeAllDocDropdowns();
+    }
+
+    function setDocFontSizePt(pt) {
+      currentFontSizePt = pt;
+      var lbl = document.getElementById('tb-size-label');
+      if (lbl) lbl.innerText = pt;
       try {
         document.execCommand('fontSize', false, '7');
         var fonts = document.querySelectorAll('font[size="7"]');
@@ -441,16 +495,68 @@ e.s(["default",0,function(){
           f.parentNode.replaceChild(span, f);
         }
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function stepDocFontSize(delta) {
+      var newPt = Math.max(6, Math.min(72, currentFontSizePt + delta));
+      setDocFontSizePt(newPt);
+    }
+
+    function setDocBlockFormat(tag, label) {
+      document.execCommand('formatBlock', false, tag);
+      var lbl = document.getElementById('tb-style-label');
+      if (lbl) lbl.innerText = label;
+      closeAllDocDropdowns();
+    }
+
+    function setDocTextColor(hex) {
+      document.execCommand('foreColor', false, hex);
+      closeAllDocDropdowns();
+    }
+
+    function setDocHighlightColor(col) {
+      document.execCommand('hiliteColor', false, col);
+      closeAllDocDropdowns();
     }
 
     function setDocLineSpacing(val) {
       try {
         var sel = window.getSelection();
-        if (!sel) return;
-        var node = sel.anchorNode;
-        var p = node ? (node.nodeType === 1 ? node : node.parentElement).closest('p, div, li, td, th') : null;
-        if (p) p.style.lineHeight = val;
+        if (sel && sel.rangeCount > 0) {
+          var node = sel.anchorNode;
+          var block = node ? (node.nodeType === 1 ? node : node.parentElement).closest('p, div, li, td, th, h1, h2, h3') : null;
+          if (block) block.style.lineHeight = val;
+        }
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function applyDocZoom(factor, label) {
+      var ws = document.getElementById('docEditor');
+      if (ws) {
+        ws.style.transform = 'scale(' + factor + ')';
+        ws.style.transformOrigin = 'top center';
+      }
+      var zLbl = document.getElementById('tb-zoom-label');
+      if (zLbl) zLbl.innerText = label;
+      var sZ = document.getElementById('statusZoom');
+      if (sZ) sZ.innerText = label;
+      closeAllDocDropdowns();
+    }
+
+    function handleDirectPrint() {
+      window.print();
+    }
+
+    function handleInsertLogo() {
+      var imgHtml = '<div style="text-align:center;margin:6px 0;"><img src="' + RESERSE_LOGO_B64 + '" class="anev-doc-logo" alt="Logo Reserse Polri" title="Klik untuk memilih, tekan Backspace/Delete untuk menghapus" style="width:70px;height:auto;display:block;margin:4px auto;cursor:pointer;" /></div>';
+      try {
+        document.execCommand('insertHTML', false, imgHtml);
+      } catch(e) {
+        var p1 = document.querySelector('.anev-page-body');
+        if (p1) p1.insertAdjacentHTML('afterbegin', imgHtml);
+      }
     }
 
     function renumberDocPages() {
@@ -458,10 +564,14 @@ e.s(["default",0,function(){
         var sheets = document.querySelectorAll('.anev-page-sheet');
         for (var i = 0; i < sheets.length; i++) {
           var s = sheets[i];
-          s.setAttribute('data-page', i + 1);
+          var num = i + 1;
+          s.setAttribute('data-page', num);
+          var h = s.querySelector('.anev-sheet-header');
+          if (h && num > 1) h.innerText = num;
           var disp = s.querySelector('.page-num-display');
-          if (disp) disp.innerText = i + 1;
+          if (disp) disp.innerText = num;
         }
+        updateDocStats();
       } catch(e) {}
     }
 
@@ -470,51 +580,148 @@ e.s(["default",0,function(){
         var sel = window.getSelection();
         if (!sel || sel.rangeCount === 0) return;
         var node = sel.anchorNode;
-        var editor = node ? (node.nodeType === 1 ? node : node.parentElement).closest('.anev-doc-editor') : null;
-        if (!editor) return;
-        var sheet = editor.closest('.anev-page-sheet');
+        var pageBody = node ? (node.nodeType === 1 ? node : node.parentElement).closest('.anev-page-body') : null;
+        var sheet = pageBody ? pageBody.closest('.anev-page-sheet') : document.querySelector('.anev-page-sheet:last-child');
         if (!sheet) return;
+
         var pageNum = parseInt(sheet.getAttribute('data-page') || '1', 10);
-        var newSheet = sheet.cloneNode(true);
+        var newSheet = document.createElement('div');
         var newPageNum = pageNum + 1;
+        newSheet.className = 'anev-page-sheet anev-print-sheet gdocs-page';
         newSheet.setAttribute('data-page', newPageNum);
-        var newEditor = newSheet.querySelector('.anev-doc-editor');
-        if (newEditor) newEditor.innerHTML = '<p><br></p>';
-        var pageNumDisp = newSheet.querySelector('.page-num-display');
-        if (pageNumDisp) pageNumDisp.innerText = newPageNum;
-        
+
+        var header = document.createElement('div');
+        header.className = 'anev-sheet-header';
+        header.setAttribute('contenteditable', 'false');
+        header.style.textAlign = 'center';
+        header.style.fontWeight = '700';
+        header.style.fontSize = '10pt';
+        header.style.marginBottom = '14px';
+        header.style.userSelect = 'none';
+        header.innerText = newPageNum;
+        newSheet.appendChild(header);
+
+        var newBody = document.createElement('div');
+        newBody.className = 'anev-page-body';
+        newBody.innerHTML = '<p><br></p>';
+
         var currentBlock = (node.nodeType === 1 ? node : node.parentElement).closest('p, div, table, ol, ul, h1, h2, h3');
-        if (currentBlock && currentBlock.parentElement === editor && newEditor) {
-          var nextSib = currentBlock.nextElementSibling;
-          while (nextSib) {
-            var toMove = nextSib;
-            nextSib = nextSib.nextElementSibling;
-            newEditor.appendChild(toMove);
+        if (currentBlock && currentBlock.parentElement === pageBody) {
+          var next = currentBlock.nextElementSibling;
+          while (next) {
+            var toMove = next;
+            next = next.nextElementSibling;
+            newBody.appendChild(toMove);
           }
         }
+        newSheet.appendChild(newBody);
+
+        var catchword = document.createElement('div');
+        catchword.className = 'anev-sheet-catchword';
+        catchword.setAttribute('contenteditable', 'false');
+        catchword.style.textAlign = 'right';
+        catchword.style.fontSize = '8.5pt';
+        catchword.style.fontStyle = 'italic';
+        catchword.style.color = '#475569';
+        catchword.style.marginTop = '16px';
+        catchword.style.userSelect = 'none';
+        catchword.innerText = '[*First Next Line Char] + [……]';
+        newSheet.appendChild(catchword);
+
+        var footer = document.createElement('div');
+        footer.className = 'anev-page-footer';
+        footer.setAttribute('contenteditable', 'false');
+        footer.style.userSelect = 'none';
+        footer.innerHTML = '<div class="anev-footer-left anev-forensic-stamp"><span style="font-size:0.72rem;margin-right:4px;">🛡️</span><span style="font-family:monospace;font-size:0.66rem;font-weight:700;color:#475569;letter-spacing:0.4px;">' + docStamp + '</span></div><div class="anev-footer-right page-num-display">' + newPageNum + '</div>';
+        newSheet.appendChild(footer);
+
         sheet.after(newSheet);
         renumberDocPages();
-        if (newEditor) newEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        newSheet.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch(e) {
         console.warn('Page break error:', e);
       }
     }
 
-    function insertCustomTable() {
-      var html = '<table class="anev-table-naskah"><thead><tr><th>No</th><th>Uraian / Indikator</th><th>Target</th><th>Keterangan</th></tr></thead><tbody><tr><td style="text-align:center;">1</td><td>Data baru</td><td style="text-align:center;">-</td><td>-</td></tr></tbody></table><p><br></p>';
+    function insertCustomTable(rows, cols) {
+      rows = rows || 3;
+      cols = cols || 4;
+      var html = '<table class="anev-table-naskah"><thead><tr>';
+      for (var c = 1; c <= cols; c++) html += '<th>Header ' + c + '</th>';
+      html += '</tr></thead><tbody>';
+      for (var r = 1; r <= rows; r++) {
+        html += '<tr>';
+        for (var c = 1; c <= cols; c++) html += '<td>Data ' + r + '.' + c + '</td>';
+        html += '</tr>';
+      }
+      html += '</tbody></table><p><br></p>';
       try {
         document.execCommand('insertHTML', false, html);
       } catch(e) {}
+      closeAllDocDropdowns();
+    }
+
+    function handleTableAction(act) {
+      var cell = lastActiveCell || (window.getSelection()?.anchorNode ? (window.getSelection().anchorNode.nodeType === 1 ? window.getSelection().anchorNode : window.getSelection().anchorNode.parentElement).closest('td, th') : null);
+      var table = cell ? cell.closest('table') : document.querySelector('.anev-table-naskah');
+      if (!table) return;
+
+      if (act === 'addRowAbove' || act === 'addRowBelow') {
+        var refTr = cell ? cell.closest('tr') : table.querySelector('tbody tr:last-child') || table.querySelector('tr:last-child');
+        var colCount = refTr ? refTr.children.length : 4;
+        var newTr = document.createElement('tr');
+        for (var i = 0; i < colCount; i++) {
+          var td = document.createElement('td');
+          td.style.border = '1px solid #000';
+          td.style.padding = '3px 5px';
+          td.innerHTML = '-';
+          newTr.appendChild(td);
+        }
+        if (act === 'addRowAbove' && refTr) refTr.before(newTr);
+        else if (refTr) refTr.after(newTr);
+        else table.appendChild(newTr);
+      } else if (act === 'delRow') {
+        var tr = cell ? cell.closest('tr') : null;
+        if (tr && tr.parentElement.children.length > 1) tr.remove();
+      } else if (act === 'addColLeft' || act === 'addColRight') {
+        var colIdx = cell ? cell.cellIndex : 0;
+        var rows = table.rows;
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          var isTh = row.firstElementChild && row.firstElementChild.tagName === 'TH';
+          var newCell = document.createElement(isTh ? 'th' : 'td');
+          newCell.style.border = '1px solid #000';
+          newCell.style.padding = '3px 5px';
+          if (isTh) { newCell.style.background = '#f1f5f9'; newCell.innerHTML = 'Kolom'; }
+          else newCell.innerHTML = '-';
+          if (colIdx >= 0 && colIdx < row.children.length) {
+            if (act === 'addColLeft') row.children[colIdx].before(newCell);
+            else row.children[colIdx].after(newCell);
+          } else row.appendChild(newCell);
+        }
+      } else if (act === 'delCol') {
+        var colIdx = cell ? cell.cellIndex : -1;
+        if (colIdx >= 0) {
+          var rows = table.rows;
+          if (rows.length > 0 && rows[0].children.length <= 1) { table.remove(); closeAllDocDropdowns(); return; }
+          for (var r = 0; r < rows.length; r++) {
+            if (colIdx < rows[r].children.length) rows[r].children[colIdx].remove();
+          }
+        }
+      } else if (act === 'delTable') {
+        table.remove();
+      }
+      closeAllDocDropdowns();
     }
 
     (0,a.useEffect)(() => {
       function onCtxMenu(e) {
-        let editor = e.target.closest('.anev-doc-editor');
+        var editor = e.target.closest('#docEditor');
         if (!editor) return;
         e.preventDefault();
-        let isImg = e.target.tagName === 'IMG';
-        let isTable = !!e.target.closest('table');
-        let type = isImg ? 'img' : (isTable ? 'table' : 'text');
+        var isImg = e.target.tagName === 'IMG';
+        var isTable = !!e.target.closest('table');
+        var type = isImg ? 'img' : (isTable ? 'table' : 'text');
         setContextMenu({
           x: Math.min(e.clientX, window.innerWidth - 220),
           y: Math.min(e.clientY, window.innerHeight - 280),
@@ -522,110 +729,99 @@ e.s(["default",0,function(){
           target: e.target
         });
       }
+
       function onDocClick(e) {
-        if (!e.target.closest('.anev-context-menu')) {
-          setContextMenu(null);
+        if (!e.target.closest('.tb-dropdown')) {
+          closeAllDocDropdowns();
         }
+        var cell = e.target.closest('td, th');
+        if (cell) lastActiveCell = cell;
       }
+
+      function onDocInput() {
+        updateDocStats();
+      }
+
       function handleCrossPageKeys(e) {
-        let sel = window.getSelection();
+        var sel = window.getSelection();
         if (!sel || !sel.isCollapsed) return;
 
-        let targetEditor = sel.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('.anev-doc-editor') : null;
-        if (!targetEditor) return;
+        var anchor = sel.anchorNode;
+        var pageBody = anchor ? (anchor.nodeType === 1 ? anchor : anchor.parentElement).closest('.anev-page-body') : null;
+        if (!pageBody) return;
 
-        let currentSheet = targetEditor.closest('.anev-page-sheet');
-        let pageNum = parseInt(currentSheet?.getAttribute('data-page') || '1', 10);
+        var currentSheet = pageBody.closest('.anev-page-sheet');
+        var pageNum = parseInt(currentSheet?.getAttribute('data-page') || '1', 10);
 
         if (e.key === 'Backspace') {
-          let range = sel.getRangeAt(0);
-          let preRange = range.cloneRange();
-          preRange.selectNodeContents(targetEditor);
+          var range = sel.getRangeAt(0);
+          var preRange = range.cloneRange();
+          preRange.selectNodeContents(pageBody);
           preRange.setEnd(range.startContainer, range.startOffset);
 
-          // If cursor is at the very beginning of this page's editor
+          // If cursor is at the very beginning of this page's body
           if (preRange.toString().length === 0) {
             if (pageNum > 1) {
               e.preventDefault();
-              let prevSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum - 1) + '"]');
-              let prevEditor = prevSheet ? prevSheet.querySelector('.anev-doc-editor') : null;
-              if (prevEditor) {
-                let firstChild = targetEditor.firstElementChild;
-                if (firstChild) {
-                  prevEditor.appendChild(firstChild);
-                  let newRange = document.createRange();
-                  newRange.selectNodeContents(firstChild);
-                  newRange.collapse(true);
-                  sel.removeAllRanges();
-                  sel.addRange(newRange);
-                  firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                  let lastChild = prevEditor.lastElementChild || prevEditor;
-                  let newRange = document.createRange();
-                  newRange.selectNodeContents(lastChild);
-                  newRange.collapse(false);
-                  sel.removeAllRanges();
-                  sel.addRange(newRange);
-                  lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              var prevSheet = currentSheet.previousElementSibling;
+              while (prevSheet && !prevSheet.classList.contains('anev-page-sheet')) {
+                prevSheet = prevSheet.previousElementSibling;
+              }
+              if (prevSheet) {
+                var prevBody = prevSheet.querySelector('.anev-page-body');
+                if (prevBody) {
+                  var firstChild = pageBody.firstElementChild;
+                  var targetAttach = prevBody.lastElementChild || prevBody;
+                  if (firstChild) {
+                    prevBody.appendChild(firstChild);
+                    var newRange = document.createRange();
+                    newRange.selectNodeContents(firstChild);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  } else {
+                    var newRange = document.createRange();
+                    newRange.selectNodeContents(targetAttach);
+                    newRange.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    targetAttach.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }
+
+                  // If sheet body is now empty, remove current sheet
+                  var remainingText = pageBody.innerText.trim();
+                  if (pageBody.children.length === 0 || (!remainingText && pageBody.children.length <= 1)) {
+                    currentSheet.remove();
+                    renumberDocPages();
+                  }
                 }
               }
             }
           }
         } else if (e.key === 'Delete') {
-          let range = sel.getRangeAt(0);
-          let postRange = range.cloneRange();
-          postRange.selectNodeContents(targetEditor);
+          var range = sel.getRangeAt(0);
+          var postRange = range.cloneRange();
+          postRange.selectNodeContents(pageBody);
           postRange.setStart(range.endContainer, range.endOffset);
 
           if (postRange.toString().length === 0) {
-            let nextSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum + 1) + '"]');
-            let nextEditor = nextSheet ? nextSheet.querySelector('.anev-doc-editor') : null;
-            if (nextEditor && nextEditor.firstElementChild) {
-              e.preventDefault();
-              let moved = nextEditor.firstElementChild;
-              targetEditor.appendChild(moved);
+            var nextSheet = currentSheet.nextElementSibling;
+            while (nextSheet && !nextSheet.classList.contains('anev-page-sheet')) {
+              nextSheet = nextSheet.nextElementSibling;
             }
-          }
-        } else if (e.key === 'ArrowUp') {
-          let range = sel.getRangeAt(0);
-          let preRange = range.cloneRange();
-          preRange.selectNodeContents(targetEditor);
-          preRange.setEnd(range.startContainer, range.startOffset);
-
-          if (preRange.toString().indexOf('\n') === -1 && preRange.toString().length < 30) {
-            if (pageNum > 1) {
-              let prevSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum - 1) + '"]');
-              let prevEditor = prevSheet ? prevSheet.querySelector('.anev-doc-editor') : null;
-              if (prevEditor) {
-                let lastChild = prevEditor.lastElementChild || prevEditor;
-                let newRange = document.createRange();
-                newRange.selectNodeContents(lastChild);
-                newRange.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-                lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (nextSheet) {
+              var nextBody = nextSheet.querySelector('.anev-page-body');
+              if (nextBody && nextBody.firstElementChild) {
                 e.preventDefault();
+                var moved = nextBody.firstElementChild;
+                pageBody.appendChild(moved);
+                var remainingNext = nextBody.innerText.trim();
+                if (nextBody.children.length === 0 || (!remainingNext && nextBody.children.length <= 1)) {
+                  nextSheet.remove();
+                  renumberDocPages();
+                }
               }
-            }
-          }
-        } else if (e.key === 'ArrowDown') {
-          let range = sel.getRangeAt(0);
-          let postRange = range.cloneRange();
-          postRange.selectNodeContents(targetEditor);
-          postRange.setStart(range.endContainer, range.endOffset);
-
-          if (postRange.toString().indexOf('\n') === -1 && postRange.toString().length < 30) {
-            let nextSheet = document.querySelector('.anev-page-sheet[data-page="' + (pageNum + 1) + '"]');
-            let nextEditor = nextSheet ? nextSheet.querySelector('.anev-doc-editor') : null;
-            if (nextEditor) {
-              let firstChild = nextEditor.firstElementChild || nextEditor;
-              let newRange = document.createRange();
-              newRange.selectNodeContents(firstChild);
-              newRange.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(newRange);
-              firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-              e.preventDefault();
             }
           }
         } else if (e.key === 'Enter' && e.ctrlKey) {
@@ -634,13 +830,19 @@ e.s(["default",0,function(){
         }
       }
 
+      document.addEventListener('selectionchange', updateToolbarState);
       document.addEventListener('contextmenu', onCtxMenu);
       document.addEventListener('click', onDocClick);
       document.addEventListener('keydown', handleCrossPageKeys);
+      document.addEventListener('input', onDocInput);
+      setTimeout(updateDocStats, 600);
+
       return () => {
+        document.removeEventListener('selectionchange', updateToolbarState);
         document.removeEventListener('contextmenu', onCtxMenu);
         document.removeEventListener('click', onDocClick);
         document.removeEventListener('keydown', handleCrossPageKeys);
+        document.removeEventListener('input', onDocInput);
       };
     }, []);
 
@@ -923,7 +1125,7 @@ e.s(["default",0,function(){
           "[*count: X = (KB + KT) : (KM + KP) x 100%]": "X = (" + ccCurr.toLocaleString("id-ID") + ") : (" + ctCurr.toLocaleString("id-ID") + ") x 100% = " + crCurr + "%"
         };
 
-        var workspace = document.querySelector(".anev-pages-workspace");
+        var workspace = document.querySelector("#docEditor");
         if (workspace) {
           var walker = document.createTreeWalker(workspace, NodeFilter.SHOW_TEXT, null, false);
           var node;
@@ -996,6 +1198,7 @@ e.s(["default",0,function(){
           }
         }
 
+        updateDocStats();
         toastRef.current?.show({ severity: "success", summary: "Data Tersinkron", detail: "Semua tag naskah dan tabel telah terhubung dengan data riil CAS.", life: 2500 });
       } catch(e) {
         console.error("resolveAutoTags error:", e);
@@ -1782,19 +1985,24 @@ e.s(["default",0,function(){
             background: transparent !important;
           }
           .anev-docs-toolbar,
+          .gdocs-menubar,
           .gdocs-toolbar,
           .anev-ruler-bar,
           .anev-context-menu,
           .anev-sheet-corner-pill,
+          .gdocs-statusbar,
+          .tb-dropdown-menu,
           .anev-no-print {
             display: none !important;
           }
-          .anev-pages-workspace {
+          .anev-pages-workspace,
+          .gdocs-document-container {
             padding: 0 !important;
             margin: 0 !important;
             background: transparent !important;
             gap: 0 !important;
             overflow: visible !important;
+            transform: none !important;
           }
           .anev-page-sheet {
             display: flex !important;
@@ -1825,7 +2033,7 @@ e.s(["default",0,function(){
             page-break-after: auto !important;
             break-after: auto !important;
           }
-          .anev-page-content {
+          .anev-page-body {
             flex: 1 1 auto !important;
             width: 100% !important;
             max-width: 100% !important;
@@ -1842,11 +2050,21 @@ e.s(["default",0,function(){
         }
         .anev-pages-workspace {
           background: #cbd5e1;
-          padding: 24px 0 60px 0;
+          padding: 24px 0 70px 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 25px;
+          min-height: calc(100vh - 120px);
+        }
+        .gdocs-document-container {
+          outline: none;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 25px;
+          transition: transform 0.15s ease-out;
         }
         .anev-page-sheet {
           background: #ffffff;
@@ -1854,7 +2072,7 @@ e.s(["default",0,function(){
           width: 210mm;
           min-height: 297mm;
           padding: 2cm 2cm 2cm 3cm; /* 2cm top, 2cm right, 2cm bottom, 3cm left matching @page! */
-          margin: 0 auto 24px auto;
+          margin: 0 auto;
           box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
           border-radius: 2px;
           position: relative;
@@ -1869,14 +2087,9 @@ e.s(["default",0,function(){
         }
 
         /* TYPOGRAPHY: DEFAULT JUSTIFY */
-        .anev-page-content, .anev-doc-editor {
-          flex: 1 1 auto;
-          outline: none;
-          text-align: justify;
-          text-justify: inter-word;
-          color: #000000;
-        }
-        .anev-page-content p, .anev-page-content li, .anev-doc-editor p, .anev-doc-editor li {
+        .anev-page-sheet p,
+        .anev-page-sheet div,
+        .anev-page-sheet li {
           text-align: justify;
           text-justify: inter-word;
           margin: 0.35rem 0;
@@ -1974,27 +2187,58 @@ e.s(["default",0,function(){
           z-index: 10;
         }
 
-        /* GOOGLE DOCS STICKY TOOLBAR */
-        .anev-docs-toolbar {
-          position: sticky;
-          top: 0;
-          z-index: 1000;
+        /* GOOGLE DOCS MENUBAR */
+        .gdocs-menubar {
           background: #ffffff;
+          border-bottom: 1px solid #e2e8f0;
+          padding: 3px 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.80rem;
+        }
+        .gdocs-menu-title {
+          font-weight: 800;
+          color: #1e293b;
+          margin-right: 10px;
+          display: flex;
+          align-items: center;
+        }
+        .gdocs-menu-btn {
+          background: none;
+          border: none;
+          padding: 2px 7px;
+          border-radius: 4px;
+          font-size: 0.78rem;
+          color: #334155;
+          cursor: pointer;
+        }
+        .gdocs-menu-btn:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+        }
+
+        /* GOOGLE DOCS STICKY TOOLBAR */
+        .gdocs-toolbar, .anev-docs-toolbar {
+          position: sticky;
+          top: var(--cms-header-h, 0px);
+          z-index: 1000;
+          background: #f8fafc;
           border-bottom: 1px solid #cbd5e1;
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
           padding: 4px 14px;
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: 2px;
           flex-wrap: wrap;
         }
-        .anev-tool-btn {
+        .anev-tool-btn, .tb-btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           min-width: 28px;
           height: 28px;
-          padding: 2px 7px;
+          padding: 2px 6px;
           border-radius: 4px;
           border: 1px solid transparent;
           background: transparent;
@@ -2003,79 +2247,96 @@ e.s(["default",0,function(){
           font-weight: 700;
           cursor: pointer;
           user-select: none;
+          transition: background 0.1s;
         }
-        .anev-tool-btn:hover {
-          background: #f1f5f9;
+        .anev-tool-btn:hover, .tb-btn:hover {
+          background: #e2e8f0;
           color: #0f172a;
         }
-        .anev-tool-separator {
+        .anev-tool-btn.active, .tb-btn.active {
+          background: #dbeafe !important;
+          color: #1d4ed8 !important;
+          border-color: #93c5fd !important;
+        }
+        .anev-tool-separator, .tb-sep {
           width: 1px;
           height: 20px;
           background: #cbd5e1;
           margin: 0 4px;
         }
-        .anev-tool-select {
+        .tb-select-btn {
           height: 28px;
           border: 1px solid #cbd5e1;
           border-radius: 4px;
-          padding: 0 6px;
-          font-size: 0.78rem;
+          padding: 0 8px;
+          font-size: 0.80rem;
+          font-weight: 600;
           background: #ffffff;
           color: #334155;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          user-select: none;
         }
-        .anev-palette-dropdown {
+        .tb-select-btn:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+        }
+
+        /* DROPDOWNS */
+        .tb-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+        .tb-dropdown-menu {
+          display: none;
           position: absolute;
           top: 100%;
           left: 0;
-          margin-top: 4px;
+          margin-top: 3px;
           background: #ffffff;
           border: 1px solid #cbd5e1;
           border-radius: 6px;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-          padding: 6px;
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 5px;
-          z-index: 120;
-          min-width: 110px;
-        }
-        .anev-color-swatch {
-          width: 24px;
-          height: 24px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        .anev-color-swatch:hover {
-          transform: scale(1.15);
-        }
-        .anev-menu-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          margin-top: 4px;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+          z-index: 1200;
           padding: 4px 0;
-          z-index: 120;
-          min-width: 195px;
+          min-width: 150px;
         }
-        .anev-menu-item {
-          padding: 6px 12px;
-          font-size: 0.78rem;
-          font-weight: 600;
+        .tb-dropdown.open .tb-dropdown-menu {
+          display: block;
+        }
+        .tb-menu-item {
+          padding: 6px 14px;
+          font-size: 0.80rem;
           color: #334155;
           cursor: pointer;
           display: flex;
           align-items: center;
           gap: 8px;
-          transition: background 0.1s;
+          user-select: none;
         }
-        .anev-menu-item:hover {
+        .tb-menu-item:hover {
           background: #f1f5f9;
           color: #0f172a;
+        }
+
+        /* STATUS BAR BOTTOM */
+        .gdocs-statusbar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #ffffff;
+          border-top: 1px solid #cbd5e1;
+          padding: 5px 24px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 0.75rem;
+          color: #475569;
+          z-index: 1000;
+          box-shadow: 0 -2px 6px rgba(0,0,0,0.04);
         }
 
         /* GOOGLE DOCS HORIZONTAL RULER */
@@ -2641,15 +2902,15 @@ e.s(["default",0,function(){
           }),
           contextMenu.type === "table" && (0,t.jsxs)(t.Fragment, {
             children: [
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableRow(true); setContextMenu(null); },children:"⬆️ Sisipkan Baris di Atas"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableRow(false); setContextMenu(null); },children:"⬇️ Sisipkan Baris di Bawah"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleDeleteTableRow(); setContextMenu(null); },children:"❌ Hapus Baris"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addRowAbove"); setContextMenu(null); },children:"⬆️ Sisipkan Baris di Atas"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addRowBelow"); setContextMenu(null); },children:"⬇️ Sisipkan Baris di Bawah"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("delRow"); setContextMenu(null); },children:"❌ Hapus Baris"}),
               (0,t.jsx)("div",{className:"anev-context-separator"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableCol(true); setContextMenu(null); },children:"⬅️ Sisipkan Kolom di Kiri"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleAddTableCol(false); setContextMenu(null); },children:"➡️ Sisipkan Kolom di Kanan"}),
-              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleDeleteTableCol(); setContextMenu(null); },children:"❌ Hapus Kolom"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addColLeft"); setContextMenu(null); },children:"⬅️ Sisipkan Kolom di Kiri"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("addColRight"); setContextMenu(null); },children:"➡️ Sisipkan Kolom di Kanan"}),
+              (0,t.jsx)("div",{className:"anev-context-item",onClick:() => { handleTableAction("delCol"); setContextMenu(null); },children:"❌ Hapus Kolom"}),
               (0,t.jsx)("div",{className:"anev-context-separator"}),
-              (0,t.jsx)("div",{className:"anev-context-item",style:{color:"#dc2626"},onClick:() => { handleDeleteTable(); setContextMenu(null); },children:"🗑️ Hapus Tabel"})
+              (0,t.jsx)("div",{className:"anev-context-item",style:{color:"#dc2626"},onClick:() => { handleTableAction("delTable"); setContextMenu(null); },children:"🗑️ Hapus Tabel"})
             ]
           }),
           contextMenu.type === "text" && (0,t.jsxs)(t.Fragment, {
@@ -2674,137 +2935,213 @@ e.s(["default",0,function(){
 
 
         // TAB 1: NASKAH DINAS (EDITOR WYSIWYG)
+        // GOOGLE DOCS / MS WORD MENUBAR
+        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"gdocs-menubar anev-no-print",children:[
+          (0,t.jsxs)("div",{className:"gdocs-menu-title",children:[
+            (0,t.jsx)("span",{style:{color:"#2563eb",fontSize:"1.1rem",marginRight:"4px"},children:"📄"}),
+            " Google Docs / MS Word Editor"
+          ]}),
+          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();window.print()},children:"File (Cetak)"}),
+          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();runDocCmd("undo")},children:"Edit (Undo)"}),
+          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak()},children:"Sisipkan (Page Break)"}),
+          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",onMouseDown:e=>{e.preventDefault();runDocCmd("bold")},children:"Format (Tebal)"}),
+          (0,t.jsx)("button",{type:"button",className:"gdocs-menu-btn",style:{color:"#2563eb",fontWeight:700},onMouseDown:e=>{e.preventDefault();resolveAutoTags()},children:"Alat (Sinkron Data CAS)"})
+        ]}),
+
         // BARIS 3: MS WORD / GOOGLE DOCS TOOLBAR
-        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"anev-docs-toolbar anev-no-print",children:[
-          // 1. Font Family
-          (0,t.jsxs)("select",{className:"anev-tool-select",onChange:(e) => runDocCmd("fontName", e.target.value),defaultValue:"Arial",title:"Jenis Huruf (Font)",children:[
-            (0,t.jsx)("option",{value:"Arial",children:"Arial"}),
-            (0,t.jsx)("option",{value:"Times New Roman",children:"Times New Roman"}),
-            (0,t.jsx)("option",{value:"Calibri",children:"Calibri"})
+        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"gdocs-toolbar anev-docs-toolbar anev-no-print",children:[
+          // 1. Undo, Redo, Print, RemoveFormat
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Urungkan (Ctrl+Z)",onMouseDown:e=>{e.preventDefault();runDocCmd("undo")},children:"↶"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Ulangi (Ctrl+Y)",onMouseDown:e=>{e.preventDefault();runDocCmd("redo")},children:"↷"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Cetak Naskah (Ctrl+P)",onMouseDown:e=>{e.preventDefault();window.print()},children:"🖨️"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Hapus Format (Clear Formatting)",onMouseDown:e=>{e.preventDefault();runDocCmd("removeFormat")},children:"🧹"}),
+          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+          // 2. Zoom Dropdown
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"zoomDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("zoomDropdown")},children:[
+              (0,t.jsx)("span",{id:"tb-zoom-label",children:"100%"}),
+              " ▾"
+            ]}),
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"100px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.75,"75%")},children:"75%"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(0.90,"90%")},children:"90%"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.00,"100%")},children:"100%"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.25,"125%")},children:"125%"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();applyDocZoom(1.50,"150%")},children:"150%"})
+            ]})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 2. Real Point Font Size (pt)
-          (0,t.jsxs)("select",{className:"anev-tool-select",onChange:(e) => setDocFontSize(e.target.value),defaultValue:"10",title:"Ukuran Huruf (Point/pt)",children:[
-            (0,t.jsx)("option",{value:"9",children:"9 pt"}),
-            (0,t.jsx)("option",{value:"10",children:"10 pt"}),
-            (0,t.jsx)("option",{value:"11",children:"11 pt"}),
-            (0,t.jsx)("option",{value:"12",children:"12 pt"}),
-            (0,t.jsx)("option",{value:"14",children:"14 pt"}),
-            (0,t.jsx)("option",{value:"16",children:"16 pt"}),
-            (0,t.jsx)("option",{value:"18",children:"18 pt"})
+          // 3. Paragraph Style Dropdown
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"styleDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("styleDropdown")},children:[
+              (0,t.jsx)("span",{id:"tb-style-label",children:"Teks normal"}),
+              " ▾"
+            ]}),
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("p","Teks normal")},children:(0,t.jsx)("span",{style:{fontSize:"10pt"},children:"Teks normal"})}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h1","Judul Utama")},children:(0,t.jsx)("b",{style:{fontSize:"13pt"},children:"Judul Utama"})}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h2","Subjudul")},children:(0,t.jsx)("b",{style:{fontSize:"11.5pt"},children:"Subjudul"})}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocBlockFormat("h3","Tajuk 3")},children:(0,t.jsx)("b",{style:{fontSize:"10.5pt"},children:"Tajuk 3"})})
+            ]})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 3. Bold, Italic, Underline, Strikethrough
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Tebal (Ctrl+B)",onClick:() => runDocCmd("bold"),children:(0,t.jsx)("b",{children:"B"})}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Miring (Ctrl+I)",onClick:() => runDocCmd("italic"),children:(0,t.jsx)("i",{children:"I"})}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Garis Bawah (Ctrl+U)",onClick:() => runDocCmd("underline"),children:(0,t.jsx)("u",{children:"U"})}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Coretan (Strike)",onClick:() => runDocCmd("strikeThrough"),children:(0,t.jsx)("s",{children:"S"})}),
+          // 4. Font Family Dropdown
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"fontDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"95px"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("fontDropdown")},children:[
+              (0,t.jsx)("span",{id:"tb-font-label",children:"Arial"}),
+              " ▾"
+            ]}),
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"160px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Arial"},onMouseDown:e=>{e.preventDefault();setDocFontName("Arial")},children:"Arial"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Times New Roman'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Times New Roman")},children:"Times New Roman"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Calibri"},onMouseDown:e=>{e.preventDefault();setDocFontName("Calibri")},children:"Calibri"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Georgia"},onMouseDown:e=>{e.preventDefault();setDocFontName("Georgia")},children:"Georgia"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"'Courier New'"},onMouseDown:e=>{e.preventDefault();setDocFontName("Courier New")},children:"Courier New"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{fontFamily:"Verdana"},onMouseDown:e=>{e.preventDefault();setDocFontName("Verdana")},children:"Verdana"})
+            ]})
+          ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 4. Text Color Picker
-          (0,t.jsxs)("div",{style:{position:"relative",display:"inline-block"},children:[
-            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",onClick:() => setShowTextColorPalette(!showTextColorPalette),title:"Warna Teks",children:[
+          // 5. Font Size Decrement, Dropdown, Increment
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kecilkan Huruf (Font Size -)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(-1)},children:"−"}),
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"sizeDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{minWidth:"48px",justifyContent:"center"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("sizeDropdown")},children:[
+              (0,t.jsx)("span",{id:"tb-size-label",children:"10"}),
+              " ▾"
+            ]}),
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"65px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(8)},children:"8"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(9)},children:"9"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(10)},children:"10"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(11)},children:"11"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(12)},children:"12"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(14)},children:"14"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(16)},children:"16"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(18)},children:"18"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(20)},children:"20"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(24)},children:"24"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocFontSizePt(32)},children:"32"})
+            ]})
+          ]}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Besarkan Huruf (Font Size +)",onMouseDown:e=>{e.preventDefault();stepDocFontSize(1)},children:"+"}),
+          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+          // 6. Bold, Italic, Underline, Strike
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-bold",className:"anev-tool-btn",title:"Tebal (Ctrl+B)",onMouseDown:e=>{e.preventDefault();runDocCmd("bold")},children:(0,t.jsx)("b",{children:"B"})}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-italic",className:"anev-tool-btn",title:"Miring (Ctrl+I)",onMouseDown:e=>{e.preventDefault();runDocCmd("italic")},children:(0,t.jsx)("i",{children:"I"})}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-underline",className:"anev-tool-btn",title:"Garis Bawah (Ctrl+U)",onMouseDown:e=>{e.preventDefault();runDocCmd("underline")},children:(0,t.jsx)("u",{children:"U"})}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-strike",className:"anev-tool-btn",title:"Coretan (Strike)",onMouseDown:e=>{e.preventDefault();runDocCmd("strikeThrough")},children:(0,t.jsx)("s",{children:"S"})}),
+          (0,t.jsx)("div",{className:"anev-tool-separator"}),
+
+          // 7. Text Color Palette
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"textColorDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Teks",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("textColorDropdown")},children:[
               (0,t.jsx)("span",{style:{color:"#dc2626",fontWeight:900,textDecoration:"underline"},children:"A"}),
               " ▾"
             ]}),
-            showTextColorPalette && (0,t.jsxs)("div",{className:"anev-palette-dropdown",children:[
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#000000"},onClick:() => { runDocCmd("foreColor","#000000"); setShowTextColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#dc2626"},onClick:() => { runDocCmd("foreColor","#dc2626"); setShowTextColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#2563eb"},onClick:() => { runDocCmd("foreColor","#2563eb"); setShowTextColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#16a34a"},onClick:() => { runDocCmd("foreColor","#16a34a"); setShowTextColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#d97706"},onClick:() => { runDocCmd("foreColor","#d97706"); setShowTextColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#7c3aed"},onClick:() => { runDocCmd("foreColor","#7c3aed"); setShowTextColorPalette(false); }})
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#000000",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#000000")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#475569",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#475569")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#dc2626",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#dc2626")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ea580c",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ea580c")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#ca8a04",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#ca8a04")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#16a34a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#16a34a")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#0284c7",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#0284c7")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#2563eb",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#2563eb")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#7c3aed",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#7c3aed")}}),
+              (0,t.jsx)("div",{style:{width:"20px",height:"20px",background:"#db2777",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocTextColor("#db2777")}})
             ]})
           ]}),
 
-          // 5. Highlight Color Picker
-          (0,t.jsxs)("div",{style:{position:"relative",display:"inline-block"},children:[
-            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",onClick:() => setShowBgColorPalette(!showBgColorPalette),title:"Warna Sorotan (Stabilo)",children:[
+          // 8. Highlight Color Palette
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"bgColorDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Warna Sorotan (Stabilo)",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("bgColorDropdown")},children:[
               (0,t.jsx)("span",{style:{background:"#fef08a",padding:"0 3px",border:"1px solid #ca8a04",borderRadius:"2px"},children:"🖊️"}),
               " ▾"
             ]}),
-            showBgColorPalette && (0,t.jsxs)("div",{className:"anev-palette-dropdown",children:[
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#fef08a"},onClick:() => { runDocCmd("hiliteColor","#fef08a"); setShowBgColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#bbf7d0"},onClick:() => { runDocCmd("hiliteColor","#bbf7d0"); setShowBgColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#bae6fd"},onClick:() => { runDocCmd("hiliteColor","#bae6fd"); setShowBgColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#fbcfe8"},onClick:() => { runDocCmd("hiliteColor","#fbcfe8"); setShowBgColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"#fed7aa"},onClick:() => { runDocCmd("hiliteColor","#fed7aa"); setShowBgColorPalette(false); }}),
-              (0,t.jsx)("div",{className:"anev-color-swatch",style:{background:"transparent",border:"1px dashed #64748b"},title:"Tanpa Warna",onClick:() => { runDocCmd("hiliteColor","transparent"); setShowBgColorPalette(false); }})
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"130px",padding:"8px",display:"grid",gridTemplateColumns:"repeat(5, 20px)",gap:"4px"},children:[
+              (0,t.jsx)("div",{title:"Kuning",style:{width:"20px",height:"20px",background:"#fef08a",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fef08a")}}),
+              (0,t.jsx)("div",{title:"Hijau",style:{width:"20px",height:"20px",background:"#bbf7d0",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bbf7d0")}}),
+              (0,t.jsx)("div",{title:"Biru",style:{width:"20px",height:"20px",background:"#bae6fd",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#bae6fd")}}),
+              (0,t.jsx)("div",{title:"Oranye",style:{width:"20px",height:"20px",background:"#fed7aa",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fed7aa")}}),
+              (0,t.jsx)("div",{title:"Pink",style:{width:"20px",height:"20px",background:"#fbcfe8",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("#fbcfe8")}}),
+              (0,t.jsx)("div",{title:"Tanpa Warna",style:{width:"20px",height:"20px",background:"transparent",border:"1px dashed #64748b",borderRadius:"2px",cursor:"pointer"},onMouseDown:e=>{e.preventDefault();setDocHighlightColor("transparent")}})
             ]})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 6. Alignments (Left, Center, Right, Justify)
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Rata Kiri (Left)",onClick:() => runDocCmd("justifyLeft"),children:"⇤"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Rata Tengah (Center)",onClick:() => runDocCmd("justifyCenter"),children:"⇎"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Rata Kanan (Right)",onClick:() => runDocCmd("justifyRight"),children:"⇥"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn active",title:"Rata Justify (Kanan-Kiri Penuh)",onClick:() => runDocCmd("justifyFull"),children:"≡"}),
+          // 9. Alignments
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-left",className:"anev-tool-btn",title:"Rata Kiri (Left)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyLeft")},children:"⇤"}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-center",className:"anev-tool-btn",title:"Rata Tengah (Center)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyCenter")},children:"⇎"}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-right",className:"anev-tool-btn",title:"Rata Kanan (Right)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyRight")},children:"⇥"}),
+          (0,t.jsx)("button",{type:"button",id:"tb-btn-align-justify",className:"anev-tool-btn active",title:"Rata Justify (Kanan-Kiri Penuh)",onMouseDown:e=>{e.preventDefault();runDocCmd("justifyFull")},children:"≡"}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 7. Line Spacing (1.15, 1.35, 1.45, 1.5, 2.0)
-          (0,t.jsxs)("select",{className:"anev-tool-select",onChange:(e) => setDocLineSpacing(e.target.value),defaultValue:"1.45",title:"Spasi Baris (Line Spacing)",children:[
-            (0,t.jsx)("option",{value:"1.15",children:"1.15"}),
-            (0,t.jsx)("option",{value:"1.35",children:"1.35"}),
-            (0,t.jsx)("option",{value:"1.45",children:"1.45"}),
-            (0,t.jsx)("option",{value:"1.5",children:"1.5"}),
-            (0,t.jsx)("option",{value:"2.0",children:"2.0"})
+          // 10. Line Spacing Dropdown
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"spacingDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",onMouseDown:e=>{e.preventDefault();toggleDocDropdown("spacingDropdown")},children:[
+              (0,t.jsx)("span",{children:"↕ Spasi"}),
+              " ▾"
+            ]}),
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"150px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.0")},children:"1.0 (Tunggal)"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.15")},children:"1.15"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.35")},children:"1.35"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.45")},children:"1.45 (Standar Polri)"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("1.5")},children:"1.5"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();setDocLineSpacing("2.0")},children:"2.0 (Ganda)"})
+            ]})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 8. Indent & Outdent
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kurangi Indentasi",onClick:() => runDocCmd("outdent"),children:"⇤"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Tambah Indentasi",onClick:() => runDocCmd("indent"),children:"⇥"}),
+          // 11. Bullets & Indentation
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Butir (Bullets)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertUnorderedList")},children:"•≡"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Nomor (Numbered)",onMouseDown:e=>{e.preventDefault();runDocCmd("insertOrderedList")},children:"1≡"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Kurangi Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("outdent")},children:"⇤"}),
+          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Tambah Indentasi",onMouseDown:e=>{e.preventDefault();runDocCmd("indent")},children:"⇥"}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 9. Lists
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Butir (Bullets)",onClick:() => runDocCmd("insertUnorderedList"),children:"•≡"}),
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Daftar Nomor (Numbered)",onClick:() => runDocCmd("insertOrderedList"),children:"1≡"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 10. Table Operations Dropdown
-          (0,t.jsxs)("div",{style:{position:"relative",display:"inline-block"},children:[
-            (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{color:"#1d4ed8",fontWeight:700,background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"4px",padding:"2px 8px",gap:"4px"},onClick:() => setShowTableMenu(!showTableMenu),title:"Menu Manipulasi Tabel",children:[
+          // 12. Table Menu Dropdown
+          (0,t.jsxs)("div",{className:"tb-dropdown",id:"tableDropdown",children:[
+            (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{color:"#1d4ed8",fontWeight:700,background:"#eff6ff",borderColor:"#bfdbfe"},onMouseDown:e=>{e.preventDefault();toggleDocDropdown("tableDropdown")},children:[
               "📊 ",
               (0,t.jsx)("span",{children:"Tabel ▾"})
             ]}),
-            showTableMenu && (0,t.jsxs)("div",{className:"anev-menu-dropdown",children:[
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { insertCustomTable(); setShowTableMenu(false); },children:"➕ Sisipkan Tabel Baru"}),
-              (0,t.jsx)("div",{style:{width:"100%",height:"1px",background:"#e2e8f0",margin:"2px 0"}}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleAddTableRow(true); setShowTableMenu(false); },children:"⬆️ Tambah Baris Atas"}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleAddTableRow(false); setShowTableMenu(false); },children:"⬇️ Tambah Baris Bawah"}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleDeleteTableRow(); setShowTableMenu(false); },children:"❌ Hapus Baris"}),
-              (0,t.jsx)("div",{style:{width:"100%",height:"1px",background:"#e2e8f0",margin:"2px 0"}}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleAddTableCol(true); setShowTableMenu(false); },children:"⬅️ Tambah Kolom Kiri"}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleAddTableCol(false); setShowTableMenu(false); },children:"➡️ Tambah Kolom Kanan"}),
-              (0,t.jsx)("div",{className:"anev-menu-item",onClick:() => { handleDeleteTableCol(); setShowTableMenu(false); },children:"❌ Hapus Kolom"}),
-              (0,t.jsx)("div",{style:{width:"100%",height:"1px",background:"#e2e8f0",margin:"2px 0"}}),
-              (0,t.jsx)("div",{className:"anev-menu-item",style:{color:"#dc2626"},onClick:() => { handleDeleteTable(); setShowTableMenu(false); },children:"🗑️ Hapus Tabel"})
+            (0,t.jsxs)("div",{className:"tb-dropdown-menu",style:{minWidth:"190px"},children:[
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();insertCustomTable(3, 4)},children:"➕ Sisipkan Tabel Baru"}),
+              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowAbove")},children:"⬆️ Sisipkan Baris di Atas"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addRowBelow")},children:"⬇️ Sisipkan Baris di Bawah"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delRow")},children:"❌ Hapus Baris"}),
+              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColLeft")},children:"⬅️ Sisipkan Kolom di Kiri"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("addColRight")},children:"➡️ Sisipkan Kolom di Kanan"}),
+              (0,t.jsx)("div",{className:"tb-menu-item",onMouseDown:e=>{e.preventDefault();handleTableAction("delCol")},children:"❌ Hapus Kolom"}),
+              (0,t.jsx)("div",{style:{height:"1px",background:"#e2e8f0",margin:"3px 0"}}),
+              (0,t.jsx)("div",{className:"tb-menu-item",style:{color:"#dc2626"},onMouseDown:e=>{e.preventDefault();handleTableAction("delTable")},children:"🗑️ Hapus Tabel"})
             ]})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 11. Page Break Button
-          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",title:"Sisipkan Pemisah Halaman (Page Break / Ctrl+Enter)",onClick:handleInsertPageBreak,children:[
+          // 13. Page Break
+          (0,t.jsxs)("button",{type:"button",className:"tb-select-btn",style:{fontWeight:700},title:"Pemisah Halaman (Page Break / Ctrl+Enter)",onMouseDown:e=>{e.preventDefault();handleInsertPageBreak()},children:[
             "📄+ ",
             (0,t.jsx)("span",{children:"Page Break"})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 12. Clear Formatting
-          (0,t.jsx)("button",{type:"button",className:"anev-tool-btn",title:"Hapus Format (Clear Formatting)",onClick:() => runDocCmd("removeFormat"),children:"🧹"}),
-          (0,t.jsx)("div",{className:"anev-tool-separator"}),
-
-          // 13. Sisipkan Logo Reserse (Bila Terhapus)
-          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{gap:"4px",color:"#475569"},onClick:handleInsertLogo,title:"Sisipkan kembali lambang Reserse",children:[
+          // 14. Logo Reserse
+          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{gap:"4px",color:"#475569"},onMouseDown:e=>{e.preventDefault();handleInsertLogo()},title:"Sisipkan kembali lambang Reserse Polri",children:[
             "🖼️ ",
             (0,t.jsx)("span",{children:"Logo"})
           ]}),
           (0,t.jsx)("div",{className:"anev-tool-separator"}),
 
-          // 14. Sinkron Data CAS
-          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{background:"#2563eb",color:"#ffffff",border:"1px solid #1d4ed8",borderRadius:"4px",padding:"2px 10px",fontWeight:800,gap:"4px"},onClick:() => resolveAutoTags(),title:"Gantikan semua tag dinamis dan tabel dengan data satker dan periode terkini dari database CAS",children:[
+          // 15. Sinkron Data CAS
+          (0,t.jsxs)("button",{type:"button",className:"anev-tool-btn",style:{background:"#2563eb",color:"#ffffff",border:"1px solid #1d4ed8",borderRadius:"4px",padding:"2px 10px",fontWeight:800,gap:"4px"},onMouseDown:e=>{e.preventDefault();resolveAutoTags()},title:"Gantikan semua tag dinamis dan tabel dengan data satker dan periode terkini dari database CAS",children:[
             "✨ ",
             (0,t.jsx)("span",{children:"Sinkron Data CAS"})
           ]})
@@ -2813,9 +3150,7 @@ e.s(["default",0,function(){
         // HORIZONTAL RULER (PENGGARIS DOKUMEN GOOGLE DOCS / MS WORD)
         activeTab === "lampiran" && (0,t.jsx)("div",{className:"anev-ruler-bar anev-no-print",children:[
           (0,t.jsxs)("div",{className:"anev-ruler",children:[
-            // Left margin 3cm
             (0,t.jsx)("div",{className:"anev-ruler-left-margin",title:"Batas Margin Kiri (3 cm)",children:(0,t.jsx)("span",{children:"3 cm"})}),
-            // Printable body 16cm
             (0,t.jsxs)("div",{className:"anev-ruler-body",title:"Area Cetak Lembar Kerja (16 cm)",children:[
               (0,t.jsx)("div",{className:"gdocs-ruler-marker-top",title:"Indentasi Baris Pertama (First-line indent)"}),
               (0,t.jsx)("div",{className:"gdocs-ruler-marker-bottom",title:"Indentasi Kiri (Left indent)"}),
@@ -2841,28 +3176,29 @@ e.s(["default",0,function(){
                 ]})
               ]})
             ]}),
-            // Right margin 2cm
             (0,t.jsx)("div",{className:"anev-ruler-right-margin",title:"Batas Margin Kanan (2 cm)",children:(0,t.jsx)("span",{children:"2 cm"})})
           ]})
         ]}),
 
-        // WORKSPACE A4 13 PAGES
-        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"anev-pages-workspace",children:[
+        // WORKSPACE A4 UNIFIED GOOGLE DOCS / MS WORD ROOT
+        activeTab === "lampiran" && (0,t.jsxs)("div",{className:"anev-pages-workspace",id:"docWorkspace",children:[
+          (0,t.jsxs)("div",{className:"gdocs-document-container anev-unified-editor",id:"docEditor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
   
 
-        (0,t.jsxs)("div",{"data-page":1,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":1,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{height:"14px"}}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{height:"14px",userSelect:"none"}}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             // KOP DINAS & SECURITY STAMP
             (0,t.jsxs)("div",{style:{textAlign:"center",marginBottom:"0.8rem"},children:[
@@ -2895,11 +3231,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("p",{children:"Laporan ini disusun dengan maksud untuk mendokumentasikan seluruh pelaksanaan kegiatan penyelidikan dan penyidikan yang dilaksanakan oleh {{AUTO: organization_level}} {{AUTO: structure_level}} {{AUTO: lokasi_satker}} selama periode yang telah ditentukan."}),
             (0,t.jsx)("div",{style:{fontWeight:700,marginTop:"0.3rem"},children:"2. Tujuan"}),
             (0,t.jsx)("p",{children:"Laporan ini bertujuan untuk:"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -2909,19 +3246,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":2,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":2,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:2}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:2}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsxs)("div",{style:{margin:"2px 0 8px 1.2rem"},children:[
               (0,t.jsx)("p",{children:"a. Menyajikan data capaian kinerja dan perkembangan penanganan perkara secara akurat dan terukur;"}),
@@ -2942,11 +3280,12 @@ e.s(["default",0,function(){
 
             (0,t.jsx)("div",{className:"anev-sub-title",style:{marginTop:"0.8rem"},children:"D. Ruang Lingkup"}),
             (0,t.jsx)("p",{children:"Laporan ini mencakup seluruh kegiatan penyelidikan dan penyidikan yang dilaksanakan oleh {{AUTO: organization_level}} {{AUTO: structure_level}} {{AUTO: lokasi_satker}} selama periode {{[*DETAIL PERIOD]}}."})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -2956,19 +3295,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":3,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":3,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:3}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:3}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"Adapun ruang lingkup pelaporan meliputi:"}),
             (0,t.jsxs)("div",{style:{margin:"2px 0 8px 1.2rem"},children:[
@@ -3019,11 +3359,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("div",{style:{fontSize:"8.5pt",fontStyle:"italic",margin:"4px 0 8px 0"},children:"Tabel 1.1: indikator kinerja utama indeks gakkum polri"}),
 
             (0,t.jsx)("p",{children:"Target Indeks Kinerja Utama (IKU) ini bersifat tahunan dan digunakan sebagai dasar dalam mengevaluasi kinerja satuan kerja (satker) fungsi"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3033,19 +3374,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":4,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":4,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:4}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:4}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"Reserse, mulai dari tingkat Polsek, Polres, Polda, hingga Bareskrim Polri. Penilaian terhadap pencapaian IKU dilakukan melalui pengukuran berbasis data yang bersumber dari Crime Analytic System (CAS), yang mengelola data secara otomatis. Dengan demikian, IKU tidak hanya menjadi alat ukur administratif, tetapi juga instrumen strategis dalam perencanaan kebutuhan personel, anggaran, serta pengambilan kebijakan berbasis analisis beban kerja dan kasus prioritas."}),
 
@@ -3064,11 +3406,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("p",{children:"Penggunaan anggaran belanja selama periode pelaporan terbagi dalam tiga jenis: Belanja Pegawai, Belanja Barang, dan Belanja Modal. Penyerapan anggaran pada periode ini [*Nihil / terserap … digunakan untuk … / dll.]."}),
 
             (0,t.jsx)("div",{style:{fontWeight:700,marginTop:"0.4rem"},children:"c. Sarana prasarana"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3078,19 +3421,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":5,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":5,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:5}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:5}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"Penggunaan dan kondisi sarana serta prasarana dalam mendukung operasional satuan disusun berdasarkan klasifikasi berikut:"}),
             
@@ -3174,11 +3518,12 @@ e.s(["default",0,function(){
                 (0,t.jsxs)("tr",{style:{fontWeight:600},children:[(0,t.jsx)("td",{style:{textAlign:"center"},children:"2."}),(0,t.jsx)("td",{colSpan:4,children:"Perangkat Elektronik"})]})
               ]})
             ]})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3188,19 +3533,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":6,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":6,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:6}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:6}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             // Tabel 1.9 Part 2
             (0,t.jsxs)("table",{className:"anev-table-naskah",children:[
@@ -3255,11 +3601,12 @@ e.s(["default",0,function(){
 
             (0,t.jsx)("div",{style:{fontWeight:700,marginTop:"0.8rem"},children:"3. Analisis dan evaluasi terhadap pelaksanaan tugas"}),
             (0,t.jsx)("p",{children:"Analisis dan evaluasi ini disusun berdasarkan data operasional yang terintegrasi melalui CAS. Evaluasi dilakukan dengan pendekatan kuantitatif dan komparatif, membandingkan indikator kinerja antara periode pelaporan saat ini dengan periode sebelumnya yang setara"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3269,19 +3616,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":7,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":7,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:7}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:7}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"(apple to apple). Metode perbandingan ini memungkinkan pengukuran tren kinerja yang akurat serta mendukung penyusunan kebijakan berbasis data."}),
 
@@ -3401,11 +3749,12 @@ e.s(["default",0,function(){
                 (0,t.jsx)("text",{x:"318",y:"127",fontSize:"7.5",fill:"#334155",children:"Period 2"})
               ]})
             ]})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3415,19 +3764,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":8,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":8,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:8}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:8}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("div",{style:{fontSize:"8.5pt",fontStyle:"italic",textAlign:"center",marginBottom:"10px"},children:"Gambar 1.1: grafik perbandingan tren jumlah kasus tindak pidana"}),
 
@@ -3484,11 +3834,12 @@ e.s(["default",0,function(){
                 (0,t.jsxs)("tr",{children:[(0,t.jsx)("td",{style:{textAlign:"center"},children:"5."}),(0,t.jsx)("td",{children:"-"}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{}),(0,t.jsx)("td",{})]})
               ]})
             ]})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3498,19 +3849,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":9,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":9,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:9}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:9}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             // Tabel 2.3 Part 2
             (0,t.jsxs)("table",{className:"anev-table-naskah",children:[
@@ -3558,11 +3910,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("p",{children:"Berdasarkan data pada Tabel [*Nomor Tabel], jumlah kasus yang harus ditangani (Crime Total/CT) pada periode [*PERIODE 2] tercatat sebanyak *[CT-P2] kasus, mengalami [*peningkatan/penurunan] sebesar *[SELISIH-CT] kasus atau *[PERSEN-CT]% dibandingkan periode [*PERIODE 1] yang berjumlah *[CT-P1] kasus."}),
             (0,t.jsx)("p",{children:"Tingkat penyelesaian perkara (Crime Clearance/CC) pada periode [*PERIODE 2] adalah *[CC-P2] kasus dengan Clearance Rate (CR) sebesar [*CR-P2]%, [*lebih tinggi/lebih rendah] *[SELISIH-CR]% dibandingkan periode sebelumnya ([*CR-P1]%)."}),
             (0,t.jsx)("p",{children:"Jumlah penyidik/penyidik pembantu aktif pada periode [*PERIODE 2] tercatat sebanyak *[AGT-P2] personel, sehingga rata-rata beban kasus per penyidik (Ratio"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3572,19 +3925,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":10,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":10,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:10}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:10}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"LP/AGT) adalah *[RATIO-P2] kasus, atau setara dengan *[BEBAN-P2]% dari standar beban ideal yang telah ditetapkan."}),
             (0,t.jsx)("p",{children:"Berdasarkan perbandingan antarperiode, dapat disimpulkan bahwa beban kinerja [*meningkat/menurun] pada periode [*PERIODE 2], yang [*berpotensi memerlukan penambahan personel/masih berada pada batas ideal] untuk menjaga efektivitas penanganan perkara."}),
@@ -3602,11 +3956,12 @@ e.s(["default",0,function(){
 
             (0,t.jsx)("div",{style:{fontWeight:700,marginTop:"0.5rem"},children:"3) Optimalisasi RJ"}),
             (0,t.jsx)("p",{children:"Penyelesaian perkara melalui RJ pada periode ini mencapai *[RJ-JUMLAH] perkara atau *[RJ-PERSEN]%"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3616,19 +3971,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":11,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":11,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:11}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:11}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"dari total perkara yang diselesaikan."}),
             (0,t.jsx)("p",{children:"Hal ini [*menunjukkan pemanfaatan RJ berjalan optimal sesuai kebijakan Polri / masih perlu didorong agar lebih efektif terutama untuk perkara yang memenuhi syarat RJ], guna mengurangi beban perkara di penyidikan formal."}),
@@ -3649,11 +4005,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("p",{children:"3) … dst."}),
 
             (0,t.jsx)("div",{style:{fontWeight:700,marginTop:"0.3rem"},children:"b. Melalui media masa (pemberitaan) dan atau media sosial"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3663,19 +4020,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":12,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":12,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:12}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:12}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"1) Judul kasus / tag, karena apa dapat menjadi kasus menonjol atau yang menjadi perhatian Masyarakat, Nomor LP jika ada, Hal terakhir yang dilakukan, Menjadi viral/tidak, Viral dimedia apa, Ket lain yang perlu ditambahkan"}),
             (0,t.jsx)("p",{children:"2) …"}),
@@ -3699,11 +4057,12 @@ e.s(["default",0,function(){
             (0,t.jsx)("p",{children:"……[*Berisi Kesimpulan yang disimpulan yang dapat berdasarkan data yang diberikan oleh satuan kerja dan tambahan Kesimpulan dari penandatangan laporan ini]……"}),
 
             (0,t.jsx)("div",{className:"anev-sub-title",style:{marginTop:"0.6rem"},children:"B. Saran"})
-,
-            (0,t.jsx)("div",{style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"})
+
           ]}),
+          // Catchword
+          (0,t.jsx)("div",{className:"anev-sheet-catchword",contentEditable:false,style:{textAlign:"right",fontSize:"8.5pt",fontStyle:"italic",color:"#475569",marginTop:"16px",userSelect:"none"},children:"[*First Next Line Char] + [……]"}),
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3713,19 +4072,20 @@ e.s(["default",0,function(){
         ]})
   ,
 
-        (0,t.jsxs)("div",{"data-page":13,className:"anev-page-sheet anev-print-sheet",children:[
+        (0,t.jsxs)("div",{"data-page":13,className:"anev-page-sheet anev-print-sheet gdocs-page",children:[
           // Corner Status Pill
-          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
-          // Watermark Overlay (NRP 98010710)
-          (0,t.jsx)("div",{className:"anev-watermark-overlay",style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0"},children:[
+          (0,t.jsx)("div",{className:"anev-sheet-corner-pill anev-no-print",contentEditable:false,style:{position:"absolute",top:"12px",right:"18px",fontSize:"0.65rem",fontWeight:800,letterSpacing:"0.5px",padding:"2px 8px",borderRadius:"10px",background:archiveLoadedInfo?"#fef3c7":"#ecfdf5",color:archiveLoadedInfo?"#92400e":"#065f46",border:archiveLoadedInfo?"1px solid #fde68a":"1px solid #a7f3d0",userSelect:"none"},children:archiveLoadedInfo?"🔒 SALINAN ARSIP RESMI":"📝 DRAFT NASKAH DINAS"}),
+          // Watermark Overlay
+          (0,t.jsx)("div",{className:"anev-watermark-overlay",contentEditable:false,style:{display:"flex",flexDirection:"column",justifyContent:"space-around",height:"100%",padding:"2rem 0",userSelect:"none",pointerEvents:"none"},children:[
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText}),
             (0,t.jsx)("div",{className:"anev-watermark-line",children:watermarkText})
           ]}),
-          // Page Content (WYSIWYG Editable)
-          (0,t.jsxs)("div",{className:"anev-page-content anev-doc-editor",contentEditable:!0,suppressContentEditableWarning:!0,spellCheck:!1,children:[
-            (0,t.jsx)("div",{style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:13}),
+          // Page Header
+          (0,t.jsx)("div",{className:"anev-sheet-header",contentEditable:false,style:{textAlign:"center",fontWeight:700,fontSize:"10pt",color:"#000000",marginBottom:"14px",userSelect:"none"},children:13}),
+          // Page Content Area (Editable Body)
+          (0,t.jsxs)("div",{className:"anev-page-body",children:[
             
             (0,t.jsx)("p",{children:"……[*Berisi saran dari satuan kerja yang membuat laporan bahwa diperlukan apa dalam menanggapi Kesimpulan yang telah dibuat di atasnya]……"}),
 
@@ -3752,11 +4112,12 @@ e.s(["default",0,function(){
                 (0,t.jsx)("div",{style:{fontSize:"9.5pt"},children:"[*PANGKAT] NRP/NIP [*ID NRP/NIP]"})
               ]})
             ]})
-,
-            
+
           ]}),
+          // Catchword
+          ,
           // Page Footer (Forensic Stamp)
-          (0,t.jsxs)("div",{className:"anev-page-footer",children:[
+          (0,t.jsxs)("div",{className:"anev-page-footer",contentEditable:false,style:{userSelect:"none"},children:[
             (0,t.jsxs)("div",{className:"anev-footer-left anev-forensic-stamp",children:[
               (0,t.jsx)("span",{style:{fontSize:"0.72rem",marginRight:"4px"},children:"🛡️"}),
               (0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:archiveLoadedInfo?800:700,color:archiveLoadedInfo?"#92400e":"#475569",letterSpacing:"0.4px"},children:archiveLoadedInfo ? ("ARSIP #" + archiveLoadedInfo.id + " • " + (archiveLoadedInfo.stamp ? archiveLoadedInfo.stamp.replace(/^STAMP-/, "CAS-") : "CAS-" + archiveLoadedInfo.id)) : docStamp})
@@ -3765,8 +4126,18 @@ e.s(["default",0,function(){
           ]})
         ]})
   
-      ]})
-    ]}),
+          ]}),
+
+          (0,t.jsxs)("div",{className:"gdocs-statusbar anev-no-print",children:[
+            (0,t.jsx)("div",{id:"statusPageInfo",children:"13 halaman"}),
+            (0,t.jsx)("div",{id:"statusWordInfo",children:"Memuat statistik dokumen..."}),
+            (0,t.jsxs)("div",{children:[
+              "Zoom: ",(0,t.jsx)("span",{id:"statusZoom",children:"100%"})," • Margin: 3cm / 2cm • A4 Portrait"
+            ]})
+          ]})
+
+        ]})
+      ]}),
 
       // TAB 2: ARSIP DOKUMEN TERENKRIPSI DENGAN TOMBOL KEMBALI JELAS & PEMBEDA DRAFT
       activeTab === "arsip" && (0,t.jsxs)("div",{children:[
