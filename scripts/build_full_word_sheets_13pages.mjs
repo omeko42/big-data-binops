@@ -690,7 +690,7 @@ export function getAll13Sheets() {
     renderSheet(11, sheet11Content),
     renderSheet(12, sheet12Content),
     renderSheet(13, sheet13Content, true)
-  ].join('\n');
+  ].join(',\n');
 }
 
 export function getToolbarAndSheets() {
