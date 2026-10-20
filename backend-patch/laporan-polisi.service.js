@@ -167,16 +167,29 @@ let LaporanPolisiService = class LaporanPolisiService {
         const NA = "'(Tidak diketahui - dari DORS)'";
         await this.dataSource.query(`
             insert into cm_jenis_kejahatan (id, keterangan, status_aktif, id_sub_golongan, "golonganKejahatanId", created_at, updated_at)
-            select distinct on ((lp.payload_json->'kategori_gk'->>'id')::bigint)
-                   (lp.payload_json->'kategori_gk'->>'id')::bigint,
-                   coalesce(nullif(lp.payload_json->'kategori_gk'->>'keterangan',''), ${NA}), true,
-                   nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','')::int,
-                   case when nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','')::int in (1,2,3,4)
-                        then nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','')::bigint end,
+            select distinct on (jk_id)
+                   jk_id,
+                   coalesce(ket, ${NA}), true,
+                   sub_gol,
+                   case when sub_gol in (1,2,3,4) then sub_gol::bigint end,
                    now(), now()
-            from bdb_laporan_polisi lp
-            where lp.jenis_kejahatan_id is null and nullif(lp.payload_json->'kategori_gk'->>'id','') ~ '^[0-9]+$'
-            order by (lp.payload_json->'kategori_gk'->>'id')::bigint
+            from (
+                select
+                    coalesce(
+                        case when nullif(lp.payload_json->'kategori_gk'->>'id','') ~ '^[0-9]+$' then (lp.payload_json->'kategori_gk'->>'id')::bigint end,
+                        case when nullif(lp.payload_json->'tindak_pidana'->0->>'id_kategori_kejahatan','') ~ '^[0-9]+$' then (lp.payload_json->'tindak_pidana'->0->>'id_kategori_kejahatan')::bigint end
+                    ) as jk_id,
+                    coalesce(
+                        nullif(lp.payload_json->'kategori_gk'->>'keterangan',''),
+                        nullif(lp.payload_json->'tindak_pidana'->0->>'nama_kategori_kejahatan','')
+                    ) as ket,
+                    case when nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','') ~ '^[0-9]+$'
+                         then (lp.payload_json->'kategori_gk'->>'id_sub_golongan')::int end as sub_gol
+                from bdb_laporan_polisi lp
+                where lp.jenis_kejahatan_id is null
+            ) sub
+            where jk_id is not null
+            order by jk_id
             on conflict (id) do nothing;
 
             -- Jaga-jaga: baris cm_jenis_kejahatan lama (dari sinkronisasi sebelum kolom ini ada,
@@ -253,49 +266,61 @@ let LaporanPolisiService = class LaporanPolisiService {
         await this.ensureMasterDataLinkColumns();
         await this.autoRegisterMasterData();
         const started = Date.now();
-        const updated = await this.dataSource.query(`
-            with candidates as (
-                select
-                    lp.id,
-                    nullif(lp.payload_json->'kategori_gk'->>'id','')::bigint as jk_raw,
-                    nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','')::bigint as gk_raw,
-                    nullif(lp.payload_json->>'id_kategori_lokasi','')::bigint as kl_raw,
-                    nullif(lp.payload_json->>'id_emp_motif_kejahatan','')::bigint as mk_raw,
-                    nullif(lp.payload_json->>'id_emp_modus_operandi','')::bigint as mo_raw,
-                    nullif(lp.payload_json->>'tkp_id_provinsi','')::bigint as prov_raw,
-                    nullif(lp.payload_json->>'tkp_id_kota','')::bigint as kab_raw,
-                    nullif(lp.payload_json->>'tkp_id_kecamatan','')::bigint as kec_raw,
-                    nullif(lp.payload_json->>'tkp_id_desa','')::bigint as desa_raw
-                from bdb_laporan_polisi lp
-                where lp.master_data_linked_at is null
-                order by lp.id
-                limit 1000
-            )
-            update bdb_laporan_polisi lp set
-                jenis_kejahatan_id = jk.id,
-                golongan_kejahatan_id = gk.id,
-                kategori_lokasi_id = kl.id,
-                motif_kejahatan_id = mk.id,
-                modus_operandi_id = mo.id,
-                tkp_provinsi_code = prov.code,
-                tkp_kabupaten_code = kab.code,
-                tkp_kecamatan_code = kec.code,
-                tkp_desa_code = desa.code,
-                master_data_linked_at = now()
-            from candidates c
-            left join cm_jenis_kejahatan jk on jk.id = c.jk_raw
-            left join cm_golongan_kejahatan gk on gk.id = c.gk_raw
-            left join cm_kategori_lokasi kl on kl.id = c.kl_raw
-            left join cm_motif_kejahatan mk on mk.id = c.mk_raw
-            left join cm_modus_operandi mo on mo.id = c.mo_raw
-            left join cm_provinsi prov on prov.code = c.prov_raw
-            left join cm_kabupaten kab on kab.code = c.kab_raw
-            left join cm_kecamatann kec on kec.code = c.kec_raw
-            left join cm_desa desa on desa.code = c.desa_raw
-            where lp.id = c.id
-            returning lp.id
-        `);
-        const n = Array.isArray(updated?.[0]) ? updated[0].length : 0;
+        let n = 0;
+        while (true) {
+            const updated = await this.dataSource.query(`
+                with candidates as (
+                    select
+                        lp.id,
+                        coalesce(
+                            nullif(lp.payload_json->'kategori_gk'->>'id','')::bigint,
+                            nullif(lp.payload_json->'tindak_pidana'->0->>'id_kategori_kejahatan','')::bigint
+                        ) as jk_raw,
+                        nullif(lp.payload_json->'kategori_gk'->>'id_sub_golongan','')::bigint as gk_raw,
+                        nullif(lp.payload_json->>'id_kategori_lokasi','')::bigint as kl_raw,
+                        nullif(lp.payload_json->>'id_emp_motif_kejahatan','')::bigint as mk_raw,
+                        nullif(lp.payload_json->>'id_emp_modus_operandi','')::bigint as mo_raw,
+                        nullif(lp.payload_json->>'tkp_id_provinsi','')::bigint as prov_raw,
+                        nullif(lp.payload_json->>'tkp_id_kota','')::bigint as kab_raw,
+                        nullif(lp.payload_json->>'tkp_id_kecamatan','')::bigint as kec_raw,
+                        nullif(lp.payload_json->>'tkp_id_desa','')::bigint as desa_raw
+                    from bdb_laporan_polisi lp
+                    where lp.master_data_linked_at is null
+                       or (lp.jenis_kejahatan_id is null and coalesce(
+                            nullif(lp.payload_json->'kategori_gk'->>'id',''),
+                            nullif(lp.payload_json->'tindak_pidana'->0->>'id_kategori_kejahatan','')
+                       ) is not null)
+                    order by lp.id
+                    limit 10000
+                )
+                update bdb_laporan_polisi lp set
+                    jenis_kejahatan_id = jk.id,
+                    golongan_kejahatan_id = coalesce(gk.id, jk."golonganKejahatanId"),
+                    kategori_lokasi_id = kl.id,
+                    motif_kejahatan_id = mk.id,
+                    modus_operandi_id = mo.id,
+                    tkp_provinsi_code = prov.code,
+                    tkp_kabupaten_code = kab.code,
+                    tkp_kecamatan_code = kec.code,
+                    tkp_desa_code = desa.code,
+                    master_data_linked_at = now()
+                from candidates c
+                left join cm_jenis_kejahatan jk on jk.id = c.jk_raw
+                left join cm_golongan_kejahatan gk on gk.id = c.gk_raw
+                left join cm_kategori_lokasi kl on kl.id = c.kl_raw
+                left join cm_motif_kejahatan mk on mk.id = c.mk_raw
+                left join cm_modus_operandi mo on mo.id = c.mo_raw
+                left join cm_provinsi prov on prov.code = c.prov_raw
+                left join cm_kabupaten kab on kab.code = c.kab_raw
+                left join cm_kecamatann kec on kec.code = c.kec_raw
+                left join cm_desa desa on desa.code = c.desa_raw
+                where lp.id = c.id
+                returning lp.id
+            `);
+            const batchLen = Array.isArray(updated?.[0]) ? updated[0].length : 0;
+            n += batchLen;
+            if (batchLen < 10000) break;
+        }
         const tp = await this.dataSource.query(`
             insert into bdb_lp_tindak_pidana_dors
                 (laporan_polisi_id, dors_tp_id, jenis_kejahatan_id, undang_undang_id,
@@ -396,6 +421,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                    ${isReskrimKeyword ? "and (lp.kategori is distinct from 'pelanggaran' and lp.no_laporan not ilike '%/GAR/%')" : ""}
                    and upper(regexp_replace(lp.unit_nama,'[^A-Za-z0-9]','','g')) = $1
                    and c.parent_id = lp.satker_id
+                   and c.dors_mapping_aktif = true and coalesce(c.is_synthetic, false) = false
                    and regexp_replace(upper(c.deskripsi),'[^A-Z0-9]','','g') like '%' || $2 || '%'
                  returning lp.id`, [unit, kw]);
             updated += Array.isArray(ret?.[0]) ? ret[0].length : 0;
@@ -405,28 +431,80 @@ let LaporanPolisiService = class LaporanPolisiService {
              from bdb_satker c
              where lp.penanganan_level in ('Polres', 'Polsek')
                and lp.unit_satker_id is null
-               and lp.model_lp = 'lp_model_b'
                and lp.kategori is distinct from 'pelanggaran'
                and lp.no_laporan not ilike '%/GAR/%'
-               and upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA','SPKT')
-               and c.parent_id = lp.satker_id
-               and upper(regexp_replace(c.deskripsi,'[^A-Z0-9]','','g')) like '%RESKRIM%'
+               and ((lp.model_lp = 'lp_model_b' and upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SPKT')) or (lp.penanganan_level = 'Polsek' and upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA','SPKT')))
+               and c.parent_id = lp.satker_id and c.dors_mapping_aktif = true and c.kinerja_aktif = true and upper(regexp_replace(c.deskripsi,'[^A-Z0-9]','','g')) like '%RESKRIM%'
              returning lp.id`);
         updated += Array.isArray(retReskrim?.[0]) ? retReskrim[0].length : 0;
+
+        const retSamapta = await this.dataSource.query(`
+            with target_samapta as (
+                select 
+                    lp.id as lp_id,
+                    (
+                        select s.id from bdb_satker s
+                        where s.parent_id = lp.satker_id 
+                          and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false
+                          and (s.deskripsi ilike '%SAMAPTA%' or s.deskripsi ilike '%SABHARA%')
+                        order by case 
+                          when upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) like '%SAMAPTA%' and upper(s.deskripsi) like '%SAMAPTA%' then 1
+                          when upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) like '%SABHARA%' and upper(s.deskripsi) like '%SABHARA%' then 1
+                          else 2 end, s.id
+                        limit 1
+                    ) as resolved_unit_id
+                from bdb_laporan_polisi lp
+                where coalesce(lp.penanganan_level, '') <> 'Polsek'
+                  and upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA')
+                  and (
+                    lp.unit_satker_id is null 
+                    or lp.unit_satker_nama ilike '%RESKRIM%' 
+                    or lp.unit_satker_nama ilike '%KRIM%'
+                  )
+            ),
+            resolved_details as (
+                select ts.lp_id, ts.resolved_unit_id, s.deskripsi as resolved_nama, s.kode as resolved_kode
+                from target_samapta ts
+                join bdb_satker s on s.id = ts.resolved_unit_id
+            )
+            update bdb_laporan_polisi lp
+            set unit_satker_id = rd.resolved_unit_id,
+                unit_satker_nama = rd.resolved_nama,
+                unit_satker_kode = rd.resolved_kode,
+                updated_at = now()
+            from resolved_details rd
+            where lp.id = rd.lp_id
+            returning lp.id
+        `);
+        updated += Array.isArray(retSamapta?.[0]) ? retSamapta[0].length : 0;
+
+        const retUnlinkReskrim = await this.dataSource.query(`
+            update bdb_laporan_polisi
+            set unit_satker_id = null,
+                unit_satker_nama = null,
+                unit_satker_kode = null,
+                updated_at = now()
+            where coalesce(penanganan_level, '') <> 'Polsek'
+              and upper(regexp_replace(coalesce(unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA')
+              and (unit_satker_nama ilike '%RESKRIM%' or unit_satker_nama ilike '%KRIM%')
+            returning id
+        `);
+        updated += Array.isArray(retUnlinkReskrim?.[0]) ? retUnlinkReskrim[0].length : 0;
+
         const retGar = await this.dataSource.query(`
             with target_gar as (
                 select 
                     lp.id as lp_id,
                     case 
                         when (lp.no_laporan ilike '%LANTAS%' or lp.unit_nama ilike '%LANTAS%') then coalesce(
-                            (select s.id from bdb_satker s where s.id = lp.unit_satker_id and s.deskripsi ilike '%LANTAS%'),
-                            (select s.id from bdb_satker s where s.parent_id = lp.satker_id and s.deskripsi ilike '%LANTAS%' limit 1),
-                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = lp.satker_id) and s.deskripsi ilike '%LANTAS%' limit 1)
+                            (select s.id from bdb_satker s where s.id = lp.unit_satker_id and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%'),
+                            (select s.id from bdb_satker s where s.parent_id = lp.satker_id and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' limit 1),
+                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = lp.satker_id) and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' limit 1)
                         )
                         else coalesce(
-                            (select s.id from bdb_satker s where s.parent_id = lp.satker_id and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1),
-                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = lp.satker_id) and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1),
-                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = (select parent_id from bdb_satker where id = lp.satker_id)) and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1)
+                            (select s.id from bdb_satker s where s.parent_id = lp.satker_id and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1),
+                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = lp.satker_id) and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1),
+                            (select s.id from bdb_satker s where s.parent_id = (select parent_id from bdb_satker where id = (select parent_id from bdb_satker where id = lp.satker_id)) and s.dors_mapping_aktif = true and coalesce(s.is_synthetic, false) = false and (s.deskripsi ilike '%SABHARA%' or s.deskripsi ilike '%SAMAPTA%') limit 1)
                         )
                     end as resolved_unit_id
                 from bdb_laporan_polisi lp
@@ -448,6 +526,40 @@ let LaporanPolisiService = class LaporanPolisiService {
             returning lp.id
         `);
         updated += Array.isArray(retGar?.[0]) ? retGar[0].length : 0;
+        const retLantasCrime = await this.dataSource.query(`
+            with target_lantas as (
+                select
+                    lp.id as lp_id,
+                    coalesce(
+                        (select s.id from bdb_satker s where s.id = lp.unit_satker_id and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' limit 1),
+                        (select s.id from bdb_satker s where s.parent_id = lp.satker_id and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' order by s.dors_mapping_aktif desc, s.id limit 1),
+                        (select s.id from bdb_satker s where s.parent_id = (select p.parent_id from bdb_satker p where p.id = lp.satker_id) and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' order by s.dors_mapping_aktif desc, s.id limit 1),
+                        (select s.id from bdb_satker s where s.parent_id = (select p2.parent_id from bdb_satker p1 join bdb_satker p2 on p2.id = p1.parent_id where p1.id = lp.satker_id) and coalesce(s.is_synthetic, false) = false and s.deskripsi ilike '%LANTAS%' order by s.dors_mapping_aktif desc, s.id limit 1)
+                    ) as resolved_unit_id
+                from bdb_laporan_polisi lp
+                where lp.deleted_at is null
+                  and coalesce(
+                      lp.jenis_kejahatan_id,
+                      nullif(lp.payload_json->'kategori_gk'->>'id','')::bigint,
+                      nullif(lp.payload_json->'tindak_pidana'->0->>'id_kategori_kejahatan','')::bigint
+                  ) in (148, 153, 163, 204, 348, 349, 350, 516, 640, 641, 645, 711, 712, 713, 741)
+                  and not coalesce(lp.unit_satker_nama, '') ilike '%LANTAS%'
+            ),
+            resolved_details as (
+                select tl.lp_id, tl.resolved_unit_id, s.deskripsi as resolved_nama, s.kode as resolved_kode
+                from target_lantas tl
+                join bdb_satker s on s.id = tl.resolved_unit_id
+            )
+            update bdb_laporan_polisi lp
+            set unit_satker_id = rd.resolved_unit_id,
+                unit_satker_nama = rd.resolved_nama,
+                unit_satker_kode = rd.resolved_kode,
+                updated_at = now()
+            from resolved_details rd
+            where lp.id = rd.lp_id
+            returning lp.id
+        `);
+        updated += Array.isArray(retLantasCrime?.[0]) ? retLantasCrime[0].length : 0;
         this.logger.log(`Remap dalam: ${updated} LP dipetakan ke unit satker terdalam.`);
         return updated;
     }
@@ -488,7 +600,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                           lp.payload_json#>>'{polda,kode_pusiknas}',lp.payload_json#>>'{polres,kode_pusiknas}',lp.payload_json#>>'{polsek,kode_pusiknas}')
                       is distinct from
                       jsonb_build_array(r.payload_json#>>'{unit,unit}',r.payload_json#>>'{unit,level}',
-                          r.payload_json#>>'{polda,kode_pusiknas}',r.payload_json#>>'{polres,kode_pusiknas}',r.payload_json#>>'{polsek,kode_pusiknas}'))
+                          r.payload_json#>>'{polda,kode_pusiknas}',r.payload_json#>>'{polres,kode_pusiknas}',r.payload_json#>>'{polsek,kode_pusiknas}')))
             ),
             processable as materialized (
                 select u.*
@@ -754,7 +866,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                 ) c on true
             ),
             unit_candidates as materialized (
-                select tc.id as lp_id, u.id as unit_id
+                select distinct on (tc.id) tc.id as lp_id, u.id as unit_id
                 from territory_coverage tc
                 join (values ${unitValues}) unit_cfg(dors_unit,keyword) on unit_cfg.dors_unit=tc.target_unit
                 join bdb_satker u
@@ -762,6 +874,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                  and coalesce(u.is_synthetic,false) = false
                  and u.dors_mapping_aktif = true
                  and upper(coalesce(u.tipe_satker,'FUNGSI')) = 'FUNGSI'
+                 and (tc.target_level = 'polsek' or u.deskripsi not ilike '%POLSEK%')
                 cross join lateral (
                     select regexp_replace(
                         upper(concat_ws(' ',u.deskripsi,u.nama_satker_dors,u.operational_role)),
@@ -769,7 +882,17 @@ let LaporanPolisiService = class LaporanPolisiService {
                     ) as label
                 ) norm
                 where tc.territory_count = 1
-                  and norm.label like '%' || unit_cfg.keyword || '%'
+                  and (
+                    norm.label like '%' || unit_cfg.keyword || '%'
+                    or (unit_cfg.keyword in ('SABHARA','SAMAPTA') and (norm.label like '%SAMAPTA%' or norm.label like '%SABHARA%'))
+                  )
+                order by tc.id,
+                  case 
+                    when unit_cfg.keyword in ('SABHARA','SAMAPTA') and tc.target_unit like '%SAMAPTA%' and norm.label like '%SAMAPTA%' then 1
+                    when unit_cfg.keyword in ('SABHARA','SAMAPTA') and tc.target_unit like '%SABHARA%' and norm.label like '%SABHARA%' then 1
+                    when norm.label like '%' || unit_cfg.keyword || '%' then 2
+                    else 3
+                  end, u.id
             ),
             resolved_coverage as materialized (
                 select
@@ -1042,6 +1165,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                           )
                           and (
                               gp.id is null
+                              or (r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
                               or nullif(r.payload_json#>>'{polda,nama}','') is null
                               or regexp_replace(upper(gp.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                               or regexp_replace(upper(r.payload_json#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(gp.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
@@ -1056,6 +1180,9 @@ let LaporanPolisiService = class LaporanPolisiService {
                   -- Cross-check No Laporan: jika nomor laporan menyebut nama POLDA, satker (atau leluhurnya) wajib sesuai
                   and (
                       r.no_laporan not ilike '%POLDA%'
+                      or (r.target_level = 'Polda' and r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                      or (r.target_level = 'Polres' and r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                      or (r.target_level = 'Polsek' and r.grandparent_kp is not null and (gp.kode = r.grandparent_kp or gp.kode_canonical = r.grandparent_kp))
                       or (
                           case
                               when r.target_level = 'Polda' then s.deskripsi
@@ -1213,7 +1340,7 @@ let LaporanPolisiService = class LaporanPolisiService {
             const parentPay = (parentPayload || '').trim();
             const best = await this.dataSource.query(`select c.id, c.deskripsi
                  from bdb_satker c left join bdb_satker par on par.id = c.parent_id
-                 where c.is_synthetic = false and similarity(upper(c.deskripsi), upper($1)) >= $4
+                 where c.is_synthetic = false and c.dors_mapping_aktif = true and coalesce(c.kinerja_aktif, true) = true and coalesce(c.tipe_satker, '') in ('POLDA', 'POLRES', 'POLSEK', 'MABES') and similarity(upper(c.deskripsi), upper($1)) >= $4
                  order by similarity(upper(c.deskripsi), upper($1))
                         + greatest(coalesce(similarity(upper(par.deskripsi), upper($2)), 0), coalesce(similarity(upper(par.deskripsi), upper($3)), 0)) desc,
                         c.id
@@ -1288,7 +1415,7 @@ let LaporanPolisiService = class LaporanPolisiService {
             const parentChain = (chain[1] || '').trim();
             const best = await this.dataSource.query(`select c.id, c.deskripsi
                  from bdb_satker c left join bdb_satker par on par.id = c.parent_id
-                 where c.is_synthetic = false and similarity(upper(c.deskripsi), upper($1)) >= $4
+                 where c.is_synthetic = false and c.dors_mapping_aktif = true and coalesce(c.kinerja_aktif, true) = true and coalesce(c.tipe_satker, '') in ('POLDA', 'POLRES', 'POLSEK', 'MABES') and similarity(upper(c.deskripsi), upper($1)) >= $4
                  order by similarity(upper(c.deskripsi), upper($1))
                         + greatest(coalesce(similarity(upper(par.deskripsi), upper($2)), 0), coalesce(similarity(upper(par.deskripsi), upper($3)), 0)) desc,
                         c.id
@@ -1329,6 +1456,7 @@ let LaporanPolisiService = class LaporanPolisiService {
             join bdb_dors_raw_lp r on r.id = u.id
             join bdb_dors_satker_map a
               on a.unit_nama is not null
+                 and exists (select 1 from bdb_satker s_chk where s_chk.id = a.satker_id and s_chk.dors_mapping_aktif = true)
                  and a.dors_kode_pusiknas is not null
                  and ${LaporanPolisiService_1.normKode('a.dors_kode_pusiknas')} = ${LaporanPolisiService_1.normKode(LaporanPolisiService_1.KP_SQL)}
                  and upper(regexp_replace(a.unit_nama,'[^A-Za-z0-9]','','g')) = upper(regexp_replace(coalesce(r.payload_json->'unit'->>'unit',''),'[^A-Za-z0-9]','','g'))
@@ -1367,9 +1495,10 @@ let LaporanPolisiService = class LaporanPolisiService {
             ) x
             join bdb_dors_satker_map a
               on a.unit_nama is null
+                 and exists (select 1 from bdb_satker s_chk where s_chk.id = a.satker_id and s_chk.dors_mapping_aktif = true and (s_chk.tipe_satker in ('MABES','POLDA','POLRES','POLSEK') or lower(trim(a.dors_nama)) = lower(trim(x.dors_nama))))
                  and ((a.dors_kode_pusiknas is not null and ${LaporanPolisiService_1.normKode('a.dors_kode_pusiknas')} = ${LaporanPolisiService_1.normKode(LaporanPolisiService_1.KP_SQL)})
-                 or (lower(a.dors_nama) = lower(x.dors_nama)
-                     and (a.dors_parent_nama is null or lower(a.dors_parent_nama) = lower(coalesce(x.parent_nama,'')))))
+                 or (lower(trim(a.dors_nama)) = lower(trim(x.dors_nama))
+                     and (a.dors_parent_nama is null or lower(trim(a.dors_parent_nama)) = lower(trim(coalesce(x.parent_nama,''))))))
             where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
             order by r.dors_lp_id, r.model_lp, a.id
             on conflict (dors_lp_id, model_lp) do nothing
@@ -1556,7 +1685,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                    and tx.function_domain = any(${fnParam})
             )`);
             if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
-                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)')`);
+                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (coalesce(lp.penanganan_level, '') <> 'Polsek' and coalesce(lp.unit_nama, '') ~* '(SAMAPTA|SABHARA)') or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)' or coalesce(lp.jenis_kejahatan_id, -1) in (148, 153, 163, 204, 348, 349, 350, 516, 640, 641, 645, 711, 712, 713, 741))`);
             }
         }
         if (search) {
@@ -1726,7 +1855,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                    and tx.function_domain = any(${fnParam})
             )`);
             if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
-                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)')`);
+                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (coalesce(lp.penanganan_level, '') <> 'Polsek' and coalesce(lp.unit_nama, '') ~* '(SAMAPTA|SABHARA)') or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)' or coalesce(lp.jenis_kejahatan_id, -1) in (148, 153, 163, 204, 348, 349, 350, 516, 640, 641, 645, 711, 712, 713, 741))`);
             }
         }
         if (opts.search) {
@@ -2122,8 +2251,8 @@ let LaporanPolisiService = class LaporanPolisiService {
         let targetUnitNama = null;
         let targetUnitKode = null;
         if (satker.tipe_satker === 'FUNGSI' && satker.parent_id) {
-            const parentRow = await this.dataSource.query('select id, deskripsi from bdb_satker where id=$1', [satker.parent_id]);
-            if (parentRow.length) {
+            const parentRow = await this.dataSource.query('select id, deskripsi, tipe_satker from bdb_satker where id=$1', [satker.parent_id]);
+            if (parentRow.length && ['POLDA', 'POLRES', 'POLSEK'].includes(String(parentRow[0].tipe_satker || '').toUpperCase())) {
                 targetSatkerId = parentRow[0].id;
                 targetSatkerNama = parentRow[0].deskripsi;
                 targetUnitId = satker.id;
@@ -2550,7 +2679,7 @@ let LaporanPolisiService = class LaporanPolisiService {
                    and tx.function_domain = any(${fnParam})
             )`);
             if (taxonomy.functionDomain === 'INTERNAL_RESERSE' && taxonomy.organizationDomain === 'INTERNAL_POLRI') {
-                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)')`);
+                where.push(`not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (coalesce(lp.penanganan_level, '') <> 'Polsek' and coalesce(lp.unit_nama, '') ~* '(SAMAPTA|SABHARA)') or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')) or coalesce(lp.kategori, '') = 'pelanggaran' or coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)' or coalesce(lp.jenis_kejahatan_id, -1) in (148, 153, 163, 204, 348, 349, 350, 516, 640, 641, 645, 711, 712, 713, 741))`);
             }
         }
         const parseLevels = (val) => {
@@ -3132,8 +3261,9 @@ let LaporanPolisiService = class LaporanPolisiService {
                 });
                 continue;
             }
+            const isPenyelidikan = targetCode === 'PENYELIDIKAN' || targetCode === 'LIDIK' || Number(targetStat?.id) === 2;
             const parsedLp = this.parseFlexibleDate(dbLp.tgl_laporan);
-            if (parsedLp && parsedDok.dateStr < parsedLp.dateStr) {
+            if (!isPenyelidikan && parsedLp && parsedDok.dateStr < parsedLp.dateStr) {
                 errorCount++;
                 processedRows.push({
                     ...row,
