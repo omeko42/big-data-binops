@@ -1,6 +1,0 @@
-TOP_LEVEL
-SIZES
-32.3M	.next
-980.0K	public
-4.0K	package.json
-tar (busybox) 1.37.0

@@ -1,3 +1,0 @@
-PID1=next-server (v 
-Connecting to 127.0.0.1:3000 (127.0.0.1:3000)
-wget: can't connect to remote host (127.0.0.1): Connection refused

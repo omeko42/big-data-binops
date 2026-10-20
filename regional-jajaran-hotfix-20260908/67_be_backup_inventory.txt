@@ -1,7 +1,0 @@
-TOP_LEVEL
-SIZES
-4.0M	src
-7.8M	dist
-8.0K	package.json
-652.0K	package-lock.json
-tar (busybox) 1.37.0

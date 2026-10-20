@@ -1,9 +1,0 @@
-FROM bdb-api:20260805-193904
-
-WORKDIR /usr/src/app
-
-COPY src/bdb/laporan-polisi/laporan-polisi.service.ts src/bdb/laporan-polisi/laporan-polisi.service.ts
-COPY src/app_core/helper/service/errorException.helper.service.ts src/app_core/helper/service/errorException.helper.service.ts
-
-RUN npm test -- --runInBand src/bdb/laporan-polisi/satker-placement.util.spec.ts
-RUN npm run build

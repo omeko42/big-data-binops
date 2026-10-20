@@ -1,87 +1,19 @@
-# ==========================================
-# CREDENTIALS & SENSITIVE ENVIRONMENT FILES
-# ==========================================
-*.env
-*.env.*
-*.env.local
-CAS_SSH_LOCAL.env
-cas_env_askpass.cmd
-credentials.json
-*.pem
-*.key
-*.id_rsa
-*.id_ed25519
+﻿# Ignore everything in the local working workspace by default
+/*
 
-# ==========================================
-# SERVER SCRATCH & TEMPORARY PROBE SCRIPTS
-# ==========================================
-scratch/
-tmp/
-temp/
-outputs/
-output/
-generated/
-.codex/
-.codex-artifact/
-.system_generated/
-.batch8_*
-.verify-*
-.work_*
-.pptx-*
-*.out
-*.err
-*.done
-*.done.*
-*.log
-*.tsv
-*.csv
+# Explicitly allow only clean, sanitized, general application directories and docs
+!/.gitignore
+!/.env.example
+!/README.md
+!/backend/
+!/frontend/
+!/database/
+!/docs/
 
-# ==========================================
-# LARGE BINARIES & DATABASE DUMPS
-# ==========================================
-*.dump
-*.sql
-!scripts/migrations/*.sql
-*.tar
-
-*.tar.gz
-*.tgz
-*.zip
-*.7z
-*.rar
-*.bak
-*.bak-*
-*.old
-
-# ==========================================
-# OFFICE & BINARY DOCUMENTS
-# ==========================================
-*.docx
-*.xlsx
-*.pptx
-*.pdf
-*.png
-*.jpg
-*.jpeg
-*.mp4
-*.mov
-VIDEO HASIL TAMPILAN/
-
-# ==========================================
-# DEPENDENCIES & BUILD ARTIFACTS
-# ==========================================
+# Always ignore environment secrets, node_modules, and build artifacts inside allowed dirs
 node_modules/
-dist/
-.next/
-build/
-.cache/
-
-# ==========================================
-# OS & EDITOR METADATA
-# ==========================================
-.DS_Store
-Thumbs.db
-desktop.ini
-.vscode/
-.idea/
-{
+.env
+.env.*
+!.env.example
+*.bak*
+*.log

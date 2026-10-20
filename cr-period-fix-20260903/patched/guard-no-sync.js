@@ -1,3 +1,0 @@
-'use strict';
-const {Client}=require('pg');
-(async()=>{const c=new Client({host:process.env.DB_HOST,port:Number(process.env.DB_PORT||5432),user:process.env.DB_USERNAME,password:process.env.DB_PASSWORD,database:process.env.DB_DATABASE,statement_timeout:10000,options:'-c default_transaction_read_only=on'});await c.connect();try{const r=await c.query("select id from bdb_dors_sync_log where status='running'");if(r.rowCount)throw new Error('Active DORS sync: '+r.rows.map(x=>x.id));console.log('NO_RUNNING_SYNC=1');}finally{await c.end();}})().catch(e=>{console.error(e.message);process.exitCode=1;});
