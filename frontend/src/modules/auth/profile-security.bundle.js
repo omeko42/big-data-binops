@@ -3179,7 +3179,7 @@ children:[
 (0,t.jsxs)("div",{
 children:[
 (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:"Keamanan Kriptografi Perangkat Keras (FIDO2 / WebAuthn)"}),
-(0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--text-color-secondary, #475569)",marginTop:"0.2rem",lineHeight:1.4},children:"Gawai terdaftar di bawah ini dapat melakukan login cepat tanpa sandi. Kunci privat tersimpan aman di Secure Enclave / TPM gawai Anda."})
+(0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-secondary, #475569)",marginTop:"0.2rem",lineHeight:1.4},children:"Gawai terdaftar di bawah ini dapat melakukan login cepat tanpa sandi. Kunci privat tersimpan aman di Secure Enclave / TPM gawai Anda."})
 ]
 })
 ]
@@ -3187,7 +3187,7 @@ children:[
 (0,t.jsxs)("div",{
 style:{display:"flex",justifyContent:"space-between",alignItems:"center"},
 children:[
-(0,t.jsxs)("span",{style:{fontSize:"0.78rem",fontWeight:700,color:"#94a3b8"},children:["Perangkat Terdaftar: ",(0,t.jsx)("strong",{style:{color:"var(--text-color, #0f172a)"},children:ePasskeyDevices.length})]}),
+(0,t.jsxs)("span",{style:{fontSize:"0.78rem",fontWeight:700,color:"#94a3b8"},children:["Perangkat Terdaftar: ",(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:ePasskeyDevices.length})]}),
 (0,t.jsx)(o.Button,{
 label:"+ Daftarkan Gawai Ini",
 icon:"pi pi-plus",
@@ -3202,7 +3202,7 @@ ePasskeyDevices.length===0?(0,t.jsxs)("div",{
 style:{textAlign:"center",padding:"2rem 1rem",background:"rgba(255,255,255,0.02)",border:"1px dashed rgba(255,255,255,0.15)",borderRadius:8},
 children:[
 (0,t.jsx)("i",{className:"pi pi-mobile",style:{fontSize:"2rem",color:"#64748b",marginBottom:"0.5rem",display:"block"}}),
-(0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--text-color, #0f172a)"},children:"Belum ada gawai biometrik terdaftar"}),
+(0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #0f172a)"},children:"Belum ada gawai biometrik terdaftar"}),
 (0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"#94a3b8",marginTop:"0.25rem",maxWidth:"320px",margin:"0.25rem auto 1rem"},children:"Daftarkan HP, laptop, atau tablet Anda untuk login instan tanpa perlu mengetik kata sandi."}),
 (0,t.jsx)(o.Button,{
 label:"Daftarkan Gawai Ini (Biometrik / PIN)",
@@ -3217,7 +3217,7 @@ style:{display:"flex",flexDirection:"column",gap:"0.6rem",maxHeight:"260px",over
 children:ePasskeyDevices.map(function(dev){
 return (0,t.jsxs)("div",{
 key:dev.id,
-style:{background:"var(--surface-hover, rgba(148,163,184,0.08))",border:"1px solid var(--surface-border, rgba(148,163,184,0.24))",borderRadius:8,padding:"0.65rem 0.8rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem"},
+style:{background:"var(--surface-hover, rgba(148,163,184,0.08))",border:"1px solid var(--cas-border, #cbd5e1)",borderRadius:8,padding:"0.65rem 0.8rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem"},
 children:[
 (0,t.jsxs)("div",{
 style:{display:"flex",alignItems:"center",gap:"0.65rem"},
@@ -3229,7 +3229,7 @@ children:(0,t.jsx)("i",{className:(/iPhone|Android|iPad/i.test(dev.device_name)?
 (0,t.jsxs)("div",{
 children:[
 (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-(0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--text-color, #0f172a)"},children:dev.device_name}),
+(0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #0f172a)"},children:dev.device_name}),
 (0,t.jsx)("span",{style:{fontSize:"0.62rem",background:"rgba(22,163,74,0.14)",color:"#16a34a",padding:"1px 5px",borderRadius:"4px",fontWeight:700},children:"FIDO2"})
 ]}),
 (0,t.jsxs)("div",{style:{fontSize:"0.69rem",color:"#94a3b8",marginTop:"0.15rem"},children:[
@@ -3272,13 +3272,13 @@ children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.9
 (0,t.jsx)("i",{className:"pi pi-exclamation-triangle",style:{color:"#ef4444",fontSize:"1.1rem",marginTop:"0.15rem"}}),
 (0,t.jsxs)("div",{children:[
 (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"#f87171"},children:["Cabut Akses: ",eRevokeTarget?.device_name]}),
-(0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--text-color-secondary, #475569)",marginTop:"0.2rem",lineHeight:1.4},children:"Kunci biometrik pada gawai ini akan dihapus dari sistem CAS. Gawai ini tidak akan bisa lagi dipakai login tanpa memasukkan kata sandi."})
+(0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-secondary, #475569)",marginTop:"0.2rem",lineHeight:1.4},children:"Kunci biometrik pada gawai ini akan dihapus dari sistem CAS. Gawai ini tidak akan bisa lagi dipakai login tanpa memasukkan kata sandi."})
 ]})
 ]}),
 (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.35rem"},children:[
-(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--text-color, #0f172a)"},children:"Verifikasi Keamanan (Password / PIN / TOTP)"}),
+(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #0f172a)"},children:"Verifikasi Keamanan (Password / PIN / TOTP)"}),
 (0,t.jsxs)("div",{style:{position:"relative"},children:[
-(0,t.jsx)("input",{type:eRevokeShowPass?"text":"password",value:eRevokeCode,onChange:function(ev){setRevokeCode(ev.target.value);setRevokeError("");},onKeyDown:function(ev){if(ev.key==="Enter")confirmRevokePasskey();},placeholder:"Masukkan password akun Anda",style:{width:"100%",padding:"0.6rem 2.4rem 0.6rem 0.8rem",background:"var(--surface-card, rgba(148,163,184,0.08))",border:"1px solid var(--surface-border, #cbd5e1)",borderRadius:"6px",color:"var(--text-color, #0f172a)",fontSize:"0.82rem"}}),
+(0,t.jsx)("input",{type:eRevokeShowPass?"text":"password",value:eRevokeCode,onChange:function(ev){setRevokeCode(ev.target.value);setRevokeError("");},onKeyDown:function(ev){if(ev.key==="Enter")confirmRevokePasskey();},placeholder:"Masukkan password akun Anda",style:{width:"100%",padding:"0.6rem 2.4rem 0.6rem 0.8rem",background:"var(--surface-card, rgba(148,163,184,0.08))",border:"1px solid var(--cas-border, #cbd5e1)",borderRadius:"6px",color:"var(--cas-text-primary, #0f172a)",fontSize:"0.82rem"}}),
 (0,t.jsx)("button",{type:"button",onClick:function(){setRevokeShowPass(!eRevokeShowPass);},style:{position:"absolute",right:"0.6rem",top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#94a3b8",cursor:"pointer",padding:0},children:(0,t.jsx)("i",{className:eRevokeShowPass?"pi pi-eye-slash":"pi pi-eye",style:{fontSize:"0.9rem"}})})
 ]}),
 (0,t.jsx)("span",{style:{fontSize:"0.71rem",color:"#94a3b8"},children:"Masukkan Password Akun, PIN Keamanan, atau 6-digit TOTP Anda."}),
