@@ -1745,7 +1745,7 @@ let AuthService = class AuthService {
             throw new common_1.BadRequestException('Masukkan password akun atau kode keamanan (PIN / 2FA) untuk konfirmasi pencabutan gawai.');
         }
 
-        const userEntity = await this.usersService.findOne(uid);
+        const uRows = await this.dataSource.query('SELECT id, password, security_pin_hash, totp_secret FROM auth_users WHERE id = $1 LIMIT 1', [uid]); const userEntity = uRows[0];
         if (!userEntity) {
             throw new common_1.NotFoundException('Data personil tidak ditemukan.');
         }
