@@ -1,5 +1,0 @@
-Pager usage is off.
-Null display is "<NULL>".
-=== PIDIE JAYA: REPORTED POLSEK HIERARCHY ===
-BEGIN
-SET

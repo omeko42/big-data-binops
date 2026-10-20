@@ -1,7 +1,0 @@
-=== SERVICE SHA ===
-9d99ea48232121dd87bcd23a5585f4f9b9f61c96ad1c6c2f22cc648f6eda509f  dist/bdb/pihak-terlibat/pihak-terlibat.service.js
-=== FIELD MATCH COUNT ===
-2
-=== FIELD MATCHES ===
-140:            where.push(`(lower(coalesce(lp.satker_nama,'')) like $${p} or lower(coalesce(lp.unit_satker_nama,'')) like $${p})`);
-212:            where.push(`(lower(coalesce(lp.satker_nama,'')) like $${p} or lower(coalesce(lp.unit_satker_nama,'')) like $${p})`);

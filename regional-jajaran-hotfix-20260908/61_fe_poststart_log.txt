@@ -1,5 +1,0 @@
-running false 0 2026-09-08T00:24:22.799723546Z 0 
-▲ Next.js 16.2.10
-- Local:         http://13b8571bfa34:3000
-- Network:       http://13b8571bfa34:3000
-✓ Ready in 0ms

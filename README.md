@@ -64,7 +64,7 @@ Enterprise-grade criminal intelligence and law enforcement analytics platform fo
 - **Backend**: NestJS, TypeScript, TypeORM, Express, Bcrypt, Puppeteer, Node.js
 - **Frontend**: Next.js (App Router, Server-Side Rendering, TurboPack), React, PrimeReact, Lucide Icons, Chart.js
 - **Database**: PostgreSQL with multi-index partitioning and audit trail triggers
-- **Security & Infrastructure**: Docker containerization, Linux multi-node deployment (FE: `10.0.0.x`, BE: `10.0.0.x`, DB: `10.0.0.x`)
+- **Security & Infrastructure**: Docker containerization, Linux multi-node deployment (Multi-tier isolated Frontend, Backend API, and Database cluster)
 
 ---
 

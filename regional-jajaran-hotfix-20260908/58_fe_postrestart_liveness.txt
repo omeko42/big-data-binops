@@ -1,4 +1,0 @@
-PID1=next-server (v 
-PORT=3000
-1e46fef222d4984ee92153e671266ebf4f586592139ebe004788536bca57a89e  .next/static/chunks/register-pihak-v5-6478da3b8c2c.js
-1
