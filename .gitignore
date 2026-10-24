@@ -1,10 +1,11 @@
-﻿# Ignore everything in the local working workspace by default
+# Ignore everything in the local working workspace by default
 /*
 
 # Explicitly allow only clean, sanitized, general application directories and docs
 !/.gitignore
 !/.env.example
 !/README.md
+!/SECURITY.md
 !/backend/
 !/frontend/
 !/database/

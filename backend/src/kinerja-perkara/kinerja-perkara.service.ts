@@ -316,8 +316,10 @@ export const buildKinerjaGroupPlan = (satkers: SatkerRow[], dimensions: KinerjaG
         if (group == null) {
             fallbackSatkerIds.push(id);
         } else {
+            const compact = compactSatkerName(satker.deskripsi);
+            const isGeneralReskrimUnit = group === 'KRIMUM' && (compact.startsWith('SATRESKRIM') || compact.startsWith('UNITRESKRIM') || (compact.includes('RESKRIM') && !compact.startsWith('DIT'))) && !compact.includes('NARKOBA') && !compact.includes('PPAPPO') && !compact.includes('PPADANPPO');
             const hasExact = selected.has(group);
-            const hasCompatible = [...selected].some((sel) => isCompatibleGroup(group, sel));
+            const hasCompatible = [...selected].some((sel) => isCompatibleGroup(group, sel) || (isGeneralReskrimUnit && sel !== 'TIPIDNARKOBA' && sel !== 'NARKOBA'));
             if (hasExact) {
                 functionMatchedSatkerIds.push(id);
             } else if (hasCompatible) {
@@ -627,7 +629,7 @@ export const buildKinerjaRegionalScopePlan = (
     else root = nearestPolsek || nearestPolres || nearestPolda || scopeNode;
 
     const accountRootId = Number(root.id);
-    const functionGroup = (Number(root.id) === 13 || Number(scopeNode.id) === 13) ? null : kinerjaScopeFunctionGroup(scopeNode.deskripsi);
+    const functionGroup = (Number(root.id) === 13 || Number(scopeNode.id) === 13 || nearestPolsek != null) ? null : kinerjaScopeFunctionGroup(scopeNode.deskripsi);
     const isDescendantOf = (satker: SatkerRow, ancestorId: number): boolean => {
         let current: SatkerRow | undefined = satker;
         const guard = new Set<number>();
@@ -777,11 +779,11 @@ export class KinerjaPerkaraService implements OnModuleInit {
             const rawRows = await this.ds.query(`
                 select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.jumlah_penduduk,
                        s.tipe_satker, s.urutan,
-                       t.function_domain as function_domain_resolved,
-                       t.organization_domain as organization_domain_resolved,
-                       t.counting_eligible
+                       coalesce(t.function_domain, case when s.tipe_satker = 'FUNGSI' then 'INTERNAL_RESERSE' else 'STRUCTURAL' end) as function_domain_resolved,
+                       coalesce(t.organization_domain, 'INTERNAL_POLRI') as organization_domain_resolved,
+                       coalesce(t.counting_eligible, true) as counting_eligible
                 from public.bdb_satker s
-                inner join public.bdb_satker_taxonomy_r11 t
+                left join public.bdb_satker_taxonomy_r11 t
                         on t.source_table = 'BDB_SATKER'
                        and t.entity_id = s.id
             `);
@@ -1251,7 +1253,17 @@ export class KinerjaPerkaraService implements OnModuleInit {
 
         const partitions = [
             { tahun: 2026, bulan: null, from: '2026-01-01', to: '2026-12-31' },
-            { tahun: 2026, bulan: curMonth, from: '2026-' + curMonthStr + '-01', to: '2026-' + curMonthStr + '-' + lastDayStr }
+            ...[10, 11, 12].map((m) => {
+                const mStr = String(m).padStart(2, '0');
+                const lDay = String(new Date(2025, m, 0).getDate()).padStart(2, '0');
+                return { tahun: 2025, bulan: m, from: '2025-' + mStr + '-01', to: '2025-' + mStr + '-' + lDay };
+            }),
+            ...Array.from({ length: curMonth }, (_, i) => {
+                const m = i + 1;
+                const mStr = String(m).padStart(2, '0');
+                const lDay = String(new Date(2026, m, 0).getDate()).padStart(2, '0');
+                return { tahun: 2026, bulan: m, from: '2026-' + mStr + '-01', to: '2026-' + mStr + '-' + lDay };
+            })
         ];
 
         for (const p of partitions) {
@@ -2210,7 +2222,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                 targetTahun = new Date().getFullYear();
                 targetBulan = null;
             }
-            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
+            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 12) {
                 targetTahun = 2025;
             }
             if (targetTahun !== null) {
@@ -2253,7 +2265,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                                 };
                             }
                         }
-                    } else if (scopeSatkerId) {
+                    } else if (scopeSatkerId && (scope.all || !scope.satkerId || Number(scope.satkerId) === 13 || !kinerjaScopeFunctionGroup((await this.getSatkerTree()).find((s) => Number(s.id) === Number(scope.satkerId))?.deskripsi))) {
                         if (parent) {
                             const snapSql = targetBulan !== null
                                 ? "SELECT rekap_data->'children'->$3 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
@@ -2273,10 +2285,13 @@ export class KinerjaPerkaraService implements OnModuleInit {
                                 };
                             }
                         } else {
+                            const satkers = await this.getSatkerTree();
+                            const targetSatker = satkers.find((s) => Number(s.id) === Number(scopeSatkerId));
+                            const parentKey = targetSatker && targetSatker.parent_id != null ? String(targetSatker.parent_id) : '060';
                             const snapSql = targetBulan !== null
-                                ? "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
-                                : "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
-                            const snapParams = targetBulan !== null ? [targetTahun, targetBulan] : [targetTahun];
+                                ? "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->$3->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
+                                : "SELECT rekap_data->'root' as root_meta, rekap_data->'children'->$2->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
+                            const snapParams = targetBulan !== null ? [targetTahun, targetBulan, parentKey] : [targetTahun, parentKey];
                             const snapRows = await this.ds.query(snapSql, snapParams);
                             if (snapRows.length > 0 && Array.isArray(snapRows[0]?.reg_nodes)) {
                                 const found = snapRows[0].reg_nodes.find((n: any) => Number(n.id) === Number(scopeSatkerId));
@@ -2423,7 +2438,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                 targetTahun = new Date().getFullYear();
                 targetBulan = null;
             }
-            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 9) {
+            if (targetTahun === 2026 && targetBulan !== null && targetBulan > 12) {
                 targetTahun = 2025;
             }
             if (targetTahun !== null) {
@@ -2437,11 +2452,14 @@ export class KinerjaPerkaraService implements OnModuleInit {
                         if (snapRows.length > 0 && snapRows[0].summary_data) {
                             return snapRows[0].summary_data;
                         }
-                    } else if (scopeSatkerId) {
+                    } else if (scopeSatkerId && (scope.all || !scope.satkerId || Number(scope.satkerId) === 13 || !kinerjaScopeFunctionGroup((await this.getSatkerTree()).find((s) => Number(s.id) === Number(scope.satkerId))?.deskripsi))) {
+                        const satkersForSnap = await this.getSatkerTree();
+                        const targetSatkerForSnap = satkersForSnap.find((s) => Number(s.id) === Number(scopeSatkerId));
+                        const parentKey = targetSatkerForSnap && targetSatkerForSnap.parent_id != null ? String(targetSatkerForSnap.parent_id) : '060';
                         const snapSql = targetBulan !== null
-                            ? "SELECT summary_data, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
-                            : "SELECT summary_data, rekap_data->'children'->'060'->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
-                        const snapParams = targetBulan !== null ? [targetTahun, targetBulan] : [targetTahun];
+                            ? "SELECT summary_data, rekap_data->'children'->$3->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
+                            : "SELECT summary_data, rekap_data->'children'->$2->'nodes' as reg_nodes FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' LIMIT 1";
+                        const snapParams = targetBulan !== null ? [targetTahun, targetBulan, parentKey] : [targetTahun, parentKey];
                         const snapRows = await this.ds.query(snapSql, snapParams);
                         if (snapRows.length > 0 && Array.isArray(snapRows[0]?.reg_nodes)) {
                             const node = snapRows[0].reg_nodes.find((n: any) => Number(n.id) === Number(scopeSatkerId));
