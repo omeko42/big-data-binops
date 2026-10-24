@@ -5,6 +5,7 @@
 !/.gitignore
 !/.env.example
 !/README.md
+!/README.id.md
 !/LICENSE
 !/CITATION.cff
 !/CONTRIBUTING.md
