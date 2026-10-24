@@ -5,12 +5,12 @@ type: software
 authors:
   - family-names: "Agung"
     given-names: "Eko"
-    alias: "omeko11"
+    alias: "omeko42"
     affiliation: "Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri"
 version: "2.5.0"
 date-released: "2026-10-24"
-url: "https://github.com/omeko11/big-data-binops"
-repository-code: "https://github.com/omeko11/big-data-binops"
+url: "https://github.com/omeko42/big-data-binops"
+repository-code: "https://github.com/omeko42/big-data-binops"
 license: "Proprietary"
 keywords:
   - "Big Data Binops"

@@ -58,7 +58,7 @@ function timeAgo(dateStr) {
 
 function getVerificationBadge(role, isUserOne, userId, username) {
   var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
-  if (isUserOne || SUPER_IDS.includes(String(userId)) || username === 'omeko11' || username === 'Yud08') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
+  if (isUserOne || SUPER_IDS.includes(String(userId)) || username === 'omeko42' || username === 'Yud08') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   var r = String(role || '').toLowerCase().trim();
   if (r === 'superadmin') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#10b981', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
@@ -280,11 +280,11 @@ e.s(["default",0,function() {
   var toastRef = (0,n.useRef)(null);
   var fileInputRef = (0,n.useRef)(null);
 
-  // Current user state (strictly resolve username/callsign to omeko11 for EKO)
+  // Current user state (strictly resolve username/callsign to omeko42 for EKO)
   var [currentUser, setCurrentUser] = (0,n.useState)(() => {
     try {
       var u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u.username === 'omeko11' || u.id === 1 || u.id === '1' || u.id === 'usr_superadmin') {
+      if (u.username === 'omeko42' || u.id === 1 || u.id === '1' || u.id === 'usr_superadmin') {
         /* keep dynamic username & callsign */
         u.name = 'EKO';
         u.role_bdb = 'superadmin';
@@ -789,7 +789,7 @@ e.s(["default",0,function() {
   var endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
   var paginatedPosts = filteredPosts.slice(startIndex, endIndex);
 
-  var isSuperadmin = currentUser?.username === 'omeko11' || currentUser?.id === 1 || currentUser?.id === '1' || currentUser?.id === 'usr_superadmin' || currentUser?.role_bdb === 'superadmin';
+  var isSuperadmin = currentUser?.username === 'omeko42' || currentUser?.id === 1 || currentUser?.id === '1' || currentUser?.id === 'usr_superadmin' || currentUser?.role_bdb === 'superadmin';
   var myBadge = getVerificationBadge(currentUser?.role_bdb, isSuperadmin);
   var userAvatar = currentUser?.photo_url || currentUser?.foto;
   var userInitials = String(currentUser?.name || currentUser?.username || 'P').charAt(0).toUpperCase();
@@ -2117,7 +2117,7 @@ e.s(["default",0,function() {
               renderCornerAvatar(
                 previewUser.photo_url || previewUser.foto,
                 String(previewUser.name || 'P').charAt(0).toUpperCase(),
-                getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko11' || String(previewUser.role_bdb).toLowerCase() === 'superadmin'),
+                getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb).toLowerCase() === 'superadmin'),
                 4.2,
                 22,
                 12
@@ -2137,7 +2137,7 @@ e.s(["default",0,function() {
               previewUser.jabatan || previewUser.role || "Penyidik Reserse Polri"
             ]}),
             (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:(function(){
-  var isSuper = String(previewUser.id) === '1' || previewUser.username === 'omeko11' || String(previewUser.role_bdb || '').toLowerCase() === 'superadmin';
+  var isSuper = String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb || '').toLowerCase() === 'superadmin';
   if (isSuper) return "Robinopsnal Bareskrim Polri";
   return toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri");
 })()})

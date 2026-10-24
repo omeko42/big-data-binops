@@ -630,7 +630,7 @@ e.s(["default", 0, function() {
                                   })(post)
                                 }),
                                 (function(item){
-                                  var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin';
+                                  var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin';
                                   var r = String(item?.author_role || '').toLowerCase();
                                   var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
                                   var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
@@ -1064,7 +1064,7 @@ e.s(["default", 0, function() {
                               })(p)
                             }),
                             (function(item){
-                              var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin';
+                              var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin';
                               var r = String(item?.author_role || '').toLowerCase();
                               var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
                               var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
@@ -1085,7 +1085,7 @@ e.s(["default", 0, function() {
                             padding: "0.1rem 0.4rem",
                             borderRadius: "4px"
                           },
-                          children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko11' || item?.author_callsign === 'omeko11' || String(item?.author_role).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(item?.author_id)); if (isSuper) return "Robinopsnal Bareskrim Polri"; return item?.author_satker || item?.satker_name || item?.satker || "Robinopsnal Bareskrim Polri"; })(p)
+                          children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(item?.author_id)); if (isSuper) return "Robinopsnal Bareskrim Polri"; return item?.author_satker || item?.satker_name || item?.satker || "Robinopsnal Bareskrim Polri"; })(p)
                         }),
                         (0, t.jsxs)("span", {
                           style: { fontSize: "0.72rem", color: "#64748b" },

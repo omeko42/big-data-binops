@@ -2,7 +2,7 @@ LISENSI KHUSUS KEDINASAN & PORTOFOLIO ARSITEKTUR REKAYASA
 (SOVEREIGN INSTITUTIONAL & ARCHITECTURAL PORTFOLIO LICENSE)
 ================================================================================
 
-Hak Cipta (c) 2024–2026 Eko Agung (@omeko11)
+Hak Cipta (c) 2024–2026 Eko Agung (@omeko42)
 Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri &
 Komunitas Operasional CAS (Community Anggota Serse)
 
@@ -16,7 +16,7 @@ I. KETENTUAN UMUM & STATUS KEPEMILIKAN (BAHASA INDONESIA)
    Kode sumber, rancangan skema basis data, algoritma rekonsiliasi 4-tingkat,
    mesin snapshot analitik, serta dokumentasi teknis pada repositori
    "Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)" ini
-   dirancang dan dikembangkan oleh Eko Agung (@omeko11) dalam rangka
+   dirancang dan dikembangkan oleh Eko Agung (@omeko42) dalam rangka
    modernisasi dan kedaulatan tata kelola data operasional di lingkungan
    Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri.
 
@@ -62,7 +62,7 @@ I. KETENTUAN UMUM & STATUS KEPEMILIKAN (BAHASA INDONESIA)
 II. GENERAL TERMS & INSTITUTIONAL LICENSE (ENGLISH SUMMARY)
 --------------------------------------------------------------------------------
 
-Copyright (c) 2024–2026 Eko Agung (@omeko11)
+Copyright (c) 2024–2026 Eko Agung (@omeko42)
 Bureau of Operational Management (Robinopsnal) — Criminal Investigation Agency
 of the Indonesian National Police (Bareskrim Polri) & CAS (Community Anggota Serse).
 All Rights Reserved.
@@ -70,7 +70,7 @@ All Rights Reserved.
 1. INSTITUTIONAL & PORTFOLIO PURPOSE:
    This repository contains the sanitized architectural reference, source code,
    and database DDL schema of the Big Data Binops (BDB) platform, engineered by
-   Eko Agung (@omeko11). Official operational deployment rights are granted to
+   Eko Agung (@omeko42). Official operational deployment rights are granted to
    the Indonesian National Police (Polri / Bareskrim Polri). Public visibility
    is provided strictly for software engineering portfolio evaluation,
    architectural review, and academic reference.

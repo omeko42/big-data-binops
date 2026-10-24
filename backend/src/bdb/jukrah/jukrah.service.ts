@@ -230,14 +230,14 @@ export class JukrahService {
         // Transform data: Canonical Handle, penyamaran identitas, dan media tokenized stream
         const posts = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
-            const isUserOne = Number(r.author_id) === 1 || r.author_username === 'omeko11' || r.author_callsign === 'omeko11';
+            const isUserOne = Number(r.author_id) === 1 || r.author_username === 'omeko42' || r.author_callsign === 'omeko42';
 
             const nrpMatch = (r.author_email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.author_username && r.author_username.replace(/^Nrp\./i, '')) || '';
 
             const formatSOPHandle = (rawCallsign: string, authorId: any, username: string) => {
                 const idStr = String(authorId || '');
-                if (idStr === '1' || username === 'omeko11' || rawCallsign === 'omeko11') return '@omeko11';
+                if (idStr === '1' || username === 'omeko42' || rawCallsign === 'omeko42') return '@omeko42';
                 const c = String(rawCallsign || '').trim().replace(/^@/, '');
                 const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
                 if (c && !invalidPlaceholders.includes(c.toLowerCase())) return '@' + c;
@@ -265,8 +265,8 @@ export class JukrahService {
                 author_id: Number(r.author_id),
                 author_name: displayName,
                 author_handle: handle,
-                author_callsign: isUserOne ? 'omeko11' : (r.author_callsign ? String(r.author_callsign).replace(/^@/, '') : null),
-                author_username: isUserOne ? 'omeko11' : (r.author_username ? String(r.author_username).replace(/^@/, '') : null),
+                author_callsign: isUserOne ? 'omeko42' : (r.author_callsign ? String(r.author_callsign).replace(/^@/, '') : null),
+                author_username: isUserOne ? 'omeko42' : (r.author_username ? String(r.author_username).replace(/^@/, '') : null),
                 author_nrp: derivedNrp,
                 raw_name: isUserOne ? 'EKO' : r.raw_author_name,
                 author_role: authorRole,
@@ -314,11 +314,11 @@ export class JukrahService {
                 [parentIds]
             );
             const parentMap = new Map(parents.map((p: any) => {
-                const isPUserOne = Number(p.id) === 1 || p.username === 'omeko11' || p.callsign === 'omeko11';
+                const isPUserOne = Number(p.id) === 1 || p.username === 'omeko42' || p.callsign === 'omeko42';
                 return [Number(p.id), {
                     id: Number(p.id),
                     content: p.content,
-                    author_handle: isPUserOne ? '@omeko11' : (p.callsign ? `@${p.callsign}` : (p.username ? `@${p.username}` : `@pers_${p.id}`)),
+                    author_handle: isPUserOne ? '@omeko42' : (p.callsign ? `@${p.callsign}` : (p.username ? `@${p.username}` : `@pers_${p.id}`)),
                     satker: isPUserOne ? 'Bareskrim Polri' : (p.satker || 'Mabes'),
                     created_at: p.created_at
                 }];
@@ -525,7 +525,7 @@ export class JukrahService {
             [postId]
         );
         const list = rows.map((r: any) => {
-            const isUserOne = Number(r.user_id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
+            const isUserOne = Number(r.user_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
             return {
                 id: Number(r.id),
                 reaction_type: r.reaction_type,
@@ -533,8 +533,8 @@ export class JukrahService {
                 user: {
                     id: Number(r.user_id),
                     name: isUserOne ? 'EKO' : r.name,
-                    username: isUserOne ? 'omeko11' : r.username,
-                    callsign: isUserOne ? 'omeko11' : (r.callsign || r.username),
+                    username: isUserOne ? 'omeko42' : r.username,
+                    callsign: isUserOne ? 'omeko42' : (r.callsign || r.username),
                     photo_url: r.photo_url,
                     role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
                     satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes Bareskrim')
@@ -675,15 +675,15 @@ export class JukrahService {
         `;
         const rows = await this.dataSource.query(sql, limitParams);
         const list = rows.map((r: any) => {
-            const isUserOne = Number(r.id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
+            const isUserOne = Number(r.id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
             const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
 
             return {
                 id: Number(r.id),
                 name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
                 pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
                 jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
                 satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
@@ -724,7 +724,7 @@ export class JukrahService {
         );
         if (!rows.length) throw new NotFoundException('Personil CAS tidak ditemukan.');
         const r = rows[0];
-        const isUserOne = Number(r.id) === 1 || r.username === 'omeko11';
+        const isUserOne = Number(r.id) === 1 || r.username === 'omeko42';
         const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
         const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
 
@@ -733,8 +733,8 @@ export class JukrahService {
             data: {
                 id: Number(r.id),
                 name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
                 role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
                 pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
                 jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
@@ -770,8 +770,8 @@ export class JukrahService {
         const comments = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
             const canSeeReal = isGlobalAdmin || isSelf;
-            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
-            const handle = isUserOne ? '@omeko11' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
+            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
+            const handle = isUserOne ? '@omeko42' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
             const displayName = isUserOne ? 'EKO' : canSeeReal ? (r.raw_name || handle) : handle;
             return {
                 id: Number(r.id),
@@ -779,8 +779,8 @@ export class JukrahService {
                 content: r.content,
                 created_at: r.created_at,
                 author_id: Number(r.author_id),
-                author_username: isUserOne ? 'omeko11' : r.username,
-                author_callsign: isUserOne ? 'omeko11' : r.callsign,
+                author_username: isUserOne ? 'omeko42' : r.username,
+                author_callsign: isUserOne ? 'omeko42' : r.callsign,
                 author_handle: handle,
                 author_name: displayName,
                 author_satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes'),
@@ -820,8 +820,8 @@ export class JukrahService {
             });
         }
 
-        const isUserOne = uid === 1 || user?.username === 'omeko11' || user?.callsign === 'omeko11';
-        const authorHandle = isUserOne ? '@omeko11' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
+        const isUserOne = uid === 1 || user?.username === 'omeko42' || user?.callsign === 'omeko42';
+        const authorHandle = isUserOne ? '@omeko42' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
         const authorName = isUserOne ? 'EKO' : (user?.name || user?.username || 'Saya');
 
         return {
@@ -833,8 +833,8 @@ export class JukrahService {
                 content: text,
                 created_at: r[0].created_at,
                 author_id: uid,
-                author_username: isUserOne ? 'omeko11' : (user?.username || null),
-                author_callsign: isUserOne ? 'omeko11' : (user?.callsign || null),
+                author_username: isUserOne ? 'omeko42' : (user?.username || null),
+                author_callsign: isUserOne ? 'omeko42' : (user?.callsign || null),
                 author_handle: authorHandle,
                 author_name: authorName,
                 author_satker: isUserOne ? 'Bareskrim Polri' : (user?.satker || 'Mabes Bareskrim'),
@@ -1309,15 +1309,15 @@ export class JukrahService {
         `;
         const rows = await this.dataSource.query(sql, limitParams);
         const list = rows.map((r: any) => {
-            const isUserOne = Number(r.id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
+            const isUserOne = Number(r.id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
             const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
 
             return {
                 id: Number(r.id),
                 name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
                 pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
                 jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
                 satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
@@ -1358,7 +1358,7 @@ export class JukrahService {
         );
         if (!rows.length) throw new NotFoundException('Personil CAS tidak ditemukan.');
         const r = rows[0];
-        const isUserOne = Number(r.id) === 1 || r.username === 'omeko11';
+        const isUserOne = Number(r.id) === 1 || r.username === 'omeko42';
         const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
         const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
 
@@ -1367,8 +1367,8 @@ export class JukrahService {
             data: {
                 id: Number(r.id),
                 name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko11' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko11' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
+                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
+                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
                 role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
                 pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
                 jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
@@ -1404,8 +1404,8 @@ export class JukrahService {
         const comments = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
             const canSeeReal = isGlobalAdmin || isSelf;
-            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko11' || r.callsign === 'omeko11';
-            const handle = isUserOne ? '@omeko11' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
+            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
+            const handle = isUserOne ? '@omeko42' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
             const displayName = isUserOne ? 'EKO' : canSeeReal ? (r.raw_name || handle) : handle;
             return {
                 id: Number(r.id),
@@ -1413,8 +1413,8 @@ export class JukrahService {
                 content: r.content,
                 created_at: r.created_at,
                 author_id: Number(r.author_id),
-                author_username: isUserOne ? 'omeko11' : r.username,
-                author_callsign: isUserOne ? 'omeko11' : r.callsign,
+                author_username: isUserOne ? 'omeko42' : r.username,
+                author_callsign: isUserOne ? 'omeko42' : r.callsign,
                 author_handle: handle,
                 author_name: displayName,
                 author_satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes'),
@@ -1454,8 +1454,8 @@ export class JukrahService {
             });
         }
 
-        const isUserOne = uid === 1 || user?.username === 'omeko11' || user?.callsign === 'omeko11';
-        const authorHandle = isUserOne ? '@omeko11' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
+        const isUserOne = uid === 1 || user?.username === 'omeko42' || user?.callsign === 'omeko42';
+        const authorHandle = isUserOne ? '@omeko42' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
         const authorName = isUserOne ? 'EKO' : (user?.name || user?.username || 'Saya');
 
         return {
@@ -1467,8 +1467,8 @@ export class JukrahService {
                 content: text,
                 created_at: r[0].created_at,
                 author_id: uid,
-                author_username: isUserOne ? 'omeko11' : (user?.username || null),
-                author_callsign: isUserOne ? 'omeko11' : (user?.callsign || null),
+                author_username: isUserOne ? 'omeko42' : (user?.username || null),
+                author_callsign: isUserOne ? 'omeko42' : (user?.callsign || null),
                 author_handle: authorHandle,
                 author_name: authorName,
                 author_satker: isUserOne ? 'Bareskrim Polri' : (user?.satker || 'Mabes Bareskrim'),

@@ -629,7 +629,7 @@ let UserService = class UserService {
             policeProfile = policeRows?.[0] || null;
         }
         catch { }
-        const isSuper = String(user.id) === '1' || user.username === 'omeko11' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
+        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
         let satkerNama = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSatuan = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
         if (!satkerNama && user.scope_satker_id) {
