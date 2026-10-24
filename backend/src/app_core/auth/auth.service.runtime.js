@@ -1660,13 +1660,7 @@ let AuthService = class AuthService {
         const model = userAgentResult?.device?.model || '';
         const browser = userAgentResult?.browser?.name || '';
 
-        const isGooglePasswordManager = aaguid === 'ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4';
-        const isWindowsCloudSynced = os.toLowerCase().includes('windows') && (credentialBackedUp || credentialDeviceType === 'multiDevice');
-        if (isGooglePasswordManager || isWindowsCloudSynced) {
-            throw new common_1.BadRequestException(
-                'Pendaftaran ditolak: Passkey terdeteksi disimpan ke Cloud Akun Google (Google Password Manager), bukan di hardware perangkat fisik. Pilih opsi "Windows Hello / Perangkat Ini" saat mendaftarkan biometrik agar akses tidak ikut tersinkronisasi ke perangkat lain.'
-            );
-        }
+        // Allow platform & browser-managed passkeys (Windows Hello TPM & Chrome Passkey Enclave) — device/OS binding is enforced via os_name & browser_name
 
         const transports = ['internal'];
 
@@ -1958,26 +1952,7 @@ let AuthService = class AuthService {
             );
         }
 
-        const isGoogleSynced = String(pk.aaguid || '').toLowerCase() === 'ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4';
-        const isWindowsMultiDevice = currentOs.toLowerCase().includes('windows') && (Boolean(authInfo.credentialBackedUp) || authInfo.credentialDeviceType === 'multiDevice');
-        if (isGoogleSynced || isWindowsMultiDevice) {
-            void this.audit.log({
-                userId: Number(pk.user_db_id),
-                userName: pk.username,
-                action: 'LOGIN_PASSKEY_BLOCKED',
-                entity: 'auth',
-                meta: {
-                    reason: 'CLOUD_SYNCED_PASSKEY_BLOCKED',
-                    device_name: pk.device_name,
-                    credential_device_type: authInfo.credentialDeviceType,
-                    credential_backed_up: authInfo.credentialBackedUp,
-                    os: currentOs
-                }
-            });
-            throw new common_1.UnauthorizedException(
-                'Login biometrik ditolak: Passkey ini tersinkronisasi melalui Cloud Akun Google (Google Password Manager) dan tidak terikat pada hardware fisik perangkat. Silakan masuk dengan Password/OTP, hapus passkey lama di Pengaturan Keamanan, lalu daftarkan ulang langsung menggunakan Windows Hello (Perangkat Lokal).'
-            );
-        }
+        // OS & Browser binding already enforced above via expectedOs and pk.browser_name
 
         const newCounter = Number(authInfo.newCounter ?? storedCounter);
         await this.dataSource.query(
