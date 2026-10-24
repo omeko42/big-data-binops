@@ -1,6 +1,7 @@
-# Arsitektur Real & Inventaris Server Produksi — CAS (Crime Analytic System) Bareskrim Polri
+# Arsitektur Real & Inventaris Server Produksi — Big Data Binops (BDB) & CAS (Community Anggota Serse)
 
 > **Status Dokumen:** Hasil Audit Forensik & Ekstraksi Langsung Server Produksi (Oktober 2026)  
+> **Identitas Platform:** **Big Data Binops (BDB)** — Platform Pengolahan Data Operasional Kompleks Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri, yang digerakkan oleh ekosistem **CAS (*Community Anggota Serse* — 1.024+ Anggota Reserse & KBO se-Indonesia)**.  
 > **Standar Keamanan:** Seluruh alamat IP internal, kredensial database, kunci privat TLS, dan *secret token* telah disanitasi sesuai kebijakan **Zero-Secret Repository** (`SECURITY.md`).
 
 ---

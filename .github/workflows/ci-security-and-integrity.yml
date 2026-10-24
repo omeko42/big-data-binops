@@ -1,0 +1,67 @@
+name: Security & Architecture Integrity Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  zero-secret-and-integrity-audit:
+    name: Zero-Secret & Repository Integrity Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run Automated Zero-Secret & PII Scanner
+        run: |
+          node -e '
+          const fs = require("fs");
+          const path = require("path");
+          const roots = ["backend", "frontend", "database", "docs", ".env.example", "README.md", "ARCHITECTURE.md", "CHANGELOG.md", "SECURITY.md"];
+          const files = [];
+          function walk(p) {
+            if (!fs.existsSync(p)) return;
+            const st = fs.statSync(p);
+            if (st.isFile()) { files.push(p); return; }
+            for (const f of fs.readdirSync(p)) walk(path.join(p, f));
+          }
+          roots.forEach(walk);
+          const patterns = [
+            { name: "Private Key Block", re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
+            { name: "GitHub/GitLab PAT", re: /(glpat-[a-zA-Z0-9_\-]{20,}|ghp_[a-zA-Z0-9]{36,})/ },
+            { name: "Internal Private Subnet 10.200.x.x", re: /10\.200\.\d+\.\d+/ },
+            { name: "Raw Bcrypt Hash", re: /\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}/ }
+          ];
+          let hits = 0;
+          for (const f of files) {
+            const c = fs.readFileSync(f, "utf8");
+            for (const p of patterns) {
+              if (p.re.test(c)) {
+                console.error("SECURITY VIOLATION [" + p.name + "] in " + f);
+                hits++;
+              }
+            }
+          }
+          console.log("Audited " + files.length + " files. Security violations: " + hits);
+          if (hits > 0) process.exit(1);
+          '
+
+      - name: Verify Core Architecture & Schema Artifacts Exist
+        run: |
+          test -f backend/package.json
+          test -f backend/src/main.ts
+          test -f backend/src/bdb/bdb.module.ts
+          test -f frontend/package.json
+          test -f frontend/services/cas-doc-service/cas_doc_service.py
+          test -f database/schema/000_live_production_schema.sql
+          test -f database/schema/DATABASE_INVENTORY.md
+          test -f docs/SERVER_ARCHITECTURE_AND_INVENTORY.md
+          test -f docs/STRATEGIC_GOVERNANCE_AND_EVOLUTION.md
