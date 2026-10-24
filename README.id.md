@@ -184,7 +184,7 @@ flowchart TB
 
 ## 🔒 Keamanan, Lisensi & Tata Kelola
 
-- **Lisensi Khusus Kedinasan & Portofolio ([`LICENSE`](LICENSE))**: Dirancang dan dikembangkan oleh **Eko Agung (`@omeko11`)** untuk tata kelola operasional resmi di lingkungan **Robinopsnal Bareskrim Polri** dan **CAS (*Community Anggota Serse*)**. Dipublikasikan khusus sebagai bahan evaluasi portofolio rekayasa perangkat lunak dan referensi arsitektur (**Seluruh Hak Dilindungi Undang-Undang — Dilarang keras memperjualbelikan ulang atau memalsukan atribut institusi**).
+- **Lisensi Khusus Kedinasan & Portofolio ([`LICENSE`](LICENSE))**: Dirancang dan dikembangkan oleh **Eko Agung (`@omeko42`)** untuk tata kelola operasional resmi di lingkungan **Robinopsnal Bareskrim Polri** dan **CAS (*Community Anggota Serse*)**. Dipublikasikan khusus sebagai bahan evaluasi portofolio rekayasa perangkat lunak dan referensi arsitektur (**Seluruh Hak Dilindungi Undang-Undang — Dilarang keras memperjualbelikan ulang atau memalsukan atribut institusi**).
 - **Kepatuhan Regulasi**: Direkayasa sesuai amanat **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, serta **Perkap 6/2019**.
 - **Kontrol Versi Bebas Rahasia (*Zero-Secret Version Control*)**: Seluruh 500 file di dalam repositori ini telah diaudit dan disanitasi untuk menjamin tidak adanya kebocoran `JWT_SECRET`, kata sandi basis data, kunci MinIO, kunci privat TLS, maupun alamat IP internal. Lihat [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), dan [`SECURITY.md`](SECURITY.md).
 
@@ -192,6 +192,6 @@ flowchart TB
 
 ## 👨‍💻 Perancang & Arsitek Utama Sistem
 
-- **Eko Agung** ([@omeko11](https://github.com/omeko11))  
+- **Eko Agung** ([@omeko42](https://github.com/omeko42))  
   *Full-Stack Engineer & System Architect (Sebelumnya Analis Data Operasional — Robinopsnal Bareskrim Polri)*  
   *Pendiri **CAS (Community Anggota Serse)** & Pengembang Utama **Big Data Binops (BDB)***

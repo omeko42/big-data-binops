@@ -219,7 +219,7 @@ flowchart TB
 
 ## 🔒 Security, Licensing & Governance
 
-- **Sovereign Institutional & Portfolio License ([`LICENSE`](LICENSE))**: Engineered by **Eko Agung (`@omeko11`)** for official operational governance across **Robinopsnal Bareskrim Polri** and **CAS (*Community Anggota Serse*)**. Published strictly for software engineering portfolio evaluation and architectural reference (**All Rights Reserved — Commercial redistribution and institutional impersonation are strictly prohibited**).
+- **Sovereign Institutional & Portfolio License ([`LICENSE`](LICENSE))**: Engineered by **Eko Agung (`@omeko42`)** for official operational governance across **Robinopsnal Bareskrim Polri** and **CAS (*Community Anggota Serse*)**. Published strictly for software engineering portfolio evaluation and architectural reference (**All Rights Reserved — Commercial redistribution and institutional impersonation are strictly prohibited**).
 - **Regulatory Compliance**: Engineered in strict accordance with **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, and **Perkap 6/2019**.
 - **Zero-Secret Version Control**: Every tracked file in this repository has been audited and sanitized to guarantee zero leaked JWT secrets, database passwords, MinIO keys, TLS private keys, or internal private IP addresses. See [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), and [`SECURITY.md`](SECURITY.md) for deployment configuration guidelines.
 
@@ -227,6 +227,6 @@ flowchart TB
 
 ## 👨‍💻 Creator & Full-Stack System Architect
 
-- **Eko Agung** ([@omeko11](https://github.com/omeko11))  
+- **Eko Agung** ([@omeko42](https://github.com/omeko42))  
   *Full-Stack Engineer & System Architect (Former Operational Data Analyst — Robinopsnal Bareskrim Polri)*  
   *Founder of **CAS (Community Anggota Serse)** & Lead Engineer of **Big Data Binops (BDB)***
