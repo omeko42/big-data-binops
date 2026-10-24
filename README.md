@@ -1,5 +1,7 @@
 # Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
 
+> 🌐 **Language / Pilihan Bahasa:** [**🇬🇧 English (Active)**](README.md) &nbsp;|&nbsp; [**🇮🇩 Bahasa Indonesia (Edisi Resmi)**](README.id.md)
+
 [![Platform](https://img.shields.io/badge/platform-Big%20Data%20Binops%20(BDB)%20v2.5-1E40AF.svg?style=flat-square)](#)
 [![Community](https://img.shields.io/badge/CAS-Community%20Anggota%20Serse%20(1,024%2B%20Members)-25D366.svg?style=flat-square&logo=whatsapp&logoColor=white)](#-the-evolution-story-from-data-analyst-to-full-stack-system-architect)
 [![Language](https://img.shields.io/badge/language-TypeScript%20%7C%20Node.js%2022%20%7C%20Python%203-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -191,7 +193,9 @@ flowchart TB
 │   ├── API_INTEGRATION_GUIDE.md                # Managed External REST API Reference & Security Spec
 │   ├── GENAI_INTEGRATION_SPEC.md               # LLM / RAG Downstream Ingestion Specification
 │   └── infrastructure/                         # Sanitized Nginx, Docker Compose & Crontab production blueprints
-├── ARCHITECTURE.md                             # Engineering Decision Records (ADRs 001–005)
+├── README.md                                   # Main Documentation (English Edition)
+├── README.id.md                                # Main Documentation (Bahasa Indonesia Official Edition)
+├── ARCHITECTURE.md                             # Engineering Decision Records (ADRs 001–005 — Bilingual)
 ├── CHANGELOG.md                                # Platform Evolution & Release History
 ├── CONTRIBUTING.md                             # Governance & Contribution Guidelines (Pokja Bareskrim & CAS)
 ├── CITATION.cff                                # Official Academic & Technical Citation Metadata
