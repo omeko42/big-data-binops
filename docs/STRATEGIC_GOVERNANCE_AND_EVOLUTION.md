@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Transformasi Identitas: *Big Data Binops (BDB) by Community Anggota Serse (CAS)*
+## 1. Transformasi Identitas: *Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)*
 
 Pada fase awal (2024–2025), akronim **CAS** merujuk pada sistem manual statis yang hanya berfokus sempit pada rekapitulasi angka *Crime Total (CT)* dan *Crime Clearance (CC)*. Seiring transformasi menyeluruh pada T.A. 2026:
 
@@ -33,7 +33,7 @@ flowchart LR
         T3A["• Inisiasi tarikan awal LP DORS satu pintu\n• Paradigma statistik sempit: murni agregasi statis CT & CC\n• Struktur relasional 2D kaku, tidak mendukung data majemuk\n• Dikelola pihak ketiga tanpa DRP terisolasi → insiden kehilangan DB"]
     end
 
-    subgraph T4["TAHAP 4 (2026–Ke Depan)\nBig Data Binops (BDB) by CAS"]
+    subgraph T4["TAHAP 4 (2026–Ke Depan)\nBig Data Binops (BDB) — Powered by CAS"]
         T4A["• Merangkul Data Majemuk: LP, Satgas, Dumas NIK, Kerma, Tahti, Almatsus\n• Bebas Beban Dobel Input: Tarik otomatis DORS/EMP + Quick Count KBO\n• Kemandirian Klaster Server Internal (FE, BE, DB) & Zero Data Loss\n• Didukung 1.024+ anggota Community Anggota Serse (CAS) se-Indonesia"]
     end
 
