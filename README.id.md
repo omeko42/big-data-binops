@@ -1,4 +1,4 @@
-# Big Data Binops (BDB) — Digerakkan oleh CAS (*Community Anggota Serse*)
+# Big Data Binops (BDB) by Community Anggota Serse (CAS)
 
 > 🌐 **Pilihan Bahasa / Language:** [**🇮🇩 Bahasa Indonesia (Aktif)**](README.id.md) &nbsp;|&nbsp; [**🇬🇧 English Version**](README.md)
 

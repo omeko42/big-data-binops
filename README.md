@@ -1,4 +1,4 @@
-# Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
+# Big Data Binops (BDB) by Community Anggota Serse (CAS)
 
 > 🌐 **Language / Pilihan Bahasa:** [**🇬🇧 English (Active)**](README.md) &nbsp;|&nbsp; [**🇮🇩 Bahasa Indonesia (Edisi Resmi)**](README.id.md)
 
