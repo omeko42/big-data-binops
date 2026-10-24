@@ -12,7 +12,7 @@ Platform **Big Data Binops (BDB)** dan ekosistem **CAS (*Community Anggota Serse
 - **Peraturan Polri Nomor 4 Tahun 2025 & Peraturan Kapolri Nomor 6 Tahun 2019**
 - **Standar Keamanan Sistem Elektronik di Lingkungan Bareskrim Polri**
 
-Seluruh rekaman operasional perkara (*Laporan Polisi*) diisolasi secara ketat berdasarkan hierarki kewilayahan (**Mabes Polri $\to$ Polda $\to$ Polres $\to$ Polsek**) dan taksonomi kamar direktorat penyidikan (`INTERNAL_RESERSE` vs `EKSTERNAL_RESERSE`).
+Seluruh rekaman operasional perkara (*Laporan Polisi*) diisolasi secara ketat berdasarkan hierarki kewilayahan (**Mabes Polri → Polda → Polres → Polsek**) dan taksonomi kamar direktorat penyidikan (`INTERNAL_RESERSE` vs `EKSTERNAL_RESERSE`).
 
 ### 2. Autentikasi Berlapis & Kontrol *Zero-Trust*
 - **Passkey Perangkat Keras FIDO2 / WebAuthn**:
@@ -39,7 +39,7 @@ The **Big Data Binops (BDB)** platform — powered by **CAS (*Community Anggota 
 - **Polri Regulation No. 4 of 2025 (Perpol 4/2025) & Chief of Police Regulation No. 6 of 2019 (Perkap 6/2019)**
 - **Bareskrim Polri Electronic System Security Standards**
 
-All operational case records (*Laporan Polisi*) are strictly isolated by 4-tier territorial hierarchy (**Mabes $\to$ Polda $\to$ Polres $\to$ Polsek**) and functional directorate taxonomy.
+All operational case records (*Laporan Polisi*) are strictly isolated by 4-tier territorial hierarchy (**Mabes → Polda → Polres → Polsek**) and functional directorate taxonomy.
 
 ### 2. Authentication & Zero-Trust Controls
 - **FIDO2 / WebAuthn Hardware Passkeys**:

@@ -14,7 +14,7 @@
 
 **Big Data Binops (BDB)** adalah platform tata kelola data operasional berskala *enterprise*, manajemen siklus hidup perkara lintas sumber, serta analitik penegakan hukum yang dirancang dan dibangun untuk **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
-Lahir dari **CAS (*Community Anggota Serse*)** — sebuah gerakan dan komunitas operasional akar rumput yang menghimpun **1.024+ penyidik aktif, operator, Kanit Reskrim Polsek, hingga Kaur Binops (KBO)** di seluruh Indonesia — **Big Data Binops (BDB)** mengonsolidasikan **~68,89 juta rekaman basis data produksi aktif** (**2,84+ juta Laporan Polisi / LP**, **11,16+ juta pihak terlibat**, **5,84+ juta barang bukti**, dan **5,46+ juta catatan audit forensik**) di seluruh 4 tingkatan kewilayahan (**Mabes Polri $\to$ 36 Polda $\to$ 508+ Polres $\to$ 4.900+ Polsek**).
+Lahir dari **CAS (*Community Anggota Serse*)** — sebuah gerakan dan komunitas operasional akar rumput yang menghimpun **1.024+ penyidik aktif, operator, Kanit Reskrim Polsek, hingga Kaur Binops (KBO)** di seluruh Indonesia — **Big Data Binops (BDB)** mengonsolidasikan **~68,89 juta rekaman basis data produksi aktif** (**2,84+ juta Laporan Polisi / LP**, **11,16+ juta pihak terlibat**, **5,84+ juta barang bukti**, dan **5,46+ juta catatan audit forensik**) di seluruh 4 tingkatan kewilayahan (**Mabes Polri → 36 Polda → 508+ Polres → 4.900+ Polsek**).
 
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
     T1 --> T2 --> T3 --> T4
 ```
 
-### Mengapa Transformasi **CAS (*Community Anggota Serse*)** $\to$ **Big Data Binops (BDB)** Sangat Krusial?
+### Mengapa Transformasi **CAS (*Community Anggota Serse*)** → **Big Data Binops (BDB)** Sangat Krusial?
 1. **Adopsi Operasional dari Bawah ke Atas (*Bottom-Up via CAS — Community Anggota Serse*)**: Alih-alih memaksakan aplikasi instruksional dari atas yang membebani penyidik dengan pengisian ganda (*beban dobel input*), **CAS** menghubungkan **1.024+ personil Reserse aktif** dalam satu lingkar komunikasi langsung (Grup WhatsApp Komunitas berkapasitas penuh & forum taktis internal **SHARESE**). Operator kewilayahan melaporkan langsung anomali pemekaran Satker, kendala pelimpahan LP, maupun kebutuhan fitur lapangan untuk segera diselesaikan di dalam **Big Data Binops (BDB)**.
 2. **Keselarasan Penuh dengan SOTK Polri (`Perkap 6/2017 jo. Perpol 4/2025`)**: Menyatukan alur kerja keempat Bagian inti di lingkungan **Robinopsnal Bareskrim Polri**:
    - **Bagrenopsnal (*Perencanaan & Pelatihan Operasi*)**: Modul Operasi Kepolisian & Satgas (`bdb_operasi_satgas` — 12 Satgas aktif), penandaan LP operasi (`operasi_satgas_id`), repositori PDF *Sprin & Renops* di MinIO S3, serta diseminasi *Jukrah* komando terenkripsi.
@@ -120,7 +120,7 @@ flowchart TB
 
 ### 1. Ingesti DORS 4-Tingkat & Pemisahan Tegas Rantai Komando Reserse
 - **Sentralitas Binops Reserse (`Mabes → Polda → Polres → Polsek`)**: Memisahkan secara tegas rantai komando Korps Reserse (`INTERNAL_RESERSE`: 6 Direktorat Bareskrim + *Satresmob*, 5 Ditres Polda di bawah kendali *Kabagbinopsnal*, *Satreskrim / Satresnarkoba / Satres PPA-PPO* Polres di bawah kendali *KBO*, serta *Unit Reskrim Polsek*) dari fungsi Non-Reserse (`EKSTERNAL_RESERSE`: *Baharkam, Polairud, Sabhara/Samapta, Lantas, Intelkam, Kortastipidkor, Densus 88 AT*).
-- **Perencanaan Cakupan Akses Berjenjang (`LpMonitoringAccessService`)**: Menghitung hak baca, tulis, dan pelimpahan perkara secara dinamis lintas pohon induk-anak kewilayahan (termasuk penyatuan otomatis cakupan `Polsek` $\leftrightarrow$ `Unit Reskrim Polsek` serta supervisi `Direktorat Polda` $\to$ `Satres Polres`).
+- **Perencanaan Cakupan Akses Berjenjang (`LpMonitoringAccessService`)**: Menghitung hak baca, tulis, dan pelimpahan perkara secara dinamis lintas pohon induk-anak kewilayahan (termasuk penyatuan otomatis cakupan `Polsek` ↔ `Unit Reskrim Polsek` serta supervisi `Direktorat Polda` → `Satres Polres`).
 
 ### 2. Mesin Perhitungan Penyelesaian Perkara (CT / CP / CC / CR) & Taksonomi Multi-Direktorat
 - **Pelacakan Siklus Hidup Perkara Menyeluruh**: Memantau perkembangan perkara sejak **Laporan Polisi (Belum Update)**, **Penyelidikan (Lidik)**, **Penyidikan (Sidik)**, **SPDP**, **Tahap I**, **P19**, **P21**, hingga penyelesaian akhir melalui **Tahap II**, **Henti Lidik (SP2Lid)**, **Henti Sidik (SP3 / Restorative Justice)**, dan **PERMA Tipiring**.

@@ -52,7 +52,7 @@ flowchart LR
 Big Data Binops (BDB) dirancang dengan filosofi **"Mengoptimalkan instrumen kerja yang sudah ada tanpa menambah beban pengisian administratif ganda bagi penyidik di lapangan"**:
 
 1. **Penyeragaman Format & Pengakhiran Silo Data (*Single Source of Truth*)**:
-   - Menghapus ketergantungan pada puluhan spreadsheet manual; konsolidasi data dari tingkat **Unit Reskrim Polsek $\to$ Satreskrim Polres $\to$ Ditreskrim Polda $\to$ Bareskrim Polri** berjalan otomatis.
+   - Menghapus ketergantungan pada puluhan spreadsheet manual; konsolidasi data dari tingkat **Unit Reskrim Polsek → Satreskrim Polres → Ditreskrim Polda → Bareskrim Polri** berjalan otomatis.
 2. **Instrumen Anev Lintas Sumber & Deteksi Perkara Macet (*Bottleneck Detection*)**:
    - **Bebas Dobel Input**: Apabila instrumen kerja primer penyidik (DORS / EMP) telah diisi dengan benar, BDB menarik dan menormalisasi datanya secara otomatis untuk kebutuhan Anev pimpinan.
    - **Riwayat Lancar sebagai Nilai Plus**: LP yang riwayat administrasi penyidikannya tuntas dari awal hingga akhir tercatat otomatis sebagai capaian kinerja positif.
@@ -66,7 +66,7 @@ Big Data Binops (BDB) dirancang dengan filosofi **"Mengoptimalkan instrumen kerj
 
 | Studi Kasus Lapangan | Tantangan Sebelumnya | Penyelesaian Arsitektural di Big Data Binops (BDB) |
 | :--- | :--- | :--- |
-| **Kasus 1: Rekonsiliasi Presisi Selisih 8 LP pada Persiapan Audiensi Pimpinan (2026)** | Tarikan awal DORS mencatat `1.728 LP`, sedangkan rekap manual direktorat mencatat `1.720 LP` (selisih `8 LP` akibat berkas fisik di Polda sedang berproses namun sinkronisasi administrasi pusat belum tersambung). | Engine rekonsiliasi matematis multi-sumber (`bdb_dors_raw_lp` $\leftrightarrow$ `bdb_laporan_polisi` $\leftrightarrow$ `bdb_lp_pelimpahan`) mengisolasi ke-8 LP tersebut dalam hitungan menit tanpa menyisakan selisih angka. |
+| **Kasus 1: Rekonsiliasi Presisi Selisih 8 LP pada Persiapan Audiensi Pimpinan (2026)** | Tarikan awal DORS mencatat `1.728 LP`, sedangkan rekap manual direktorat mencatat `1.720 LP` (selisih `8 LP` akibat berkas fisik di Polda sedang berproses namun sinkronisasi administrasi pusat belum tersambung). | Engine rekonsiliasi matematis multi-sumber (`bdb_dors_raw_lp` ↔ `bdb_laporan_polisi` ↔ `bdb_lp_pelimpahan`) mengisolasi ke-8 LP tersebut dalam hitungan menit tanpa menyisakan selisih angka. |
 | **Kasus 2: Pelacakan Instan DPO Lintas Negara & Koordinasi Ekstradisi** | Saat pimpinan menanyakan posisi spesifik buronan atensi trans-nasional, petugas harus menghubungi penyidik satu per satu dan membongkar arsip fisik. | Keterhubungan langsung antara nomor LP, status tersangka/DPO (`bdb_dpo`), *Red Notice*, dan riwayat penanganan tersaji instan di layar komando. |
 | **Kasus 3: Audit Matematis 100% Terverifikasi pada 36 Polda & Bareskrim** | Perbedaan klasifikasi kejahatan dan pemekaran satker membuat angka agregat wilayah vs pusat sering tidak sinkron. | Lolos verifikasi audit matematis 100% lintas **36 Polda (`269.436 CT`) + Bareskrim (`623 CT`) = `270.059 CT` Nasional** (termasuk konsolidasi presisi 7 Sub-Tipid seperti `Tipidum 199.121 + Tipid PPA-PPO 21.024 = 220.145 Ditreskrimum`). |
 

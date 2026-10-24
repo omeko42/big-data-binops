@@ -22,7 +22,7 @@ Seluruh tonggak pencapaian arsitektur, rilis fitur, dan penyempurnaan rekayasa p
   - Dukungan penuh untuk satker pemekaran baru **Ditres PPA-PPO** (Polda) dan **Satres PPA-PPO** (Polres) beserta pemetaan kelompok kejahatan TPPO Konvensional (`782`) dan Penyelundupan Orang (`783`).
 
 #### Diperbaiki & Dioptimalkan (*Fixed & Optimized*)
-- **Penyatuan Nasional Cakupan `POLSEK` $\leftrightarrow$ `UNIT RESKRIM POLSEK`**:
+- **Penyatuan Nasional Cakupan `POLSEK` ↔ `UNIT RESKRIM POLSEK`**:
   - Menyatukan hak akses dan agregasi snapshot antara induk `POLSEK` dan anak `UNIT RESKRIM POLSEK` pada `laporan-polisi.service.ts`, `kinerja-perkara.service.ts`, dan `lp-monitoring-access.service.ts`, menuntaskan laporan lapangan dari anggota **CAS (*Community Anggota Serse*)**.
 - **Inisialisasi Snapshot Non-Blocking (`onModuleInit`)**:
   - Memisahkan proses penyegaran awal `KinerjaPerkaraService.onModuleInit()` menggunakan `setImmediate()` + *PostgreSQL Advisory Lock* sehingga `bdb-api` langsung membuka port `3850` dalam $<2\text{ detik}$ tanpa memicu *502 Bad Gateway*.
@@ -30,7 +30,7 @@ Seluruh tonggak pencapaian arsitektur, rilis fitur, dan penyempurnaan rekayasa p
   - Mengecualikan perkara lalu lintas murni (`jenis_kejahatan_id IN (516, 741)`) dan satker non-Reserse (*Sabhara/Samapta, Polairud, Lantas*) dari `bdb_kinerja_perkara_snapshot`, menghasilkan `0` anomali *Unmapped/Review* pada Periode I & Periode II.
 
 ### [v2.0.0] — Juli s/d September 2026 (Ingesti DORS 4-Tingkat & Mesin Snapshot)
-- Meluncurkan pipa ingesti otomatis 4-tingkat dari **DORS Stamaops Polri** (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`) dengan pembersihan spasi gaib `chr(160)` dan kamus alias `bdb_dors_satker_map`.
+- Meluncurkan pipa ingesti otomatis 4-tingkat dari **DORS Stamaops Polri** (`bdb_dors_raw_lp` → `bdb_laporan_polisi`) dengan pembersihan spasi gaib `chr(160)` dan kamus alias `bdb_dors_satker_map`.
 - Membangun `bdb_kinerja_perkara_snapshot`, `bdb_anev_rekap_snapshot`, `bdb_pihak_terlibat_ranking_snapshot`, dan `bdb_barang_bukti_summary_snapshot` untuk memangkas kueri nasional dari $>10\text{ detik}$ menjadi $<100\text{ ms}$.
 - Meluncurkan forum taktis internal **SHARESE** (`/cms/broadcaster`) dan distribusi **Jukrah** pimpinan.
 
@@ -50,6 +50,6 @@ Seluruh tonggak pencapaian arsitektur, rilis fitur, dan penyempurnaan rekayasa p
 - **SOTK Perpol 4/2025 & 4 Bagian Robinopsnal Integration**: Integrated workflows for **Bagrenopsnal**, **Bagkerma**, **Baganev**, and **Bagyanmas**, including newly established **Ditres PPA-PPO** and **Satres PPA-PPO** jurisdictions.
 
 #### Fixed & Optimized
-- **Nationwide Polsek $\leftrightarrow$ Unit Reskrim Scope Unification**: Unified parent `POLSEK` and child `UNIT RESKRIM POLSEK` visibility and snapshot rollups based on **CAS (*Community Anggota Serse*)** field reports.
+- **Nationwide Polsek ↔ Unit Reskrim Scope Unification**: Unified parent `POLSEK` and child `UNIT RESKRIM POLSEK` visibility and snapshot rollups based on **CAS (*Community Anggota Serse*)** field reports.
 - **Non-Blocking Container Startup (`onModuleInit`)**: Asynchronous `setImmediate()` + PostgreSQL Advisory Lock snapshot initialization preventing 502 Bad Gateway timeouts on restart.
 - **Reserse Snapshot Purity**: Isolated traffic offenses (`516, 741`) and non-Reserse units from Reserse performance snapshots (`0` unmapped anomalies).
