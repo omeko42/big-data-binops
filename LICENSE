@@ -1,0 +1,83 @@
+LISENSI KHUSUS KEDINASAN & PORTOFOLIO ARSITEKTUR REKAYASA
+(SOVEREIGN INSTITUTIONAL & ARCHITECTURAL PORTFOLIO LICENSE)
+================================================================================
+
+Hak Cipta (c) 2024–2026 Eko Agung (@omeko11)
+Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri &
+Komunitas Operasional CAS (Community Anggota Serse)
+
+Seluruh Hak Dilindungi Undang-Undang (All Rights Reserved).
+
+--------------------------------------------------------------------------------
+I. KETENTUAN UMUM & STATUS KEPEMILIKAN (BAHASA INDONESIA)
+--------------------------------------------------------------------------------
+
+1. HAK CIPTA REKAYASA & ARSITEKTUR
+   Kode sumber, rancangan skema basis data, algoritma rekonsiliasi 4-tingkat,
+   mesin snapshot analitik, serta dokumentasi teknis pada repositori
+   "Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)" ini
+   dirancang dan dikembangkan oleh Eko Agung (@omeko11) dalam rangka
+   modernisasi dan kedaulatan tata kelola data operasional di lingkungan
+   Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri.
+
+2. LISENSI PENGGUNAAN KEDINASAN (POLRI)
+   Kepolisian Negara Republik Indonesia (Polri), khususnya Badan Reserse
+   Kriminal (Bareskrim Polri) beserta seluruh jajaran Direktorat Reserse Polda,
+   Satuan Reserse Polres, dan Unit Reskrim Polsek yang tergabung dalam
+   ekosistem CAS (Community Anggota Serse), memiliki hak penuh untuk
+   menggunakan, mengoperasikan, dan mengembangkan sistem ini bagi kepentingan
+   resmi penegakan hukum dan pelayanan publik.
+
+3. PUBLIKASI PORTOFOLIO & REFERENSI AKADEMIS (ZERO-SECRET COMPLIANCE)
+   Repositori ini dipublikasikan sebagai dokumentasi portofolio rekayasa
+   perangkat lunak (Full-Stack Engineering & Data Architecture Reference).
+   Seluruh isi repositori ini telah melalui proses sanitasi ketat (Zero-Secret
+   & Zero-PII Policy) sesuai dengan:
+   - Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP);
+   - Undang-Undang Nomor 11 Tahun 2008 jo. UU Nomor 1 Tahun 2024 tentang ITE;
+   - Peraturan Polri Nomor 4 Tahun 2025 & Peraturan Kapolri Nomor 6 Tahun 2019.
+   Tidak terdapat data pribadi masyarakat, rahasia penyidikan, kredensial
+   server, kunci kriptografi, maupun konfigurasi jaringan internal di dalam
+   repositori ini.
+
+4. PEMBATASAN & LARANGAN KERAS (RESTRICTIONS)
+   Tanpa izin tertulis dari Pemegang Hak Cipta dan/atau otoritas resmi
+   Bareskrim Polri, pihak mana pun di luar ketentuan Pasal 2 DILARANG KERAS:
+   a. Menyalin, mendistribusikan ulang, memodifikasi, atau memperjualbelikan
+      kode sumber dan skema basis data ini untuk kepentingan komersial
+      (Commercial Use Prohibited);
+   b. Menggunakan nama, lambang, atribut, atau nomenklatur Bareskrim Polri,
+      Robinopsnal, Big Data Binops (BDB), maupun CAS (Community Anggota Serse)
+      untuk membuat layanan tiruan yang menyesatkan publik (Impersonation
+      Prohibited);
+   c. Mengklaim kepemilikan intelektual atas arsitektur sistem ini tanpa
+      atribusi yang sah.
+
+5. PENOLAKAN JAMINAN (DISCLAIMER OF WARRANTY)
+   Perangkat lunak dan dokumentasi arsitektur ini disediakan "SEBAGAIMANA
+   ADANYA" (AS IS) untuk tujuan referensi teknis dan tata kelola, tanpa jaminan
+   tersurat maupun tersirat.
+
+--------------------------------------------------------------------------------
+II. GENERAL TERMS & INSTITUTIONAL LICENSE (ENGLISH SUMMARY)
+--------------------------------------------------------------------------------
+
+Copyright (c) 2024–2026 Eko Agung (@omeko11)
+Bureau of Operational Management (Robinopsnal) — Criminal Investigation Agency
+of the Indonesian National Police (Bareskrim Polri) & CAS (Community Anggota Serse).
+All Rights Reserved.
+
+1. INSTITUTIONAL & PORTFOLIO PURPOSE:
+   This repository contains the sanitized architectural reference, source code,
+   and database DDL schema of the Big Data Binops (BDB) platform, engineered by
+   Eko Agung (@omeko11). Official operational deployment rights are granted to
+   the Indonesian National Police (Polri / Bareskrim Polri). Public visibility
+   is provided strictly for software engineering portfolio evaluation,
+   architectural review, and academic reference.
+
+2. PROHIBITIONS:
+   This software is NOT licensed under an open-source commercial license.
+   Unauthorized copying, commercial redistribution, sublicensing, or
+   impersonation of official Indonesian National Police (Polri) systems is
+   strictly prohibited and subject to applicable laws of the Republic of
+   Indonesia.
