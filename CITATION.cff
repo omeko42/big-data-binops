@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "Big Data Binops (BDB) & CAS (Community Anggota Serse): Enterprise Law Enforcement Data Governance & Operational Analytics Platform"
+message: "If you reference this software architecture or operational data governance study in academic or technical publications, please cite it as below."
+type: software
+authors:
+  - family-names: "Agung"
+    given-names: "Eko"
+    alias: "omeko11"
+    affiliation: "Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri"
+version: "2.5.0"
+date-released: "2026-10-24"
+url: "https://github.com/omeko11/cas-crime-analytic-system"
+repository-code: "https://github.com/omeko11/cas-crime-analytic-system"
+license: "Proprietary"
+keywords:
+  - "Big Data Binops"
+  - "Community Anggota Serse"
+  - "Bareskrim Polri"
+  - "Law Enforcement Analytics"
+  - "Data Governance"
+  - "NestJS"
+  - "Next.js"
+  - "PostgreSQL"
+  - "FIDO2 WebAuthn"
+  - "ONLYOFFICE"
+abstract: >-
+  Enterprise-grade operational data governance, 4-tier DORS reconciliation,
+  and sub-100ms law enforcement analytics platform engineered for Biro
+  Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri, managing over
+  68.89 million live relational records across Mabes Polri, 36 Polda,
+  508+ Polres, and 4,900+ Polsek nationwide.

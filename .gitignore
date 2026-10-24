@@ -5,6 +5,9 @@
 !/.gitignore
 !/.env.example
 !/README.md
+!/LICENSE
+!/CITATION.cff
+!/CONTRIBUTING.md
 !/ARCHITECTURE.md
 !/CHANGELOG.md
 !/SECURITY.md

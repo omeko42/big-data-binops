@@ -8,6 +8,7 @@
 [![Database](https://img.shields.io/badge/database-PostgreSQL%20(171%20Tables%20%7C%2068.8M%2B%20Rows)%20%7C%20Redis-336791.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docs](https://img.shields.io/badge/docs-ONLYOFFICE%20DS%20%7C%20Jukminu%20Polri%20Engine-FF6F3D.svg?style=flat-square)](#3-13-sheet-official-perkap--jukminu-polri-document-engine--onlyoffice-integration)
 [![Security](https://img.shields.io/badge/security-FIDO2%20Passkey%20%7C%20Zero--Secret%20%7C%20UU%20PDP-10B981.svg?style=flat-square)](#4-fido2--webauthn-hardware-passkey--zero-trust-security-suite)
+[![License](https://img.shields.io/badge/license-Sovereign%20Institutional%20(Polri)%20%26%20Portfolio-B91C1C.svg?style=flat-square)](LICENSE)
 
 **Big Data Binops (BDB)** is an enterprise-grade operational data governance, multi-source case lifecycle management, and law enforcement analytics platform engineered for **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
@@ -192,6 +193,9 @@ flowchart TB
 │   └── infrastructure/                         # Sanitized Nginx, Docker Compose & Crontab production blueprints
 ├── ARCHITECTURE.md                             # Engineering Decision Records (ADRs 001–005)
 ├── CHANGELOG.md                                # Platform Evolution & Release History
+├── CONTRIBUTING.md                             # Governance & Contribution Guidelines (Pokja Bareskrim & CAS)
+├── CITATION.cff                                # Official Academic & Technical Citation Metadata
+├── LICENSE                                     # Sovereign Institutional (Polri) & Architectural Portfolio License
 ├── SECURITY.md                                 # Security Architecture, Zero-Secret Policy & UU PDP Compliance
 └── .env.example                                # Sanitized Root Environment Variable Template
 ```
@@ -210,8 +214,9 @@ flowchart TB
 
 ---
 
-## 🔒 Security & Governance
+## 🔒 Security, Licensing & Governance
 
+- **Sovereign Institutional & Portfolio License ([`LICENSE`](LICENSE))**: Engineered by **Eko Agung (`@omeko11`)** for official operational governance across **Robinopsnal Bareskrim Polri** and **CAS (*Community Anggota Serse*)**. Published strictly for software engineering portfolio evaluation and architectural reference (**All Rights Reserved — Commercial redistribution and institutional impersonation are strictly prohibited**).
 - **Regulatory Compliance**: Engineered in strict accordance with **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, and **Perkap 6/2019**.
 - **Zero-Secret Version Control**: Every tracked file in this repository has been audited and sanitized to guarantee zero leaked JWT secrets, database passwords, MinIO keys, TLS private keys, or internal private IP addresses. See [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), and [`SECURITY.md`](SECURITY.md) for deployment configuration guidelines.
 
