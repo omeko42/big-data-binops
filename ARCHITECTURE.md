@@ -10,7 +10,7 @@ This document summarizes the core architectural patterns and key engineering dec
 ## 1. Key Engineering Decisions (ADRs)
 
 ### ADR-001: Decoupled JSONB Staging vs. Normalized Core (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`)
-- **Context**: Upstream payloads from **DORS Pusiknas** arrive with heterogeneous regional formatting, non-breaking spaces (`chr(160)` / NBSP) in Pusiknas Satker codes, and evolving nested arrays (`tindak_pidana`, `terlibat`, `barang_bukti`).
+- **Context**: Upstream payloads from **DORS Stamaops Polri** arrive with heterogeneous regional formatting, non-breaking spaces (`chr(160)` / NBSP) in Pusiknas Satker codes, and evolving nested arrays (`tindak_pidana`, `terlibat`, `barang_bukti`).
 - **Decision**: Implement a two-stage ingestion pipeline:
   1. **Immutable Raw Staging (`bdb_dors_raw_lp` & `bdb_dors_lp`)**: Stores the exact upstream JSONB payload keyed by `raw_lp_id` without destructive transformation.
   2. **Normalized Relational Core (`bdb_laporan_polisi`, `bdb_lp_tindak_pidana_dors`, `bdb_dokumen`)**: Applies `REGEXP_REPLACE` NBSP sanitization, 4-tier Satker placement resolution (`Mabes` $\to$ `Polda` $\to$ `Polres` $\to$ `Polsek`), and fallback crime-category linking (`coalesce(kategori_gk, tindak_pidana[0].id_kategori_kejahatan)`).

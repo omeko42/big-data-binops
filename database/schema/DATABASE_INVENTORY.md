@@ -77,18 +77,18 @@ Menyimpan struktur pohon organisasi Polri dari tingkat Mabes/Bareskrim, Polda, P
 | `bdb_satker_profiles` | `TABLE` | 18 | 3 | **0** | Profil detail satuan kerja (alamat kantor, koordinat lokasi, kontak pejabat/operator). |
 | `bdb_satker_taxonomy_r11` | `VIEW` | 28 | 0 | ***(Dinamis)*** | [SQL VIEW] View klasifikasi dinamis taksonomi R11 satker (STRUCTURAL, INTERNAL_RESERSE, EKSTERNAL_RESERSE) menggunakan fungsi bdb_satker_classify_r11. |
 | `bdb_satker_taxonomy_r11_manifest` | `TABLE` | 8 | 1 | **0** | Tabel manifest snapshot hasil klasifikasi taksonomi satker R11. |
-| `bdb_dors_satker_map` | `TABLE` | 10 | 2 | **5.691** | Tabel pemetaan (mapping alias & kode) nama/kode satker dan unit dari feed DORS Pusiknas ke ID satker kanonik di bdb_satker. |
+| `bdb_dors_satker_map` | `TABLE` | 10 | 2 | **5.691** | Tabel pemetaan (mapping alias & kode) nama/kode satker dan unit dari feed DORS Stamaops Polri ke ID satker kanonik di bdb_satker. |
 
 ## 3. DORS Ingestion & Raw Mirror
 
-Menyimpan konfigurasi worker sinkronisasi, payload JSON mentah (`bdb_dors_raw_lp`), serta tabel-tabel relasional hasil normalisasi langsung dari feed DORS Pusiknas.
+Menyimpan konfigurasi worker sinkronisasi, payload JSON mentah (`bdb_dors_raw_lp`), serta tabel-tabel relasional hasil normalisasi langsung dari feed DORS Stamaops Polri.
 
 | Nama Tabel / View | Tipe | Jml Kolom | Jml Index | Jumlah Baris Produksi | Fungsi Utama |
 | :--- | :-: | ---: | ---: | ---: | :--- |
-| `bdb_dors_config` | `TABLE` | 12 | 1 | **1** | Konfigurasi penjadwal (scheduler), watermark sinkronisasi, dan status worker penarikan data DORS Pusiknas. |
+| `bdb_dors_config` | `TABLE` | 12 | 1 | **1** | Konfigurasi penjadwal (scheduler), watermark sinkronisasi, dan status worker penarikan data DORS Stamaops Polri. |
 | `bdb_dors_sync_log` | `TABLE` | 22 | 1 | **815** | Log histori eksekusi job sinkronisasi DORS (rentang tanggal chunk, halaman, jumlah LP masuk/diperbarui, durasi, dan error). |
-| `bdb_dors_raw_lp` | `TABLE` | 11 | 5 | **2.852.128** | Penyimpanan payload JSON mentah (raw mirror) Laporan Polisi yang diterima dari API DORS Pusiknas. |
-| `bdb_dors_lp` | `TABLE` | 50 | 2 | **2.852.161** | Tabel utama hasil normalisasi data Laporan Polisi dari DORS Pusiknas. |
+| `bdb_dors_raw_lp` | `TABLE` | 11 | 5 | **2.852.128** | Penyimpanan payload JSON mentah (raw mirror) Laporan Polisi yang diterima dari API DORS Stamaops Polri. |
+| `bdb_dors_lp` | `TABLE` | 50 | 2 | **2.852.161** | Tabel utama hasil normalisasi data Laporan Polisi dari DORS Stamaops Polri. |
 | `bdb_dors_lp_polda` | `TABLE` | 15 | 2 | **2.851.899** | Atribut relasi tingkat Polda pada LP DORS. |
 | `bdb_dors_lp_polres` | `TABLE` | 16 | 2 | **2.689.581** | Atribut relasi tingkat Polres pada LP DORS. |
 | `bdb_dors_lp_polsek` | `TABLE` | 18 | 2 | **835.693** | Atribut relasi tingkat Polsek pada LP DORS. |

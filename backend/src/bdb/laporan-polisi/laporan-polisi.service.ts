@@ -2692,7 +2692,7 @@ export class LaporanPolisiService {
     }
 
     /**
-     * Rekonsiliasi otomatis duplikasi LP akibat pelimpahan DORS Pusiknas
+     * Rekonsiliasi otomatis duplikasi LP akibat pelimpahan DORS Stamaops Polri
      * (di mana DORS membuat dors_lp_id baru untuk satker penerima tanpa menghapus baris lama).
      * Menyatukan dokumen, riwayat pelimpahan, dan mengupdate snapshot kinerja perkara.
      */

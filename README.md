@@ -59,7 +59,7 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Upstream["Upstream Law Enforcement Sources & Community"]
-        DORS["DORS Pusiknas Bareskrim Polri<br/>(Daily Operation Report System)"]
+        DORS["DORS Stamaops Polri (Staf Utama Kapolri Bidang Operasi)<br/>(Daily Operation Report System)"]
         CAS["CAS (Community Anggota Serse)<br/>(1,024+ Active Reserse Operators & KBOs • Mabes to Polsek)"]
     end
 
@@ -153,7 +153,7 @@ flowchart TB
 │       │   ├── audit/                          # Global audit trail interceptor & query service (5.46M+ logs)
 │       │   ├── barang-bukti/                   # National evidence registry & summary snapshot service
 │       │   ├── common/                         # Scope plan, PostgreSQL advisory job queue & Snapshot Orchestrator
-│       │   ├── dors/                           # DORS Pusiknas bidirectional sync scheduler & raw mirror store
+│       │   ├── dors/                           # DORS Stamaops Polri bidirectional sync scheduler & raw mirror store
 │       │   ├── dpo/                            # Daftar Pencarian Orang (DPO) lifecycle & archive service
 │       │   ├── integration-client/             # External API client management & encrypted PDF doc generator
 │       │   ├── jukrah/                         # Leadership directives (Jukrah & Atensi) & read-receipt tracking

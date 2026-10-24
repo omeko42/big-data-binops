@@ -31,7 +31,7 @@ All notable architectural milestones, feature releases, and production engineeri
 ---
 
 ## [v2.0.0] — 2026-07 to 2026-09 (4-Tier DORS Ingestion & Snapshot Engine)
-- Introduced automated 4-Tier DORS Pusiknas ingestion (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`) with NBSP `chr(160)` code normalization and `bdb_dors_satker_map` alias resolution.
+- Introduced automated 4-Tier DORS Stamaops Polri ingestion (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`) with NBSP `chr(160)` code normalization and `bdb_dors_satker_map` alias resolution.
 - Built `bdb_kinerja_perkara_snapshot`, `bdb_anev_rekap_snapshot`, `bdb_pihak_terlibat_ranking_snapshot`, and `bdb_barang_bukti_summary_snapshot` to cut national query execution from $>10\text{ s}$ to $<100\text{ ms}$.
 - Launched **SHARESE** internal tactical broadcaster (`/cms/broadcaster`) and leadership **Jukrah** dissemination with read-receipt tracking.
 
