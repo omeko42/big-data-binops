@@ -1,4 +1,4 @@
-# Riwayat Perubahan / Changelog — Big Data Binops (BDB) & CAS (*Community Anggota Serse*)
+# Riwayat Perubahan / Changelog — Big Data Binops (BDB) by CAS (*Community Anggota Serse*)
 
 > 🌐 **Daftar Isi / Sections:** [**🇮🇩 Bagian I: Bahasa Indonesia**](#-bagian-i-riwayat-perubahan--evolusi-platform-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version**](#-part-ii-platform-changelog--release-history-english)
 

@@ -1,4 +1,4 @@
-# Catatan Keputusan Arsitektur / Architecture Decision Records (ADR) — Big Data Binops (BDB) & CAS
+# Catatan Keputusan Arsitektur / Architecture Decision Records (ADR) — Big Data Binops (BDB) by CAS (*Community Anggota Serse*)
 
 > 🌐 **Daftar Isi / Sections:** [**🇮🇩 Bagian I: Bahasa Indonesia**](#-bagian-i-catatan-keputusan-arsitektur-rekayasa-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version**](#-part-ii-system-architecture--engineering-decision-records-english)
 

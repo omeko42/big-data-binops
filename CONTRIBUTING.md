@@ -1,4 +1,4 @@
-# Pedoman Tata Kelola & Kontribusi / Governance & Contribution Guidelines — Big Data Binops (BDB) & CAS
+# Pedoman Tata Kelola & Kontribusi / Governance & Contribution Guidelines — Big Data Binops (BDB) by CAS (*Community Anggota Serse*)
 
 > 🌐 **Daftar Isi / Sections:** [**🇮🇩 Bagian I: Bahasa Indonesia**](#-bagian-i-pedoman-tata-kelola--kontribusi-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version**](#-part-ii-governance--contribution-guidelines-english)
 
