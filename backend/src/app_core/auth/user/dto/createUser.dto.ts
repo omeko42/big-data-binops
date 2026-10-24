@@ -4,7 +4,7 @@ import { PASSWORD_COMPLEXITY_MESSAGE, PASSWORD_COMPLEXITY_REGEX, PASSWORD_MIN_LE
 
 export class CreateUserDto {
     @ApiProperty({
-        example: 'asbi@asbi.com',
+        example: 'operator@polri.go.id',
         description: "The user's email address"
     })
     @IsNotEmpty()
@@ -33,7 +33,7 @@ export class CreateUserDto {
     @IsNotEmpty()
     name: string;
 
-    @ApiProperty({ required: false, example: '98010710' })
+    @ApiProperty({ required: false, example: '12345678' })
     @IsOptional()
     @IsString()
     nrp: string;

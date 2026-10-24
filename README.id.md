@@ -156,7 +156,6 @@ flowchart TB
 ├── frontend/                                   # Portal Next.js 16.2.10 & Layanan Mikro Dokumen (Node Edge)
 │   ├── package.json & server.js                # Server standalone Next.js 16.2.10 (:3000) dengan proteksi Cache-Control
 │   ├── FRONTEND_ROUTES_AND_MODULES.md          # Pemetaan lengkap 73 halaman App Router & 21 bundel fitur
-│   ├── public/tools/Bersihkan-Cache-CAS.bat    # Utilitas pembersih cache peramban klien
 │   ├── services/cas-doc-service/               # Layanan Python 3 Jukminu Polri & ONLYOFFICE (:3860)
 │   └── src/                                    # Manifest route resmi (73 route), 21 bundel modul & sistem desain CSS
 ├── database/                                   # Skema Produksi & Migrasi PostgreSQL

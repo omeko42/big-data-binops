@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Transformasi Identitas: Dari *Crime Analytic System* Menuju *Community Anggota Serse (CAS)* & *Big Data Binops (BDB)*
+## 1. Transformasi Identitas: Dari *Community Anggota Serse* Menuju *Community Anggota Serse (CAS)* & *Big Data Binops (BDB)*
 
 Pada fase awal (2024–2025), akronim **CAS** merujuk pada sistem manual statis yang hanya berfokus sempit pada rekapitulasi angka *Crime Total (CT)* dan *Crime Clearance (CC)*. Seiring transformasi menyeluruh pada T.A. 2026:
 

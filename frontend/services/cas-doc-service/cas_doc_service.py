@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CAS Document Management & ONLYOFFICE Integration Service (v3.0)
-Crime Analytic System (CAS) - Bareskrim Polri
+Big Data Binops (BDB) & Community Anggota Serse (CAS) - Bareskrim Polri
 Features:
 - Standardized Naming: CAS-{hash_8}-{DDMMYYYY}.docx
 - Police Reporting Standards (Jukminu Polri):
@@ -35,7 +35,7 @@ from datetime import datetime
 PORT = 3860
 DOCS_DIR = "/var/www/cas_docs"
 DB_PATH = os.path.join(DOCS_DIR, "cas_documents.db")
-TEMPLATE_PATH = os.path.join(DOCS_DIR, "DRAFT_LAPORAN_PERIODIK_BARESKRIM_v1.5.Eko.docx")
+TEMPLATE_PATH = os.path.join(DOCS_DIR, "TEMPLATE_LAPORAN_PERIODIK_BARESKRIM.docx")
 BASE_URL = "https://cas.bareskrim.polri.go.id"
 CAS_BE_URL = os.environ.get("CAS_BE_URL", "http://127.0.0.1:3850")
 ONLYOFFICE_INTERNAL_URL = "http://127.0.0.1:8088"
@@ -242,13 +242,13 @@ def format_signature_info(satker_nama, satuan_fungsi, nama, pangkat, nrp_nip, ti
         "lokasi_tgl": lokasi_tgl,
         "an_pimpinan": an_pimpinan,
         "jabatan": jabatan,
-        "nama": nama or "EKO AGUNG KRISDIANTO, S.Kom.",
+        "nama": nama or "NAMA PERSONEL, S.I.K.",
         "id_line": id_line
     }
 
 def generate_police_docx(target_path, satker_nama="BARESKRIM POLRI", satuan_fungsi="KRIMUM",
-                        periode_label="Agustus 2026", user_nama="EKO AGUNG KRISDIANTO, S.Kom.",
-                        user_pangkat="BRIPTU", user_nrp="98010710", user_tipe="POLRI",
+                        periode_label="Agustus 2026", user_nama="NAMA PERSONEL, S.I.K.",
+                        user_pangkat="BRIPTU", user_nrp="00000000", user_tipe="POLRI",
                         ct_val=40803, cc_val=2945, cr_val=6.8, crime_clock="Selang 1 Menit 6 Detik",
                         kota="Jakarta"):
     """
@@ -266,7 +266,7 @@ def generate_police_docx(target_path, satker_nama="BARESKRIM POLRI", satuan_fung
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
     tmp_step1 = target_path + ".tmp.docx"
-    doc = docx.Document(TEMPLATE_PATH if os.path.exists(TEMPLATE_PATH) else "DRAFT_LAPORAN_PERIODIK_BARESKRIM_v1.5.Eko.docx")
+    doc = docx.Document(TEMPLATE_PATH if os.path.exists(TEMPLATE_PATH) else "TEMPLATE_LAPORAN_PERIODIK_BARESKRIM.docx")
 
     # 1. Update Table 0 (KOP SURAT)
     kop_lines = get_kop_lines(satker_nama, satuan_fungsi)
@@ -558,7 +558,7 @@ def generate_police_docx(target_path, satker_nama="BARESKRIM POLRI", satuan_fung
         comments_xml = files['word/comments.xml'].decode('utf-8')
         c_id = '99'
         id_lbl = "NRP" if user_tipe == "POLRI" else "NIP"
-        new_comment = f'''<w:comment w:id="{c_id}" w:author="Agung Krisdianto" w:date="2026-10-13T20:00:00Z" w:initials="AK">
+        new_comment = f'''<w:comment w:id="{c_id}" w:author="Operator BDB" w:date="2026-10-13T20:00:00Z" w:initials="AK">
   <w:p><w:pPr><w:pStyle w:val="CommentText"/></w:pPr>
     <w:r><w:rPr><w:rStyle w:val="CommentReference"/></w:rPr><w:annotationRef/></w:r>
     <w:r><w:rPr><w:sz w:val="22"/></w:rPr><w:t>Watermark {user_nrp} diambil otomatis dari &lt;&lt;{id_lbl}&gt;&gt; pengguna aktif</w:t></w:r>
@@ -604,8 +604,8 @@ def init_db():
             file_size INTEGER DEFAULT 0,
             sha256 TEXT,
             stamp_code TEXT,
-            creator_nama TEXT DEFAULT 'EKO AGUNG KRISDIANTO, S.Kom.',
-            creator_nrp TEXT DEFAULT '98010710',
+            creator_nama TEXT DEFAULT 'NAMA PERSONEL, S.I.K.',
+            creator_nrp TEXT DEFAULT '00000000',
             creator_pangkat TEXT DEFAULT 'BRIPTU',
             opsi_ttd TEXT DEFAULT 'POLRI',
             kop_tipe TEXT DEFAULT 'MABES',
@@ -660,9 +660,9 @@ def init_db():
                 satker_nama="BARESKRIM POLRI",
                 satuan_fungsi="KRIMUM",
                 periode_label="Agustus 2026",
-                user_nama="EKO AGUNG KRISDIANTO, S.Kom.",
+                user_nama="NAMA PERSONEL, S.I.K.",
                 user_pangkat="BRIPTU",
-                user_nrp="98010710",
+                user_nrp="00000000",
                 user_tipe="POLRI",
                 kota="Jakarta"
             )
@@ -686,7 +686,7 @@ def init_db():
             "Laporan Analisis dan Evaluasi Periodik - Bareskrim Polri",
             13, "BARESKRIM POLRI", "KRIMUM", "BULANAN", "Agustus 2026",
             "2026-08-01", "2026-08-31", def_fn, sz, h, stamp_code,
-            "EKO AGUNG KRISDIANTO, S.Kom.", "98010710", "BRIPTU", "POLRI", "MABES", "DRAFT",
+            "NAMA PERSONEL, S.I.K.", "00000000", "BRIPTU", "POLRI", "MABES", "DRAFT",
             40803, 2945, 6.8, "Selang 1 Menit 6 Detik", now, now
         ))
         conn.commit()
@@ -844,8 +844,8 @@ class CASDocHandler(BaseHTTPRequestHandler):
                     "callbackUrl": callback_url,
                     "lang": "id",
                     "user": {
-                        "id": doc["creator_nrp"] or "98010710",
-                        "name": doc["creator_nama"] or "EKO AGUNG KRISDIANTO, S.Kom."
+                        "id": doc["creator_nrp"] or "00000000",
+                        "name": doc["creator_nama"] or "NAMA PERSONEL, S.I.K."
                     },
                     "customization": {
                         "autosave": True,
@@ -1130,9 +1130,9 @@ class CASDocHandler(BaseHTTPRequestHandler):
                 satker_nama=satker_nama,
                 satuan_fungsi=satuan_fungsi,
                 periode_label=p_lbl,
-                user_nama="EKO AGUNG KRISDIANTO, S.Kom.",
+                user_nama="NAMA PERSONEL, S.I.K.",
                 user_pangkat="BRIPTU",
-                user_nrp="98010710",
+                user_nrp="00000000",
                 user_tipe="POLRI",
                 ct_val=ct_val,
                 cc_val=cc_val,
@@ -1193,8 +1193,8 @@ class CASDocHandler(BaseHTTPRequestHandler):
             periode_label = body.get("periodeLabel") or "Agustus 2026"
             satuan_fungsi = body.get("satuanFungsi") or "KRIMUM"
             title = body.get("title") or f"Laporan Anev CT/CC - {satker_nama} ({periode_label})"
-            creator_nama = body.get("creatorNama") or "EKO AGUNG KRISDIANTO, S.Kom."
-            creator_nrp = body.get("creatorNrp") or "98010710"
+            creator_nama = body.get("creatorNama") or "NAMA PERSONEL, S.I.K."
+            creator_nrp = body.get("creatorNrp") or "00000000"
             creator_pangkat = body.get("creatorPangkat") or "BRIPTU"
             opsi_ttd = body.get("opsiTtd") or "POLRI"
 

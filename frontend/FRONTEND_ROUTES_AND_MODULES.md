@@ -10,7 +10,6 @@ Dokumen ini memetakan **73 route Next.js App Router** (`bdb-web` / `cas-web-mast
 | :--- | :--- |
 | `frontend/package.json` | Manifest dependensi Next.js 16.2.10, React 19.2.4, PrimeReact 10.9.8, Chart.js 4.5.1, Lucide React, Axios |
 | `frontend/server.js` | Custom standalone HTTP server Next.js (port `3000`, override header `Cache-Control: public, max-age=0, must-revalidate` untuk mencegah stale chunk) |
-| `frontend/public/tools/Bersihkan-Cache-CAS.bat` | Utilitas pembersih cache browser & DNS klien operasional |
 | `frontend/src/app-routes-manifest.json` | Manifest resmi 73 route App Router (`.next/app-path-routes-manifest.json`) |
 | `frontend/services/cas-doc-service/cas_doc_service.py` | Microservice Python v3.0 (port `3860`) untuk manajemen dokumen ANEV Jukminu Polri & integrasi ONLYOFFICE Document Server (`8088`) |
 | `frontend/services/cas-doc-service/cas-docs.service` | Unit systemd untuk menjalankan `cas_doc_service.py` secara otomatis |
