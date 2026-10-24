@@ -10,7 +10,8 @@
 [![Database](https://img.shields.io/badge/database-PostgreSQL%20(171%20Tabel%20%7C%2068,8%20Juta%2B%20Baris)%20%7C%20Redis-336791.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docs](https://img.shields.io/badge/dokumen-ONLYOFFICE%20DS%20%7C%20Engine%20Jukminu%20Polri-FF6F3D.svg?style=flat-square)](#3-mesin-dokumen-13-lembar-perkap--jukminu-polri--integrasi-onlyoffice)
 [![Security](https://img.shields.io/badge/keamanan-FIDO2%20Passkey%20%7C%20Zero--Secret%20%7C%20UU%20PDP-10B981.svg?style=flat-square)](#4-autentikasi-biometrik-fido2--webauthn-passkey--keamanan-zero-trust)
-[![License](https://img.shields.io/badge/lisensi-Kedinasan%20Polri%20%26%20Portofolio%20Arsitektur-B91C1C.svg?style=flat-square)](LICENSE.md)
+[![License](https://img.shields.io/badge/lisensi-Kedinasan%20Polri%20%7C%20NDA%20%7C%20SLA-B91C1C.svg?style=flat-square)](LICENSE.md)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Eko%20Agung%20(%40omeko42)-0A66C2.svg?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/omeko42/)
 
 **Big Data Binops (BDB)** adalah platform tata kelola data operasional berskala *enterprise*, manajemen siklus hidup perkara lintas sumber, serta analitik penegakan hukum yang dirancang dan dibangun untuk **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
@@ -175,23 +176,22 @@ flowchart TB
 ├── CHANGELOG.md                                # Riwayat Evolusi & Rilis Platform (Bilingual)
 ├── CONTRIBUTING.md                             # Pedoman Tata Kelola & Kontribusi Tim Pokja Bareskrim & CAS (Bilingual)
 ├── CITATION.cff                                # Metadata Sitasi Resmi Akademis & Teknis
-├── LICENSE                                     # Lisensi Khusus Kedinasan Polri & Portofolio Arsitektur (Bilingual)
-├── SECURITY.md                                 # Kebijakan Keamanan, Arsitektur Kriptografi & Kepatuhan UU PDP (Bilingual)
+├── LICENSE.md                                  # Lisensi Kedinasan Polri, NDA, SLA & Kebijakan Keamanan Terpadu (Bilingual)
 └── .env.example                                # Template Variabel Lingkungan (Sanitized)
 ```
 
 ---
 
-## 🔒 Keamanan, Lisensi & Tata Kelola
+## 🔒 Keamanan, Lisensi, NDA & SLA Tata Kelola
 
-- **Lisensi Khusus Kedinasan & Portofolio ([`LICENSE`](LICENSE.md))**: Dirancang dan dikembangkan oleh **Eko Agung (`@omeko42`)** untuk tata kelola operasional resmi di lingkungan **Robinopsnal Bareskrim Polri** dan **CAS (*Community Anggota Serse*)**. Dipublikasikan khusus sebagai bahan evaluasi portofolio rekayasa perangkat lunak dan referensi arsitektur (**Seluruh Hak Dilindungi Undang-Undang — Dilarang keras memperjualbelikan ulang atau memalsukan atribut institusi**).
+- **Lisensi Kedinasan, NDA, SLA & Kebijakan Keamanan Terpadu ([`LICENSE.md`](LICENSE.md))**: Dirancang dan dikembangkan oleh **Eko Agung (`@omeko42`)** untuk tata kelola operasional resmi di lingkungan **Robinopsnal Bareskrim Polri** dan **CAS (*Community Anggota Serse*)**. Menyatukan perlindungan hak cipta, klausul **Perjanjian Kerahasiaan (NDA)**, komitmen **SLA Operasional (`99,9% Uptime` & `<100ms Analytical Latency`)**, serta **Arsitektur Keamanan Zero-Trust** (**Seluruh Hak Dilindungi Undang-Undang — Dilarang keras memperjualbelikan ulang atau memalsukan atribut institusi**).
 - **Kepatuhan Regulasi**: Direkayasa sesuai amanat **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, serta **Perkap 6/2019**.
-- **Kontrol Versi Bebas Rahasia (*Zero-Secret Version Control*)**: Seluruh 500 file di dalam repositori ini telah diaudit dan disanitasi untuk menjamin tidak adanya kebocoran `JWT_SECRET`, kata sandi basis data, kunci MinIO, kunci privat TLS, maupun alamat IP internal. Lihat [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), dan [`SECURITY.md`](SECURITY.md).
+- **Kontrol Versi Bebas Rahasia (*Zero-Secret Version Control*)**: Seluruh file di dalam repositori ini telah diaudit dan disanitasi untuk menjamin tidak adanya kebocoran `JWT_SECRET`, kata sandi basis data, kunci MinIO, kunci privat TLS, maupun alamat IP internal. Lihat [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), dan [`LICENSE.md`](LICENSE.md).
 
 ---
 
 ## 👨‍💻 Perancang & Arsitek Utama Sistem
 
-- **Eko Agung** ([@omeko42](https://github.com/omeko42))  
+- **Eko Agung** — [GitHub (`@omeko42`)](https://github.com/omeko42) &nbsp;|&nbsp; [LinkedIn (`in/omeko42`)](https://www.linkedin.com/in/omeko42/)  
   *Full-Stack Engineer & System Architect (Sebelumnya Analis Data Operasional — Robinopsnal Bareskrim Polri)*  
   *Pendiri **CAS (Community Anggota Serse)** & Pengembang Utama **Big Data Binops (BDB)***
