@@ -1596,7 +1596,7 @@ let UserService = class UserService {
         sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
         sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
         sheet.views = [{ state: 'frozen', ySplit: 1 }];
-        sheet.addRow(['Contoh Nama', '98010710', '98010710@polri.go.id', '', 'contoh.username', 'operator', '060.01.02 (lihat sheet "Daftar Satker")', 'AKTIF']).font = { italic: true, color: { argb: 'FF94A3B8' } };
+        sheet.addRow(['Contoh Nama', '12345678', '12345678@polri.go.id', '', 'contoh.username', 'operator', '060.01.02 (lihat sheet "Daftar Satker")', 'AKTIF']).font = { italic: true, color: { argb: 'FF94A3B8' } };
         for (let i = 2; i <= 200; i++) {
             sheet.getCell(`F${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: [`"${UserService_1.IMPORT_ROLE_OPTS.join(',')}"`] };
             sheet.getCell(`H${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: [`"${UserService_1.IMPORT_STATUS_OPTS.join(',')}"`] };

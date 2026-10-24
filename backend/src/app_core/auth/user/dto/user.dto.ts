@@ -5,14 +5,14 @@ import { PASSWORD_COMPLEXITY_MESSAGE, PASSWORD_COMPLEXITY_REGEX, PASSWORD_MIN_LE
 export class UserDto {
     @ApiProperty({
         description: 'The username of the user',
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     email: string;
 
     @ApiProperty({
         description: 'The password of the user',
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     password: string;
@@ -40,13 +40,13 @@ export class RefreshTokenDto {
 
 export class RegisterTOTP {
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     email: string;
 
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     password: string;
@@ -54,13 +54,13 @@ export class RegisterTOTP {
 
 export class verifyTOTP {
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     email: string;
 
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     password: string;
@@ -153,13 +153,13 @@ export class Register {
 }
 export class receivedInvitation {
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     nrp: string;
 
     @ApiProperty({
-        example: 'asbi@asbi.com'
+        example: 'operator@polri.go.id'
     })
     @IsNotEmpty()
     role_code: string;

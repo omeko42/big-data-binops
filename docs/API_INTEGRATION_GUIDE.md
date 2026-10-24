@@ -2,7 +2,7 @@
 ## Portal Integrasi Keluar &mdash; Modul Eksternal Laporan Polisi
 
 > **Klasifikasi Dokumen**: Teknis / Terbatas (Untuk Tim Pengembang Mitra Resmi & Lembaga Eksternal)  
-> **Sistem Sumber**: **CAS (Crime Analytic System)** &middot; **BDB (Big Data Binops)** &mdash; Bareskrim Polri  
+> **Sistem Sumber**: **CAS (Community Anggota Serse)** &middot; **BDB (Big Data Binops)** &mdash; Bareskrim Polri  
 > **Versi Dokumen**: 1.2 (BDB 2026 Enhanced Spec)  
 > **Tanggal Efektif**: 21 September 2026  
 > **Protokol**: RESTful JSON over HTTPS  
@@ -11,7 +11,7 @@
 
 ## 1. Pendahuluan & Ringkasan Arsitektur
 
-Dokumen ini merupakan panduan teknis resmi penggunaan antarmuka **Portal Integrasi Keluar** sistem **CAS (Crime Analytic System)** / **BDB (Big Data Binops)** Bareskrim Polri yang diperuntukkan bagi tim teknis mitra pengembang dan kementerian/lembaga eksternal.
+Dokumen ini merupakan panduan teknis resmi penggunaan antarmuka **Portal Integrasi Keluar** sistem **CAS (Community Anggota Serse)** / **BDB (Big Data Binops)** Bareskrim Polri yang diperuntukkan bagi tim teknis mitra pengembang dan kementerian/lembaga eksternal.
 
 API ini bertindak sebagai gerbang terkelola (*Managed API Gateway*) yang mendistribusikan data resmi Laporan Polisi (LP) secara terstandarisasi untuk kebutuhan analitik lanjutan, sinkronisasi lintas instansi, dashboard pemantauan, maupun platform pemrosesan data cerdas.
 
@@ -28,7 +28,7 @@ API ini bertindak sebagai gerbang terkelola (*Managed API Gateway*) yang mendist
 > ℹ️ **Terintegrasi Langsung dengan DORS Mabes Polri:**  
 > Seluruh data Laporan Polisi (LP) yang dialirkan melalui antarmuka CAS/BDB ini **bersumber langsung dan terintegrasi dengan sistem DORS (Daily Operation Report System) Mabes Polri** sebagai sistem sumber primer pelaporan harian kepolisian di seluruh Indonesia (Mabes, Polda, Polres, hingga Polsek).
 
-Melalui sistem CAS (Crime Analytic System) / BDB (Big Data Binops), data mentah dari DORS telah melalui proses pengolahan dan standardisasi:
+Melalui sistem CAS (Community Anggota Serse) / BDB (Big Data Binops), data mentah dari DORS telah melalui proses pengolahan dan standardisasi:
 1. **Pembersihan & Validasi**: Standardisasi penomoran LP, penyeragaman pasal/klasifikasi kejahatan, dan validasi data ganda.
 2. **Pemetaan Hierarki Satker**: Penataan relasi satuan kerja dari Polda, Polres, hingga Polsek jajaran.
 3. **Pelacakan Crime Clearance (CC)**: Menghubungkan pelaporan awal DORS dengan dokumen ketetapan akhir (Tahap II, SP3, Restorative Justice, Diversi, dan putusan Tipiring PERMA).

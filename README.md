@@ -176,7 +176,6 @@ flowchart TB
 ├── frontend/                                   # Next.js 16.2.10 Portal & Document Microservice (Edge Node)
 │   ├── package.json & server.js                # Next.js 16.2.10 standalone server (:3000) with Cache-Control guard
 │   ├── FRONTEND_ROUTES_AND_MODULES.md          # Complete mapping of all 73 App Router pages & 21 feature bundles
-│   ├── public/tools/Bersihkan-Cache-CAS.bat    # Client browser cache reset utility
 │   ├── services/cas-doc-service/               # Python 3 Jukminu Polri & ONLYOFFICE Service (:3860)
 │   └── src/
 │       ├── app-routes-manifest.json            # Official Next.js App Router path manifest (73 routes)

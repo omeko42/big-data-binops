@@ -5,7 +5,7 @@ import { PASSWORD_COMPLEXITY_MESSAGE, PASSWORD_COMPLEXITY_REGEX, PASSWORD_MIN_LE
 
 export class UpdateUserDto {
     @ApiProperty({
-        example: 'asbi@asbi.com',
+        example: 'operator@polri.go.id',
         description: "The user's email address"
     })
     @IsOptional()
@@ -34,7 +34,7 @@ export class UpdateUserDto {
     @IsOptional()
     name: string;
 
-    @ApiProperty({ required: false, example: '98010710' })
+    @ApiProperty({ required: false, example: '12345678' })
     @IsOptional()
     nrp: string;
 
@@ -120,7 +120,7 @@ export class UpdateUserDto {
 }
 export class sendOtpEmailDto {
     @ApiProperty({
-        example: 'asbi@asbi.com',
+        example: 'operator@polri.go.id',
         description: "The user's email address"
     })
     @IsEmail()
