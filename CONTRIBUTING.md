@@ -10,7 +10,7 @@ Anggota Reserse, operator, Kanit Reskrim Polsek, dan KBO Satreskrim/Ditreskrim d
 1. **Identitas Satker & Akun Operator**: Tingkat Satker (`Mabes / Polda / Polres / Polsek`), Satuan Fungsi (`Reskrim / Narkoba / PPA-PPO / Siber / Eksus / Pidter`), dan `username` / NRP.
 2. **Kategori Kendala**:
    - **Rekonsiliasi Hirarki / Pemekaran Satker**: Misalnya Polsek atau Satres baru hasil pemekaran `Perpol 4/2025` yang belum terpetakan di `bdb_dors_satker_map`.
-   - **Sinkronisasi LP DORS**: Nomor LP yang sudah diinput di DORS Pusiknas namun belum tampil atau salah kamar fungsi.
+   - **Sinkronisasi LP DORS**: Nomor LP yang sudah diinput di DORS Stamaops Polri namun belum tampil atau salah kamar fungsi.
    - **Perhitungan Kinerja Perkara (CT / CP / CC / CR / Indeks)**: Ketidaksesuaian antara status dokumen penyidikan (`Tahap II`, `SP3`, `RJ`, `SP2Lid`) dengan angka pada tabel *Kinerja Perkara*.
 
 ---

@@ -119,7 +119,7 @@ Arsitektur `bdb_satker` dan view `bdb_satker_taxonomy_r11` memisahkan secara ket
 Audit teknis pada database produksi PostgreSQL membuktikan tata kelola data yang terbagi ke dalam **4 Klaster Fungsional Utama**:
 
 ### Klaster 1 — Ingesti DORS & Core LP (*Pondasi Data Utama*)
-- **Decoupled JSONB Staging (`bdb_dors_raw_lp` & `bdb_dors_lp` — 2,85+ Juta Baris)**: Menyimpan *raw payload* JSONB dari DORS Pusiknas secara utuh tanpa risiko merusak data hulu saat rekonsiliasi.
+- **Decoupled JSONB Staging (`bdb_dors_raw_lp` & `bdb_dors_lp` — 2,85+ Juta Baris)**: Menyimpan *raw payload* JSONB dari DORS Stamaops Polri secara utuh tanpa risiko merusak data hulu saat rekonsiliasi.
 - **Normalized Core LP (`bdb_laporan_polisi` — 2,84+ Juta Baris)**: Termutakhirkan secara presisi ke **14.217 node Satker**.
 - **Sanitasi Anomali Karakter Gaib (`chr(160)` / NBSP)**: Membersihkan karakter *Non-Breaking Space* pada `kode_pusiknas` menggunakan `REGEXP_REPLACE` sehingga pencocokan hierarki satker 100% akurat.
 - **Siklus Hidup KUHAP (11 Status Penanganan)**: Memisahkan dengan tegas **7 Status Beban Kasus (CT / Crime Process)** dari **4 Status Penyelesaian Perkara (CC: *Tahap II, SP3, RJ, SP2Lid*)**, dengan menerapkan doktrin yuridis ketat bahwa **Status P-21 tetap terhitung beban CT hingga penyerahan fisik tersangka & barang bukti (Tahap II)**.
