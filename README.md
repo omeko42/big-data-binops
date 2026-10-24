@@ -140,7 +140,6 @@ flowchart TB
 ## 📂 Complete Repository Structure (Real Server Mirror — 497 Tracked Files)
 
 ```text
-├── .github/workflows/                          # Automated DevSecOps CI Pipeline (Zero-Secret & Integrity Audit)
 ├── backend/                                    # NestJS 11 Backend Server (bdb-api :3850, PM2 32-Worker Cluster)
 │   ├── Dockerfile.bdb & ecosystem.config.js    # Alpine Node 22.14 + Chromium + qpdf + PM2 32-instance cluster config
 │   ├── cron_activity_cache.js                  # Daily 00:05 WIB personnel activity scoring worker
@@ -214,7 +213,7 @@ flowchart TB
 ## 🔒 Security & Governance
 
 - **Regulatory Compliance**: Engineered in strict accordance with **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, and **Perkap 6/2019**.
-- **Zero-Secret Version Control**: Every tracked file in this repository is continuously audited via automated CI ([`.github/workflows/ci-security-and-integrity.yml`](.github/workflows/ci-security-and-integrity.yml)) to guarantee zero leaked JWT secrets, database passwords, MinIO keys, TLS private keys, or internal private IP addresses.
+- **Zero-Secret Version Control**: Every tracked file in this repository has been audited and sanitized to guarantee zero leaked JWT secrets, database passwords, MinIO keys, TLS private keys, or internal private IP addresses. See [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), and [`SECURITY.md`](SECURITY.md) for deployment configuration guidelines.
 
 ---
 

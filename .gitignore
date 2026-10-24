@@ -3,7 +3,6 @@
 
 # Explicitly allow only clean, sanitized, general application directories and docs
 !/.gitignore
-!/.github/
 !/.env.example
 !/README.md
 !/ARCHITECTURE.md
