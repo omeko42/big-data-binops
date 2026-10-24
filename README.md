@@ -14,7 +14,7 @@
 
 **Big Data Binops (BDB)** is an enterprise-grade operational data governance, multi-source case lifecycle management, and law enforcement analytics platform engineered for **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
-Born out of **CAS (*Community Anggota Serse*)** — a grassroots operational community of **1,024+ active criminal investigation personnel, operators, Kanit Reskrim, and Kaur Binops (KBO)** across Indonesia — **Big Data Binops (BDB)** unifies **~68.89 million live production records** (**2.84+ million Police Reports / LP**, **11.16+ million involved parties**, **5.84+ million evidence items**, and **5.46+ million forensic audit logs**) across all 4 territorial tiers (**Mabes Polri $\to$ 36 Polda $\to$ 508+ Polres $\to$ 4,900+ Polsek**).
+Born out of **CAS (*Community Anggota Serse*)** — a grassroots operational community of **1,024+ active criminal investigation personnel, operators, Kanit Reskrim, and Kaur Binops (KBO)** across Indonesia — **Big Data Binops (BDB)** unifies **~68.89 million live production records** (**2.84+ million Police Reports / LP**, **11.16+ million involved parties**, **5.84+ million evidence items**, and **5.46+ million forensic audit logs**) across all 4 territorial tiers (**Mabes Polri → 36 Polda → 508+ Polres → 4,900+ Polsek**).
 
 ---
 
@@ -43,7 +43,7 @@ flowchart LR
     T1 --> T2 --> T3 --> T4
 ```
 
-### Why **CAS (*Community Anggota Serse*)** $\to$ **Big Data Binops (BDB)** Matters
+### Why **CAS (*Community Anggota Serse*)** → **Big Data Binops (BDB)** Matters
 1. **Bottom-Up Operational Adoption (`CAS — Community Anggota Serse`)**: Rather than forcing a top-down tool that burdens field investigators with double data entry (*beban dobel input*), **CAS** connected **1,024+ active Reserse personnel** in a direct real-time community loop (WhatsApp & internal **SHARESE** tactical forum). Field operators report jurisdiction edge cases, *pemekaran satker* anomalies, and workflow bottlenecks directly, which are resolved in real time within **BDB**.
 2. **Full SOTK Alignment (`Perkap 6/2017 jo. Perpol 4/2025`)**: Unifies the core workflows of all **4 Bagian of Robinopsnal Bareskrim Polri**:
    - **Bagrenopsnal (*Perencanaan & Pelatihan Operasi*)**: Active Police Operations & Task Forces (`bdb_operasi_satgas` — 12 active Satgas), LP operation tagging (`operasi_satgas_id`), MinIO S3 *Sprin & Renops* PDF repository, and encrypted operational *Jukrah*.
@@ -120,7 +120,7 @@ flowchart TB
 
 ### 1. 4-Tier DORS Ingestion & Strict Reserse Command-Chain Isolation
 - **Sentralitas Binops Reserse (`Mabes → Polda → Polres → Polsek`)**: Strictly separates the Reserse command chain (`INTERNAL_RESERSE`: Bareskrim 6 Directorates + *Satresmob*, 5 Polda Ditres led by *Kabagbinopsnal*, Polres *Satreskrim / Satresnarkoba / Satres PPA-PPO* led by *KBO*, and *Unit Reskrim Polsek*) from non-Reserse functions (`EKSTERNAL_RESERSE`: *Baharkam, Polairud, Sabhara/Samapta, Lantas, Intelkam, Kortastipidkor, Densus 88 AT*).
-- **Role-Scoped Monitoring Plan (`LpMonitoringAccessService`)**: Dynamically computes hierarchical read/write/transfer permissions across territorial parent-child trees (including unified `Polsek` $\leftrightarrow$ `Unit Reskrim Polsek` scopes and `Polda Directorate` $\to$ `Polres Satreskrim/Satresnarkoba/Satresppa` oversight).
+- **Role-Scoped Monitoring Plan (`LpMonitoringAccessService`)**: Dynamically computes hierarchical read/write/transfer permissions across territorial parent-child trees (including unified `Polsek` ↔ `Unit Reskrim Polsek` scopes and `Polda Directorate` → `Polres Satreskrim/Satresnarkoba/Satresppa` oversight).
 
 ### 2. Crime Clearance (CT / CP / CC / CR) & Multi-Directorate Taxonomy Engine
 - **End-to-End Case Lifecycle Tracking**: Tracks criminal cases from initial report (**LP / Belum Update**) through **Penyelidikan (Lidik)**, **Penyidikan (Sidik)**, **SPDP**, **Tahap I**, **P19**, **P21**, to final resolution via **Tahap II**, **Henti Lidik (SP2Lid)**, **Henti Sidik (SP3 / Restorative Justice)**, and **PERMA Tipiring**.

@@ -8,11 +8,11 @@
 
 Dokumen ini merangkum pola arsitektur inti dan keputusan rekayasa utama (**Architecture Decision Records / ADR**) yang memungkinkan **Big Data Binops (BDB)** — yang digerakkan oleh komunitas **CAS (*Community Anggota Serse*)** — mengelola **~68,89 juta baris data produksi aktif** (**2,84+ juta Laporan Polisi**, **11,16+ juta pihak terlibat**, **5,84+ juta barang bukti**, dan **5,46+ juta catatan audit forensik**) dengan waktu respons analitik di bawah **100 milidetik**.
 
-### ADR-001: Pemisahan Staging JSONB (*Decoupled Staging*) dari Tabel Inti Ternormalisasi (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`)
+### ADR-001: Pemisahan Staging JSONB (*Decoupled Staging*) dari Tabel Inti Ternormalisasi (`bdb_dors_raw_lp` → `bdb_laporan_polisi`)
 - **Konteks**: Data hulu dari **DORS Stamaops Polri** memiliki format kewilayahan yang beragam, karakter spasi gaib (`chr(160)` / *Non-Breaking Space*) pada kode Satker, serta struktur larik bersarang (`tindak_pidana`, `terlibat`, `barang_bukti`).
 - **Keputusan**: Menerapkan pipa ingesti dua tahap:
   1. **Staging Mentah Tak Berubah (`bdb_dors_raw_lp` & `bdb_dors_lp`)**: Menyimpan muatan JSONB asli dari hulu berdasarkan kunci `raw_lp_id` tanpa risiko merusak data sumber.
-  2. **Tabel Inti Relasional Ternormalisasi (`bdb_laporan_polisi`, `bdb_lp_tindak_pidana_dors`, `bdb_dokumen`)**: Menjalankan pembersihan karakter `chr(160)` melalui `REGEXP_REPLACE`, penempatan hierarki Satker 4-tingkat (`Mabes` $\to$ `Polda` $\to$ `Polres` $\to$ `Polsek`), serta penautan kategori kejahatan berjenjang (`coalesce(kategori_gk, tindak_pidana[0].id_kategori_kejahatan)`).
+  2. **Tabel Inti Relasional Ternormalisasi (`bdb_laporan_polisi`, `bdb_lp_tindak_pidana_dors`, `bdb_dokumen`)**: Menjalankan pembersihan karakter `chr(160)` melalui `REGEXP_REPLACE`, penempatan hierarki Satker 4-tingkat (`Mabes` → `Polda` → `Polres` → `Polsek`), serta penautan kategori kejahatan berjenjang (`coalesce(kategori_gk, tindak_pidana[0].id_kategori_kejahatan)`).
 - **Dampak**: Nol kehilangan data hulu (*Zero Data Loss*) dan akurasi rekonsiliasi matematis 100% lintas 36 Polda dan Bareskrim Polri.
 
 ### ADR-002: Mesin *Materialized Snapshot* Pra-Hitung (`bdb_kinerja_perkara_snapshot`)
@@ -43,7 +43,7 @@ Dokumen ini merangkum pola arsitektur inti dan keputusan rekayasa utama (**Archi
 
 This section summarizes the core architectural patterns and key engineering decisions (**ADRs**) that enable **Big Data Binops (BDB)** to process **~68.89 million live database rows** with sub-100ms analytical latency.
 
-### ADR-001: Decoupled JSONB Staging vs. Normalized Core (`bdb_dors_raw_lp` $\to$ `bdb_laporan_polisi`)
+### ADR-001: Decoupled JSONB Staging vs. Normalized Core (`bdb_dors_raw_lp` → `bdb_laporan_polisi`)
 - **Context**: Upstream payloads from **DORS Stamaops Polri** arrive with heterogeneous regional formatting, non-breaking spaces (`chr(160)` / NBSP) in Satker codes, and evolving nested arrays.
 - **Decision**: Implement an immutable raw JSONB staging layer (`bdb_dors_raw_lp` & `bdb_dors_lp`) decoupled from the normalized relational core (`bdb_laporan_polisi`), applying `REGEXP_REPLACE` NBSP sanitization and 4-tier Satker placement resolution.
 - **Impact**: Zero upstream data loss and 100% mathematical reconciliation accuracy across all 36 Polda and Bareskrim Polri.
@@ -54,7 +54,7 @@ This section summarizes the core architectural patterns and key engineering deci
 - **Impact**: Analytical query latency reduced from **$>10\text{ s}$ to $<100\text{ ms}$** with zero 502 Bad Gateway downtime during container restarts.
 
 ### ADR-003: Strict Juridical & SOTK Separation (`Perkap 6/2017 jo. Perpol 4/2025` & KUHAP)
-- **Decision**: Strictly isolate `INTERNAL_RESERSE` from `EKSTERNAL_RESERSE` (`bdb_satker_taxonomy_r11`), enforce the KUHAP doctrine that **P-21** remains active CT workload until physical **Tahap II** handover, and unify parent `POLSEK` $\leftrightarrow$ child `UNIT RESKRIM POLSEK` scopes nationwide.
+- **Decision**: Strictly isolate `INTERNAL_RESERSE` from `EKSTERNAL_RESERSE` (`bdb_satker_taxonomy_r11`), enforce the KUHAP doctrine that **P-21** remains active CT workload until physical **Tahap II** handover, and unify parent `POLSEK` ↔ child `UNIT RESKRIM POLSEK` scopes nationwide.
 
 ### ADR-004: Dual-Client MinIO S3 Object Storage Pattern
 - **Decision**: Offload all binary PDF attachments to a dedicated **MinIO S3 cluster (`bdb-attachments`)** using a Dual-Client Pattern in `minio.service.ts` to eliminate PostgreSQL table bloat.

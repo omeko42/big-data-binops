@@ -47,5 +47,5 @@ Investigators, operators, Kanit Reskrim Polsek, and KBO Satreskrim/Ditreskrim ca
 ### 2. Engineering & Database Standards (For Core Developers)
 1. **Strict Zero-Secret & UU PDP Compliance**: Never commit `.env` files, database passwords, `JWT_SECRET`, TLS private keys, internal subnet IPs, or real citizen PII into Git. Always read secrets from `process.env.*` or `os.environ.get(...)`.
 2. **Parameterized SQL Queries**: Always use PostgreSQL positional parameters (`$1, $2, ...` or `ANY($1::bigint[])`).
-3. **Juridical & SOTK Invariants**: Preserve strict separation between `INTERNAL_RESERSE` and `EKSTERNAL_RESERSE`, maintain the KUHAP doctrine that **P-21** remains active CT workload until physical **Tahap II** handover, and keep parent `POLSEK` $\leftrightarrow$ child `UNIT RESKRIM POLSEK` scopes unified.
+3. **Juridical & SOTK Invariants**: Preserve strict separation between `INTERNAL_RESERSE` and `EKSTERNAL_RESERSE`, maintain the KUHAP doctrine that **P-21** remains active CT workload until physical **Tahap II** handover, and keep parent `POLSEK` ↔ child `UNIT RESKRIM POLSEK` scopes unified.
 4. **Non-Blocking 32-Worker PM2 Cluster Coordination**: Heavy background jobs must run asynchronously via `setImmediate()` guarded by PostgreSQL Advisory Locks (`pg_try_advisory_lock`).
