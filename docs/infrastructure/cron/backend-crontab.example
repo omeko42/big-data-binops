@@ -1,0 +1,7 @@
+# ==============================================================================
+# CAS Backend Server Crontab Blueprint (`/var/spool/cron/crontabs/clouduser`)
+# ==============================================================================
+# Menjalankan sinkronisasi harian cache keaktifan personel (Master User Activity)
+# setiap pukul 00:05 dini hari di dalam container `bdb-api`.
+
+5 0 * * * docker exec -w /usr/src/app bdb-api node cron_activity_cache.js >> /tmp/cron_activity.log 2>&1

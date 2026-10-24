@@ -1,0 +1,120 @@
+version: "3.8"
+
+# ==============================================================================
+# CAS Backend Server Topology Blueprint (Sanitized)
+# Mencerminkan topologi container aktif di server Backend:
+# - bdb-api (NestJS Backend API di port 3850)
+# - bdb-redis (Redis Cache di port 6379, maxmemory 1500mb allkeys-lru)
+# - bdb-minio (MinIO Object Storage di port 9100 -> 9000 & Console 9101)
+# - adminer (Database Management UI di port 7775 -> 8080)
+# Catatan: PostgreSQL 16 berjalan secara native (systemd) di host Backend (port 5432).
+# ==============================================================================
+
+services:
+  bdb-api:
+    image: bdb-api:latest
+    container_name: bdb-api
+    working_dir: /usr/src/app
+    command: ["npm", "run", "start:prod"]
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3850:3850"
+    environment:
+      NODE_ENV: production
+      PORT: 3850
+      GLOBAL_PREFIX: api
+      TZ: Asia/Jakarta
+      FRONTEND: https://cas.bareskrim.polri.go.id
+      # PostgreSQL 16 (Host Native)
+      DB_TYPE: postgres
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-CHANGE_ME_DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE:-bdb_Prod}
+      # Redis Cache
+      REDIS_ENABLED: "true"
+      REDIS_HOST: ${REDIS_HOST:-bdb-redis}
+      REDIS_PORT: 6379
+      MEMORY_CACHE_TTL_MS: 300000
+      # JWT & Security
+      JWT_SECRET: ${JWT_SECRET:-CHANGE_ME_JWT_SECRET}
+      CAPTCHA_SECRET: ${CAPTCHA_SECRET:-CHANGE_ME_CAPTCHA_SECRET}
+      EXTERNAL_SERVICE_TOKENS: ${EXTERNAL_SERVICE_TOKENS:-CHANGE_ME_EXTERNAL_TOKENS}
+      # Superadmin Bootstrap
+      BDB_SUPERADMIN_NAME: ${BDB_SUPERADMIN_NAME:-Superadmin CAS}
+      BDB_SUPERADMIN_EMAIL: ${BDB_SUPERADMIN_EMAIL:-admin@polri.go.id}
+      BDB_SUPERADMIN_PASSWORD: ${BDB_SUPERADMIN_PASSWORD:-CHANGE_ME_SUPERADMIN_PASSWORD}
+      # Swagger Documentation Auth
+      SWAGGER_USERNAME: ${SWAGGER_USERNAME:-swagger_admin}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-CHANGE_ME_SWAGGER_PASSWORD}
+      EXTERNAL_SWAGGER_PASSWORD: ${EXTERNAL_SWAGGER_PASSWORD:-CHANGE_ME_EXT_SWAGGER_PASSWORD}
+      # SMTP / Email
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.polri.go.id}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-no-reply@polri.go.id}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-CHANGE_ME_EMAIL_PASSWORD}
+      EMAIL_SSL: "false"
+      # MinIO Object Storage
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-bdb-minio}
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-CHANGE_ME_MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET_KEY}
+      MINIO_BUCKET: bdb-attachments
+      MINIO_PUBLIC_ENDPOINT: https://api-cas.bareskrim.polri.go.id
+      MINIO_PUBLIC_PORT: 443
+      MINIO_PUBLIC_USE_SSL: "true"
+      # Puppeteer / Headless Chromium
+      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium-browser
+    networks:
+      - bdb-net
+
+  bdb-redis:
+    image: redis:alpine
+    container_name: bdb-redis
+    working_dir: /data
+    command: ["redis-server", "--maxmemory", "1500mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    restart: always
+    ports:
+      - "0.0.0.0:6379:6379"
+    networks:
+      - bdb-net
+
+  bdb-minio:
+    image: minio/minio
+    container_name: bdb-minio
+    command: ["server", "/data", "--console-address", ":9101"]
+    restart: unless-stopped
+    ports:
+      - "<BACKEND_PRIVATE_IP>:9100:9000"
+      - "127.0.0.1:9101:9101"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-CHANGE_ME_MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET_KEY}
+    volumes:
+      - bdb_minio_data:/data
+    networks:
+      - bdb-net
+
+  adminer:
+    image: adminer
+    container_name: adminer-adminer-1
+    working_dir: /var/www/html
+    command: ["php", "-S", "[::]:8080", "-t", "/var/www/html"]
+    restart: always
+    ports:
+      - "0.0.0.0:7775:8080"
+    networks:
+      - adminer_default
+
+networks:
+  bdb-net:
+    driver: bridge
+  adminer_default:
+    driver: bridge
+
+volumes:
+  bdb_minio_data:
+    external: true

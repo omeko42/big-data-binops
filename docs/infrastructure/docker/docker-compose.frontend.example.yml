@@ -1,0 +1,53 @@
+version: "3.8"
+
+# ==============================================================================
+# CAS Frontend Server Topology Blueprint (Sanitized)
+# Mencerminkan topologi layanan aktif di server Frontend:
+# 1. bdb-web (Next.js 16.2.10 Standalone Server di port 3000)
+# 2. onlyoffice-ds (ONLYOFFICE Document Server di port 127.0.0.1:8088 -> 80)
+# 3. cas-docs.service (Microservice Python Jukminu Polri & ONLYOFFICE Callback
+#    berjalan di port 3860 sebagai systemd service di host /var/www/cas_docs,
+#    atau dapat dijalankan sebagai container pendamping seperti di bawah ini).
+# ==============================================================================
+
+services:
+  bdb-web:
+    image: bdb-web:kinerja-v6-prod-20260830
+    container_name: bdb-web
+    working_dir: /usr/src/app
+    command: ["node", "server.js"]
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3000:3000"
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Jakarta
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+
+  onlyoffice-ds:
+    image: onlyoffice/documentserver:latest
+    container_name: onlyoffice-ds
+    restart: always
+    ports:
+      - "127.0.0.1:8088:80"
+    environment:
+      JWT_ENABLED: "false"
+      USE_UNAUTHORIZED_STORAGE: "true"
+      ACCEPT_EULA: "true"
+
+  # Opsional: Representasi container untuk cas-docs.service (secara default berjalan via systemd di host port 3860)
+  cas-doc-service:
+    image: python:3.11-slim
+    container_name: cas-doc-service
+    working_dir: /var/www/cas_docs
+    command: ["python3", "/var/www/cas_docs/cas_doc_service.py"]
+    restart: always
+    ports:
+      - "127.0.0.1:3860:3860"
+    environment:
+      CAS_BE_URL: http://<BACKEND_PRIVATE_IP>:3850
+      CAS_BE_JWT_SECRET: ${CAS_BE_JWT_SECRET:-CHANGE_ME_JWT_SECRET}
+      CAS_STORAGE_SECRET: ${CAS_STORAGE_SECRET:-CHANGE_ME_STORAGE_SECRET}
+    volumes:
+      - /var/www/cas_docs:/var/www/cas_docs
