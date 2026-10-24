@@ -1,4 +1,4 @@
-# Kebijakan Keamanan & Arsitektur Kriptografi / Security Policy — Big Data Binops (BDB) by CAS (*Community Anggota Serse*)
+# Kebijakan Keamanan & Tata Kelola Kriptografi / Security Policy — Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
 
 > 🌐 **Daftar Isi / Sections:** [**🇮🇩 Bagian I: Bahasa Indonesia**](#-bagian-i-kebijakan-keamanan--arsitektur-kriptografi-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version**](#-part-ii-security-policy--cryptographic-architecture-english)
 

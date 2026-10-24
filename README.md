@@ -1,4 +1,4 @@
-# Big Data Binops (BDB) by Community Anggota Serse (CAS)
+# Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
 
 > 🌐 **Language / Pilihan Bahasa:** [**🇬🇧 English (Active)**](README.md) &nbsp;|&nbsp; [**🇮🇩 Bahasa Indonesia (Edisi Resmi)**](README.id.md)
 
@@ -36,7 +36,7 @@ flowchart LR
         T3D["• Narrow static focus (CT & CC numbers only)\n• Rigid 2D relational schema unable to handle complex data\n• Managed by external third party without isolated DRP\n• Suffered fatal operational database loss incident"]
     end
 
-    subgraph T4["STAGE 4 (2026–Present)\nBig Data Binops (BDB) by CAS"]
+    subgraph T4["STAGE 4 (2026–Present)\nBig Data Binops (BDB) — Powered by CAS"]
         T4D["• Complex Multi-Domain Data: LP, Satgas, Kerma, Dumas, Tahti, DPO\n• Zero Double-Input: Automated DORS/EMP pull + KBO Quick Count\n• Sovereign Internal Server Cluster (FE, BE, DB) & Zero Data Loss\n• Driven by 1,024+ members of Community Anggota Serse (CAS)"]
     end
 

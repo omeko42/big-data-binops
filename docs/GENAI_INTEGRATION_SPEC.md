@@ -2,7 +2,7 @@
 ## Modul Eksternal Laporan Polisi &mdash; Integrasi CAS dengan Generative AI
 
 > **Klasifikasi Dokumen**: Teknis / Terbatas (Untuk Tim Pengembang Mitra Resmi)  
-> **Sistem Sumber**: **Big Data Binops (BDB) by Community Anggota Serse (CAS)** &mdash; Bareskrim Polri  
+> **Sistem Sumber**: **Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)** &mdash; Bareskrim Polri  
 > **Versi Dokumen**: 1.2 (BDB 2026 Enhanced Spec)  
 > **Tanggal Efektif**: 21 September 2026  
 > **Protokol**: RESTful JSON over HTTPS  

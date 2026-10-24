@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CAS Document Management & ONLYOFFICE Integration Service (v3.0)
-Big Data Binops (BDB) by Community Anggota Serse (CAS) - Bareskrim Polri
+Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse) - Bareskrim Polri
 Features:
 - Standardized Naming: CAS-{hash_8}-{DDMMYYYY}.docx
 - Police Reporting Standards (Jukminu Polri):
