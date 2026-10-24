@@ -385,6 +385,31 @@ export class AnevService {
                 return Array.from(allowed);
             }
         }
+        if (tipe === 'FUNGSI' && s.parent_id) {
+            const pRows = await this.ds.query('select id, deskripsi, tipe_satker from bdb_satker where id=$1', [s.parent_id]);
+            const p = pRows[0];
+            const pTipe = String(p?.tipe_satker || '').trim().toUpperCase();
+            if (pTipe === 'POLDA') {
+                const poldaChildren = await this.descendantIds(Number(s.parent_id));
+                const satkers = await this.ds.query('select id, deskripsi, tipe_satker, parent_id from bdb_satker where id = any($1)', [poldaChildren]);
+                const isNarkoba = /NARKOBA|NARKOTIKA/.test(deskripsi);
+                const isPpa = /PPA|PPO|RENAKTA/.test(deskripsi);
+                const allowed = new Set<number>([Number(rootId), Number(s.parent_id)]);
+                for (const cs of satkers) {
+                    const cid = Number(cs.id);
+                    const cTipe = String(cs.tipe_satker || '').trim().toUpperCase();
+                    const cDesk = String(cs.deskripsi || '').trim().toUpperCase();
+                    if (['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLSEK'].includes(cTipe)) {
+                        allowed.add(cid);
+                    } else if (cTipe === 'FUNGSI' && Number(cs.parent_id) !== Number(s.parent_id)) {
+                        if (isNarkoba && /NARKOBA|NARKOTIKA/.test(cDesk)) allowed.add(cid);
+                        else if (isPpa && /PPA|PPO|RENAKTA|RESKRIM/.test(cDesk) && !/NARKOBA/.test(cDesk)) allowed.add(cid);
+                        else if (!isNarkoba && !isPpa && /RESKRIM|KRIMUM|KRIMSUS|SIBER/.test(cDesk) && !/NARKOBA/.test(cDesk)) allowed.add(cid);
+                    }
+                }
+                return Array.from(allowed);
+            }
+        }
 
         return this.descendantIds(rootId);
     }
@@ -1193,7 +1218,7 @@ export class AnevService {
         const http = require('http');
         const token = jwt.sign(
             { id: userId || 320, user: { id: userId || 320, organisasi_id: 1, organisasiRoleId: 1 } },
-            process.env.JWT_SECRET || '9948e67a185be09aeba80edc2a7db0d56dfd02615d346f17c09c64111ab7939a'
+            process.env.JWT_SECRET || ''
         );
 
         const fetchKpApi = (path) => {

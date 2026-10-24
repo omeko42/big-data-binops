@@ -684,6 +684,8 @@ let LaporanPolisiService = class LaporanPolisiService {
                          t.target_level = 'polsek'
                          and (
                              nullif(t.raw_payload#>>'{polsek,nama}','') is null
+                             or (t.target_kp is not null and (s.kode = t.target_kp or s.kode_canonical = t.target_kp))
+                             or (s.nama_satker_dors is not null and regexp_replace(upper(s.nama_satker_dors), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g'))
                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                              or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                          )
@@ -828,6 +830,8 @@ let LaporanPolisiService = class LaporanPolisiService {
                         )
                         and (
                             nullif(t.raw_payload#>>'{polres,nama}','') is null
+                            or (t.target_parent_kp is not null and (parent.kode = t.target_parent_kp or parent.kode_canonical = t.target_parent_kp))
+                            or (parent.nama_satker_dors is not null and regexp_replace(upper(parent.nama_satker_dors), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%')
                             or regexp_replace(upper(parent.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
                             or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(parent.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
                         )
@@ -845,6 +849,8 @@ let LaporanPolisiService = class LaporanPolisiService {
                         )
                         and (
                             nullif(t.raw_payload#>>'{polsek,nama}','') is null
+                            or (t.target_kp is not null and (territory.kode = t.target_kp or territory.kode_canonical = t.target_kp))
+                            or (territory.nama_satker_dors is not null and regexp_replace(upper(territory.nama_satker_dors), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g'))
                             or regexp_replace(upper(territory.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                             or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(territory.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                         )
@@ -1160,6 +1166,8 @@ let LaporanPolisiService = class LaporanPolisiService {
                           and upper(coalesce(p.tipe_satker,'')) = 'POLRES'
                           and (
                               nullif(r.payload_json#>>'{polres,nama}','') is null
+                              or (r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                              or (p.nama_satker_dors is not null and regexp_replace(upper(p.nama_satker_dors), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%')
                               or regexp_replace(upper(p.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
                               or regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(p.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
                           )
@@ -1172,6 +1180,8 @@ let LaporanPolisiService = class LaporanPolisiService {
                           )
                           and (
                               nullif(r.payload_json#>>'{polsek,nama}','') is null
+                              or (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp) and r.parent_kp is not null and (p.kode = r.parent_kp or p.kode_canonical = r.parent_kp))
+                              or (s.nama_satker_dors is not null and regexp_replace(upper(s.nama_satker_dors), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(r.payload_json#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g'))
                               or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                               or regexp_replace(upper(r.payload_json#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
                           )
@@ -1643,8 +1653,11 @@ let LaporanPolisiService = class LaporanPolisiService {
         const params = [];
         if (!plan.all) {
             if (plan.own) {
-                params.push(plan.actorSatkerId);
-                where.push(`coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`);
+                const ownIds = Array.isArray(plan.ownerIds) && plan.ownerIds.length ? plan.ownerIds : [plan.actorSatkerId];
+                params.push(ownIds);
+                where.push(ownIds.length > 1
+                    ? `(coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length}) or lp.satker_id = any($${params.length}))`
+                    : `coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length})`);
             }
             else {
                 params.push(plan.ownerIds);
@@ -1814,9 +1827,10 @@ let LaporanPolisiService = class LaporanPolisiService {
         const where = ['lp.deleted_at is null', isEksternalPolri ? 'coalesce(lp.dilimpahkan_eksternal, false) = true' : 'coalesce(lp.dilimpahkan_eksternal, false) = false', 'coalesce(lp.unit_satker_id, lp.satker_id) is not null'];
         const params = [];
         if (!plan.all) {
-            params.push(plan.own ? plan.actorSatkerId : plan.ownerIds);
-            where.push(plan.own
-                ? `coalesce(lp.unit_satker_id, lp.satker_id) = $${params.length}`
+            const ownIds = Array.isArray(plan.ownerIds) && plan.ownerIds.length ? plan.ownerIds : [plan.actorSatkerId];
+            params.push(plan.own ? ownIds : plan.ownerIds);
+            where.push(plan.own && ownIds.length > 1
+                ? `(coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length}) or lp.satker_id = any($${params.length}))`
                 : `coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length})`);
             if (!plan.own) {
                 params.push(plan.crimeIds.length ? plan.crimeIds : [-1]);

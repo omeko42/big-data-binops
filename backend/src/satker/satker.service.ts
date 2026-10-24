@@ -980,10 +980,11 @@ export class SatkerService implements OnModuleInit {
 
         const rows = await this.dataSource.query(
             `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.depth, s.parent_id,
-                exists(select 1 from bdb_satker c where c.parent_id=s.id ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as has_children,
-                (select count(*)::int from bdb_satker c where c.parent_id=s.id ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as child_count
+                exists(select 1 from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as has_children,
+                (select count(*)::int from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as child_count
              from bdb_satker s
              where s.parent_id = $1
+               and s.deskripsi !~* 'DUPLIKAT\\s*NONAKTIF' and not (coalesce(s.kinerja_aktif, true) = false and coalesce(s.dors_mapping_aktif, true) = false)
                ${allowedSql}
              order by s.urutan nulls last, s.kode_canonical`,
             params
@@ -1096,7 +1097,7 @@ export class SatkerService implements OnModuleInit {
 
                 // 3. Bangun Pool Satker Berbasis Master Data Murni (Taxonomy R11)
         const params: any[] = [];
-        const whereClauses: string[] = ['s.is_synthetic = false'];
+        const whereClauses: string[] = ['s.is_synthetic = false', "s.deskripsi !~* 'DUPLIKAT\\s*NONAKTIF' and not (coalesce(s.kinerja_aktif, true) = false and coalesce(s.dors_mapping_aktif, true) = false)"];
         let cteAllowed = '';
         const fromSource = 'pool s';
 
@@ -1109,18 +1110,18 @@ export class SatkerService implements OnModuleInit {
 
             cteAllowed =
                 "with recursive sub as (" +
-                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.tipe_satker " +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker, s.kinerja_aktif, s.dors_mapping_aktif " +
                 "from bdb_satker s " +
                 "where s.id = $" + pTerr + " or s.id = $" + pActor + " " +
                 "union all " +
-                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.tipe_satker " +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker, s.kinerja_aktif, s.dors_mapping_aktif " +
                 "from bdb_satker s " +
                 "join sub on s.parent_id = sub.id" +
                 "), " +
                 "pool as (" +
                 "select distinct on (s.id) " +
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
-                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
+                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                 "case " +
                 "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
                 "when s.tipe_satker = 'POLRES' then 'POLRES' " +
@@ -1138,7 +1139,7 @@ export class SatkerService implements OnModuleInit {
                 "and s.organization_domain = 'INTERNAL_POLRI' " +
                 "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
                 (actorDomain !== 'ALL'
-                    ? " and not (s.depth = 2 and s.parent_id = $" + pTerr + " and s.id <> $" + pActor + ") and not (s.id = $" + pTerr + " and s.depth = 1)"
+                    ? " and not (s.depth = 2 and s.parent_id = $" + pTerr + " and s.id <> $" + pActor + " and s.tipe_satker = 'FUNGSI') and not (s.id = $" + pTerr + " and s.depth = 1)"
                     : "") +
                 "), ";
         } else {
@@ -1147,7 +1148,7 @@ export class SatkerService implements OnModuleInit {
                 "with pool as (" +
                 "select " +
                 "s.id, s.kode, s.deskripsi, s.parent_id, s.depth, " +
-                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, " +
+                "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                 "case " +
                 "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
                 "when s.tipe_satker = 'POLRES' then 'POLRES' " +
@@ -1206,7 +1207,73 @@ export class SatkerService implements OnModuleInit {
             const fd = functionDomain.trim().toUpperCase();
             if (fd === 'INTERNAL_RESERSE') {
                 params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
-                whereClauses.push('(s.function_domain = any($' + params.length + ") or s.tipe_satker = 'POLSEK')");
+                whereClauses.push('(s.function_domain = any(
+            } else if (fd === 'EKSTERNAL_RESERSE') {
+                params.push(['EKSTERNAL_RESERSE']);
+                whereClauses.push('s.function_domain = any($' + params.length + ')');
+            }
+        }
+
+        if (level) {
+            const levels = level
+                .split(',')
+                .map((x) => x.trim().toUpperCase())
+                .filter(Boolean);
+            if (levels.length > 0 && levels.length < 4) {
+                params.push(levels);
+                whereClauses.push('upper(s.tipe_satker) = any($' + params.length + ')');
+            }
+        }
+
+        params.push(cleanLimit);
+        const limitParam = '$' + params.length;
+        params.push(offset);
+        const offsetParam = '$' + params.length;
+        const whereSql = whereClauses.length > 0 ? 'where ' + whereClauses.join(' and ') : '';
+
+        const sql =
+            cteAllowed +
+            'filtered as (' +
+            'select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
+            'count(*) over()::int as full_count ' +
+            'from ' + fromSource + ' ' +
+            whereSql + ' ' +
+            '), ' +
+            'paged as (' +
+            'select * from filtered ' +
+            'order by depth, coalesce(kode_canonical, kode) ' +
+            'limit ' + limitParam + ' offset ' + offsetParam + ' ' +
+            ') ' +
+            'select p.id, p.kode, p.deskripsi, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
+            '(with recursive up(id,kode,deskripsi,parent_id,lvl) as (' +
+            'select s.id,s.kode,s.deskripsi,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
+            'union all select s.id,s.kode,s.deskripsi,s.parent_id,up.lvl+1 from bdb_satker s join up on s.id=up.parent_id' +
+            ') select string_agg(deskripsi,\' > \' order by lvl desc) from up) as jalur, ' +
+            '(with recursive up2(id,parent_id,lvl) as (' +
+            'select s.id,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
+            'union all select s.id,s.parent_id,up2.lvl+1 from bdb_satker s join up2 on s.id=up2.parent_id' +
+            ') select array_agg(id order by lvl desc) from up2) as path_ids ' +
+            'from paged p';
+
+        const rows = await this.dataSource.query(sql, params);
+        let total = rows.length > 0 ? Number(rows[0].full_count) : 0;
+        if (rows.length === 0 && offset > 0) {
+            const countSql = cteAllowed + 'select count(*)::int as c from ' + fromSource + ' ' + whereSql;
+            const countRows = await this.dataSource.query(countSql, params.slice(0, params.length - 2));
+            total = countRows[0]?.c ? Number(countRows[0].c) : 0;
+        }
+        return {
+            status: 1,
+            data: rows,
+            total,
+            page: cleanPage,
+            limit: cleanLimit,
+            total_page: Math.ceil(total / cleanLimit)
+        };
+    }
+
+}
+ + params.length + ") or s.tipe_satker = 'POLSEK')");
             } else if (fd === 'EKSTERNAL_RESERSE') {
                 params.push(['EKSTERNAL_RESERSE']);
                 whereClauses.push('s.function_domain = any($' + params.length + ')');

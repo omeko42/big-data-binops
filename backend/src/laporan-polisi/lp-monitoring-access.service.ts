@@ -315,7 +315,7 @@ export class LpMonitoringAccessService {
                 const isNarkoba = /NARKOBA/.test(String(target.deskripsi || '').toUpperCase());
                 const siblingRows = await this.ds.query(
                     `select id::int from bdb_satker
-                     where parent_id = $1 and ${isNarkoba ? "(deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA')" : "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM')"}`,
+                     where parent_id = $1 and ${isNarkoba ? "(deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA')" : (domains.includes('TIPIDPPAPPO') ? "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|PPA|PPO|RENAKTA')" : "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM')")}`,
                     [target.parent_id]
                 );
                 siblingRows.forEach((r: any) => additionalIds.push(Number(r.id)));
@@ -378,12 +378,12 @@ export class LpMonitoringAccessService {
                 select s.id, s.deskripsi, s.parent_id, s.tipe_satker, s.depth, s.kode_canonical,
                        case when upper(s.tipe_satker) in ('POLDA','POLRES','POLSEK') then upper(s.tipe_satker) else null end as terr_lvl
                 from bdb_satker s
-                where s.parent_id = $1
+                where s.parent_id = $1 and (s.deskripsi !~* 'DUPLIKAT\s*NONAKTIF' and not (coalesce(s.kinerja_aktif, true) = false and coalesce(s.dors_mapping_aktif, true) = false))
                 union all
                 select s.id, s.deskripsi, s.parent_id, s.tipe_satker, s.depth, s.kode_canonical,
                        coalesce(case when upper(s.tipe_satker) in ('POLDA','POLRES','POLSEK') then upper(s.tipe_satker) else null end, sub.terr_lvl) as terr_lvl
                 from bdb_satker s
-                join sub on s.parent_id = sub.id
+                join sub on s.parent_id = sub.id where (s.deskripsi !~* 'DUPLIKAT\s*NONAKTIF' and not (coalesce(s.kinerja_aktif, true) = false and coalesce(s.dors_mapping_aktif, true) = false))
             ),
             polda_units as (
                 select s.id::int, s.deskripsi, s.parent_id::int, s.tipe_satker, s.depth::int, s.kode_canonical
@@ -471,6 +471,22 @@ export class LpMonitoringAccessService {
         } catch {
             return { allowed: false, monitoring: false, plan: null };
         }
+    }
+
+        async assertNotViewer(userId: number | undefined, authUser?: any) {
+        let role = String(authUser?.role_bdb || authUser?.role_name || '').trim().toLowerCase();
+        if (!role && userId) {
+            const uRows = await this.ds.query('select role_bdb, role_name from auth_users where id=$1 and deleted_at is null', [userId]);
+            role = String(uRows[0]?.role_bdb || uRows[0]?.role_name || '').trim().toLowerCase();
+        }
+        if (role === 'viewer') {
+            throw new ForbiddenException('Role viewer hanya memiliki hak akses lihat (read-only). Aksi tidak diizinkan.');
+        }
+    }
+
+    async assertCanMutateLp(userId: number | undefined, lpId: number, authUser?: any) {
+        await this.assertNotViewer(userId, authUser);
+        return this.assertCanAccessLp(userId, lpId);
     }
 
     async assertCanAccessLp(userId: number | undefined, lpId: number) {

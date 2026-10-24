@@ -1730,4 +1730,359 @@ export class AuthService {
         await this.usersService.logOwnPasswordChange(authUser, sessionRevoked);
         return { message: 'Password berhasil diubah' };
     }
+
+    // ==========================================
+    // PASSKEY / WEBAUTHN / BIOMETRIC AUTHENTICATION
+    // ==========================================
+
+    private getRPInfo() {
+        return {
+            rpName: 'CAS Bareskrim Polri',
+            rpID: 'cas.bareskrim.polri.go.id',
+            expectedOrigin: 'https://cas.bareskrim.polri.go.id'
+        };
+    }
+
+    /** 1. Generate Registration Options for current authenticated user */
+    async passkeyRegisterOptions(user: any) {
+        const { generateRegistrationOptions } = require('@simplewebauthn/server');
+        const { rpName, rpID } = this.getRPInfo();
+
+        const uid = Number(user.id);
+        const existingKeys = await this.dataSource.query(
+            `SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1`,
+            [uid]
+        );
+
+        const options = await generateRegistrationOptions({
+            rpName,
+            rpID,
+            userID: new Uint8Array(Buffer.from(String(uid))),
+            userName: user.username || user.email || `user_${uid}`,
+            userDisplayName: user.name || user.username || 'Personil CAS',
+            attestationType: 'none',
+            excludeCredentials: existingKeys.map((k: any) => ({
+                id: k.credential_id,
+                transports: k.transports || ['internal', 'hybrid']
+            })),
+            authenticatorSelection: {
+                residentKey: 'preferred',
+                userVerification: 'preferred'
+            }
+        });
+
+        await this.dataSource.query(
+            `INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
+             VALUES ($1, $2, $3, 'registration', NOW() + INTERVAL '5 minutes')
+             ON CONFLICT (id) DO UPDATE SET challenge = $3, expires_at = NOW() + INTERVAL '5 minutes'`,
+            [`reg_${uid}`, uid, options.challenge]
+        );
+
+        return options;
+    }
+
+    /** 2. Verify Registration Response and store passkey */
+    async passkeyRegisterVerify(user: any, dto: any, userAgentResult: any) {
+        const { verifyRegistrationResponse } = require('@simplewebauthn/server');
+        const { rpID, expectedOrigin } = this.getRPInfo();
+        const uid = Number(user.id);
+
+        const challengeRows = await this.dataSource.query(
+            `SELECT challenge FROM auth_passkey_challenges 
+             WHERE id = $1 AND type = 'registration' AND expires_at > NOW()`,
+            [`reg_${uid}`]
+        );
+
+        if (!challengeRows.length) {
+            throw new BadRequestException('Sesi pendaftaran biometrik telah kedaluwarsa. Silakan ulangi.');
+        }
+
+        const expectedChallenge = challengeRows[0].challenge;
+        const regResponse = dto.registrationResponse || dto;
+
+        let verification: any;
+        try {
+            verification = await verifyRegistrationResponse({
+                response: regResponse,
+                expectedChallenge,
+                expectedOrigin,
+                expectedRPID: rpID,
+                requireUserVerification: false
+            });
+        } catch (err: any) {
+            throw new BadRequestException(`Gagal memverifikasi pendaftaran biometrik: ${err?.message || 'Data tidak valid'}`);
+        }
+
+        if (!verification.verified || !verification.registrationInfo) {
+            throw new BadRequestException('Verifikasi pendaftaran biometrik gagal.');
+        }
+
+        const info = verification.registrationInfo;
+        const credentialID = info.credentialID || info.credential?.id || regResponse.id;
+        const pubKey = info.credentialPublicKey || info.credential?.publicKey;
+        const publicKeyB64 = pubKey ? Buffer.from(pubKey).toString('base64') : '';
+        const counter = 0;
+        const transports = regResponse.response?.transports || ['internal', 'hybrid'];
+
+        let devName = String(dto.deviceName || '').trim();
+        if (!devName) {
+            const os = userAgentResult?.os?.name || '';
+            const vendor = userAgentResult?.device?.vendor || '';
+            const model = userAgentResult?.device?.model || '';
+            const browser = userAgentResult?.browser?.name || '';
+            if (vendor || model) {
+                devName = `${vendor} ${model}`.trim();
+            } else if (os) {
+                devName = `${os} (${browser || 'Browser'})`.trim();
+            } else {
+                devName = 'Gawai Terpercaya (FIDO2)';
+            }
+        }
+
+        await this.dataSource.query(
+            `INSERT INTO auth_passkeys (user_id, credential_id, public_key, counter, device_name, transports, created_at, last_used_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+             ON CONFLICT (credential_id) DO UPDATE SET public_key = $3, counter = $4, device_name = $5, last_used_at = NOW()`,
+            [uid, credentialID, publicKeyB64, counter, devName, transports]
+        );
+
+        await this.dataSource.query(`DELETE FROM auth_passkey_challenges WHERE id = $1`, [`reg_${uid}`]);
+
+        void this.audit.log({
+            userId: uid,
+            userName: user.username,
+            action: 'PASSKEY_REGISTER',
+            entity: 'auth_passkeys',
+            meta: { device_name: devName },
+            ip: undefined
+        });
+
+        return { verified: true, device_name: devName };
+    }
+
+    /** 3. Get Registered Devices for current user */
+    async passkeyGetDevices(user: any) {
+        const uid = Number(user.id);
+        const rows = await this.dataSource.query(
+            `SELECT id, device_name, device_type, transports, created_at, last_used_at
+             FROM auth_passkeys
+             WHERE user_id = $1
+             ORDER BY last_used_at DESC NULLS LAST, created_at DESC`,
+            [uid]
+        );
+        return rows.map((r: any) => ({
+            id: Number(r.id),
+            device_name: r.device_name || 'Gawai Terpercaya',
+            transports: r.transports || [],
+            created_at: r.created_at,
+            last_used_at: r.last_used_at
+        }));
+    }
+
+    /** 4. Delete / Revoke a Registered Device */
+    async passkeyDeleteDevice(user: any, deviceId: number, dto?: any) {
+        const uid = Number(user.id);
+        const inputCode = String(dto?.password || dto?.code || dto?.pin || dto?.totp_token || dto?.verification || '').trim();
+
+        if (!inputCode) {
+            throw new BadRequestException('Masukkan password akun atau kode keamanan (PIN / 2FA) untuk konfirmasi pencabutan gawai.');
+        }
+
+        const uRows = await this.dataSource.query('SELECT id, password, security_pin_hash, totp_secret FROM auth_users WHERE id = $1 LIMIT 1', [uid]);
+        const userEntity = uRows[0];
+        if (!userEntity) {
+            throw new NotFoundException('Data personil tidak ditemukan.');
+        }
+
+        const bcrypt = require('bcrypt');
+        let verified = false;
+
+        if (userEntity.password && (await bcrypt.compare(inputCode, userEntity.password))) {
+            verified = true;
+        }
+        else if (userEntity.security_pin_hash && (await bcrypt.compare(inputCode, userEntity.security_pin_hash))) {
+            verified = true;
+        }
+        else if (userEntity.totp_secret) {
+            try {
+                const otplib = require('otplib');
+                if (otplib.authenticator.check(inputCode, userEntity.totp_secret)) {
+                    verified = true;
+                }
+            } catch(_e) {}
+        }
+
+        if (!verified) {
+            throw new BadRequestException('Password atau kode verifikasi keamanan salah. Otorisasi pencabutan akses ditolak.');
+        }
+
+        const res = await this.dataSource.query(
+            `DELETE FROM auth_passkeys WHERE id = $1 AND user_id = $2 RETURNING device_name`,
+            [deviceId, uid]
+        );
+        if (!res.length) {
+            throw new NotFoundException('Perangkat tidak ditemukan atau sudah dihapus.');
+        }
+
+        void this.audit.log({
+            userId: uid,
+            userName: user.username,
+            action: 'PASSKEY_REVOKE',
+            entity: 'auth_passkeys',
+            meta: { device_id: deviceId, device_name: res[0].device_name },
+            ip: undefined
+        });
+
+        return { success: true, message: 'Akses gawai berhasil dicabut.' };
+    }
+
+    /** 5. Generate Login Authentication Options (Public) */
+    async passkeyLoginOptions(username?: string) {
+        const { generateAuthenticationOptions } = require('@simplewebauthn/server');
+        const { rpID } = this.getRPInfo();
+
+        let allowCredentials: any[] = [];
+        let targetUid: number | null = null;
+
+        if (username) {
+            const cleanUser = String(username).trim().toLowerCase();
+            const uRows = await this.dataSource.query(
+                `SELECT id FROM auth_users WHERE LOWER(username) = $1 OR LOWER(email) = $1 OR LOWER(callsign) = $1`,
+                [cleanUser]
+            );
+            if (uRows.length) {
+                targetUid = Number(uRows[0].id);
+                const pkRows = await this.dataSource.query(
+                    `SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1`,
+                    [targetUid]
+                );
+                allowCredentials = pkRows.map((pk: any) => ({
+                    id: pk.credential_id,
+                    transports: pk.transports || ['internal', 'hybrid']
+                }));
+            }
+        }
+
+        const options = await generateAuthenticationOptions({
+            rpID,
+            userVerification: 'preferred',
+            allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined
+        });
+
+        await this.dataSource.query(
+            `INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
+             VALUES ($1, $2, $3, 'authentication', NOW() + INTERVAL '5 minutes')`,
+            [options.challenge, targetUid, options.challenge]
+        );
+
+        return options;
+    }
+
+    /** 6. Verify Login Authentication Response & Issue JWT Session (Public) */
+    async passkeyLoginVerify(dto: any, userAgentResult: any) {
+        const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
+        const { rpID, expectedOrigin } = this.getRPInfo();
+
+        const authResponse = dto.authResponse || dto;
+        const credId = authResponse.id;
+
+        const pkRows = await this.dataSource.query(
+            `SELECT p.id, p.user_id, p.credential_id, p.public_key, p.counter, p.transports, p.device_name,
+                    u.id as user_db_id, u.username, u.name, u.email, u.role_bdb, u.role_name, u.scope_satker_id, u.status
+             FROM auth_passkeys p
+             JOIN auth_users u ON u.id = p.user_id
+             WHERE p.credential_id = $1`,
+            [credId]
+        );
+
+        if (!pkRows.length) {
+            throw new UnauthorizedException('Kredensial biometrik tidak terdaftar pada sistem CAS.');
+        }
+
+        const pk = pkRows[0];
+        if (String(pk.status).toUpperCase() === 'NONAKTIF' || String(pk.status).toLowerCase() === 'inactive') {
+            throw new UnauthorizedException('Akun personil sedang dinonaktifkan.');
+        }
+
+        const challengeToFind = dto.challenge;
+        let challengeRow: any = null;
+
+        if (challengeToFind) {
+            const chRows = await this.dataSource.query(
+                `SELECT challenge FROM auth_passkey_challenges 
+                 WHERE challenge = $1 AND type = 'authentication' AND expires_at > NOW()`,
+                [challengeToFind]
+            );
+            if (chRows.length) challengeRow = chRows[0];
+        }
+
+        if (!challengeRow) {
+            const recentRows = await this.dataSource.query(
+                `SELECT challenge FROM auth_passkey_challenges 
+                 WHERE type = 'authentication' AND expires_at > NOW()
+                 ORDER BY created_at DESC LIMIT 1`
+            );
+            if (recentRows.length) challengeRow = recentRows[0];
+        }
+
+        if (!challengeRow) {
+            throw new BadRequestException('Sesi verifikasi biometrik kedaluwarsa. Silakan coba lagi.');
+        }
+
+        let verification: any;
+        try {
+            verification = await verifyAuthenticationResponse({
+                response: authResponse,
+                expectedChallenge: challengeRow.challenge,
+                expectedOrigin,
+                expectedRPID: rpID,
+                authenticator: {
+                    credentialID: pk.credential_id,
+                    credentialPublicKey: new Uint8Array(Buffer.from(pk.public_key, 'base64')),
+                    counter: 0,
+                    transports: pk.transports || ['internal', 'hybrid']
+                },
+                credential: {
+                    id: pk.credential_id,
+                    publicKey: Buffer.from(pk.public_key, 'base64'),
+                    counter: Number(pk.counter || 0),
+                    transports: pk.transports || ['internal', 'hybrid']
+                },
+                requireUserVerification: false
+            });
+        } catch (err: any) {
+            throw new UnauthorizedException(`Verifikasi biometrik gagal: ${err?.message || 'Tanda tangan tidak valid'}`);
+        }
+
+        if (!verification.verified) {
+            throw new UnauthorizedException('Verifikasi biometrik ditolak.');
+        }
+
+        const newCounter = verification.authenticationInfo?.newCounter || 0;
+        await this.dataSource.query(
+            `UPDATE auth_passkeys SET counter = $1, last_used_at = NOW() WHERE id = $2`,
+            [newCounter, pk.id]
+        );
+
+        await this.dataSource.query(
+            `DELETE FROM auth_passkey_challenges WHERE challenge = $1`,
+            [challengeRow.challenge]
+        );
+
+        const userEntity = await this.usersService.findOne(pk.user_db_id);
+        if (!userEntity) {
+            throw new NotFoundException('Data personil tidak ditemukan.');
+        }
+
+        void this.audit.log({
+            userId: Number(pk.user_db_id),
+            userName: pk.username,
+            action: 'LOGIN_PASSKEY',
+            entity: 'auth',
+            meta: { device_name: pk.device_name, outcome: 'SUCCESS' },
+            ip: undefined
+        });
+
+        return this.createLoginSession(userEntity, userAgentResult, 'PASSKEY_BIOMETRIC');
+    }
 }

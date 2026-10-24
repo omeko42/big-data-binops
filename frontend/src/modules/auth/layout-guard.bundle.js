@@ -279,7 +279,7 @@ tR.interceptors.response.use(
           statusText: 'OK (Offline Queued)',
           headers: {},
           config: e.config,
-          data: { status: 1, message: 'Pekerjaan tersimpan di Mode Offline. Akan di-sync otomatis saat server online.', data: { __offline_queued: true } }
+          data: { status: 1, message: 'Pekerjaan tersimpan di Mode Offline. Akan disinkronkan otomatis saat server online.', data: { __offline_queued: true } }
         };
       } catch (qErr) {
         console.error('[BDB Offline] Queue error:', qErr);
@@ -291,6 +291,34 @@ tR.interceptors.response.use(
 /* === BDB OFFLINE & AUTO-SYNC ENGINE LOGIC === */
 if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
   window.__bdbOfflineEngineReady = true;
+  /* Suppress Chrome unused <link rel="preload"> warnings from Next.js SPA route prefetching */
+  (function bdbCleanPreloadLinks() {
+    try {
+      const neutralize = (el) => {
+        if (!el || el.tagName !== "LINK") return;
+        const rel = (el.getAttribute("rel") || "").toLowerCase();
+        if (rel === "preload") {
+          setTimeout(() => {
+            try {
+              if (el.getAttribute("rel") === "preload") {
+                el.removeAttribute("rel");
+              }
+            } catch (e) {}
+          }, 800);
+        }
+      };
+      document.querySelectorAll('link[rel="preload"]').forEach(neutralize);
+      if (typeof MutationObserver !== "undefined" && document.head) {
+        const obs = new MutationObserver((mutations) => {
+          for (const m of mutations) {
+            m.addedNodes.forEach(neutralize);
+          }
+        });
+        obs.observe(document.head, { childList: true });
+      }
+    } catch (e) {}
+  })();
+
   const DB_NAME = "bdb_offline_db";
   const DB_VER = 2;
   let _idb = null;
