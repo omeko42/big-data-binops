@@ -1,12 +1,12 @@
-# Lisensi Kedinasan, Perjanjian Kerahasiaan (NDA) & Standar Layanan (SLA) / Institutional License, NDA & SLA — Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
+# Lisensi Kedinasan, NDA, SLA & Tata Kelola Keamanan / Institutional License, NDA, SLA & Security Policy — Big Data Binops (BDB) — Powered by CAS (*Community Anggota Serse*)
 
-> 🌐 ** Pilih Bahasa / Select Language:** [**🇮🇩 Bagian I: Bahasa Indonesia (Lengkap)**](#-bagian-i-lisensi-kedinasan-nda--sla-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version (Complete)**](#-part-ii-institutional-license-nda--sla-english)
+> 🌐 **Pilih Bahasa / Select Language:** [**🇮🇩 Bagian I: Bahasa Indonesia (Lengkap)**](#-bagian-i-lisensi-kedinasan-nda-sla--keamanan-bahasa-indonesia) &nbsp;|&nbsp; [**🇬🇧 Part II: English Version (Complete)**](#-part-ii-institutional-license-nda-sla--security-english)
 
 ---
 
-## 🇮🇩 Bagian I: Lisensi Kedinasan, NDA & SLA (Bahasa Indonesia)
+## 🇮🇩 Bagian I: Lisensi Kedinasan, NDA, SLA & Keamanan (Bahasa Indonesia)
 
-**Hak Cipta © 2024–2026 Eko Agung (`@omeko42`)**  
+**Hak Cipta © 2024–2026 Eko Agung (`@omeko42`)** — [GitHub](https://github.com/omeko42) | [LinkedIn](https://www.linkedin.com/in/omeko42/)  
 **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri & Komunitas Operasional CAS (*Community Anggota Serse*)**  
 *Seluruh Hak Dilindungi Undang-Undang (All Rights Reserved).*
 
@@ -23,7 +23,7 @@ Seluruh pengelolaan sistem produksi maupun publikasi referensi arsitektur pada r
 
 | Kategori Objek | Status Kerahasiaan (NDA) | Ketentuan Hukum & Teknis |
 | :--- | :--- | :--- |
-| **Data Operasional & Perkara Nyata** (*Isi Laporan Polisi, BAP, Identitas NIK/NRP Pelapor, Saksi, & Tersangka*) | 🔒 **RAHASIA PENUH (*Strictly Confidential under NDA*)** | **Dilarang keras** disalin, dibocorkan, atau dipublikasikan ke luar jaringan internal Polri.Repositori GitHub ini **0% memuat data perkara atau PII masyarakat**. |
+| **Data Operasional & Perkara Nyata** (*Isi Laporan Polisi, BAP, Identitas NIK/NRP Pelapor, Saksi, & Tersangka*) | 🔒 **RAHASIA PENUH (*Strictly Confidential under NDA*)** | **Dilarang keras** disalin, dibocorkan, atau dipublikasikan ke luar jaringan internal Polri. Repositori GitHub ini **0% memuat data perkara atau PII masyarakat**. |
 | **Kredensial, Kunci Kriptografi & Topologi Jaringan** (*Password DB, JWT Secret, API Key, Alamat IP Privat `10.200.x.x`*) | 🔒 **RAHASIA INFRASTRUKTUR (*Strictly Confidential under NDA*)** | Dilindungi oleh kebijakan *Zero-Secret Commit*. Seluruh kredensial produksi disuntikkan melalui *Environment Variables* terisolasi di server internal. |
 | **Akses Mitra Integrasi Eksternal (`/api/external/v1/*`)** | 🛡️ **TERIKAT NDA & PKS RESMI** | Kementerian/Lembaga atau mitra yang mengakses API Keluar wajib menandatangani Perjanjian Kerja Sama (PKS) dan NDA resmi serta menggunakan kunci `X-API-Key` ber-kuota dan ber-audit. |
 | **Kerangka Arsitektur, Skema DDL Kosong & Dokumentasi Rekayasa** *(Isi Repositori Ini)* | 📖 **PUBLIKASI PORTOFOLIO TERBATAS (*Sanitized Portfolio Reference*)** | Diizinkan untuk ditinjau secara terbuka sebagai bukti portofolio rekayasa perangkat lunak (*Full-Stack Engineering & System Architecture*) dengan tetap menghormati hak cipta. |
@@ -39,7 +39,14 @@ Dalam operasional produksi di lingkungan klaster server internal (**Dual-Node Pr
 | **Pemulihan & Ketahanan Data (*RPO & RTO SLA*)** | **RPO ≈ `0 detik` \| RTO `< 15 menit`** | Penyimpanan *staging* JSONB *immutable* (`bdb_dors_raw_lp`) yang menjamin *Zero Data Loss*, ditambah *cron* rekonsiliasi otomatis harian (`00:05 WIB`). |
 | **Respons Insiden & Dukungan Komunitas CAS (*Support SLA*)** | **Kritis `< 1 Jam` \| Taktis `< 24 Jam`** | Pemantauan langsung melalui lingkar komunikasi taktis **CAS (*Community Anggota Serse* — 1.024+ anggota)** dan kanal internal **SHARESE**. |
 
-### 5. Pembatasan & Larangan Keras (*Strict Prohibitions*)
+### 5. Arsitektur Keamanan Zero-Trust & Kriptografi Produksi
+Platform **Big Data Binops (BDB)** menerapkan pertahanan berlapis (*Defense-in-Depth*) yang mencakup:
+1. **Autentikasi Biometrik Perangkat Keras (FIDO2 / WebAuthn Passkey)**: Mengimplementasikan `@simplewebauthn/server` dengan kunci publik kriptografis asimetris (`COSE Public Key`), pelacakan penghitung tanda tangan (*signature counter anti-cloning*), serta tantangan (*challenge*) 32-byte sekali pakai dengan masa berlaku 5 menit.
+2. **Autentikasi Multi-Faktor (MFA) Berlapis**: Mendukung **TOTP 2FA (RFC 6238)** terenkripsi, **PIN Keamanan 6 Digit** (`bcrypt`), **OTP Email Kedinasan**, serta **Captcha Hybrid (Proof-of-Work + SVG)**.
+3. **Otorisasi Bertingkat untuk Cabut Akses Gawai (*Step-Up MFA Device Revocation*)**: Pencabutan sesi atau penghapusan kunci biometrik gawai wajib melewati verifikasi ulang kredensial sekunder secara langsung.
+4. **Enkripsi ID Buram (*Opaque ID Cipher*) & Jejak Audit *Immutable***: Seluruh ID primer pada URL eksternal disandikan dengan **AES-GCM (`id-cipher.util.ts`)**, dan setiap tindakan personel terekam secara permanen di dalam **5,46+ juta baris `bdb_audit_log`**.
+
+### 6. Pembatasan & Larangan Keras (*Strict Prohibitions*)
 Perangkat lunak ini **BUKAN** perangkat lunak bebas komersial (*bukan MIT / Apache Open-Source*). Tanpa izin tertulis dari Pemegang Hak Cipta dan/atau otoritas resmi Bareskrim Polri, pihak mana pun di luar ketentuan Pasal 2 **DILARANG KERAS**:
 1. **Memperjualbelikan (*Commercialization Prohibited*)**: Menyalin, mengemas ulang, menyewakan, atau menjual kode sumber, skema basis data, maupun layanan mikro dokumen di dalam repositori ini untuk keuntungan komersial atau proyek vendor pihak ketiga.
 2. **Memalsukan Atribut Institusi (*Impersonation Prohibited*)**: Menggunakan nama, lambang, kop surat, atau nomenklatur **Bareskrim Polri**, **Robinopsnal**, **Big Data Binops (BDB)**, maupun **CAS (*Community Anggota Serse*)** untuk membuat aplikasi tiruan yang menyesatkan publik.
@@ -47,9 +54,9 @@ Perangkat lunak ini **BUKAN** perangkat lunak bebas komersial (*bukan MIT / Apac
 
 ---
 
-## 🇬🇧 Part II: Institutional License, NDA & SLA (English)
+## 🇬🇧 Part II: Institutional License, NDA, SLA & Security (English)
 
-**Copyright © 2024–2026 Eko Agung (`@omeko42`)**  
+**Copyright © 2024–2026 Eko Agung (`@omeko42`)** — [GitHub](https://github.com/omeko42) | [LinkedIn](https://www.linkedin.com/in/omeko42/)  
 **Bureau of Operational Management (Robinopsnal) — Criminal Investigation Agency of the Indonesian National Police (Bareskrim Polri) & CAS (*Community Anggota Serse*)**  
 *All Rights Reserved.*
 
@@ -82,7 +89,14 @@ In live production across the internal **Dual-Node Production Cluster**, the **B
 | **Data Durability & Recovery (*RPO & RTO SLA*)** | **RPO ≈ `0s` \| RTO `< 15 min`** | Immutable JSONB raw staging (`bdb_dors_raw_lp`) guaranteeing *Zero Data Loss*, paired with automated daily reconciliation crons (`00:05 WIB`). |
 | **Incident Response & CAS Field Support SLA** | **Critical `< 1 hr` \| Tactical `< 24 hrs`** | Direct real-time reporting and triage through the **1,024+ member CAS (*Community Anggota Serse*)** operational loop and in-app **SHARESE** channel. |
 
-### 5. Strict Prohibitions & Disclaimer
+### 5. Zero-Trust Security & Cryptographic Architecture
+The **Big Data Binops (BDB)** platform enforces a multi-layered *Defense-in-Depth* security model:
+1. **FIDO2 / WebAuthn Hardware Passkey Authentication**: Implements `@simplewebauthn/server` with asymmetric `COSE` public keys, signature counter cloning detection, and single-use 32-byte cryptographic challenges (5-minute TTL).
+2. **Multi-Factor Authentication (MFA) Matrix**: Supports encrypted **RFC 6238 TOTP 2FA**, **6-Digit Security PIN** (`bcrypt`), **Official Email OTP**, and **Hybrid Proof-of-Work + SVG Captcha**.
+3. **Step-Up MFA for Trusted Device Revocation**: Revoking an active device session or deleting a registered hardware passkey requires real-time secondary MFA verification.
+4. **Opaque ID Ciphers & Immutable Forensic Audit**: Primary database IDs are obfuscated via **AES-GCM (`id-cipher.util.ts`)**, and all user mutations are permanently recorded across **5.46+ million rows in `bdb_audit_log`**.
+
+### 6. Strict Prohibitions & Disclaimer
 This software is **NOT** licensed under a permissive commercial open-source license (*not MIT / Apache*). Without prior written authorization from the Copyright Holder and/or official **Bareskrim Polri** leadership, any party outside Article 2 is **STRICTLY PROHIBITED** from:
 1. **Commercial Redistribution**: Copying, repackaging, sublicensing, or selling the source code, database schema, or document automation microservices for commercial gain or third-party vendor contracts.
 2. **Institutional Impersonation**: Using the names, insignia, letterheads, or nomenclature of **Bareskrim Polri**, **Robinopsnal**, **Big Data Binops (BDB)**, or **CAS (*Community Anggota Serse*)** to misrepresent unauthorized software.
