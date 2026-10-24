@@ -8,7 +8,7 @@
 
 ## 1. Topologi Multi-Node Server Produksi
 
-Secara aktual di lingkungan produksi, **CAS (Community Anggota Serse)** dideploy menggunakan arsitektur **Dual-Node Terpisah (Frontend/Edge Node & Backend/Data Node)** yang terhubung melalui jaringan privat internal:
+Secara aktual di lingkungan produksi, **Big Data Binops (BDB) by Community Anggota Serse (CAS)** dideploy menggunakan arsitektur **Dual-Node Terpisah (Frontend/Edge Node & Backend/Data Node)** yang terhubung melalui jaringan privat internal:
 
 ```mermaid
 flowchart TB

@@ -36,7 +36,7 @@ flowchart LR
         T3D["• Narrow static focus (CT & CC numbers only)\n• Rigid 2D relational schema unable to handle complex data\n• Managed by external third party without isolated DRP\n• Suffered fatal operational database loss incident"]
     end
 
-    subgraph T4["STAGE 4 (2026–Present)\nBig Data Binops (BDB) & CAS"]
+    subgraph T4["STAGE 4 (2026–Present)\nBig Data Binops (BDB) by CAS"]
         T4D["• Complex Multi-Domain Data: LP, Satgas, Kerma, Dumas, Tahti, DPO\n• Zero Double-Input: Automated DORS/EMP pull + KBO Quick Count\n• Sovereign Internal Server Cluster (FE, BE, DB) & Zero Data Loss\n• Driven by 1,024+ members of Community Anggota Serse (CAS)"]
     end
 
