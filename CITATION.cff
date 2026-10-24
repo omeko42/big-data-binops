@@ -9,8 +9,8 @@ authors:
     affiliation: "Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri"
 version: "2.5.0"
 date-released: "2026-10-24"
-url: "https://github.com/omeko11/cas-crime-analytic-system"
-repository-code: "https://github.com/omeko11/cas-crime-analytic-system"
+url: "https://github.com/omeko11/big-data-binops"
+repository-code: "https://github.com/omeko11/big-data-binops"
 license: "Proprietary"
 keywords:
   - "Big Data Binops"
