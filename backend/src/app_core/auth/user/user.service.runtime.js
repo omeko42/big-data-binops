@@ -155,6 +155,16 @@ let UserService = class UserService {
     }
     async checkIdentifierAvailability(field, value, excludeUserId) {
         const normalized = this.normalizeEmail(value);
+        const rawTrim = String(value || '').trim();
+        if (field === 'username' && rawTrim) {
+            if (rawTrim.includes('@')) {
+                const suggested = this.sanitizeUsernameInput(rawTrim) || 'username';
+                return { available: false, reason: 'Format salah: Username tidak boleh memakai @domain/email! Cukup ketik "' + suggested + '" saja.' };
+            }
+            if (!/^[a-z0-9_.]{3,30}$/i.test(rawTrim)) {
+                return { available: false, reason: 'Format salah: Gunakan 3-30 karakter huruf kecil, angka, titik (.), atau underscore (_) tanpa spasi.' };
+            }
+        }
         if (!normalized)
             return { available: true };
         const qb = this.userRepository.createQueryBuilder('user').where(`lower(user.${field}) = :v`, { v: normalized });

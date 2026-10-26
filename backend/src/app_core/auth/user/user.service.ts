@@ -184,7 +184,18 @@ export class UserService {
     /** Cek ketersediaan username/email_polri -- dipakai form Master Pengguna sblm submit (live validation). */
     async checkIdentifierAvailability(field: 'username' | 'email_polri' | 'email', value: string, excludeUserId?: number): Promise<{ available: boolean; satker_nama?: string }> {
         const normalized = this.normalizeEmail(value);
-        if (!normalized) return { available: true };
+        const rawTrim = String(value || '').trim();
+        if (field === 'username' && rawTrim) {
+            if (rawTrim.includes('@')) {
+                const suggested = this.sanitizeUsernameInput(rawTrim) || 'username';
+                return { available: false, reason: 'Format salah: Username tidak boleh memakai @domain/email! Cukup ketik "' + suggested + '" saja.' };
+            }
+            if (!/^[a-z0-9_.]{3,30}$/i.test(rawTrim)) {
+                return { available: false, reason: 'Format salah: Gunakan 3-30 karakter huruf kecil, angka, titik (.), atau underscore (_) tanpa spasi.' };
+            }
+        }
+        if (!normalized)
+            return { available: true };
         const qb = this.userRepository.createQueryBuilder('user').where(`lower(user.${field}) = :v`, { v: normalized });
         if (excludeUserId) qb.andWhere('user.id <> :id', { id: excludeUserId });
         const existing = await qb.getOne();
