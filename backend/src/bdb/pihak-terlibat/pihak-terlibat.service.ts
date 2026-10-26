@@ -1798,14 +1798,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 const orderClauseMaster = catFilter === 'ALL'
                     ? (keterlibatan === 'LINTAS_WILAYAH' 
-                        ? 'jumlah_polda_unik DESC, nasional_score DESC, total_lp DESC, last_seen DESC' 
-                        : 'nasional_score DESC, total_lp DESC, last_seen DESC')
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
-                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
-                       catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
-                       catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
-                       catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
+                        ? `jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC` 
+                        : `total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC`)
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
+                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
+                       catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
+                       catFilter === 'SAKSI' ? 'count_saksi DESC,' :
+                       catFilter === 'KORBAN' ? 'count_korban DESC,' :
+                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
 
                 const [snapRanking, countRes, summaryRes] = await Promise.all([
                     this.dataSource.query(`
@@ -1942,13 +1942,13 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const catFilter = (keterlibatan && keterlibatan !== 'ALL' && keterlibatan !== 'LINTAS_WILAYAH') ? keterlibatan : 'ALL';
 
                 const orderClauseDash = catFilter === 'ALL'
-                    ? 'nasional_score DESC, total_lp DESC, last_seen DESC'
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
-                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
-                       catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
-                       catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
-                       catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
+                    ? `total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC`
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
+                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
+                       catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
+                       catFilter === 'SAKSI' ? 'count_saksi DESC,' :
+                       catFilter === 'KORBAN' ? 'count_korban DESC,' :
+                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
 
                 const snapRanking = await this.dataSource.query(`
                     SELECT nama, nik,
@@ -1993,7 +1993,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         const isCorp = r.tipe_subjek === 'KORPORASI' || (r.nik && String(r.nik).startsWith('KORP:')) || r.tipe_identitas === 'BADAN HUKUM';
                         return {
                             nama: r.nama,
-                            nik: isCorp ? 'KORPORASI' : r.nik,
+                            nik: r.nik || (isCorp ? `KORP:${r.nama}` : ''),
                             raw_nik: r.nik,
                             keterlibatan: catFilter !== 'ALL' ? catFilter : (r.kasta || 'PIHAK'),
                             kasta: catFilter !== 'ALL' ? catFilter : (r.kasta || 'PIHAK'),

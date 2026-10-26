@@ -235,7 +235,23 @@ export class BdbOperasiSatgasService {
                 end as status_tampil,
                 (select count(*)::int from bdb_laporan_polisi lp where lp.operasi_satgas_id = bdb_operasi_satgas.id and lp.deleted_at is null) as jumlah_lp,
                 (
-                    select min(s.depth)::int
+                    select min(
+                        case
+                            when s.id in (1,2,3,4,13) or s.parent_id = 13
+                              or upper(coalesce(s.deskripsi,'')) like '%BARESKRIM%'
+                              or upper(coalesce(s.deskripsi,'')) like '%MABES%'
+                              or upper(coalesce(s.deskripsi,'')) like '%DITTIPID%'
+                              or upper(coalesce(s.deskripsi,'')) like '%TIPID%'
+                              or upper(coalesce(s.nama_singkat,'')) like '%BARESKRIM%' then 1
+                            when upper(coalesce(s.deskripsi,'')) like '%POLSEK%' then 4
+                            when upper(coalesce(s.deskripsi,'')) like '%POLRES%'
+                              or upper(coalesce(s.deskripsi,'')) like '%POLRESTA%'
+                              or upper(coalesce(s.deskripsi,'')) like 'RES %'
+                              or upper(coalesce(s.deskripsi,'')) like '% RES %' then 3
+                            when upper(coalesce(s.deskripsi,'')) like '%POLDA%' or s.depth <= 2 then 2
+                            else greatest(2, least(4, coalesce(s.depth::int, 4)))
+                        end
+                    )::int
                     from regexp_split_to_table(
                         coalesce(bdb_operasi_satgas.satker_penyelenggara,''),
                         '\\s*[,;/]\\s*'
@@ -290,7 +306,7 @@ export class BdbOperasiSatgasService {
         const total = Number(countRows?.[0]?.total || 0);
 
         const rows = await this.dataSource.query(
-            `select * ${baseSql} where ${outerWhere.join(' and ')} order by coalesce(tanggal_mulai, created_at::date) desc, id desc limit $${params.length + 1} offset $${params.length + 2}`,
+            `select * ${baseSql} where ${outerWhere.join(' and ')} order by jumlah_lp desc, coalesce(satker_depth, 99) asc, (case when jenis = 'OPERASI' then 0 else 1 end) asc, coalesce(tanggal_mulai, created_at::date) desc, id desc limit $${params.length + 1} offset $${params.length + 2}`,
             [...params, limit, offset]
         );
 
