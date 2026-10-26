@@ -108,11 +108,38 @@ export class BdbKasusMenonjolService {
         return tag ? `${judul.trim().toUpperCase()} - ${tag.toUpperCase()}` : judul;
     }
 
+    private satkerDepthExpr() {
+        return `coalesce((
+            select case
+                when s.id in (1,2,3,4,13) or s.parent_id = 13
+                  or upper(coalesce(s.deskripsi,'')) like '%BARESKRIM%'
+                  or upper(coalesce(s.deskripsi,'')) like '%MABES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DITTIPID%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DENSUS%'
+                  or upper(coalesce(s.deskripsi,'')) like '%BAHARKAM%'
+                  or upper(coalesce(s.nama_singkat,'')) like '%BARESKRIM%' then 1
+                when upper(coalesce(s.deskripsi,'')) like '%POLSEK%' then 4
+                when upper(coalesce(s.deskripsi,'')) like '%POLRES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%POLRESTA%'
+                  or upper(coalesce(s.deskripsi,'')) like 'RES %'
+                  or upper(coalesce(s.deskripsi,'')) like '% RES %' then 3
+                when upper(coalesce(s.deskripsi,'')) like '%POLDA%' or s.depth <= 2 then 2
+                else greatest(2, least(4, coalesce(s.depth::int, 4)))
+            end
+            from bdb_satker s
+            where s.id = coalesce(
+                k.satker_id,
+                (select coalesce(lp0.unit_satker_id, lp0.satker_id) from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
+            )
+            limit 1
+        ), 99)`;
+    }
+
     private buildBaseSelect() {
         return `
             select
                 k.id, k.judul, k.skala_viral, k.tanggal_rilis::text as tanggal_rilis, k.rilis, k.keterangan, k.satker_id,
-                (select s.depth::int from bdb_satker s where s.id = k.satker_id limit 1) as satker_depth,
+                ${this.satkerDepthExpr()} as satker_depth,
                 coalesce(
                     (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
                     (select lp0.satker_nama from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
@@ -191,39 +218,15 @@ export class BdbKasusMenonjolService {
 
         const whereSql = where.join(' and ');
 
-        let orderBy = 'order by k.created_at desc, k.id desc';
-        if (query.dashboard === '1' || query.dashboard === 1 || query.dashboard === true || query.dashboard === 'true' || query.sort === 'priority') {
-            orderBy = `order by
-                (
-                    -- PART 1: Skala Viral
-                    case when lower(coalesce(k.skala_viral,'')) = 'nasional' then 100
-                         when lower(coalesce(k.skala_viral,'')) = 'regional' then 50
-                         else 20 end
-                    +
-                    -- PART 2: Jumlah LP (Volume Dampak)
-                    case when (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) > 1 then
-                            least(100, 30 + round(15 * log(2, greatest(2, (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id))))::int)
-                         when (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) = 1 then 10
-                         else 0 end
-                    +
-                    -- PART 3: Status & Tanggal Rilis (Kebaruan Rilis Pers)
-                    case when k.rilis = true then
-                            case when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '7 days' then 60
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '30 days' then 45
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '90 days' then 30
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '365 days' then 15
-                                 else 5 end
-                         else 25 end
-                    +
-                    -- PART 4: Kebaruan Tanggal Input
-                    case when (now() - k.created_at) <= interval '7 days' then 40
-                         when (now() - k.created_at) <= interval '30 days' then 30
-                         when (now() - k.created_at) <= interval '90 days' then 20
-                         when (now() - k.created_at) <= interval '365 days' then 10
-                         else 0 end
-                ) desc,
-                k.created_at desc, k.id desc`;
-        }
+        const orderBy = `order by
+            (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) desc,
+            ${this.satkerDepthExpr()} asc,
+            case when lower(coalesce(k.skala_viral,'')) = 'nasional' then 1
+                 when lower(coalesce(k.skala_viral,'')) = 'regional' then 2
+                 else 3 end asc,
+            coalesce(k.tanggal_rilis::timestamptz, k.created_at) desc,
+            k.created_at desc,
+            k.id desc`;
 
         const [totalRow, summaryRow, rows] = await Promise.all([
             this.dataSource.query(`select count(*)::int as total from bdb_kasus_menonjol k where ${whereSql}`, params),
