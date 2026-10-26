@@ -233,14 +233,19 @@ e.s(["default", 0, function() {
     children: [
       // Top Header
       (0, t.jsxs)("div", {
+        className: "cms-card",
         style: {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
           flexWrap: "wrap",
           gap: "1rem",
-          paddingBottom: "1rem",
-          borderBottom: "1px solid var(--cas-border, rgba(255,255,255,0.1))"
+          padding: "1.25rem 1.5rem",
+          background: "var(--cas-bg-surface, #ffffff)",
+          border: "1px solid var(--cas-border, #cbd5e1)",
+          borderLeft: "4px solid #2563eb",
+          borderRadius: "12px",
+          boxShadow: "var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))"
         },
         children: [
           (0, t.jsxs)("div", {
@@ -248,18 +253,18 @@ e.s(["default", 0, function() {
               (0, t.jsxs)("div", {
                 style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                 children: [
-                  (0, t.jsx)("span", { style: { fontSize: "1.5rem" }, children: "⚙️" }),
+                  (0, t.jsx)("i", { className: "pi pi-cog", style: { fontSize: "1.25rem", color: "#2563eb" } }),
                   (0, t.jsx)("h1", {
                     className: "cms-page-title",
-                    style: { margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--text-color, #0f172a)" },
+                    style: { margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" },
                     children: "Kelola Sharese & Kedinasan"
                   }),
                   (0, t.jsx)("span", {
                     style: {
                       fontSize: "0.7rem",
-                      background: "rgba(220,38,38,0.15)",
+                      background: "rgba(220,38,38,0.12)",
                       border: "1px solid rgba(220,38,38,0.3)",
-                      color: "#ef4444",
+                      color: "var(--cas-crimson, #dc2626)",
                       padding: "0.15rem 0.5rem",
                       borderRadius: "999px",
                       fontWeight: 800
@@ -270,7 +275,7 @@ e.s(["default", 0, function() {
               }),
               (0, t.jsx)("p", {
                 className: "cms-page-sub",
-                style: { margin: "0.35rem 0 0", color: "var(--text-color-secondary, #64748b)", fontSize: "0.85rem" },
+                style: { margin: "0.35rem 0 0", color: "var(--cas-text-secondary, #475569)", fontSize: "0.85rem", fontWeight: 500 },
                 children: "Pusat Komando Siaran Resmi Bareskrim: Penyebaran Instruksi Dinas, Analitik Keterbacaan Satker, dan Pengawasan Linimasa CAS."
               })
             ]
@@ -279,10 +284,10 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             style: {
               display: "inline-flex",
-              background: "var(--cas-bg-surface-2, rgba(255,255,255,0.06))",
+              background: "var(--cas-bg-subtle, #f1f5f9)",
               borderRadius: "10px",
               padding: "0.25rem",
-              border: "1px solid var(--cas-border, rgba(255,255,255,0.1))",
+              border: "1px solid var(--cas-border, #cbd5e1)",
               gap: "0.25rem"
             },
             children: [
@@ -300,7 +305,7 @@ e.s(["default", 0, function() {
                   border: "none",
                   cursor: "pointer",
                   background: activeTab === 'broadcast' ? "#2563eb" : "transparent",
-                  color: activeTab === 'broadcast' ? "#fff" : "var(--cas-text-secondary, #94a3b8)",
+                  color: activeTab === 'broadcast' ? "#fff" : "var(--cas-text-secondary, #475569)",
                   transition: "all 0.15s ease"
                 },
                 children: [(0, t.jsx)(iconMegaphone, { size: 14 }), " Siaran Resmi"]
@@ -319,7 +324,7 @@ e.s(["default", 0, function() {
                   border: "none",
                   cursor: "pointer",
                   background: activeTab === 'reports' ? "#2563eb" : "transparent",
-                  color: activeTab === 'reports' ? "#fff" : "var(--cas-text-secondary, #94a3b8)",
+                  color: activeTab === 'reports' ? "#fff" : "var(--cas-text-secondary, #475569)",
                   transition: "all 0.15s ease"
                 },
                 children: [(0, t.jsx)(iconBarChart, { size: 14 }), " Laporan Respon Satker"]
@@ -338,7 +343,7 @@ e.s(["default", 0, function() {
                   border: "none",
                   cursor: "pointer",
                   background: activeTab === 'moderation' ? "#dc2626" : "transparent",
-                  color: activeTab === 'moderation' ? "#fff" : "var(--cas-text-secondary, #94a3b8)",
+                  color: activeTab === 'moderation' ? "#fff" : "var(--cas-text-secondary, #475569)",
                   transition: "all 0.15s ease"
                 },
                 children: [(0, t.jsx)(iconShieldAlert, { size: 14 }), " Moderasi & Takedown"]
@@ -359,7 +364,7 @@ e.s(["default", 0, function() {
           fontSize: "0.85rem",
           fontWeight: 600,
           background: feedbackMsg.type === 'success' ? "rgba(34,197,94,0.15)" : feedbackMsg.type === 'warn' ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
-          color: feedbackMsg.type === 'success' ? "#22c55e" : feedbackMsg.type === 'warn' ? "#f59e0b" : "#ef4444",
+          color: feedbackMsg.type === 'success' ? "#16a34a" : feedbackMsg.type === 'warn' ? "#d97706" : "#dc2626",
           border: "1px solid " + (feedbackMsg.type === 'success' ? "rgba(34,197,94,0.3)" : feedbackMsg.type === 'warn' ? "rgba(245,158,11,0.3)" : "rgba(239,68,68,0.3)")
         },
         children: [
@@ -381,19 +386,20 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             className: "cms-card",
             style: {
-              background: "var(--cas-bg-card, #1e293b)",
-              border: "1px solid rgba(59,130,246,0.3)",
+              background: "var(--cas-bg-surface, #ffffff)",
+              border: "1px solid var(--cas-border, #cbd5e1)",
+              borderTop: "3px solid #2563eb",
               borderRadius: "12px",
               padding: "1.25rem",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.15)"
+              boxShadow: "var(--cas-shadow-sm, 0 1px 3px rgba(0,0,0,0.05))"
             },
             children: [
               (0, t.jsxs)("div", {
                 style: { display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" },
                 children: [
-                  (0, t.jsx)(iconMegaphone, { size: 18, style: { color: "#3b82f6" } }),
+                  (0, t.jsx)(iconMegaphone, { size: 18, style: { color: "#2563eb" } }),
                   (0, t.jsx)("h2", {
-                    style: { fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--text-color, #0f172a)" },
+                    style: { fontSize: "1.05rem", fontWeight: 800, margin: 0, color: "var(--cas-text-primary, #0f172a)" },
                     children: "Formulir Siaran Jukrah / Instruksi Kedinasan"
                   })
                 ]
@@ -405,7 +411,7 @@ e.s(["default", 0, function() {
                   (0, t.jsxs)("div", {
                     children: [
                       (0, t.jsx)("label", {
-                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-color-secondary, #64748b)", marginBottom: "0.3rem" },
+                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--cas-text-secondary, #475569)", marginBottom: "0.3rem" },
                         children: "Nomor / Perihal Jukrah (Opsional)"
                       }),
                       (0, t.jsx)(r.InputText, {
@@ -419,7 +425,7 @@ e.s(["default", 0, function() {
                   (0, t.jsxs)("div", {
                     children: [
                       (0, t.jsx)("label", {
-                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--text-color-secondary, #64748b)", marginBottom: "0.3rem" },
+                        style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--cas-text-secondary, #475569)", marginBottom: "0.3rem" },
                         children: "Isi Instruksi Kedinasan & Pedoman Taktis (Maks 3.000 Karakter) *"
                       }),
                       (0, t.jsx)("textarea", {
@@ -432,9 +438,9 @@ e.s(["default", 0, function() {
                         style: {
                           width: "100%",
                           borderRadius: "8px",
-                          border: "1px solid var(--surface-border, #cbd5e1)",
-                          background: "var(--surface-input, var(--surface-card, #ffffff))",
-                          color: "var(--text-color, #0f172a)",
+                          border: "1px solid var(--cas-border, #cbd5e1)",
+                          background: "var(--cas-bg-surface, #ffffff)",
+                          color: "var(--cas-text-primary, #0f172a)",
                           fontSize: "0.88rem",
                           lineHeight: "1.5",
                           padding: "0.65rem 0.85rem",
@@ -447,7 +453,7 @@ e.s(["default", 0, function() {
                         style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.35rem" },
                         children: [
                           (0, t.jsx)("span", {
-                            style: { fontSize: "0.72rem", color: "var(--text-color-secondary, #64748b)" },
+                            style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #64748b)" },
                             children: "Semua personil yang membaca akan diwajibkan mengonfirmasi tombol 'Paham & Siap Laksanakan'."
                           }),
                           (0, t.jsxs)("span", {
@@ -484,12 +490,12 @@ e.s(["default", 0, function() {
                               gap: "0.4rem",
                               fontSize: "0.78rem",
                               fontWeight: 600,
-                              color: "#60a5fa",
+                              color: "var(--cas-blue, #2563eb)",
                               cursor: "pointer",
                               padding: "0.35rem 0.65rem",
                               borderRadius: "6px",
-                              border: "1px dashed rgba(59,130,246,0.4)",
-                              background: "rgba(59,130,246,0.08)"
+                              border: "1px dashed rgba(37,99,235,0.45)",
+                              background: "rgba(37,99,235,0.08)"
                             },
                             children: [
                               (0, t.jsx)(o.Paperclip, { size: 14 }),
@@ -510,8 +516,9 @@ e.s(["default", 0, function() {
                               alignItems: "center",
                               gap: "0.35rem",
                               fontSize: "0.78rem",
-                              color: "var(--text-color, #0f172a)",
-                              cursor: "pointer"
+                              color: "var(--cas-text-primary, #0f172a)",
+                              cursor: "pointer",
+                              fontWeight: 600
                             },
                             children: [
                               (0, t.jsx)("input", {
@@ -519,7 +526,8 @@ e.s(["default", 0, function() {
                                 checked: formPinned,
                                 onChange: e => setFormPinned(e.target.checked)
                               }),
-                              "📌 Sematkan di Puncak Feed (Pinned)"
+                              (0, t.jsx)("i", { className: "pi pi-thumbtack", style: { fontSize: "0.75rem", color: "#64748b" } }),
+                              "Sematkan di Puncak Feed (Pinned)"
                             ]
                           })
                         ]
@@ -545,7 +553,7 @@ e.s(["default", 0, function() {
                         },
                         children: [
                           (0, t.jsx)(iconSend, { size: 14 }),
-                          submitting ? "Memproses Siaran..." : "🚀 Publikasikan Jukrah Kedinasan"
+                          submitting ? "Memproses Siaran..." : "Publikasikan Jukrah Kedinasan"
                         ]
                       })
                     ]
@@ -559,7 +567,7 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             children: [
               (0, t.jsxs)("h3", {
-                style: { fontSize: "0.95rem", fontWeight: 800, margin: "0 0 0.75rem", color: "var(--text-color-secondary, #64748b)" },
+                style: { fontSize: "0.95rem", fontWeight: 800, margin: "0 0 0.75rem", color: "var(--cas-text-secondary, #475569)" },
                 children: ["Arsip Jukrah Resmi Kedinasan Aktif (", officialPosts.length, ")"]
               }),
               loadingPosts ? (0, t.jsx)("div", { style: { color: "#94a3b8", padding: "1.5rem", textAlign: "center" }, children: "Memuat arsip siaran..." }) :
@@ -574,15 +582,15 @@ e.s(["default", 0, function() {
                   key: post.id,
                   className: "cms-card",
                   style: {
-                    background: "var(--cas-bg-card, #1e293b)",
-                    border: "1px solid var(--cas-border, rgba(255,255,255,0.1))",
+                    background: "var(--cas-bg-surface, #ffffff)",
+                    border: "1px solid var(--cas-border, #cbd5e1)",
                     borderRadius: "10px",
                     padding: "1rem",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
                     gap: "1rem",
-                    borderLeft: "4px solid #3b82f6"
+                    borderLeft: "4px solid #2563eb"
                   },
                   children: [
                     (0, t.jsxs)("div", {
@@ -591,59 +599,74 @@ e.s(["default", 0, function() {
                         (0, t.jsxs)("div", {
                           style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.35rem" },
                           children: [
-                            (0, t.jsx)("span", {
+                            (0, t.jsxs)("span", {
                               style: {
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
                                 fontSize: "0.68rem",
-                                background: "rgba(59,130,246,0.15)",
-                                color: "#60a5fa",
-                                border: "1px solid rgba(59,130,246,0.3)",
+                                background: "rgba(37,99,235,0.12)",
+                                color: "var(--cas-blue, #2563eb)",
+                                border: "1px solid rgba(37,99,235,0.3)",
                                 padding: "0.15rem 0.45rem",
                                 borderRadius: "4px",
                                 fontWeight: 800
                               },
-                              children: "📢 DINAS"
+                              children: [(0, t.jsx)("i", { className: "pi pi-megaphone", style: { fontSize: "0.65rem" } }), "DINAS"]
                             }),
-                            post.is_pinned && (0, t.jsx)("span", {
+                            post.is_pinned && (0, t.jsxs)("span", {
                               style: {
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
                                 fontSize: "0.68rem",
                                 background: "rgba(245,158,11,0.15)",
-                                color: "#f59e0b",
+                                color: "#d97706",
                                 border: "1px solid rgba(245,158,11,0.3)",
                                 padding: "0.15rem 0.45rem",
                                 borderRadius: "4px",
                                 fontWeight: 800
                               },
-                              children: "📌 PINNED"
+                              children: [(0, t.jsx)("i", { className: "pi pi-thumbtack", style: { fontSize: "0.65rem" } }), "PINNED"]
                             }),
-                            (0, t.jsx)("span", {
+                            (0, t.jsxs)("span", {
                               style: { display: "inline-flex", alignItems: "center", gap: "0.35rem" },
                               children: [
                                 (0, t.jsx)("span", {
-                                  style: { fontSize: "0.82rem", fontWeight: 700, color: "var(--text-color, #0f172a)" },
+                                  style: { fontSize: "0.82rem", fontWeight: 700, color: "#38bdf8" },
                                   children: (function(item){
                                     if (!item) return "@personil";
-                                    /* dynamic handle */
                                     if (item.author_callsign && !String(item.author_callsign).startsWith('user_')) return "@" + String(item.author_callsign).replace(/^@/, '');
-                                    if (item.author_name && String(item.author_name).trim()) return item.author_name;
-                                    if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + item.author_username;
-                                    return item.author_handle || formatCallsign(item.author_callsign, item.author_id, item.author_username);
+                                    if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + String(item.author_username).replace(/^@/, '');
+                                    if (item.author_name && String(item.author_name).trim()) return "@" + String(item.author_name).trim().toLowerCase().replace(/\s+/g, '.');
+                                    return item.author_handle || "@personil";
                                   })(post)
                                 }),
                                 (function(item){
-                                  var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin';
-                                  var r = String(item?.author_role || '').toLowerCase();
-                                  var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
-                                  var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+                                  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+                                  var uNorm = String(item?.author_username || item?.author_callsign || '').toLowerCase().trim().replace(/^@/, '');
+                                  var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
+                                  var r = String(item?.author_role || '').toLowerCase().trim();
+                                  var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? '#6366f1' : (r === 'operator' ? '#0095f6' : '#64748b'));
+                                  var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : (r === 'operator' ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
                                   return (0, t.jsx)("span", {
                                     title: bTitle,
-                                    style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "13px", height: "13px", borderRadius: "50%", background: bColor, flexShrink: 0 },
-                                    children: [(0, t.jsx)("svg", { viewBox: "0 0 24 24", width: 8, height: 8, children: [(0, t.jsx)("path", { d: "m6 12 4 4 8-8", stroke: "#ffffff", strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })] })]
+                                    style: { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 },
+                                    children: (0, t.jsxs)("svg", {
+                                      viewBox: "0 0 24 24",
+                                      width: 15,
+                                      height: 15,
+                                      children: [
+                                        (0, t.jsx)("path", { d: "M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z", fill: bColor }),
+                                        (0, t.jsx)("path", { d: "M9.5 12.5l2 2 4.5-4.5", stroke: "#ffffff", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })
+                                      ]
+                                    })
                                   });
                                 })(post)
                               ]
                             }),
                             (0, t.jsxs)("span", {
-                              style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                              style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #64748b)", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
                               children: [(0, t.jsx)(a.Clock, { size: 12 }), " ", formatDate(post.created_at)]
                             })
                           ]
@@ -652,7 +675,7 @@ e.s(["default", 0, function() {
                           style: {
                             margin: 0,
                             fontSize: "0.86rem",
-                            color: "var(--text-color, #1e293b)",
+                            color: "var(--cas-text-primary, #0f172a)",
                             lineHeight: "1.45",
                             whiteSpace: "pre-wrap",
                             wordBreak: "break-word"
@@ -671,11 +694,12 @@ e.s(["default", 0, function() {
                               alignItems: "center",
                               gap: "0.3rem",
                               fontSize: "0.75rem",
-                              padding: "0.25rem 0.5rem",
-                              borderRadius: "4px",
-                              background: "rgba(255,255,255,0.06)",
-                              border: "1px solid rgba(255,255,255,0.12)",
-                              color: "#60a5fa",
+                              padding: "0.25rem 0.55rem",
+                              borderRadius: "6px",
+                              background: "var(--cas-bg-subtle, #f8fafc)",
+                              border: "1px solid var(--cas-border, #cbd5e1)",
+                              color: "var(--cas-blue, #2563eb)",
+                              fontWeight: 600,
                               cursor: "pointer"
                             },
                             children: [(0, t.jsx)(o.Paperclip, { size: 12 }), " ", m.name || "Berkas"]
@@ -699,9 +723,9 @@ e.s(["default", 0, function() {
                             gap: "0.35rem",
                             padding: "0.35rem 0.75rem",
                             borderRadius: "6px",
-                            background: "rgba(59,130,246,0.15)",
-                            border: "1px solid rgba(59,130,246,0.3)",
-                            color: "#60a5fa",
+                            background: "rgba(37,99,235,0.12)",
+                            border: "1px solid rgba(37,99,235,0.3)",
+                            color: "var(--cas-blue, #2563eb)",
                             fontSize: "0.78rem",
                             fontWeight: 700,
                             cursor: "pointer"
@@ -744,8 +768,8 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             className: "cms-card",
             style: {
-              background: "var(--cas-bg-card, #1e293b)",
-              border: "1px solid var(--cas-border, rgba(255,255,255,0.1))",
+              background: "var(--cas-bg-surface, #ffffff)",
+              border: "1px solid var(--cas-border, #cbd5e1)",
               borderRadius: "10px",
               padding: "1rem",
               display: "flex",
@@ -758,8 +782,8 @@ e.s(["default", 0, function() {
               (0, t.jsxs)("div", {
                 style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                 children: [
-                  (0, t.jsx)(iconBarChart, { size: 18, style: { color: "#3b82f6" } }),
-                  (0, t.jsx)("span", { style: { fontSize: "0.88rem", fontWeight: 700, color: "var(--text-color, #0f172a)" }, children: "Pilih Siaran Jukrah:" })
+                  (0, t.jsx)(iconBarChart, { size: 18, style: { color: "#2563eb" } }),
+                  (0, t.jsx)("span", { style: { fontSize: "0.88rem", fontWeight: 700, color: "var(--cas-text-primary, #0f172a)" }, children: "Pilih Siaran Jukrah:" })
                 ]
               }),
               (0, t.jsx)("select", {
@@ -771,9 +795,9 @@ e.s(["default", 0, function() {
                   padding: "0.45rem 0.75rem",
                   fontSize: "0.85rem",
                   borderRadius: "6px",
-                  background: "var(--cas-bg-surface-2, rgba(0,0,0,0.2))",
-                  border: "1px solid var(--cas-border, rgba(255,255,255,0.2))",
-                  color: "var(--text-color, #0f172a)"
+                  background: "var(--cas-bg-surface, #ffffff)",
+                  border: "1px solid var(--cas-border, #cbd5e1)",
+                  color: "var(--cas-text-primary, #0f172a)"
                 },
                 children: officialPosts.map(p => (0, t.jsx)("option", {
                   value: p.id,
@@ -784,16 +808,19 @@ e.s(["default", 0, function() {
                 type: "button",
                 onClick: () => fetchReport(selectedPostId),
                 style: {
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
                   padding: "0.45rem 0.85rem",
                   borderRadius: "6px",
-                  background: "rgba(59,130,246,0.15)",
-                  border: "1px solid rgba(59,130,246,0.3)",
-                  color: "#60a5fa",
+                  background: "rgba(37,99,235,0.12)",
+                  border: "1px solid rgba(37,99,235,0.3)",
+                  color: "var(--cas-blue, #2563eb)",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   cursor: "pointer"
                 },
-                children: "🔄 Segarkan Data"
+                children: [(0, t.jsx)("i", { className: "pi pi-refresh", style: { fontSize: "0.75rem" } }), "Segarkan Data"]
               })
             ]
           }),
@@ -804,27 +831,27 @@ e.s(["default", 0, function() {
             children: [
               (0, t.jsxs)("div", {
                 className: "cms-card",
-                style: { background: "var(--cas-bg-card, #1e293b)", border: "1px solid var(--cas-border, rgba(255,255,255,0.1))", borderRadius: "10px", padding: "1rem" },
+                style: { background: "var(--cas-bg-surface, #ffffff)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", fontWeight: 700 }, children: "🏢 TOTAL SATKER DITARGETKAN" }),
-                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--text-color, #0f172a)" }, children: totalTargetSatker })
+                  (0, t.jsxs)("div", { style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #475569)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [(0, t.jsx)("i", { className: "pi pi-building", style: { fontSize: "0.75rem" } }), "TOTAL SATKER DITARGETKAN"] }),
+                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--cas-text-primary, #0f172a)" }, children: totalTargetSatker })
                 ]
               }),
               (0, t.jsxs)("div", {
                 className: "cms-card",
-                style: { background: "var(--cas-bg-card, #1e293b)", border: "1px solid var(--cas-border, rgba(255,255,255,0.1))", borderRadius: "10px", padding: "1rem" },
+                style: { background: "var(--cas-bg-surface, #ffffff)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "var(--text-color-secondary, #64748b)", fontWeight: 700 }, children: "👥 TOTAL PERSONIL TERDAFTAR" }),
-                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--text-color, #0f172a)" }, children: totalPersonil })
+                  (0, t.jsxs)("div", { style: { fontSize: "0.75rem", color: "var(--cas-text-secondary, #475569)", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [(0, t.jsx)("i", { className: "pi pi-users", style: { fontSize: "0.75rem" } }), "TOTAL PERSONIL TERDAFTAR"] }),
+                  (0, t.jsx)("div", { style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "var(--cas-text-primary, #0f172a)" }, children: totalPersonil })
                 ]
               }),
               (0, t.jsxs)("div", {
                 className: "cms-card",
                 style: { background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "#22c55e", fontWeight: 700 }, children: "🫡 SUDAH KONFIRMASI (PAHAM)" }),
+                  (0, t.jsxs)("div", { style: { fontSize: "0.75rem", color: "#16a34a", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [(0, t.jsx)("i", { className: "pi pi-check-circle", style: { fontSize: "0.75rem" } }), "SUDAH KONFIRMASI (PAHAM)"] }),
                   (0, t.jsxs)("div", {
-                    style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "#22c55e", display: "flex", alignItems: "baseline", gap: "0.5rem" },
+                    style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "#16a34a", display: "flex", alignItems: "baseline", gap: "0.5rem" },
                     children: [
                       totalSudahBaca,
                       (0, t.jsxs)("span", { style: { fontSize: "0.95rem", fontWeight: 600, opacity: 0.8 }, children: ["(", totalPct, "%)"] })
@@ -836,9 +863,9 @@ e.s(["default", 0, function() {
                 className: "cms-card",
                 style: { background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "10px", padding: "1rem" },
                 children: [
-                  (0, t.jsx)("div", { style: { fontSize: "0.75rem", color: "#ef4444", fontWeight: 700 }, children: "⏳ BELUM KONFIRMASI" }),
+                  (0, t.jsxs)("div", { style: { fontSize: "0.75rem", color: "#dc2626", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [(0, t.jsx)("i", { className: "pi pi-clock", style: { fontSize: "0.75rem" } }), "BELUM KONFIRMASI"] }),
                   (0, t.jsxs)("div", {
-                    style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "#ef4444", display: "flex", alignItems: "baseline", gap: "0.5rem" },
+                    style: { fontSize: "1.6rem", fontWeight: 800, marginTop: "0.25rem", color: "#dc2626", display: "flex", alignItems: "baseline", gap: "0.5rem" },
                     children: [
                       totalPersonil - totalSudahBaca,
                       (0, t.jsxs)("span", { style: { fontSize: "0.95rem", fontWeight: 600, opacity: 0.8 }, children: ["(", 100 - totalPct, "%)"] })
@@ -853,8 +880,8 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             className: "cms-card",
             style: {
-              background: "var(--cas-bg-card, #1e293b)",
-              border: "1px solid var(--cas-border, rgba(255,255,255,0.1))",
+              background: "var(--cas-bg-surface, #ffffff)",
+              border: "1px solid var(--cas-border, #cbd5e1)",
               borderRadius: "10px",
               padding: "1rem"
             },
@@ -863,7 +890,7 @@ e.s(["default", 0, function() {
                 style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" },
                 children: [
                   (0, t.jsx)("h3", {
-                    style: { fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "var(--text-color, #0f172a)" },
+                    style: { fontSize: "0.95rem", fontWeight: 800, margin: 0, color: "var(--cas-text-primary, #0f172a)" },
                     children: "Rincian Kepatuhan per Satuan Kerja"
                   }),
                   (0, t.jsx)(r.InputText, {
@@ -883,7 +910,7 @@ e.s(["default", 0, function() {
                   children: [
                     (0, t.jsx)("thead", {
                       children: (0, t.jsxs)("tr", {
-                        style: { borderBottom: "1px solid var(--cas-border, rgba(255,255,255,0.15))", textAlign: "left", color: "var(--text-color-secondary, #64748b)", fontSize: "0.75rem" },
+                        style: { borderBottom: "1px solid var(--cas-border, #cbd5e1)", textAlign: "left", color: "var(--cas-text-secondary, #475569)", fontSize: "0.75rem" },
                         children: [
                           (0, t.jsx)("th", { style: { padding: "0.6rem 0.75rem" }, children: "SATKER / DIREKTORAT" }),
                           (0, t.jsx)("th", { style: { padding: "0.6rem 0.75rem", textAlign: "center" }, children: "PERSONIL KONFIRMASI" }),
@@ -894,23 +921,23 @@ e.s(["default", 0, function() {
                     (0, t.jsx)("tbody", {
                       children: filteredSatkers.map(s => {
                         let pct = s.total_personil > 0 ? Math.round((s.total_sudah_baca / s.total_personil) * 100) : 0;
-                        let badgeColor = pct >= 80 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#ef4444';
+                        let badgeColor = pct >= 80 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626';
                         let badgeBg = pct >= 80 ? 'rgba(34,197,94,0.12)' : pct >= 40 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)';
                         let label = pct >= 80 ? 'Tinggi' : pct >= 40 ? 'Sebagian' : 'Perhatian';
 
                         return (0, t.jsxs)("tr", {
                           key: s.satker_id,
-                          style: { borderBottom: "1px solid var(--cas-border, rgba(255,255,255,0.06))" },
+                          style: { borderBottom: "1px solid var(--cas-border-subtle, #f1f5f9)" },
                           children: [
                             (0, t.jsxs)("td", {
                               style: { padding: "0.65rem 0.75rem" },
                               children: [
-                                (0, t.jsx)("div", { style: { fontWeight: 700, color: "var(--text-color, #0f172a)" }, children: s.satker_nama }),
-                                s.satker_singkat && (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: "var(--text-color-secondary, #64748b)" }, children: s.satker_singkat })
+                                (0, t.jsx)("div", { style: { fontWeight: 700, color: "var(--cas-text-primary, #0f172a)" }, children: s.satker_nama }),
+                                s.satker_singkat && (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #64748b)" }, children: s.satker_singkat })
                               ]
                             }),
                             (0, t.jsx)("td", {
-                              style: { padding: "0.65rem 0.75rem", textAlign: "center", fontWeight: 700, color: "var(--text-color, #0f172a)" },
+                              style: { padding: "0.65rem 0.75rem", textAlign: "center", fontWeight: 700, color: "var(--cas-text-primary, #0f172a)" },
                               children: s.total_sudah_baca + " / " + s.total_personil + " personil"
                             }),
                             (0, t.jsxs)("td", {
@@ -934,7 +961,7 @@ e.s(["default", 0, function() {
                                   ]
                                 }),
                                 (0, t.jsx)("div", {
-                                  style: { width: "100%", height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "999px", overflow: "hidden" },
+                                  style: { width: "100%", height: "6px", background: "var(--cas-bg-active, rgba(148,163,184,0.22))", borderRadius: "999px", overflow: "hidden" },
                                   children: (0, t.jsx)("div", {
                                     style: { width: pct + "%", height: "100%", background: badgeColor, borderRadius: "999px" }
                                   })
@@ -961,7 +988,7 @@ e.s(["default", 0, function() {
           (0, t.jsxs)("div", {
             className: "cms-card",
             style: {
-              background: "rgba(220,38,38,0.1)",
+              background: "rgba(220,38,38,0.08)",
               border: "1px solid rgba(220,38,38,0.3)",
               borderRadius: "10px",
               padding: "1rem",
@@ -975,11 +1002,11 @@ e.s(["default", 0, function() {
               (0, t.jsxs)("div", {
                 style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                 children: [
-                  (0, t.jsx)(iconShieldAlert, { size: 22, style: { color: "#ef4444" } }),
+                  (0, t.jsx)(iconShieldAlert, { size: 22, style: { color: "#dc2626" } }),
                   (0, t.jsxs)("div", {
                     children: [
-                      (0, t.jsx)("div", { style: { fontSize: "0.95rem", fontWeight: 800, color: "#f87171" }, children: "Protokol Keamanan & Moderasi Sandi CAS" }),
-                      (0, t.jsx)("div", { style: { fontSize: "0.78rem", color: "var(--text-color-secondary, #64748b)" }, children: "Jika ditemukan potensi kebocoran intelijen atau pelanggaran kode etik, gunakan tombol Panic Takedown." })
+                      (0, t.jsx)("div", { style: { fontSize: "0.95rem", fontWeight: 800, color: "var(--cas-crimson, #dc2626)" }, children: "Protokol Keamanan & Moderasi Sandi CAS" }),
+                      (0, t.jsx)("div", { style: { fontSize: "0.78rem", color: "var(--cas-text-secondary, #475569)" }, children: "Jika ditemukan potensi kebocoran intelijen atau pelanggaran kode etik, gunakan tombol Panic Takedown." })
                     ]
                   })
                 ]
@@ -993,27 +1020,32 @@ e.s(["default", 0, function() {
                     style: {
                       padding: "0.35rem 0.75rem",
                       borderRadius: "6px",
-                      border: "none",
+                      border: moderationFilter === 'all' ? "none" : "1px solid var(--cas-border, #cbd5e1)",
                       cursor: "pointer",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      background: moderationFilter === 'all' ? "#ef4444" : "var(--cas-bg-subtle, #f1f5f9)", color: moderationFilter === 'all' ? "#fff" : "var(--cas-text-primary, #0f172a)"
+                      background: moderationFilter === 'all' ? "#dc2626" : "var(--cas-bg-surface, #ffffff)",
+                      color: moderationFilter === 'all' ? "#fff" : "var(--cas-text-primary, #0f172a)"
                     },
                     children: "Semua Postingan CAS"
                   }),
-                  (0, t.jsx)("button", {
+                  (0, t.jsxs)("button", {
                     type: "button",
                     onClick: () => setModerationFilter('reported'),
                     style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
                       padding: "0.35rem 0.75rem",
                       borderRadius: "6px",
-                      border: "none",
+                      border: moderationFilter === 'reported' ? "none" : "1px solid var(--cas-border, #cbd5e1)",
                       cursor: "pointer",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      background: moderationFilter === 'reported' ? "#ef4444" : "var(--cas-bg-subtle, #f1f5f9)", color: moderationFilter === 'reported' ? "#fff" : "var(--cas-text-primary, #0f172a)"
+                      background: moderationFilter === 'reported' ? "#dc2626" : "var(--cas-bg-surface, #ffffff)",
+                      color: moderationFilter === 'reported' ? "#fff" : "var(--cas-text-primary, #0f172a)"
                     },
-                    children: "⚠️ Postingan Dilaporkan"
+                    children: [(0, t.jsx)("i", { className: "pi pi-exclamation-triangle", style: { fontSize: "0.75rem" } }), "Postingan Dilaporkan"]
                   })
                 ]
               })
@@ -1033,8 +1065,8 @@ e.s(["default", 0, function() {
               key: p.id,
               className: "cms-card",
               style: {
-                background: "var(--cas-bg-card, #1e293b)",
-                border: "1px solid var(--cas-border, rgba(255,255,255,0.1))",
+                background: "var(--cas-bg-surface, #ffffff)",
+                border: "1px solid var(--cas-border, #cbd5e1)",
                 borderRadius: "10px",
                 padding: "1rem",
                 display: "flex",
@@ -1053,37 +1085,46 @@ e.s(["default", 0, function() {
                           style: { display: "inline-flex", alignItems: "center", gap: "0.35rem" },
                           children: [
                             (0, t.jsx)("span", {
-                              style: { fontWeight: 800, color: "var(--text-color, #0f172a)", fontSize: "0.88rem" },
+                              style: { fontWeight: 800, color: "#38bdf8", fontSize: "0.88rem" },
                               children: (function(item){
                                 if (!item) return "@personil";
-                                /* dynamic handle */
                                 if (item.author_callsign && !String(item.author_callsign).startsWith('user_')) return "@" + String(item.author_callsign).replace(/^@/, '');
-                                if (item.author_name && String(item.author_name).trim()) return item.author_name;
-                                if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + item.author_username;
-                                return item.author_handle || formatCallsign(item.author_callsign, item.author_id, item.author_username);
+                                if (item.author_username && !String(item.author_username).startsWith('user_')) return "@" + String(item.author_username).replace(/^@/, '');
+                                if (item.author_name && String(item.author_name).trim()) return "@" + String(item.author_name).trim().toLowerCase().replace(/\s+/g, '.');
+                                return item.author_handle || "@personil";
                               })(p)
                             }),
                             (function(item){
-                              var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin';
-                              var r = String(item?.author_role || '').toLowerCase();
-                              var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'binops') ? '#10b981' : '#38bdf8');
-                              var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : 'Personil Terverifikasi');
+                              var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+                              var uNorm = String(item?.author_username || item?.author_callsign || '').toLowerCase().trim().replace(/^@/, '');
+                              var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
+                              var r = String(item?.author_role || '').toLowerCase().trim();
+                              var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? '#6366f1' : (r === 'operator' ? '#0095f6' : '#64748b'));
+                              var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : (r === 'operator' ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
                               return (0, t.jsx)("span", {
                                 title: bTitle,
-                                style: { display: "inline-flex", alignItems: "center", justifyContent: "center", width: "13px", height: "13px", borderRadius: "50%", background: bColor, flexShrink: 0 },
-                                children: [(0, t.jsx)("svg", { viewBox: "0 0 24 24", width: 8, height: 8, children: [(0, t.jsx)("path", { d: "m6 12 4 4 8-8", stroke: "#ffffff", strokeWidth: 3.5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })] })]
+                                style: { display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 },
+                                children: (0, t.jsxs)("svg", {
+                                  viewBox: "0 0 24 24",
+                                  width: 15,
+                                  height: 15,
+                                  children: [
+                                    (0, t.jsx)("path", { d: "M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z", fill: bColor }),
+                                    (0, t.jsx)("path", { d: "M9.5 12.5l2 2 4.5-4.5", stroke: "#ffffff", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" })
+                                  ]
+                                })
                               });
                             })(p)
                           ]
                         }),
-                        
                         (0, t.jsx)("span", {
                           style: {
                             fontSize: "0.68rem",
-                            background: "rgba(148,163,184,0.12)",
-                            color: "#94a3b8",
-                            padding: "0.1rem 0.4rem",
-                            borderRadius: "4px"
+                            background: "rgba(148,163,184,0.14)",
+                            color: "var(--cas-text-secondary, #475569)",
+                            padding: "0.1rem 0.45rem",
+                            borderRadius: "4px",
+                            fontWeight: 600
                           },
                           children: (function(item){ var isSuper = String(item?.author_id) === '1' || item?.author_username === 'omeko42' || item?.author_callsign === 'omeko42' || String(item?.author_role).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(item?.author_id)); if (isSuper) return "Robinopsnal Bareskrim Polri"; return item?.author_satker || item?.satker_name || item?.satker || "Robinopsnal Bareskrim Polri"; })(p)
                         }),
@@ -1097,7 +1138,7 @@ e.s(["default", 0, function() {
                       style: {
                         margin: "0.35rem 0 0",
                         fontSize: "0.86rem",
-                        color: "var(--text-color, #1e293b)",
+                        color: "var(--cas-text-primary, #0f172a)",
                         lineHeight: "1.45",
                         whiteSpace: "pre-wrap",
                         wordBreak: "break-word"
@@ -1127,7 +1168,7 @@ e.s(["default", 0, function() {
                         cursor: "pointer",
                         boxShadow: "0 2px 8px rgba(220,38,38,0.3)"
                       },
-                      children: [(0, t.jsx)(iconShieldAlert, { size: 13 }), " 🚨 Panic Takedown"]
+                      children: [(0, t.jsx)(iconShieldAlert, { size: 13 }), " Panic Takedown"]
                     }),
                     (0, t.jsxs)("button", {
                       type: "button",
@@ -1138,9 +1179,9 @@ e.s(["default", 0, function() {
                         gap: "0.35rem",
                         padding: "0.4rem 0.8rem",
                         borderRadius: "6px",
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.15)",
-                        color: "var(--cas-text-secondary, #cbd5e1)",
+                        background: "var(--cas-bg-subtle, #f8fafc)",
+                        border: "1px solid var(--cas-border, #cbd5e1)",
+                        color: "var(--cas-text-secondary, #475569)",
                         fontSize: "0.78rem",
                         fontWeight: 600,
                         cursor: "pointer"

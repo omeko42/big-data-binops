@@ -897,7 +897,7 @@ children:[
         (0,t.jsxs)("div",{
           style:{display:"flex",alignItems:"center",gap:"0.5rem"},
           children:[
-            (0,t.jsx)("span",{style:{fontSize:"1.1rem"},children:"📡"}),
+            (0,t.jsx)("i",{className:"pi pi-bolt",style:{fontSize:"0.95rem",color:"#2563eb"}}),
             (0,t.jsx)("span",{
               style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary, #f8fafc)"},
               children:"Sharese"
@@ -947,7 +947,7 @@ children:[
       (0,t.jsx)("div",{
         style:{display:"flex",flexDirection:"column",gap:"0.4rem"},
         children:casFeed.slice(0, 5).map(item => {
-          let isUserOne = String(item.author_id) === '1' || item.author_username === 'omeko42' || item.author_callsign === 'omeko42';
+          let isUserOne = String(item.author_id) === '1' || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(item.author_username || '').toLowerCase()) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(item.author_callsign || '').toLowerCase().replace(/^@/, ''));
           let isSuper = isUserOne || String(item.author_role || '').toLowerCase() === 'superadmin';
           let roleStr = String(item.author_role || '').toLowerCase();
           let callsign = (function() {
@@ -965,8 +965,8 @@ children:[
             let code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
             return '@user_' + (idStr || '0') + code;
           })();
-          let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? '#10b981' : '#38bdf8');
-          let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Terverifikasi' : 'Personil Terverifikasi'));
+          let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? '#6366f1' : ((roleStr === 'operator') ? '#0095f6' : '#64748b'));
+          let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
           let satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : toTitleCase(item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || 'Mabes Bareskrim');
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
@@ -1003,26 +1003,29 @@ children:[
                 },
                 children:[
                   (0,t.jsxs)("div",{
-                    style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,overflow:"hidden"},
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},
                     children:[
-                      (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",whiteSpace:"nowrap"},children:callsign}),
+                      (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",whiteSpace:"nowrap",flexShrink:0},children:callsign}),
                       (0,t.jsx)("span",{
                         title:bTitle,
-                        style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"13px",height:"13px",borderRadius:"50%",background:bColor,flexShrink:0},
+                        style:{display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,lineHeight:1},
                         children:[
-                          (0,t.jsx)("svg",{viewBox:"0 0 24 24",width:8,height:8,children:[
-                            (0,t.jsx)("path",{d:"m6 12 4 4 8-8",stroke:"#ffffff",strokeWidth:3.5,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+                          (0,t.jsxs)("svg",{viewBox:"0 0 24 24",width:15,height:15,children:[
+                            (0,t.jsx)("path",{d:"M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z",fill:bColor}),
+                            (0,t.jsx)("path",{d:"M9.5 12.5l2 2 4.5-4.5",stroke:"#ffffff",strokeWidth:2.4,strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
                           ]})
                         ]
                       }),
                       (0,t.jsx)("span",{
                         style:{
                           fontSize:"0.68rem",
-                          background:"rgba(255,255,255,0.08)",
-                          color:"#cbd5e1",
-                          padding:"0.05rem 0.35rem",
+                          background:"rgba(148,163,184,0.14)",
+                          color:"var(--cas-text-secondary, #cbd5e1)",
+                          padding:"0.05rem 0.45rem",
                           borderRadius:"4px",
-                          maxWidth:"150px",
+                          maxWidth:"none",
+                          flex:"0 1 auto",
+                          minWidth:0,
                           overflow:"hidden",
                           textOverflow:"ellipsis",
                           whiteSpace:"nowrap"

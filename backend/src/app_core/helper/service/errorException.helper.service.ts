@@ -24,13 +24,9 @@ export class ErrorExceptionFilter implements ExceptionFilter {
         } else if (exception instanceof QueryFailedError) {
             status = HttpStatus.BAD_REQUEST; // Or another suitable status code
             errorMessage = (exception.driverError && exception.driverError.constraint === 'chk_auth_users_username_format') ? 'Format Username tidak valid: gunakan 3-30 karakter huruf kecil, angka, titik (.), atau garis bawah (_) tanpa @domain.' : (exception.driverError && exception.driverError.detail ? 'Gagal menyimpan ke database: ' + exception.driverError.detail : 'Database query failed');
-            const errorCode = exception.driverError.code;
+            const errorCode = exception.driverError?.code;
             systemMessage = [
-                exception.message,
-                `Error Code: ${errorCode}`,
-                `Query: ${exception.query}`,
-                `Parameters: ${exception.parameters.join(', ')}`,
-                `Driver Error: ${exception.driverError.message}`
+                `Error Code: ${errorCode || 'DB_QUERY_ERROR'}`
             ];
             errorDetails = {
                 detail: exception.driverError.detail,

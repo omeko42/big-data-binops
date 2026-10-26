@@ -1,8 +1,19 @@
 const http = require('http');
 const _origSetHeader = http.ServerResponse.prototype.setHeader;
 http.ServerResponse.prototype.setHeader = function (name, value) {
-  if (typeof name === 'string' && name.toLowerCase() === 'cache-control' && typeof value === 'string' && value.includes('immutable')) {
-    value = 'public, max-age=0, must-revalidate';
+  if (typeof name === 'string') {
+    const lower = name.toLowerCase();
+    if (lower === 'cache-control' && typeof value === 'string' && value.includes('immutable')) {
+      value = 'public, max-age=0, must-revalidate';
+    } else if (lower === 'link') {
+      if (typeof value === 'string' && value.includes('.woff2')) {
+        value = value.split(',').filter((p) => !p.includes('.woff2')).join(',').trim();
+        if (!value) return this;
+      } else if (Array.isArray(value)) {
+        value = value.filter((v) => typeof v !== 'string' || !v.includes('.woff2'));
+        if (value.length === 0) return this;
+      }
+    }
   }
   return _origSetHeader.call(this, name, value);
 };

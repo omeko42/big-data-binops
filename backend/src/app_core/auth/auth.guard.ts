@@ -16,8 +16,8 @@ export class AuthGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const reqObj = context.switchToHttp().getRequest();
-        if (reqObj.url && ((reqObj.url.includes('/dpo/') || reqObj.url.includes('/pihak-terlibat/')) && (reqObj.url.includes('/arsip') || reqObj.url.includes('/foto')) || reqObj.url.includes('/bdb/jukrah/stream/'))) {
-            // Allow internal DPO archive/photo viewing and self-authenticating tokenized media stream
+        if (reqObj.url && ((reqObj.url.includes('/dpo/') || reqObj.url.includes('/pihak-terlibat/')) && (reqObj.url.includes('/arsip') || reqObj.url.includes('/foto')) || reqObj.url.includes('/bdb/jukrah/stream/') || reqObj.url.includes('/bdb/system/orchestrator/queue-status'))) {
+            // Allow internal DPO archive/photo viewing, self-authenticating tokenized media stream, and read-only queue status
             return true;
         }
         const request = context.switchToHttp().getRequest();
@@ -27,9 +27,19 @@ export class AuthGuard implements CanActivate {
 
             throw new UnauthorizedException('Invalid token');
         }
-        const payload = await this.jwtService.verifyAsync(token, {
-            secret: jwtConstants.secret
-        });
+        let payload: any;
+        try {
+            payload = await this.jwtService.verifyAsync(token, {
+                secret: jwtConstants.secret
+            });
+        } catch {
+            if (reqObj.url && reqObj.url.includes('/Authentication/logout')) {
+                payload = this.jwtService.decode(token) || {};
+                request['user'] = payload;
+                return true;
+            }
+            throw new UnauthorizedException('Invalid token');
+        }
         request['user'] = payload;
         const device = await this.dataSource.getRepository(Device).findOne({ where: { device_token: payload.device_token } });
         const organisasiId =

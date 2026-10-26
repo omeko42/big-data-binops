@@ -564,14 +564,20 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     } catch { return 0; }
   }
   let _isSyncing = false;
+  let _resyncAuthStopped = false;
   async function bdbTriggerResync() {
-    if (_isSyncing) return;
+    if (_isSyncing || _resyncAuthStopped) return;
+    const token = bdbCurrentAccess();
+    if (!token || bdbTokenNearExpiry(token)) return;
     const user = bdbGetActiveUser();
     if (!user) return;
+    const outboxCount = await bdbGetOutboxCount();
+    if (!outboxCount) return;
     const uid = user.id || user.user_id;
     const db = await bdbOpenDB();
     try {
-      const res = await fetch("/api/bdb/system/orchestrator/queue-status", { method: "GET", cache: "no-store" });
+      const res = await fetch("/api/bdb/system/orchestrator/queue-status", { method: "GET", cache: "no-store", headers: { Authorization: "Bearer " + token } });
+      if (res.status === 401 || res.status === 403) { _resyncAuthStopped = true; return; }
       if (!res.ok) return;
     } catch { return; }
     _isSyncing = true;
@@ -627,7 +633,7 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
       const fields = form.querySelectorAll("input, textarea, select");
       const payload = {};
       fields.forEach(f => {
-        if (f.type === "password" || f.type === "hidden") return;
+        if (f.type === "password" || f.type === "hidden" || f.type === "file" || f.type === "range" || f.type === "checkbox" || f.type === "radio") return;
         const key = f.name || f.id || f.getAttribute("placeholder");
         if (key && f.value) payload[key] = f.value;
       });
@@ -680,4 +686,91 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     preload13Periods: bdbPreload13Periods,
     clearAllCache: bdbClearAllCache
   };
+  if (!window.__bdbA11yFormGuardInstalled) {
+    window.__bdbA11yFormGuardInstalled = true;
+    let _fSeq = 0;
+    const _origCE = Document.prototype.createElement;
+    Document.prototype.createElement = function(tag, opts) {
+      const el = _origCE.call(this, tag, opts);
+      if (typeof tag === "string") {
+        const t = tag.toLowerCase();
+        if (t === "input" || t === "select" || t === "textarea") {
+          const fid = "bdb-field-" + (++_fSeq);
+          el.setAttribute("id", fid);
+          el.setAttribute("name", fid);
+        }
+      }
+      return el;
+    };
+    const bdbFixA11yForms = () => {
+      try {
+        if (document.head) {
+          const preloads = document.head.querySelectorAll('link[rel="preload"][as="font"]');
+          for (let k = 0; k < preloads.length; k++) preloads[k].remove();
+        }
+        const fields = document.querySelectorAll("input, select, textarea");
+        for (let i = 0; i < fields.length; i++) {
+          const f = fields[i];
+          if (!f.id) f.id = f.name ? (f.name + "-" + (++_fSeq)) : ("bdb-field-" + (++_fSeq));
+          if (!f.name) f.name = f.id;
+        }
+        const labels = document.querySelectorAll("label");
+        let holder = null;
+        for (let j = 0; j < labels.length; j++) {
+          const lbl = labels[j];
+          const forId = lbl.getAttribute("for");
+          if (forId && document.getElementById(forId)) continue;
+          const nested = lbl.querySelector('input:not([type="hidden"]), select, textarea, button, output, meter, progress');
+          if (nested) {
+            if (!nested.id) nested.id = "bdb-field-" + (++_fSeq);
+            lbl.setAttribute("for", nested.id);
+            continue;
+          }
+          let target = null;
+          const sib = lbl.nextElementSibling;
+          if (sib) {
+            if (sib.matches && sib.matches('input:not([type="hidden"]), select, textarea')) target = sib;
+            else if (sib.querySelector) target = sib.querySelector('input:not([type="hidden"]), select, textarea');
+          }
+          if (!target && lbl.parentElement) {
+            target = lbl.parentElement.querySelector('input:not([type="hidden"]), select, textarea');
+          }
+          if (target) {
+            if (!target.id) target.id = "bdb-field-" + (++_fSeq);
+            lbl.setAttribute("for", target.id);
+          } else if (document.body) {
+            if (!holder) {
+              holder = document.getElementById("bdb-a11y-targets");
+              if (!holder) {
+                holder = _origCE.call(document, "div");
+                holder.id = "bdb-a11y-targets";
+                holder.style.display = "none";
+                holder.setAttribute("aria-hidden", "true");
+                document.body.appendChild(holder);
+              }
+            }
+            const outId = "bdb-lbl-out-" + (++_fSeq);
+            const outEl = _origCE.call(document, "output");
+            outEl.id = outId;
+            holder.appendChild(outEl);
+            lbl.setAttribute("for", outId);
+          }
+        }
+      } catch (_e) {}
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bdbFixA11yForms);
+    } else {
+      bdbFixA11yForms();
+    }
+    window.addEventListener("load", bdbFixA11yForms);
+    if (typeof MutationObserver !== "undefined") {
+      const obs = new MutationObserver(() => {
+        if (document.querySelector("label:not([for]), input:not([id]), input:not([name]), select:not([id]), select:not([name]), textarea:not([id]), textarea:not([name])")) {
+          bdbFixA11yForms();
+        }
+      });
+      obs.observe(document.documentElement, { childList: true, subtree: true });
+    }
+  }
 }
