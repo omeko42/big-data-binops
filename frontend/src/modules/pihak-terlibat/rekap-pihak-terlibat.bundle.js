@@ -387,13 +387,15 @@ let K=()=>{v(1),E({search:k.trim(),keterlibatan:w,sumber:T,status:D,from:P,to:M,
         (0,a.jsx)("button",{type:"button",onClick:()=>{setLpModalParty(null);setLpModalMax(!1);},style:{background:"none",border:"none",fontSize:"1.25rem",cursor:"pointer",color:"#64748b",padding:"0.25rem 0.5rem"},children:"✕"})
       ]})
     ]}),
-    (0,a.jsx)("div",{style:{padding:"0.75rem 1rem",overflowY:"auto",flex:"1 1 auto",maxHeight:lpModalMax?"calc(100vh - 135px)":"68vh"},children:
-      (0,a.jsxs)(l.DataTable,{
+    (0,a.jsx)("div",{style:{padding:"0.75rem 1rem",overflowY:"auto",flex:"1 1 auto",maxHeight:lpModalMax?"calc(100vh - 135px)":"68vh"},children:(()=>{
+      let dynLpRows=lpModalMax?Math.max(10,Math.floor(((typeof window!=="undefined"?window.innerHeight:900)-230)/48)):5;
+      let rppOpts=Array.from(new Set([5,10,15,20,25,50,dynLpRows])).sort((x,y)=>x-y);
+      return (0,a.jsxs)(l.DataTable,{
         value:actRows,
         loading:lpModalLoading,
-        paginator:actRows.length>(lpModalMax?20:5),
-        rows:lpModalMax?20:5,
-        rowsPerPageOptions:[5,10,25,50],
+        paginator:actRows.length>dynLpRows,
+        rows:dynLpRows,
+        rowsPerPageOptions:rppOpts,
         paginatorTemplate:"CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown",
         currentPageReportTemplate:"Menampilkan {first} - {last} dari {totalRecords} LP",
         size:"small",
@@ -442,8 +444,8 @@ let K=()=>{v(1),E({search:k.trim(),keterlibatan:w,sumber:T,status:D,from:P,to:M,
             return(0,a.jsx)(n.Tag,{value:p,severity:sev,style:{fontWeight:700,fontSize:"0.72rem"}});
           },style:{width:"6.5rem",textAlign:"center"}})
         ]
-      })
-    }),
+      });
+    })()}),
     (0,a.jsxs)("div",{style:{padding:"0.75rem 1.25rem",borderTop:"1px solid #e2e8f0",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f8fafc",flexWrap:"wrap",gap:"0.5rem"},children:[
       (0,a.jsxs)("button",{type:"button",onClick:()=>{let val=lpModalParty?.nik&&!String(lpModalParty.nik).startsWith("KORP:")?lpModalParty.nik:(lpModalParty?.nama||"");jumpToRegister(val);},className:"att-btn",style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.78rem",fontWeight:600,color:"#0284c7"},children:[(0,a.jsx)("i",{className:"pi pi-search"}),(0,a.jsx)("span",{children:"Buka di Register Pihak Terlibat"})]}),
       (0,a.jsx)("button",{type:"button",onClick:()=>{setLpModalParty(null);setLpModalMax(!1);},className:"att-btn primary",children:"Tutup"})
