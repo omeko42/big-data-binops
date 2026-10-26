@@ -4884,20 +4884,68 @@ div[style*="margin-top:-1.6rem"] > span {
   gap: 1rem;
 }
 
-@media (max-width: 900px) {
+/* Minimized state on Desktop: move compact 5-icon filter header bar above Composer */
+.feed-layout-container:has(.feed-right-col.is-minimized) {
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+}
+
+.feed-right-col.is-minimized {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  position: static !important;
+  order: -1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)) !important;
+  gap: 0.75rem !important;
+}
+
+.feed-right-col.is-minimized .feed-filter-vertical-list {
+  display: none !important;
+}
+
+.feed-right-col.is-minimized .feed-filter-card-header {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border-bottom: none !important;
+}
+
+.feed-right-col.is-minimized .feed-filter-card {
+  padding: 0.65rem 0.9rem !important;
+}
+
+@media (max-width: 1120px) {
   .feed-layout-container {
     flex-direction: column !important;
-    gap: 1rem !important;
+    gap: 0.85rem !important;
   }
   .feed-left-col {
     flex: 1 1 100% !important;
     width: 100% !important;
+    order: 1 !important;
   }
   .feed-right-col {
     flex: 1 1 100% !important;
     width: 100% !important;
     position: static !important;
-    order: 2 !important;
+    order: -1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+  .feed-right-col .feed-filter-vertical-list {
+    display: none !important;
+  }
+  .feed-right-col .feed-filter-card-header {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+  .feed-right-col .feed-filter-card {
+    padding: 0.65rem 0.9rem !important;
+  }
+  .feed-right-col .feed-filter-collapse-btn {
+    display: none !important;
   }
 }
 
@@ -5466,6 +5514,53 @@ div[style*="margin-top:-1.6rem"] > span {
 :root[data-theme="dark"] .p-dialog [style*="color:#15803d"] {
   color: #4ade80 !important;
 }
+
+/* ============================================================================
+ * ROUND 6 — UNIFIED FILTER BAR HEIGHT (38px), SHARESE FILTER PILLS & DARK/LIGHT CONTRAST
+ * ============================================================================ */
+.feed-filter-header-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.feed-filter-icon-pill {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.feed-filter-icon-pill:hover {
+  transform: translateY(-1px);
+}
+
+/* Ensure PrimeReact Dropdowns inside 38px filter bars align vertically */
+.cms-card .p-dropdown[style*="height: 38px"],
+.cms-card .p-dropdown[style*="height:38px"] {
+  height: 38px !important;
+  min-height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.cms-card .p-dropdown[style*="height: 38px"] .p-dropdown-label,
+.cms-card .p-dropdown[style*="height:38px"] .p-dropdown-label {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  font-size: 0.82rem !important;
+}
+
+/* Dark mode contrast for remaining hardcoded slate text in executive dialogs & tables */
+:root[data-theme="dark"] .cms-main [style*="color: rgb(30, 41, 59)"],
+:root[data-theme="dark"] .cms-main [style*="color:#1e293b"],
+:root[data-theme="dark"] .cms-main [style*="color: #1e293b"],
+:root[data-theme="dark"] .p-dialog [style*="color: rgb(30, 41, 59)"],
+:root[data-theme="dark"] .p-dialog [style*="color:#1e293b"],
+:root[data-theme="dark"] .p-dialog [style*="color: #1e293b"] {
+  color: #f1f5f9 !important;
+}
+
 
 
 

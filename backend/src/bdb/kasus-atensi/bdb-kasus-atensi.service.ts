@@ -118,13 +118,19 @@ export class BdbKasusAtensiService {
             select
                 k.id, k.judul, k.sumber_atensi, k.level_atensi, k.tanggal_atensi::text as tanggal_atensi, k.status_atensi, k.keterangan, k.satker_id,
                 (select s.depth::int from bdb_satker s where s.id = k.satker_id limit 1) as satker_depth,
+                coalesce(
+                    (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
+                    (select lp0.satker_nama from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1)
+                ) as satker_nama,
                 k.created_by, k.updated_by, k.created_at, k.updated_at,
                 (select count(*)::int from bdb_kasus_atensi_lp l where l.kasus_atensi_id = k.id) as jumlah_lp,
                 (select count(*)::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id) as jumlah_lampiran,
                 (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_atensi_lp l
                     join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_atensi_id = k.id) as satker_terkait,
                 (select lp0.no_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
-                    where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_no_laporan
+                    where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_no_laporan,
+                (select lp0.tgl_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                    where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_tgl_laporan
             from bdb_kasus_atensi k
         `;
     }
@@ -141,7 +147,16 @@ export class BdbKasusAtensiService {
         const where: string[] = ['k.deleted_at is null'];
         if (query.scope === 'scoped' && !scope.all) {
             if (!scope.satkerId) {
-                return { data: [], meta: { total: 0, page, limit, totalPages: 1 } };
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page,
+                        limit,
+                        totalPages: 1,
+                        summary: { total_all: 0, tinggi: 0, sedang: 0, biasa: 0, aktif: 0, selesai: 0, total_lp_terkait: 0 }
+                    }
+                };
             }
             params.push(scope.satkerId);
             where.push(`k.satker_id = $${params.length}`);
@@ -150,17 +165,41 @@ export class BdbKasusAtensiService {
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
-            where.push(`lower(coalesce(k.judul,'')) like $${params.length}`);
+            const p = params.length;
+            where.push(`(
+                lower(coalesce(k.judul,'')) like $${p}
+                or lower(coalesce(k.keterangan,'')) like $${p}
+                or exists (
+                    select 1 from bdb_kasus_atensi_lp l_s
+                    join bdb_laporan_polisi lp_s on lp_s.id = l_s.lp_id
+                    where l_s.kasus_atensi_id = k.id
+                      and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p})
+                )
+            )`);
         }
-        const status = this.toText(query.status_atensi);
-        if (status && STATUS_OPTS.includes(status)) {
+
+        const summaryWhereSql = where.join(' and ');
+        const summaryParams = [...params];
+
+        const status = this.toText(query.status_atensi)?.toLowerCase() || null;
+        if (status && !['all', 'semua'].includes(status)) {
             params.push(status);
-            where.push(`k.status_atensi = $${params.length}`);
+            where.push(`lower(coalesce(k.status_atensi,'aktif')) = $${params.length}`);
+        }
+
+        const level = this.toText(query.level_atensi)?.toLowerCase() || null;
+        if (level && !['all', 'semua'].includes(level)) {
+            params.push(level);
+            where.push(`lower(coalesce(k.level_atensi,'')) = $${params.length}`);
+        }
+
+        const sumber = this.toText(query.sumber_atensi)?.toLowerCase() || null;
+        if (sumber && !['all', 'semua'].includes(sumber)) {
+            params.push(sumber);
+            where.push(`lower(coalesce(k.sumber_atensi,'')) = $${params.length}`);
         }
 
         const whereSql = where.join(' and ');
-        const totalRow = await this.dataSource.query(`select count(*)::int as total from bdb_kasus_atensi k where ${whereSql}`, params);
-        const total = Number(totalRow?.[0]?.total || 0);
 
         let orderBy = 'order by k.created_at desc, k.id desc';
         if (query.dashboard === '1' || query.dashboard === 1 || query.dashboard === true || query.dashboard === 'true' || query.sort === 'priority') {
@@ -190,12 +229,44 @@ export class BdbKasusAtensiService {
                 k.created_at desc, k.id desc`;
         }
 
-        const rows = await this.dataSource.query(
-            `${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`,
-            [...params, limit, offset]
-        );
+        const [totalRow, summaryRow, rows] = await Promise.all([
+            this.dataSource.query(`select count(*)::int as total from bdb_kasus_atensi k where ${whereSql}`, params),
+            this.dataSource.query(
+                `select
+                    count(*)::int as total_all,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'tinggi')::int as tinggi,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'sedang')::int as sedang,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'biasa' or coalesce(k.level_atensi,'') = '')::int as biasa,
+                    count(*) filter (where lower(coalesce(k.status_atensi,'aktif')) = 'aktif')::int as aktif,
+                    count(*) filter (where lower(coalesce(k.status_atensi,'aktif')) = 'selesai')::int as selesai,
+                    coalesce((
+                        select count(*)::int
+                        from bdb_kasus_atensi_lp l_cnt
+                        join bdb_kasus_atensi k on k.id = l_cnt.kasus_atensi_id
+                        where ${summaryWhereSql}
+                    ), 0) as total_lp_terkait
+                 from bdb_kasus_atensi k
+                 where ${summaryWhereSql}`,
+                summaryParams
+            ),
+            this.dataSource.query(
+                `${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`,
+                [...params, limit, offset]
+            )
+        ]);
+        const total = Number(totalRow?.[0]?.total || 0);
+        const s = summaryRow?.[0] || {};
+        const summary = {
+            total_all: Number(s.total_all || 0),
+            tinggi: Number(s.tinggi || 0),
+            sedang: Number(s.sedang || 0),
+            biasa: Number(s.biasa || 0),
+            aktif: Number(s.aktif || 0),
+            selesai: Number(s.selesai || 0),
+            total_lp_terkait: Number(s.total_lp_terkait || 0)
+        };
 
-        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
+        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
     }
 
     async findOne(id: number, userId: number | undefined) {
