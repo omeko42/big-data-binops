@@ -1758,11 +1758,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
               WHEN count_dpo > 0 THEN 'DPO'
               WHEN count_tersangka > 0 THEN 'TERSANGKA'
               WHEN (tipe_subjek = 'KORPORASI' AND count_korban > count_terlapor * 2)
-                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
+                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
               WHEN count_terlapor > 0 THEN 'TERLAPOR'
+              WHEN count_pelapor > 0 THEN 'PELAPOR'
               WHEN count_saksi > 0 THEN 'SAKSI'
               WHEN count_korban > 0 THEN 'KORBAN'
-              WHEN count_pelapor > 0 THEN 'PELAPOR'
               ELSE 'PIHAK'
             END`;
 
@@ -1771,11 +1771,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
               WHEN count_dpo > 0 THEN 1
               WHEN count_tersangka > 0 THEN 2
               WHEN (tipe_subjek = 'KORPORASI' AND count_korban > count_terlapor * 2)
-                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_saksi AND count_korban > 0) THEN 5
+                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 6
               WHEN count_terlapor > 0 THEN 3
-              WHEN count_saksi > 0 THEN 4
-              WHEN count_korban > 0 THEN 5
-              WHEN count_pelapor > 0 THEN 6
+              WHEN count_pelapor > 0 THEN 4
+              WHEN count_saksi > 0 THEN 5
+              WHEN count_korban > 0 THEN 6
               ELSE 7
             END`;
 
@@ -1798,8 +1798,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
                 const orderClauseMaster = catFilter === 'ALL'
                     ? (keterlibatan === 'LINTAS_WILAYAH' 
-                        ? `jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC` 
-                        : `total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC`)
+                        ? `(${kastaRankExpr}) ASC, jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, last_seen DESC` 
+                        : `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`)
                     : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
                        catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
@@ -1942,7 +1942,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const catFilter = (keterlibatan && keterlibatan !== 'ALL' && keterlibatan !== 'LINTAS_WILAYAH') ? keterlibatan : 'ALL';
 
                 const orderClauseDash = catFilter === 'ALL'
-                    ? `total_lp DESC, satker_tier ASC, (${kastaRankExpr}) ASC, last_seen DESC`
+                    ? `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`
                     : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
                        catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
@@ -2586,9 +2586,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                             WHEN count_dpo > 0 THEN 1
                                             WHEN count_tersangka > 0 THEN 2
                                             WHEN count_terlapor > 0 THEN 3
-                                            WHEN count_saksi > 0 THEN 4
-                                            WHEN count_korban > 0 THEN 5
-                                            WHEN count_pelapor > 0 THEN 6
+                                            WHEN count_pelapor > 0 THEN 4
+                                            WHEN count_saksi > 0 THEN 5
+                                            WHEN count_korban > 0 THEN 6
                                             ELSE 7
                                         END
                                     )
@@ -2603,9 +2603,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                     WHEN kategori_filter = 'DPO' THEN count_dpo
                                     ELSE 0
                                 END) DESC,
+                                total_lp DESC,
                                 satker_tier ASC,
                                 jumlah_satker_unik DESC,
-                                total_lp DESC,
                                 last_seen DESC
                         ) as rn
                     FROM multi_cat
@@ -2757,11 +2757,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         WHEN count_dpo > 0 THEN 'DPO'
                         WHEN count_tersangka > 0 THEN 'TERSANGKA'
                         WHEN (coalesce(tipe_subjek, '') = 'KORPORASI' AND count_korban > count_terlapor * 2)
-                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
+                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
                         WHEN count_terlapor > 0 THEN 'TERLAPOR'
+                        WHEN count_pelapor > 0 THEN 'PELAPOR'
                         WHEN count_saksi > 0 THEN 'SAKSI'
                         WHEN count_korban > 0 THEN 'KORBAN'
-                        ELSE 'PELAPOR'
+                        ELSE 'PIHAK'
                     END
                 WHERE tahun = 2026 AND ${monthDeleteClause};
             `);
