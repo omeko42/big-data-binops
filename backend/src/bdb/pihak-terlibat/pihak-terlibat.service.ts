@@ -136,13 +136,17 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             if (cleanSearch.startsWith('KORP:')) {
                 cleanSearch = cleanSearch.replace(/^KORP:/, '').replace(/_/g, ' ').trim();
             }
-            const isNik = /^\d{8,16}$/.test(cleanSearch);
-            if (isNik) {
+            const isFullNik = /^\d{15,16}$/.test(cleanSearch);
+            const isNik = !isFullNik && /^\d{8,14}$/.test(cleanSearch);
+            if (isFullNik) {
+                params.push(cleanSearch);
+                where.push(`c.nik = $${params.length}`);
+            } else if (isNik) {
                 params.push(cleanSearch);
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(c.nik = $${pExact} or c.nik like $${pLike} or lower(coalesce(c.nama,'')) like $${pLike})`);
+                where.push(`(c.nik = $${pExact} or c.nik like $${pLike})`);
             } else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
@@ -164,15 +168,13 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             const end = new Date(toDate + 'T00:00:00Z');
             const days = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
             if (days < 1) throw new BadRequestException('Tanggal akhir tidak boleh sebelum tanggal awal.');
-
-
         }
         for (const [name, op] of [['from', '>='], ['to', '<=']] as const) {
             const value = this.toText(query[name]);
             if (!value) continue;
             if (!datePattern.test(value)) throw new BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
             params.push(value);
-            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) ${op} $${params.length}::date`);
         }
         addLike('jk.keterangan', query.kejahatan);
         const area = this.toText(query.area);
@@ -242,13 +244,17 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             if (cleanSearch.startsWith('KORP:')) {
                 cleanSearch = cleanSearch.replace(/^KORP:/, '').replace(/_/g, ' ').trim();
             }
-            const isNik = /^\d{8,16}$/.test(cleanSearch);
-            if (isNik) {
+            const isFullNik = /^\d{15,16}$/.test(cleanSearch);
+            const isNik = !isFullNik && /^\d{8,14}$/.test(cleanSearch);
+            if (isFullNik) {
+                params.push(cleanSearch);
+                where.push(`${partyAlias}.nik = $${params.length}`);
+            } else if (isNik) {
                 params.push(cleanSearch);
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik like $${pLike} or lower(coalesce(${partyAlias}.nama,'')) like $${pLike})`);
+                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik like $${pLike})`);
             } else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
@@ -266,23 +272,13 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             const end = new Date(toDate + 'T00:00:00Z');
             const days = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
             if (days < 1) throw new BadRequestException('Tanggal akhir tidak boleh sebelum tanggal awal.');
-
-            // Pembatasan 31 hari hanya untuk query terbuka se-Indonesia tanpa filter satker dan tanpa kata kunci NIK/nama
-            const hasSearch = Boolean(this.toText(query.search));
-            const satkerId = Number(query.satker_id || 0);
-            const hasRegionalSatker = (Number.isSafeInteger(satkerId) && satkerId > 0) || (!scope.all && Boolean(scope.satkerId));
-            const isNationalUnfiltered = !hasSearch && !hasRegionalSatker;
-
-            if (isNationalUnfiltered && days > 31 && !isDpoQuery) {
-                throw new BadRequestException('Query nasional tanpa filter NIK / satker regional dibatasi maksimal 31 hari. Silakan pilih Wilayah Satker atau masukkan kata kunci pencarian NIK/Nama.');
-            }
         }
         for (const [name, op] of [['from', '>='], ['to', '<=']] as const) {
             const value = this.toText(query[name]);
             if (!value) continue;
             if (!datePattern.test(value)) throw new BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
             params.push(value);
-            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) ${op} $${params.length}::date`);
         }
 
         const kejahatan = this.toText(query.kejahatan);
@@ -1412,6 +1408,16 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
         const dorsWhere = this.buildDirectSummaryWhere(scope, query, 't', 'DORS', true);
         if (!dorsWhere.skip) {
+            const hasSearch = Boolean(this.toText(query.search));
+            const hasDate = Boolean(this.toText(query.from) || this.toText(query.to));
+            const hasSatker = Number(query.satker_id || 0) > 0 || (!scope.all && Boolean(scope.satkerId));
+            const dorsOrder = hasSearch
+                ? 't.id desc'
+                : hasDate
+                    ? 'parse_tgl_laporan(lp.tgl_laporan) desc nulls last, lp.id desc'
+                    : hasSatker
+                        ? 'lp.id desc'
+                        : 't.id desc';
             branchTasks.push(this.readOnlyQuery(
                 `select 'DORS' as sumber,t.id::text as row_id,lp.id as lp_id,t.nama,t.nik,
                         upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
@@ -1424,7 +1430,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                  left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
                  left join bdb_status_master sm on sm.id=lp.status_id
                  where ${dorsWhere.where.join(' and ')}
-                 order by d.synced_at desc,t.id desc limit $${dorsWhere.params.length + 1}`,
+                 order by ${dorsOrder} limit $${dorsWhere.params.length + 1}`,
                 [...dorsWhere.params, fetch],
                 12000
             ));
@@ -1687,9 +1693,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     WHEN peran = 'DPO' THEN 1
                     WHEN peran = 'TERSANGKA' THEN 2
                     WHEN peran = 'TERLAPOR' THEN 3
-                    WHEN peran = 'KORBAN' THEN 4
-                    WHEN peran = 'PELAPOR' THEN 5
-                    WHEN peran = 'SAKSI' THEN 6
+                    WHEN peran = 'PELAPOR' THEN 4
+                    WHEN peran = 'SAKSI' THEN 5
+                    WHEN peran = 'KORBAN' THEN 6
                     ELSE 7
                 END as kasta_rank
             FROM all_parties
@@ -1793,9 +1799,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     WHEN peran = 'DPO' THEN 1
                     WHEN peran = 'TERSANGKA' THEN 2
                     WHEN peran = 'TERLAPOR' THEN 3
-                    WHEN peran = 'KORBAN' THEN 4
-                    WHEN peran = 'PELAPOR' THEN 5
-                    WHEN peran = 'SAKSI' THEN 6
+                    WHEN peran = 'PELAPOR' THEN 4
+                    WHEN peran = 'SAKSI' THEN 5
+                    WHEN peran = 'KORBAN' THEN 6
                     ELSE 7
                 END as kasta_rank
             FROM all_parties
