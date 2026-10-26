@@ -28,7 +28,7 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 
 [eAddSectionModal,setAddSectionModal]=(0,n.useState)(!1),
 [eBannerModal,setBannerModal]=(0,n.useState)(!1),
-[eBannerTheme,setBannerTheme]=(0,n.useState)('linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)'),
+[eBannerTheme,setBannerTheme]=(0,n.useState)('/images/default-banner-polri.jpg'),
 [eLightboxMedia,setLightboxMedia]=(0,n.useState)(null),
 [eCustomBannerLoading,setCustomBannerLoading]=(0,n.useState)(!1),
 [eRawBanner,setRawBanner]=(0,n.useState)(null),
@@ -259,7 +259,50 @@ function renderMetaVerifiedBadge(badge, sizePx) {
   });
 }
 
-function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx) {
+function isPolwanUser(u) {
+  if (!u || typeof u !== 'object') return false;
+  var g = String(u.gender || u.jenis_kelamin || u.social_media?.gender || '').toLowerCase();
+  if (['p', 'perempuan', 'wanita', 'female', 'f'].includes(g)) return true;
+  var nm = String(u.name || u.author_name || u.raw_name || u.username || u.callsign || u.author_username || u.author_callsign || '');
+  return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(nm);
+}
+function getDefaultAvatarUrl(u) {
+  return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';
+}
+function resolveUserAvatar(photoUrl, userObj) {
+  if (photoUrl && typeof photoUrl === 'string' && photoUrl.trim().length > 5 && photoUrl !== 'null' && photoUrl !== 'undefined') {
+    var uId = String(userObj?.id || userObj?.user_id || userObj?.author_id || '');
+    var uName = String(userObj?.username || userObj?.callsign || userObj?.author_username || userObj?.author_callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
+    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    if (isOko) return photoUrl;
+    var hasExplicitV2 = Boolean(userObj?.social_media?.avatar_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_avatar_v2_' + uId) === '1'));
+    if (!hasExplicitV2) {
+      return getDefaultAvatarUrl(userObj);
+    }
+    return photoUrl;
+  }
+  return getDefaultAvatarUrl(userObj);
+}
+var DEFAULT_POLRI_BANNER = '/images/default-banner-polri.jpg';
+function resolveUserBanner(rawBanner, userObj) {
+  if (rawBanner && typeof rawBanner === 'string') {
+    var b = rawBanner.trim();
+    var uId = String(userObj?.id || userObj?.user_id || '');
+    var uName = String(userObj?.username || userObj?.callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
+    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    if (isOko) {
+      if (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient')) return b;
+    }
+    var hasExplicitBannerV2 = Boolean(userObj?.social_media?.banner_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1'));
+    if (hasExplicitBannerV2 && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient'))) {
+      return b;
+    }
+  }
+  return DEFAULT_POLRI_BANNER;
+}
+
+function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx, userObj) {
+  var resolvedAvatar = resolveUserAvatar(avatarUrl, userObj);
   return (0,t.jsx)("div",{
     style:{
       position:"relative",
@@ -282,7 +325,7 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
         color:"#38bdf8",
         border:"1px solid rgba(255,255,255,0.12)"
       },
-      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",loading:"lazy",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
+      children:(0,t.jsx)("img",{src:resolvedAvatar,alt:"Avatar",loading:"lazy",decoding:"async",onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}})
     })
   });
 }
@@ -654,14 +697,17 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
     var targetBio = (typeof a?.bio === 'string' && a.bio) ? a.bio : (typeof soc?.bio === 'string' ? soc.bio : '');
     setBio(targetBio);
 
-    var defaultGrad = 'linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)';
-    var cachedBanner = (a?.id && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + a.id) : null;
-    var targetBanner = (typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : 
-                       (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme : 
-                       (cachedBanner || defaultGrad);
+    var uId = String(a?.id || '');
+    var uName = String(a?.username || a?.callsign || '').toLowerCase().replace(/^@/, '');
+    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    var cachedBanner = ((isOko || (!isReadOnlyMode && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1')) && uId && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + uId) : null;
+    var rawB = (typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : 
+               (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme : 
+               cachedBanner;
+    var targetBanner = resolveUserBanner(rawB, a);
     setBannerTheme(targetBanner);
   }
-}, [a]);
+}, [a, isReadOnlyMode]);
 
 (0,n.useEffect)(() => {
   let handleClickOutside = (ev) => {
@@ -822,9 +868,13 @@ let persistSocialMedia = async (updates) => {
   };
   try {
     try {
+      if (updates && updates.banner_theme) {
+        nextSoc.banner_v2 = !0;
+      }
       localStorage.setItem('cas_profile_social_' + a?.id, JSON.stringify(nextSoc));
       if (nextSoc.banner_theme) {
         localStorage.setItem('cas_banner_' + a?.id, nextSoc.banner_theme);
+        localStorage.setItem('cas_banner_v2_' + a?.id, '1');
       }
     } catch(e) {}
     let patchRes = await c.apiAuth.patch("/user/me/profile", { social_media: nextSoc });
@@ -1550,9 +1600,12 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
 
 // 2. Read-Only Tactical Alert Banner (Hanya muncul jika mode terenkripsi uToken)
 isReadOnlyMode && (0,t.jsxs)("div",{
+  className:"cas-tactical-readonly-banner",
   style:{
-    background:"linear-gradient(135deg, rgba(2,132,199,0.15) 0%, rgba(15,23,42,0.6) 100%)",
-    border:"1px solid rgba(56,189,248,0.3)",
+    background:"var(--cas-bg-surface, #ffffff)",
+    border:"1px solid rgba(2,132,199,0.35)",
+    borderLeft:"4px solid #0284c7",
+    boxShadow:"0 4px 14px rgba(2,132,199,0.08)",
     borderRadius:"12px",
     padding:"0.85rem 1.25rem",
     marginBottom:"1.25rem",
@@ -1564,16 +1617,16 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   },
   children:[
     (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
-      (0,t.jsx)("i",{className:"pi pi-shield",style:{fontSize:"1.25rem",color:"#38bdf8"}}),
+      (0,t.jsx)("i",{className:"pi pi-shield",style:{fontSize:"1.25rem",color:"#0284c7"}}),
       (0,t.jsxs)("div",{children:[
-        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#f8fafc"},children:"Profil Personil CAS (Mode Kedinasan - Terenkripsi)"}),
-        (0,t.jsx)("div",{style:{fontSize:"0.75rem",color:"#94a3b8"},children:"Data identitas dan riwayat penugasan resmi Mabes Bareskrim Polri • Akses Terbatas (Read-Only)"})
+        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"var(--cas-text-primary, #0f172a)"},children:"Profil Personil CAS (Mode Kedinasan - Terenkripsi)"}),
+        (0,t.jsx)("div",{style:{fontSize:"0.76rem",fontWeight:600,color:"var(--cas-text-secondary, #475569)"},children:"Data identitas dan riwayat penugasan resmi Mabes Bareskrim Polri • Akses Terbatas (Read-Only)"})
       ]})
     ]}),
     (0,t.jsxs)("button",{
       type:"button",
       onClick:() => { try { sessionStorage.removeItem('cas_view_user'); } catch(e){} window.location.href = '/cms/profile'; },
-      style:{background:"#2563eb",color:"#fff",border:"none",padding:"0.4rem 0.95rem",borderRadius:"8px",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",boxShadow:"0 2px 6px rgba(37,99,235,0.3)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+      style:{background:"#2563eb",color:"#fff",border:"none",padding:"0.45rem 1rem",borderRadius:"8px",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",boxShadow:"0 2px 6px rgba(37,99,235,0.3)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
       children:[(0,t.jsx)("i",{className:"pi pi-arrow-left",style:{fontSize:"0.78rem"}}),"Kembali ke Profil Saya"]
     })
   ]
@@ -1807,6 +1860,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     (0,t.jsx)("div",{
       style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.6rem",width:"100%",boxSizing:"border-box"},
       children:[
+        { id: "default_polri", name: "Polisi Bersama Masyarakat (Default)", grad: "/images/default-banner-polri.jpg" },
         { id: "cyber_blue", name: "Cyber Ops Blue", grad: "linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)" },
         { id: "stealth_dark", name: "Stealth Reskrim", grad: "linear-gradient(135deg, #020617 0%, #0f172a 60%, #1e1b4b 100%)" },
         { id: "emerald_shield", name: "Tactical Emerald", grad: "linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0f172a 100%)" },
@@ -1816,11 +1870,13 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         type:"button",
         onClick:()=>{setBannerTheme(thm.grad);setRawBanner(null);},
         style:{
+          gridColumn:thm.id==="default_polri"?"1 / -1":"auto",
           height:"50px",
           borderRadius:"8px",
-          background:thm.grad,
+          background:thm.grad.startsWith("/")?("url(\""+thm.grad+"\") center/cover no-repeat"):thm.grad,
           border:eBannerTheme===thm.grad?"2px solid #0284c7":"1px solid rgba(255,255,255,0.2)",
           color:"#fff",
+          textShadow:"0 1px 4px rgba(0,0,0,0.85)",
           fontSize:"0.78rem",
           fontWeight:700,
           cursor:"pointer",
@@ -1887,7 +1943,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           (0,t.jsx)("span",{children:eCustomBannerLoading ? "Mengompresi gambar..." : "Pilih Foto Sampul dari Perangkat"})
         ]
       }),
-      ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem",width:"100%",boxSizing:"border-box"},children:[
+      ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http') || eBannerTheme.startsWith('/')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem",width:"100%",boxSizing:"border-box"},children:[
         (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",maxWidth:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,border:"1.5px solid #0284c7",background:"#090d16",display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box"},children:[
           (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{position:"absolute",left:"50%",top:"50%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transform:`translate(-50%, -50%) translate(${eBannerPanX}px, ${eBannerPanY}px) scale(${eBannerZoom})`,transformOrigin:"center center",pointerEvents:"none"}}),
           (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.75)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.68rem",fontWeight:700},children:"Pratinjau Sampul (100% Sesuai Hasil)"})
@@ -2291,7 +2347,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                       window.location.href = '/cms/profile?id=' + encodeURIComponent(user.id) + '&u=' + encodeURIComponent(h);
                     }
                   },
-                  children:renderCornerAvatar(userPhoto, userInitials, userBadge, 2.8, 15, 8.5)
+                  children:renderCornerAvatar(userPhoto, userInitials, userBadge, 2.8, 15, 8.5, user)
                 }),
                 (0,t.jsxs)("div",{style:{minWidth:0,flex:1},children:[
                   (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"4px"},children:[
@@ -2465,7 +2521,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   modal:!0,
   dismissableMask:!0,
   children:ePreviewUser ? (0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",padding:"0 0 0.5rem 0"},children:[
-    (0,t.jsxs)("div",{style:{position:"relative",height:"105px",borderRadius:"10px",background:"linear-gradient(135deg, #090d16 0%, #0f172a 50%, #0369a1 100%)",overflow:"hidden",display:"flex",alignItems:"flex-end",padding:"0.75rem 1rem"},children:[
+    (0,t.jsxs)("div",{style:{position:"relative",height:"105px",borderRadius:"10px",background:(()=>{var pb=resolveUserBanner(ePreviewUser.banner_theme||ePreviewUser.social_media?.banner_theme,ePreviewUser);return pb.startsWith("linear-gradient")?pb:("url(\""+pb+"\") center/cover no-repeat");})(),overflow:"hidden",display:"flex",alignItems:"flex-end",padding:"0.75rem 1rem"},children:[
       (0,t.jsx)("div",{style:{position:"absolute",inset:0,opacity:0.25,backgroundImage:"radial-gradient(rgba(56,189,248,0.5) 1px, transparent 1px)",backgroundSize:"18px 18px",pointerEvents:"none"}}),
       (0,t.jsxs)("div",{style:{position:"absolute",bottom:"-25px",left:"1.25rem",display:"flex",alignItems:"flex-end",gap:"0.75rem"},children:[
         (0,t.jsx)("div",{
@@ -2484,7 +2540,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             color:"#fff",
             overflow:"hidden"
           },
-          children:ePreviewUser.photo_url || ePreviewUser.foto ? (0,t.jsx)("img",{src:ePreviewUser.photo_url||ePreviewUser.foto,alt:ePreviewUser.name,style:{width:"100%",height:"100%",objectFit:"cover"}}) : (ePreviewUser.name ? ePreviewUser.name.charAt(0).toUpperCase() : "👮")
+          children:(0,t.jsx)("img",{src:resolveUserAvatar(ePreviewUser.photo_url||ePreviewUser.foto||ePreviewUser.photo,ePreviewUser),alt:ePreviewUser.name||"Avatar",onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}})
         })
       ]})
     ]}),
@@ -2551,7 +2607,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 // HERO CARD (Exact Pilihan B / Mockup media_1790609760611.png)
 (0,t.jsxs)("div",{className:"cms-card",style:{padding:0,overflow:"hidden",marginBottom:"1.25rem",borderRadius:"16px",border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",background:"var(--cas-bg-surface, #1e293b)",boxShadow:"0 8px 30px rgba(0,0,0,0.25)",WebkitMaskImage:"-webkit-radial-gradient(white, black)"},children:[
   // 1. Cover Banner (Height: 220px, WYSIWYG matching modal)
-  (0,t.jsxs)("div",{id:"cas-profile-hero-banner",style:{position:"relative",height:"220px",borderTopLeftRadius:"15px",borderTopRightRadius:"15px",background:(eBannerTheme && (eBannerTheme.startsWith("data:") || eBannerTheme.startsWith("http"))) ? ("url(\"" + eBannerTheme + "\") center/cover no-repeat") : (eBannerTheme || "linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e293b 85%, #0369a1 100%)"),overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"1rem 1.5rem"},children:[
+  (0,t.jsxs)("div",{id:"cas-profile-hero-banner",style:{position:"relative",height:"220px",borderTopLeftRadius:"15px",borderTopRightRadius:"15px",background:(eBannerTheme && (eBannerTheme.startsWith("data:") || eBannerTheme.startsWith("http") || eBannerTheme.startsWith("/"))) ? ("url(\"" + eBannerTheme + "\") center/cover no-repeat") : (eBannerTheme && eBannerTheme.startsWith("linear-gradient") ? eBannerTheme : "url(\"/images/default-banner-polri.jpg\") center/cover no-repeat"),overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"1rem 1.5rem"},children:[
 
 
     // Edit cover button (Top right of banner, clean monochrome pencil icon)
@@ -2560,7 +2616,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       title:"Edit tema foto sampul",
       onClick:()=>{
         if(!isReadOnlyMode){
-          if(!eRawBanner && eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http'))){
+          if(!eRawBanner && eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http') || eBannerTheme.startsWith('/'))){
             setRawBanner(eBannerTheme);
           }
           setBannerZoom(1);
@@ -2587,11 +2643,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           style:{width:"100%",height:"100%",borderRadius:"50%",background:"#0f172a",border:"4px solid var(--cas-bg-surface, #ffffff)",boxShadow:"0 8px 24px rgba(0,0,0,0.45)",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"3rem",fontWeight:800,color:"#fff",cursor:isReadOnlyMode?"default":"pointer",transition:"transform 0.15s ease"},
           children:
           (function(){
-            var photoSrc = isReadOnlyMode ? (a?.photo_url || a?.foto || a?.photo || null) : (a?.photo_url || a?.foto || a?.photo || mySelf?.photo_url || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.photo_url) || null);
-            if (photoSrc) {
-              return (0,t.jsx)("img",{src:photoSrc,alt:a?.name||"Foto Profil",style:{width:"100%",height:"100%",objectFit:"cover"}});
-            }
-            return eB;
+            var rawPhoto = isReadOnlyMode ? (a?.photo_url || a?.foto || a?.photo || null) : (a?.photo_url || a?.foto || a?.photo || mySelf?.photo_url || (typeof localStorage !== 'undefined' && JSON.parse(localStorage.getItem('user')||'{}')?.photo_url) || null);
+            var photoSrc = resolveUserAvatar(rawPhoto, a);
+            return (0,t.jsx)("img",{src:photoSrc,alt:a?.name||"Foto Profil",onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}});
           })()
         })
       })
@@ -2623,13 +2677,13 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         })(),
         // [Online]
         (0,t.jsx)("span",{
-          style:{fontSize:"0.76rem",fontWeight:700,padding:"0.18rem 0.6rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.35)",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+          style:{fontSize:"0.76rem",fontWeight:700,padding:"0.18rem 0.6rem",borderRadius:"999px",background:"rgba(22,163,74,0.14)",color:"#15803d",border:"1px solid rgba(22,163,74,0.4)",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
           children:"● Online"
         })
       ]}),
 
       // Subline: Nasional • Info kontak • 4.120+ koneksi
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",color:"#94a3b8"},children:[
+      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",fontWeight:600,color:"var(--cas-text-secondary, #334155)"},children:[
         (0,t.jsx)("span",{children:(function(){
           var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || a?.callsign === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
           if (isSuper) return "Robinopsnal Bareskrim Polri";
@@ -2642,7 +2696,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           return sClean;
         })()}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
-        (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info kontak"}),
+        (0,t.jsx)("button",{type:"button",onClick:()=>setContactModal(!0),style:{background:"transparent",border:"none",color:"#0284c7",fontWeight:700,cursor:"pointer",padding:0,textDecoration:"underline"},children:"Info kontak"}),
         (0,t.jsx)("span",{style:{color:"#64748b"},children:"•"}),
         (0,t.jsxs)("button",{
           type:"button",
@@ -2663,7 +2717,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             setNetworkModal(!0);
             fetchNetworkDirectory('', 'connected', 1, targetUid, spec.limit);
           },
-          style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
+          style:{background:"transparent",border:"none",color:"#0284c7",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
           children:[
             (function(){
               var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
@@ -2693,7 +2747,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           (0,t.jsx)("button",{
             type:"button",
             onClick:()=>setAddSectionModal(!0),
-            style:{background:"transparent",color:"#38bdf8",border:"1px solid #0284c7",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+            style:{background:"transparent",color:"#0284c7",border:"1px solid #0284c7",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-plus",style:{fontSize:"0.76rem"}}),
               (0,t.jsx)("span",{children:"Tambahkan bagian"})
@@ -2710,8 +2764,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               onClick:handleToggleConnect,
               style:isTargetConnected ? {
                 background:"rgba(16,185,129,0.14)",
-                color:"#34d399",
-                border:"1px solid rgba(52,211,153,0.45)",
+                color:"#047857",
+                border:"1px solid rgba(16,185,129,0.45)",
                 borderRadius:"24px",
                 padding:"0.45rem 1.15rem",
                 fontSize:"0.84rem",
@@ -2725,7 +2779,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               } : {
                 background:"#0284c7",
                 color:"#fff",
-                border:"1px solid #38bdf8",
+                border:"1px solid #0284c7",
                 borderRadius:"24px",
                 padding:"0.45rem 1.15rem",
                 fontSize:"0.84rem",
@@ -2765,7 +2819,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           }),
 
           (0,t.jsxs)("div",{
-            style:{background:"rgba(56,189,248,0.12)",color:"#38bdf8",border:"1px solid rgba(56,189,248,0.3)",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+            style:{background:"rgba(2,132,199,0.12)",color:"#0369a1",border:"1px solid rgba(2,132,199,0.35)",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.4rem"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-lock",style:{fontSize:"0.8rem"}}),
               (0,t.jsx)("span",{children:"Mode Kedinasan"})
@@ -2802,10 +2856,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       eBio.trim() ? (
         (0,t.jsx)("div",{style:{fontSize:"0.88rem",lineHeight:"1.6",color:"var(--cas-text-primary, #e2e8f0)",whiteSpace:"pre-wrap",wordBreak:"break-word"},children:eBio})
       ) : (
-        (0,t.jsxs)("div",{style:{padding:"1rem 1.25rem",borderRadius:"10px",background:"rgba(56,189,248,0.03)",border:"1px dashed rgba(56,189,248,0.2)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+        (0,t.jsxs)("div",{style:{padding:"1rem 1.25rem",borderRadius:"10px",background:"rgba(2,132,199,0.06)",border:"1px dashed rgba(2,132,199,0.35)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
           (0,t.jsxs)("div",{children:[
-            (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#38bdf8"},children:isReadOnlyMode ? "Ringkasan belum ditambahkan" : "Belum ada ringkasan tentang profil Anda"}),
-            (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.2rem"},children:isReadOnlyMode ? "Personil bersangkutan belum menambahkan biodata publik." : "Tambahkan ringkasan peran operasional, keahlian reserse siber, atau moto integritas kedinasan."})
+            (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:"#0369a1"},children:isReadOnlyMode ? "Ringkasan belum ditambahkan" : "Belum ada ringkasan tentang profil Anda"}),
+            (0,t.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:500,color:"var(--cas-text-secondary, #475569)",marginTop:"0.2rem"},children:isReadOnlyMode ? "Personil bersangkutan belum menambahkan biodata publik." : "Tambahkan ringkasan peran operasional, keahlian reserse siber, atau moto integritas kedinasan."})
           ]}),
           !isReadOnlyMode && (0,t.jsx)("button",{
             type:"button",
@@ -2826,7 +2880,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             (0,t.jsx)("i",{className:"pi pi-list",style:{fontSize:"1rem",color:"#3b82f6"}}),
             (0,t.jsx)("h3",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:"Aktivitas"})
           ]}),
-          (0,t.jsx)("p",{style:{margin:"0.15rem 0 0",fontSize:"0.78rem",color:"#94a3b8"},children:isReadOnlyMode ? "Postingan dan catatan operasional personil" : "Postingan, catatan operasional, dan pemikiran taktis Anda"})
+          (0,t.jsx)("p",{style:{margin:"0.15rem 0 0",fontSize:"0.78rem",fontWeight:500,color:"var(--cas-text-secondary, #475569)"},children:isReadOnlyMode ? "Postingan dan catatan operasional personil" : "Postingan, catatan operasional, dan pemikiran taktis Anda"})
         ]}),
 
         // 4 Tabs: Postingan Saya, Tanggapan, Privat, Draft
@@ -3020,7 +3074,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center",minWidth:0,flex:1},children:[
                     (0,t.jsx)("div",{
                       style:{display:"inline-flex",cursor:"default"},
-                      children:renderCornerAvatar(pAvatar, pInitials, pBadge, 2.5, 15, 8.5)
+                      children:renderCornerAvatar(pAvatar, pInitials, pBadge, 2.5, 15, 8.5, isAuthorThisProfile ? a : p)
                     }),
                     (0,t.jsxs)("div",{children:[
                       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"5px"},children:[
@@ -3353,7 +3407,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                       return (0,t.jsxs)("div",{key:cm.id,style:{background:"var(--cas-bg-subtle, rgba(255,255,255,0.04))",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
                           style:{display:"inline-flex"},
-                          children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5)
+                          children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5, cm)
                         }),
                         (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
                           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.25rem",flexWrap:"wrap",gap:"0.35rem"},children:[
@@ -3602,8 +3656,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                 } catch(e){}
                 window.location.href = '/cms/profile?id=' + encodeURIComponent(pers.id) + '&u=' + encodeURIComponent(h);
               },
-              style:{width:"36px",height:"36px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #38bdf8",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.88rem",color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"},
-              children:pers.photo ? (0,t.jsx)("img",{src:pers.photo,alt:formatCallsign(pers.callsign, pers.id, pers.username),style:{width:"100%",height:"100%",objectFit:"cover"}}) : String(formatCallsign(pers.callsign, pers.id, pers.username) || '@P').replace(/^@/,'').charAt(0).toUpperCase()
+              style:{width:"36px",height:"36px",borderRadius:"50%",background:"#0f172a",border:"1.5px solid #0284c7",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:"0.88rem",color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"},
+              children:(0,t.jsx)("img",{src:resolveUserAvatar(pers.photo || pers.photo_url || pers.foto, pers),alt:formatCallsign(pers.callsign, pers.id, pers.username),onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}})
             }),
             (0,t.jsxs)("div",{
               onClick:() => {
@@ -3657,7 +3711,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   ]})
 
 ]}),
-(0,t.jsx)(r.Dialog,{header:"Edit Profil",visible:Boolean($ && !isReadOnlyMode),onHide:()=>q(!1),style:{width:"32rem",maxWidth:"95vw"},modal:!0,footer:(0,t.jsxs)("div",{children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>q(!1),disabled:J}),(0,t.jsx)(o.Button,{label:"Simpan",icon:"pi pi-check",onClick:eA,loading:J})]}),children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.7rem"},children:[(0,t.jsx)("p",{style:{margin:0,fontSize:"0.8rem",color:"#94a3b8"},children:"Data personil ini dipakai untuk melengkapi Profil Saya. Kosongkan field yang tidak ingin diubah."}),(0,t.jsx)(F,{label:"Nama Lengkap",required:!0,children:(0,t.jsx)(i.InputText,{id:"profile-form-name",name:"name",autoComplete:"name",value:Z.name,onChange:e=>G(t=>({...t,name:e.target.value})),style:{width:"100%"}})}),(0,t.jsx)(F,{label:"Status Kepegawaian Personel",children:(0,t.jsxs)("div",{style:{display:"flex",gap:"1.25rem",padding:"0.25rem 0"},children:[(0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",cursor:"pointer",fontWeight:!Z.is_pns?700:500,color:!Z.is_pns?"#38bdf8":"var(--cas-text-secondary, #94a3b8)"},children:[(0,t.jsx)("input",{type:"radio",name:"is_pns",checked:!Z.is_pns,onChange:()=>G(t=>({...t,is_pns:!1}))}),"Anggota Polri"]}),(0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",cursor:"pointer",fontWeight:Z.is_pns?700:500,color:Z.is_pns?"#38bdf8":"var(--cas-text-secondary, #94a3b8)"},children:[(0,t.jsx)("input",{type:"radio",name:"is_pns",checked:!!Z.is_pns,onChange:()=>G(t=>({...t,is_pns:!0}))}),"PNS Polri"]})]})}),(0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.7rem"},children:[(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-30",name:"field_3def3ti6rk0vr_30",label:"NRP / NIP",children:(0,t.jsx)(i.InputText,{id:"profile-form-nrp",name:"nrp",autoComplete:"off",value:Z.nrp,onChange:e=>G(t=>({...t,nrp:e.target.value})),style:{width:"100%"}})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-32",name:"field_3def3ti6rk0vr_32",label:"No. HP",children:(0,t.jsx)(i.InputText,{id:"profile-form-no-hp",name:"no_hp",autoComplete:"tel",value:Z.no_hp,onChange:e=>G(t=>({...t,no_hp:e.target.value})),style:{width:"100%"},placeholder:"08xxxxxxxxxx"})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-34",name:"field_3def3ti6rk0vr_34",label:"Pangkat",children:(0,t.jsxs)("select",{id:"profile-form-pangkat",name:"pangkat",value:Z.pangkat,onChange:e=>G(t=>({...t,pangkat:e.target.value})),className:"p-inputtext",style:{width:"100%",height:"2.6rem",borderRadius:"6px",border:"1px solid #cbd5e1",padding:"0 0.5rem",backgroundColor:"var(--cas-bg-surface, #fff)",fontSize:"0.85rem",color:"var(--cas-text-primary, #1e293b)",borderColor:"var(--cas-border-card, #cbd5e1)"},children:[(0,t.jsx)("option",{value:"",children:"-- Pilih Pangkat --"}),(!Z.is_pns?["Bharada","Bharatu","Bharaka","Abripda","Abriptu","Abrip","Bripda","Briptu","Brigpol","Bripka","Aipda","Aiptu","Ipda","Iptu","AKP","Kompol","AKBP","Kombes Pol","Brigjen Pol","Irjen Pol","Komjen Pol","Jenderal Polisi"]:["Juru Muda (I/a)","Juru Muda Tingkat I (I/b)","Juru (I/c)","Juru Tingkat I (I/d)","Pengatur Muda (II/a)","Pengatur Muda Tingkat I (II/b)","Pengatur (II/c)","Pengatur Tingkat I (II/d)","Penata Muda (III/a)","Penata Muda Tingkat I (III/b)","Penata (III/c)","Penata Tingkat I (III/d)","Pembina (IV/a)","Pembina Tingkat I (IV/b)","Pembina Utama Muda (IV/c)","Pembina Utama Madya (IV/d)","Pembina Utama (IV/e)"]).map(e=>(0,t.jsx)("option",{value:e,children:e},e)),Z.pangkat&&!["Bharada","Bharatu","Bharaka","Abripda","Abriptu","Abrip","Bripda","Briptu","Brigpol","Bripka","Aipda","Aiptu","Ipda","Iptu","AKP","Kompol","AKBP","Kombes Pol","Brigjen Pol","Irjen Pol","Komjen Pol","Jenderal Polisi","Juru Muda (I/a)","Juru Muda Tingkat I (I/b)","Juru (I/c)","Juru Tingkat I (I/d)","Pengatur Muda (II/a)","Pengatur Muda Tingkat I (II/b)","Pengatur (II/c)","Pengatur Tingkat I (II/d)","Penata Muda (III/a)","Penata Muda Tingkat I (III/b)","Penata (III/c)","Penata Tingkat I (III/d)","Pembina (IV/a)","Pembina Tingkat I (IV/b)","Pembina Utama Muda (IV/c)","Pembina Utama Madya (IV/d)","Pembina Utama (IV/e)"].includes(Z.pangkat)&&(0,t.jsx)("option",{value:Z.pangkat,children:Z.pangkat},Z.pangkat)]})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-36",name:"field_3def3ti6rk0vr_36",label:"Jabatan",children:(0,t.jsx)(i.InputText,{id:"profile-form-jabatan",name:"jabatan",autoComplete:"off",value:Z.jabatan,onChange:e=>G(t=>({...t,jabatan:e.target.value})),style:{width:"100%"},placeholder:"mis. Kanit Reskrim"})})]}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-38",name:"field_3def3ti6rk0vr_38",label:"Satuan / Satker Penugasan",hint:"ditetapkan oleh Administrator",children:[(0,t.jsx)(i.InputText,{id:"profile-form-satuan",name:"satuan",autoComplete:"off",value:(['1','320','15403','15404','16568','16576','16594'].includes(String(a?.id))||String(a?.role_bdb||a?.role||'').toLowerCase()==='superadmin'?"Robinopsnal Bareskrim Polri":(K(a?.scope_satker_name)||K(a?.scope_access_display)||K(Z.satuan)||"—")),disabled:!0,readOnly:!0,style:{width:"100%",background:"#f8fafc",color:"#475569",cursor:"not-allowed"}}),(0,t.jsx)("small",{style:{display:"block",marginTop:"0.25rem",color:"#94a3b8",fontSize:"0.72rem"},children:"Satker penugasan dan cakupan hak akses diatur terpusat oleh Superadmin di menu Master Pengguna."})]}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-40",name:"field_3def3ti6rk0vr_40",label:"Email Dinas Polri (Utama)",hint:"wajib @polri.go.id, login & OTP",children:[(0,t.jsx)(p.default,{id:"profile-form-email-polri",name:"email_polri",autoComplete:"email",value:Z.email_polri,onChange:e=>{G(t=>({...t,email_polri:e})),X.onChangeDebounced("email_polri",e)},onBlur:e=>X.onBlurNow("email_polri",e),status:(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?"error":X.status.email_polri,placeholder:"nrp@polri.go.id atau nip@polri.go.id"}),(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?(0,t.jsx)("small",{className:"bdb-error",style:{color:"#ef4444",fontWeight:600},children:"Email Dinas Polri tidak boleh sama dengan Username!"}):X.message.email_polri&&(0,t.jsx)("small",{className:"bdb-error",children:X.message.email_polri})]}),(0,t.jsx)(F,{label:"Email Sekunder",hint:"opsional / bebas (mis. Gmail, Yahoo)",children:(0,t.jsx)(i.InputText,{id:"profile-form-email",name:"email",autoComplete:"email",value:Z.email,onChange:e=>G(t=>({...t,email:e.target.value})),style:{width:"100%"},placeholder:"mis. nama@gmail.com"})}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-41",name:"field_3def3ti6rk0vr_41",label:"Username",hint:"alternatif login selain email dinas Polri",children:[(0,t.jsx)(p.default,{id:"profile-form-username",name:"username",autoComplete:"username",value:Z.username,onChange:e=>{G(t=>({...t,username:e})),X.onChangeDebounced("username",e)},onBlur:e=>X.onBlurNow("username",e),status:(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?"error":X.status.username,placeholder:"Contoh: omeko42"}),(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?(0,t.jsx)("small",{className:"bdb-error",style:{color:"#ef4444",fontWeight:600},children:"Username tidak boleh sama dengan Email Dinas Polri!"}):X.message.username&&(0,t.jsx)("small",{className:"bdb-error",children:X.message.username})]}),(0,t.jsxs)(F,{label:"Media Sosial Personil (Membangun Komunitas)",hint:"masukkan URL profil (Instagram, LinkedIn, X, TikTok, dll.) - opsional",children:[(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem"},children:eSocUrls.map((u,idx)=>(0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",alignItems:"center"},children:[(0,t.jsx)(i.InputText,{placeholder:"https://... (URL medsos)",value:u,onChange:e=>{let next=[...eSocUrls];next[idx]=e.target.value;setSocUrls(next)},style:{flex:1}}),(idx===eSocUrls.length-1)&&(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-plus",className:"p-button-outlined p-button-sm",onClick:()=>setSocUrls([...eSocUrls,""]),tooltip:"Tambah link medsos lain",style:{width:"2.5rem",height:"2.5rem",flexShrink:0}}),(eSocUrls.length>1)&&(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-trash",className:"p-button-outlined p-button-danger p-button-sm",onClick:()=>setSocUrls(eSocUrls.filter((_,i)=>i!==idx)),tooltip:"Hapus",style:{width:"2.5rem",height:"2.5rem",flexShrink:0}})]},idx))})]})]})}),(0,t.jsx)(r.Dialog,{header:"Foto Profil Personel",visible:Boolean(ePhotoModal && !isReadOnlyMode),onHide:()=>setPhotoModal(!1),style:{width:"27rem",maxWidth:"95vw"},modal:!0,footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[eRawPhoto?(0,t.jsx)(o.Button,{label:"Hapus",icon:"pi pi-trash",severity:"danger",text:!0,size:"small",disabled:ePhotoLoading,onClick:()=>{setPhotoPreview(null);setRawPhoto(null);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)}}):(0,t.jsx)("span",{}),(0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>setPhotoModal(!1),disabled:ePhotoLoading}),(0,t.jsx)(o.Button,{label:"Simpan Foto",icon:"pi pi-check",loading:ePhotoLoading,onClick:async function(){setPhotoLoading(!0);try{let finalBase64=null;if(eRawPhoto){finalBase64=await new Promise(res=>{let img=new Image;img.onload=function(){let sz=360,cv=document.createElement("canvas");cv.width=sz;cv.height=sz;let cx=cv.getContext("2d");let w=img.width,h=img.height,bs=Math.max(sz/w,sz/h)*ePhotoZoom,dw=w*bs,dh=h*bs;let dx=(sz-dw)/2+(ePhotoPanX*(sz/180)),dy=(sz-dh)/2+(ePhotoPanY*(sz/180));cx.drawImage(img,dx,dy,dw,dh);res(cv.toDataURL("image/jpeg",0.85))};img.onerror=()=>res(eRawPhoto);img.src=eRawPhoto})}let payload={photo_url:finalBase64||"",foto:finalBase64||""};(0,c.assertOk)(await c.apiAuth.patch("/user/me/profile",payload)),y(t=>({...t,photo_url:finalBase64||null,foto:finalBase64||null}));try{let cur=JSON.parse(localStorage.getItem("user")||"{}");cur.photo_url=finalBase64||null;cur.foto=finalBase64||null;localStorage.setItem("user",JSON.stringify(cur));window.dispatchEvent(new Event("storage"));window.dispatchEvent(new CustomEvent("user-updated",{detail:cur}))}catch(err){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Foto profil berhasil diperbarui."}),setPhotoModal(!1);setTimeout(()=>{window.location.reload()},400)}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan foto profil."})}finally{setPhotoLoading(!1)}}})]})]}),children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",padding:"0.5rem 0"},children:[(0,t.jsx)("input",{id:"user-photo-file-input",type:"file",style:{display:"none"},accept:"image/png,image/jpeg,image/webp,image/gif",onChange:function(ev){let f=ev.target.files?.[0];if(!f)return;let r=new FileReader;r.onload=function(e2){setRawPhoto(e2.target.result);setPhotoPreview(e2.target.result);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)};r.readAsDataURL(f)}}),(0,t.jsx)("div",{style:{width:"11.5rem",height:"11.5rem",borderRadius:"999px",border:"3.5px solid #3b82f6",overflow:"hidden",boxShadow:"0 4px 14px rgba(0,0,0,0.25)",display:"flex",alignItems:"center",justifyContent:"center",background:"#0f172a",marginBottom:"0.9rem",position:"relative"},children:eRawPhoto?(0,t.jsx)("img",{src:eRawPhoto,alt:"Preview",style:{width:"100%",height:"100%",objectFit:"cover",transform:`scale(${ePhotoZoom}) translate(${ePhotoPanX}px, ${ePhotoPanY}px)`,transformOrigin:"center center",pointerEvents:"none"}}):(0,t.jsx)("div",{style:{fontSize:"3.5rem",fontWeight:800,color:"#94a3b8"},children:eB})}),eRawPhoto&&(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.4rem",width:"100%",maxWidth:"19rem",background:"rgba(255,255,255,0.06)",padding:"0.6rem 0.8rem",borderRadius:"8px",marginBottom:"0.75rem",fontSize:"0.74rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[(0,t.jsx)("span",{children:"Perbesar (Zoom)"}),(0,t.jsx)("span",{style:{fontWeight:700,color:"#3b82f6"},children:`${Math.round(ePhotoZoom*100)}%`})]}),(0,t.jsx)("input",{type:"range",min:"1",max:"2.5",step:"0.05",value:ePhotoZoom,onChange:e=>setPhotoZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[(0,t.jsx)("span",{children:"Geser Kiri / Kanan"}),(0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${ePhotoPanX}px`})]}),(0,t.jsx)("input",{type:"range",min:"-50",max:"50",step:"1",value:ePhotoPanX,onChange:e=>setPhotoPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[(0,t.jsx)("span",{children:"Geser Atas / Bawah"}),(0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${ePhotoPanY}px`})]}),(0,t.jsx)("input",{type:"range",min:"-50",max:"50",step:"1",value:ePhotoPanY,onChange:e=>setPhotoPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsx)("button",{type:"button",style:{fontSize:"0.68rem",color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",alignSelf:"center",marginTop:"0.2rem"},onClick:()=>{setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)},children:"Reset Posisi & Zoom"})]}),(0,t.jsx)(o.Button,{label:eRawPhoto?"Ganti Foto dari Perangkat":"Pilih Foto dari Perangkat",icon:"pi pi-upload",size:"small",onClick:function(){let el=document.getElementById("user-photo-file-input");if(el)el.click()},disabled:ePhotoLoading,className:"p-button-outlined"}),(0,t.jsx)("p",{style:{fontSize:"0.72rem",color:"#94a3b8",marginTop:"0.5rem",marginBottom:0,textAlign:"center"},children:"Atur zoom & geser posisi agar pas di lingkaran. Foto otomatis dikonversi ke ukuran avatar optimal saat disimpan."})]})}),(0,t.jsx)(r.Dialog,{header:1===eTotpStep?"Setup Google Authenticator (TOTP) - Verifikasi":"Setup Google Authenticator (TOTP) - Pindai QR",visible:Boolean(eTotpModal && !isReadOnlyMode),onHide:()=>setTotpModal(!1),style:{width:"28rem",maxWidth:"95vw"},modal:!0,footer:1===eTotpStep?(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,disabled:eTotpLoading,onClick:()=>setTotpModal(!1)}),(0,t.jsx)(o.Button,{label:"Lanjut: Tampilkan QR",icon:"pi pi-arrow-right",iconPos:"right",loading:eTotpLoading,onClick:fetchTotpSetup})]}):(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[(0,t.jsx)(o.Button,{label:"Kembali",icon:"pi pi-arrow-left",text:!0,disabled:eTotpLoading,onClick:()=>setTotpStep(1)}),(0,t.jsx)(o.Button,{label:"Verifikasi & Aktifkan TOTP",icon:"pi pi-check",loading:eTotpLoading,onClick:confirmTotpActivation})]}),children:1===eTotpStep?(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"1rem",padding:"0.5rem 0"},children:[(0,t.jsxs)("div",{style:{background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.2)",borderRadius:8,padding:"0.65rem 0.8rem",display:"flex",gap:"0.6rem",alignItems:"flex-start"},children:[(0,t.jsx)("i",{className:"pi pi-shield",style:{color:"#38bdf8",fontSize:"1.1rem",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:"Konfirmasi Keamanan"}),(0,t.jsx)("div",{style:{fontSize:"0.75rem",color:"var(--cas-text-secondary, #334155)",marginTop:"0.15rem"},children:"Masukkan password akun Anda saat ini untuk mengonfirmasi kepemilikan akun sebelum mengaktifkan Google Authenticator."})]})]}),(0,t.jsxs)("div",{style:{display:"grid",gap:"0.35rem"},children:[(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #0f172a)"},children:"Password Akun Saat Ini:"}),(0,t.jsxs)("div",{style:{position:"relative",display:"flex",alignItems:"center"},children:[(0,t.jsx)(i.InputText,{type:eShowPassword?"text":"password",placeholder:"Masukkan password akun Anda",value:eExistingPassword,onChange:ev=>{setExistingPassword(ev.target.value);setTotpError("");},onKeyDown:ev=>{if(ev.key==="Enter")fetchTotpSetup();},style:{width:"100%",fontSize:"0.88rem",paddingRight:"2.5rem"}}),(0,t.jsx)("i",{className:eShowPassword?"pi pi-eye-slash":"pi pi-eye",style:{position:"absolute",right:"0.75rem",color:"#94a3b8",cursor:"pointer",fontSize:"0.95rem"},onClick:()=>setShowPassword(!eShowPassword)})]}),eTotpError&&(0,t.jsx)("small",{style:{color:"#ef4444",fontSize:"0.74rem",fontWeight:600},children:eTotpError})]})]}):(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.75rem",padding:"0.5rem 0"},children:[(0,t.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",margin:0},children:"Buka aplikasi Google Authenticator, Microsoft Authenticator, atau FreeOTP di ponsel Anda, lalu pindai kode QR di bawah ini:"}),eTotpData?.totp_image&&(0,t.jsx)("div",{style:{display:"flex",justifyContent:"center",padding:"0.75rem",background:"#fff",borderRadius:"10px",width:"fit-content",margin:"0 auto",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"},children:(0,t.jsx)("img",{src:eTotpData.totp_image,alt:"QR Code TOTP",style:{width:"160px",height:"160px",display:"block"}})}),eTotpData?.secret&&(0,t.jsxs)("div",{style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #e2e8f0)",padding:"0.5rem 0.75rem",borderRadius:"6px",display:"flex",alignItems:"center",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{style:{display:"block",fontSize:"0.68rem",color:"#64748b"},children:"Kunci Rahasia Manual:"}),(0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.85rem",fontWeight:700,color:"#38bdf8",letterSpacing:"1px"},children:eTotpData.secret})]}),(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-copy",className:"p-button-text p-button-sm",tooltip:"Salin Kunci",onClick:()=>{if(navigator.clipboard)navigator.clipboard.writeText(eTotpData.secret);e.current?.show({severity:"info",summary:"Disalin",detail:"Kunci rahasia berhasil disalin."});}})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.35rem"},children:[(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #0f172a)"},children:"Kode Authenticator (6 Digit dari Ponsel):"}),(0,t.jsx)(i.InputText,{placeholder:"000000",value:eTotpInputCode,onChange:ev=>setTotpInputCode(ev.target.value.replace(/\D/g,"").slice(0,6)),onKeyDown:ev=>{if(ev.key==="Enter"&&eTotpInputCode.length===6)confirmTotpActivation();},style:{width:"100%",fontSize:"1.2rem",letterSpacing:"5px",textAlign:"center",fontWeight:700,fontFamily:"monospace"},maxLength:6}),eTotpError&&(0,t.jsx)("small",{style:{color:"#ef4444",fontSize:"0.74rem",fontWeight:600},children:eTotpError})]})]})}),(0,t.jsx)(r.Dialog,{
+(0,t.jsx)(r.Dialog,{header:"Edit Profil",visible:Boolean($ && !isReadOnlyMode),onHide:()=>q(!1),style:{width:"32rem",maxWidth:"95vw"},modal:!0,footer:(0,t.jsxs)("div",{children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>q(!1),disabled:J}),(0,t.jsx)(o.Button,{label:"Simpan",icon:"pi pi-check",onClick:eA,loading:J})]}),children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.7rem"},children:[(0,t.jsx)("p",{style:{margin:0,fontSize:"0.8rem",color:"#94a3b8"},children:"Data personil ini dipakai untuk melengkapi Profil Saya. Kosongkan field yang tidak ingin diubah."}),(0,t.jsx)(F,{label:"Nama Lengkap",required:!0,children:(0,t.jsx)(i.InputText,{id:"profile-form-name",name:"name",autoComplete:"name",value:Z.name,onChange:e=>G(t=>({...t,name:e.target.value})),style:{width:"100%"}})}),(0,t.jsx)(F,{label:"Status Kepegawaian Personel",children:(0,t.jsxs)("div",{style:{display:"flex",gap:"1.25rem",padding:"0.25rem 0"},children:[(0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",cursor:"pointer",fontWeight:!Z.is_pns?700:500,color:!Z.is_pns?"#38bdf8":"var(--cas-text-secondary, #94a3b8)"},children:[(0,t.jsx)("input",{type:"radio",name:"is_pns",checked:!Z.is_pns,onChange:()=>G(t=>({...t,is_pns:!1}))}),"Anggota Polri"]}),(0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",cursor:"pointer",fontWeight:Z.is_pns?700:500,color:Z.is_pns?"#38bdf8":"var(--cas-text-secondary, #94a3b8)"},children:[(0,t.jsx)("input",{type:"radio",name:"is_pns",checked:!!Z.is_pns,onChange:()=>G(t=>({...t,is_pns:!0}))}),"PNS Polri"]})]})}),(0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.7rem"},children:[(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-30",name:"field_3def3ti6rk0vr_30",label:"NRP / NIP",children:(0,t.jsx)(i.InputText,{id:"profile-form-nrp",name:"nrp",autoComplete:"off",value:Z.nrp,onChange:e=>G(t=>({...t,nrp:e.target.value})),style:{width:"100%"}})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-32",name:"field_3def3ti6rk0vr_32",label:"No. HP",children:(0,t.jsx)(i.InputText,{id:"profile-form-no-hp",name:"no_hp",autoComplete:"tel",value:Z.no_hp,onChange:e=>G(t=>({...t,no_hp:e.target.value})),style:{width:"100%"},placeholder:"08xxxxxxxxxx"})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-34",name:"field_3def3ti6rk0vr_34",label:"Pangkat",children:(0,t.jsxs)("select",{id:"profile-form-pangkat",name:"pangkat",value:Z.pangkat,onChange:e=>G(t=>({...t,pangkat:e.target.value})),className:"p-inputtext",style:{width:"100%",height:"2.6rem",borderRadius:"6px",border:"1px solid #cbd5e1",padding:"0 0.5rem",backgroundColor:"var(--cas-bg-surface, #fff)",fontSize:"0.85rem",color:"var(--cas-text-primary, #1e293b)",borderColor:"var(--cas-border-card, #cbd5e1)"},children:[(0,t.jsx)("option",{value:"",children:"-- Pilih Pangkat --"}),(!Z.is_pns?["Bharada","Bharatu","Bharaka","Abripda","Abriptu","Abrip","Bripda","Briptu","Brigpol","Bripka","Aipda","Aiptu","Ipda","Iptu","AKP","Kompol","AKBP","Kombes Pol","Brigjen Pol","Irjen Pol","Komjen Pol","Jenderal Polisi"]:["Juru Muda (I/a)","Juru Muda Tingkat I (I/b)","Juru (I/c)","Juru Tingkat I (I/d)","Pengatur Muda (II/a)","Pengatur Muda Tingkat I (II/b)","Pengatur (II/c)","Pengatur Tingkat I (II/d)","Penata Muda (III/a)","Penata Muda Tingkat I (III/b)","Penata (III/c)","Penata Tingkat I (III/d)","Pembina (IV/a)","Pembina Tingkat I (IV/b)","Pembina Utama Muda (IV/c)","Pembina Utama Madya (IV/d)","Pembina Utama (IV/e)"]).map(e=>(0,t.jsx)("option",{value:e,children:e},e)),Z.pangkat&&!["Bharada","Bharatu","Bharaka","Abripda","Abriptu","Abrip","Bripda","Briptu","Brigpol","Bripka","Aipda","Aiptu","Ipda","Iptu","AKP","Kompol","AKBP","Kombes Pol","Brigjen Pol","Irjen Pol","Komjen Pol","Jenderal Polisi","Juru Muda (I/a)","Juru Muda Tingkat I (I/b)","Juru (I/c)","Juru Tingkat I (I/d)","Pengatur Muda (II/a)","Pengatur Muda Tingkat I (II/b)","Pengatur (II/c)","Pengatur Tingkat I (II/d)","Penata Muda (III/a)","Penata Muda Tingkat I (III/b)","Penata (III/c)","Penata Tingkat I (III/d)","Pembina (IV/a)","Pembina Tingkat I (IV/b)","Pembina Utama Muda (IV/c)","Pembina Utama Madya (IV/d)","Pembina Utama (IV/e)"].includes(Z.pangkat)&&(0,t.jsx)("option",{value:Z.pangkat,children:Z.pangkat},Z.pangkat)]})}),(0,t.jsx)(F,{id:"fld-3def3ti6rk0vr-36",name:"field_3def3ti6rk0vr_36",label:"Jabatan",children:(0,t.jsx)(i.InputText,{id:"profile-form-jabatan",name:"jabatan",autoComplete:"off",value:Z.jabatan,onChange:e=>G(t=>({...t,jabatan:e.target.value})),style:{width:"100%"},placeholder:"mis. Kanit Reskrim"})})]}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-38",name:"field_3def3ti6rk0vr_38",label:"Satuan / Satker Penugasan",hint:"ditetapkan oleh Administrator",children:[(0,t.jsx)(i.InputText,{id:"profile-form-satuan",name:"satuan",autoComplete:"off",value:(['1','320','15403','15404','16568','16576','16594'].includes(String(a?.id))||String(a?.role_bdb||a?.role||'').toLowerCase()==='superadmin'?"Robinopsnal Bareskrim Polri":(K(a?.scope_satker_name)||K(a?.scope_access_display)||K(Z.satuan)||"—")),disabled:!0,readOnly:!0,style:{width:"100%",background:"#f8fafc",color:"#475569",cursor:"not-allowed"}}),(0,t.jsx)("small",{style:{display:"block",marginTop:"0.25rem",color:"#94a3b8",fontSize:"0.72rem"},children:"Satker penugasan dan cakupan hak akses diatur terpusat oleh Superadmin di menu Master Pengguna."})]}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-40",name:"field_3def3ti6rk0vr_40",label:"Email Dinas Polri (Utama)",hint:"wajib @polri.go.id, login & OTP",children:[(0,t.jsx)(p.default,{id:"profile-form-email-polri",name:"email_polri",autoComplete:"email",value:Z.email_polri,onChange:e=>{G(t=>({...t,email_polri:e})),X.onChangeDebounced("email_polri",e)},onBlur:e=>X.onBlurNow("email_polri",e),status:(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?"error":X.status.email_polri,placeholder:"nrp@polri.go.id atau nip@polri.go.id"}),(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?(0,t.jsx)("small",{className:"bdb-error",style:{color:"#ef4444",fontWeight:600},children:"Email Dinas Polri tidak boleh sama dengan Username!"}):X.message.email_polri&&(0,t.jsx)("small",{className:"bdb-error",children:X.message.email_polri})]}),(0,t.jsx)(F,{label:"Email Sekunder",hint:"opsional / bebas (mis. Gmail, Yahoo)",children:(0,t.jsx)(i.InputText,{id:"profile-form-email",name:"email",autoComplete:"email",value:Z.email,onChange:e=>G(t=>({...t,email:e.target.value})),style:{width:"100%"},placeholder:"mis. nama@gmail.com"})}),(0,t.jsxs)(F,{id:"fld-3def3ti6rk0vr-41",name:"field_3def3ti6rk0vr_41",label:"Username",hint:"alternatif login selain email dinas Polri",children:[(0,t.jsx)(p.default,{id:"profile-form-username",name:"username",autoComplete:"username",value:Z.username,onChange:e=>{G(t=>({...t,username:e})),X.onChangeDebounced("username",e)},onBlur:e=>X.onBlurNow("username",e),status:(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?"error":X.status.username,placeholder:"Contoh: omeko42"}),(Z.username&&Z.email_polri&&Z.username.trim().toLowerCase()===Z.email_polri.trim().toLowerCase())?(0,t.jsx)("small",{className:"bdb-error",style:{color:"#ef4444",fontWeight:600},children:"Username tidak boleh sama dengan Email Dinas Polri!"}):X.message.username&&(0,t.jsx)("small",{className:"bdb-error",children:X.message.username})]}),(0,t.jsxs)(F,{label:"Media Sosial Personil (Membangun Komunitas)",hint:"masukkan URL profil (Instagram, LinkedIn, X, TikTok, dll.) - opsional",children:[(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem"},children:eSocUrls.map((u,idx)=>(0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",alignItems:"center"},children:[(0,t.jsx)(i.InputText,{placeholder:"https://... (URL medsos)",value:u,onChange:e=>{let next=[...eSocUrls];next[idx]=e.target.value;setSocUrls(next)},style:{flex:1}}),(idx===eSocUrls.length-1)&&(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-plus",className:"p-button-outlined p-button-sm",onClick:()=>setSocUrls([...eSocUrls,""]),tooltip:"Tambah link medsos lain",style:{width:"2.5rem",height:"2.5rem",flexShrink:0}}),(eSocUrls.length>1)&&(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-trash",className:"p-button-outlined p-button-danger p-button-sm",onClick:()=>setSocUrls(eSocUrls.filter((_,i)=>i!==idx)),tooltip:"Hapus",style:{width:"2.5rem",height:"2.5rem",flexShrink:0}})]},idx))})]})]})}),(0,t.jsx)(r.Dialog,{header:"Foto Profil Personel",visible:Boolean(ePhotoModal && !isReadOnlyMode),onHide:()=>setPhotoModal(!1),style:{width:"27rem",maxWidth:"95vw"},modal:!0,footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[eRawPhoto?(0,t.jsx)(o.Button,{label:"Hapus",icon:"pi pi-trash",severity:"danger",text:!0,size:"small",disabled:ePhotoLoading,onClick:()=>{setPhotoPreview(null);setRawPhoto(null);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)}}):(0,t.jsx)("span",{}),(0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,onClick:()=>setPhotoModal(!1),disabled:ePhotoLoading}),(0,t.jsx)(o.Button,{label:"Simpan Foto",icon:"pi pi-check",loading:ePhotoLoading,onClick:async function(){setPhotoLoading(!0);try{let finalBase64=null;if(eRawPhoto){finalBase64=await new Promise(res=>{let img=new Image;img.onload=function(){let sz=360,cv=document.createElement("canvas");cv.width=sz;cv.height=sz;let cx=cv.getContext("2d");let w=img.width,h=img.height,bs=Math.max(sz/w,sz/h)*ePhotoZoom,dw=w*bs,dh=h*bs;let dx=(sz-dw)/2+(ePhotoPanX*(sz/180)),dy=(sz-dh)/2+(ePhotoPanY*(sz/180));cx.drawImage(img,dx,dy,dw,dh);res(cv.toDataURL("image/jpeg",0.85))};img.onerror=()=>res(eRawPhoto);img.src=eRawPhoto})}let nextSoc={...(a?.social_media||{}),avatar_v2:Boolean(finalBase64)};let payload={photo_url:finalBase64||"",foto:finalBase64||"",social_media:nextSoc};(0,c.assertOk)(await c.apiAuth.patch("/user/me/profile",payload)),y(t=>({...t,photo_url:finalBase64||null,foto:finalBase64||null,social_media:nextSoc}));try{if(a?.id)localStorage.setItem("cas_avatar_v2_"+a.id,finalBase64?"1":"0");let cur=JSON.parse(localStorage.getItem("user")||"{}");cur.photo_url=finalBase64||null;cur.foto=finalBase64||null;cur.social_media=nextSoc;localStorage.setItem("user",JSON.stringify(cur));window.dispatchEvent(new Event("storage"));window.dispatchEvent(new CustomEvent("user-updated",{detail:cur}))}catch(err){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Foto profil berhasil diperbarui."}),setPhotoModal(!1);setTimeout(()=>{window.location.reload()},400)}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan foto profil."})}finally{setPhotoLoading(!1)}}})]})]}),children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",padding:"0.5rem 0"},children:[(0,t.jsx)("input",{id:"user-photo-file-input",type:"file",style:{display:"none"},accept:"image/png,image/jpeg,image/webp,image/gif",onChange:function(ev){let f=ev.target.files?.[0];if(!f)return;let r=new FileReader;r.onload=function(e2){setRawPhoto(e2.target.result);setPhotoPreview(e2.target.result);setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)};r.readAsDataURL(f)}}),(0,t.jsx)("div",{style:{width:"11.5rem",height:"11.5rem",borderRadius:"999px",border:"3.5px solid #3b82f6",overflow:"hidden",boxShadow:"0 4px 14px rgba(0,0,0,0.25)",display:"flex",alignItems:"center",justifyContent:"center",background:"#0f172a",marginBottom:"0.9rem",position:"relative"},children:eRawPhoto?(0,t.jsx)("img",{src:eRawPhoto,alt:"Preview",style:{width:"100%",height:"100%",objectFit:"cover",transform:`scale(${ePhotoZoom}) translate(${ePhotoPanX}px, ${ePhotoPanY}px)`,transformOrigin:"center center",pointerEvents:"none"}}):(0,t.jsx)("img",{src:getDefaultAvatarUrl(a),alt:"Default Avatar",style:{width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none"}})}),eRawPhoto&&(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.4rem",width:"100%",maxWidth:"19rem",background:"rgba(255,255,255,0.06)",padding:"0.6rem 0.8rem",borderRadius:"8px",marginBottom:"0.75rem",fontSize:"0.74rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[(0,t.jsx)("span",{children:"Perbesar (Zoom)"}),(0,t.jsx)("span",{style:{fontWeight:700,color:"#3b82f6"},children:`${Math.round(ePhotoZoom*100)}%`})]}),(0,t.jsx)("input",{type:"range",min:"1",max:"2.5",step:"0.05",value:ePhotoZoom,onChange:e=>setPhotoZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[(0,t.jsx)("span",{children:"Geser Kiri / Kanan"}),(0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${ePhotoPanX}px`})]}),(0,t.jsx)("input",{type:"range",min:"-50",max:"50",step:"1",value:ePhotoPanX,onChange:e=>setPhotoPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[(0,t.jsx)("span",{children:"Geser Atas / Bawah"}),(0,t.jsx)("span",{style:{fontWeight:600,color:"#94a3b8"},children:`${ePhotoPanY}px`})]}),(0,t.jsx)("input",{type:"range",min:"-50",max:"50",step:"1",value:ePhotoPanY,onChange:e=>setPhotoPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#3b82f6",cursor:"pointer"}}),(0,t.jsx)("button",{type:"button",style:{fontSize:"0.68rem",color:"#94a3b8",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",alignSelf:"center",marginTop:"0.2rem"},onClick:()=>{setPhotoZoom(1);setPhotoPanX(0);setPhotoPanY(0)},children:"Reset Posisi & Zoom"})]}),(0,t.jsx)(o.Button,{label:eRawPhoto?"Ganti Foto dari Perangkat":"Pilih Foto dari Perangkat",icon:"pi pi-upload",size:"small",onClick:function(){let el=document.getElementById("user-photo-file-input");if(el)el.click()},disabled:ePhotoLoading,className:"p-button-outlined"}),(0,t.jsx)("p",{style:{fontSize:"0.72rem",color:"#94a3b8",marginTop:"0.5rem",marginBottom:0,textAlign:"center"},children:"Atur zoom & geser posisi agar pas di lingkaran. Foto otomatis dikonversi ke ukuran avatar optimal saat disimpan."})]})}),(0,t.jsx)(r.Dialog,{header:1===eTotpStep?"Setup Google Authenticator (TOTP) - Verifikasi":"Setup Google Authenticator (TOTP) - Pindai QR",visible:Boolean(eTotpModal && !isReadOnlyMode),onHide:()=>setTotpModal(!1),style:{width:"28rem",maxWidth:"95vw"},modal:!0,footer:1===eTotpStep?(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[(0,t.jsx)(o.Button,{label:"Batal",text:!0,disabled:eTotpLoading,onClick:()=>setTotpModal(!1)}),(0,t.jsx)(o.Button,{label:"Lanjut: Tampilkan QR",icon:"pi pi-arrow-right",iconPos:"right",loading:eTotpLoading,onClick:fetchTotpSetup})]}):(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[(0,t.jsx)(o.Button,{label:"Kembali",icon:"pi pi-arrow-left",text:!0,disabled:eTotpLoading,onClick:()=>setTotpStep(1)}),(0,t.jsx)(o.Button,{label:"Verifikasi & Aktifkan TOTP",icon:"pi pi-check",loading:eTotpLoading,onClick:confirmTotpActivation})]}),children:1===eTotpStep?(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"1rem",padding:"0.5rem 0"},children:[(0,t.jsxs)("div",{style:{background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.2)",borderRadius:8,padding:"0.65rem 0.8rem",display:"flex",gap:"0.6rem",alignItems:"flex-start"},children:[(0,t.jsx)("i",{className:"pi pi-shield",style:{color:"#38bdf8",fontSize:"1.1rem",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:"Konfirmasi Keamanan"}),(0,t.jsx)("div",{style:{fontSize:"0.75rem",color:"var(--cas-text-secondary, #334155)",marginTop:"0.15rem"},children:"Masukkan password akun Anda saat ini untuk mengonfirmasi kepemilikan akun sebelum mengaktifkan Google Authenticator."})]})]}),(0,t.jsxs)("div",{style:{display:"grid",gap:"0.35rem"},children:[(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #0f172a)"},children:"Password Akun Saat Ini:"}),(0,t.jsxs)("div",{style:{position:"relative",display:"flex",alignItems:"center"},children:[(0,t.jsx)(i.InputText,{type:eShowPassword?"text":"password",placeholder:"Masukkan password akun Anda",value:eExistingPassword,onChange:ev=>{setExistingPassword(ev.target.value);setTotpError("");},onKeyDown:ev=>{if(ev.key==="Enter")fetchTotpSetup();},style:{width:"100%",fontSize:"0.88rem",paddingRight:"2.5rem"}}),(0,t.jsx)("i",{className:eShowPassword?"pi pi-eye-slash":"pi pi-eye",style:{position:"absolute",right:"0.75rem",color:"#94a3b8",cursor:"pointer",fontSize:"0.95rem"},onClick:()=>setShowPassword(!eShowPassword)})]}),eTotpError&&(0,t.jsx)("small",{style:{color:"#ef4444",fontSize:"0.74rem",fontWeight:600},children:eTotpError})]})]}):(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.75rem",padding:"0.5rem 0"},children:[(0,t.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",margin:0},children:"Buka aplikasi Google Authenticator, Microsoft Authenticator, atau FreeOTP di ponsel Anda, lalu pindai kode QR di bawah ini:"}),eTotpData?.totp_image&&(0,t.jsx)("div",{style:{display:"flex",justifyContent:"center",padding:"0.75rem",background:"#fff",borderRadius:"10px",width:"fit-content",margin:"0 auto",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"},children:(0,t.jsx)("img",{src:eTotpData.totp_image,alt:"QR Code TOTP",style:{width:"160px",height:"160px",display:"block"}})}),eTotpData?.secret&&(0,t.jsxs)("div",{style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #e2e8f0)",padding:"0.5rem 0.75rem",borderRadius:"6px",display:"flex",alignItems:"center",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{style:{display:"block",fontSize:"0.68rem",color:"#64748b"},children:"Kunci Rahasia Manual:"}),(0,t.jsx)("span",{style:{fontFamily:"monospace",fontSize:"0.85rem",fontWeight:700,color:"#38bdf8",letterSpacing:"1px"},children:eTotpData.secret})]}),(0,t.jsx)(o.Button,{type:"button",icon:"pi pi-copy",className:"p-button-text p-button-sm",tooltip:"Salin Kunci",onClick:()=>{if(navigator.clipboard)navigator.clipboard.writeText(eTotpData.secret);e.current?.show({severity:"info",summary:"Disalin",detail:"Kunci rahasia berhasil disalin."});}})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.35rem"},children:[(0,t.jsx)("label",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #0f172a)"},children:"Kode Authenticator (6 Digit dari Ponsel):"}),(0,t.jsx)(i.InputText,{placeholder:"000000",value:eTotpInputCode,onChange:ev=>setTotpInputCode(ev.target.value.replace(/\D/g,"").slice(0,6)),onKeyDown:ev=>{if(ev.key==="Enter"&&eTotpInputCode.length===6)confirmTotpActivation();},style:{width:"100%",fontSize:"1.2rem",letterSpacing:"5px",textAlign:"center",fontWeight:700,fontFamily:"monospace"},maxLength:6}),eTotpError&&(0,t.jsx)("small",{style:{color:"#ef4444",fontSize:"0.74rem",fontWeight:600},children:eTotpError})]})]})}),(0,t.jsx)(r.Dialog,{
 header:"Daftar Perangkat Terpercaya (Passkey FIDO2)",
 visible:Boolean(ePasskeyModal&&!isReadOnlyMode),
 onHide:function(){setPasskeyModal(!1)},
@@ -3910,7 +3964,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",width:"100%"},
                 title:"Klik untuk melihat profil personil",
                 children:[
-                  renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8),
+                  renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8, usr),
                   (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
                     (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.84rem",color:"#38bdf8"},children:usrHandle}),
                     renderMetaVerifiedBadge(usrBadge, 14),

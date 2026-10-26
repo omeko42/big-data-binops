@@ -5365,4 +5365,107 @@ div[style*="margin-top:-1.6rem"] > span {
   gap: 0.75rem !important;
 }
 
+/* ==========================================================================
+   ROUND 5: ANTI-NYARU HIGH-CONTRAST TYPOGRAPHY & BANNER ENGINE (LIGHT & DARK)
+   Ensures zero low-contrast ("nyaru") text vs background across all views
+   ========================================================================== */
+:root:not([data-theme="dark"]) .cas-tactical-readonly-banner {
+  background: #ffffff !important;
+  border: 1px solid rgba(2, 132, 199, 0.35) !important;
+  border-left: 4px solid #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.08) !important;
+}
+:root[data-theme="dark"] .cas-tactical-readonly-banner {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-left: 4px solid #38bdf8 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Light Mode: Darken pastel inline text colors (#38bdf8, #4ade80, #34d399, #fbbf24, #f87171, #94a3b8, #c084fc) */
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(56, 189, 248)"]:not(#cas-profile-hero-banner *),
+:root:not([data-theme="dark"]) .cms-main [style*="color:#38bdf8"]:not(#cas-profile-hero-banner *),
+:root:not([data-theme="dark"]) .cms-main [style*="color: #38bdf8"]:not(#cas-profile-hero-banner *),
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(96, 165, 250)"]:not(#cas-profile-hero-banner *),
+:root:not([data-theme="dark"]) .cms-main [style*="color:#60a5fa"]:not(#cas-profile-hero-banner *),
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(56, 189, 248)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#38bdf8"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: #38bdf8"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(96, 165, 250)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#60a5fa"] {
+  color: #0369a1 !important;
+}
+
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(74, 222, 128)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#4ade80"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: #4ade80"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(52, 211, 153)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#34d399"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: #34d399"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(74, 222, 128)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#4ade80"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: #4ade80"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(52, 211, 153)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#34d399"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: #34d399"] {
+  color: #15803d !important;
+}
+
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(251, 191, 36)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#fbbf24"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: #fbbf24"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(245, 158, 11)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#f59e0b"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(251, 191, 36)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#fbbf24"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(245, 158, 11)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#f59e0b"] {
+  color: #b45309 !important;
+}
+
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(248, 113, 113)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#f87171"],
+:root:not([data-theme="dark"]) .cms-main [style*="color: #f87171"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(248, 113, 113)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#f87171"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: #f87171"] {
+  color: #b91c1c !important;
+}
+
+:root:not([data-theme="dark"]) .cms-main [style*="color: rgb(192, 132, 252)"],
+:root:not([data-theme="dark"]) .cms-main [style*="color:#c084fc"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(192, 132, 252)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#c084fc"] {
+  color: #7e22ce !important;
+}
+
+:root:not([data-theme="dark"]) .cms-card [style*="color: rgb(148, 163, 184)"],
+:root:not([data-theme="dark"]) .cms-card [style*="color:#94a3b8"],
+:root:not([data-theme="dark"]) .cms-card [style*="color: #94a3b8"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: rgb(148, 163, 184)"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color:#94a3b8"],
+:root:not([data-theme="dark"]) .p-dialog [style*="color: #94a3b8"] {
+  color: #475569 !important;
+}
+
+/* Dark Mode: Brighten deep blue/green inline text colors so they pop on dark slate */
+:root[data-theme="dark"] .cms-main [style*="color: rgb(3, 105, 161)"],
+:root[data-theme="dark"] .cms-main [style*="color:#0369a1"],
+:root[data-theme="dark"] .cms-main [style*="color: rgb(2, 132, 199)"],
+:root[data-theme="dark"] .cms-main [style*="color:#0284c7"],
+:root[data-theme="dark"] .p-dialog [style*="color: rgb(3, 105, 161)"],
+:root[data-theme="dark"] .p-dialog [style*="color:#0369a1"] {
+  color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .cms-main [style*="color: rgb(21, 128, 61)"],
+:root[data-theme="dark"] .cms-main [style*="color:#15803d"],
+:root[data-theme="dark"] .cms-main [style*="color: rgb(4, 120, 87)"],
+:root[data-theme="dark"] .cms-main [style*="color:#047857"],
+:root[data-theme="dark"] .p-dialog [style*="color: rgb(21, 128, 61)"],
+:root[data-theme="dark"] .p-dialog [style*="color:#15803d"] {
+  color: #4ade80 !important;
+}
+
+
 
