@@ -4862,13 +4862,13 @@ div[style*="margin-top:-1.6rem"] > span {
   display: flex;
   gap: 1.5rem;
   align-items: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
   box-sizing: border-box;
 }
 
 .feed-left-col {
-  flex: 1 1 540px;
+  flex: 1 1 0%;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -4882,6 +4882,10 @@ div[style*="margin-top:-1.6rem"] > span {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.feed-right-col:not(.is-minimized) .feed-filter-header-icons .feed-filter-icon-pill {
+  display: none !important;
 }
 
 /* Minimized state on Desktop: move compact 5-icon filter header bar above Composer */
@@ -4900,6 +4904,10 @@ div[style*="margin-top:-1.6rem"] > span {
   gap: 0.75rem !important;
 }
 
+.feed-right-col.is-minimized .feed-filter-header-icons .feed-filter-icon-pill {
+  display: inline-flex !important;
+}
+
 .feed-right-col.is-minimized .feed-filter-vertical-list {
   display: none !important;
 }
@@ -4914,7 +4922,7 @@ div[style*="margin-top:-1.6rem"] > span {
   padding: 0.65rem 0.9rem !important;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1180px) {
   .feed-layout-container {
     flex-direction: column !important;
     gap: 0.85rem !important;
@@ -4932,6 +4940,9 @@ div[style*="margin-top:-1.6rem"] > span {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)) !important;
     gap: 0.75rem !important;
+  }
+  .feed-right-col .feed-filter-header-icons .feed-filter-icon-pill {
+    display: inline-flex !important;
   }
   .feed-right-col .feed-filter-vertical-list {
     display: none !important;
