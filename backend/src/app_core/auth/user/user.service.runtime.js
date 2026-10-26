@@ -36,6 +36,15 @@ let UserService = class UserService {
         this.userRepository = this.dataSource.getRepository(user_entity_1.User);
         this.tableHelper = new table_helper_service_1.TableHelperService();
     }
+    sanitizeUsernameInput(raw) {
+        if (raw === undefined || raw === null) return null;
+        let u = String(raw).trim().toLowerCase();
+        if (!u) return null;
+        if (u.startsWith('@')) u = u.slice(1);
+        if (u.includes('@')) u = u.split('@')[0];
+        u = u.replace(/[^a-z0-9_.]/g, '').slice(0, 30);
+        return u || null;
+    }
     normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
     }
@@ -136,7 +145,7 @@ let UserService = class UserService {
             .leftJoinAndSelect('user.OrganisasiRole', 'OrganisasiRole')
             .leftJoinAndSelect('Organisasi.OrganisasiLevel', 'OrganisasiLevel')
             .where('lower(user.email_polri) = :id', { id: raw })
-            .orWhere('lower(user.username) = :id', { id: raw })
+            .orWhere('lower(user.username) = :id', { id: raw }).orWhere('lower(user.username) = :uLocal', { uLocal: raw.includes('@') ? raw.split('@')[0] : raw })
             .orWhere('lower(user.email) = :id', { id: raw })
             .orWhere('lower(user.callsign) = :cid', { cid: normalized })
             .addSelect('user.password')
@@ -163,6 +172,18 @@ let UserService = class UserService {
     }
     async create(createUserDto, authUser) {
         const { password, password_confirmation, email, ...rest } = createUserDto;
+        if (rest.username !== undefined && rest.username !== null && String(rest.username).trim() !== '') {
+            const sanitizedU = this.sanitizeUsernameInput(rest.username);
+            if (!sanitizedU || sanitizedU.length < 3) {
+                throw new common_1.BadRequestException({
+                    message: 'Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore).',
+                    errors: { username: ['Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore, tanpa @domain).'] }
+                });
+            }
+            rest.username = sanitizedU;
+        } else {
+            rest.username = null;
+        }
         if (password !== password_confirmation) {
             throw new common_1.BadRequestException({
                 message: 'Bad Request',
@@ -397,6 +418,20 @@ let UserService = class UserService {
             });
             if (!user) {
                 throw new common_1.NotFoundException('User with ID ' + id + ' not found.');
+            }
+            if (dto.username !== undefined) {
+                if (dto.username !== null && String(dto.username).trim() !== '') {
+                    const sanitizedU = this.sanitizeUsernameInput(dto.username);
+                    if (!sanitizedU || sanitizedU.length < 3) {
+                        throw new common_1.BadRequestException({
+                            message: 'Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore).',
+                            errors: { username: ['Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore, tanpa @domain).'] }
+                        });
+                    }
+                    dto.username = sanitizedU;
+                } else {
+                    dto.username = null;
+                }
             }
             const polriToCheck = dto.email_polri !== undefined ? dto.email_polri : user.email_polri;
             const usernameToCheck = dto.username !== undefined ? dto.username : user.username;

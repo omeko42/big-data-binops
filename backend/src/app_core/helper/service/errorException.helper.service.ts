@@ -23,7 +23,7 @@ export class ErrorExceptionFilter implements ExceptionFilter {
             errorDetails = errorResponse as any;
         } else if (exception instanceof QueryFailedError) {
             status = HttpStatus.BAD_REQUEST; // Or another suitable status code
-            errorMessage = 'Database query failed';
+            errorMessage = (exception.driverError && exception.driverError.constraint === 'chk_auth_users_username_format') ? 'Format Username tidak valid: gunakan 3-30 karakter huruf kecil, angka, titik (.), atau garis bawah (_) tanpa @domain.' : (exception.driverError && exception.driverError.detail ? 'Gagal menyimpan ke database: ' + exception.driverError.detail : 'Database query failed');
             const errorCode = exception.driverError.code;
             systemMessage = [
                 exception.message,
@@ -58,7 +58,7 @@ export class ErrorExceptionFilter implements ExceptionFilter {
             method: request.route?.methods,
             message: errorMessage,
             system_message: systemMessage, // Include system messages for debugging
-            errors: errorDetails.errors || {}, // Safe access to properties
+            errors: (errorDetails.errors && Object.keys(errorDetails.errors).length > 0) ? errorDetails.errors : (errorMessage ? { _general: [errorMessage] } : {}), // Safe access to properties
             data: errorDetails.data || [] // Safe access to properties
         };
 

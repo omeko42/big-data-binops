@@ -45,6 +45,15 @@ export class UserService {
         this.tableHelper = new TableHelperService();
     }
 
+    sanitizeUsernameInput(raw: any): string | null {
+        if (raw === undefined || raw === null) return null;
+        let u = String(raw).trim().toLowerCase();
+        if (!u) return null;
+        if (u.startsWith('@')) u = u.slice(1);
+        if (u.includes('@')) u = u.split('@')[0];
+        u = u.replace(/[^a-z0-9_.]/g, '').slice(0, 30);
+        return u || null;
+    }
     private normalizeEmail(email?: string): string {
         return String(email || '').trim().toLowerCase();
     }
@@ -163,7 +172,7 @@ export class UserService {
             .leftJoinAndSelect('user.OrganisasiRole', 'OrganisasiRole')
             .leftJoinAndSelect('Organisasi.OrganisasiLevel', 'OrganisasiLevel')
             .where('lower(user.email_polri) = :id', { id: raw })
-            .orWhere('lower(user.username) = :id', { id: raw })
+            .orWhere('lower(user.username) = :id', { id: raw }).orWhere('lower(user.username) = :uLocal', { uLocal: raw.includes('@') ? raw.split('@')[0] : raw })
             .orWhere('lower(user.email) = :id', { id: raw })
             .orWhere('lower(user.callsign) = :cid', { cid: normalized })
             .addSelect('user.password')
