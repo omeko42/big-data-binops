@@ -40,6 +40,9 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 [eSettingsTab,setSettingsTab]=(0,n.useState)('keamanan'),
 
 [eNetworkModal,setNetworkModal]=(0,n.useState)(!1),
+[eNetworkMaximized,setNetworkMaximized]=(0,n.useState)(!1),
+networkCacheRef=(0,n.useRef)(new Map()),
+networkSearchTimerRef=(0,n.useRef)(null),
 [eNetworkConnectedTarget,setNetworkConnectedTarget]=(0,n.useState)(null),
 [eNetworkModalTitle,setNetworkModalTitle]=(0,n.useState)(''),
 [eNetworkTab,setNetworkTab]=(0,n.useState)('connected'),
@@ -278,7 +281,7 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
         color:"#38bdf8",
         border:"1px solid rgba(255,255,255,0.12)"
       },
-      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
+      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",loading:"lazy",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
     })
   });
 }
@@ -431,6 +434,7 @@ async function handleModalToggleConnect(targetUser) {
         await c.apiAuth.post('/bdb/jukrah/network/disconnect/' + targetId);
       } catch(err) {}
       try { localStorage.removeItem('cas_conn_' + targetId); } catch(e) {}
+      networkCacheRef.current.clear();
       setNetworkUsers(prev => prev.map(u => String(u.id) === String(targetId) ? { ...u, is_connected: false, connection_status: 'NONE' } : u));
       if (String(a?.id) === String(targetId)) {
         y(prev => ({ ...prev, is_connected: false, connection_status: 'NONE' }));
@@ -441,6 +445,7 @@ async function handleModalToggleConnect(targetUser) {
         await c.apiAuth.post('/bdb/jukrah/network/connect/' + targetId);
       } catch(err) {}
       try { localStorage.setItem('cas_conn_' + targetId, '1'); } catch(e) {}
+      networkCacheRef.current.clear();
       setNetworkUsers(prev => prev.map(u => String(u.id) === String(targetId) ? { ...u, is_connected: true, connection_status: 'ACCEPTED' } : u));
       if (String(a?.id) === String(targetId)) {
         y(prev => ({ ...prev, is_connected: true, connection_status: 'ACCEPTED' }));
@@ -671,22 +676,42 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
 
 let defaultPersonnel = [];
 
-let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo) => {
-  setNetworkLoading(!0);
+let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo, customLimit, isSilentPrefetch) => {
   let p = targetPage || 1;
-  setNetworkPage(p);
+  let pageSize = customLimit || (eNetworkMaximized ? 18 : 9);
+  if (!isSilentPrefetch) setNetworkPage(p);
   try {
     let sVal = search !== void 0 ? search : eNetworkSearch;
     let satVal = satker !== void 0 ? satker : eNetworkSatkerFilter;
     let connTo = targetConnectedTo !== void 0 ? targetConnectedTo : (satVal === 'connected' ? (eNetworkConnectedTarget || a?.id || mySelf?.id) : null);
+    let activeConnId = (satVal === 'connected' || connTo) ? (connTo || eNetworkConnectedTarget || a?.id || mySelf?.id || '') : '';
+    let cacheKey = [sVal || '', satVal || '', p, activeConnId, pageSize].join('|');
+    if (networkCacheRef.current.has(cacheKey)) {
+      let cached = networkCacheRef.current.get(cacheKey);
+      if (!isSilentPrefetch) {
+        setNetworkUsers(cached.list);
+        setNetworkTotal(cached.total);
+        setNetworkTotalPages(cached.totalPages);
+        setNetworkLoading(!1);
+        if (p < cached.totalPages) {
+          let nextKey = [sVal || '', satVal || '', p + 1, activeConnId, pageSize].join('|');
+          if (!networkCacheRef.current.has(nextKey)) {
+            setTimeout(() => { fetchNetworkDirectory(sVal, satVal, p + 1, activeConnId || null, pageSize, !0); }, 100);
+          }
+        }
+      }
+      return;
+    }
+    if (!isSilentPrefetch && eNetworkUsers.length === 0) {
+      setNetworkLoading(!0);
+    }
     let qParams = {
       search: sVal || '',
       satker: (satVal === 'all' || satVal === 'connected') ? '' : (satVal === 'my_satker' ? (a?.satker_nama || a?.satker || '') : satVal),
       page: p,
-      limit: 9
+      limit: pageSize
     };
     if (satVal === 'connected' || connTo) {
-      var activeConnId = connTo || eNetworkConnectedTarget || a?.id || mySelf?.id;
       if (activeConnId) {
         qParams.connected_to = activeConnId;
         qParams.target_user_id = activeConnId;
@@ -698,21 +723,41 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
     }
     let res = await c.apiAuth.get('/bdb/jukrah/network/users', { params: qParams });
     let list = res.data?.data || [];
-    setNetworkUsers(list);
-    setNetworkTotal(res.data?.total !== undefined ? res.data.total : list.length);
-    setNetworkTotalPages(res.data?.total_pages || Math.ceil((res.data?.total !== undefined ? res.data.total : list.length) / 9) || 1);
+    let total = res.data?.total !== undefined ? res.data.total : list.length;
+    let totalPages = res.data?.total_pages || Math.ceil(total / pageSize) || 1;
+    networkCacheRef.current.set(cacheKey, { list, total, totalPages });
+    if (!isSilentPrefetch) {
+      setNetworkUsers(list);
+      setNetworkTotal(total);
+      setNetworkTotalPages(totalPages);
+      if (p < totalPages) {
+        setTimeout(() => { fetchNetworkDirectory(sVal, satVal, p + 1, activeConnId || null, pageSize, !0); }, 120);
+      }
+    }
   } catch (err) {
-    setNetworkUsers([]);
-    setNetworkTotal(0);
-    setNetworkTotalPages(1);
+    if (!isSilentPrefetch && eNetworkUsers.length === 0) {
+      setNetworkUsers([]);
+      setNetworkTotal(0);
+      setNetworkTotalPages(1);
+    }
   } finally {
-    setNetworkLoading(!1);
+    if (!isSilentPrefetch) {
+      setNetworkLoading(!1);
+    }
   }
 };
 
 (0,n.useEffect)(() => {
-  fetchNetworkDirectory('', 'all', 1);
+  fetchNetworkDirectory('', 'all', 1, null, 9, !0);
 }, []);
+
+(0,n.useEffect)(() => {
+  var uid = a?.id || mySelf?.id;
+  if (uid) {
+    fetchNetworkDirectory('', 'connected', 1, uid, 9, !0);
+    fetchNetworkDirectory('', 'connected', 1, uid, 18, !0);
+  }
+}, [a?.id, mySelf?.id]);
 
 let handleOpenProfilePreview = async (user) => {
   try {
@@ -1922,6 +1967,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   ]}),
   visible:Boolean(eSettingsModal && !isReadOnlyMode),
   onHide:()=>setSettingsModal(!1),
+  maximizable:!0,
   style:{width:"48rem",maxWidth:"95vw"},
   modal:!0,
   dismissableMask:!0,
@@ -2045,25 +2091,66 @@ isReadOnlyMode && (0,t.jsxs)("div",{
 
 // 10. JARINGAN & KONEKSI CAS MODAL (LINKEDIN STYLE)
 (0,t.jsx)(r.Dialog,{
-  header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-    (0,t.jsx)("i",{className:"pi pi-users",style:{fontSize:"1.1rem",color:"#38bdf8"}}),
-    (0,t.jsx)("span",{style:{fontWeight:800},children:eNetworkModalTitle || "Jaringan & Koneksi Personil CAS"}),
-    (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:(eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi" : " Personil")})
+  header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",paddingRight:"0.5rem",gap:"0.75rem"},children:[
+    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",minWidth:0,flexWrap:"wrap"},children:[
+      (0,t.jsx)("i",{className:"pi pi-users",style:{fontSize:"1.1rem",color:"#38bdf8"}}),
+      (0,t.jsx)("span",{style:{fontWeight:800},children:eNetworkModalTitle || ("Daftar Koneksi " + formatCallsign(a?.callsign, a?.id, a?.username))}),
+      (0,t.jsx)("span",{style:{fontSize:"0.72rem",background:"rgba(56,189,248,0.15)",color:"#38bdf8",padding:"0.15rem 0.55rem",borderRadius:"999px",fontWeight:700},children:(eNetworkTotal || 0).toLocaleString("id-ID") + (eNetworkConnectedTarget ? " Koneksi" : " Personil")})
+    ]}),
+    (0,t.jsxs)("button",{
+      type:"button",
+      onClick:()=>{
+        var nextMax = !eNetworkMaximized;
+        setNetworkMaximized(nextMax);
+        fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, nextMax ? 18 : 9);
+      },
+      title:eNetworkMaximized ? "Perkecil Tampilan" : "Tampilkan Full Web-Screen (100% Layar)",
+      style:{
+        background:eNetworkMaximized ? "rgba(37,99,235,0.18)" : "rgba(56,189,248,0.12)",
+        border:"1px solid " + (eNetworkMaximized ? "rgba(96,165,250,0.45)" : "rgba(56,189,248,0.3)"),
+        color:"#38bdf8",
+        borderRadius:"8px",
+        padding:"0.32rem 0.7rem",
+        fontSize:"0.76rem",
+        fontWeight:700,
+        cursor:"pointer",
+        display:"inline-flex",
+        alignItems:"center",
+        gap:"0.38rem",
+        flexShrink:0
+      },
+      children:[
+        (0,t.jsx)("i",{className:eNetworkMaximized ? "pi pi-window-minimize" : "pi pi-window-maximize",style:{fontSize:"0.78rem"}}),
+        (0,t.jsx)("span",{children:eNetworkMaximized ? "Perkecil" : "Layar Penuh"})
+      ]
+    })
   ]}),
   visible:eNetworkModal,
-  onHide:()=>setNetworkModal(!1),
-  style:{width:"52rem",maxWidth:"95vw"},
+  onHide:()=>{setNetworkModal(!1);setNetworkMaximized(!1);},
+  maximizable:!0,
+  maximized:eNetworkMaximized,
+  onMaximize:ev=>{
+    var nextMax = Boolean(ev.maximized);
+    setNetworkMaximized(nextMax);
+    fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, nextMax ? 18 : 9);
+  },
+  style:eNetworkMaximized?{width:"100vw",height:"100vh",maxWidth:"100vw",maxHeight:"100vh",margin:0,top:0,left:0,borderRadius:0}:{width:"52rem",maxWidth:"95vw"},
+  contentStyle:eNetworkMaximized?{display:"flex",flexDirection:"column",flex:"1 1 auto",height:"calc(100vh - 70px)",maxHeight:"calc(100vh - 70px)",overflow:"hidden"}:void 0,
   modal:!0,
   dismissableMask:!0,
-  children:(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",padding:"0.25rem 0"},children:[
+  children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"1rem",padding:"0.25rem 0",flex:1,minHeight:0,height:eNetworkMaximized?"100%":"auto"},children:[
     // Search & Filter Bar
-    (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+    (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap",flexShrink:0},children:[
       (0,t.jsx)("div",{style:{flex:1,minWidth:"200px"},children:
         (0,t.jsx)(i.InputText,{
           value:eNetworkSearch,
           onChange:ev=>{
-            setNetworkSearch(ev.target.value);
-            fetchNetworkDirectory(ev.target.value, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id);
+            var val = ev.target.value;
+            setNetworkSearch(val);
+            if (networkSearchTimerRef.current) clearTimeout(networkSearchTimerRef.current);
+            networkSearchTimerRef.current = setTimeout(() => {
+              fetchNetworkDirectory(val, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id);
+            }, 250);
           },
           placeholder:"Cari personil berdasarkan nama, NRP, callsign, atau fungsi…",
           style:{width:"100%",fontSize:"0.85rem",padding:"0.5rem 0.75rem"}
@@ -2080,7 +2167,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             setNetworkModalTitle('Jaringan & Direktori Personil CAS');
           } else {
             setNetworkConnectedTarget(connTo);
-            setNetworkModalTitle('Daftar Koneksi ' + (a?.name || a?.callsign || 'Personil'));
+            setNetworkModalTitle('Daftar Koneksi ' + formatCallsign(a?.callsign, a?.id, a?.username));
           }
           fetchNetworkDirectory(eNetworkSearch, val, 1, connTo);
         },
@@ -2099,10 +2186,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     ]}),
 
     // Personnel Cards Grid
-    eNetworkLoading ? (
+    (eNetworkLoading && eNetworkUsers.length === 0) ? (
       (0,t.jsx)("div",{
-        style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem"},
-        children:[1,2,3,4,5,6].map(i => (
+        style:{display:"grid",gridTemplateColumns:eNetworkMaximized?"repeat(auto-fill, minmax(250px, 1fr))":"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",flex:eNetworkMaximized?"1 1 auto":"unset"},
+        children:(eNetworkMaximized?[1,2,3,4,5,6,7,8,9,10,11,12]:[1,2,3,4,5,6]).map(i => (
           (0,t.jsxs)("div",{
             key:i,
             className:"cms-card",
@@ -2119,7 +2206,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       })
     ) : (
       (0,t.jsx)("div",{
-        style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:"60vh",overflowY:"auto",paddingRight:"0.25rem"},
+        style:{display:"grid",gridTemplateColumns:eNetworkMaximized?"repeat(auto-fill, minmax(250px, 1fr))":"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:eNetworkMaximized?"calc(100vh - 200px)":"60vh",flex:eNetworkMaximized?"1 1 auto":"unset",overflowY:"auto",paddingRight:"0.25rem",alignContent:"start"},
         children:eNetworkUsers.map(user => {
           var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id)) || user.username === 'omeko42' || String(user.role_bdb || user.role || '').toLowerCase() === 'superadmin';
           var isTargetSelf = mySelf ? (String(user.id) === String(mySelf.id)) : (String(user.id) === String(a?.id));
@@ -2326,6 +2413,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   header:"Profil Personil CAS",
   visible:eProfilePreviewModal,
   onHide:()=>setProfilePreviewModal(!1),
+  maximizable:!0,
   style:{width:"36rem",maxWidth:"95vw"},
   modal:!0,
   dismissableMask:!0,
@@ -2513,14 +2601,17 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           type:"button",
           onClick:()=>{
             var targetUid = a?.id || mySelf?.id;
-            var targetName = a?.name || (a?.callsign ? '@' + a.callsign.replace(/^@/,'') : 'Personil');
+            var targetHandle = formatCallsign(a?.callsign, a?.id, a?.username);
             var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
-            setNetworkUsers([]);
-            setNetworkTotal(cCount);
+            var pageSize = eNetworkMaximized ? 18 : 9;
+            var cacheKey = ['', 'connected', 1, targetUid || '', pageSize].join('|');
+            if (!networkCacheRef.current.has(cacheKey)) {
+              setNetworkTotal(cCount);
+            }
             setNetworkConnectedTarget(targetUid);
             setNetworkSatkerFilter('connected');
             setNetworkSearch('');
-            setNetworkModalTitle('Daftar Koneksi ' + targetName);
+            setNetworkModalTitle('Daftar Koneksi ' + targetHandle);
             setNetworkModal(!0);
             fetchNetworkDirectory('', 'connected', 1, targetUid);
           },
@@ -3734,6 +3825,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
       ]}),
       visible:Boolean(ePersonalLikesModal),
       onHide:() => setPersonalLikesModal(!1),
+      maximizable:!0,
       style:{width:"30rem",maxWidth:"95vw"},
       modal:!0,
       dismissableMask:!0,
@@ -3825,6 +3917,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
   header:eLightboxMedia?.name || "Pratinjau Foto CAS",
   visible:Boolean(eLightboxMedia),
   onHide:()=>setLightboxMedia(null),
+  maximizable:!0,
   style:{width:"48rem",maxWidth:"95vw"},
   modal:!0,
   dismissableMask:!0,
@@ -3834,7 +3927,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
       (0,t.jsx)("img",{
         src:eLightboxMedia.url,
         alt:eLightboxMedia.name || "Foto",
-        style:{maxWidth:"100%",maxHeight:"75vh",borderRadius:"8px",objectFit:"contain",boxShadow:"0 8px 30px rgba(0,0,0,0.5)"}
+        style:{maxWidth:"100%",maxHeight:"85vh",borderRadius:"8px",objectFit:"contain",boxShadow:"0 8px 30px rgba(0,0,0,0.5)"}
       }),
       (0,t.jsxs)("div",{
         style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",borderTop:"1px solid rgba(255,255,255,0.1)",paddingTop:"0.75rem"},

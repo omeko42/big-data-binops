@@ -140,7 +140,7 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
         color:"#38bdf8",
         border:"1px solid rgba(255,255,255,0.12)"
       },
-      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
+      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",loading:"lazy",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
     })
   });
 }
@@ -2025,6 +2025,7 @@ e.s(["default",0,function() {
       ]}),
       visible:!!reactionsPostId,
       onHide:() => setReactionsPostId(null),
+      maximizable:!0,
       style:{width:"30rem",maxWidth:"95vw"},
       modal:!0,
       dismissableMask:!0,
@@ -2072,6 +2073,7 @@ e.s(["default",0,function() {
       ]}),
       visible:satkerModalOpen,
       onHide:() => setSatkerModalOpen(!1),
+      maximizable:!0,
       style:{width:"32rem",maxWidth:"95vw"},
       modal:!0,
       dismissableMask:!0,
@@ -2224,6 +2226,7 @@ e.s(["default",0,function() {
       header:"Profil Personil CAS",
       visible:profileModalOpen,
       onHide:() => setProfileModalOpen(!1),
+      maximizable:!0,
       style:{width:"36rem",maxWidth:"95vw"},
       modal:!0,
       dismissableMask:!0,
