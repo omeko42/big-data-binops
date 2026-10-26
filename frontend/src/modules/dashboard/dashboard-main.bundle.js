@@ -175,7 +175,7 @@ function pihakRankCacheKey(kind=pihakJenis){
     );
 
     return[
-      "bdb-dash-pihak-rank-v10",
+      "bdb-dash-pihak-rank-v11",
       encodeURIComponent(
         String(user.email).toLowerCase()
       ),
@@ -269,6 +269,7 @@ let loadPihakRanking=(0,a.useCallback)(async(force=!1,overrideKind=null)=>{
           limit:5,
           scope:"national",
           dashboard:1,
+          all_time:1,
           ...(force?{refresh:1}:{})
         }
       }
@@ -312,7 +313,7 @@ function dashCacheKey(){
     );
 
     return[
-      "bdb-dashboard-v12",
+      "bdb-dashboard-v13",
       encodeURIComponent(
         String(user.email).toLowerCase()
       ),
@@ -594,6 +595,7 @@ ei=(0,a.useCallback)(async()=>{
           limit:5,
           scope:"national",
           dashboard:1,
+          all_time:1,
           ...(force?{refresh:1}:{})
         }
       }
