@@ -2034,7 +2034,7 @@ e.s(["default",0,function() {
       ) : reactionsList.length === 0 ? (
         (0,t.jsx)("div",{style:{padding:"2rem",textAlign:"center",color:"#94a3b8",fontSize:"0.85rem"},children:"Belum ada personil yang memberikan reaksi."})
       ) : (
-        (0,t.jsx)("div",{style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
+        (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
           reactionsList.map(rx => {
             var usr = rx.user || {};
             var isThisUserMe = String(usr.id) === String(currentUser?.id || currentUser?.user_id);
@@ -2113,7 +2113,7 @@ e.s(["default",0,function() {
         loadingSatkers ? (
           (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"#94a3b8",fontSize:"0.85rem"},children:"Memuat daftar Satker..."})
         ) : (
-          (0,t.jsx)("div",{style:{maxHeight:"20rem",overflowY:"auto",display:"grid",gap:"0.4rem",paddingRight:"0.25rem"},children:
+          (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{maxHeight:"20rem",overflowY:"auto",display:"grid",gap:"0.4rem",paddingRight:"0.25rem"},children:
             availableSatkers
               .filter(s => !satkerSearchQuery.trim() || (s.nama_satker || s.name || '').toLowerCase().includes(satkerSearchQuery.toLowerCase()))
               .map(stk => {

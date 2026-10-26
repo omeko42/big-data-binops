@@ -41,6 +41,7 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 
 [eNetworkModal,setNetworkModal]=(0,n.useState)(!1),
 [eNetworkMaximized,setNetworkMaximized]=(0,n.useState)(!1),
+[eNetworkGridSpec,setNetworkGridSpec]=(0,n.useState)(()=>({cols:3,rows:3,limit:9})),
 networkCacheRef=(0,n.useRef)(new Map()),
 networkSearchTimerRef=(0,n.useRef)(null),
 [eNetworkConnectedTarget,setNetworkConnectedTarget]=(0,n.useState)(null),
@@ -676,9 +677,23 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
 
 let defaultPersonnel = [];
 
+let calcNetworkGridSpec = (isMax) => {
+  if (!isMax || typeof window === 'undefined') {
+    var wNorm = typeof window !== 'undefined' ? window.innerWidth : 1280;
+    var cNorm = wNorm < 640 ? 1 : (wNorm < 960 ? 2 : 3);
+    return { cols: cNorm, rows: 3, limit: cNorm * 3 };
+  }
+  var availW = Math.max(320, window.innerWidth - 48);
+  var availH = Math.max(360, window.innerHeight - 195);
+  var gap = 14;
+  var cols = Math.max(2, Math.min(10, Math.floor((availW + gap) / (245 + gap))));
+  var rows = Math.max(3, Math.min(8, Math.floor((availH + gap) / (155 + gap))));
+  return { cols: cols, rows: rows, limit: cols * rows };
+};
+
 let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo, customLimit, isSilentPrefetch) => {
   let p = targetPage || 1;
-  let pageSize = customLimit || (eNetworkMaximized ? 18 : 9);
+  let pageSize = customLimit || calcNetworkGridSpec(eNetworkMaximized).limit || 9;
   if (!isSilentPrefetch) setNetworkPage(p);
   try {
     let sVal = search !== void 0 ? search : eNetworkSearch;
@@ -748,16 +763,42 @@ let fetchNetworkDirectory = async (search, satker, targetPage, targetConnectedTo
 };
 
 (0,n.useEffect)(() => {
+  var maxLim = calcNetworkGridSpec(!0).limit;
   fetchNetworkDirectory('', 'all', 1, null, 9, !0);
+  if (maxLim !== 9) fetchNetworkDirectory('', 'all', 1, null, maxLim, !0);
 }, []);
 
 (0,n.useEffect)(() => {
   var uid = a?.id || mySelf?.id;
   if (uid) {
+    var maxLim = calcNetworkGridSpec(!0).limit;
     fetchNetworkDirectory('', 'connected', 1, uid, 9, !0);
-    fetchNetworkDirectory('', 'connected', 1, uid, 18, !0);
+    if (maxLim !== 9) fetchNetworkDirectory('', 'connected', 1, uid, maxLim, !0);
   }
 }, [a?.id, mySelf?.id]);
+
+(0,n.useEffect)(() => {
+  if (!eNetworkModal || typeof window === 'undefined') return;
+  var rTimer = null;
+  var onResize = () => {
+    if (rTimer) clearTimeout(rTimer);
+    rTimer = setTimeout(() => {
+      var spec = calcNetworkGridSpec(eNetworkMaximized);
+      setNetworkGridSpec(prev => {
+        if (prev.limit !== spec.limit || prev.cols !== spec.cols || prev.rows !== spec.rows) {
+          fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, spec.limit);
+          return spec;
+        }
+        return prev;
+      });
+    }, 150);
+  };
+  window.addEventListener('resize', onResize);
+  return () => {
+    window.removeEventListener('resize', onResize);
+    if (rTimer) clearTimeout(rTimer);
+  };
+}, [eNetworkModal, eNetworkMaximized, eNetworkSearch, eNetworkSatkerFilter, eNetworkConnectedTarget, a?.id, mySelf?.id]);
 
 let handleOpenProfilePreview = async (user) => {
   try {
@@ -2101,8 +2142,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       type:"button",
       onClick:()=>{
         var nextMax = !eNetworkMaximized;
+        var spec = calcNetworkGridSpec(nextMax);
         setNetworkMaximized(nextMax);
-        fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, nextMax ? 18 : 9);
+        setNetworkGridSpec(spec);
+        fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, spec.limit);
       },
       title:eNetworkMaximized ? "Perkecil Tampilan" : "Tampilkan Full Web-Screen (100% Layar)",
       style:{
@@ -2127,12 +2170,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
   ]}),
   visible:eNetworkModal,
   onHide:()=>{setNetworkModal(!1);setNetworkMaximized(!1);},
-  maximizable:!0,
+  maximizable:!1,
   maximized:eNetworkMaximized,
   onMaximize:ev=>{
     var nextMax = Boolean(ev.maximized);
+    var spec = calcNetworkGridSpec(nextMax);
     setNetworkMaximized(nextMax);
-    fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, nextMax ? 18 : 9);
+    setNetworkGridSpec(spec);
+    fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, eNetworkConnectedTarget || a?.id || mySelf?.id, spec.limit);
   },
   style:eNetworkMaximized?{width:"100vw",height:"100vh",maxWidth:"100vw",maxHeight:"100vh",margin:0,top:0,left:0,borderRadius:0}:{width:"52rem",maxWidth:"95vw"},
   contentStyle:eNetworkMaximized?{display:"flex",flexDirection:"column",flex:"1 1 auto",height:"calc(100vh - 70px)",maxHeight:"calc(100vh - 70px)",overflow:"hidden"}:void 0,
@@ -2188,12 +2233,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     // Personnel Cards Grid
     (eNetworkLoading && eNetworkUsers.length === 0) ? (
       (0,t.jsx)("div",{
-        style:{display:"grid",gridTemplateColumns:eNetworkMaximized?"repeat(auto-fill, minmax(250px, 1fr))":"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",flex:eNetworkMaximized?"1 1 auto":"unset"},
-        children:(eNetworkMaximized?[1,2,3,4,5,6,7,8,9,10,11,12]:[1,2,3,4,5,6]).map(i => (
+        style:eNetworkMaximized?{display:"grid",gridTemplateColumns:"repeat(" + eNetworkGridSpec.cols + ", minmax(0, 1fr))",gridTemplateRows:"repeat(" + eNetworkGridSpec.rows + ", minmax(0, 1fr))",gap:"0.85rem",flex:"1 1 auto",height:"calc(100vh - 195px)",maxHeight:"calc(100vh - 195px)",overflow:"hidden"}:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem"},
+        children:Array.from({length:eNetworkMaximized ? eNetworkGridSpec.limit : 9}, (_, idx) => idx).map(i => (
           (0,t.jsxs)("div",{
             key:i,
             className:"cms-card",
-            style:{padding:"1.1rem",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",gap:"0.55rem",background:"var(--cas-bg-surface, rgba(255,255,255,0.03))"},
+            style:{padding:"1.1rem",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"0.55rem",height:"100%",boxSizing:"border-box",background:"var(--cas-bg-surface, rgba(255,255,255,0.03))"},
             children:[
               (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"52px",height:"52px",borderRadius:"50%"}}),
               (0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"130px",height:"14px",borderRadius:"4px",marginTop:"0.2rem"}}),
@@ -2206,7 +2251,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       })
     ) : (
       (0,t.jsx)("div",{
-        style:{display:"grid",gridTemplateColumns:eNetworkMaximized?"repeat(auto-fill, minmax(250px, 1fr))":"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:eNetworkMaximized?"calc(100vh - 200px)":"60vh",flex:eNetworkMaximized?"1 1 auto":"unset",overflowY:"auto",paddingRight:"0.25rem",alignContent:"start"},
+        style:eNetworkMaximized?{display:"grid",gridTemplateColumns:"repeat(" + eNetworkGridSpec.cols + ", minmax(0, 1fr))",gridTemplateRows:eNetworkUsers.length >= eNetworkGridSpec.limit ? ("repeat(" + eNetworkGridSpec.rows + ", minmax(0, 1fr))") : ("repeat(" + eNetworkGridSpec.rows + ", minmax(140px, 1fr))"),gap:"0.85rem",flex:"1 1 auto",height:"calc(100vh - 195px)",maxHeight:"calc(100vh - 195px)",overflowY:"auto",paddingRight:"0.25rem",alignContent:"stretch"}:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:"60vh",overflowY:"auto",paddingRight:"0.25rem",alignContent:"start"},
         children:eNetworkUsers.map(user => {
           var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id)) || user.username === 'omeko42' || String(user.role_bdb || user.role || '').toLowerCase() === 'superadmin';
           var isTargetSelf = mySelf ? (String(user.id) === String(mySelf.id)) : (String(user.id) === String(a?.id));
@@ -2226,7 +2271,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               display:"flex",
               flexDirection:"column",
               justifyContent:"space-between",
-              gap:"0.75rem"
+              gap:"0.75rem",
+              height:"100%",
+              boxSizing:"border-box"
             },
             children:[
               (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center"},children:[
@@ -2603,8 +2650,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var targetUid = a?.id || mySelf?.id;
             var targetHandle = formatCallsign(a?.callsign, a?.id, a?.username);
             var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
-            var pageSize = eNetworkMaximized ? 18 : 9;
-            var cacheKey = ['', 'connected', 1, targetUid || '', pageSize].join('|');
+            var spec = calcNetworkGridSpec(eNetworkMaximized);
+            setNetworkGridSpec(spec);
+            var cacheKey = ['', 'connected', 1, targetUid || '', spec.limit].join('|');
             if (!networkCacheRef.current.has(cacheKey)) {
               setNetworkTotal(cCount);
             }
@@ -2613,7 +2661,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             setNetworkSearch('');
             setNetworkModalTitle('Daftar Koneksi ' + targetHandle);
             setNetworkModal(!0);
-            fetchNetworkDirectory('', 'connected', 1, targetUid);
+            fetchNetworkDirectory('', 'connected', 1, targetUid, spec.limit);
           },
           style:{background:"transparent",border:"none",color:"#38bdf8",fontWeight:700,cursor:"pointer",padding:0,display:"inline-flex",alignItems:"center",gap:"0.3rem",textDecoration:"underline"},
           children:[
@@ -3592,12 +3640,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("button",{
         type:"button",
         onClick:()=>{
+          var spec = calcNetworkGridSpec(eNetworkMaximized);
+          setNetworkGridSpec(spec);
           setNetworkConnectedTarget(null);
           setNetworkSatkerFilter('all');
           setNetworkSearch('');
           setNetworkModalTitle('Direktori Jaringan Personil CAS');
           setNetworkModal(!0);
-          fetchNetworkDirectory('', 'all', 1, null);
+          fetchNetworkDirectory('', 'all', 1, null, spec.limit);
         },
         style:{width:"100%",marginTop:"0.85rem",padding:"0.45rem",borderRadius:"8px",background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #cbd5e1)",color:"var(--cas-text-primary, #0f172a)",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",textAlign:"center"},
         children:"Lihat Semua Rekan" + (eNetworkTotal ? " (" + eNetworkTotal.toLocaleString("id-ID") + ")" : "")
@@ -3834,7 +3884,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
       ) : ePersonalLikesList.length === 0 ? (
         (0,t.jsx)("div",{style:{padding:"2rem",textAlign:"center",color:"#94a3b8",fontSize:"0.85rem"},children:"Belum ada personil yang memberikan reaksi."})
       ) : (
-        (0,t.jsx)("div",{style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
+        (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
           ePersonalLikesList.map(rx => {
             var usr = rx.user || {};
             var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
