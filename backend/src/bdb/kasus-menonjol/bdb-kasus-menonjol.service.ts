@@ -113,13 +113,19 @@ export class BdbKasusMenonjolService {
             select
                 k.id, k.judul, k.skala_viral, k.tanggal_rilis::text as tanggal_rilis, k.rilis, k.keterangan, k.satker_id,
                 (select s.depth::int from bdb_satker s where s.id = k.satker_id limit 1) as satker_depth,
+                coalesce(
+                    (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
+                    (select lp0.satker_nama from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
+                ) as satker_nama,
                 k.created_by, k.updated_by, k.created_at, k.updated_at,
                 (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) as jumlah_lp,
                 (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id) as jumlah_lampiran,
                 (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_menonjol_lp l
                     join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_menonjol_id = k.id) as satker_terkait,
                 (select lp0.no_laporan from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
-                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_no_laporan
+                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_no_laporan,
+                (select lp0.tgl_laporan from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_tgl_laporan
             from bdb_kasus_menonjol k
         `;
     }
@@ -136,7 +142,16 @@ export class BdbKasusMenonjolService {
         const where: string[] = ['k.deleted_at is null'];
         if (query.scope === 'scoped' && !scope.all) {
             if (!scope.satkerId) {
-                return { data: [], meta: { total: 0, page, limit, totalPages: 1 } };
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page,
+                        limit,
+                        totalPages: 1,
+                        summary: { total_all: 0, nasional: 0, regional: 0, tidak_viral: 0, sudah_rilis: 0, belum_rilis: 0, total_lp_terkait: 0 }
+                    }
+                };
             }
             params.push(scope.satkerId);
             where.push(`k.satker_id = $${params.length}`);
@@ -145,17 +160,36 @@ export class BdbKasusMenonjolService {
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
-            where.push(`lower(coalesce(k.judul,'')) like $${params.length}`);
+            const p = params.length;
+            where.push(`(
+                lower(coalesce(k.judul,'')) like $${p}
+                or lower(coalesce(k.keterangan,'')) like $${p}
+                or exists (
+                    select 1 from bdb_kasus_menonjol_lp l_s
+                    join bdb_laporan_polisi lp_s on lp_s.id = l_s.lp_id
+                    where l_s.kasus_menonjol_id = k.id
+                      and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p})
+                )
+            )`);
         }
-        const skala = this.toText(query.skala_viral);
-        if (skala && SKALA_OPTS.includes(skala)) {
+
+        const summaryWhereSql = where.join(' and ');
+        const summaryParams = [...params];
+
+        const skala = this.toText(query.skala_viral)?.toLowerCase() || null;
+        if (skala && !['all', 'semua'].includes(skala)) {
             params.push(skala);
-            where.push(`k.skala_viral = $${params.length}`);
+            where.push(`lower(coalesce(k.skala_viral,'')) = $${params.length}`);
+        }
+
+        const rawRilis = this.toText(query.rilis);
+        if (rawRilis && !['all', 'semua'].includes(rawRilis.toLowerCase())) {
+            const isRilis = ['true', '1', 'ya', 'yes', 'sudah'].includes(rawRilis.toLowerCase());
+            params.push(isRilis);
+            where.push(`coalesce(k.rilis, false) = $${params.length}`);
         }
 
         const whereSql = where.join(' and ');
-        const totalRow = await this.dataSource.query(`select count(*)::int as total from bdb_kasus_menonjol k where ${whereSql}`, params);
-        const total = Number(totalRow?.[0]?.total || 0);
 
         let orderBy = 'order by k.created_at desc, k.id desc';
         if (query.dashboard === '1' || query.dashboard === 1 || query.dashboard === true || query.dashboard === 'true' || query.sort === 'priority') {
@@ -191,12 +225,44 @@ export class BdbKasusMenonjolService {
                 k.created_at desc, k.id desc`;
         }
 
-        const rows = await this.dataSource.query(
-            `${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`,
-            [...params, limit, offset]
-        );
+        const [totalRow, summaryRow, rows] = await Promise.all([
+            this.dataSource.query(`select count(*)::int as total from bdb_kasus_menonjol k where ${whereSql}`, params),
+            this.dataSource.query(
+                `select
+                    count(*)::int as total_all,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'nasional')::int as nasional,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'regional')::int as regional,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'tidak viral' or coalesce(k.skala_viral,'') = '')::int as tidak_viral,
+                    count(*) filter (where k.rilis = true)::int as sudah_rilis,
+                    count(*) filter (where coalesce(k.rilis, false) = false)::int as belum_rilis,
+                    coalesce((
+                        select count(*)::int
+                        from bdb_kasus_menonjol_lp l_cnt
+                        join bdb_kasus_menonjol k on k.id = l_cnt.kasus_menonjol_id
+                        where ${summaryWhereSql}
+                    ), 0) as total_lp_terkait
+                 from bdb_kasus_menonjol k
+                 where ${summaryWhereSql}`,
+                summaryParams
+            ),
+            this.dataSource.query(
+                `${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`,
+                [...params, limit, offset]
+            )
+        ]);
+        const total = Number(totalRow?.[0]?.total || 0);
+        const s = summaryRow?.[0] || {};
+        const summary = {
+            total_all: Number(s.total_all || 0),
+            nasional: Number(s.nasional || 0),
+            regional: Number(s.regional || 0),
+            tidak_viral: Number(s.tidak_viral || 0),
+            sudah_rilis: Number(s.sudah_rilis || 0),
+            belum_rilis: Number(s.belum_rilis || 0),
+            total_lp_terkait: Number(s.total_lp_terkait || 0)
+        };
 
-        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
+        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
     }
 
     async findOne(id: number, userId: number | undefined) {

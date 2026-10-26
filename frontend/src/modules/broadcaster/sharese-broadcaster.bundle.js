@@ -333,12 +333,58 @@ e.s(["default",0,function() {
     } catch { return {}; }
   });
 
+  // Sync currentUser with localStorage & backend profile so Composer avatar always matches Topbar & Feed posts
+  (0,n.useEffect)(() => {
+    var syncFromStorage = () => {
+      try {
+        var raw = JSON.parse(localStorage.getItem('user') || '{}');
+        if (raw && (raw.id || raw.username)) {
+          if (raw.username === 'omeko42' || raw.id === 1 || raw.id === '1' || raw.id === 'usr_superadmin') {
+            raw.name = 'EKO';
+            raw.role_bdb = 'superadmin';
+          }
+          setCurrentUser(prev => ({ ...prev, ...raw, photo_url: raw.photo_url || raw.foto || prev?.photo_url || prev?.foto }));
+        }
+      } catch (e) {}
+    };
+    syncFromStorage();
+    window.addEventListener('user-updated', syncFromStorage);
+    window.addEventListener('cas_user_profile_updated', syncFromStorage);
+    window.addEventListener('storage', syncFromStorage);
+    (async () => {
+      try {
+        var res = await k.apiAuth.get('/user/me/profile');
+        var d = res?.data?.data || res?.data;
+        if (d && (d.photo_url || d.foto || d.id)) {
+          setCurrentUser(prev => {
+            var next = { ...prev, ...d, photo_url: d.photo_url || d.foto || prev?.photo_url || prev?.foto };
+            if (next.username === 'omeko42' || next.id === 1 || next.id === '1' || next.id === 'usr_superadmin') {
+              next.name = 'EKO';
+              next.role_bdb = 'superadmin';
+            }
+            try {
+              var st = JSON.parse(localStorage.getItem('user') || '{}');
+              localStorage.setItem('user', JSON.stringify({ ...st, photo_url: next.photo_url, foto: next.photo_url, callsign: next.callsign || st.callsign }));
+            } catch (e) {}
+            return next;
+          });
+        }
+      } catch (e) {}
+    })();
+    return () => {
+      window.removeEventListener('user-updated', syncFromStorage);
+      window.removeEventListener('cas_user_profile_updated', syncFromStorage);
+      window.removeEventListener('storage', syncFromStorage);
+    };
+  }, []);
+
   // Feed & filter states (Separated Content Category & Visibility)
   var [posts, setPosts] = (0,n.useState)([]);
   var [loading, setLoading] = (0,n.useState)(!0);
   var [searchQuery, setSearchQuery] = (0,n.useState)('');
   var [feedCategory, setFeedCategory] = (0,n.useState)('all'); // 'all', 'repost', 'saved', 'mine', 'official'
   var [visibilityFilter, setVisibilityFilter] = (0,n.useState)('all'); // 'all', 'public', 'regional', 'friends', 'private'
+  var [isFilterMinimized, setIsFilterMinimized] = (0,n.useState)(!1);
   var [currentPage, setCurrentPage] = (0,n.useState)(1);
   var [lightboxImage, setLightboxImage] = (0,n.useState)(null);
   var [carouselIndices, setCarouselIndices] = (0,n.useState)({});
@@ -888,8 +934,9 @@ e.s(["default",0,function() {
   var paginatedPosts = filteredPosts.slice(startIndex, endIndex);
 
   var isSuperadmin = currentUser?.username === 'omeko42' || currentUser?.id === 1 || currentUser?.id === '1' || currentUser?.id === 'usr_superadmin' || currentUser?.role_bdb === 'superadmin';
-  var myBadge = getVerificationBadge(currentUser?.role_bdb, isSuperadmin);
-  var userAvatar = currentUser?.photo_url || currentUser?.foto;
+  var myBadge = getVerificationBadge(currentUser?.role_bdb, isSuperadmin, currentUser?.id, currentUser?.username);
+  var myPostAvatar = posts.find(p => String(p.author_id) === String(currentUser?.id || currentUser?.user_id) && (p.author_photo_url || p.author_photo))?.author_photo_url;
+  var userAvatar = currentUser?.photo_url || currentUser?.foto || currentUser?.avatar_url || myPostAvatar || null;
   var userInitials = String(currentUser?.name || currentUser?.username || 'P').charAt(0).toUpperCase();
   var myHandle = formatCallsign(currentUser?.callsign, currentUser?.id, currentUser?.username);
 
@@ -1012,7 +1059,7 @@ e.s(["default",0,function() {
           onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.05)',
           onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
           title:"Klik untuk melihat profil akun",
-          children:renderCornerAvatar(userAvatar, userInitials, myBadge, 2.5, 15, 8.5)
+          children:renderCornerAvatar(userAvatar, userInitials, myBadge, 2.5, 15, 8.5, currentUser)
         }),
         (0,t.jsxs)("div",{style:{flex:1},children:[
           (0,t.jsx)(l.InputTextarea,{
@@ -1924,134 +1971,254 @@ e.s(["default",0,function() {
 
         // Side Filters Column (Kategori & Visibilitas)
       (0,t.jsxs)("div",{
-        className:"feed-right-col",
+        className:"feed-right-col" + (isFilterMinimized ? " is-minimized" : ""),
         children:[
           // Card 1: Filter Kategori
           (0,t.jsxs)("div",{
-            className:"cms-card",
+            className:"cms-card feed-filter-card",
             style:{
-              padding:"1rem",
+              padding:"0.8rem 0.95rem",
               borderRadius:"12px",
               border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
               background:"var(--cas-bg-card, #1e293b)",
               display:"flex",
               flexDirection:"column",
-              gap:"0.4rem"
+              gap:"0.35rem"
             },
             children:[
               (0,t.jsxs)("div",{
-                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
+                className:"feed-filter-card-header",
+                style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",marginBottom:isFilterMinimized ? 0 : "0.25rem",paddingBottom:isFilterMinimized ? 0 : "0.45rem",borderBottom:isFilterMinimized ? "none" : "1px solid var(--cas-border, rgba(255,255,255,0.08))"},
                 children:[
-                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-folder",style:{fontSize:"0.78rem",color:"#64748b"}}),"KATEGORI"]}),
-                  feedCategory !== 'all' && (0,t.jsx)("button",{
-                    type:"button",
-                    onClick:()=>{ setFeedCategory('all'); setCurrentPage(1); },
-                    style:{fontSize:"0.68rem",background:"none",border:"none",color:"#60a5fa",cursor:"pointer",fontWeight:600},
-                    children:"Reset"
+                  (0,t.jsxs)("span",{style:{fontSize:"0.72rem",fontWeight:800,letterSpacing:"0.04em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.35rem",whiteSpace:"nowrap"},children:[(0,t.jsx)("i",{className:"pi pi-folder",style:{fontSize:"0.76rem",color:"#3b82f6"}}),"KATEGORI"]}),
+                  (0,t.jsxs)("div",{
+                    className:"feed-filter-header-icons",
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flexWrap:"nowrap"},
+                    children:[
+                      ...[
+                        { id: 'all', label: 'Semua Kategori', icon: 'pi pi-th-large' },
+                        { id: 'repost', label: 'Repost', icon: 'pi pi-refresh' },
+                        { id: 'saved', label: 'Tersimpan', icon: 'pi pi-bookmark' },
+                        { id: 'mine', label: 'Postingan Saya', icon: 'pi pi-user' },
+                        { id: 'official', label: 'Jukrah Resmi', icon: 'pi pi-megaphone' }
+                      ].map(cat => {
+                        var active = feedCategory === cat.id;
+                        return (0,t.jsx)("button",{
+                          key:"hdr-cat-"+cat.id,
+                          type:"button",
+                          title:"Kategori: " + cat.label,
+                          "aria-label":"Kategori: " + cat.label,
+                          onClick:()=>{ setFeedCategory(cat.id); setCurrentPage(1); },
+                          className:"feed-filter-icon-pill" + (active ? " active-cat" : ""),
+                          style:{
+                            width:"26px",
+                            height:"26px",
+                            minWidth:"26px",
+                            borderRadius:"6px",
+                            display:"inline-flex",
+                            alignItems:"center",
+                            justifyContent:"center",
+                            padding:0,
+                            cursor:"pointer",
+                            background:active ? "#2563eb" : "var(--cas-bg-subtle, rgba(148,163,184,0.12))",
+                            color:active ? "#ffffff" : "var(--cas-text-secondary, #64748b)",
+                            border:active ? "1px solid #3b82f6" : "1px solid var(--cas-border, rgba(148,163,184,0.22))",
+                            boxShadow:active ? "0 2px 6px rgba(37,99,235,0.35)" : "none",
+                            transition:"all 0.15s ease"
+                          },
+                          children:(0,t.jsx)("i",{className:cat.icon,style:{fontSize:"0.72rem",color:active ? "#ffffff" : "inherit"}})
+                        });
+                      }),
+                      (0,t.jsx)("button",{
+                        type:"button",
+                        title:isFilterMinimized ? "Tampilkan daftar kategori lengkap" : "Ringkas panel filter ke bar ikon",
+                        onClick:()=>setIsFilterMinimized(v => !v),
+                        className:"feed-filter-collapse-btn",
+                        style:{
+                          width:"24px",
+                          height:"26px",
+                          borderRadius:"6px",
+                          display:"inline-flex",
+                          alignItems:"center",
+                          justifyContent:"center",
+                          padding:0,
+                          marginLeft:"0.1rem",
+                          cursor:"pointer",
+                          background:"transparent",
+                          color:"var(--cas-text-secondary, #64748b)",
+                          border:"1px dashed var(--cas-border, rgba(148,163,184,0.25))"
+                        },
+                        children:(0,t.jsx)("i",{className:isFilterMinimized ? "pi pi-chevron-down" : "pi pi-chevron-up",style:{fontSize:"0.65rem"}})
+                      })
+                    ]
                   })
                 ]
               }),
-              [
-                { id: 'all', label: 'Semua', icon: 'pi pi-th-large' },
-                { id: 'repost', label: 'Repost', icon: 'pi pi-refresh' },
-                { id: 'saved', label: 'Tersimpan', icon: 'pi pi-bookmark' },
-                { id: 'mine', label: 'Postingan Saya', icon: 'pi pi-user' },
-                { id: 'official', label: 'Jukrah', icon: 'pi pi-megaphone' }
-              ].map(cat => {
-                var active = feedCategory === cat.id;
-                return (0,t.jsxs)("button",{
-                  key:cat.id,
-                  type:"button",
-                  onClick:()=>{ setFeedCategory(cat.id); setCurrentPage(1); },
-                  style:{
-                    display:"flex",
-                    alignItems:"center",
-                    justifyContent:"space-between",
-                    width:"100%",
-                    padding:"0.55rem 0.75rem",
-                    borderRadius:"8px",
-                    fontSize:"0.8rem",
-                    fontWeight:active ? 800 : 500,
-                    background:active ? "rgba(37,99,235,0.18)" : "transparent",
-                    color:active ? "#60a5fa" : "var(--cas-text-secondary, #94a3b8)",
-                    border:active ? "1px solid rgba(59,130,246,0.5)" : "1px solid transparent",
-                    cursor:"pointer",
-                    textAlign:"left",
-                    transition:"all 0.15s ease"
-                  },
-                  children:[
-                    (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                      (0,t.jsx)("i",{className:cat.icon,style:{fontSize:"0.82rem"}}),
-                      cat.label
-                    ]}),
-                    active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#3b82f6"}})
-                  ]
-                });
+              (0,t.jsx)("div",{
+                className:"feed-filter-vertical-list",
+                style:{display:isFilterMinimized ? "none" : "flex",flexDirection:"column",gap:"0.32rem"},
+                children:[
+                  { id: 'all', label: 'Semua', icon: 'pi pi-th-large' },
+                  { id: 'repost', label: 'Repost', icon: 'pi pi-refresh' },
+                  { id: 'saved', label: 'Tersimpan', icon: 'pi pi-bookmark' },
+                  { id: 'mine', label: 'Postingan Saya', icon: 'pi pi-user' },
+                  { id: 'official', label: 'Jukrah', icon: 'pi pi-megaphone' }
+                ].map(cat => {
+                  var active = feedCategory === cat.id;
+                  return (0,t.jsxs)("button",{
+                    key:cat.id,
+                    type:"button",
+                    onClick:()=>{ setFeedCategory(cat.id); setCurrentPage(1); },
+                    style:{
+                      display:"flex",
+                      alignItems:"center",
+                      justifyContent:"space-between",
+                      width:"100%",
+                      padding:"0.5rem 0.7rem",
+                      borderRadius:"8px",
+                      fontSize:"0.8rem",
+                      fontWeight:active ? 800 : 500,
+                      background:active ? "rgba(37,99,235,0.18)" : "transparent",
+                      color:active ? "#60a5fa" : "var(--cas-text-secondary, #94a3b8)",
+                      border:active ? "1px solid rgba(59,130,246,0.5)" : "1px solid transparent",
+                      cursor:"pointer",
+                      textAlign:"left",
+                      transition:"all 0.15s ease"
+                    },
+                    children:[
+                      (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+                        (0,t.jsx)("i",{className:cat.icon,style:{fontSize:"0.82rem"}}),
+                        cat.label
+                      ]}),
+                      active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#3b82f6"}})
+                    ]
+                  });
+                })
               })
             ]
           }),
 
           // Card 2: Filter Visibilitas
           (0,t.jsxs)("div",{
-            className:"cms-card",
+            className:"cms-card feed-filter-card",
             style:{
-              padding:"1rem",
+              padding:"0.8rem 0.95rem",
               borderRadius:"12px",
               border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
               background:"var(--cas-bg-card, #1e293b)",
               display:"flex",
               flexDirection:"column",
-              gap:"0.4rem"
+              gap:"0.35rem"
             },
             children:[
               (0,t.jsxs)("div",{
-                style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
+                className:"feed-filter-card-header",
+                style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",marginBottom:isFilterMinimized ? 0 : "0.25rem",paddingBottom:isFilterMinimized ? 0 : "0.45rem",borderBottom:isFilterMinimized ? "none" : "1px solid var(--cas-border, rgba(255,255,255,0.08))"},
                 children:[
-                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-eye",style:{fontSize:"0.78rem",color:"#64748b"}}),"Visibilitas"]}),
-                  visibilityFilter !== 'all' && (0,t.jsx)("button",{
-                    type:"button",
-                    onClick:()=>{ setVisibilityFilter('all'); setCurrentPage(1); },
-                    style:{fontSize:"0.68rem",background:"none",border:"none",color:"#34d399",cursor:"pointer",fontWeight:600},
-                    children:"Reset"
+                  (0,t.jsxs)("span",{style:{fontSize:"0.72rem",fontWeight:800,letterSpacing:"0.04em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.35rem",whiteSpace:"nowrap"},children:[(0,t.jsx)("i",{className:"pi pi-eye",style:{fontSize:"0.76rem",color:"#10b981"}}),"VISIBILITAS"]}),
+                  (0,t.jsxs)("div",{
+                    className:"feed-filter-header-icons",
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flexWrap:"nowrap"},
+                    children:[
+                      ...[
+                        { id: 'all', label: 'Semua Visibilitas', icon: 'pi pi-sliders-h' },
+                        { id: 'public', label: 'Publik', icon: 'pi pi-globe' },
+                        { id: 'regional', label: 'Lingkup Satker', icon: 'pi pi-building' },
+                        { id: 'friends', label: 'Koneksi', icon: 'pi pi-users' },
+                        { id: 'private', label: 'Privat', icon: 'pi pi-lock' }
+                      ].map(vis => {
+                        var active = visibilityFilter === vis.id;
+                        return (0,t.jsx)("button",{
+                          key:"hdr-vis-"+vis.id,
+                          type:"button",
+                          title:"Visibilitas: " + vis.label,
+                          "aria-label":"Visibilitas: " + vis.label,
+                          onClick:()=>{ setVisibilityFilter(vis.id); setCurrentPage(1); },
+                          className:"feed-filter-icon-pill" + (active ? " active-vis" : ""),
+                          style:{
+                            width:"26px",
+                            height:"26px",
+                            minWidth:"26px",
+                            borderRadius:"6px",
+                            display:"inline-flex",
+                            alignItems:"center",
+                            justifyContent:"center",
+                            padding:0,
+                            cursor:"pointer",
+                            background:active ? "#059669" : "var(--cas-bg-subtle, rgba(148,163,184,0.12))",
+                            color:active ? "#ffffff" : "var(--cas-text-secondary, #64748b)",
+                            border:active ? "1px solid #10b981" : "1px solid var(--cas-border, rgba(148,163,184,0.22))",
+                            boxShadow:active ? "0 2px 6px rgba(16,185,129,0.35)" : "none",
+                            transition:"all 0.15s ease"
+                          },
+                          children:(0,t.jsx)("i",{className:vis.icon,style:{fontSize:"0.72rem",color:active ? "#ffffff" : "inherit"}})
+                        });
+                      }),
+                      (0,t.jsx)("button",{
+                        type:"button",
+                        title:isFilterMinimized ? "Tampilkan daftar visibilitas lengkap" : "Ringkas panel filter ke bar ikon",
+                        onClick:()=>setIsFilterMinimized(v => !v),
+                        className:"feed-filter-collapse-btn",
+                        style:{
+                          width:"24px",
+                          height:"26px",
+                          borderRadius:"6px",
+                          display:"inline-flex",
+                          alignItems:"center",
+                          justifyContent:"center",
+                          padding:0,
+                          marginLeft:"0.1rem",
+                          cursor:"pointer",
+                          background:"transparent",
+                          color:"var(--cas-text-secondary, #64748b)",
+                          border:"1px dashed var(--cas-border, rgba(148,163,184,0.25))"
+                        },
+                        children:(0,t.jsx)("i",{className:isFilterMinimized ? "pi pi-chevron-down" : "pi pi-chevron-up",style:{fontSize:"0.65rem"}})
+                      })
+                    ]
                   })
                 ]
               }),
-              [
-                { id: 'all', label: 'Semua Visibilitas', icon: 'pi pi-sliders-h' },
-                { id: 'public', label: 'Publik', icon: 'pi pi-globe' },
-                { id: 'regional', label: 'Lingkup Satker', icon: 'pi pi-building' },
-                { id: 'friends', label: 'Koneksi', icon: 'pi pi-users' },
-                { id: 'private', label: 'Privat', icon: 'pi pi-lock' }
-              ].map(vis => {
-                var active = visibilityFilter === vis.id;
-                return (0,t.jsxs)("button",{
-                  key:vis.id,
-                  type:"button",
-                  onClick:()=>{ setVisibilityFilter(vis.id); setCurrentPage(1); },
-                  style:{
-                    display:"flex",
-                    alignItems:"center",
-                    justifyContent:"space-between",
-                    width:"100%",
-                    padding:"0.55rem 0.75rem",
-                    borderRadius:"8px",
-                    fontSize:"0.8rem",
-                    fontWeight:active ? 800 : 500,
-                    background:active ? "rgba(16,185,129,0.18)" : "transparent",
-                    color:active ? "#34d399" : "var(--cas-text-secondary, #94a3b8)",
-                    border:active ? "1px solid rgba(16,185,129,0.5)" : "1px solid transparent",
-                    cursor:"pointer",
-                    textAlign:"left",
-                    transition:"all 0.15s ease"
-                  },
-                  children:[
-                    (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                      (0,t.jsx)("i",{className:vis.icon,style:{fontSize:"0.82rem"}}),
-                      vis.label
-                    ]}),
-                    active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#10b981"}})
-                  ]
-                });
+              (0,t.jsx)("div",{
+                className:"feed-filter-vertical-list",
+                style:{display:isFilterMinimized ? "none" : "flex",flexDirection:"column",gap:"0.32rem"},
+                children:[
+                  { id: 'all', label: 'Semua Visibilitas', icon: 'pi pi-sliders-h' },
+                  { id: 'public', label: 'Publik', icon: 'pi pi-globe' },
+                  { id: 'regional', label: 'Lingkup Satker', icon: 'pi pi-building' },
+                  { id: 'friends', label: 'Koneksi', icon: 'pi pi-users' },
+                  { id: 'private', label: 'Privat', icon: 'pi pi-lock' }
+                ].map(vis => {
+                  var active = visibilityFilter === vis.id;
+                  return (0,t.jsxs)("button",{
+                    key:vis.id,
+                    type:"button",
+                    onClick:()=>{ setVisibilityFilter(vis.id); setCurrentPage(1); },
+                    style:{
+                      display:"flex",
+                      alignItems:"center",
+                      justifyContent:"space-between",
+                      width:"100%",
+                      padding:"0.5rem 0.7rem",
+                      borderRadius:"8px",
+                      fontSize:"0.8rem",
+                      fontWeight:active ? 800 : 500,
+                      background:active ? "rgba(16,185,129,0.18)" : "transparent",
+                      color:active ? "#34d399" : "var(--cas-text-secondary, #94a3b8)",
+                      border:active ? "1px solid rgba(16,185,129,0.5)" : "1px solid transparent",
+                      cursor:"pointer",
+                      textAlign:"left",
+                      transition:"all 0.15s ease"
+                    },
+                    children:[
+                      (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
+                        (0,t.jsx)("i",{className:vis.icon,style:{fontSize:"0.82rem"}}),
+                        vis.label
+                      ]}),
+                      active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#10b981"}})
+                    ]
+                  });
+                })
               })
             ]
           })
