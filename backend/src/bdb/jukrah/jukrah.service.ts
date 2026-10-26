@@ -82,7 +82,32 @@ export class JukrahService {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_trb_police_lower_email ON trb_police (LOWER(email))');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
         } catch {}
+        this.clearNetworkUsersCache();
         this.ready = true;
+    }
+
+    private isFemalePersonnel(name?: any, jenisKelamin?: any, socialMedia?: any): boolean {
+        const jk = String(jenisKelamin || socialMedia?.gender || socialMedia?.jenis_kelamin || '').trim().toLowerCase();
+        if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(jk)) return true;
+        const n = String(name || '').trim();
+        if (!n) return false;
+        return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
+    }
+
+    private resolveDefaultAvatar(photoUrl: any, name?: any, jenisKelamin?: any, socialMedia?: any): string {
+        const clean = String(photoUrl || '').trim();
+        if (clean.length > 5 && clean !== 'null' && clean !== 'undefined') return clean;
+        return this.isFemalePersonnel(name, jenisKelamin, socialMedia)
+            ? '/images/default-avatar-polwan.jpg'
+            : '/images/default-avatar-polki.png';
+    }
+
+    private resolveDefaultBanner(socialMedia: any): string {
+        const b = socialMedia?.banner_theme;
+        if (typeof b === 'string' && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/'))) {
+            return b;
+        }
+        return '/images/default-banner-polri.jpg';
     }
 
     private isSuperUserOne(id: any, username?: any, callsign?: any): boolean {
@@ -296,6 +321,7 @@ export class JukrahService {
             const authorSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
             const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
             const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
+            const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, null);
 
             const media = (r.media_urls || []).map((m: any) => ({
                 ...m,
@@ -312,8 +338,8 @@ export class JukrahService {
                 author_nrp: derivedNrp,
                 raw_name: isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? r.raw_author_name : null),
                 author_role: authorRole,
-                author_photo: r.author_photo,
-                author_photo_url: r.author_photo || null,
+                author_photo: resolvedPhoto,
+                author_photo_url: resolvedPhoto,
                 author_satker: authorSatker,
                 satker_name: authorSatker,
                 satker: authorSatker,
@@ -587,7 +613,7 @@ export class JukrahService {
             `SELECT r.id, r.reaction_type, r.created_at,
                     u.id as user_id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
-                    p.pangkat, p.nrp
+                    p.pangkat, p.nrp, p.jenis_kelamin, p.foto
              FROM bdb_social_reactions r
              JOIN auth_users u ON u.id = r.user_id
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
@@ -600,6 +626,7 @@ export class JukrahService {
             const isUserOne = this.isSuperUserOne(r.user_id, r.username, r.callsign);
             const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri');
             const isVerified = isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese');
+            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.foto, r.name, r.jenis_kelamin, null);
             return {
                 id: Number(r.id),
                 reaction_type: r.reaction_type,
@@ -610,7 +637,7 @@ export class JukrahService {
                     name: isUserOne ? (r.name || 'EKO') : r.name,
                     username: r.username,
                     callsign: r.callsign || r.username || 'personil',
-                    photo_url: r.photo_url,
+                    photo_url: resolvedPhoto,
                     role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
                     satker: satkerName,
                     satker_nama: satkerName,
@@ -772,11 +799,11 @@ export class JukrahService {
                 ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
                 LIMIT $${limitIdx} OFFSET $${offsetIdx}
             )
-            SELECT pu.*, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp
+            SELECT pu.*, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto
             FROM paged_users pu
             LEFT JOIN bdb_satker s ON s.id = pu.scope_satker_id
             LEFT JOIN LATERAL (
-                SELECT pangkat, nrp, satuan, no_hp
+                SELECT pangkat, nrp, satuan, no_hp, jenis_kelamin, foto
                 FROM trb_police tp
                 WHERE lower(tp.email) = lower(pu.email)
                    OR (pu.email_polri IS NOT NULL AND lower(tp.email) = lower(pu.email_polri))
@@ -804,6 +831,8 @@ export class JukrahService {
             const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
             const nrpFallback = r.email && r.email.match(/^(\d{7,10})@/) ? r.email.match(/^(\d{7,10})@/)[1] : (r.email_polri && r.email_polri.match(/^(\d{7,10})@/) ? r.email_polri.match(/^(\d{7,10})@/)[1] : null);
             const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
+            const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, null);
+            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, null);
             return {
                 id: Number(r.id),
                 name: isUserOne ? (r.name || 'EKO') : r.name,
@@ -819,7 +848,9 @@ export class JukrahService {
                 pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(r.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
                 nrp: r.nrp || nrpFallback,
                 no_hp: r.no_hp || null,
-                photo_url: r.photo_url,
+                photo_url: resolvedPhoto,
+                gender: isFemale ? 'P' : 'L',
+                jenis_kelamin: isFemale ? 'P' : 'L',
                 is_connected: Boolean(connectedTo) || isSuperadmin || Number(r.id) === uid,
                 last_login_at: r.last_login_at
             };
@@ -864,7 +895,7 @@ export class JukrahService {
             const emailsLower = [target.email, target.email_polri].filter(Boolean).map((e: string) => String(e).toLowerCase());
             if (emailsLower.length) {
                 const pRes = await this.dataSource.query(
-                    'SELECT nrp, nama, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
+                    'SELECT nrp, nama, jenis_kelamin, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
                     [emailsLower]
                 );
                 if (pRes && pRes.length) policeProfile = pRes[0];
@@ -878,6 +909,11 @@ export class JukrahService {
             connectionsCount = Number(cRes[0]?.c || 0);
         } catch {}
         const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri');
+        const rawSocial = { ...(policeProfile?.social_media || {}), ...(target.social_media || {}) };
+        const resolvedBanner = this.resolveDefaultBanner(rawSocial);
+        const mergedSocial = { ...rawSocial, banner_theme: resolvedBanner };
+        const isFemale = this.isFemalePersonnel(target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
+        const resolvedPhoto = this.resolveDefaultAvatar(target.photo_url || policeProfile?.foto, target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
         return {
             status: 1,
             data: {
@@ -895,10 +931,13 @@ export class JukrahService {
                 email_polri: target.email_polri || (target.email && target.email.endsWith('@polri.go.id') ? target.email : null),
                 email: target.email,
                 no_hp: policeProfile?.no_hp || null,
-                photo_url: target.photo_url || policeProfile?.foto || null,
+                photo_url: resolvedPhoto,
+                banner_theme: resolvedBanner,
+                gender: isFemale ? 'P' : 'L',
+                jenis_kelamin: isFemale ? 'P' : 'L',
                 role_bdb: isUserOne ? 'superadmin' : target.role_bdb,
                 connections_count: connectionsCount,
-                social_media: target.social_media || policeProfile?.social_media || {},
+                social_media: mergedSocial,
                 last_login_at: target.last_login_at
             }
         };
@@ -946,7 +985,7 @@ export class JukrahService {
                 author_name: isUserOne ? (r.raw_name || 'EKO') : (canSeeReal ? (r.raw_name || handle) : handle),
                 author_role: isUserOne ? 'superadmin' : (r.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri'),
-                author_photo: r.photo_url,
+                author_photo: this.resolveDefaultAvatar(r.photo_url, r.raw_name, null, null),
                 is_verified: isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese'),
                 likes_count: Number(r.likes_count || 0),
                 is_liked: Boolean(r.is_liked),
@@ -1040,7 +1079,7 @@ export class JukrahService {
                 author_name: isUserOne ? (uInfo.name || 'EKO') : (uInfo.name || handle),
                 author_role: isUserOne ? 'superadmin' : (uInfo.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (uInfo.satker || uInfo.satker_nama || 'Polri'),
-                author_photo: uInfo.photo_url || null,
+                author_photo: this.resolveDefaultAvatar(uInfo.photo_url, uInfo.name, null, null),
                 is_verified: isUserOne ? true : Boolean(uInfo.role_bdb && uInfo.role_bdb !== 'sharese'),
                 likes_count: 0,
                 is_liked: false,
@@ -1294,7 +1333,7 @@ export class JukrahService {
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
                 sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
-                sender_photo: r.sender_photo,
+                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
                 link: '/cms/broadcaster'
             })));
 
@@ -1320,7 +1359,7 @@ export class JukrahService {
                     is_read: true,
                     created_at: r.created_at,
                     sender_handle: '@' + handle,
-                    sender_photo: r.other_photo,
+                    sender_photo: this.resolveDefaultAvatar(r.other_photo, r.other_name, null, null),
                     link: '/cms/profile'
                 };
             }));
@@ -1347,7 +1386,7 @@ export class JukrahService {
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
                 sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
-                sender_photo: r.sender_photo,
+                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
                 link: '/cms/broadcaster'
             })));
 

@@ -117,7 +117,50 @@ function formatSatkerName(rawSatker, isSuper, fallback) {
   return s || fallback || 'Polri';
 }
 
-function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx) {
+function isPolwanUser(u) {
+  if (!u || typeof u !== 'object') return false;
+  var g = String(u.gender || u.jenis_kelamin || u.social_media?.gender || '').toLowerCase();
+  if (['p', 'perempuan', 'wanita', 'female', 'f'].includes(g)) return true;
+  var nm = String(u.name || u.author_name || u.raw_name || u.username || u.callsign || u.author_username || u.author_callsign || '');
+  return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(nm);
+}
+function getDefaultAvatarUrl(u) {
+  return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';
+}
+function resolveUserAvatar(photoUrl, userObj) {
+  if (photoUrl && typeof photoUrl === 'string' && photoUrl.trim().length > 5 && photoUrl !== 'null' && photoUrl !== 'undefined') {
+    var uId = String(userObj?.id || userObj?.user_id || userObj?.author_id || '');
+    var uName = String(userObj?.username || userObj?.callsign || userObj?.author_username || userObj?.author_callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
+    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    if (isOko) return photoUrl;
+    var hasExplicitV2 = Boolean(userObj?.social_media?.avatar_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_avatar_v2_' + uId) === '1'));
+    if (!hasExplicitV2) {
+      return getDefaultAvatarUrl(userObj);
+    }
+    return photoUrl;
+  }
+  return getDefaultAvatarUrl(userObj);
+}
+var DEFAULT_POLRI_BANNER = '/images/default-banner-polri.jpg';
+function resolveUserBanner(rawBanner, userObj) {
+  if (rawBanner && typeof rawBanner === 'string') {
+    var b = rawBanner.trim();
+    var uId = String(userObj?.id || userObj?.user_id || '');
+    var uName = String(userObj?.username || userObj?.callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
+    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    if (isOko) {
+      if (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient')) return b;
+    }
+    var hasExplicitBannerV2 = Boolean(userObj?.social_media?.banner_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1'));
+    if (hasExplicitBannerV2 && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient'))) {
+      return b;
+    }
+  }
+  return DEFAULT_POLRI_BANNER;
+}
+
+function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx, userObj) {
+  var resolvedAvatar = resolveUserAvatar(avatarUrl, userObj);
   return (0,t.jsx)("div",{
     style:{
       position:"relative",
@@ -140,7 +183,7 @@ function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx)
         color:"#38bdf8",
         border:"1px solid rgba(255,255,255,0.12)"
       },
-      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",loading:"lazy",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
+      children:(0,t.jsx)("img",{src:resolvedAvatar,alt:"Avatar",loading:"lazy",decoding:"async",onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}})
     })
   });
 }
@@ -1171,7 +1214,7 @@ e.s(["default",0,function() {
                     onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.05)',
                     onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
                     title:"Klik untuk membuka profil " + (authorNameDisplay || authorHandle),
-                    children:renderCornerAvatar(authorAvatar, authorInitials, authorBadge, 2.5, 15, 8.5)
+                    children:renderCornerAvatar(authorAvatar, authorInitials, authorBadge, 2.5, 15, 8.5, post)
                   }),
                   (0,t.jsxs)("div",{children:[
                     (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
@@ -1679,7 +1722,7 @@ e.s(["default",0,function() {
                           onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.05)',
                           onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
                           title:"Klik untuk melihat profil personil",
-                          children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5)
+                          children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5, cm)
                         }),
                         (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
                           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.25rem",flexWrap:"wrap",gap:"0.35rem"},children:[
@@ -2051,7 +2094,7 @@ e.s(["default",0,function() {
                 style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",width:"100%"},
                 title:"Klik untuk melihat profil personil",
                 children:[
-                  renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8),
+                  renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8, usr),
                   (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
                     (0,t.jsx)("span",{style:{color:"#38bdf8",fontWeight:700,fontSize:"0.84rem"},children:usrHandle}),
                     renderMetaVerifiedBadge(usrBadge, 14),
@@ -2235,7 +2278,7 @@ e.s(["default",0,function() {
       ) : previewUser ? (
         (0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",padding:"0 0 0.5rem 0"},children:[
           // Mini Cover & Avatar Header
-          (0,t.jsxs)("div",{style:{position:"relative",height:"105px",borderRadius:"10px",background:"linear-gradient(135deg, #090d16 0%, #0f172a 50%, #0369a1 100%)",overflow:"hidden",display:"flex",alignItems:"flex-end",padding:"0.75rem 1rem"},children:[
+          (0,t.jsxs)("div",{style:{position:"relative",height:"105px",borderRadius:"10px",background:(()=>{var pb=resolveUserBanner(previewUser.banner_theme||previewUser.social_media?.banner_theme,previewUser);return pb.startsWith("linear-gradient")?pb:("url(\""+pb+"\") center/cover no-repeat");})(),overflow:"hidden",display:"flex",alignItems:"flex-end",padding:"0.75rem 1rem"},children:[
             (0,t.jsx)("div",{style:{position:"absolute",inset:0,opacity:0.25,backgroundImage:"radial-gradient(rgba(56,189,248,0.5) 1px, transparent 1px)",backgroundSize:"18px 18px",pointerEvents:"none"}}),
             (0,t.jsxs)("div",{style:{position:"absolute",bottom:"-25px",left:"1.25rem",display:"flex",alignItems:"flex-end",gap:"0.75rem"},children:[
               renderCornerAvatar(
@@ -2244,7 +2287,8 @@ e.s(["default",0,function() {
                 null,
                 4.2,
                 22,
-                12
+                12,
+                previewUser
               )
             ]})
           ]}),
