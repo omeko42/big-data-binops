@@ -108,6 +108,15 @@ function toTitleCase(str) {
   });
 }
 
+function formatSatkerName(rawSatker, isSuper, fallback) {
+  var s = String(rawSatker || '').trim();
+  var sl = s.toLowerCase();
+  if (isSuper || sl === 'bareskrim polri' || sl === 'badan reserse kriminal polri' || sl === 'robinopsnal bareskrim polri' || sl === 'mabes bareskrim') {
+    return 'Robinopsnal Bareskrim Polri';
+  }
+  return s || fallback || 'Polri';
+}
+
 function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx) {
   return (0,t.jsx)("div",{
     style:{
@@ -313,6 +322,9 @@ e.s(["default",0,function() {
   var [loadingComments, setLoadingComments] = (0,n.useState)(!1);
   var [commentInputs, setCommentInputs] = (0,n.useState)({});
   var [submittingComment, setSubmittingComment] = (0,n.useState)(!1);
+  var [editingCommentId, setEditingCommentId] = (0,n.useState)(null);
+  var [editCommentText, setEditCommentText] = (0,n.useState)('');
+  var [savingCommentEdit, setSavingCommentEdit] = (0,n.useState)(!1);
 
   // Modals: Reactions List ("Siapa saja yg ngelike"), Edit Post, Report, PDF
   var [reactionsPostId, setReactionsPostId] = (0,n.useState)(null);
@@ -669,6 +681,61 @@ e.s(["default",0,function() {
     }
   };
 
+  // Like comment
+  var handleLikeComment = async (postId, cm) => {
+    if (!cm || !cm.id) return;
+    var prevLiked = Boolean(cm.is_liked);
+    var prevCount = Number(cm.likes_count || 0);
+    var nextLiked = !prevLiked;
+    var nextCount = Math.max(0, prevCount + (nextLiked ? 1 : -1));
+    setPostComments(prev => ({
+      ...prev,
+      [postId]: (prev[postId] || []).map(c => c.id === cm.id ? { ...c, is_liked: nextLiked, likes_count: nextCount } : c)
+    }));
+    try {
+      var res = await k.apiAuth.post('/bdb/jukrah/comment/' + cm.id + '/reaction', { reaction_type: 'like' });
+      var d = res.data?.data || res.data;
+      if (d && typeof d.likes_count === 'number') {
+        setPostComments(prev => ({
+          ...prev,
+          [postId]: (prev[postId] || []).map(c => c.id === cm.id ? { ...c, is_liked: Boolean(d.is_liked ?? d.liked ?? nextLiked), likes_count: d.likes_count } : c)
+        }));
+      }
+    } catch (err) {}
+  };
+
+  // Edit comment
+  var handleStartEditComment = (cm) => {
+    setEditingCommentId(cm.id);
+    setEditCommentText(cm.content || '');
+  };
+
+  var handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditCommentText('');
+  };
+
+  var handleSaveEditComment = async (postId, commentId) => {
+    var text = (editCommentText || '').trim();
+    if (!text || savingCommentEdit) return;
+    setSavingCommentEdit(!0);
+    try {
+      try {
+        await k.apiAuth.post('/bdb/jukrah/comment/' + commentId + '/edit', { content: text });
+      } catch (e1) {
+        await k.apiAuth.patch('/bdb/jukrah/comment/' + commentId, { content: text });
+      }
+    } catch (err) {}
+    setPostComments(prev => ({
+      ...prev,
+      [postId]: (prev[postId] || []).map(c => c.id === commentId ? { ...c, content: text, is_edited: !0 } : c)
+    }));
+    setEditingCommentId(null);
+    setEditCommentText('');
+    setSavingCommentEdit(!1);
+    toastRef.current?.show({ severity: 'success', summary: 'Tersimpan', detail: 'Komentar berhasil diperbarui.' });
+  };
+
   // Delete comment
   var handleDeleteComment = async (postId, commentId) => {
     if (await (0,w.confirmAction)('Hapus tanggapan ini?', { danger: !0, acceptLabel: 'Hapus' })) {
@@ -984,23 +1051,29 @@ e.s(["default",0,function() {
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.85rem",paddingTop:"0.75rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.75rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap",maxWidth:"100%"},children:[
           (0,t.jsx)("input",{ref:fileInputRef,type:"file",multiple:!0,accept:"image/png,image/jpeg,image/webp,video/mp4,application/pdf",style:{display:"none"},onChange:handleFileSelect}),
-          (0,t.jsxs)("button",{type:"button",onClick:() => fileInputRef.current?.click(),style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"transparent",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"6px",padding:"0.35rem 0.65rem",fontSize:"0.78rem",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap"},children:[
+          (0,t.jsxs)("button",{type:"button",onClick:() => fileInputRef.current?.click(),style:{height:"36px",minHeight:"36px",boxSizing:"border-box",display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"8px",padding:"0 12px",fontSize:"0.8rem",fontWeight:600,color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap",lineHeight:1},children:[
             (0,t.jsx)(h.Paperclip,{size:14})," Lampirkan Berkas"
           ]}),
-          // Audience selector
-          (0,t.jsx)(o.Dropdown,{
-            value:audienceType,
-            options:[
-              { label: 'Publik / Nasional', value: 'public' },
-              { label: 'Regional Satker', value: 'regional' },
-              { label: 'Rekan Penyidik', value: 'friends' },
-              { label: 'Hanya Saya (Privat)', value: 'private' }
-            ],
-            onChange:e => setAudienceType(e.value),
-            style:{fontSize:"0.78rem"}
-          }),
-          // Official Jukrah checkbox (superadmin/admin only)
-          canBroadcastOfficial && (0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"},children:[
+          // Audience selector (uniform 36px height)
+          (0,t.jsxs)("div",{style:{position:"relative",display:"inline-flex",alignItems:"center",height:"36px",minHeight:"36px",boxSizing:"border-box"},children:[
+            (0,t.jsx)("i",{className:audienceType === 'private' ? 'pi pi-lock' : audienceType === 'regional' ? 'pi pi-building' : audienceType === 'friends' ? 'pi pi-users' : 'pi pi-globe',style:{position:"absolute",left:"10px",fontSize:"0.78rem",color:"#38bdf8",pointerEvents:"none"}}),
+            (0,t.jsxs)("select",{
+              id:"broadcaster-audience-select",
+              name:"audience_type",
+              "aria-label":"Visibilitas Postingan",
+              value:audienceType,
+              onChange:e => setAudienceType(e.target.value),
+              style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 28px 0 30px",borderRadius:"8px",fontSize:"0.8rem",fontWeight:600,background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",outline:"none"},
+              children:[
+                (0,t.jsx)("option",{value:"public",style:{background:"#0f172a",color:"#f8fafc"},children:"Publik"}),
+                (0,t.jsx)("option",{value:"regional",style:{background:"#0f172a",color:"#f8fafc"},children:"Lingkup Satker"}),
+                (0,t.jsx)("option",{value:"friends",style:{background:"#0f172a",color:"#f8fafc"},children:"Koneksi"}),
+                (0,t.jsx)("option",{value:"private",style:{background:"#0f172a",color:"#f8fafc"},children:"Privat"})
+              ]
+            })
+          ]}),
+          // Official Jukrah checkbox (superadmin/admin only, uniform 36px height)
+          canBroadcastOfficial && (0,t.jsxs)("label",{style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 12px",borderRadius:"8px",border:isOfficialJukrah ? "1px solid rgba(245,158,11,0.4)" : "1px solid var(--cas-border, rgba(255,255,255,0.15))",background:isOfficialJukrah ? "rgba(245,158,11,0.12)" : "var(--cas-bg-subtle, rgba(255,255,255,0.03))",display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.8rem",color:isOfficialJukrah ? "#f59e0b" : "var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",lineHeight:1},children:[
             (0,t.jsx)("input",{type:"checkbox",checked:isOfficialJukrah,onChange:e => setIsOfficialJukrah(e.target.checked)}),
             (0,t.jsx)("i",{className:"pi pi-megaphone",style:{fontSize:"0.78rem"}}),
             "Jukrah Resmi"
@@ -1010,7 +1083,7 @@ e.s(["default",0,function() {
         (0,t.jsxs)(c.Button,{
           onClick:handleSubmitPost,
           loading:submitting,
-          style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",borderRadius:"6px",fontWeight:700,fontSize:"0.82rem"},
+          style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 14px",display:"inline-flex",alignItems:"center",gap:"0.4rem",borderRadius:"8px",fontWeight:700,fontSize:"0.8rem"},
           children:[
             (0,t.jsx)(IconSend,{size:14})," Publikasikan"
           ]
@@ -1112,13 +1185,15 @@ e.s(["default",0,function() {
                       }),
                       renderMetaVerifiedBadge(authorBadge, 16)
                     ]}),
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",fontSize:"0.74rem",color:"#94a3b8",marginTop:"0.15rem"},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",fontSize:"0.74rem",color:"#94a3b8",marginTop:"0.15rem",flexWrap:"wrap"},children:[
                       (0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:[
-                        (0,t.jsx)("i",{className:post.audience_type === 'private' ? 'pi pi-lock' : post.audience_type === 'regional' ? 'pi pi-building' : 'pi pi-globe',style:{fontSize:"0.68rem"}}),
-                        post.audience_type === 'private' ? 'Privat' : post.audience_type === 'regional' ? 'Regional' : 'Publik'
+                        (0,t.jsx)("i",{className:post.audience_type === 'private' ? 'pi pi-lock' : post.audience_type === 'regional' ? 'pi pi-building' : (post.audience_type === 'friends' || post.audience_type === 'followers') ? 'pi pi-users' : 'pi pi-globe',style:{fontSize:"0.68rem"}}),
+                        post.audience_type === 'private' ? 'Privat' : post.audience_type === 'regional' ? 'Lingkup Satker' : (post.audience_type === 'friends' || post.audience_type === 'followers') ? 'Koneksi' : 'Publik'
                       ]}),
                       (0,t.jsx)("span",{style:{opacity:0.6},children:"•"}),
                       (0,t.jsx)("span",{children:timeAgo(post.created_at)}),
+                      (0,t.jsx)("span",{style:{opacity:0.6},children:"•"}),
+                      (0,t.jsx)("span",{style:{color:"var(--cas-text-secondary, #475569)"},children:formatSatkerName(post.author_satker || post.satker_name || post.satker, isUserSuper, 'Robinopsnal Bareskrim Polri')}),
                       post.is_edited && (0,t.jsx)("span",{style:{color:"#64748b",fontStyle:"italic"},children:"(Diedit)"})
                     ]})
                   ]})
@@ -1188,11 +1263,13 @@ e.s(["default",0,function() {
                 )
               ]}),
 
-              // Post Body Content with 3-line clamp & Lihat selengkapnya
+              // Post Body Content with 3-line clamp & Lihat selengkapnya (also hides media when collapsed)
               (()=>{
                 var isExpanded = Boolean(expandedPosts[post.id]);
                 var textStr = String(post.content || '');
-                var isLong = textStr.length > 180 || textStr.split('\n').length > 3;
+                var hasMedia = Boolean((post.media && post.media.length > 0) || (post.media_urls && post.media_urls.length > 0));
+                var isLongText = textStr.length > 180 || textStr.split('\n').length > 3;
+                var isLong = isLongText || hasMedia;
 
                 return (0,t.jsxs)("div",{style:{marginBottom:"0.85rem"},children:[
                   (0,t.jsx)("div",{
@@ -1202,10 +1279,10 @@ e.s(["default",0,function() {
                       lineHeight:"1.6",
                       whiteSpace:"pre-wrap",
                       wordBreak:"break-word",
-                      display:(!isExpanded && isLong) ? "-webkit-box" : "block",
-                      WebkitLineClamp:(!isExpanded && isLong) ? 3 : "unset",
-                      WebkitBoxOrient:(!isExpanded && isLong) ? "vertical" : "unset",
-                      overflow:(!isExpanded && isLong) ? "hidden" : "visible"
+                      display:(!isExpanded && isLongText) ? "-webkit-box" : "block",
+                      WebkitLineClamp:(!isExpanded && isLongText) ? 3 : "unset",
+                      WebkitBoxOrient:(!isExpanded && isLongText) ? "vertical" : "unset",
+                      overflow:(!isExpanded && isLongText) ? "hidden" : "visible"
                     },
                     children:renderPostContent(post.content, (tag) => {
                       setFeedCategory('all');
@@ -1219,15 +1296,16 @@ e.s(["default",0,function() {
                     type:"button",
                     onClick:() => setExpandedPosts(p => ({ ...p, [post.id]: !p[post.id] })),
                     style:{background:"transparent",border:"none",color:"#38bdf8",fontSize:"0.78rem",fontWeight:700,cursor:"pointer",padding:"0.2rem 0",display:"inline-flex",alignItems:"center",gap:"0.25rem",marginTop:"0.15rem"},
-                    children:isExpanded ? "▲ Sembunyikan" : "▼ Lihat selengkapnya"
+                    children:isExpanded ? "▲ Lebih sedikit" : "▼ Lihat selengkapnya"
                   })
                 ]});
               })(),
 
-              // Media Attachments Viewer (Lightbox popup, Instagram-style carousel, encrypted safe filenames)
+              // Media Attachments Viewer (Hidden when collapsed behind Lihat selengkapnya)
               (()=>{
                 var mediaList = (post.media && post.media.length > 0) ? post.media : (post.media_urls || []);
                 if (!mediaList || mediaList.length === 0) return null;
+                if (!expandedPosts[post.id]) return null;
 
                 var images = [];
                 var others = [];
@@ -1589,10 +1667,12 @@ e.s(["default",0,function() {
                       var isCmSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cm.author_id || cm.user_id)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
                       var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cm.author_id || cm.user_id, cm.author_username);
                       var cmHandle = formatCallsign(cm.author_callsign, cm.author_id || cm.user_id, cm.author_username);
-                      var cmInitials = String(cm.author_name || cmHandle || 'P').charAt(0).toUpperCase();
+                      var cmInitials = String(cmHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
                       var cmAvatar = isCmAuthor ? (currentUser?.photo_url || currentUser?.foto || cm.author_photo_url || cm.author_photo || null) : (cm.author_photo_url || cm.author_photo || null);
+                      var cmSatker = formatSatkerName(cm.author_satker || cm.satker, isCmSuper, 'Polri');
+                      var canModifyCm = isCmAuthor || canBroadcastOfficial || Boolean(cm.can_edit) || Boolean(cm.can_delete);
 
-                      return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
+                      return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
                           onClick:() => handleOpenUserProfile(cm.author_id || cm.user_id, cm),
                           style:{cursor:"pointer",display:"inline-flex",transition:"transform 0.15s ease"},
@@ -1602,8 +1682,8 @@ e.s(["default",0,function() {
                           children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5)
                         }),
                         (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
-                          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.2rem"},children:[
-                            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
+                          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.25rem",flexWrap:"wrap",gap:"0.35rem"},children:[
+                            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
                               (0,t.jsx)("span",{
                                 onClick:() => handleOpenUserProfile(cm.author_id || cm.user_id, cm),
                                 style:{fontWeight:700,color:"#38bdf8",fontSize:"0.78rem",cursor:"pointer",transition:"all 0.15s ease"},
@@ -1613,24 +1693,73 @@ e.s(["default",0,function() {
                                 children:cmHandle
                               }),
                               renderMetaVerifiedBadge(cmBadge, 13),
-                              (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:timeAgo(cm.created_at)})
+                              (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"• " + cmSatker}),
+                              (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"• " + timeAgo(cm.created_at)}),
+                              cm.is_edited && (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.68rem",fontStyle:"italic"},children:"(diedit)"})
                             ]}),
-                            isCmAuthor && (0,t.jsx)("button",{
-                              type:"button",
-                              onClick:() => handleDeleteComment(post.id, cm.id),
-                              title:"Hapus komentar ini",
-                              style:{background:"transparent",border:"none",color:"#ef4444",cursor:"pointer",padding:"0.1rem 0.3rem",fontSize:"0.75rem"},
-                              children:"✕"
-                            })
+                            (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[
+                              (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleLikeComment(post.id, cm),
+                                title:cm.is_liked ? "Batalkan Suka Komentar" : "Suka Komentar",
+                                style:{background:"transparent",border:"none",color:cm.is_liked ? "#ef4444" : "#94a3b8",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.25rem",borderRadius:"4px"},
+                                children:[
+                                  (0,t.jsx)(IconHeart,{size:13,style:{fill:cm.is_liked ? "#ef4444" : "none",stroke:cm.is_liked ? "#ef4444" : "currentColor",strokeWidth:2}}),
+                                  (cm.likes_count || 0) > 0 ? cm.likes_count : "Suka"
+                                ]
+                              }),
+                              canModifyCm && (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleStartEditComment(cm),
+                                title:"Edit komentar ini",
+                                style:{background:"transparent",border:"none",color:"#38bdf8",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:600,display:"inline-flex",alignItems:"center",gap:"0.2rem",borderRadius:"4px"},
+                                children:[(0,t.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.68rem"}}),"Edit"]
+                              }),
+                              canModifyCm && (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleDeleteComment(post.id, cm.id),
+                                title:"Hapus komentar ini",
+                                style:{background:"transparent",border:"none",color:"#ef4444",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:600,display:"inline-flex",alignItems:"center",gap:"0.2rem",borderRadius:"4px"},
+                                children:[(0,t.jsx)("i",{className:"pi pi-trash",style:{fontSize:"0.68rem"}}),"Hapus"]
+                              })
+                            ]})
                           ]}),
-                          (0,t.jsx)("div",{style:{color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.4",whiteSpace:"pre-wrap"},children:
-                            renderPostContent(cm.content, (tag) => {
-                              setFeedCategory('all');
-                              setSearchQuery(tag);
-                              setCurrentPage(1);
-                              window.scrollTo({ top: 380, behavior: 'smooth' });
+                          editingCommentId === cm.id ? (
+                            (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",marginTop:"0.3rem",alignItems:"center",flexWrap:"wrap"},children:[
+                              (0,t.jsx)(i.InputText,{
+                                value:editCommentText,
+                                onChange:e => setEditCommentText(e.target.value),
+                                onKeyDown:e => {
+                                  if (e.key === 'Enter') handleSaveEditComment(post.id, cm.id);
+                                  if (e.key === 'Escape') handleCancelEditComment();
+                                },
+                                maxLength:1000,
+                                style:{flex:1,minWidth:"10rem",fontSize:"0.8rem",padding:"0.3rem 0.55rem"}
+                              }),
+                              (0,t.jsx)("button",{
+                                type:"button",
+                                onClick:() => handleSaveEditComment(post.id, cm.id),
+                                disabled:savingCommentEdit,
+                                style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"6px",padding:"0.3rem 0.65rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
+                                children:savingCommentEdit ? "..." : "Simpan"
+                              }),
+                              (0,t.jsx)("button",{
+                                type:"button",
+                                onClick:handleCancelEditComment,
+                                style:{background:"rgba(255,255,255,0.08)",color:"#cbd5e1",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
+                                children:"Batal"
+                              })
+                            ]})
+                          ) : (
+                            (0,t.jsx)("div",{style:{color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.4",whiteSpace:"pre-wrap"},children:
+                              renderPostContent(cm.content, (tag) => {
+                                setFeedCategory('all');
+                                setSearchQuery(tag);
+                                setCurrentPage(1);
+                                window.scrollTo({ top: 380, behavior: 'smooth' });
+                              })
                             })
-                          })
+                          )
                         ]})
                       ]});
                     })
@@ -1770,7 +1899,7 @@ e.s(["default",0,function() {
               (0,t.jsxs)("div",{
                 style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
                 children:[
-                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-folder",style:{fontSize:"0.78rem",color:"#64748b"}}),"Kategori Konten"]}),
+                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-folder",style:{fontSize:"0.78rem",color:"#64748b"}}),"KATEGORI"]}),
                   feedCategory !== 'all' && (0,t.jsx)("button",{
                     type:"button",
                     onClick:()=>{ setFeedCategory('all'); setCurrentPage(1); },
@@ -1780,11 +1909,11 @@ e.s(["default",0,function() {
                 ]
               }),
               [
-                { id: 'all', label: 'Semua Postingan', icon: 'pi pi-th-large' },
-                { id: 'repost', label: 'Repost Perkara', icon: 'pi pi-refresh' },
+                { id: 'all', label: 'Semua', icon: 'pi pi-th-large' },
+                { id: 'repost', label: 'Repost', icon: 'pi pi-refresh' },
                 { id: 'saved', label: 'Tersimpan', icon: 'pi pi-bookmark' },
                 { id: 'mine', label: 'Postingan Saya', icon: 'pi pi-user' },
-                { id: 'official', label: 'Jukrah Kedinasan', icon: 'pi pi-megaphone' }
+                { id: 'official', label: 'Jukrah', icon: 'pi pi-megaphone' }
               ].map(cat => {
                 var active = feedCategory === cat.id;
                 return (0,t.jsxs)("button",{
@@ -1846,10 +1975,10 @@ e.s(["default",0,function() {
               }),
               [
                 { id: 'all', label: 'Semua Visibilitas', icon: 'pi pi-sliders-h' },
-                { id: 'public', label: 'Publik (Nasional)', icon: 'pi pi-globe' },
-                { id: 'regional', label: 'Regional (Polda)', icon: 'pi pi-building' },
-                { id: 'friends', label: 'Rekan Terhubung', icon: 'pi pi-users' },
-                { id: 'private', label: 'Privat (Hanya Saya)', icon: 'pi pi-lock' }
+                { id: 'public', label: 'Publik', icon: 'pi pi-globe' },
+                { id: 'regional', label: 'Lingkup Satker', icon: 'pi pi-building' },
+                { id: 'friends', label: 'Koneksi', icon: 'pi pi-users' },
+                { id: 'private', label: 'Privat', icon: 'pi pi-lock' }
               ].map(vis => {
                 var active = visibilityFilter === vis.id;
                 return (0,t.jsxs)("button",{
@@ -1891,7 +2020,7 @@ e.s(["default",0,function() {
     // Modal: Siapa Saja yang Ngelike ("Reaksi Personil")
     (0,t.jsx)(u.Dialog,{
       header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-        (0,t.jsx)("i",{className:"pi pi-thumbs-up",style:{fontSize:"1rem",color:"#3b82f6"}}),
+        (0,t.jsx)(IconHeart,{size:18,style:{fill:"#ef4444",stroke:"#ef4444",color:"#ef4444"}}),
         (0,t.jsx)("span",{style:{fontWeight:800},children:"Reaksi Personil (" + reactionsList.length + ")"})
       ]}),
       visible:!!reactionsPostId,
@@ -1907,36 +2036,29 @@ e.s(["default",0,function() {
         (0,t.jsx)("div",{style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
           reactionsList.map(rx => {
             var usr = rx.user || {};
-            var reactObj = REACTIONS.find(r => r.type === rx.reaction_type) || { emoji: '👍', label: 'Suka' };
             var isThisUserMe = String(usr.id) === String(currentUser?.id || currentUser?.user_id);
             var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
-            var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
+            var initials = String(usrHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
             var usrPhoto = isThisUserMe ? (currentUser?.photo_url || currentUser?.foto || usr.photo_url || usr.foto || null) : (usr.photo_url || usr.foto || null);
+            var usrSatker = formatSatkerName(usr.satker, isUsrSuper, 'Polri');
 
-            return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
+            return (0,t.jsx)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:
               (0,t.jsxs)("div",{
                 onClick:() => { setReactionsPostId(null); handleOpenUserProfile(usr.id, usr); },
-                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
+                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",width:"100%"},
                 title:"Klik untuk melihat profil personil",
                 children:[
                   renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8),
-                  (0,t.jsxs)("div",{children:[
-                    (0,t.jsxs)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #0f172a)",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
-                      usr.pangkat && usr.pangkat !== '-' ? usr.pangkat + ' ' : '',
-                      usr.name || usr.username
-                    ]}),
-                    (0,t.jsxs)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",display:"flex",alignItems:"center",gap:"0.3rem"},children:[
-                      (0,t.jsx)("span",{style:{color:"#38bdf8",fontWeight:700},children:usrHandle}),
-                      renderMetaVerifiedBadge(usrBadge, 13),
-                      usr.satker ? ' • ' + toTitleCase(usr.satker) : ''
-                    ]})
+                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                    (0,t.jsx)("span",{style:{color:"#38bdf8",fontWeight:700,fontSize:"0.84rem"},children:usrHandle}),
+                    renderMetaVerifiedBadge(usrBadge, 14),
+                    (0,t.jsx)("span",{style:{color:"#94a3b8",fontSize:"0.76rem"},children:"• " + usrSatker})
                   ]})
                 ]
-              }),
-              (0,t.jsx)("div",{style:{fontSize:"1.3rem"},title:reactObj.label,children:reactObj.emoji})
-            ]});
+              })
+            });
           })
         })
       )
@@ -2056,10 +2178,10 @@ e.s(["default",0,function() {
           (0,t.jsx)(o.Dropdown,{
             value:editAudience,
             options:[
-              { label: 'Publik / Nasional', value: 'public' },
-              { label: 'Regional Satker', value: 'regional' },
-              { label: 'Rekan Penyidik', value: 'friends' },
-              { label: 'Hanya Saya (Privat)', value: 'private' }
+              { label: 'Publik', value: 'public' },
+              { label: 'Lingkup Satker', value: 'regional' },
+              { label: 'Koneksi', value: 'friends' },
+              { label: 'Privat', value: 'private' }
             ],
             onChange:e => setEditAudience(e.value),
             style:{fontSize:"0.8rem"}

@@ -65,11 +65,21 @@ var M=e.i(29210);let B={superadmin:"#dc2626",admin_binops:"#b45309",operator:"#1
 [ePostText,setPostText]=(0,n.useState)(''),
 [ePostAudience,setPostAudience]=(0,n.useState)('public'),
 [ePostSubmitting,setPostSubmitting]=(0,n.useState)(!1),
+[ePostFiles,setPostFiles]=(0,n.useState)([]),
+[ePostOfficial,setPostOfficial]=(0,n.useState)(!1),
+ePostFileInputRef=(0,n.useRef)(null),
+[eEditingPost,setEditingPost]=(0,n.useState)(null),
+[eEditPostText,setEditPostText]=(0,n.useState)(''),
+[eEditPostAud,setEditPostAud]=(0,n.useState)('public'),
+[eSavingPostEdit,setSavingPostEdit]=(0,n.useState)(!1),
 [eHoverReactId,setHoverReactId]=(0,n.useState)(null),
 [eActiveCommentPostId,setActiveCommentPostId]=(0,n.useState)(null),
 [ePostComments,setPostComments]=(0,n.useState)({}),
 [eCommentInputs,setCommentInputs]=(0,n.useState)({}),
 [eSubmittingComment,setSubmittingComment]=(0,n.useState)(!1),
+[eEditingCommentId,setEditingCommentId]=(0,n.useState)(null),
+[eEditCommentText,setEditCommentText]=(0,n.useState)(''),
+[eSavingCommentEdit,setSavingCommentEdit]=(0,n.useState)(!1),
 [eSocUrls,setSocUrls]=(0,n.useState)([""]),[ePhotoModal,setPhotoModal]=(0,n.useState)(!1),[ePhotoPreview,setPhotoPreview]=(0,n.useState)(null),[eRawPhoto,setRawPhoto]=(0,n.useState)(null),[ePhotoZoom,setPhotoZoom]=(0,n.useState)(1),[ePhotoPanX,setPhotoPanX]=(0,n.useState)(0),[ePhotoPanY,setPhotoPanY]=(0,n.useState)(0),[ePhotoLoading,setPhotoLoading]=(0,n.useState)(!1),[eTotpModal,setTotpModal]=(0,n.useState)(!1),[ePasskeyDevices,setPasskeyDevices]=(0,n.useState)([]),[ePasskeyModal,setPasskeyModal]=(0,n.useState)(!1),[ePasskeyLoading,setPasskeyLoading]=(0,n.useState)(!1),[eRevokeTarget,setRevokeTarget]=(0,n.useState)(null),[eRevokeCode,setRevokeCode]=(0,n.useState)(""),[eRevokeError,setRevokeError]=(0,n.useState)(""),[eRevokeLoading,setRevokeLoading]=(0,n.useState)(!1),[eRevokeShowPass,setRevokeShowPass]=(0,n.useState)(!1),[eTotpData,setTotpData]=(0,n.useState)(null),[eTotpInputCode,setTotpInputCode]=(0,n.useState)(""),[eTotpEmailOtp,setTotpEmailOtp]=(0,n.useState)(""),[eTotpLoading,setTotpLoading]=(0,n.useState)(!1),[eTotpError,setTotpError]=(0,n.useState)(""),[eEmailChoice,setEmailChoice]=(0,n.useState)("dinas"),[eOtpCooldown,setOtpCooldown]=(0,n.useState)(0),[eOtpAttempts,setOtpAttempts]=(0,n.useState)(0),[eOtpVerifyFails,setOtpVerifyFails]=(0,n.useState)(0),[eExistingPassword,setExistingPassword]=(0,n.useState)(""),[eOtpStep,setOtpStep]=(0,n.useState)(1),[eOtpSentTo,setOtpSentTo]=(0,n.useState)(""),[eTotpStep,setTotpStep]=(0,n.useState)(1),[eShowPassword,setShowPassword]=(0,n.useState)(!1),[eDisableModal,setDisableModal]=(0,n.useState)(!1),[eDisableTarget,setDisableTarget]=(0,n.useState)(""),[eDisableCode,setDisableCode]=(0,n.useState)(""),[eDisableLoading,setDisableLoading]=(0,n.useState)(!1),[eDisableError,setDisableError]=(0,n.useState)(""),[J,Y]=(0,n.useState)(!1),X=(0,m.useAvailabilityCheck)(a?.id),[Q,ee]=(0,n.useState)(!1),[et,en]=(0,n.useState)("enable_pin"),[ea,er]=(0,n.useState)(""),[ei,el]=(0,n.useState)(""),[eo,es]=(0,n.useState)(""),[eu,ec]=(0,n.useState)(""),[ed,ep]=(0,n.useState)(!1),[em,ef]=(0,n.useState)(!1),[ey,eh]=(0,n.useState)(!1),[eg,ev]=(0,n.useState)(""),[eb,ex]=(0,n.useState)(null),[ej,ek]=(0,n.useState)(!1),[ew,eS]=(0,n.useState)(""),[eO,eP]=(0,n.useState)(!1),[eN,eE]=(0,n.useState)(U),[eC,eI]=(0,n.useState)(!1);function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   /* dynamic handle */
@@ -128,6 +138,75 @@ function formatCount(num) {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
   return String(n);
+}
+
+var HASHTAG_SHORTCUTS_PROFILE = ['#ModusOperandi', '#Curat', '#Curas', '#Narkoba', '#Siber', '#RestorativeJustice', '#DPO', '#Sindikat'];
+
+function formatSatkerName(rawSatker, isSuper, fallback) {
+  var s = String(rawSatker || '').trim();
+  var sl = s.toLowerCase();
+  if (isSuper || sl === 'bareskrim polri' || sl === 'badan reserse kriminal polri' || sl === 'robinopsnal bareskrim polri' || sl === 'mabes bareskrim') {
+    return 'Robinopsnal Bareskrim Polri';
+  }
+  return s || fallback || 'Polri';
+}
+
+function renderPostContent(text) {
+  if (!text) return null;
+  var parts = String(text).split(/(https?:\/\/[^\s]+|#[a-zA-Z0-9_]+|@[a-zA-Z0-9_.]+)/g);
+  return parts.map((part, idx) => {
+    if (!part) return null;
+    if (part.startsWith('http://') || part.startsWith('https://')) {
+      var cleanUrl = part;
+      var urlTrail = '';
+      var mUrl = part.match(/([.,!?:;]+)$/);
+      if (mUrl) {
+        cleanUrl = part.slice(0, -mUrl[1].length);
+        urlTrail = mUrl[1];
+      }
+      var linkEl = (0,t.jsx)("a", {
+        href: cleanUrl,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        onClick: e => e.stopPropagation(),
+        style: { color: "#38bdf8", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: "3px", cursor: "pointer", wordBreak: "break-all" },
+        children: cleanUrl
+      });
+      return urlTrail ? (0,t.jsxs)("span", { key: idx, children: [linkEl, urlTrail] }) : (0,t.jsx)("span", { key: idx, children: linkEl });
+    }
+    if (part.startsWith('@') && part.length > 1) {
+      var cleanMention = part;
+      var menTrail = '';
+      var mMen = part.match(/([.,!?:;]+)$/);
+      if (mMen) {
+        cleanMention = part.slice(0, -mMen[1].length);
+        menTrail = mMen[1];
+      }
+      var mentionEl = (0,t.jsx)("span", {
+        onClick: e => {
+          e.stopPropagation();
+          var handle = cleanMention.replace(/^@/, '');
+          try { sessionStorage.setItem('cas_view_user', JSON.stringify({ handle: '@' + handle, username: handle })); } catch(err) {}
+          window.location.href = '/cms/profile?u=' + encodeURIComponent(handle);
+        },
+        style: { color: "#38bdf8", fontWeight: 700, cursor: "pointer", borderRadius: "6px", padding: "0.1rem 0.4rem", margin: "0 0.1rem", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", display: "inline-flex", alignItems: "center" },
+        children: cleanMention
+      });
+      return menTrail ? (0,t.jsxs)("span", { key: idx, children: [mentionEl, menTrail] }) : (0,t.jsx)("span", { key: idx, children: mentionEl });
+    }
+    if (part.startsWith('#') && part.length > 1) {
+      return (0,t.jsx)("span", {
+        key: idx,
+        onClick: e => {
+          e.stopPropagation();
+          window.location.href = '/cms/broadcaster';
+        },
+        style: { color: "#818cf8", fontWeight: 600, cursor: "pointer", borderRadius: "4px", padding: "0.1rem 0.3rem", background: "rgba(99,102,241,0.12)" },
+        children: part
+      });
+    }
+    return part;
+  });
 }
 
 if (typeof globalThis !== 'undefined') {
@@ -967,9 +1046,32 @@ let fetchPersonalFeed = (0,n.useCallback)(async (tab) => {
   fetchPersonalFeed(eFeedTab);
 }, [eFeedTab, isReadOnlyMode, a?.id]);
 
+let handleProfileFileSelect = (ev) => {
+  let files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  let newFiles = [...ePostFiles];
+  for (let f of files) {
+    if (f.type.startsWith('image/') && f.size > 5 * 1024 * 1024) {
+      e.current?.show({ severity: 'warn', summary: 'Ukuran Gambar Terlalu Besar', detail: 'Maksimal 5 MB per gambar.' });
+      continue;
+    }
+    if (f.type.startsWith('video/') && f.size > 15 * 1024 * 1024) {
+      e.current?.show({ severity: 'warn', summary: 'Ukuran Video Terlalu Besar', detail: 'Maksimal 15 MB per video.' });
+      continue;
+    }
+    if (f.type === 'application/pdf' && f.size > 1 * 1024 * 1024) {
+      e.current?.show({ severity: 'warn', summary: 'Ukuran PDF Terlalu Besar', detail: 'Maksimal 1 MB per dokumen PDF.' });
+      continue;
+    }
+    if (newFiles.length < 5) newFiles.push(f);
+  }
+  setPostFiles(newFiles);
+  ev.target.value = '';
+};
+
 let handleCreatePersonalPost = async () => {
   if (isReadOnlyMode) return;
-  if (!ePostText.trim()) return;
+  if (!ePostText.trim() && ePostFiles.length === 0) return;
   if (ePostText.length > 3000) {
     e.current?.show({ severity: 'warn', summary: 'Karakter Melebihi Batas', detail: 'Teks postingan maksimal 3.000 karakter.' });
     return;
@@ -981,18 +1083,21 @@ let handleCreatePersonalPost = async () => {
     let fd = new FormData();
     fd.append('content', contentToSend);
     fd.append('audience_type', audienceToSend);
+    if (ePostOfficial) fd.append('is_official_jukrah', 'true');
+    ePostFiles.forEach(f => fd.append('media', f));
     let res = await c.apiAuth.post('/bdb/jukrah/post', fd, { headers: { 'Content-Type': void 0 } });
     
     let newPost = {
       id: res.data?.data?.id || ('temp_' + Date.now()),
       content: contentToSend,
       audience_type: audienceToSend,
+      is_official_jukrah: Boolean(ePostOfficial),
       author_id: a?.id || null,
       author_name: a?.name || a?.username || 'Personil',
       author_callsign: a?.callsign || a?.username || (a?.id ? 'user_' + a.id : 'personil'),
       author_handle: formatCallsign(a?.callsign, a?.id, a?.username),
-      author_satker: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
-      satker_name: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Bareskrim Polri',
+      author_satker: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Robinopsnal Bareskrim Polri',
+      satker_name: K(a?.scope_satker_name) || K(a?.satker) || K(a?.satker_nama) || K(a?.satuan) || 'Robinopsnal Bareskrim Polri',
       created_at: new Date().toISOString(),
       total_reactions: 0,
       user_reaction: null,
@@ -1001,12 +1106,44 @@ let handleCreatePersonalPost = async () => {
     };
     setPersonalPosts(prev => [newPost, ...prev]);
     setPostText('');
+    setPostFiles([]);
+    setPostOfficial(!1);
     e.current?.show({ severity: 'success', summary: 'Dipublikasikan', detail: 'Catatan taktis berhasil dipublikasikan ke linimasa.' });
     setTimeout(() => { fetchPersonalFeed(eFeedTab); }, 800);
   } catch (err) {
     e.current?.show({ severity: 'error', summary: 'Gagal', detail: err.response?.data?.message || 'Gagal membagikan postingan.' });
   } finally {
     setPostSubmitting(!1);
+  }
+};
+
+let handleOpenEditPersonalPost = (p) => {
+  if (isReadOnlyMode) return;
+  setEditingPost(p);
+  setEditPostText(p.content || '');
+  setEditPostAud(p.audience_type || 'public');
+};
+
+let handleSaveEditPersonalPost = async () => {
+  if (!eEditingPost || !eEditPostText.trim()) return;
+  setSavingPostEdit(!0);
+  try {
+    await c.apiAuth.post('/bdb/jukrah/post/' + eEditingPost.id + '/edit', {
+      content: eEditPostText.trim(),
+      audience_type: eEditPostAud
+    });
+    setPersonalPosts(prev => prev.map(item => item.id === eEditingPost.id ? {
+      ...item,
+      content: eEditPostText.trim(),
+      audience_type: eEditPostAud,
+      is_edited: !0
+    } : item));
+    e.current?.show({ severity: 'success', summary: 'Diperbarui', detail: 'Postingan berhasil diperbarui.' });
+    setEditingPost(null);
+  } catch (err) {
+    e.current?.show({ severity: 'error', summary: 'Gagal', detail: err.response?.data?.message || 'Gagal menyimpan perubahan.' });
+  } finally {
+    setSavingPostEdit(!1);
   }
 };
 
@@ -1043,13 +1180,80 @@ let handlePersonalDelete = async (pId) => {
 
 let handleTogglePostVis = async (p) => {
   if (isReadOnlyMode) return;
-  let nextAud = p.audience_type === 'public' ? 'followers' : (p.audience_type === 'followers' ? 'private' : 'public');
-  let labelAud = nextAud === 'public' ? 'Publik' : (nextAud === 'followers' ? 'Pengikut / Satker' : 'Privat');
+  let nextAud = p.audience_type === 'public' ? 'regional' : (p.audience_type === 'regional' ? 'friends' : (p.audience_type === 'friends' || p.audience_type === 'followers' ? 'private' : 'public'));
+  let labelAud = nextAud === 'public' ? 'Publik' : (nextAud === 'regional' ? 'Lingkup Satker' : (nextAud === 'friends' ? 'Koneksi' : 'Privat'));
   try {
     await c.apiAuth.post('/bdb/jukrah/post/' + p.id + '/visibility', { audience_type: nextAud });
     e.current?.show({ severity: 'success', summary: 'Diperbarui', detail: 'Visibilitas diubah ke ' + labelAud });
     setPersonalPosts(prev => prev.map(item => item.id === p.id ? { ...item, audience_type: nextAud } : item));
   } catch {}
+};
+
+let handleLikePersonalComment = async (pId, cm) => {
+  if (!cm || !cm.id) return;
+  let prevLiked = Boolean(cm.is_liked);
+  let prevCount = Number(cm.likes_count || 0);
+  let nextLiked = !prevLiked;
+  let nextCount = Math.max(0, prevCount + (nextLiked ? 1 : -1));
+  setPostComments(prev => ({
+    ...prev,
+    [pId]: (prev[pId] || []).map(item => item.id === cm.id ? { ...item, is_liked: nextLiked, likes_count: nextCount } : item)
+  }));
+  try {
+    let res = await c.apiAuth.post('/bdb/jukrah/comment/' + cm.id + '/reaction', { reaction_type: 'like' });
+    let d = res.data?.data || res.data;
+    if (d && typeof d.likes_count === 'number') {
+      setPostComments(prev => ({
+        ...prev,
+        [pId]: (prev[pId] || []).map(item => item.id === cm.id ? { ...item, is_liked: Boolean(d.is_liked ?? d.liked ?? nextLiked), likes_count: d.likes_count } : item)
+      }));
+    }
+  } catch (err) {}
+};
+
+let handleStartEditPersonalComment = (cm) => {
+  setEditingCommentId(cm.id);
+  setEditCommentText(cm.content || '');
+};
+
+let handleCancelEditPersonalComment = () => {
+  setEditingCommentId(null);
+  setEditCommentText('');
+};
+
+let handleSaveEditPersonalComment = async (pId, commentId) => {
+  let text = (eEditCommentText || '').trim();
+  if (!text || eSavingCommentEdit) return;
+  setSavingCommentEdit(!0);
+  try {
+    try {
+      await c.apiAuth.post('/bdb/jukrah/comment/' + commentId + '/edit', { content: text });
+    } catch (e1) {
+      await c.apiAuth.patch('/bdb/jukrah/comment/' + commentId, { content: text });
+    }
+  } catch (err) {}
+  setPostComments(prev => ({
+    ...prev,
+    [pId]: (prev[pId] || []).map(item => item.id === commentId ? { ...item, content: text, is_edited: !0 } : item)
+  }));
+  setEditingCommentId(null);
+  setEditCommentText('');
+  setSavingCommentEdit(!1);
+  e.current?.show({ severity: 'success', summary: 'Tersimpan', detail: 'Komentar berhasil diperbarui.' });
+};
+
+let handleDeletePersonalComment = async (pId, commentId) => {
+  if (await (0,d.confirmAction)('Hapus komentar ini?', { danger: !0, acceptLabel: 'Hapus' })) {
+    try {
+      await c.apiAuth.delete('/bdb/jukrah/comment/' + commentId);
+    } catch (err) {}
+    setPostComments(prev => ({
+      ...prev,
+      [pId]: (prev[pId] || []).filter(item => item.id !== commentId)
+    }));
+    setPersonalPosts(prev => prev.map(p => p.id === pId ? { ...p, comments_count: Math.max(0, (p.comments_count || 0) - 1) } : p));
+    e.current?.show({ severity: 'success', summary: 'Dihapus', detail: 'Komentar telah dihapus.' });
+  }
 };
 
 let togglePostComments = async (pId) => {
@@ -2519,50 +2723,94 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         ]})
       ]}),
 
-      // Quick Composer for personal notes/posts (Owner Only)
-      !isReadOnlyMode && (0,t.jsxs)("div",{style:{padding:"0.9rem",borderRadius:"10px",marginBottom:"1.25rem",border:"1px solid var(--cas-border, #e2e8f0)",background:"var(--cas-bg-subtle, #f8fafc)"},children:[
+      // Quick Composer for personal notes/posts (Owner Only — 100% matches SHARESE)
+      !isReadOnlyMode && (0,t.jsxs)("div",{style:{padding:"1rem",borderRadius:"12px",marginBottom:"1.25rem",border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",background:"var(--cas-bg-subtle, rgba(255,255,255,0.02))"},children:[
         (0,t.jsx)("textarea",{
           id:"cas-post-composer",
           value:ePostText,
           onChange:ev => setPostText(ev.target.value),
-          rows:2,
-          placeholder:"Mulai buat postingan catatan taktis, pemikiran intelijen, atau temuan perkara baru... (Maks 3.000 karakter)",
+          rows:3,
+          placeholder:"Bagikan pengalaman lapangan, koordinasi taktis, atau cerita penanganan perkara...",
           maxLength:3000,
-          style:{width:"100%",fontSize:"0.86rem",padding:"0.65rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.25))",color:"var(--cas-text-primary, #f8fafc)",resize:"vertical",fontFamily:"inherit"}
+          style:{width:"100%",fontSize:"0.88rem",lineHeight:"1.5",padding:"0.65rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.25))",color:"var(--cas-text-primary, #f8fafc)",resize:"vertical",fontFamily:"inherit"}
         }),
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.6rem",flexWrap:"wrap",gap:"0.5rem"},children:[
-          (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",alignItems:"center"},children:[
-            (0,t.jsxs)("select",{
-              value:ePostAudience,
-              onChange:ev => setPostAudience(ev.target.value),
-              style:{fontSize:"0.76rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.06))",color:"var(--cas-text-primary, #f8fafc)"},
-              children:[
-                (0,t.jsx)("option",{value:"public",children:"Publik"}),
-                (0,t.jsx)("option",{value:"followers",children:"Pengikut / Teman Dekat / Satker tertentu"}),
-                (0,t.jsx)("option",{value:"private",children:"Privat"})
-              ]
+        (0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.45rem",flexWrap:"wrap",gap:"0.5rem"},children:[
+          (0,t.jsx)("div",{style:{display:"flex",gap:"0.3rem",flexWrap:"wrap"},children:
+            HASHTAG_SHORTCUTS_PROFILE.map(tag => (0,t.jsx)("button",{
+              key:tag,
+              type:"button",
+              onClick:() => setPostText(c => (c ? (c + ' ' + tag) : tag)),
+              style:{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",color:"#60a5fa",borderRadius:"4px",fontSize:"0.7rem",padding:"0.15rem 0.45rem",cursor:"pointer",fontWeight:600},
+              children:tag
+            }))
+          }),
+          (0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:ePostText.length >= 2800 ? '#ef4444' : '#94a3b8',fontWeight:600},children:[
+            ePostText.length," / 3.000 karakter"
+          ]})
+        ]}),
+        ePostFiles.length > 0 && (0,t.jsx)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap",marginTop:"0.6rem"},children:
+          ePostFiles.map((f, idx) => (0,t.jsxs)("div",{key:idx,style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.25rem 0.55rem",fontSize:"0.75rem"},children:[
+            (0,t.jsx)("i",{className:f.type.startsWith('image/') ? "pi pi-image" : f.type.startsWith('video/') ? "pi pi-video" : "pi pi-file",style:{fontSize:"0.75rem",color:"#38bdf8"}}),
+            (0,t.jsx)("span",{style:{maxWidth:"10rem",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:f.name}),
+            (0,t.jsx)("span",{style:{color:"#94a3b8",fontSize:"0.65rem"},children:"(" + Math.round(f.size/1024) + " KB)"}),
+            (0,t.jsx)("button",{type:"button",onClick:() => setPostFiles(ePostFiles.filter((_, i) => i !== idx)),style:{background:"none",border:"none",color:"#ef4444",cursor:"pointer",padding:0,marginLeft:"0.2rem",fontWeight:700},children:"✕"})
+          ]}))
+        }),
+        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.75rem",paddingTop:"0.7rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.6rem"},children:[
+          (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",alignItems:"center",flexWrap:"wrap"},children:[
+            (0,t.jsx)("input",{ref:ePostFileInputRef,type:"file",multiple:!0,accept:"image/png,image/jpeg,image/webp,video/mp4,application/pdf",style:{display:"none"},onChange:handleProfileFileSelect}),
+            (0,t.jsxs)("button",{
+              type:"button",
+              onClick:() => ePostFileInputRef.current?.click(),
+              style:{height:"36px",minHeight:"36px",boxSizing:"border-box",display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"var(--cas-bg-surface, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"8px",padding:"0 12px",fontSize:"0.8rem",fontWeight:600,color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap",lineHeight:1},
+              children:[(0,t.jsx)("i",{className:"pi pi-paperclip",style:{fontSize:"0.78rem"}}),"Lampirkan Berkas"]
             }),
-            (0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:ePostText.length >= 2800 ? '#ef4444' : '#94a3b8',fontWeight:600},children:[
-              ePostText.length," / 3.000 karakter"
-            ]})
+            (0,t.jsxs)("div",{style:{position:"relative",display:"inline-flex",alignItems:"center",height:"36px",minHeight:"36px",boxSizing:"border-box"},children:[
+              (0,t.jsx)("i",{className:ePostAudience === 'private' ? 'pi pi-lock' : ePostAudience === 'regional' ? 'pi pi-building' : (ePostAudience === 'friends' || ePostAudience === 'followers') ? 'pi pi-users' : 'pi pi-globe',style:{position:"absolute",left:"10px",fontSize:"0.78rem",color:"#38bdf8",pointerEvents:"none"}}),
+              (0,t.jsxs)("select",{
+                id:"profile-post-audience-select",
+                name:"audience_type",
+                "aria-label":"Visibilitas Postingan",
+                value:ePostAudience,
+                onChange:ev => setPostAudience(ev.target.value),
+                style:{height:"36px",minHeight:"36px",boxSizing:"border-box",fontSize:"0.8rem",fontWeight:600,padding:"0 28px 0 30px",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface, rgba(255,255,255,0.03))",color:"var(--cas-text-primary, #f8fafc)",cursor:"pointer",outline:"none"},
+                children:[
+                  (0,t.jsx)("option",{value:"public",style:{background:"#0f172a",color:"#f8fafc"},children:"Publik"}),
+                  (0,t.jsx)("option",{value:"regional",style:{background:"#0f172a",color:"#f8fafc"},children:"Lingkup Satker"}),
+                  (0,t.jsx)("option",{value:"friends",style:{background:"#0f172a",color:"#f8fafc"},children:"Koneksi"}),
+                  (0,t.jsx)("option",{value:"private",style:{background:"#0f172a",color:"#f8fafc"},children:"Privat"})
+                ]
+              })
+            ]}),
+            (['superadmin', 'admin_binops'].includes(String(a?.role_bdb || a?.role || '').toLowerCase()) || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id))) && (0,t.jsxs)("label",{
+              style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 12px",borderRadius:"8px",border:ePostOfficial ? "1px solid rgba(245,158,11,0.4)" : "1px solid var(--cas-border, rgba(255,255,255,0.15))",background:ePostOfficial ? "rgba(245,158,11,0.12)" : "var(--cas-bg-surface, rgba(255,255,255,0.03))",display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.8rem",color:ePostOfficial ? "#f59e0b" : "var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",lineHeight:1},
+              children:[
+                (0,t.jsx)("input",{type:"checkbox",checked:ePostOfficial,onChange:ev => setPostOfficial(ev.target.checked)}),
+                (0,t.jsx)("i",{className:"pi pi-megaphone",style:{fontSize:"0.78rem"}}),
+                "Jukrah Resmi"
+              ]
+            })
           ]}),
           (0,t.jsxs)("button",{
             type:"button",
             onClick:handleCreatePersonalPost,
-            disabled:ePostSubmitting || !ePostText.trim(),
+            disabled:ePostSubmitting || (!ePostText.trim() && ePostFiles.length === 0),
             style:{
+              height:"36px",
+              minHeight:"36px",
+              boxSizing:"border-box",
               display:"inline-flex",
               alignItems:"center",
               gap:"0.4rem",
-              padding:"0.45rem 1rem",
+              padding:"0 14px",
               borderRadius:"8px",
               background:"#2563eb",
               color:"#fff",
               border:"none",
               fontWeight:700,
-              fontSize:"0.82rem",
-              cursor:ePostSubmitting || !ePostText.trim() ? "not-allowed" : "pointer",
-              opacity:ePostSubmitting || !ePostText.trim() ? 0.6 : 1
+              fontSize:"0.8rem",
+              cursor:ePostSubmitting || (!ePostText.trim() && ePostFiles.length === 0) ? "not-allowed" : "pointer",
+              opacity:ePostSubmitting || (!ePostText.trim() && ePostFiles.length === 0) ? 0.6 : 1
             },
             children:[
               (0,t.jsx)("i",{className:"pi pi-send",style:{fontSize:"0.76rem"}}),
@@ -2612,10 +2860,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             var pBadge = getVerificationBadge(p.author_role || a?.role, isAuthorSuper, p.author_id || a?.id, p.author_username || a?.username);
             var pHandle = formatCallsign(p.author_callsign || (isAuthorThisProfile ? a?.callsign : null), p.author_id || a?.id, p.author_username || (isAuthorThisProfile ? a?.username : null));
             var pAvatar = p.author_photo_url || p.photo_url || (isAuthorThisProfile ? (a?.photo_url || a?.foto || null) : null);
-            var pInitials = String(p.author_name || (isAuthorThisProfile ? a?.name : null) || pHandle || 'P').charAt(0).toUpperCase();
-            var pSatker = isAuthorSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama || 'Polri');
-            var audIcon = p.audience_type === 'private' ? 'pi pi-lock' : (p.audience_type === 'followers' ? 'pi pi-users' : 'pi pi-globe');
-            var audLabel = p.audience_type === 'private' ? 'Privat' : (p.audience_type === 'followers' ? 'Satker' : 'Publik');
+            var pInitials = String(pHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
+            var pSatker = formatSatkerName(p.satker_name || p.author_satker || a?.scope_satker_name || a?.satker || a?.satker_nama, isAuthorSuper, 'Robinopsnal Bareskrim Polri');
+            var audIcon = p.audience_type === 'private' ? 'pi pi-lock' : (p.audience_type === 'regional' ? 'pi pi-building' : (p.audience_type === 'followers' || p.audience_type === 'friends' ? 'pi pi-users' : 'pi pi-globe'));
+            var audLabel = p.audience_type === 'private' ? 'Privat' : (p.audience_type === 'regional' ? 'Lingkup Satker' : (p.audience_type === 'followers' || p.audience_type === 'friends' ? 'Koneksi' : 'Publik'));
 
             return (0,t.jsxs)("div",{
               key:p.id,
@@ -2623,7 +2871,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               style:{
                 padding:"1.25rem",
                 borderRadius:"14px",
-                border:"1px solid var(--cas-border, rgba(255,255,255,0.1))",
+                border:p.is_official_jukrah ? "1.5px solid #f59e0b" : "1px solid var(--cas-border, rgba(255,255,255,0.1))",
                 background:"var(--cas-bg-surface, #1e293b)",
                 position:"relative"
               },
@@ -2648,17 +2896,25 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                         (0,t.jsx)("span",{style:{opacity:0.6},children:"•"}),
                         (0,t.jsx)("span",{children:timeAgo(p.created_at)}),
                         (0,t.jsx)("span",{style:{opacity:0.6},children:"•"}),
-                        (0,t.jsx)("span",{style:{color:"var(--cas-text-secondary, #475569)"},children:pSatker})
+                        (0,t.jsx)("span",{style:{color:"var(--cas-text-secondary, #475569)"},children:pSatker}),
+                        p.is_edited && (0,t.jsx)("span",{style:{color:"#64748b",fontStyle:"italic"},children:"(Diedit)"})
                       ]})
                     ]})
                   ]}),
 
-                  // Context Action Buttons (Lucide icons matching Feed, no emojis!)
+                  // Context Action Buttons (Edit, Visibility, Delete matching SHARESE)
                   !isReadOnlyMode && (0,t.jsxs)("div",{style:{display:"flex",gap:"0.3rem",alignItems:"center"},children:[
                     (0,t.jsx)("button",{
                       type:"button",
+                      onClick:() => handleOpenEditPersonalPost(p),
+                      title:"Edit Postingan",
+                      style:{background:"transparent",border:"none",color:"#94a3b8",cursor:"pointer",padding:"0.3rem",borderRadius:"6px",display:"inline-flex",alignItems:"center"},
+                      children:(0,t.jsx)(IconEdit,{size:15})
+                    }),
+                    (0,t.jsx)("button",{
+                      type:"button",
                       onClick:() => handleTogglePostVis(p),
-                      title:p.audience_type === 'private' ? 'Ubah ke Publik' : 'Ubah ke Privat',
+                      title:"Ubah Visibilitas (" + audLabel + ")",
                       style:{background:"transparent",border:"none",color:"#94a3b8",cursor:"pointer",padding:"0.3rem",borderRadius:"6px",display:"inline-flex",alignItems:"center"},
                       children:p.audience_type === 'private' ? (0,t.jsx)(IconLock,{size:15,style:{color:"#eab308"}}) : (0,t.jsx)(IconGlobe,{size:15})
                     }),
@@ -2672,41 +2928,46 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   ]})
                 ]}),
 
-                // Content with Lihat Selengkapnya Truncation
+                // Content with Lihat Selengkapnya Truncation (also hides media when collapsed)
                 (function(){
                   var content = String(p.content || '');
                   var isExp = !!expandedPersonalPosts[p.id];
                   var lines = content.split('\n');
-                  var isLong = content.length > 180 || lines.length > 3;
-                  var displayContent = content;
-                  if (isLong && !isExp) {
-                    if (lines.length > 3) {
-                      displayContent = lines.slice(0, 3).join('\n') + '...';
-                    } else {
-                      displayContent = content.substring(0, 180) + '...';
-                    }
-                  }
+                  var hasMedia = Boolean((Array.isArray(p.media) && p.media.length > 0) || (Array.isArray(p.media_urls) && p.media_urls.length > 0) || (Array.isArray(p.attachments) && p.attachments.length > 0));
+                  var isLongText = content.length > 180 || lines.length > 3;
+                  var isLong = isLongText || hasMedia;
                   return (0,t.jsxs)("div",{style:{marginBottom:"0.75rem"},children:[
                     (0,t.jsx)("div",{
-                      style:{fontSize:"0.88rem",lineHeight:"1.5",color:"var(--cas-text-primary, #e2e8f0)",whiteSpace:"pre-wrap",wordBreak:"break-word"},
-                      children:displayContent
+                      style:{
+                        fontSize:"0.88rem",
+                        lineHeight:"1.6",
+                        color:"var(--cas-text-primary, #e2e8f0)",
+                        whiteSpace:"pre-wrap",
+                        wordBreak:"break-word",
+                        display:(!isExp && isLongText) ? "-webkit-box" : "block",
+                        WebkitLineClamp:(!isExp && isLongText) ? 3 : "unset",
+                        WebkitBoxOrient:(!isExp && isLongText) ? "vertical" : "unset",
+                        overflow:(!isExp && isLongText) ? "hidden" : "visible"
+                      },
+                      children:renderPostContent(content)
                     }),
                     isLong && (0,t.jsx)("button",{
                       type:"button",
                       onClick:() => setExpandedPersonalPosts(prev => ({ ...prev, [p.id]: !prev[p.id] })),
                       style:{background:"transparent",border:"none",padding:"0.2rem 0",fontSize:"0.8rem",fontWeight:700,color:"#38bdf8",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.2rem",marginTop:"0.25rem"},
-                      children:isExp ? '▲ Tampilkan lebih sedikit' : '▼ Lihat selengkapnya'
+                      children:isExp ? '▲ Lebih sedikit' : '▼ Lihat selengkapnya'
                     })
                   ]});
                 })(),
 
-                // Attached Media in Profile Activity
+                // Attached Media in Profile Activity (Hidden when collapsed behind Lihat selengkapnya)
                 (function(){
                   var mediaList = [];
                   if (Array.isArray(p.media) && p.media.length > 0) mediaList = p.media;
                   else if (Array.isArray(p.media_urls) && p.media_urls.length > 0) mediaList = p.media_urls;
                   else if (Array.isArray(p.attachments) && p.attachments.length > 0) mediaList = p.attachments;
                   if (!mediaList || mediaList.length === 0) return null;
+                  if (!expandedPersonalPosts[p.id]) return null;
 
                   var images = [];
                   var docs = [];
@@ -2915,30 +3176,116 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   })
                 }),
 
-              // Comments drawer
-              eActiveCommentPostId === p.id && (0,t.jsxs)("div",{style:{marginTop:"0.75rem",paddingTop:"0.75rem",borderTop:"1px solid rgba(255,255,255,0.06)"},children:[
-                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",marginBottom:"0.6rem"},children:[
+              // Comments drawer (Add, Edit, Delete, Like matching SHARESE)
+              eActiveCommentPostId === p.id && (0,t.jsxs)("div",{style:{marginTop:"0.85rem",paddingTop:"0.85rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
+                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",marginBottom:"0.75rem"},children:[
                   (0,t.jsx)("input",{
                     type:"text",
                     value:eCommentInputs[p.id] || '',
                     onChange:ev => setCommentInputs({ ...eCommentInputs, [p.id]: ev.target.value }),
                     onKeyDown:ev => ev.key === 'Enter' && handleAddPersonalComment(p.id),
-                    placeholder:"Balas tanggapan ini... (maks 1.000 karakter)",
+                    placeholder:"Tulis tanggapan taktis... (maks 1.000 karakter)",
                     maxLength:1000,
-                    style:{flex:1,fontSize:"0.8rem",padding:"0.35rem 0.6rem",borderRadius:"6px",border:"1px solid var(--cas-border, #cbd5e1)",background:"var(--cas-bg-subtle, #f8fafc)",color:"var(--cas-text-primary, #0f172a)"}
+                    style:{flex:1,fontSize:"0.82rem",padding:"0.45rem 0.7rem",borderRadius:"8px",border:"1px solid var(--cas-border, #cbd5e1)",background:"var(--cas-bg-subtle, #f8fafc)",color:"var(--cas-text-primary, #0f172a)"}
                   }),
                   (0,t.jsx)("button",{
                     type:"button",
                     onClick:() => handleAddPersonalComment(p.id),
                     disabled:eSubmittingComment,
-                    style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"6px",padding:"0.35rem 0.65rem",fontSize:"0.78rem",fontWeight:700,cursor:"pointer"},
-                    children:"Kirim"
+                    style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 0.85rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+                    children:[(0,t.jsx)("i",{className:"pi pi-send",style:{fontSize:"0.75rem"}}),"Kirim"]
                   })
                 ]}),
-                (ePostComments[p.id] || []).map(cm => (0,t.jsxs)("div",{key:cm.id,style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #e2e8f0)",borderRadius:"6px",padding:"0.45rem 0.65rem",fontSize:"0.78rem",marginBottom:"0.35rem"},children:[
-                  (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",marginRight:"0.4rem"},children:formatCallsign(cm.author_callsign, cm.author_id, cm.author_username)}),
-                  (0,t.jsx)("span",{style:{color:"var(--cas-text-secondary, #334155)"},children:cm.content})
-                ]}))
+                (ePostComments[p.id] || []).length === 0 ? (
+                  (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",textAlign:"center",padding:"0.5rem"},children:"Belum ada tanggapan. Berikan tanggapan pertama!"})
+                ) : (
+                  (0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem"},children:
+                    (ePostComments[p.id] || []).map(cm => {
+                      var cmAuthorId = cm.author_id || cm.user_id;
+                      var isCmAuthor = String(cmAuthorId) === String(mySelf?.id || a?.id);
+                      var isCmSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cmAuthorId)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
+                      var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cmAuthorId, cm.author_username);
+                      var cmHandle = formatCallsign(cm.author_callsign, cmAuthorId, cm.author_username);
+                      var cmInitials = String(cmHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
+                      var cmAvatar = cm.author_photo_url || cm.author_photo || (isCmAuthor ? (mySelf?.photo_url || mySelf?.foto || a?.photo_url || a?.foto || null) : null);
+                      var cmSatker = formatSatkerName(cm.author_satker || cm.satker, isCmSuper, 'Polri');
+                      var canModifyCm = isCmAuthor || !isReadOnlyMode || Boolean(cm.can_edit) || Boolean(cm.can_delete);
+
+                      return (0,t.jsxs)("div",{key:cm.id,style:{background:"var(--cas-bg-subtle, rgba(255,255,255,0.04))",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
+                        (0,t.jsx)("div",{
+                          style:{display:"inline-flex"},
+                          children:renderCornerAvatar(cmAvatar, cmInitials, cmBadge, 1.9, 12, 6.5)
+                        }),
+                        (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
+                          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.25rem",flexWrap:"wrap",gap:"0.35rem"},children:[
+                            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                              (0,t.jsx)("span",{style:{fontWeight:700,color:"#38bdf8",fontSize:"0.78rem"},children:cmHandle}),
+                              renderMetaVerifiedBadge(cmBadge, 13),
+                              (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"• " + cmSatker}),
+                              (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:"• " + timeAgo(cm.created_at)}),
+                              cm.is_edited && (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.68rem",fontStyle:"italic"},children:"(diedit)"})
+                            ]}),
+                            (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[
+                              (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleLikePersonalComment(p.id, cm),
+                                title:cm.is_liked ? "Batalkan Suka Komentar" : "Suka Komentar",
+                                style:{background:"transparent",border:"none",color:cm.is_liked ? "#ef4444" : "#94a3b8",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.25rem",borderRadius:"4px"},
+                                children:[
+                                  (0,t.jsx)(IconHeart,{size:13,style:{fill:cm.is_liked ? "#ef4444" : "none",stroke:cm.is_liked ? "#ef4444" : "currentColor",strokeWidth:2}}),
+                                  (cm.likes_count || 0) > 0 ? cm.likes_count : "Suka"
+                                ]
+                              }),
+                              canModifyCm && (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleStartEditPersonalComment(cm),
+                                title:"Edit komentar ini",
+                                style:{background:"transparent",border:"none",color:"#38bdf8",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:600,display:"inline-flex",alignItems:"center",gap:"0.2rem",borderRadius:"4px"},
+                                children:[(0,t.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.68rem"}}),"Edit"]
+                              }),
+                              canModifyCm && (0,t.jsxs)("button",{
+                                type:"button",
+                                onClick:() => handleDeletePersonalComment(p.id, cm.id),
+                                title:"Hapus komentar ini",
+                                style:{background:"transparent",border:"none",color:"#ef4444",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:600,display:"inline-flex",alignItems:"center",gap:"0.2rem",borderRadius:"4px"},
+                                children:[(0,t.jsx)("i",{className:"pi pi-trash",style:{fontSize:"0.68rem"}}),"Hapus"]
+                              })
+                            ]})
+                          ]}),
+                          eEditingCommentId === cm.id ? (
+                            (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",marginTop:"0.3rem",alignItems:"center",flexWrap:"wrap"},children:[
+                              (0,t.jsx)(i.InputText,{
+                                value:eEditCommentText,
+                                onChange:ev => setEditCommentText(ev.target.value),
+                                onKeyDown:ev => {
+                                  if (ev.key === 'Enter') handleSaveEditPersonalComment(p.id, cm.id);
+                                  if (ev.key === 'Escape') handleCancelEditPersonalComment();
+                                },
+                                maxLength:1000,
+                                style:{flex:1,minWidth:"10rem",fontSize:"0.8rem",padding:"0.3rem 0.55rem"}
+                              }),
+                              (0,t.jsx)("button",{
+                                type:"button",
+                                onClick:() => handleSaveEditPersonalComment(p.id, cm.id),
+                                disabled:eSavingCommentEdit,
+                                style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"6px",padding:"0.3rem 0.65rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
+                                children:eSavingCommentEdit ? "..." : "Simpan"
+                              }),
+                              (0,t.jsx)("button",{
+                                type:"button",
+                                onClick:handleCancelEditPersonalComment,
+                                style:{background:"rgba(255,255,255,0.08)",color:"#cbd5e1",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
+                                children:"Batal"
+                              })
+                            ]})
+                          ) : (
+                            (0,t.jsx)("div",{style:{color:"var(--cas-text-primary, #e2e8f0)",lineHeight:"1.4",whiteSpace:"pre-wrap"},children:renderPostContent(cm.content)})
+                          )
+                        ]})
+                      ]});
+                    })
+                  })
+                )
               ]})
             ]});
           })
@@ -3382,7 +3729,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
 // Modal: Reaksi Personil di Profil
     (0,t.jsx)(r.Dialog,{
       header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-        (0,t.jsx)("span",{style:{fontSize:"1.2rem"},children:"👍"}),
+        (0,t.jsx)(IconHeart,{size:18,style:{fill:"#ef4444",stroke:"#ef4444",color:"#ef4444"}}),
         (0,t.jsx)("span",{style:{fontWeight:800},children:"Reaksi Personil (" + ePersonalLikesList.length + ")"})
       ]}),
       visible:Boolean(ePersonalLikesModal),
@@ -3400,11 +3747,12 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
             var usr = rx.user || {};
             var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
-            var usrHandle = (usr.callsign ? (String(usr.callsign).startsWith('@') ? usr.callsign : '@' + usr.callsign) : (usr.username ? (String(usr.username).startsWith('@') ? usr.username : '@' + usr.username) : '@personil'));
-            var initials = String(usr.name || usr.username || 'P').charAt(0).toUpperCase();
+            var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
+            var initials = String(usrHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
             var usrPhoto = usr.photo_url || usr.foto || usr.photo || null;
+            var usrSatker = formatSatkerName(usr.satker, isUsrSuper, 'Polri');
 
-            return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #e2e8f0)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:[
+            return (0,t.jsx)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #e2e8f0)",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:
               (0,t.jsxs)("div",{
                 onClick:() => {
                   setPersonalLikesModal(!1);
@@ -3417,21 +3765,60 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
                     window.location.href = '/cms/profile?u=' + encodeURIComponent(h);
                   }
                 },
-                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer"},
+                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",width:"100%"},
                 title:"Klik untuk melihat profil personil",
                 children:[
                   renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8),
-                  (0,t.jsxs)("div",{children:[
-                    (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.88rem",color:isUsrSuper ? '#f59e0b' : '#38bdf8'},children:usrHandle}),
-                    (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-secondary, #94a3b8)"},children:isUsrSuper ? "Robinopsnal Bareskrim Polri" : (usr.satker || "Mabes Bareskrim")})
+                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                    (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.84rem",color:"#38bdf8"},children:usrHandle}),
+                    renderMetaVerifiedBadge(usrBadge, 14),
+                    (0,t.jsx)("span",{style:{fontSize:"0.76rem",color:"var(--cas-text-secondary, #94a3b8)"},children:"• " + usrSatker})
                   ]})
                 ]
-              }),
-              (0,t.jsx)("span",{style:{fontSize:"1.25rem"},children:"👍"})
-            ]});
+              })
+            });
           })
         })
       )
+    }),
+
+    // Modal: Edit Informasi Postingan di Profil
+    (0,t.jsx)(r.Dialog,{
+      header:"Edit Informasi Postingan",
+      visible:Boolean(eEditingPost),
+      onHide:() => setEditingPost(null),
+      style:{width:"36rem",maxWidth:"95vw"},
+      modal:!0,
+      dismissableMask:!0,
+      footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"flex-end",gap:"0.5rem"},children:[
+        (0,t.jsx)(o.Button,{label:"Batal",text:!0,onClick:() => setEditingPost(null),disabled:eSavingPostEdit}),
+        (0,t.jsx)(o.Button,{label:"Simpan Perubahan",icon:"pi pi-check",onClick:handleSaveEditPersonalPost,loading:eSavingPostEdit})
+      ]}),
+      children:(0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.5rem 0"},children:[
+        (0,t.jsx)("textarea",{
+          value:eEditPostText,
+          onChange:ev => setEditPostText(ev.target.value),
+          rows:5,
+          maxLength:3000,
+          style:{width:"100%",fontSize:"0.88rem",lineHeight:"1.5",padding:"0.65rem 0.85rem",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface-2, rgba(0,0,0,0.25))",color:"var(--cas-text-primary, #f8fafc)",resize:"vertical",fontFamily:"inherit"}
+        }),
+        (0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"},children:[
+          (0,t.jsxs)("select",{
+            value:eEditPostAud,
+            onChange:ev => setEditPostAud(ev.target.value),
+            style:{height:"36px",fontSize:"0.8rem",fontWeight:600,padding:"0 12px",borderRadius:"8px",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",background:"var(--cas-bg-surface, #0f172a)",color:"var(--cas-text-primary, #f8fafc)"},
+            children:[
+              (0,t.jsx)("option",{value:"public",children:"Publik"}),
+              (0,t.jsx)("option",{value:"regional",children:"Lingkup Satker"}),
+              (0,t.jsx)("option",{value:"friends",children:"Koneksi"}),
+              (0,t.jsx)("option",{value:"private",children:"Privat"})
+            ]
+          }),
+          (0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:eEditPostText.length >= 2800 ? '#ef4444' : '#94a3b8'},children:[
+            eEditPostText.length," / 3.000 karakter"
+          ]})
+        ]})
+      ]})
     }),
 
     (0,t.jsx)(r.Dialog,{

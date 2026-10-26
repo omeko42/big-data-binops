@@ -1,5 +1,5 @@
 import { 
-    Body, Controller, Delete, Get, Param, Post, Query, Req, Res, 
+    Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, 
     UploadedFiles, UseGuards, UseInterceptors 
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -113,6 +113,26 @@ export class JukrahController {
     @Delete('comment/:id')
     deleteComment(@Req() req: any, @Param('id') id: string) {
         return this.service.deleteComment(req?.user, parseInt(id, 10));
+    }
+
+    @Post('comment/:id/edit')
+    editCommentPost(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+
+    @Patch('comment/:id')
+    editCommentPatch(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+
+    @Post('comment/:id/reaction')
+    reactComment(@Req() req: any, @Param('id') id: string) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
+    }
+
+    @Post('comment/:id/like')
+    likeComment(@Req() req: any, @Param('id') id: string) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
     }
 
     @Post('post/:id/acknowledge')

@@ -59,7 +59,46 @@ export class JukrahService {
                 unique (post_id, user_id)
             )`);
         await this.dataSource.query('alter table bdb_social_posts add column if not exists is_edited boolean default false');
+        await this.dataSource.query('alter table bdb_social_comments add column if not exists is_edited boolean default false');
+        await this.dataSource.query('alter table bdb_social_comments add column if not exists updated_at timestamptz default now()');
+        await this.dataSource.query(`
+            create table if not exists bdb_social_comment_reactions (
+                comment_id bigint not null references bdb_social_comments(id) on delete cascade,
+                user_id bigint not null,
+                created_at timestamptz default now(),
+                primary key (comment_id, user_id)
+            )`);
         this.ready = true;
+    }
+
+    private isSuperUserOne(id: any, username?: any, callsign?: any): boolean {
+        if (Number(id) === 1) return true;
+        const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
+        const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
+        return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
+    }
+
+    formatCallsign(rawCallsign: any, authorId: any, username?: any): string {
+        const idStr = String(authorId || '');
+        let c = String(rawCallsign || '').trim().replace(/^@/, '');
+        if (c.startsWith('pers_') || (c.startsWith('user_') && !/^[a-zA-Z0-9_]{15,}$/.test(c))) c = '';
+        const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && !c.startsWith('user_')) {
+            return '@' + c.toLowerCase();
+        }
+        let u = String(username || '').trim().replace(/^@/, '');
+        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && !u.startsWith('user_')) {
+            return '@' + u.toLowerCase();
+        }
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
+            return '@' + c.toLowerCase();
+        }
+        if (idStr === '1') return '@om.eko_42';
+        const seed = idStr || 'polri';
+        let num = 0;
+        for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+        return '@user_' + (idStr || '0') + code;
     }
 
     // =========================================================================
@@ -138,46 +177,47 @@ export class JukrahService {
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
 
         const page = Math.max(1, Number(opts.page) || 1);
-        const limit = Math.min(50, Math.max(1, Number(opts.limit) || 15));
+        const limit = Math.min(200, Math.max(1, Number(opts.limit) || 100));
         const offset = (page - 1) * limit;
 
         const params: any[] = [uid, userSatkerId];
         const conditions: string[] = ["p.status = 'active'"];
 
         // Aturan visibilitas audiens:
-        let audienceFilter = `(
+        const audienceFilter = `(
             p.author_id = $1
             OR p.audience_type = 'public'
-            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR ${isGlobalAdmin ? 'true' : 'false'}))
+            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR u.scope_satker_id = $2::int OR ${isGlobalAdmin ? 'true' : 'false'}))
             OR (p.audience_type = 'friends' AND (p.author_id = $1 OR u.scope_satker_id = $2::int))
         )`;
         conditions.push(audienceFilter);
 
-        // Filter tab medsos (semua, tersimpan, postingan saya, regional, jukrah)
         if (opts.author_id) {
             params.push(Number(opts.author_id));
             conditions.push("p.author_id = $" + params.length);
         }
 
-        const filterType = String(opts.type || opts.filter || 'all').toLowerCase();
-        if (filterType === 'saved') {
-            conditions.push(`EXISTS (SELECT 1 FROM bdb_social_bookmarks bm_f WHERE bm_f.post_id = p.id AND bm_f.user_id = $1)`);
-        } else if (filterType === 'mine') {
+        const effectiveFilter = String(opts.filter || opts.type || 'all').toLowerCase();
+        if (effectiveFilter === 'mine') {
             params.push(uid);
             conditions.push(`p.author_id = $${params.length}`);
-        } else if (filterType === 'jukrah' || filterType === 'official') {
+        } else if (effectiveFilter === 'saved' || effectiveFilter === 'bookmarks') {
+            conditions.push('bm.id IS NOT NULL');
+        } else if (effectiveFilter === 'jukrah' || effectiveFilter === 'official') {
             conditions.push('p.is_official_jukrah = true');
-        } else if (filterType === 'regional') {
+        } else if (effectiveFilter === 'regional') {
             conditions.push("p.audience_type = 'regional'");
-        } else if (filterType === 'private') {
+        } else if (effectiveFilter === 'friends') {
+            conditions.push("p.audience_type = 'friends'");
+        } else if (effectiveFilter === 'private') {
             params.push(uid);
             conditions.push(`p.author_id = $${params.length} AND p.audience_type = 'private'`);
         }
 
-        const searchStr = (opts.search || opts.tag || '').trim();
-        if (searchStr) {
-            params.push(`%${searchStr.replace(/^#/, '')}%`);
-            conditions.push(`p.content ILIKE $${params.length}`);
+        const effectiveSearch = (opts.search || opts.tag || '').trim();
+        if (effectiveSearch) {
+            params.push(`%${effectiveSearch.replace(/^#/, '')}%`);
+            conditions.push(`(p.content ILIKE $${params.length} OR u.name ILIKE $${params.length} OR u.callsign ILIKE $${params.length} OR u.username ILIKE $${params.length})`);
         }
 
         const whereClause = 'WHERE ' + conditions.join(' AND ');
@@ -193,6 +233,7 @@ export class JukrahService {
                 p.case_lp_ids,
                 p.reaction_counts,
                 p.repost_count,
+                p.view_count,
                 p.is_official_jukrah,
                 p.is_pinned,
                 p.is_edited,
@@ -227,33 +268,20 @@ export class JukrahService {
 
         const rows = await this.dataSource.query(sql, params);
 
-        // Transform data: Canonical Handle, penyamaran identitas, dan media tokenized stream
         const posts = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
-            const isUserOne = Number(r.author_id) === 1 || r.author_username === 'omeko42' || r.author_callsign === 'omeko42';
+            const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
+            const canSeeRealName = isGlobalAdmin || isSelf || isUserOne;
 
             const nrpMatch = (r.author_email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.author_username && r.author_username.replace(/^Nrp\./i, '')) || '';
 
-            const formatSOPHandle = (rawCallsign: string, authorId: any, username: string) => {
-                const idStr = String(authorId || '');
-                if (idStr === '1' || username === 'omeko42' || rawCallsign === 'omeko42') return '@omeko42';
-                const c = String(rawCallsign || '').trim().replace(/^@/, '');
-                const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-                if (c && !invalidPlaceholders.includes(c.toLowerCase())) return '@' + c;
-                const u = String(username || '').trim().replace(/^@/, '');
-                if (u && !invalidPlaceholders.includes(u.toLowerCase())) return '@' + u;
-                let num = 0;
-                for (let i = 0; i < idStr.length; i++) num = (num * 31 + idStr.charCodeAt(i)) % 100000;
-                const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-                return '@user_' + (idStr || '0') + code;
-            };
-
-            const handle = formatSOPHandle(r.author_callsign, r.author_id, r.author_username);
-            const displayName = isUserOne ? 'EKO' : (r.raw_author_name || (derivedNrp ? `Personil CAS (${derivedNrp})` : handle));
-            const authorSatker = isUserOne ? 'Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
-            const isVerified = isUserOne ? true : (r.author_role && r.author_role !== 'sharese');
-            const authorRole = isUserOne ? 'superadmin' : r.author_role;
+            const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
+            const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
+            const displayName = isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? (r.raw_author_name || handle) : handle);
+            const authorSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
+            const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
+            const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
 
             const media = (r.media_urls || []).map((m: any) => ({
                 ...m,
@@ -265,12 +293,13 @@ export class JukrahService {
                 author_id: Number(r.author_id),
                 author_name: displayName,
                 author_handle: handle,
-                author_callsign: isUserOne ? 'omeko42' : (r.author_callsign ? String(r.author_callsign).replace(/^@/, '') : null),
-                author_username: isUserOne ? 'omeko42' : (r.author_username ? String(r.author_username).replace(/^@/, '') : null),
+                author_callsign: cleanHandle,
+                author_username: cleanHandle,
                 author_nrp: derivedNrp,
-                raw_name: isUserOne ? 'EKO' : r.raw_author_name,
+                raw_name: isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? r.raw_author_name : null),
                 author_role: authorRole,
                 author_photo: r.author_photo,
+                author_photo_url: r.author_photo || null,
                 author_satker: authorSatker,
                 satker_name: authorSatker,
                 satker: authorSatker,
@@ -283,6 +312,7 @@ export class JukrahService {
                 reaction_counts: r.reaction_counts || { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 },
                 total_reactions: Number(r.total_reactions || 0),
                 repost_count: Number(r.repost_count || 0),
+                view_count: Number(r.view_count || 0),
                 is_official_jukrah: Boolean(r.is_official_jukrah),
                 is_pinned: Boolean(r.is_pinned),
                 is_edited: Boolean(r.is_edited),
@@ -306,7 +336,8 @@ export class JukrahService {
         const parentIds = posts.filter(p => p.parent_post_id).map(p => p.parent_post_id);
         if (parentIds.length) {
             const parents = await this.dataSource.query(
-                `SELECT p.id, p.content, p.created_at, u.name as raw_name, u.callsign, u.username, u.role_bdb, s.nama_singkat as satker
+                `SELECT p.id, p.author_id, p.content, p.created_at, u.name as raw_name, u.callsign, u.username, u.role_bdb,
+                        s.nama_singkat as satker, s.deskripsi as satker_nama
                  FROM bdb_social_posts p
                  JOIN auth_users u ON u.id = p.author_id
                  LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
@@ -314,12 +345,14 @@ export class JukrahService {
                 [parentIds]
             );
             const parentMap = new Map(parents.map((p: any) => {
-                const isPUserOne = Number(p.id) === 1 || p.username === 'omeko42' || p.callsign === 'omeko42';
+                const isPUserOne = this.isSuperUserOne(p.author_id, p.username, p.callsign);
+                const pSatker = isPUserOne ? 'Robinopsnal Bareskrim Polri' : (p.satker || p.satker_nama || 'Polri');
                 return [Number(p.id), {
                     id: Number(p.id),
                     content: p.content,
-                    author_handle: isPUserOne ? '@omeko42' : (p.callsign ? `@${p.callsign}` : (p.username ? `@${p.username}` : `@pers_${p.id}`)),
-                    satker: isPUserOne ? 'Bareskrim Polri' : (p.satker || 'Mabes'),
+                    author_handle: this.formatCallsign(p.callsign, p.author_id, p.username),
+                    satker: pSatker,
+                    author_satker: pSatker,
                     created_at: p.created_at
                 }];
             }));
@@ -330,7 +363,13 @@ export class JukrahService {
             }
         }
 
-        return { status: 1, data: posts, page, limit };
+        const countRes = await this.dataSource.query(
+            'SELECT count(*)::int as total FROM bdb_social_posts p JOIN auth_users u ON u.id = p.author_id LEFT JOIN bdb_social_bookmarks bm ON bm.post_id = p.id AND bm.user_id = $1 ' + whereClause,
+            params
+        );
+        const total = Number(countRes[0]?.total || posts.length);
+
+        return { status: 1, data: posts, total, total_pages: Math.ceil(total / limit) || 1, page, limit };
     }
 
     /** Buat postingan baru dengan proteksi pembatasan ukuran file dan validasi audiens. */
@@ -350,7 +389,6 @@ export class JukrahService {
         const userRole = String(user?.role_bdb || 'sharese').toLowerCase();
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
 
-        // Hanya superadmin/admin_binops yang boleh menandai jukrah resmi kedinasan
         const isOfficial = (dto.is_official_jukrah === true || dto.is_official_jukrah === 'true') && isGlobalAdmin;
         const isPinned = (dto.is_pinned === true || dto.is_pinned === 'true') && isGlobalAdmin;
 
@@ -362,17 +400,18 @@ export class JukrahService {
         if (Array.isArray(dto.target_satker_ids)) {
             targetSatkers = dto.target_satker_ids.map(Number).filter(n => !isNaN(n));
         }
+        if (audienceType === 'regional' && targetSatkers.length === 0 && user?.scope_satker_id) {
+            targetSatkers = [Number(user.scope_satker_id)];
+        }
 
         let caseLps: string[] = [];
         if (Array.isArray(dto.case_lp_ids)) {
             caseLps = dto.case_lp_ids.map(s => String(s).trim()).filter(Boolean);
         }
 
-        // Upload media terenkripsi (tanpa ekstensi mentah)
         const mediaUrls: any[] = [];
         for (const file of files || []) {
             const mime = file.mimetype || 'application/octet-stream';
-            // Validasi ukuran: PDF max 1MB, Video max 15MB, Gambar max 5MB
             if (mime === 'application/pdf' && file.size > 1024 * 1024) {
                 throw new BadRequestException(`Dokumen PDF "${file.originalname}" melebihi batas 1 MB.`);
             }
@@ -412,12 +451,34 @@ export class JukrahService {
 
         const newPostId = Number(res[0].id);
 
-        // Jika Jukrah Resmi Kedinasan, buat notifikasi prioritas untuk satker terkait
         if (isOfficial) {
             await this.broadcastDinasNotification(newPostId, user, content);
         }
 
-        // Jika Repost, beritahu pemilik postingan asal
+        const mentionMatches = content.match(/@([a-z0-9_.]{3,30})/gi);
+        if (mentionMatches && mentionMatches.length) {
+            const handles = Array.from(new Set(mentionMatches.map(m => m.slice(1).toLowerCase())));
+            try {
+                const taggedUsers = await this.dataSource.query(
+                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    [handles, uid]
+                );
+                for (const tu of taggedUsers) {
+                    await this.createNotification({
+                        recipientId: Number(tu.id),
+                        senderId: uid,
+                        category: 'social',
+                        type: 'mention',
+                        postId: newPostId,
+                        title: 'Sebutan Baru (Mention)',
+                        message: `Seseorang menyebut Anda dalam sebuah postingan: "${content.slice(0, 75)}..."`
+                    });
+                }
+            } catch (err: any) {
+                this.logger.error('Failed to dispatch mention notifications: ' + err.message);
+            }
+        }
+
         if (dto.parent_post_id) {
             const orig = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [dto.parent_post_id]);
             if (orig.length && Number(orig[0].author_id) !== uid) {
@@ -459,19 +520,15 @@ export class JukrahService {
         let currentReaction = null;
         if (ex.length) {
             if (ex[0].reaction_type === type) {
-                // Toggle off (batal reaksi)
                 await this.dataSource.query('DELETE FROM bdb_social_reactions WHERE post_id = $1 AND user_id = $2', [postId, uid]);
             } else {
-                // Switch reaction
                 await this.dataSource.query('UPDATE bdb_social_reactions SET reaction_type = $3 WHERE post_id = $1 AND user_id = $2', [postId, uid, type]);
                 currentReaction = type;
             }
         } else {
-            // New reaction
             await this.dataSource.query('INSERT INTO bdb_social_reactions (post_id, user_id, reaction_type) VALUES ($1, $2, $3)', [postId, uid, type]);
             currentReaction = type;
 
-            // Notifikasi ke author jika bukan dirinya sendiri
             if (Number(post[0].author_id) !== uid) {
                 const rxLabel = type === 'respect' ? 'menghormati (respect)' : type === 'insightful' ? 'mengapresiasi wawasan' : 'menyukai';
                 await this.createNotification({
@@ -486,7 +543,6 @@ export class JukrahService {
             }
         }
 
-        // Kalkulasi ulang reaction_counts
         const counts = await this.dataSource.query(
             'SELECT reaction_type, count(*)::int as c FROM bdb_social_reactions WHERE post_id = $1 GROUP BY reaction_type',
             [postId]
@@ -514,39 +570,53 @@ export class JukrahService {
     /** Ambil daftar personil yang bereaksi pada postingan ("Siapa saja yg ngelike"). */
     async getPostReactions(user: any, postId: number) {
         const rows = await this.dataSource.query(
-            `SELECT rx.id, rx.reaction_type, rx.created_at,
+            `SELECT r.id, r.reaction_type, r.created_at,
                     u.id as user_id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb,
-                    s.nama_singkat as satker
-             FROM bdb_social_reactions rx
-             JOIN auth_users u ON u.id = rx.user_id
+                    s.nama_singkat as satker, s.deskripsi as satker_nama,
+                    p.pangkat, p.nrp
+             FROM bdb_social_reactions r
+             JOIN auth_users u ON u.id = r.user_id
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE rx.post_id = $1
-             ORDER BY rx.created_at DESC`,
+             LEFT JOIN trb_police p ON (lower(p.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(p.email) = lower(u.email_polri)))
+             WHERE r.post_id = $1
+             ORDER BY r.created_at DESC`,
             [postId]
         );
         const list = rows.map((r: any) => {
-            const isUserOne = Number(r.user_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
+            const isUserOne = this.isSuperUserOne(r.user_id, r.username, r.callsign);
+            const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri');
+            const isVerified = isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese');
             return {
                 id: Number(r.id),
                 reaction_type: r.reaction_type,
                 created_at: r.created_at,
+                is_verified: isVerified,
                 user: {
                     id: Number(r.user_id),
-                    name: isUserOne ? 'EKO' : r.name,
-                    username: isUserOne ? 'omeko42' : r.username,
-                    callsign: isUserOne ? 'omeko42' : (r.callsign || r.username),
+                    name: isUserOne ? (r.name || 'EKO') : r.name,
+                    username: r.username,
+                    callsign: r.callsign || r.username || 'personil',
                     photo_url: r.photo_url,
                     role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
-                    satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes Bareskrim')
+                    satker: satkerName,
+                    satker_nama: satkerName,
+                    is_verified: isVerified,
+                    pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(r.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
+                    nrp: r.nrp
                 }
             };
         });
         return { status: 1, data: list };
     }
 
+    async getReactions(user: any, postId: number) {
+        return this.getPostReactions(user, postId);
+    }
+
     /** Simpan atau hapus postingan dari daftar bookmark/simpanan. */
     async toggleBookmark(user: any, postId: number) {
         const uid = Number(user?.id);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid');
         const ex = await this.dataSource.query(
             'SELECT id FROM bdb_social_bookmarks WHERE post_id = $1 AND user_id = $2',
             [postId, uid]
@@ -556,13 +626,13 @@ export class JukrahService {
             await this.dataSource.query('DELETE FROM bdb_social_bookmarks WHERE post_id = $1 AND user_id = $2', [postId, uid]);
             bookmarked = false;
         } else {
-            await this.dataSource.query('INSERT INTO bdb_social_bookmarks (post_id, user_id, created_at) VALUES ($1, $2, now())', [postId, uid]);
+            await this.dataSource.query('INSERT INTO bdb_social_bookmarks (post_id, user_id, created_at) VALUES ($1, $2, now()) ON CONFLICT DO NOTHING', [postId, uid]);
             bookmarked = true;
         }
         return {
             status: 1,
             message: bookmarked ? 'Postingan disimpan.' : 'Postingan dihapus dari simpanan.',
-            data: { is_bookmarked: bookmarked }
+            data: { bookmarked, is_bookmarked: bookmarked, post_id: postId }
         };
     }
 
@@ -570,7 +640,7 @@ export class JukrahService {
     async editPost(user: any, postId: number, dto: { content: string; audience_type?: string }) {
         const uid = Number(user?.id);
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
-        const post = await this.dataSource.query("SELECT id, author_id FROM bdb_social_posts WHERE id = $1 AND status = 'active'", [postId]);
+        const post = await this.dataSource.query('SELECT id, author_id FROM bdb_social_posts WHERE id = $1', [postId]);
         if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
 
         if (!isGlobalAdmin && Number(post[0].author_id) !== uid) {
@@ -585,22 +655,20 @@ export class JukrahService {
             ? dto.audience_type
             : undefined;
 
+        let updateQuery = 'UPDATE bdb_social_posts SET content = $1, is_edited = true, updated_at = NOW()';
+        const params: any[] = [text];
         if (aud) {
-            await this.dataSource.query(
-                'UPDATE bdb_social_posts SET content = $1, audience_type = $2, is_edited = true, updated_at = now() WHERE id = $3',
-                [text, aud, postId]
-            );
-        } else {
-            await this.dataSource.query(
-                'UPDATE bdb_social_posts SET content = $1, is_edited = true, updated_at = now() WHERE id = $2',
-                [text, postId]
-            );
+            params.push(aud);
+            updateQuery += ', audience_type = $' + params.length;
         }
+        params.push(postId);
+        updateQuery += ' WHERE id = $' + params.length + ' RETURNING *';
+        const res = await this.dataSource.query(updateQuery, params);
 
         return {
             status: 1,
             message: 'Postingan berhasil diperbarui.',
-            data: { id: postId, content: text, audience_type: aud, is_edited: true }
+            data: res[0] || { id: postId, content: text, audience_type: aud, is_edited: true }
         };
     }
 
@@ -624,168 +692,186 @@ export class JukrahService {
     }
 
     /** Ambil direktori personil Polri real dari database untuk jejaring CAS. */
-    async getNetworkUsers(user: any, q: { search?: string; satker?: string; satker_id?: number; target_user_id?: number; scope?: string; page?: number; limit?: number }) {
-        const uid = Number(user?.id || 1);
-        const search = (q.search || '').trim();
-        const satker = (q.satker || '').trim();
-        const page = Math.max(1, Number(q.page) || 1);
-        const limit = Math.min(50, Math.max(1, Number(q.limit) || 10));
+    async getNetworkUsers(user: any, opts: any) {
+        const uid = Number(user?.id || 0);
+        const page = Math.max(1, Number(opts.page) || 1);
+        const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
         const offset = (page - 1) * limit;
-
+        const search = (opts.search || '').trim();
+        const whereClauses: string[] = ["(u.status = 'AKTIF' OR u.status = 'active')"];
         const params: any[] = [];
-        const conds: string[] = ["(u.status = 'AKTIF' OR u.status = 'active')"];
-
         if (search) {
             params.push('%' + search + '%');
-            conds.push('(u.name ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ' OR u.username ILIKE $' + params.length + ')');
+            whereClauses.push('(u.name ILIKE $' + params.length + ' OR u.username ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ' OR u.email_polri ILIKE $' + params.length + ' OR s.deskripsi ILIKE $' + params.length + ' OR s.nama_singkat ILIKE $' + params.length + ')');
         }
-        if (satker && satker !== 'all') {
-            params.push('%' + satker + '%');
-            conds.push('(s.nama_singkat ILIKE $' + params.length + ' OR s.deskripsi ILIKE $' + params.length + ')');
+        if (opts.satker_id) {
+            params.push(opts.satker_id);
+            whereClauses.push('u.scope_satker_id = $' + params.length);
         }
-        if (q.satker_id) {
-            params.push(Number(q.satker_id));
-            conds.push('u.scope_satker_id = 
-
-        const whereSql = conds.join(' AND ');
-
+        let rawConn = opts.connected_to;
+        if (rawConn === 'undefined' || rawConn === 'null' || rawConn === '') rawConn = null;
+        let connectedTo = (rawConn && !isNaN(Number(rawConn))) ? Number(rawConn) : null;
+        if (!connectedTo && (opts.filter === 'connected' || opts.satker === 'connected')) {
+            connectedTo = Number(opts.target_user_id) || uid;
+        }
+        if (connectedTo) {
+            params.push(connectedTo);
+            whereClauses.push('u.id IN (SELECT CASE WHEN requester_id = $' + params.length + ' THEN addressee_id ELSE requester_id END FROM user_connections WHERE (requester_id = $' + params.length + ' OR addressee_id = $' + params.length + ") AND status = 'ACCEPTED')");
+        }
         const countRes = await this.dataSource.query(
-            `SELECT COUNT(*)::int as total
-             FROM auth_users u
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE ${whereSql}`,
+            'SELECT count(*)::int as total FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE ' + whereClauses.join(' AND '),
             params
         );
-        const total = Number(countRes[0]?.total || 0);
-
-        const limitParams = [...params, limit, offset];
-        const pLimit = '$' + (limitParams.length - 1);
-        const pOffset = '$' + limitParams.length;
-
-        const sql = `
-            SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
-                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
-                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
-                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
-            FROM auth_users u
-            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            WHERE ${whereSql}
-            ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
-            LIMIT ${pLimit} OFFSET ${pOffset}
-        `;
-        const rows = await this.dataSource.query(sql, limitParams);
-        const list = rows.map((r: any) => {
-            const isUserOne = Number(r.id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
-            const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
-            const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
-
+        const total = countRes[0]?.total || 0;
+        params.push(limit);
+        const limitIdx = params.length;
+        params.push(offset);
+        const offsetIdx = params.length;
+        const sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id LEFT JOIN trb_police tp ON (lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))) WHERE ' + whereClauses.join(' AND ') + ' ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC LIMIT $' + limitIdx + ' OFFSET $' + offsetIdx;
+        const rows = await this.dataSource.query(sql, params);
+        const isSuperadmin = String(user?.role_bdb || '').toLowerCase() === 'superadmin';
+        const data = rows.map((r: any) => {
+            const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
+            const nrpFallback = r.email && r.email.match(/^(\d{7,10})@/) ? r.email.match(/^(\d{7,10})@/)[1] : (r.email_polri && r.email_polri.match(/^(\d{7,10})@/) ? r.email_polri.match(/^(\d{7,10})@/)[1] : null);
+            const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
             return {
                 id: Number(r.id),
-                name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
-                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
-                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
-                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
-                satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
-                scope_satker_name: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                scope_access_display: isUserOne ? 'Badan Reserse Kriminal Polri (Bareskrim)' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                nrp: derivedNrp,
-                role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
-                online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
-                photo: r.photo_url || null,
-                connections_count: Number(r.conn_count || 0)
+                name: isUserOne ? (r.name || 'EKO') : r.name,
+                callsign: r.callsign || r.username || (r.email_polri ? r.email_polri.split('@')[0] : (r.email ? r.email.split('@')[0] : 'personil_' + r.id)),
+                username: r.username,
+                email: r.email,
+                email_polri: r.email_polri || (r.email && r.email.endsWith('@polri.go.id') ? r.email : null),
+                role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
+                satker: satkerSpecific,
+                satker_nama: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_nama || r.satker_singkat || r.satuan || 'Polri'),
+                satker_singkat: satkerSpecific,
+                scope_satker_name: satkerSpecific,
+                pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(r.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
+                nrp: r.nrp || nrpFallback,
+                no_hp: r.no_hp || null,
+                photo_url: r.photo_url,
+                is_connected: Boolean(connectedTo) || isSuperadmin || Number(r.id) === uid,
+                last_login_at: r.last_login_at
             };
         });
-
-        return { 
-            status: 1, 
-            data: list, 
-            total, 
-            page, 
-            limit, 
-            total_pages: Math.ceil(total / limit) || 1 
-        };
+        return { status: 1, data, total, total_pages: Math.ceil(total / limit) || 1, page, limit, is_superadmin: isSuperadmin };
     }
 
     /** Ambil profil detail personil CAS (real data tanpa dummy). */
-    async getNetworkProfile(user: any, targetId: number) {
-        const rows = await this.dataSource.query(
-            `SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
-                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
-                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
-                   (SELECT COUNT(*)::int FROM bdb_social_posts p WHERE p.author_id = u.id AND p.status = 'active') as post_count,
-                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
-            FROM auth_users u
-            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            WHERE u.id = $1`,
-            [targetId]
-        );
-        if (!rows.length) throw new NotFoundException('Personil CAS tidak ditemukan.');
-        const r = rows[0];
-        const isUserOne = Number(r.id) === 1 || r.username === 'omeko42';
-        const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
-        const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
+    async getNetworkProfile(user: any, targetId: any) {
+        const cleanTarget = String(targetId || '').replace(/^@/, '').trim();
+        let targetUid: number | null = null;
+        if (/^\d+$/.test(cleanTarget)) {
+            targetUid = Number(cleanTarget);
+        } else if (/^user_(\d+)/i.test(cleanTarget)) {
+            const m = cleanTarget.match(/^user_(\d+)/i);
+            if (m) targetUid = Number(m[1]);
+        }
 
+        let sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id ';
+        let params: any[] = [];
+        if (targetUid) {
+            sql += 'WHERE u.id = $1 LIMIT 1';
+            params = [targetUid];
+        } else {
+            sql += 'WHERE lower(u.username) = $1 OR lower(u.callsign) = $1 LIMIT 1';
+            params = [cleanTarget.toLowerCase()];
+        }
+        const uRes = await this.dataSource.query(sql, params);
+        if (!uRes || !uRes.length) throw new NotFoundException('Personil tidak ditemukan');
+        const target = uRes[0];
+        const isUserOne = this.isSuperUserOne(target.id, target.username, target.callsign);
+        let policeProfile: any = null;
+        let connectionsCount = 0;
+        try {
+            const pRes = await this.dataSource.query(
+                'SELECT nrp, nama, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
+                [[target.email, target.email_polri].filter(Boolean)]
+            );
+            if (pRes && pRes.length) policeProfile = pRes[0];
+        } catch {}
+        try {
+            const cRes = await this.dataSource.query(
+                "SELECT count(*)::int as c FROM user_connections WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED'",
+                [Number(target.id)]
+            );
+            connectionsCount = Number(cRes[0]?.c || 0);
+        } catch {}
+        const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri');
         return {
             status: 1,
             data: {
-                id: Number(r.id),
-                name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
-                role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
-                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
-                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
-                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
-                satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
-                nrp: derivedNrp,
-                online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
-                photo: r.photo_url || null,
-                post_count: Number(r.post_count || 0),
-                connections_count: Number(r.conn_count || 0)
+                id: Number(target.id),
+                name: isUserOne ? (target.name || 'EKO') : target.name,
+                username: target.username,
+                callsign: target.callsign || target.username || (target.email_polri ? target.email_polri.split('@')[0] : (target.email ? target.email.split('@')[0] : 'personil')),
+                nrp: policeProfile?.nrp || (target.email && target.email.match(/^(\d{7,10})@/) ? target.email.match(/^(\d{7,10})@/)[1] : (target.email_polri && target.email_polri.match(/^(\d{7,10})@/) ? target.email_polri.match(/^(\d{7,10})@/)[1] : null)),
+                pangkat: policeProfile?.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(target.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
+                jabatan: policeProfile?.jabatan || (isUserOne ? 'Kasubdit' : target.role_bdb),
+                satuan: isUserOne ? 'Robinopsnal Bareskrim Polri' : (policeProfile?.satuan || target.satker_nama || target.satker_singkat || 'Polri'),
+                satker: satkerSpecific,
+                satker_nama: isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_nama || target.satker_singkat || 'Polri'),
+                scope_satker_name: satkerSpecific,
+                email_polri: target.email_polri || (target.email && target.email.endsWith('@polri.go.id') ? target.email : null),
+                email: target.email,
+                no_hp: policeProfile?.no_hp || null,
+                photo_url: target.photo_url || policeProfile?.foto || null,
+                role_bdb: isUserOne ? 'superadmin' : target.role_bdb,
+                connections_count: connectionsCount,
+                social_media: target.social_media || policeProfile?.social_media || {},
+                last_login_at: target.last_login_at
             }
         };
     }
 
     /** Ambil komentar sebuah postingan. */
     async getComments(user: any, postId: number) {
-        const uid = Number(user?.id);
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
 
         const rows = await this.dataSource.query(
-            `SELECT c.id, c.parent_id, c.content, c.created_at,
+            `SELECT c.id, c.parent_id, c.content, c.created_at, c.is_edited, c.updated_at,
+                    p.author_id as post_author_id,
                     u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url,
-                    s.nama_singkat as satker
+                    s.nama_singkat as satker, s.deskripsi as satker_nama,
+                    (SELECT COUNT(*)::int FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id) as likes_count,
+                    EXISTS(SELECT 1 FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id AND cr.user_id = $2) as is_liked
              FROM bdb_social_comments c
+             JOIN bdb_social_posts p ON p.id = c.post_id
              JOIN auth_users u ON u.id = c.user_id
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
              WHERE c.post_id = $1
              ORDER BY c.created_at ASC`,
-            [postId]
+            [postId, uid]
         );
 
         const comments = rows.map((r: any) => {
             const isSelf = Number(r.author_id) === uid;
-            const canSeeReal = isGlobalAdmin || isSelf;
-            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
-            const handle = isUserOne ? '@omeko42' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
-            const displayName = isUserOne ? 'EKO' : canSeeReal ? (r.raw_name || handle) : handle;
+            const isUserOne = this.isSuperUserOne(r.author_id, r.username, r.callsign);
+            const canSeeReal = isGlobalAdmin || isSelf || isUserOne;
+            const handle = this.formatCallsign(r.callsign, r.author_id, r.username);
+            const cleanCallsign = handle.startsWith('@') ? handle.slice(1) : handle;
             return {
                 id: Number(r.id),
                 parent_id: r.parent_id ? Number(r.parent_id) : null,
                 content: r.content,
                 created_at: r.created_at,
+                updated_at: r.updated_at || r.created_at,
+                is_edited: Boolean(r.is_edited),
                 author_id: Number(r.author_id),
-                author_username: isUserOne ? 'omeko42' : r.username,
-                author_callsign: isUserOne ? 'omeko42' : r.callsign,
+                author_username: r.username || cleanCallsign,
+                author_callsign: r.callsign || cleanCallsign,
                 author_handle: handle,
-                author_name: displayName,
-                author_satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes'),
+                author_name: isUserOne ? (r.raw_name || 'EKO') : (canSeeReal ? (r.raw_name || handle) : handle),
+                author_role: isUserOne ? 'superadmin' : (r.role_bdb || 'sharese'),
+                author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri'),
                 author_photo: r.photo_url,
-                can_delete: isSelf || isGlobalAdmin
+                is_verified: isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese'),
+                likes_count: Number(r.likes_count || 0),
+                is_liked: Boolean(r.is_liked),
+                can_edit: isSelf || isGlobalAdmin,
+                can_delete: isSelf || Number(r.post_author_id) === uid || isGlobalAdmin
             };
         });
 
@@ -794,12 +880,13 @@ export class JukrahService {
 
     /** Tambah komentar atau balasan. */
     async addComment(user: any, postId: number, content: string, parentId?: number) {
+        await this.ensureTable();
         const uid = Number(user?.id);
         const text = (content || '').trim();
         if (!text) throw new BadRequestException('Komentar tidak boleh kosong.');
         if (text.length > 1000) throw new BadRequestException('Panjang teks komentar maksimal 1.000 karakter.');
 
-        const post = await this.dataSource.query("SELECT author_id FROM bdb_social_posts WHERE id = $1 AND status = 'active'", [postId]);
+        const post = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [postId]);
         if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
 
         const r = await this.dataSource.query(
@@ -807,641 +894,30 @@ export class JukrahService {
             [postId, uid, parentId ? Number(parentId) : null, text]
         );
 
-        // Notifikasi ke author postingan
-        if (Number(post[0].author_id) !== uid) {
-            await this.createNotification({
-                recipientId: Number(post[0].author_id),
-                senderId: uid,
-                category: 'social',
-                type: 'comment',
-                postId,
-                title: 'Komentar Baru',
-                message: `Seseorang mengomentari postingan Anda.`
-            });
-        }
-
-        const isUserOne = uid === 1 || user?.username === 'omeko42' || user?.callsign === 'omeko42';
-        const authorHandle = isUserOne ? '@omeko42' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
-        const authorName = isUserOne ? 'EKO' : (user?.name || user?.username || 'Saya');
-
-        return {
-            status: 1,
-            message: 'Komentar terkirim.',
-            data: {
-                id: Number(r[0].id),
-                parent_id: parentId ? Number(parentId) : null,
-                content: text,
-                created_at: r[0].created_at,
-                author_id: uid,
-                author_username: isUserOne ? 'omeko42' : (user?.username || null),
-                author_callsign: isUserOne ? 'omeko42' : (user?.callsign || null),
-                author_handle: authorHandle,
-                author_name: authorName,
-                author_satker: isUserOne ? 'Bareskrim Polri' : (user?.satker || 'Mabes Bareskrim'),
-                author_photo: user?.photo_url || null,
-                can_delete: true
-            }
-        };
-    }
-
-    /** Hapus komentar (hanya author komentar atau author post atau admin). */
-    async deleteComment(user: any, commentId: number) {
-        const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
-
-        const com = await this.dataSource.query(
-            `SELECT c.id, c.user_id, p.author_id as post_author_id 
-             FROM bdb_social_comments c 
-             JOIN bdb_social_posts p ON p.id = c.post_id 
-             WHERE c.id = $1`,
-            [commentId]
-        );
-        if (!com.length) throw new NotFoundException('Komentar tidak ditemukan.');
-
-        const isCommentAuthor = Number(com[0].user_id) === uid;
-        const isPostAuthor = Number(com[0].post_author_id) === uid;
-
-        if (!isCommentAuthor && !isPostAuthor && !isGlobalAdmin) {
-            throw new ForbiddenException('Anda tidak memiliki izin menghapus komentar ini.');
-        }
-
-        await this.dataSource.query('DELETE FROM bdb_social_comments WHERE id = $1', [commentId]);
-        return { status: 1, message: 'Komentar berhasil dihapus.' };
-    }
-
-    /** Konfirmasi keterbacaan instruksi kedinasan ("Paham & Siap Laksanakan"). */
-    async acknowledgePost(user: any, postId: number) {
-        const uid = Number(user?.id);
-        const satkerId = Number(user?.scope_satker_id || 0);
-
-        await this.dataSource.query(
-            `INSERT INTO bdb_social_read_receipts (post_id, satker_id, user_id, acknowledged_at)
-             VALUES ($1, $2, $3, NOW())
-             ON CONFLICT (post_id, user_id) DO NOTHING`,
-            [postId, satkerId, uid]
-        );
-
-        const countRes = await this.dataSource.query(
-            'SELECT COUNT(*)::int as c FROM bdb_social_read_receipts WHERE post_id = $1',
-            [postId]
-        );
-
-        return {
-            status: 1,
-            message: 'Konfirmasi keterbacaan tercatat.',
-            data: { acknowledged: true, acknowledged_count: Number(countRes[0].c) }
-        };
-    }
-
-    /** Ubah visibilitas postingan (Publik <-> Privat). */
-    async updateVisibility(user: any, postId: number, audienceType: string) {
-        const uid = Number(user?.id);
-        const valid = ['public', 'regional', 'friends', 'private'];
-        if (!valid.includes(audienceType)) throw new BadRequestException('Tipe audiens tidak valid.');
-
-        const ex = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [postId]);
-        if (!ex.length) throw new NotFoundException('Postingan tidak ditemukan.');
-
-        if (Number(ex[0].author_id) !== uid) {
-            throw new ForbiddenException('Hanya pembuat postingan yang dapat mengubah visibilitas.');
-        }
-
-        await this.dataSource.query('UPDATE bdb_social_posts SET audience_type = $2, updated_at = NOW() WHERE id = $1', [postId, audienceType]);
-        return { status: 1, message: `Visibilitas diubah menjadi "${audienceType}".` };
-    }
-
-    /** Hapus / Takedown postingan. */
-    async deletePost(user: any, postId: number) {
-        const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
-
-        const ex = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [postId]);
-        if (!ex.length) throw new NotFoundException('Postingan tidak ditemukan.');
-
-        if (Number(ex[0].author_id) !== uid && !isGlobalAdmin) {
-            throw new ForbiddenException('Hanya pembuat postingan atau admin yang berhak menghapus.');
-        }
-
-        await this.dataSource.query("UPDATE bdb_social_posts SET status = 'deleted', updated_at = NOW() WHERE id = $1", [postId]);
-        await this.audit.log({ user, action: 'DELETE', entity: 'social_post', entityId: postId });
-        return { status: 1, message: 'Postingan telah dihapus.' };
-    }
-
-    /** Laporkan postingan mencurigakan / bocor operasi. */
-    async reportPost(user: any, postId: number, reason: string) {
-        const uid = Number(user?.id);
-        const post = await this.dataSource.query('SELECT id, author_id, content FROM bdb_social_posts WHERE id = $1', [postId]);
-        if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
-
-        // Buat notifikasi ke seluruh superadmin
-        const admins = await this.dataSource.query("SELECT id FROM auth_users WHERE role_bdb IN ('superadmin', 'admin_binops')");
-        for (const adm of admins) {
-            await this.createNotification({
-                recipientId: Number(adm.id),
-                senderId: uid,
-                category: 'dinas',
-                type: 'report_violation',
-                postId,
-                title: '🚨 Laporan Postingan Sensitif / Pelanggaran',
-                message: `Postingan #${postId} dilaporkan oleh personil. Alasan: ${reason || 'Indikasi kebocoran rahasia operasi'}`
-            });
-        }
-
-        return { status: 1, message: 'Laporan telah diteruskan ke Superadmin & Pengawas.' };
-    }
-
-    /** Panic Takedown darurat (khusus Superadmin / Admin Binops). */
-    async panicTakedown(user: any, postId: number) {
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
-        if (!isGlobalAdmin) throw new ForbiddenException('Akses ditolak.');
-
-        await this.dataSource.query("UPDATE bdb_social_posts SET status = 'quarantined', updated_at = NOW() WHERE id = $1", [postId]);
-        await this.audit.log({ user, action: 'TAKEDOWN', entity: 'social_post', entityId: postId, meta: { reason: 'PANIC_TAKEDOWN' } });
-        return { status: 1, message: 'Postingan berhasil ditarik dan dikarantina dari linimasa.' };
-    }
-
-    // =========================================================================
-    // NOTIFIKASI DWI-FUNGSI: TAB DINAS & TAB SOSIAL
-    // =========================================================================
-
-    private async createNotification(data: { recipientId: number; senderId: number; category: string; type: string; postId?: number; title: string; message: string }) {
-        try {
-            await this.dataSource.query(
-                `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [data.recipientId, data.senderId, data.category, data.type, data.postId || null, data.title, data.message]
-            );
-        } catch (e: any) {
-            this.logger.error(`Gagal membuat notifikasi: ${e.message}`);
-        }
-    }
-
-    private async broadcastDinasNotification(postId: number, authorUser: any, content: string) {
-        const snippet = content.length > 70 ? content.slice(0, 70) + '...' : content;
-        // Kirimkan notif ke seluruh akun aktif selain author
-        await this.dataSource.query(
-            `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
-             SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Jukrah Resmi Kedinasan Baru', $3
-             FROM auth_users
-             WHERE id <> $1 AND status = 'active'
-             LIMIT 5000`,
-            [authorUser.id, postId, snippet]
-        );
-    }
-
-    /** Ambil daftar notifikasi per kategori ('dinas' atau 'social'). */
-    async getNotifications(user: any, category?: string) {
-        const uid = Number(user?.id);
-        const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
-
-        const whereCat = cat ? 'AND n.category = $2' : '';
-        const params = cat ? [uid, cat] : [uid];
-
-        const rows = await this.dataSource.query(
-            `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
-                    u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
-             FROM bdb_social_notifications n
-             LEFT JOIN auth_users u ON u.id = n.sender_id
-             WHERE n.recipient_id = $1 ${whereCat}
-             ORDER BY n.created_at DESC
-             LIMIT 30`,
-            params
-        );
-
-        const unreadCounts = await this.dataSource.query(
-            `SELECT category, count(*)::int as c 
-             FROM bdb_social_notifications 
-             WHERE recipient_id = $1 AND is_read = false 
-             GROUP BY category`,
-            [uid]
-        );
-
-        let unreadDinas = 0;
-        let unreadSocial = 0;
-        unreadCounts.forEach((r: any) => {
-            if (r.category === 'dinas') unreadDinas = Number(r.c);
-            if (r.category === 'social') unreadSocial = Number(r.c);
-        });
-
-        return {
-            status: 1,
-            data: rows.map((r: any) => ({
-                id: Number(r.id),
-                category: r.category,
-                type: r.type,
-                post_id: r.post_id ? Number(r.post_id) : null,
-                title: r.title,
-                message: r.message,
-                is_read: Boolean(r.is_read),
-                created_at: r.created_at,
-                sender_handle: r.sender_callsign ? `@${r.sender_callsign}` : null,
-                sender_photo: r.sender_photo
-            })),
-            unread_dinas: unreadDinas,
-            unread_social: unreadSocial
-        };
-    }
-
-    /** Tandai satu notifikasi sudah dibaca. */
-    async markNotificationRead(user: any, notifId: number) {
-        const uid = Number(user?.id);
-        await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2', [notifId, uid]);
-        return { status: 1 };
-    }
-
-    /** Tandai semua notifikasi dalam kategori sudah dibaca. */
-    async markAllNotificationsRead(user: any, category: string) {
-        const uid = Number(user?.id);
-        await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1 AND category = $2', [uid, category]);
-        return { status: 1 };
-    }
-
-    // =========================================================================
-    // WIDGET 1 BARIS DASHBOARD UTAMA (/cms/dashboard/main)
-    // =========================================================================
-
-    /** Ambil data 3 card horizontal widget medsos di dashboard utama. */
-    async getDashboardWidgets(user: any) {
-        const uid = Number(user?.id || 0);
-
-        // 1. Card 1: Jukrah Resmi Terkini
-        const jukrahRows = await this.dataSource.query(
-            `SELECT p.id, p.content, p.created_at, s.nama_singkat as satker,
-                    CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged
-             FROM bdb_social_posts p
-             JOIN auth_users u ON u.id = p.author_id
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             LEFT JOIN bdb_social_read_receipts rr ON rr.post_id = p.id AND rr.user_id = $1
-             WHERE p.is_official_jukrah = true AND p.status = 'active'
-             ORDER BY p.created_at DESC
-             LIMIT 1`,
-            [uid]
-        );
-        const latestJukrah = jukrahRows.length ? {
-            id: Number(jukrahRows[0].id),
-            title: jukrahRows[0].content.slice(0, 90),
-            satker: jukrahRows[0].satker || 'Robinops Bareskrim',
-            created_at: jukrahRows[0].created_at,
-            acknowledged: Boolean(jukrahRows[0].acknowledged)
-        } : null;
-
-        // 2. Card 2: Top Trending Discussion
-        const trendingRows = await this.dataSource.query(
-            `SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.callsign, s.nama_singkat as satker,
-                    (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
-             FROM bdb_social_posts p
-             JOIN auth_users u ON u.id = p.author_id
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE p.status = 'active' AND p.audience_type = 'public'
-             ORDER BY (p.repost_count * 3 + (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) * 2) DESC, p.created_at DESC
-             LIMIT 1`
-        );
-        const topTrending = trendingRows.length ? {
-            id: Number(trendingRows[0].id),
-            snippet: trendingRows[0].content.slice(0, 85),
-            author_handle: trendingRows[0].callsign ? `@${trendingRows[0].callsign}` : '@pers_reskrim',
-            satker: trendingRows[0].satker || 'Polda',
-            comments_count: Number(trendingRows[0].comments_count || 0),
-            reaction_counts: trendingRows[0].reaction_counts || {}
-        } : null;
-
-        // 3. Card 3: Quick Stats Akun Saya
-        const userStats = await this.dataSource.query(
-            `SELECT 
-                u.callsign,
-                (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') as my_posts,
-                (SELECT COUNT(*)::int FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false AND category = 'dinas') as unread_dinas
-             FROM auth_users u WHERE u.id = $1`,
-            [uid]
-        );
-        const quickStats = {
-            callsign: userStats[0]?.callsign ? `@${userStats[0].callsign}` : null,
-            my_posts: Number(userStats[0]?.my_posts || 0),
-            unread_dinas: Number(userStats[0]?.unread_dinas || 0)
-        };
-
-        return {
-            status: 1,
-            data: {
-                latest_jukrah: latestJukrah,
-                top_trending: topTrending,
-                quick_stats: quickStats
-            }
-        };
-    }
-
-    /** Rekap keterbacaan Satker untuk Kelola Jukrahcaster (Admin). */
-    async getJukrahReadReport(user: any, postId: number) {
-        const rows = await this.dataSource.query(
-            `SELECT 
-                s.id as satker_id,
-                s.deskripsi as satker_nama,
-                s.nama_singkat as satker_singkat,
-                COUNT(DISTINCT u.id)::int as total_personil,
-                COUNT(DISTINCT rr.user_id)::int as total_sudah_baca
-             FROM auth_users u
-             JOIN bdb_satker s ON s.id = u.scope_satker_id
-             LEFT JOIN bdb_social_read_receipts rr ON rr.post_id = $1 AND rr.user_id = u.id
-             WHERE u.status = 'active'
-             GROUP BY s.id, s.deskripsi, s.nama_singkat
-             ORDER BY total_sudah_baca DESC, total_personil DESC`,
-            [postId]
-        );
-
-        return { status: 1, data: rows };
-    }
-
-    // =========================================================================
-    // LEGACY BULLETIN METHODS (Tetap dipertahankan untuk backward-compatibility)
-    // =========================================================================
-
-    private async recordView(jukrahId: number, user: any, nama?: string) {
-        const uid = user?.id;
-        if (!uid) return;
-        const ins = await this.dataSource.query('insert into bdb_jukrah_view (jukrah_id, user_id) values ($1,$2) on conflict (jukrah_id, user_id) do nothing returning id', [jukrahId, uid]);
-        if (ins.length) {
-            await this.audit.log({ user, action: 'VIEW', entity: 'jukrah', entityId: jukrahId, meta: { nama } });
-        }
-    }
-
-    private async withUrl(rows: any[]) {
-        for (const r of rows) {
-            if (r.lampiran?.key) {
-                try {
-                    r.lampiran.url = await this.minio.presignedUrl(r.lampiran.key);
-                } catch {
-                    /* abaikan */
+        const cMentionMatches = text.match(/@([a-z0-9_.]{3,30})/gi);
+        if (cMentionMatches && cMentionMatches.length) {
+            const cHandles = Array.from(new Set(cMentionMatches.map(m => m.slice(1).toLowerCase())));
+            try {
+                const cTaggedUsers = await this.dataSource.query(
+                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    [cHandles, uid]
+                );
+                for (const tu of cTaggedUsers) {
+                    await this.createNotification({
+                        recipientId: Number(tu.id),
+                        senderId: uid,
+                        category: 'social',
+                        type: 'mention',
+                        postId,
+                        title: 'Sebutan Baru di Komentar',
+                        message: `Seseorang menyebut Anda dalam sebuah komentar: "${text.slice(0, 75)}..."`
+                    });
                 }
+            } catch (err: any) {
+                this.logger.error('Failed to dispatch comment mention notifications: ' + err.message);
             }
         }
-        return rows;
-    }
 
-    private async uploadPdf(file: any) {
-        if (!file) return null;
-        if (file.mimetype !== 'application/pdf') throw new BadRequestException('Lampiran harus berupa file PDF.');
-        const key = await this.minio.upload(file, 'jukrah');
-        return { name: file.originalname, key, size: file.size, mime: file.mimetype };
-    }
-
-    async list(opts: { search?: string; aktif?: string }) {
-        await this.ensureTable();
-        const params: any[] = [];
-        const wh: string[] = [];
-        if (opts.search && opts.search.trim()) {
-            params.push(`%${opts.search.trim()}%`);
-            wh.push(`(b.nama ilike $${params.length} or b.deskripsi ilike $${params.length})`);
-        }
-        if (opts.aktif === 'true') wh.push('b.aktif=true');
-        else if (opts.aktif === 'false') wh.push('b.aktif=false');
-        const where = wh.length ? 'where ' + wh.join(' and ') : '';
-        const rows = await this.dataSource.query(
-            `select b.id, b.nama, b.deskripsi, b.aktif, b.lampiran, b.tanggal_publish, b.created_at, b.updated_at, u.name as created_by_nama,
-                    (select count(*) from bdb_jukrah_view v where v.jukrah_id=b.id)::int as view_count
-             from bdb_jukrah b left join auth_users u on u.id=b.created_by ${where} order by b.tanggal_publish desc, b.id desc`,
-            params
-        );
-        return { status: 1, data: await this.withUrl(rows) };
-    }
-
-    async active(user: any, opts: { search?: string }) {
-        await this.ensureTable();
-        const params: any[] = [];
-        let where = 'where aktif=true and tanggal_publish <= current_date';
-        if (opts.search && opts.search.trim()) {
-            params.push(`%${opts.search.trim()}%`);
-            where += ' and (nama ilike $1 or deskripsi ilike $1)';
-        }
-        const rows = await this.dataSource.query(`select id, nama, deskripsi, lampiran, tanggal_publish from bdb_jukrah ${where} order by tanggal_publish desc, id desc`, params);
-        for (const r of rows) await this.recordView(r.id, user, r.nama);
-        if (rows.length) {
-            const counts = await this.dataSource.query(
-                `select jukrah_id, count(*)::int c from bdb_jukrah_view where jukrah_id = any($1) group by jukrah_id`,
-                [rows.map((r: any) => r.id)]
-            );
-            const map = new Map<number, number>(counts.map((c: any) => [Number(c.jukrah_id), c.c]));
-            for (const r of rows) r.view_count = map.get(Number(r.id)) || 0;
-        }
-        return { status: 1, data: await this.withUrl(rows) };
-    }
-
-    async create(user: any, body: any, file: any) {
-        await this.ensureTable();
-        const nama = (body.nama || '').trim();
-        if (!nama) throw new BadRequestException('Nama wajib diisi.');
-        if (body.tanggal_publish) {
-            const chk = await this.dataSource.query('select ($1::date < current_date) as bad', [body.tanggal_publish]);
-            if (chk[0]?.bad) throw new BadRequestException('Tanggal publikasi tidak boleh mundur (backdate).');
-        }
-        const lampiran = await this.uploadPdf(file);
-        const aktif = !(body.aktif === 'false' || body.aktif === false);
-        const r = await this.dataSource.query(
-            'insert into bdb_jukrah (nama, deskripsi, aktif, lampiran, tanggal_publish, created_by) values ($1,$2,$3,$4,coalesce($5::date, current_date),$6) returning id',
-            [nama, body.deskripsi?.trim() || null, aktif, lampiran ? JSON.stringify(lampiran) : null, body.tanggal_publish || null, user?.id || null]
-        );
-        await this.audit.log({ user, action: 'CREATE', entity: 'jukrah', entityId: r[0].id, meta: { nama } });
-        return { status: 1, data: { id: r[0].id }, message: 'Pengumuman ditambahkan.' };
-    }
-
-    async update(user: any, id: number, body: any, file: any, keepLampiran: any) {
-        await this.ensureTable();
-        const ex = await this.dataSource.query('select * from bdb_jukrah where id=$1', [id]);
-        if (!ex.length) throw new NotFoundException('Data tidak ditemukan.');
-        const nama = (body.nama || '').trim();
-        if (!nama) throw new BadRequestException('Nama wajib diisi.');
-        if (body.tanggal_publish) {
-            const chk = await this.dataSource.query('select ($1::date < current_date and $1::date <> tanggal_publish) as bad from bdb_jukrah where id=$2', [body.tanggal_publish, id]);
-            if (chk[0]?.bad) throw new BadRequestException('Tanggal publikasi tidak boleh mundur (backdate).');
-        }
-        let lampiran = ex[0].lampiran;
-        if (file) lampiran = await this.uploadPdf(file);
-        else if (keepLampiran === 'false' || keepLampiran === false) lampiran = null;
-        const aktif = body.aktif === undefined ? ex[0].aktif : !(body.aktif === 'false' || body.aktif === false);
-        await this.dataSource.query(
-            'update bdb_jukrah set nama=$2, deskripsi=$3, aktif=$4, lampiran=$5, tanggal_publish=coalesce($6::date, tanggal_publish), updated_at=now() where id=$1',
-            [id, nama, body.deskripsi?.trim() || null, aktif, lampiran ? JSON.stringify(lampiran) : null, body.tanggal_publish || null]
-        );
-        await this.audit.log({ user, action: 'UPDATE', entity: 'jukrah', entityId: id, meta: { nama } });
-        return { status: 1, message: 'Pengumuman diperbarui.' };
-    }
-
-    async remove(user: any, id: number) {
-        await this.ensureTable();
-        const [r] = await this.dataSource.query('delete from bdb_jukrah where id=$1 returning id, nama', [id]);
-        if (!r.length) throw new NotFoundException('Data tidak ditemukan.');
-        await this.audit.log({ user, action: 'DELETE', entity: 'jukrah', entityId: id, meta: { nama: r[0].nama } });
-        return { status: 1, message: 'Pengumuman dihapus.' };
-    }
-}
- + params.length);
-        }
-        if (q.connected_to) {
-            params.push(Number(q.connected_to));
-            conds.push(`(EXISTS (SELECT 1 FROM user_connections uc_f WHERE ((uc_f.requester_id = ${params.length} AND uc_f.addressee_id = u.id) OR (uc_f.requester_id = u.id AND uc_f.addressee_id = ${params.length})) AND uc_f.status = 'ACCEPTED'))`);
-        }
-
-        const whereSql = conds.join(' AND ');
-
-        const countRes = await this.dataSource.query(
-            `SELECT COUNT(*)::int as total
-             FROM auth_users u
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE ${whereSql}`,
-            params
-        );
-        const total = Number(countRes[0]?.total || 0);
-
-        const limitParams = [...params, limit, offset];
-        const pLimit = '$' + (limitParams.length - 1);
-        const pOffset = '$' + limitParams.length;
-
-        const sql = `
-            SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
-                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
-                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
-                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
-            FROM auth_users u
-            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            WHERE ${whereSql}
-            ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
-            LIMIT ${pLimit} OFFSET ${pOffset}
-        `;
-        const rows = await this.dataSource.query(sql, limitParams);
-        const list = rows.map((r: any) => {
-            const isUserOne = Number(r.id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
-            const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
-            const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
-
-            return {
-                id: Number(r.id),
-                name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
-                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
-                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
-                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
-                satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
-                scope_satker_name: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                scope_access_display: isUserOne ? 'Badan Reserse Kriminal Polri (Bareskrim)' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                nrp: derivedNrp,
-                role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
-                online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
-                photo: r.photo_url || null,
-                connections_count: Number(r.conn_count || 0)
-            };
-        });
-
-        return { 
-            status: 1, 
-            data: list, 
-            total, 
-            page, 
-            limit, 
-            total_pages: Math.ceil(total / limit) || 1 
-        };
-    }
-
-    /** Ambil profil detail personil CAS (real data tanpa dummy). */
-    async getNetworkProfile(user: any, targetId: number) {
-        const rows = await this.dataSource.query(
-            `SELECT u.id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.role_name,
-                   u.email_polri, u.social_media, u.activity_score, u.last_login_at, u.status,
-                   s.id as satker_id, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama,
-                   (SELECT COUNT(*)::int FROM bdb_social_posts p WHERE p.author_id = u.id AND p.status = 'active') as post_count,
-                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = u.id OR uc.addressee_id = u.id) AND uc.status = 'ACCEPTED') as conn_count
-            FROM auth_users u
-            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            WHERE u.id = $1`,
-            [targetId]
-        );
-        if (!rows.length) throw new NotFoundException('Personil CAS tidak ditemukan.');
-        const r = rows[0];
-        const isUserOne = Number(r.id) === 1 || r.username === 'omeko42';
-        const nrpMatch = (r.email_polri || '').match(/^(\d+)@/);
-        const derivedNrp = nrpMatch ? nrpMatch[1] : (r.username && r.username.replace(/^Nrp\./i, '')) || '';
-
-        return {
-            status: 1,
-            data: {
-                id: Number(r.id),
-                name: isUserOne ? 'EKO' : r.name,
-                username: isUserOne ? 'omeko42' : (r.username || `user_${r.id}`),
-                callsign: isUserOne ? 'omeko42' : (r.callsign || derivedNrp || r.username || `pers_${r.id}`),
-                role: isUserOne ? 'Superadmin' : (r.role_bdb || r.role_name || 'Personil'),
-                pangkat: isUserOne ? 'KOMPOL' : (r.social_media?.pangkat || (Number(r.id) === 207 ? 'BRIPKA' : 'BRIGADIR')),
-                jabatan: isUserOne ? 'Kasubdit' : (r.social_media?.jabatan || (Number(r.id) === 207 ? 'BAMIN URMINTU SAT RESKRIM' : (r.role_name || 'Personil'))),
-                satuan: isUserOne ? 'BARESKRIM POLRI' : (r.satker_nama || 'POLDA BALI'),
-                satker: isUserOne ? 'Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                satker_nama: r.satker_nama || (isUserOne ? 'Bareskrim Polri' : ''),
-                nrp: derivedNrp,
-                online: isUserOne ? true : Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime()) < 30 * 60 * 1000),
-                photo: r.photo_url || null,
-                post_count: Number(r.post_count || 0),
-                connections_count: Number(r.conn_count || 0)
-            }
-        };
-    }
-
-    /** Ambil komentar sebuah postingan. */
-    async getComments(user: any, postId: number) {
-        const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
-
-        const rows = await this.dataSource.query(
-            `SELECT c.id, c.parent_id, c.content, c.created_at,
-                    u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url,
-                    s.nama_singkat as satker
-             FROM bdb_social_comments c
-             JOIN auth_users u ON u.id = c.user_id
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE c.post_id = $1
-             ORDER BY c.created_at ASC`,
-            [postId]
-        );
-
-        const comments = rows.map((r: any) => {
-            const isSelf = Number(r.author_id) === uid;
-            const canSeeReal = isGlobalAdmin || isSelf;
-            const isUserOne = Number(r.author_id) === 1 || r.username === 'omeko42' || r.callsign === 'omeko42';
-            const handle = isUserOne ? '@omeko42' : (r.callsign ? `@${r.callsign}` : (r.username ? `@${r.username}` : `@pers_${r.author_id}`));
-            const displayName = isUserOne ? 'EKO' : canSeeReal ? (r.raw_name || handle) : handle;
-            return {
-                id: Number(r.id),
-                parent_id: r.parent_id ? Number(r.parent_id) : null,
-                content: r.content,
-                created_at: r.created_at,
-                author_id: Number(r.author_id),
-                author_username: isUserOne ? 'omeko42' : r.username,
-                author_callsign: isUserOne ? 'omeko42' : r.callsign,
-                author_handle: handle,
-                author_name: displayName,
-                author_satker: isUserOne ? 'Bareskrim Polri' : (r.satker || 'Mabes'),
-                author_photo: r.photo_url,
-                can_delete: isSelf || isGlobalAdmin
-            };
-        });
-
-        return { status: 1, data: comments };
-    }
-
-    /** Tambah komentar atau balasan. */
-    async addComment(user: any, postId: number, content: string, parentId?: number) {
-        const uid = Number(user?.id);
-        const text = (content || '').trim();
-        if (!text) throw new BadRequestException('Komentar tidak boleh kosong.');
-        if (text.length > 1000) throw new BadRequestException('Panjang teks komentar maksimal 1.000 karakter.');
-
-        const post = await this.dataSource.query("SELECT author_id FROM bdb_social_posts WHERE id = $1 AND status = 'active'", [postId]);
-        if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
-
-        const r = await this.dataSource.query(
-            'INSERT INTO bdb_social_comments (post_id, user_id, parent_id, content) VALUES ($1, $2, $3, $4) RETURNING id, created_at',
-            [postId, uid, parentId ? Number(parentId) : null, text]
-        );
-
-        // Notifikasi ke author postingan
         if (Number(post[0].author_id) !== uid) {
             await this.createNotification({
                 recipientId: Number(post[0].author_id),
@@ -1454,9 +930,18 @@ export class JukrahService {
             });
         }
 
-        const isUserOne = uid === 1 || user?.username === 'omeko42' || user?.callsign === 'omeko42';
-        const authorHandle = isUserOne ? '@omeko42' : (user?.callsign ? `@${user.callsign}` : (user?.username ? `@${user.username}` : `@pers_${uid}`));
-        const authorName = isUserOne ? 'EKO' : (user?.name || user?.username || 'Saya');
+        const uRows = await this.dataSource.query(
+            `SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url,
+                    s.nama_singkat as satker, s.deskripsi as satker_nama
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE u.id = $1`,
+            [uid]
+        );
+        const uInfo = uRows[0] || user || {};
+        const isUserOne = this.isSuperUserOne(uid, uInfo.username, uInfo.callsign);
+        const handle = this.formatCallsign(uInfo.callsign, uid, uInfo.username);
+        const cleanCallsign = handle.startsWith('@') ? handle.slice(1) : handle;
 
         return {
             status: 1,
@@ -1466,15 +951,91 @@ export class JukrahService {
                 parent_id: parentId ? Number(parentId) : null,
                 content: text,
                 created_at: r[0].created_at,
+                updated_at: r[0].created_at,
+                is_edited: false,
                 author_id: uid,
-                author_username: isUserOne ? 'omeko42' : (user?.username || null),
-                author_callsign: isUserOne ? 'omeko42' : (user?.callsign || null),
-                author_handle: authorHandle,
-                author_name: authorName,
-                author_satker: isUserOne ? 'Bareskrim Polri' : (user?.satker || 'Mabes Bareskrim'),
-                author_photo: user?.photo_url || null,
+                author_username: uInfo.username || cleanCallsign,
+                author_callsign: uInfo.callsign || cleanCallsign,
+                author_handle: handle,
+                author_name: isUserOne ? (uInfo.name || 'EKO') : (uInfo.name || handle),
+                author_role: isUserOne ? 'superadmin' : (uInfo.role_bdb || 'sharese'),
+                author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (uInfo.satker || uInfo.satker_nama || 'Polri'),
+                author_photo: uInfo.photo_url || null,
+                is_verified: isUserOne ? true : Boolean(uInfo.role_bdb && uInfo.role_bdb !== 'sharese'),
+                likes_count: 0,
+                is_liked: false,
+                can_edit: true,
                 can_delete: true
             }
+        };
+    }
+
+    /** Edit komentar (author komentar atau admin). */
+    async editComment(user: any, commentId: number, content: string) {
+        await this.ensureTable();
+        const uid = Number(user?.id);
+        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
+
+        const com = await this.dataSource.query('SELECT id, user_id, post_id FROM bdb_social_comments WHERE id = $1', [commentId]);
+        if (!com.length) throw new NotFoundException('Komentar tidak ditemukan.');
+
+        if (Number(com[0].user_id) !== uid && !isGlobalAdmin) {
+            throw new ForbiddenException('Anda tidak memiliki izin mengedit komentar ini.');
+        }
+
+        const text = (content || '').trim();
+        if (!text) throw new BadRequestException('Komentar tidak boleh kosong.');
+        if (text.length > 1000) throw new BadRequestException('Panjang teks komentar maksimal 1.000 karakter.');
+
+        await this.dataSource.query(
+            'UPDATE bdb_social_comments SET content = $1, is_edited = true, updated_at = NOW() WHERE id = $2',
+            [text, commentId]
+        );
+
+        return {
+            status: 1,
+            message: 'Komentar berhasil diperbarui.',
+            data: { id: commentId, content: text, is_edited: true }
+        };
+    }
+
+    /** Like / batal like komentar. */
+    async reactComment(user: any, commentId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+
+        const com = await this.dataSource.query('SELECT id, user_id, post_id FROM bdb_social_comments WHERE id = $1', [commentId]);
+        if (!com.length) throw new NotFoundException('Komentar tidak ditemukan.');
+
+        const ex = await this.dataSource.query(
+            'SELECT 1 FROM bdb_social_comment_reactions WHERE comment_id = $1 AND user_id = $2',
+            [commentId, uid]
+        );
+        let liked = false;
+        if (ex.length) {
+            await this.dataSource.query(
+                'DELETE FROM bdb_social_comment_reactions WHERE comment_id = $1 AND user_id = $2',
+                [commentId, uid]
+            );
+            liked = false;
+        } else {
+            await this.dataSource.query(
+                'INSERT INTO bdb_social_comment_reactions (comment_id, user_id, created_at) VALUES ($1, $2, NOW()) ON CONFLICT DO NOTHING',
+                [commentId, uid]
+            );
+            liked = true;
+        }
+
+        const countRes = await this.dataSource.query(
+            'SELECT COUNT(*)::int as c FROM bdb_social_comment_reactions WHERE comment_id = $1',
+            [commentId]
+        );
+        const count = Number(countRes[0]?.c || 0);
+
+        return {
+            status: 1,
+            data: { id: commentId, is_liked: liked, likes_count: count }
         };
     }
 
@@ -1514,6 +1075,7 @@ export class JukrahService {
              ON CONFLICT (post_id, user_id) DO NOTHING`,
             [postId, satkerId, uid]
         );
+        await this.dataSource.query('UPDATE bdb_social_posts SET view_count = coalesce(view_count, 0) + 1 WHERE id = $1', [postId]);
 
         const countRes = await this.dataSource.query(
             'SELECT COUNT(*)::int as c FROM bdb_social_read_receipts WHERE post_id = $1',
@@ -1567,7 +1129,6 @@ export class JukrahService {
         const post = await this.dataSource.query('SELECT id, author_id, content FROM bdb_social_posts WHERE id = $1', [postId]);
         if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
 
-        // Buat notifikasi ke seluruh superadmin
         const admins = await this.dataSource.query("SELECT id FROM auth_users WHERE role_bdb IN ('superadmin', 'admin_binops')");
         for (const adm of admins) {
             await this.createNotification({
@@ -1612,7 +1173,6 @@ export class JukrahService {
 
     private async broadcastDinasNotification(postId: number, authorUser: any, content: string) {
         const snippet = content.length > 70 ? content.slice(0, 70) + '...' : content;
-        // Kirimkan notif ke seluruh akun aktif selain author
         await this.dataSource.query(
             `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
              SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Jukrah Resmi Kedinasan Baru', $3
@@ -1626,21 +1186,154 @@ export class JukrahService {
     /** Ambil daftar notifikasi per kategori ('dinas' atau 'social'). */
     async getNotifications(user: any, category?: string) {
         const uid = Number(user?.id);
+        const satkerId = Number(user?.scope_satker_id || 0);
+        const role = String(user?.role_bdb || '').toLowerCase();
+        const isAdmin = role === 'superadmin' || role === 'admin_binops';
         const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
 
-        const whereCat = cat ? 'AND n.category = $2' : '';
-        const params = cat ? [uid, cat] : [uid];
+        const items: any[] = [];
 
-        const rows = await this.dataSource.query(
-            `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
-                    u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
-             FROM bdb_social_notifications n
-             LEFT JOIN auth_users u ON u.id = n.sender_id
-             WHERE n.recipient_id = $1 ${whereCat}
-             ORDER BY n.created_at DESC
-             LIMIT 30`,
-            params
-        );
+        if (!cat || cat === 'social') {
+            const rows = await this.dataSource.query(
+                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                 FROM bdb_social_notifications n
+                 LEFT JOIN auth_users u ON u.id = n.sender_id
+                 WHERE n.recipient_id = $1 AND n.category = 'social'
+                 ORDER BY n.created_at DESC
+                 LIMIT 25`,
+                [uid]
+            );
+            items.push(...rows.map((r: any) => ({
+                id: Number(r.id),
+                category: 'social',
+                type: r.type,
+                post_id: r.post_id ? Number(r.post_id) : null,
+                title: r.title,
+                message: r.message,
+                is_read: Boolean(r.is_read),
+                created_at: r.created_at,
+                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_photo: r.sender_photo,
+                link: '/cms/broadcaster'
+            })));
+
+            const connRows = await this.dataSource.query(
+                `SELECT uc.id, uc.status, uc.updated_at as created_at,
+                        u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                 FROM user_connections uc
+                 JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
+                 WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED'))
+                 ORDER BY uc.updated_at DESC
+                 LIMIT 15`,
+                [uid]
+            );
+            items.push(...connRows.map((r: any) => {
+                const handle = r.other_callsign || r.other_username || ('user_' + r.other_id);
+                return {
+                    id: 'conn_' + r.id,
+                    category: 'social',
+                    type: 'connection',
+                    post_id: null,
+                    title: 'Jejaring: ' + (r.other_name || handle),
+                    message: r.status === 'PENDING' ? `Mengajukan koneksi dengan Anda (@${handle})` : `Anda sekarang terkoneksi dengan @${handle}`,
+                    is_read: true,
+                    created_at: r.created_at,
+                    sender_handle: '@' + handle,
+                    sender_photo: r.other_photo,
+                    link: '/cms/profile'
+                };
+            }));
+        }
+
+        if (!cat || cat === 'dinas') {
+            const dinasRows = await this.dataSource.query(
+                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                 FROM bdb_social_notifications n
+                 LEFT JOIN auth_users u ON u.id = n.sender_id
+                 WHERE n.recipient_id = $1 AND n.category = 'dinas'
+                 ORDER BY n.created_at DESC
+                 LIMIT 15`,
+                [uid]
+            );
+            items.push(...dinasRows.map((r: any) => ({
+                id: Number(r.id),
+                category: 'dinas',
+                type: r.type,
+                post_id: r.post_id ? Number(r.post_id) : null,
+                title: r.title,
+                message: r.message,
+                is_read: Boolean(r.is_read),
+                created_at: r.created_at,
+                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_photo: r.sender_photo,
+                link: '/cms/broadcaster'
+            })));
+
+            const satgasRows = await this.dataSource.query(
+                `SELECT id, jenis, nama as title, deskripsi, created_at
+                 FROM bdb_operasi_satgas
+                 WHERE deleted_at IS NULL
+                 ORDER BY created_at DESC
+                 LIMIT 6`
+            );
+            items.push(...satgasRows.map((r: any) => ({
+                id: 'satgas_' + r.id,
+                category: 'dinas',
+                type: r.jenis.toLowerCase(),
+                post_id: null,
+                title: r.title,
+                message: `Ada ${r.jenis === 'SATGAS' ? 'Satgas Operasi' : 'Operasi Kepolisian'} Baru dari Robinops Bareskrim`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@bareskrim',
+                sender_photo: null,
+                link: '/cms/master/operasi-satgas'
+            })));
+
+            const kermaRows = await this.dataSource.query(
+                `SELECT id, institusi, tentang as title, created_at
+                 FROM bdb_kerma_master
+                 WHERE deleted_at IS NULL
+                 ORDER BY created_at DESC
+                 LIMIT 5`
+            );
+            items.push(...kermaRows.map((r: any) => ({
+                id: 'kerma_' + r.id,
+                category: 'dinas',
+                type: 'kerma',
+                post_id: null,
+                title: r.title,
+                message: `Kerjasama (Kerma) Baru dengan ${r.institusi}`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@kerma_polri',
+                sender_photo: null,
+                link: '/cms/master/kerma'
+            })));
+
+            const lpSql = isAdmin
+                ? `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan ORDER BY created_at DESC LIMIT 6`
+                : `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $1 OR satker_asal_id = $1) ORDER BY created_at DESC LIMIT 6`;
+            const lpParams = isAdmin ? [] : [satkerId];
+            const lpRows = await this.dataSource.query(lpSql, lpParams);
+            items.push(...lpRows.map((r: any) => ({
+                id: 'lp_' + r.id,
+                category: 'dinas',
+                type: 'pelimpahan',
+                post_id: null,
+                title: `Pelimpahan ke ${r.satker_tujuan_nama || 'Satker Terkait'}`,
+                message: `LP #${r.lp_id} dilimpahkan dari ${r.satker_asal_nama || 'Satker Asal'}`,
+                is_read: true,
+                created_at: r.created_at,
+                sender_handle: '@robinops',
+                sender_photo: null,
+                link: '/cms/laporan-polisi'
+            })));
+        }
+
+        items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
         const unreadCounts = await this.dataSource.query(
             `SELECT category, count(*)::int as c 
@@ -1659,18 +1352,7 @@ export class JukrahService {
 
         return {
             status: 1,
-            data: rows.map((r: any) => ({
-                id: Number(r.id),
-                category: r.category,
-                type: r.type,
-                post_id: r.post_id ? Number(r.post_id) : null,
-                title: r.title,
-                message: r.message,
-                is_read: Boolean(r.is_read),
-                created_at: r.created_at,
-                sender_handle: r.sender_callsign ? `@${r.sender_callsign}` : null,
-                sender_photo: r.sender_photo
-            })),
+            data: items.slice(0, 30),
             unread_dinas: unreadDinas,
             unread_social: unreadSocial
         };
@@ -1698,7 +1380,6 @@ export class JukrahService {
     async getDashboardWidgets(user: any) {
         const uid = Number(user?.id || 0);
 
-        // 1. Card 1: Jukrah Resmi Terkini
         const jukrahRows = await this.dataSource.query(
             `SELECT p.id, p.content, p.created_at, s.nama_singkat as satker,
                     CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged
@@ -1714,15 +1395,14 @@ export class JukrahService {
         const latestJukrah = jukrahRows.length ? {
             id: Number(jukrahRows[0].id),
             title: jukrahRows[0].content.slice(0, 90),
-            satker: jukrahRows[0].satker || 'Robinops Bareskrim',
+            satker: jukrahRows[0].satker || 'Robinopsnal Bareskrim Polri',
             created_at: jukrahRows[0].created_at,
             acknowledged: Boolean(jukrahRows[0].acknowledged)
         } : null;
 
-        // 2. Card 2: Top Trending Discussion
         const trendingRows = await this.dataSource.query(
             `SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.callsign, s.nama_singkat as satker,
+                    u.id as author_id, u.username as author_username, u.callsign, s.nama_singkat as satker,
                     (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
@@ -1734,23 +1414,24 @@ export class JukrahService {
         const topTrending = trendingRows.length ? {
             id: Number(trendingRows[0].id),
             snippet: trendingRows[0].content.slice(0, 85),
-            author_handle: trendingRows[0].callsign ? `@${trendingRows[0].callsign}` : '@pers_reskrim',
-            satker: trendingRows[0].satker || 'Polda',
+            author_handle: this.formatCallsign(trendingRows[0].callsign, trendingRows[0].author_id, trendingRows[0].author_username),
+            satker: this.isSuperUserOne(trendingRows[0].author_id, trendingRows[0].author_username, trendingRows[0].callsign)
+                ? 'Robinopsnal Bareskrim Polri'
+                : (trendingRows[0].satker || 'Polri'),
             comments_count: Number(trendingRows[0].comments_count || 0),
             reaction_counts: trendingRows[0].reaction_counts || {}
         } : null;
 
-        // 3. Card 3: Quick Stats Akun Saya
         const userStats = await this.dataSource.query(
             `SELECT 
-                u.callsign,
+                u.id, u.username, u.callsign,
                 (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') as my_posts,
                 (SELECT COUNT(*)::int FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false AND category = 'dinas') as unread_dinas
              FROM auth_users u WHERE u.id = $1`,
             [uid]
         );
         const quickStats = {
-            callsign: userStats[0]?.callsign ? `@${userStats[0].callsign}` : null,
+            callsign: this.formatCallsign(userStats[0]?.callsign, userStats[0]?.id, userStats[0]?.username),
             my_posts: Number(userStats[0]?.my_posts || 0),
             unread_dinas: Number(userStats[0]?.unread_dinas || 0)
         };
