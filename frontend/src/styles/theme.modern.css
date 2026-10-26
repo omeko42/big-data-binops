@@ -5325,3 +5325,36 @@ div[style*="margin-top:-1.6rem"] > span {
 }
 /* === END UNIVERSAL LIGHT & DARK INLINE CONTRAST BRIDGE === */
 
+/* ==========================================================================
+   TRUE 100% FULL WEB-SCREEN MODE FOR ALL MAXIMIZED DIALOGS & MODALS
+   ========================================================================== */
+.p-dialog-mask:has(.p-dialog-maximized) {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.p-dialog.p-dialog-maximized {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  transform: none !important;
+}
+.p-dialog.p-dialog-maximized .p-dialog-content {
+  flex: 1 1 auto !important;
+  height: calc(100vh - 110px) !important;
+  max-height: none !important;
+}
+.p-dialog.p-dialog-maximized .p-dialog-header .p-dialog-header-icon {
+  width: 2.1rem !important;
+  height: 2.1rem !important;
+  border-radius: 8px !important;
+}
+
+

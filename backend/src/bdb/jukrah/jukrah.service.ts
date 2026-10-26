@@ -19,12 +19,20 @@ export class JukrahService {
     private readonly logger = new Logger('JukrahService');
     private ready = false;
     private readonly streamSecret = process.env.JWT_SECRET || process.env.CAS_STREAM_SECRET || '';
+    private readonly networkUsersCache = new Map<string, { exp: number; value: any }>();
+    private readonly networkCountCache = new Map<string, { exp: number; total: number }>();
+    private static readonly NETWORK_CACHE_TTL_MS = 30 * 1000;
 
     constructor(
         private readonly dataSource: DataSource,
         private readonly minio: MinioService,
         private readonly audit: AuditService
     ) {}
+
+    clearNetworkUsersCache() {
+        this.networkUsersCache.clear();
+        this.networkCountCache.clear();
+    }
 
     private async ensureTable() {
         if (this.ready) return;
@@ -68,6 +76,12 @@ export class JukrahService {
                 created_at timestamptz default now(),
                 primary key (comment_id, user_id)
             )`);
+        try {
+            await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_req_status ON user_connections (requester_id, status)');
+            await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_addr_status ON user_connections (addressee_id, status)');
+            await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_trb_police_lower_email ON trb_police (LOWER(email))');
+            await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
+        } catch {}
         this.ready = true;
     }
 
@@ -693,43 +707,99 @@ export class JukrahService {
 
     /** Ambil direktori personil Polri real dari database untuk jejaring CAS. */
     async getNetworkUsers(user: any, opts: any) {
+        await this.ensureTable();
         const uid = Number(user?.id || 0);
+        const isSuperadmin = String(user?.role_bdb || '').toLowerCase() === 'superadmin';
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
         const offset = (page - 1) * limit;
         const search = (opts.search || '').trim();
-        const whereClauses: string[] = ["(u.status = 'AKTIF' OR u.status = 'active')"];
-        const params: any[] = [];
-        if (search) {
-            params.push('%' + search + '%');
-            whereClauses.push('(u.name ILIKE $' + params.length + ' OR u.username ILIKE $' + params.length + ' OR u.callsign ILIKE $' + params.length + ' OR u.email_polri ILIKE $' + params.length + ' OR s.deskripsi ILIKE $' + params.length + ' OR s.nama_singkat ILIKE $' + params.length + ')');
-        }
-        if (opts.satker_id) {
-            params.push(opts.satker_id);
-            whereClauses.push('u.scope_satker_id = $' + params.length);
-        }
+        const satkerId = opts.satker_id ? String(opts.satker_id).trim() : '';
+
         let rawConn = opts.connected_to;
         if (rawConn === 'undefined' || rawConn === 'null' || rawConn === '') rawConn = null;
         let connectedTo = (rawConn && !isNaN(Number(rawConn))) ? Number(rawConn) : null;
         if (!connectedTo && (opts.filter === 'connected' || opts.satker === 'connected')) {
             connectedTo = Number(opts.target_user_id) || uid;
         }
+
+        const now = Date.now();
+        const filterKey = `${connectedTo || 0}|${satkerId}|${search.toLowerCase()}`;
+        const pageCacheKey = `${uid}|${isSuperadmin ? 1 : 0}|${filterKey}|${page}|${limit}`;
+        const cachedPage = this.networkUsersCache.get(pageCacheKey);
+        if (cachedPage && cachedPage.exp > now) {
+            return cachedPage.value;
+        }
+
+        const whereClauses: string[] = ["(u.status = 'AKTIF' OR u.status = 'active')"];
+        const params: any[] = [];
+        if (search) {
+            params.push('%' + search + '%');
+            const sIdx = params.length;
+            whereClauses.push(
+                `(u.name ILIKE $${sIdx} OR u.username ILIKE $${sIdx} OR u.callsign ILIKE $${sIdx} OR u.email_polri ILIKE $${sIdx} OR u.scope_satker_id IN (SELECT id FROM bdb_satker WHERE deskripsi ILIKE $${sIdx} OR nama_singkat ILIKE $${sIdx}))`
+            );
+        }
+        if (satkerId) {
+            params.push(satkerId);
+            whereClauses.push('u.scope_satker_id = $' + params.length);
+        }
         if (connectedTo) {
             params.push(connectedTo);
-            whereClauses.push('u.id IN (SELECT CASE WHEN requester_id = $' + params.length + ' THEN addressee_id ELSE requester_id END FROM user_connections WHERE (requester_id = $' + params.length + ' OR addressee_id = $' + params.length + ") AND status = 'ACCEPTED')");
+            const cIdx = params.length;
+            whereClauses.push(
+                `u.id IN (SELECT addressee_id FROM user_connections WHERE requester_id = $${cIdx} AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $${cIdx} AND status = 'ACCEPTED')`
+            );
         }
-        const countRes = await this.dataSource.query(
-            'SELECT count(*)::int as total FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE ' + whereClauses.join(' AND '),
-            params
-        );
-        const total = countRes[0]?.total || 0;
+
+        const whereSql = whereClauses.join(' AND ');
+        const filterParams = [...params];
+
         params.push(limit);
         const limitIdx = params.length;
         params.push(offset);
         const offsetIdx = params.length;
-        const sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id LEFT JOIN trb_police tp ON (lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))) WHERE ' + whereClauses.join(' AND ') + ' ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC LIMIT $' + limitIdx + ' OFFSET $' + offsetIdx;
-        const rows = await this.dataSource.query(sql, params);
-        const isSuperadmin = String(user?.role_bdb || '').toLowerCase() === 'superadmin';
+
+        const cachedCount = this.networkCountCache.get(filterKey);
+        const hasValidCachedCount = Boolean(cachedCount && cachedCount.exp > now);
+        const countWindowSelect = hasValidCachedCount ? '' : ', COUNT(*) OVER()::int as total_count';
+
+        const dataSql = `
+            WITH paged_users AS MATERIALIZED (
+                SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key${countWindowSelect}
+                FROM auth_users u
+                WHERE ${whereSql}
+                ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
+                LIMIT $${limitIdx} OFFSET $${offsetIdx}
+            )
+            SELECT pu.*, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp
+            FROM paged_users pu
+            LEFT JOIN bdb_satker s ON s.id = pu.scope_satker_id
+            LEFT JOIN LATERAL (
+                SELECT pangkat, nrp, satuan, no_hp
+                FROM trb_police tp
+                WHERE lower(tp.email) = lower(pu.email)
+                   OR (pu.email_polri IS NOT NULL AND lower(tp.email) = lower(pu.email_polri))
+                LIMIT 1
+            ) tp ON true
+            ORDER BY (pu.id = 1) DESC, pu.last_login_at DESC NULLS LAST, pu.id ASC
+        `;
+
+        const rows = await this.dataSource.query(dataSql, params);
+        let total = 0;
+        if (hasValidCachedCount) {
+            total = cachedCount!.total;
+        } else if (rows.length > 0 && rows[0].total_count !== undefined) {
+            total = Number(rows[0].total_count || 0);
+            this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
+        } else if (offset > 0) {
+            const cRes = await this.dataSource.query(`SELECT count(*)::int as total FROM auth_users u WHERE ${whereSql}`, filterParams);
+            total = Number(cRes[0]?.total || 0);
+            this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
+        } else {
+            this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total: 0 });
+        }
+
         const data = rows.map((r: any) => {
             const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
             const nrpFallback = r.email && r.email.match(/^(\d{7,10})@/) ? r.email.match(/^(\d{7,10})@/)[1] : (r.email_polri && r.email_polri.match(/^(\d{7,10})@/) ? r.email_polri.match(/^(\d{7,10})@/)[1] : null);
@@ -754,7 +824,14 @@ export class JukrahService {
                 last_login_at: r.last_login_at
             };
         });
-        return { status: 1, data, total, total_pages: Math.ceil(total / limit) || 1, page, limit, is_superadmin: isSuperadmin };
+        const result = { status: 1, data, total, total_pages: Math.ceil(total / limit) || 1, page, limit, is_superadmin: isSuperadmin };
+        if (this.networkUsersCache.size > 200) {
+            for (const [k, v] of this.networkUsersCache.entries()) {
+                if (v.exp <= now) this.networkUsersCache.delete(k);
+            }
+        }
+        this.networkUsersCache.set(pageCacheKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, value: result });
+        return result;
     }
 
     /** Ambil profil detail personil CAS (real data tanpa dummy). */
@@ -784,15 +861,18 @@ export class JukrahService {
         let policeProfile: any = null;
         let connectionsCount = 0;
         try {
-            const pRes = await this.dataSource.query(
-                'SELECT nrp, nama, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
-                [[target.email, target.email_polri].filter(Boolean)]
-            );
-            if (pRes && pRes.length) policeProfile = pRes[0];
+            const emailsLower = [target.email, target.email_polri].filter(Boolean).map((e: string) => String(e).toLowerCase());
+            if (emailsLower.length) {
+                const pRes = await this.dataSource.query(
+                    'SELECT nrp, nama, satuan, no_hp, pangkat, jabatan, foto, is_pns, social_media FROM trb_police WHERE lower(email) = any($1::text[]) LIMIT 1',
+                    [emailsLower]
+                );
+                if (pRes && pRes.length) policeProfile = pRes[0];
+            }
         } catch {}
         try {
             const cRes = await this.dataSource.query(
-                "SELECT count(*)::int as c FROM user_connections WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED'",
+                "SELECT count(*)::int as c FROM (SELECT addressee_id FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') conn",
                 [Number(target.id)]
             );
             connectionsCount = Number(cRes[0]?.c || 0);
