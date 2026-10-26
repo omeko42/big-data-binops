@@ -58,13 +58,31 @@ function timeAgo(dateStr) {
 
 function getVerificationBadge(role, isUserOne, userId, username) {
   var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
-  if (isUserOne || SUPER_IDS.includes(String(userId)) || username === 'omeko42' || username === 'Yud08') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
+  var uNorm = String(username || '').toLowerCase().trim().replace(/^@/, '');
+  if (isUserOne || SUPER_IDS.includes(String(userId)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm)) return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   var r = String(role || '').toLowerCase().trim();
-  if (r === 'superadmin') return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
-  if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#10b981', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
-  if (r === 'operator') return { color: '#3b82f6', label: 'Operator Terverifikasi', role: 'operator' };
-  if (r === 'viewer') return { color: '#3b82f6', label: 'Viewer Terverifikasi', role: 'viewer' };
-  return null;
+  if (r === 'superadmin' || r.includes('super')) return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
+  if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#6366f1', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
+  if (r === 'operator') return { color: '#0095f6', label: 'Operator Satker Terverifikasi', role: 'operator' };
+  return { color: '#64748b', label: 'Personel Terverifikasi', role: 'viewer' };
+}
+
+function renderMetaVerifiedBadge(badge, sizePx) {
+  if (!badge) return null;
+  var sz = sizePx || 16;
+  return (0,t.jsx)("span",{
+    title:badge.label,
+    style:{display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,lineHeight:1},
+    children:(0,t.jsxs)("svg",{
+      viewBox:"0 0 24 24",
+      width:sz,
+      height:sz,
+      children:[
+        (0,t.jsx)("path",{d:"M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z",fill:badge.color}),
+        (0,t.jsx)("path",{d:"M9.5 12.5l2 2 4.5-4.5",stroke:"#ffffff",strokeWidth:"2.4",strokeLinecap:"round",strokeLinejoin:"round",fill:"none"})
+      ]
+    })
+  });
 }
 
 function formatCallsign(rawCallsign, authorId, username) {
@@ -91,60 +109,30 @@ function toTitleCase(str) {
 }
 
 function renderCornerAvatar(avatarUrl, initials, badge, sizeRem, badgePx, svgPx) {
-  return (0,t.jsxs)("div",{
+  return (0,t.jsx)("div",{
     style:{
       position:"relative",
       width:sizeRem + "rem",
       height:sizeRem + "rem",
       flexShrink:0
     },
-    children:[
-      (0,t.jsx)("div",{
-        style:{
-          width:"100%",
-          height:"100%",
-          borderRadius:"999px",
-          overflow:"hidden",
-          background:"#1e293b",
-          display:"flex",
-          alignItems:"center",
-          justifyContent:"center",
-          fontWeight:700,
-          fontSize:(sizeRem * 0.38) + "rem",
-          color:"#38bdf8",
-          border:"1px solid rgba(255,255,255,0.12)"
-        },
-        children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
-      }),
-      badge && (0,t.jsx)("div",{
-        title:badge.label,
-        style:{
-          position:"absolute",
-          bottom:"-2px",
-          right:"-2px",
-          width:badgePx + "px",
-          height:badgePx + "px",
-          borderRadius:"999px",
-          background:badge.color,
-          border:"2px solid #0f172a",
-          display:"flex",
-          alignItems:"center",
-          justifyContent:"center",
-          boxShadow:"0 0 6px " + badge.color + "99"
-        },
-        children:(0,t.jsx)("svg",{
-          viewBox:"0 0 12 12",
-          width:svgPx + "px",
-          height:svgPx + "px",
-          fill:"none",
-          stroke:"#ffffff",
-          strokeWidth:"2.4",
-          strokeLinecap:"round",
-          strokeLinejoin:"round",
-          children:(0,t.jsx)("path",{d:"m2.5 6 2.5 2.5 5-5"})
-        })
-      })
-    ]
+    children:(0,t.jsx)("div",{
+      style:{
+        width:"100%",
+        height:"100%",
+        borderRadius:"999px",
+        overflow:"hidden",
+        background:"#1e293b",
+        display:"flex",
+        alignItems:"center",
+        justifyContent:"center",
+        fontWeight:700,
+        fontSize:(sizeRem * 0.38) + "rem",
+        color:"#38bdf8",
+        border:"1px solid rgba(255,255,255,0.12)"
+      },
+      children:avatarUrl ? (0,t.jsx)("img",{src:avatarUrl,alt:"Avatar",style:{width:"100%",height:"100%",objectFit:"cover"}}) : initials
+    })
   });
 }
 
@@ -801,12 +789,15 @@ e.s(["default",0,function() {
 
     // Header Hero Banner: "SHARESE" without Akun Aktif card on the right
     (0,t.jsx)("div",{
+      className:"cms-card",
       style:{
-        background:"linear-gradient(135deg, rgba(30,58,138,0.25) 0%, rgba(15,23,42,0.7) 100%)",
-        border:"1px solid var(--cas-border, rgba(255,255,255,0.12))",
+        background:"var(--cas-bg-surface, #ffffff)",
+        border:"1px solid var(--cas-border, #cbd5e1)",
+        borderLeft:"4px solid #2563eb",
         borderRadius:"12px",
         padding:"1.25rem 1.6rem",
-        marginBottom:"1.25rem"
+        marginBottom:"1.25rem",
+        boxShadow:"var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))"
       },
       children:(0,t.jsxs)("div",{children:[
         (0,t.jsx)("h1",{
@@ -814,17 +805,15 @@ e.s(["default",0,function() {
             fontSize:"1.65rem",
             fontWeight:900,
             margin:0,
-            background:"linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #818cf8 100%)",
-            WebkitBackgroundClip:"text",
-            WebkitTextFillColor:"transparent",
+            color:"var(--cas-text-primary, #0f172a)",
             letterSpacing:"0.06em",
             textTransform:"uppercase"
           },
           children:"SHARESE"
         }),
         (0,t.jsx)("p",{
-          style:{margin:"0.35rem 0 0",fontSize:"0.84rem",color:"var(--cas-text-secondary, #94a3b8)",lineHeight:1.45},
-          children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal"
+          style:{margin:"0.35rem 0 0",fontSize:"0.84rem",color:"var(--cas-text-secondary, #475569)",lineHeight:1.45,fontWeight:500},
+          children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal."
         })
       ]})
     }),
@@ -1002,18 +991,19 @@ e.s(["default",0,function() {
           (0,t.jsx)(o.Dropdown,{
             value:audienceType,
             options:[
-              { label: '🌐 Publik / Nasional', value: 'public' },
-              { label: '🏛️ Regional Satker', value: 'regional' },
-              { label: '👥 Rekan Penyidik', value: 'friends' },
-              { label: '🔒 Hanya Saya (Privat)', value: 'private' }
+              { label: 'Publik / Nasional', value: 'public' },
+              { label: 'Regional Satker', value: 'regional' },
+              { label: 'Rekan Penyidik', value: 'friends' },
+              { label: 'Hanya Saya (Privat)', value: 'private' }
             ],
             onChange:e => setAudienceType(e.value),
             style:{fontSize:"0.78rem"}
           }),
           // Official Jukrah checkbox (superadmin/admin only)
-          canBroadcastOfficial && (0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.75rem",color:"#f59e0b",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"},children:[
+          canBroadcastOfficial && (0,t.jsxs)("label",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"},children:[
             (0,t.jsx)("input",{type:"checkbox",checked:isOfficialJukrah,onChange:e => setIsOfficialJukrah(e.target.checked)}),
-            "📢 Jukrah Resmi"
+            (0,t.jsx)("i",{className:"pi pi-megaphone",style:{fontSize:"0.78rem"}}),
+            "Jukrah Resmi"
           ]})
         ]}),
 
@@ -1111,7 +1101,7 @@ e.s(["default",0,function() {
                     children:renderCornerAvatar(authorAvatar, authorInitials, authorBadge, 2.5, 15, 8.5)
                   }),
                   (0,t.jsxs)("div",{children:[
-                    (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
                       (0,t.jsx)("span",{
                         onClick:() => handleOpenUserProfile(post.author_id, post),
                         style:{fontWeight:800,fontSize:"0.92rem",color:"#38bdf8",letterSpacing:"-0.01em",cursor:"pointer",transition:"all 0.15s ease"},
@@ -1119,10 +1109,14 @@ e.s(["default",0,function() {
                         onMouseLeave:e => { e.currentTarget.style.color = '#38bdf8'; e.currentTarget.style.textDecoration = 'none'; },
                         title:"Klik untuk membuka profil " + (authorNameDisplay || authorHandle),
                         children:authorHandle
-                      })
+                      }),
+                      renderMetaVerifiedBadge(authorBadge, 16)
                     ]}),
                     (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",fontSize:"0.74rem",color:"#94a3b8",marginTop:"0.15rem"},children:[
-                      (0,t.jsx)("span",{children:post.audience_type === 'private' ? '🔒 Privat' : post.audience_type === 'regional' ? '🏛️ Regional' : '🌐 Publik'}),
+                      (0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:[
+                        (0,t.jsx)("i",{className:post.audience_type === 'private' ? 'pi pi-lock' : post.audience_type === 'regional' ? 'pi pi-building' : 'pi pi-globe',style:{fontSize:"0.68rem"}}),
+                        post.audience_type === 'private' ? 'Privat' : post.audience_type === 'regional' ? 'Regional' : 'Publik'
+                      ]}),
                       (0,t.jsx)("span",{style:{opacity:0.6},children:"•"}),
                       (0,t.jsx)("span",{children:timeAgo(post.created_at)}),
                       post.is_edited && (0,t.jsx)("span",{style:{color:"#64748b",fontStyle:"italic"},children:"(Diedit)"})
@@ -1181,14 +1175,15 @@ e.s(["default",0,function() {
                 ]}),
                 post.has_acknowledged || post.my_acknowledged ? (
                   (0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",color:"#10b981",fontWeight:700,fontSize:"0.78rem"},children:[
-                    "✅ Paham & Siap Laksanakan"
+                    (0,t.jsx)("i",{className:"pi pi-check-circle",style:{fontSize:"0.8rem"}}),
+                    "Paham & Siap Laksanakan"
                   ]})
                 ) : (
                   (0,t.jsxs)(c.Button,{
                     size:"small",
                     onClick:() => handleAcknowledge(post.id),
-                    style:{fontSize:"0.75rem",fontWeight:700,background:"#f59e0b",borderColor:"#f59e0b",color:"#000",padding:"0.25rem 0.65rem"},
-                    children:["🫡 Paham & Siap Laksanakan"]
+                    style:{fontSize:"0.75rem",fontWeight:700,background:"#f59e0b",borderColor:"#f59e0b",color:"#000",padding:"0.25rem 0.65rem",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+                    children:[(0,t.jsx)("i",{className:"pi pi-check",style:{fontSize:"0.75rem"}}),"Paham & Siap Laksanakan"]
                   })
                 )
               ]}),
@@ -1345,7 +1340,7 @@ e.s(["default",0,function() {
                       },
                       children:[
                         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",minWidth:0,flex:"1 1 14rem"},children:[
-                          (0,t.jsx)("div",{style:{fontSize:"1.5rem",flexShrink:0},children:m.isPdf ? "📄" : "📁"}),
+                          (0,t.jsx)("div",{style:{fontSize:"1.25rem",flexShrink:0,color:m.isPdf ? "#ef4444" : "#64748b",display:"flex",alignItems:"center"},children:(0,t.jsx)("i",{className:m.isPdf ? "pi pi-file-pdf" : "pi pi-folder",style:{fontSize:"1.2rem"}})}),
                           (0,t.jsxs)("div",{style:{minWidth:0},children:[
                             (0,t.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"var(--cas-text-primary, #f8fafc)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:m.safeDlName,children:m.safeDlName}),
                             (0,t.jsxs)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-secondary, #94a3b8)",display:"flex",gap:"0.4rem"},children:[
@@ -1371,7 +1366,8 @@ e.s(["default",0,function() {
                               gap:"0.3rem"
                             },
                             children:[
-                              "👁️ Pratinjau"
+                              (0,t.jsx)("i",{className:"pi pi-eye",style:{fontSize:"0.75rem"}}),
+                              "Pratinjau"
                             ]
                           }),
                           (0,t.jsxs)("a",{
@@ -1394,7 +1390,8 @@ e.s(["default",0,function() {
                               cursor:"pointer"
                             },
                             children:[
-                              "⬇️ Unduh"
+                              (0,t.jsx)("i",{className:"pi pi-download",style:{fontSize:"0.75rem"}}),
+                              "Unduh"
                             ]
                           })
                         ]})
@@ -1606,7 +1603,7 @@ e.s(["default",0,function() {
                         }),
                         (0,t.jsxs)("div",{style:{flex:1,minWidth:0,overflowWrap:"anywhere",wordBreak:"break-word"},children:[
                           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.2rem"},children:[
-                            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+                            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
                               (0,t.jsx)("span",{
                                 onClick:() => handleOpenUserProfile(cm.author_id || cm.user_id, cm),
                                 style:{fontWeight:700,color:"#38bdf8",fontSize:"0.78rem",cursor:"pointer",transition:"all 0.15s ease"},
@@ -1615,6 +1612,7 @@ e.s(["default",0,function() {
                                 title:"Klik untuk melihat profil personil",
                                 children:cmHandle
                               }),
+                              renderMetaVerifiedBadge(cmBadge, 13),
                               (0,t.jsx)("span",{style:{color:"#64748b",fontSize:"0.7rem"},children:timeAgo(cm.created_at)})
                             ]}),
                             isCmAuthor && (0,t.jsx)("button",{
@@ -1772,7 +1770,7 @@ e.s(["default",0,function() {
               (0,t.jsxs)("div",{
                 style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
                 children:[
-                  (0,t.jsx)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)"},children:"📁 Kategori Konten"}),
+                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-folder",style:{fontSize:"0.78rem",color:"#64748b"}}),"Kategori Konten"]}),
                   feedCategory !== 'all' && (0,t.jsx)("button",{
                     type:"button",
                     onClick:()=>{ setFeedCategory('all'); setCurrentPage(1); },
@@ -1782,11 +1780,11 @@ e.s(["default",0,function() {
                 ]
               }),
               [
-                { id: 'all', label: 'Semua Postingan', icon: '📝' },
-                { id: 'repost', label: 'Repost Perkara', icon: '🔁' },
-                { id: 'saved', label: 'Tersimpan', icon: '🔖' },
-                { id: 'mine', label: 'Postingan Saya', icon: '👤' },
-                { id: 'official', label: 'Jukrah Kedinasan', icon: '📢' }
+                { id: 'all', label: 'Semua Postingan', icon: 'pi pi-th-large' },
+                { id: 'repost', label: 'Repost Perkara', icon: 'pi pi-refresh' },
+                { id: 'saved', label: 'Tersimpan', icon: 'pi pi-bookmark' },
+                { id: 'mine', label: 'Postingan Saya', icon: 'pi pi-user' },
+                { id: 'official', label: 'Jukrah Kedinasan', icon: 'pi pi-megaphone' }
               ].map(cat => {
                 var active = feedCategory === cat.id;
                 return (0,t.jsxs)("button",{
@@ -1811,7 +1809,7 @@ e.s(["default",0,function() {
                   },
                   children:[
                     (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                      (0,t.jsx)("span",{children:cat.icon}),
+                      (0,t.jsx)("i",{className:cat.icon,style:{fontSize:"0.82rem"}}),
                       cat.label
                     ]}),
                     active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#3b82f6"}})
@@ -1837,7 +1835,7 @@ e.s(["default",0,function() {
               (0,t.jsxs)("div",{
                 style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.35rem",paddingBottom:"0.45rem",borderBottom:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},
                 children:[
-                  (0,t.jsx)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)"},children:"👁️ Visibilitas"}),
+                  (0,t.jsxs)("span",{style:{fontSize:"0.75rem",fontWeight:800,letterSpacing:"0.05em",textTransform:"uppercase",color:"var(--cas-text-primary, #f8fafc)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[(0,t.jsx)("i",{className:"pi pi-eye",style:{fontSize:"0.78rem",color:"#64748b"}}),"Visibilitas"]}),
                   visibilityFilter !== 'all' && (0,t.jsx)("button",{
                     type:"button",
                     onClick:()=>{ setVisibilityFilter('all'); setCurrentPage(1); },
@@ -1847,11 +1845,11 @@ e.s(["default",0,function() {
                 ]
               }),
               [
-                { id: 'all', label: 'Semua Visibilitas', icon: '🌐' },
-                { id: 'public', label: 'Publik (Nasional)', icon: '🌍' },
-                { id: 'regional', label: 'Regional (Polda)', icon: '🏛️' },
-                { id: 'friends', label: 'Rekan Terhubung', icon: '👥' },
-                { id: 'private', label: 'Privat (Hanya Saya)', icon: '🔒' }
+                { id: 'all', label: 'Semua Visibilitas', icon: 'pi pi-sliders-h' },
+                { id: 'public', label: 'Publik (Nasional)', icon: 'pi pi-globe' },
+                { id: 'regional', label: 'Regional (Polda)', icon: 'pi pi-building' },
+                { id: 'friends', label: 'Rekan Terhubung', icon: 'pi pi-users' },
+                { id: 'private', label: 'Privat (Hanya Saya)', icon: 'pi pi-lock' }
               ].map(vis => {
                 var active = visibilityFilter === vis.id;
                 return (0,t.jsxs)("button",{
@@ -1876,7 +1874,7 @@ e.s(["default",0,function() {
                   },
                   children:[
                     (0,t.jsxs)("span",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                      (0,t.jsx)("span",{children:vis.icon}),
+                      (0,t.jsx)("i",{className:vis.icon,style:{fontSize:"0.82rem"}}),
                       vis.label
                     ]}),
                     active && (0,t.jsx)("span",{style:{width:"6px",height:"6px",borderRadius:"50%",background:"#10b981"}})
@@ -1893,7 +1891,7 @@ e.s(["default",0,function() {
     // Modal: Siapa Saja yang Ngelike ("Reaksi Personil")
     (0,t.jsx)(u.Dialog,{
       header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-        (0,t.jsx)("span",{style:{fontSize:"1.2rem"},children:"👍"}),
+        (0,t.jsx)("i",{className:"pi pi-thumbs-up",style:{fontSize:"1rem",color:"#3b82f6"}}),
         (0,t.jsx)("span",{style:{fontWeight:800},children:"Reaksi Personil (" + reactionsList.length + ")"})
       ]}),
       visible:!!reactionsPostId,
@@ -1929,8 +1927,9 @@ e.s(["default",0,function() {
                       usr.pangkat && usr.pangkat !== '-' ? usr.pangkat + ' ' : '',
                       usr.name || usr.username
                     ]}),
-                    (0,t.jsxs)("div",{style:{fontSize:"0.72rem",color:"#94a3b8"},children:[
-                      usrHandle,
+                    (0,t.jsxs)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",display:"flex",alignItems:"center",gap:"0.3rem"},children:[
+                      (0,t.jsx)("span",{style:{color:"#38bdf8",fontWeight:700},children:usrHandle}),
+                      renderMetaVerifiedBadge(usrBadge, 13),
                       usr.satker ? ' • ' + toTitleCase(usr.satker) : ''
                     ]})
                   ]})
@@ -2035,7 +2034,7 @@ e.s(["default",0,function() {
 
     // Modal: Edit Postingan
     (0,t.jsx)(u.Dialog,{
-      header:"✏️ Edit Informasi Postingan",
+      header:"Edit Informasi Postingan",
       visible:!!editingPost,
       onHide:() => setEditingPost(null),
       style:{width:"36rem",maxWidth:"95vw"},
@@ -2057,10 +2056,10 @@ e.s(["default",0,function() {
           (0,t.jsx)(o.Dropdown,{
             value:editAudience,
             options:[
-              { label: '🌐 Publik / Nasional', value: 'public' },
-              { label: '🏛️ Regional Satker', value: 'regional' },
-              { label: '👥 Rekan Penyidik', value: 'friends' },
-              { label: '🔒 Hanya Saya (Privat)', value: 'private' }
+              { label: 'Publik / Nasional', value: 'public' },
+              { label: 'Regional Satker', value: 'regional' },
+              { label: 'Rekan Penyidik', value: 'friends' },
+              { label: 'Hanya Saya (Privat)', value: 'private' }
             ],
             onChange:e => setEditAudience(e.value),
             style:{fontSize:"0.8rem"}
@@ -2074,7 +2073,7 @@ e.s(["default",0,function() {
 
     // Dialog for reporting post
     (0,t.jsx)(u.Dialog,{
-      header:"🚨 Laporkan Konten",
+      header:"Laporkan Konten",
       visible:!!reportDialogPost,
       onHide:() => setReportDialogPost(null),
       style:{width:"28rem",maxWidth:"95vw"},
@@ -2117,7 +2116,7 @@ e.s(["default",0,function() {
               renderCornerAvatar(
                 previewUser.photo_url || previewUser.foto,
                 String(previewUser.name || 'P').charAt(0).toUpperCase(),
-                getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb).toLowerCase() === 'superadmin'),
+                null,
                 4.2,
                 22,
                 12
@@ -2127,8 +2126,9 @@ e.s(["default",0,function() {
 
           // Identity Meta
           (0,t.jsxs)("div",{style:{marginTop:"1.8rem",padding:"0 0.5rem"},children:[
-            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap"},children:[
+            (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
               (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#38bdf8"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
+              renderMetaVerifiedBadge(getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb).toLowerCase() === 'superadmin', previewUser.id, previewUser.username), 18),
               (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
             ]}),
             previewUser.name ? (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8",fontWeight:600,marginTop:"0.2rem"},children:previewUser.name}) : null,
@@ -2174,20 +2174,20 @@ e.s(["default",0,function() {
               children:"Tutup"
             }),
             (String(previewUser.id) === String(currentUser?.id || currentUser?.user_id)) ? (
-              (0,t.jsx)("button",{
+              (0,t.jsxs)("button",{
                 type:"button",
                 onClick:() => { window.location.href = '/cms/profile'; },
                 style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 1.15rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
-                children:"👤 Buka Halaman Profil Saya"
+                children:[(0,t.jsx)("i",{className:"pi pi-user",style:{fontSize:"0.78rem"}}),"Buka Halaman Profil Saya"]
               })
             ) : (
-              (0,t.jsx)("button",{
+              (0,t.jsxs)("button",{
                 type:"button",
                 onClick:() => {
                   handleOpenUserProfile(previewUser.id, previewUser);
                 },
                 style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 1.15rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
-                children:"👤 Buka Profil Lengkap"
+                children:[(0,t.jsx)("i",{className:"pi pi-user",style:{fontSize:"0.78rem"}}),"Buka Profil Lengkap"]
               })
             )
           ]})
