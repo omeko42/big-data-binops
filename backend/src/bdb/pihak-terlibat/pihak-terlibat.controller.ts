@@ -16,6 +16,11 @@ export class PihakTerlibatController {
         return this.service.list(req.user, query);
     }
 
+    @Get('recent-global')
+    recentGlobal(@Query('page') page?: string, @Query('limit') limit?: string) {
+        return this.service.recentGlobal(Math.max(1, Number(page || 1)), Math.max(1, Math.min(Number(limit || 20), 100)));
+    }
+
     @Get('ranking')
     ranking(@Req() req: any, @Query() query: any) {
         return this.service.ranking(req.user, query);

@@ -800,17 +800,18 @@ export class WorkflowService {
             }
             // update status LP (satu-satunya jalur perubahan status)
             if (dt.status_target_id) {
-                const statCat = await runner.query('select kategori from bdb_status_master where id=$1', [dt.status_target_id]);
+                const statCat = await runner.query('select kategori, code from bdb_status_master where id=$1', [dt.status_target_id]);
+                const legacyStatus = statCat[0]?.kategori === 'CC' ? 'SELESAI' : (statCat[0]?.code === 'LP' ? 'BARU' : 'PROSES');
                 if (statCat[0]?.kategori === 'CC') {
                     // tanggal_selesai ditentukan dari tanggal dokumen CC ini (bukan tanggal sistem
                     // memproses), sesuai Ketentuan Penghitungan CT/CP/CC/CR/Indeks -- fallback ke
                     // hari ini kalau dokumennya entah kenapa tak punya tanggal_dokumen.
                     await runner.query(
-                        'update bdb_laporan_polisi set status_id=$2, tanggal_selesai=case when $3::date > current_date then current_date else coalesce($3::date, current_date) end, updated_at=now() where id=$1',
-                        [lpId, dt.status_target_id, data.tanggal_dokumen || null]
+                        'update bdb_laporan_polisi set status_id=$2, status=$4, tanggal_selesai=case when $3::date > current_date then current_date else coalesce($3::date, current_date) end, updated_at=now() where id=$1',
+                        [lpId, dt.status_target_id, data.tanggal_dokumen || null, legacyStatus]
                     );
                 } else {
-                    await runner.query('update bdb_laporan_polisi set status_id=$2, tanggal_selesai=null, updated_at=now() where id=$1', [lpId, dt.status_target_id]);
+                    await runner.query('update bdb_laporan_polisi set status_id=$2, status=$3, tanggal_selesai=null, updated_at=now() where id=$1', [lpId, dt.status_target_id, legacyStatus]);
                 }
             }
             await runner.commitTransaction();
@@ -1101,7 +1102,7 @@ export class WorkflowService {
         // bukan lagi kategori CC (mis. dokumen CC-nya baru dihapus), isi dari tanggal_dokumen
         // dokumen ybs kalau statusnya CC.
         await this.dataSource.query(
-            'update bdb_laporan_polisi set status_id=$2, tanggal_selesai=case when $3::date > current_date then current_date else $3::date end, updated_at=now() where id=$1',
+            `update bdb_laporan_polisi set status_id=$2, status=coalesce((select case when kategori='CC' then 'SELESAI' when code='LP' then 'BARU' else 'PROSES' end from bdb_status_master where id=$2), status), tanggal_selesai=case when $3::date > current_date then current_date else $3::date end, updated_at=now() where id=$1`,
             [lpId, statusId, isCc ? (ccDate || this.getTodayWib()) : null]
         );
     }

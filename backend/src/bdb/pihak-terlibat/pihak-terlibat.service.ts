@@ -21,12 +21,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     private readonly logger = new Logger(PihakTerlibatService.name);
     private readonly summaryCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly rankingCache = new Map<string, { expiresAt: number; data: any }>();
+    private readonly recentGlobalCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly rankingCacheTtlMs = 2 * 60 * 1000;
 
     async onApplicationBootstrap() {
         if (!isPrimaryClusterInstance()) return;
         try {
             await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta text;`);
+            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS pihak_terkait jsonb DEFAULT '[]'::jsonb;`);
             await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_main ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, tipe_subjek, nasional_score DESC);`);
             await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_kasta ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta);`);
             const checkRes = await this.dataSource.query(
@@ -245,7 +247,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 cleanSearch = cleanSearch.replace(/^KORP:/, '').replace(/_/g, ' ').trim();
             }
             const isFullNik = /^\d{15,16}$/.test(cleanSearch);
-            const isNik = !isFullNik && /^\d{8,14}$/.test(cleanSearch);
+            const isNik = !isFullNik && /^\d{6,14}$/.test(cleanSearch);
+            const isLpNo = /^(LP|STTLP|B\/|A\/)/i.test(cleanSearch) || cleanSearch.includes('/');
             if (isFullNik) {
                 params.push(cleanSearch);
                 where.push(`${partyAlias}.nik = $${params.length}`);
@@ -254,13 +257,19 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik like $${pLike})`);
+                where.push(`(${partyAlias}.nik = $${pExact} or lower(coalesce(${partyAlias}.nik,'')) like $${pLike})`);
+            } else if (isLpNo) {
+                const words = cleanSearch.split(/\s+/).filter(Boolean);
+                const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
+                params.push(wildcardPattern);
+                const p = params.length;
+                where.push(`lower(coalesce(lp.no_laporan,'')) like $${p}`);
             } else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
                 params.push(wildcardPattern);
                 const p = params.length;
-                where.push(`(lower(coalesce(${partyAlias}.nama,'')) like $${p} or lower(coalesce(${partyAlias}.nik,'')) like $${p} or lower(coalesce(lp.no_laporan,'')) like $${p})`);
+                where.push(`lower(coalesce(${partyAlias}.nama,'')) like $${p}`);
             }
         }
 
@@ -1378,8 +1387,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     }
 
     private async recentGlobal(page: number, limit: number) {
+        const cacheKey = `${page}:${limit}`;
+        const cached = this.recentGlobalCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
         const offset = (page - 1) * limit;
         const fetch = offset + limit + 1;
+        const docScanLimit = Math.max(fetch * 4, 160);
         const dorsPromise = this.dataSource.query(
             `select 'DORS' as sumber, t.id::text as row_id, lp.id as lp_id, t.nama, t.nik,
                     upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
@@ -1409,19 +1424,39 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             [fetch]
         );
         const documentPromise = this.dataSource.query(
-            `with ${this.documentPartiesCte()}
+            `with recent_docs as (
+                 select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen, d.data, d.created_at, dt.code
+                 from bdb_dokumen d
+                 join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                 order by d.created_at desc, d.id desc
+                 limit $2
+             ),
+             recent_parties as (
+                 select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
+                        nullif(trim(item->>'nama'),'') as nama,
+                        nullif(trim(item->>'nik'),'') as nik,
+                        case when d.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end::text as keterlibatan,
+                        coalesce(nullif(trim(d.nomor_dokumen),''), nullif(trim(d.data->>'nomor_dokumen'),'')) as nomor_dokumen,
+                        coalesce(d.tanggal_dokumen, nullif(trim(d.data->>'tanggal_dokumen'),'')::date) as tanggal_dokumen,
+                        d.created_at
+                 from recent_docs d
+                 cross join lateral jsonb_array_elements(
+                     case when jsonb_typeof(d.data->'tersangka')='array' then d.data->'tersangka' else '[]'::jsonb end
+                 ) with ordinality as party(item, ordinality)
+                 where nullif(trim(item->>'nama'),'') is not null
+             )
              select 'DOKUMEN' as sumber,
                     (x.dokumen_id::text || ':' || x.urutan::text) as row_id,
                     lp.id as lp_id,x.nama,x.nik,x.keterlibatan,x.nomor_dokumen,x.tanggal_dokumen,
                     null::date as bap_tanggal,case when x.keterlibatan='DPO' then 'Penetapan DPO aktif' else 'Surat Ketetapan Penetapan Tersangka' end::text as keterangan,
                     false as has_lampiran,x.created_at,
                     lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,lp.unit_satker_nama,jk.keterangan as kejahatan
-             from document_parties x
+             from recent_parties x
              join bdb_laporan_polisi lp on lp.id=x.lp_id and lp.deleted_at is null
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              order by x.created_at desc,x.dokumen_id desc,x.urutan desc
              limit $1`,
-            [fetch]
+            [fetch, docScanLimit]
         );
         const dpoPromise = this.dataSource.query(
             `select 'DPO' as sumber,
@@ -1458,7 +1493,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const merged = [...dors, ...manual, ...document, ...dpoRows].sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         const pageRows = merged.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
-        return { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'recent-key-tail' } };
+        const result = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'recent-key-tail' } };
+        this.recentGlobalCache.set(cacheKey, { expiresAt: Date.now() + 30000, data: result });
+        return result;
     }
 
     async list(authUser: any, query: any = {}) {
@@ -1887,7 +1924,44 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             ORDER BY kasta_rank ASC, tgl_date DESC;
         `;
 
-        const rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        if (isCorp && rows.length === 0) {
+            const coreCorp = corpTerm.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
+            if (coreCorp.length >= 4) {
+                rows = await this.dataSource.query(`
+                    SELECT 
+                        lp.id as lp_id,
+                        coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                        case 
+                            when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                            else to_char(coalesce(d.synced_at, lp.synced_at, now()), 'DD-MM-YYYY')
+                        end as tgl_laporan,
+                        case 
+                            when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                            else coalesce(d.synced_at, lp.synced_at, now())::date
+                        end as tgl_date,
+                        coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                        coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                        coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                        coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                        coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                        coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
+                        'TERLAPOR' as peran,
+                        'DORS' as sumber,
+                        3 as kasta_rank
+                    FROM bdb_dors_lp d
+                    JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                    LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
+                    WHERE d.uraian_kejadian ILIKE ('%' || $1 || '%')
+                    ORDER BY tgl_date DESC
+                    LIMIT 100
+                `, [coreCorp]);
+            }
+        }
         const seen = new Set<string>();
         const deduped: any[] = [];
         for (const r of rows) {
@@ -1915,8 +1989,120 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     satker_nama: r.satker_nama || 'POLRI',
                     wilayah_nama: r.wilayah_nama || 'POLRI',
                     in_period: inPeriod,
-                    tahun: tDateStr ? tDateStr.substring(0, 4) : '—'
+                    tahun: tDateStr ? tDateStr.substring(0, 4) : '—',
+                    pihak_lp: []
                 });
+            }
+        }
+
+        let pihakKorporasi: any[] = [];
+        if (isCorp && deduped.length > 0) {
+            const lpIds = deduped.map(x => Number(x.lp_id)).filter(n => Number.isFinite(n) && n > 0);
+            if (lpIds.length > 0) {
+                try {
+                    const partyRows = await this.dataSource.query(`
+                        WITH raw_p AS (
+                            SELECT lp.id as lp_id,
+                                   upper(trim(t.nama)) as nama,
+                                   nullif(trim(t.nik), '') as nik,
+                                   upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
+                                   upper(trim(coalesce(t.pekerjaan, ''))) as pekerjaan
+                            FROM bdb_laporan_polisi lp
+                            JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
+                            JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                            WHERE lp.id = ANY($1::bigint[])
+                              AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
+                              AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA')
+                              AND regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') <> $2
+                              AND NOT (upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                            UNION ALL
+                            SELECT d.lp_id,
+                                   upper(trim(item->>'nama')) as nama,
+                                   nullif(trim(item->>'nik'), '') as nik,
+                                   case when dt.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end as peran,
+                                   upper(trim(coalesce(item->>'pekerjaan', ''))) as pekerjaan
+                            FROM bdb_dokumen d
+                            JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code IN ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                            CROSS JOIN LATERAL jsonb_array_elements(
+                                CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                            ) party(item)
+                            WHERE d.lp_id = ANY($1::bigint[])
+                              AND nullif(trim(item->>'nama'), '') IS NOT NULL
+                              AND regexp_replace(upper(trim(item->>'nama')), '[^A-Z0-9]+', '', 'g') <> $2
+                              AND NOT (upper(trim(item->>'nama')) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                            UNION ALL
+                            SELECT m.lp_id,
+                                   upper(trim(m.nama)) as nama,
+                                   nullif(trim(m.nik), '') as nik,
+                                   upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as peran,
+                                   upper(trim(coalesce(m.pekerjaan, ''))) as pekerjaan
+                            FROM bdb_lp_pihak_manual m
+                            WHERE m.lp_id = ANY($1::bigint[]) AND m.deleted_at IS NULL
+                              AND m.nama IS NOT NULL AND length(trim(m.nama)) > 2
+                              AND regexp_replace(upper(trim(m.nama)), '[^A-Z0-9]+', '', 'g') <> $2
+                        )
+                        SELECT lp_id, nama, nik, peran, pekerjaan
+                        FROM raw_p
+                    `, [lpIds, cleanTerm]);
+
+                    const byLp = new Map<number, any[]>();
+                    const byPerson = new Map<string, { nama: string; nik: string; peran: string; peranRank: number; jabatan: string; lpSet: Set<number> }>();
+                    const roleRank = (r: string) => r === 'DPO' ? 1 : r === 'TERSANGKA' ? 2 : r === 'TERLAPOR' ? 3 : r === 'PELAPOR' ? 4 : r === 'SAKSI' ? 5 : r === 'KORBAN' ? 6 : 7;
+
+                    for (const pr of (partyRows || [])) {
+                        const lid = Number(pr.lp_id);
+                        const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
+                        const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                        const lpArr = byLp.get(lid) || [];
+                        if (!lpArr.some(x => (x.nik && pr.nik && x.nik === pr.nik) || x.nama === pr.nama)) {
+                            lpArr.push({ nama: pr.nama, nik: pr.nik || '', peran: pr.peran, jabatan });
+                            byLp.set(lid, lpArr);
+                        }
+                        const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
+                        const existing = byPerson.get(pKey);
+                        const rRank = roleRank(pr.peran);
+                        if (!existing) {
+                            const s = new Set<number>();
+                            s.add(lid);
+                            byPerson.set(pKey, { nama: pr.nama, nik: pr.nik || '', peran: pr.peran, peranRank: rRank, jabatan, lpSet: s });
+                        } else {
+                            existing.lpSet.add(lid);
+                            if (rRank < existing.peranRank) {
+                                existing.peran = pr.peran;
+                                existing.peranRank = rRank;
+                            }
+                            if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
+                                existing.jabatan = 'DIREKTUR / PENGURUS';
+                            }
+                            if (!existing.nik && pr.nik) existing.nik = pr.nik;
+                        }
+                    }
+
+                    for (const item of deduped) {
+                        const lid = Number(item.lp_id);
+                        item.pihak_lp = (byLp.get(lid) || []).sort((a, b) => roleRank(a.peran) - roleRank(b.peran));
+                    }
+
+                    pihakKorporasi = Array.from(byPerson.values())
+                        .map(p => ({
+                            nama: p.nama,
+                            nik: p.nik,
+                            peran: p.peran,
+                            jabatan: p.jabatan,
+                            total_lp: p.lpSet.size
+                        }))
+                        .sort((a, b) => {
+                            const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                            const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                            if (dirA !== dirB) return dirA - dirB;
+                            const rk = roleRank(a.peran) - roleRank(b.peran);
+                            if (rk !== 0) return rk;
+                            return b.total_lp - a.total_lp;
+                        })
+                        .slice(0, 30);
+                } catch (e: any) {
+                    this.logger.warn('Gagal memuat pihak_korporasi: ' + e?.message);
+                }
             }
         }
 
@@ -1933,9 +2119,139 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             meta: { 
                 total_all: deduped.length, 
                 total_period: periodList.length,
-                period: { from: fromStr, to: toStr }
+                period: { from: fromStr, to: toStr },
+                pihak_korporasi: pihakKorporasi
             } 
         };
+    }
+
+    private async enrichCorporationsWithParties(rows: any[]): Promise<void> {
+        if (!Array.isArray(rows) || rows.length === 0) return;
+        const corpRows = rows.filter(r => r && (r.tipe_subjek === 'KORPORASI' || String(r.nik || '').startsWith('KORP:')) && (!Array.isArray(r.pihak_terkait) || r.pihak_terkait.length === 0));
+        if (corpRows.length === 0) return;
+
+        const roleRank = (r: string) => r === 'DPO' ? 1 : r === 'TERSANGKA' ? 2 : r === 'TERLAPOR' ? 3 : r === 'PELAPOR' ? 4 : r === 'SAKSI' ? 5 : r === 'KORBAN' ? 6 : 7;
+
+        await Promise.all(corpRows.slice(0, 25).map(async (corp) => {
+            try {
+                const rawName = String(corp.nama || corp.nik || '').replace(/^KORP:/, '').replace(/_/g, ' ').trim();
+                const cleanTerm = rawName.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                const coreCorp = rawName.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
+                if (!cleanTerm) return;
+
+                let lpRowIds = await this.dataSource.query(`
+                    SELECT DISTINCT d.id as dors_id, lp.id as lp_id
+                    FROM bdb_dors_lp_terlibat tc
+                    JOIN bdb_dors_lp d ON d.id = tc.lp_id
+                    LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                    WHERE upper(trim(tc.nama)) = $1
+                       OR regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') = $2
+                       OR upper(trim(tc.nama)) ILIKE ('%' || $1 || '%')
+                    LIMIT 60
+                `, [rawName.toUpperCase(), cleanTerm]);
+
+                if ((!lpRowIds || lpRowIds.length === 0) && coreCorp.length >= 4) {
+                    lpRowIds = await this.dataSource.query(`
+                        SELECT DISTINCT d.id as dors_id, lp.id as lp_id
+                        FROM bdb_dors_lp d
+                        JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                        WHERE d.uraian_kejadian ILIKE ('%' || $1 || '%')
+                        LIMIT 60
+                    `, [coreCorp]);
+                }
+
+                const dorsIds = (lpRowIds || []).map((x: any) => Number(x.dors_id)).filter((n: number) => Number.isFinite(n) && n > 0);
+                const lpIds = (lpRowIds || []).map((x: any) => Number(x.lp_id)).filter((n: number) => Number.isFinite(n) && n > 0);
+                if (dorsIds.length === 0 && lpIds.length === 0) {
+                    corp.pihak_terkait = [];
+                    return;
+                }
+
+                const partyRows = await this.dataSource.query(`
+                    WITH raw_p AS (
+                        SELECT coalesce(t.lp_id, 0) as ref_id,
+                               upper(trim(t.nama)) as nama,
+                               nullif(trim(t.nik), '') as nik,
+                               upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
+                               upper(trim(coalesce(t.pekerjaan, ''))) as pekerjaan
+                        FROM bdb_dors_lp_terlibat t
+                        WHERE t.lp_id = ANY($1::bigint[])
+                          AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
+                          AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA')
+                          AND regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') <> $3
+                          AND NOT (upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                        UNION ALL
+                        SELECT coalesce(d.lp_id, 0) as ref_id,
+                               upper(trim(item->>'nama')) as nama,
+                               nullif(trim(item->>'nik'), '') as nik,
+                               case when dt.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end as peran,
+                               upper(trim(coalesce(item->>'pekerjaan', ''))) as pekerjaan
+                        FROM bdb_dokumen d
+                        JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code IN ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                        CROSS JOIN LATERAL jsonb_array_elements(
+                            CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                        ) party(item)
+                        WHERE d.lp_id = ANY($2::bigint[])
+                          AND nullif(trim(item->>'nama'), '') IS NOT NULL
+                          AND regexp_replace(upper(trim(item->>'nama')), '[^A-Z0-9]+', '', 'g') <> $3
+                          AND NOT (upper(trim(item->>'nama')) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                    )
+                    SELECT ref_id, nama, nik, peran, pekerjaan FROM raw_p
+                `, [dorsIds, lpIds, cleanTerm]);
+
+                const byPerson = new Map<string, { nama: string; nik: string; peran: string; peranRank: number; jabatan: string; lpSet: Set<number> }>();
+                for (const pr of (partyRows || [])) {
+                    const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
+                    const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                    const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
+                    const rRank = roleRank(pr.peran);
+                    const existing = byPerson.get(pKey);
+                    if (!existing) {
+                        const s = new Set<number>();
+                        s.add(Number(pr.ref_id));
+                        byPerson.set(pKey, { nama: pr.nama, nik: pr.nik || '', peran: pr.peran, peranRank: rRank, jabatan, lpSet: s });
+                    } else {
+                        existing.lpSet.add(Number(pr.ref_id));
+                        if (rRank < existing.peranRank) {
+                            existing.peran = pr.peran;
+                            existing.peranRank = rRank;
+                        }
+                        if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
+                            existing.jabatan = 'DIREKTUR / PENGURUS';
+                        }
+                        if (!existing.nik && pr.nik) existing.nik = pr.nik;
+                    }
+                }
+
+                const list = Array.from(byPerson.values())
+                    .map(p => ({
+                        nama: p.nama,
+                        nik: p.nik,
+                        peran: p.peran,
+                        jabatan: p.jabatan,
+                        total_lp: p.lpSet.size
+                    }))
+                    .sort((a, b) => {
+                        const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        if (dirA !== dirB) return dirA - dirB;
+                        const rk = roleRank(a.peran) - roleRank(b.peran);
+                        if (rk !== 0) return rk;
+                        return b.total_lp - a.total_lp;
+                    })
+                    .slice(0, 15);
+
+                corp.pihak_terkait = list;
+                if (corp.nik && list.length > 0) {
+                    this.dataSource.query(
+                        `UPDATE bdb_pihak_terlibat_ranking_snapshot SET pihak_terkait = $2::jsonb WHERE nik = $1`,
+                        [corp.nik, JSON.stringify(list)]
+                    ).catch(() => {});
+                }
+            } catch {
+                if (!Array.isArray(corp.pihak_terkait)) corp.pihak_terkait = [];
+            }
+        }));
     }
 
     private async resolveRankingSatkerWhere(satkerId: number): Promise<string> {
@@ -2140,7 +2456,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             : `tahun = ${targetTahun} AND bulan IS NULL`;
 
         const rawSubjek = String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase();
-        const subjekWhere = rawSubjek === 'KORPORASI' ? "AND (tipe_subjek = 'KORPORASI' OR tipe_identitas = 'DIREKTUR KORPORASI')" : (rawSubjek === 'PERORANGAN' ? "AND tipe_subjek = 'PERORANGAN'" : '');
+        const subjekWhere = rawSubjek === 'KORPORASI' ? "AND tipe_subjek = 'KORPORASI'" : (rawSubjek === 'PERORANGAN' ? "AND tipe_subjek = 'PERORANGAN'" : '');
 
         const kastaCaseExpr = `
             CASE 
@@ -2204,6 +2520,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                                jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                                tipe_subjek, tipe_identitas,
+                               coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
                                ${kastaCaseExpr} as kasta,
                                ${kastaRankExpr} as kasta_rank
                         FROM bdb_pihak_terlibat_ranking_snapshot
@@ -2295,6 +2612,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         nasional_score: Number(r.nasional_score || 0),
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
                         tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
+                        pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
                         last_seen: r.last_seen
                     })),
                     pagination: {
@@ -2309,6 +2627,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         mode: targetTahun === 2026 ? (targetBulan ? 'snapshot-master-month-' + targetBulan : 'snapshot-master-year-2026') : 'snapshot-master-all-time'
                     }
                 };
+                await this.enrichCorporationsWithParties(masterResult.data);
                 if (this.rankingCache.size > 300) {
                     const now = Date.now();
                     for (const [k, v] of this.rankingCache.entries()) {
@@ -2346,6 +2665,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                            tipe_subjek, tipe_identitas,
+                           coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
                            ${kastaCaseExpr} as kasta,
                            ${kastaRankExpr} as kasta_rank
                     FROM bdb_pihak_terlibat_ranking_snapshot
@@ -2405,6 +2725,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             nasional_score: Number(r.nasional_score || 0),
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
                             tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
+                            pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
                             last_seen: r.last_seen
                         };
                     }),
@@ -2413,6 +2734,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         mode: targetTahun === 2026 ? (targetBulan ? 'snapshot-dashboard-month-' + targetBulan : 'snapshot-dashboard-year-2026') : 'snapshot-dashboard-all-time'
                     }
                 };
+                await this.enrichCorporationsWithParties(dashResult.data);
                 this.rankingCache.set(cacheKey, { expiresAt: Date.now() + this.rankingCacheTtlMs, data: dashResult });
                 return dashResult;
             } catch (err: any) {
