@@ -56,7 +56,15 @@ export class BdbKasusAtensiService {
                 size bigint,
                 created_at timestamptz not null default now()
             );
+            alter table bdb_kasus_atensi
+                add column if not exists is_pinned boolean not null default false,
+                add column if not exists pinned_at timestamptz;
         `);
+    }
+
+    private toBoolean(v: any): boolean {
+        if (typeof v === 'boolean') return v;
+        return ['true', '1', 'ya', 'yes'].includes(String(v ?? '').trim().toLowerCase());
     }
 
     private toText(v: any): string | null {
@@ -140,10 +148,32 @@ export class BdbKasusAtensiService {
         ), 99)`;
     }
 
+    private effectiveDateExpr() {
+        return `coalesce(
+            k.tanggal_atensi,
+            (
+                select case
+                    when lp0.tgl_laporan ~ '^\\d{2}[-/]\\d{2}[-/]\\d{4}' then to_date(replace(left(lp0.tgl_laporan, 10), '/', '-'), 'DD-MM-YYYY')
+                    when lp0.tgl_laporan ~ '^\\d{4}[-/]\\d{2}[-/]\\d{2}' then replace(left(lp0.tgl_laporan, 10), '/', '-')::date
+                    else null
+                end
+                from bdb_kasus_atensi_lp l0
+                join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                where l0.kasus_atensi_id = k.id
+                order by l0.id
+                limit 1
+            ),
+            (k.created_at at time zone 'Asia/Jakarta')::date
+        )`;
+    }
+
     private buildBaseSelect() {
         return `
             select
                 k.id, k.judul, k.sumber_atensi, k.level_atensi, k.tanggal_atensi::text as tanggal_atensi, k.status_atensi, k.keterangan, k.satker_id,
+                coalesce(k.is_pinned, false) as is_pinned,
+                k.pinned_at,
+                (${this.effectiveDateExpr()})::text as effective_date,
                 ${this.satkerDepthExpr()} as satker_depth,
                 coalesce(
                     (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
@@ -226,16 +256,25 @@ export class BdbKasusAtensiService {
             where.push(`lower(coalesce(k.sumber_atensi,'')) = $${params.length}`);
         }
 
+        const rawPinned = this.toText(query.pinned);
+        if (rawPinned && !['all', 'semua'].includes(rawPinned.toLowerCase())) {
+            const isPinned = ['true', '1', 'ya', 'yes', 'pinned', 'disematkan'].includes(rawPinned.toLowerCase());
+            params.push(isPinned);
+            where.push(`coalesce(k.is_pinned, false) = $${params.length}`);
+        }
+
         const whereSql = where.join(' and ');
 
         const orderBy = `order by
+            coalesce(k.is_pinned, false) desc,
+            k.pinned_at desc nulls last,
+            ${this.effectiveDateExpr()} desc nulls last,
             (select count(*)::int from bdb_kasus_atensi_lp l where l.kasus_atensi_id = k.id) desc,
             ${this.satkerDepthExpr()} asc,
             case when lower(coalesce(k.level_atensi,'')) = 'tinggi' then 1
                  when lower(coalesce(k.level_atensi,'')) = 'sedang' then 2
                  else 3 end asc,
             case when lower(coalesce(k.status_atensi,'aktif')) = 'aktif' then 0 else 1 end asc,
-            coalesce(k.tanggal_atensi::timestamptz, k.created_at) desc,
             k.created_at desc,
             k.id desc`;
 
@@ -244,6 +283,7 @@ export class BdbKasusAtensiService {
             this.dataSource.query(
                 `select
                     count(*)::int as total_all,
+                    count(*) filter (where coalesce(k.is_pinned, false) = true)::int as disematkan,
                     count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'tinggi')::int as tinggi,
                     count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'sedang')::int as sedang,
                     count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'biasa' or coalesce(k.level_atensi,'') = '')::int as biasa,
@@ -268,6 +308,7 @@ export class BdbKasusAtensiService {
         const s = summaryRow?.[0] || {};
         const summary = {
             total_all: Number(s.total_all || 0),
+            disematkan: Number(s.disematkan || 0),
             tinggi: Number(s.tinggi || 0),
             sedang: Number(s.sedang || 0),
             biasa: Number(s.biasa || 0),
@@ -324,6 +365,7 @@ export class BdbKasusAtensiService {
         if (lpRows.length) satkerId = Number(lpRows[0].satker_id) || null;
         else if (!scope.all) satkerId = scope.satkerId;
 
+        const isPinned = this.toBoolean(dto.is_pinned);
         const payload = {
             judul,
             sumber_atensi: this.toSumber(dto.sumber_atensi),
@@ -331,6 +373,8 @@ export class BdbKasusAtensiService {
             tanggal_atensi: this.toDate(dto.tanggal_atensi),
             status_atensi: this.toStatus(dto.status_atensi),
             keterangan: this.toText(dto.keterangan),
+            is_pinned: isPinned,
+            pinned_at: isPinned ? new Date() : null,
             satker_id: satkerId,
             created_by: userId ?? null,
             updated_by: userId ?? null
@@ -376,6 +420,11 @@ export class BdbKasusAtensiService {
         if (dto.tanggal_atensi !== undefined) payload.tanggal_atensi = this.toDate(dto.tanggal_atensi);
         if (dto.status_atensi !== undefined) payload.status_atensi = this.toStatus(dto.status_atensi);
         if (dto.keterangan !== undefined) payload.keterangan = this.toText(dto.keterangan);
+        if (dto.is_pinned !== undefined) {
+            const nextPin = this.toBoolean(dto.is_pinned);
+            payload.is_pinned = nextPin;
+            payload.pinned_at = nextPin ? (existing.pinned_at || new Date()) : null;
+        }
 
         const keys = Object.keys(payload);
         const sets = keys.map((k, i) => `${k} = $${i + 1}`);
@@ -385,6 +434,22 @@ export class BdbKasusAtensiService {
         await this.dataSource.query(`update bdb_kasus_atensi set ${sets.join(', ')} where id = $${params.length} and deleted_at is null`, params);
 
         if (lpIds !== null) await this.replaceLpLinks(id, lpIds);
+        return this.findOne(id, userId);
+    }
+
+    async setPin(id: number, userId: number | undefined, pinned?: any) {
+        await this.ensureTables();
+        const existing = await this.findOne(id, userId);
+        const nextPin = pinned !== undefined && pinned !== null ? this.toBoolean(pinned) : !Boolean(existing.is_pinned);
+        await this.dataSource.query(
+            `update bdb_kasus_atensi
+             set is_pinned = $2,
+                 pinned_at = case when $2 then now() else null end,
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1 and deleted_at is null`,
+            [id, nextPin, userId ?? null]
+        );
         return this.findOne(id, userId);
     }
 

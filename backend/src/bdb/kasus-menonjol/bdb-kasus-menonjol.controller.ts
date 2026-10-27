@@ -58,6 +58,16 @@ export class BdbKasusMenonjolController {
         return this.service.update(Number(id), this.uid(req), body);
     }
 
+    @Post(':id/pin')
+    pinPost(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+        return this.service.setPin(Number(id), this.uid(req), body?.is_pinned ?? body?.pinned);
+    }
+
+    @Patch(':id/pin')
+    pinPatch(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+        return this.service.setPin(Number(id), this.uid(req), body?.is_pinned ?? body?.pinned);
+    }
+
     @Delete(':id')
     remove(@Param('id') id: string, @Req() req: any) {
         return this.service.remove(Number(id), this.uid(req));
