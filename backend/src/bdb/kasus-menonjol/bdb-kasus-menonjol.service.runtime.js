@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BdbKasusMenonjolService = void 0;
 const common_1 = require("@nestjs/common");
@@ -16,12 +17,10 @@ const scope_util_1 = require("../common/scope.util");
 const minio_service_1 = require("../kerma/minio.service");
 const SKALA_OPTS = ['nasional', 'regional', 'tidak viral'];
 let BdbKasusMenonjolService = class BdbKasusMenonjolService {
-    dataSource;
-    minio;
-    ensureTablesPromise = null;
     constructor(dataSource, minio) {
         this.dataSource = dataSource;
         this.minio = minio;
+        this.ensureTablesPromise = null;
     }
     async ensureTables() {
         if (!this.ensureTablesPromise) {
@@ -56,6 +55,9 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
                 size bigint,
                 created_at timestamptz not null default now()
             );
+            alter table bdb_kasus_menonjol
+                add column if not exists is_pinned boolean not null default false,
+                add column if not exists pinned_at timestamptz;
         `)
                 .then(() => undefined)
                 .catch((error) => {
@@ -90,6 +92,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const arr = Array.isArray(v) ? v : v === undefined || v === null || v === '' ? [] : [v];
         return [...new Set(arr.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0))];
     }
+    /** Pastikan LP yg mau ditautkan benar ada & (kalau bukan admin) semuanya di satker pemanggil. */
     async validateLpIds(lpIds, scope) {
         if (!lpIds.length)
             return [];
@@ -116,18 +119,71 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const tag = rawTkp ? rawTkp.slice(0, 45) : (r.unit_nama || r.satker_nama || '').trim();
         return tag ? `${judul.trim().toUpperCase()} - ${tag.toUpperCase()}` : judul;
     }
+    satkerDepthExpr() {
+        return `coalesce((
+            select case
+                when s.id in (1,2,3,4,13) or s.parent_id = 13
+                  or upper(coalesce(s.deskripsi,'')) like '%BARESKRIM%'
+                  or upper(coalesce(s.deskripsi,'')) like '%MABES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DITTIPID%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DENSUS%'
+                  or upper(coalesce(s.deskripsi,'')) like '%BAHARKAM%'
+                  or upper(coalesce(s.nama_singkat,'')) like '%BARESKRIM%' then 1
+                when upper(coalesce(s.deskripsi,'')) like '%POLSEK%' then 4
+                when upper(coalesce(s.deskripsi,'')) like '%POLRES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%POLRESTA%'
+                  or upper(coalesce(s.deskripsi,'')) like 'RES %'
+                  or upper(coalesce(s.deskripsi,'')) like '% RES %' then 3
+                when upper(coalesce(s.deskripsi,'')) like '%POLDA%' or s.depth <= 2 then 2
+                else greatest(2, least(4, coalesce(s.depth::int, 4)))
+            end
+            from bdb_satker s
+            where s.id = coalesce(
+                k.satker_id,
+                (select coalesce(lp0.unit_satker_id, lp0.satker_id) from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
+            )
+            limit 1
+        ), 99)`;
+    }
+    effectiveDateExpr() {
+        return `coalesce(
+            k.tanggal_rilis,
+            (
+                select case
+                    when lp0.tgl_laporan ~ '^\\d{2}[-/]\\d{2}[-/]\\d{4}' then to_date(replace(left(lp0.tgl_laporan, 10), '/', '-'), 'DD-MM-YYYY')
+                    when lp0.tgl_laporan ~ '^\\d{4}[-/]\\d{2}[-/]\\d{2}' then replace(left(lp0.tgl_laporan, 10), '/', '-')::date
+                    else null
+                end
+                from bdb_kasus_menonjol_lp l0
+                join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                where l0.kasus_menonjol_id = k.id
+                order by l0.id
+                limit 1
+            ),
+            (k.created_at at time zone 'Asia/Jakarta')::date
+        )`;
+    }
     buildBaseSelect() {
         return `
             select
                 k.id, k.judul, k.skala_viral, k.tanggal_rilis::text as tanggal_rilis, k.rilis, k.keterangan, k.satker_id,
-                (select s.depth::int from bdb_satker s where s.id = k.satker_id limit 1) as satker_depth,
+                coalesce(k.is_pinned, false) as is_pinned,
+                k.pinned_at,
+                (${this.effectiveDateExpr()})::text as effective_date,
+                ${this.satkerDepthExpr()} as satker_depth,
+                coalesce(
+                    (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
+                    (select lp0.satker_nama from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
+                ) as satker_nama,
                 k.created_by, k.updated_by, k.created_at, k.updated_at,
                 (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) as jumlah_lp,
                 (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id) as jumlah_lampiran,
                 (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_menonjol_lp l
                     join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_menonjol_id = k.id) as satker_terkait,
                 (select lp0.no_laporan from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
-                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_no_laporan
+                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_no_laporan,
+                (select lp0.tgl_laporan from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                    where l0.kasus_menonjol_id = k.id order by l0.id limit 1) as first_tgl_laporan
             from bdb_kasus_menonjol k
         `;
     }
@@ -141,7 +197,16 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const where = ['k.deleted_at is null'];
         if (query.scope === 'scoped' && !scope.all) {
             if (!scope.satkerId) {
-                return { data: [], meta: { total: 0, page, limit, totalPages: 1 } };
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page,
+                        limit,
+                        totalPages: 1,
+                        summary: { total_all: 0, nasional: 0, regional: 0, tidak_viral: 0, sudah_rilis: 0, belum_rilis: 0, total_lp_terkait: 0 }
+                    }
+                };
             }
             params.push(scope.satkerId);
             where.push(`k.satker_id = $${params.length}`);
@@ -149,51 +214,83 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
-            where.push(`lower(coalesce(k.judul,'')) like $${params.length}`);
+            const p = params.length;
+            where.push(`(
+                lower(coalesce(k.judul,'')) like $${p}
+                or lower(coalesce(k.keterangan,'')) like $${p}
+                or exists (
+                    select 1 from bdb_kasus_menonjol_lp l_s
+                    join bdb_laporan_polisi lp_s on lp_s.id = l_s.lp_id
+                    where l_s.kasus_menonjol_id = k.id
+                      and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p})
+                )
+            )`);
         }
-        const skala = this.toText(query.skala_viral);
-        if (skala && SKALA_OPTS.includes(skala)) {
+        const summaryWhereSql = where.join(' and ');
+        const summaryParams = [...params];
+        const skala = this.toText(query.skala_viral)?.toLowerCase() || null;
+        if (skala && !['all', 'semua'].includes(skala)) {
             params.push(skala);
-            where.push(`k.skala_viral = $${params.length}`);
+            where.push(`lower(coalesce(k.skala_viral,'')) = $${params.length}`);
+        }
+        const rawRilis = this.toText(query.rilis);
+        if (rawRilis && !['all', 'semua'].includes(rawRilis.toLowerCase())) {
+            const isRilis = ['true', '1', 'ya', 'yes', 'sudah'].includes(rawRilis.toLowerCase());
+            params.push(isRilis);
+            where.push(`coalesce(k.rilis, false) = $${params.length}`);
+        }
+        const rawPinned = this.toText(query.pinned);
+        if (rawPinned && !['all', 'semua'].includes(rawPinned.toLowerCase())) {
+            const isPinned = ['true', '1', 'ya', 'yes', 'pinned', 'disematkan'].includes(rawPinned.toLowerCase());
+            params.push(isPinned);
+            where.push(`coalesce(k.is_pinned, false) = $${params.length}`);
         }
         const whereSql = where.join(' and ');
-        const totalRow = await this.dataSource.query(`select count(*)::int as total from bdb_kasus_menonjol k where ${whereSql}`, params);
+        const orderBy = `order by
+            coalesce(k.is_pinned, false) desc,
+            k.pinned_at desc nulls last,
+            ${this.effectiveDateExpr()} desc nulls last,
+            (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) desc,
+            ${this.satkerDepthExpr()} asc,
+            case when lower(coalesce(k.skala_viral,'')) = 'nasional' then 1
+                 when lower(coalesce(k.skala_viral,'')) = 'regional' then 2
+                 else 3 end asc,
+            case when coalesce(k.rilis, false) = true then 0 else 1 end asc,
+            k.created_at desc,
+            k.id desc`;
+        const [totalRow, summaryRow, rows] = await Promise.all([
+            this.dataSource.query(`select count(*)::int as total from bdb_kasus_menonjol k where ${whereSql}`, params),
+            this.dataSource.query(`select
+                    count(*)::int as total_all,
+                    count(*) filter (where coalesce(k.is_pinned, false) = true)::int as disematkan,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'nasional')::int as nasional,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'regional')::int as regional,
+                    count(*) filter (where lower(coalesce(k.skala_viral,'')) = 'tidak viral' or coalesce(k.skala_viral,'') = '')::int as tidak_viral,
+                    count(*) filter (where k.rilis = true)::int as sudah_rilis,
+                    count(*) filter (where coalesce(k.rilis, false) = false)::int as belum_rilis,
+                    coalesce((
+                        select count(*)::int
+                        from bdb_kasus_menonjol_lp l_cnt
+                        join bdb_kasus_menonjol k on k.id = l_cnt.kasus_menonjol_id
+                        where ${summaryWhereSql}
+                    ), 0) as total_lp_terkait
+                 from bdb_kasus_menonjol k
+                 where ${summaryWhereSql}`, summaryParams),
+            this.dataSource.query(`${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset])
+        ]);
         const total = Number(totalRow?.[0]?.total || 0);
-        let orderBy = 'order by k.created_at desc, k.id desc';
-        if (query.dashboard === '1' || query.dashboard === 1 || query.dashboard === true || query.dashboard === 'true' || query.sort === 'priority') {
-            orderBy = `order by
-                (
-                    -- PART 1: Skala Viral
-                    case when lower(coalesce(k.skala_viral,'')) = 'nasional' then 100
-                         when lower(coalesce(k.skala_viral,'')) = 'regional' then 50
-                         else 20 end
-                    +
-                    -- PART 2: Jumlah LP (Volume Dampak)
-                    case when (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) > 1 then
-                            least(100, 30 + round(15 * log(2, greatest(2, (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id))))::int)
-                         when (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) = 1 then 10
-                         else 0 end
-                    +
-                    -- PART 3: Status & Tanggal Rilis (Kebaruan Rilis Pers)
-                    case when k.rilis = true then
-                            case when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '7 days' then 60
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '30 days' then 45
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '90 days' then 30
-                                 when k.tanggal_rilis is not null and (now() - k.tanggal_rilis) <= interval '365 days' then 15
-                                 else 5 end
-                         else 25 end
-                    +
-                    -- PART 4: Kebaruan Tanggal Input
-                    case when (now() - k.created_at) <= interval '7 days' then 40
-                         when (now() - k.created_at) <= interval '30 days' then 30
-                         when (now() - k.created_at) <= interval '90 days' then 20
-                         when (now() - k.created_at) <= interval '365 days' then 10
-                         else 0 end
-                ) desc,
-                k.created_at desc, k.id desc`;
-        }
-        const rows = await this.dataSource.query(`${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset]);
-        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
+        const s = summaryRow?.[0] || {};
+        const summary = {
+            total_all: Number(s.total_all || 0),
+            disematkan: Number(s.disematkan || 0),
+            nasional: Number(s.nasional || 0),
+            regional: Number(s.regional || 0),
+            tidak_viral: Number(s.tidak_viral || 0),
+            sudah_rilis: Number(s.sudah_rilis || 0),
+            belum_rilis: Number(s.belum_rilis || 0),
+            total_lp_terkait: Number(s.total_lp_terkait || 0)
+        };
+        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
     }
     async findOne(id, userId) {
         await this.ensureTables();
@@ -205,7 +302,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         return row;
     }
     async listLp(kasusId, userId) {
-        await this.findOne(kasusId, userId);
+        await this.findOne(kasusId, userId); // scope-check
         return this.dataSource.query(`select lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan,
                     coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama
              from bdb_kasus_menonjol_lp l
@@ -238,12 +335,15 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const tanggalRilis = this.toDate(dto.tanggal_rilis);
         if (rilis && !tanggalRilis)
             throw new common_1.BadRequestException('Tanggal rilis wajib diisi jika sudah dirilis.');
+        const isPinned = this.toBoolean(dto.is_pinned);
         const payload = {
             judul,
             skala_viral: this.toSkala(dto.skala_viral),
             tanggal_rilis: tanggalRilis,
             rilis,
             keterangan: this.toText(dto.keterangan),
+            is_pinned: isPinned,
+            pinned_at: isPinned ? new Date() : null,
             satker_id: satkerId,
             created_by: userId ?? null,
             updated_by: userId ?? null
@@ -258,7 +358,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     async update(id, userId, dto) {
         await this.ensureTables();
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
-        const existing = await this.findOne(id, userId);
+        const existing = await this.findOne(id, userId); // scope-checked
         if (!scope.all && Number(existing.satker_id) !== scope.satkerId) {
             throw new common_1.ForbiddenException('Tidak memiliki akses mengubah kasus ini.');
         }
@@ -290,6 +390,11 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             payload.rilis = this.toBoolean(dto.rilis);
         if (dto.keterangan !== undefined)
             payload.keterangan = this.toText(dto.keterangan);
+        if (dto.is_pinned !== undefined) {
+            const nextPin = this.toBoolean(dto.is_pinned);
+            payload.is_pinned = nextPin;
+            payload.pinned_at = nextPin ? (existing.pinned_at || new Date()) : null;
+        }
         const rilisFinal = dto.rilis !== undefined ? payload.rilis : existing.rilis;
         const tanggalRilisFinal = dto.tanggal_rilis !== undefined ? payload.tanggal_rilis : existing.tanggal_rilis;
         if (rilisFinal && !tanggalRilisFinal)
@@ -304,18 +409,31 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             await this.replaceLpLinks(id, lpIds);
         return this.findOne(id, userId);
     }
+    async setPin(id, userId, pinned) {
+        await this.ensureTables();
+        const existing = await this.findOne(id, userId);
+        const nextPin = pinned !== undefined && pinned !== null ? this.toBoolean(pinned) : !Boolean(existing.is_pinned);
+        await this.dataSource.query(`update bdb_kasus_menonjol
+             set is_pinned = $2,
+                 pinned_at = case when $2 then now() else null end,
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1 and deleted_at is null`, [id, nextPin, userId ?? null]);
+        return this.findOne(id, userId);
+    }
     async remove(id, userId) {
         await this.ensureTables();
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
-        const existing = await this.findOne(id, userId);
+        const existing = await this.findOne(id, userId); // scope-checked
         if (!scope.all && Number(existing.satker_id) !== scope.satkerId) {
             throw new common_1.ForbiddenException('Tidak memiliki akses menghapus kasus ini.');
         }
         await this.dataSource.query('update bdb_kasus_menonjol set deleted_at = now() where id = $1', [id]);
         return { status: 1, message: 'Kasus menonjol dihapus.' };
     }
+    // ===== Lampiran (MinIO) =====
     async addAttachments(kasusId, userId, files) {
-        await this.findOne(kasusId, userId);
+        await this.findOne(kasusId, userId); // scope-check
         if (!files?.length)
             return this.listAttachments(kasusId, userId);
         for (const f of files) {
@@ -325,7 +443,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         return this.listAttachments(kasusId, userId);
     }
     async listAttachments(kasusId, userId) {
-        await this.findOne(kasusId, userId);
+        await this.findOne(kasusId, userId); // scope-check
         const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at from bdb_kasus_menonjol_attachments where kasus_menonjol_id = $1 order by id desc`, [kasusId]);
         const data = [];
         for (const r of rows) {
@@ -344,11 +462,12 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const rows = await this.dataSource.query(`select kasus_menonjol_id, object_key from bdb_kasus_menonjol_attachments where id = $1`, [attId]);
         if (!rows.length)
             throw new common_1.NotFoundException('Lampiran tidak ditemukan.');
-        await this.findOne(Number(rows[0].kasus_menonjol_id), userId);
+        await this.findOne(Number(rows[0].kasus_menonjol_id), userId); // scope-check
         try {
             await this.minio.remove(rows[0].object_key);
         }
         catch {
+            /* biarkan hapus metadata walau objek gagal dihapus */
         }
         await this.dataSource.query(`delete from bdb_kasus_menonjol_attachments where id = $1`, [attId]);
         return { status: 1, message: 'Lampiran dihapus.' };
@@ -357,7 +476,5 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
 exports.BdbKasusMenonjolService = BdbKasusMenonjolService;
 exports.BdbKasusMenonjolService = BdbKasusMenonjolService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        minio_service_1.MinioService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _b : Object])
 ], BdbKasusMenonjolService);
-//# sourceMappingURL=bdb-kasus-menonjol.service.js.map

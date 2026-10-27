@@ -82,6 +82,16 @@ export class BdbOperasiSatgasController {
         return this.service.setAktif(Number(id), body?.aktif !== false, req?.user?.id ? Number(req.user.id) : undefined);
     }
 
+    @Post(':id/pin')
+    pinPost(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+        return this.service.setPin(Number(id), body?.is_pinned ?? body?.pinned, req?.user?.id ? Number(req.user.id) : undefined);
+    }
+
+    @Patch(':id/pin')
+    pinPatch(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+        return this.service.setPin(Number(id), body?.is_pinned ?? body?.pinned, req?.user?.id ? Number(req.user.id) : undefined);
+    }
+
     @Delete(':id')
     remove(@Param('id') id: string, @Body() body: { alasan?: string }, @Req() req: any) {
         return this.service.remove(Number(id), req?.user?.id ? Number(req.user.id) : undefined, body?.alasan);

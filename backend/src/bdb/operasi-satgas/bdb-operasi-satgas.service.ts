@@ -130,6 +130,7 @@ export class BdbOperasiSatgasService {
         // jenis_kategori = sub-klasifikasi opsional (mis. "Operasi Tangkap", "Satgas Anti Narkoba"),
         // beda dari kolom `jenis` (yg cuma diskriminator OPERASI/SATGAS) -- lihat ensureJenisMasterTable().
         await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists jenis_kategori text;`);
+        await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists is_pinned boolean not null default false, add column if not exists pinned_at timestamptz;`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_deleted on bdb_operasi_satgas(deleted_at);`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_jenis on bdb_operasi_satgas(jenis);`);
     }
@@ -198,17 +199,22 @@ export class BdbOperasiSatgasService {
             pimpinan: this.toText(source.pimpinan),
             deskripsi: this.toText(source.deskripsi),
             is_aktif: this.toBoolean(source.is_aktif),
+            is_pinned: this.toBoolean(source.is_pinned, false),
             updated_by: this.toText(source.updated_by)
         };
 
         if (!partial) {
             payload.created_by = this.toText(source.created_by);
+            if (payload.is_pinned) payload.pinned_at = new Date();
             return payload;
         }
 
         const partialPayload: Payload = {};
         for (const key of Object.keys(payload)) {
             if (Object.prototype.hasOwnProperty.call(source, key)) partialPayload[key] = payload[key];
+        }
+        if (Object.prototype.hasOwnProperty.call(source, 'is_pinned')) {
+            partialPayload.pinned_at = partialPayload.is_pinned ? new Date() : null;
         }
         return partialPayload;
     }
@@ -218,6 +224,9 @@ export class BdbOperasiSatgasService {
             select
                 id, jenis, nama, jenis_kategori, nomor_dasar, tanggal_dibentuk, tanggal_mulai, tanggal_selesai,
                 satker_penyelenggara, pimpinan, deskripsi,
+                coalesce(is_pinned, false) as is_pinned,
+                pinned_at,
+                coalesce(tanggal_mulai, tanggal_dibentuk, (created_at at time zone 'Asia/Jakarta')::date) as effective_date,
                 is_aktif as is_aktif_manual,
                 case
                     when tanggal_selesai is not null
@@ -301,12 +310,18 @@ export class BdbOperasiSatgasService {
             params.push(status.toUpperCase());
             outerWhere.push(`status_tampil = $${params.length}`);
         }
+        const rawPinned = this.toText(query.pinned);
+        if (rawPinned && !['all', 'semua'].includes(rawPinned.toLowerCase())) {
+            const isPinned = ['true', '1', 'ya', 'yes', 'pinned', 'disematkan'].includes(rawPinned.toLowerCase());
+            params.push(isPinned);
+            outerWhere.push(`coalesce(is_pinned, false) = $${params.length}`);
+        }
 
         const countRows = await this.dataSource.query(`select count(*)::int as total ${baseSql} where ${outerWhere.join(' and ')}`, params);
         const total = Number(countRows?.[0]?.total || 0);
 
         const rows = await this.dataSource.query(
-            `select * ${baseSql} where ${outerWhere.join(' and ')} order by jumlah_lp desc, coalesce(satker_depth, 99) asc, (case when jenis = 'OPERASI' then 0 else 1 end) asc, coalesce(tanggal_mulai, created_at::date) desc, id desc limit $${params.length + 1} offset $${params.length + 2}`,
+            `select * ${baseSql} where ${outerWhere.join(' and ')} order by coalesce(is_pinned, false) desc, pinned_at desc nulls last, coalesce(tanggal_mulai, tanggal_dibentuk, created_at::date) desc nulls last, jumlah_lp desc, coalesce(satker_depth, 99) asc, (case when jenis = 'OPERASI' then 0 else 1 end) asc, created_at desc, id desc limit $${params.length + 1} offset $${params.length + 2}`,
             [...params, limit, offset]
         );
 
@@ -357,8 +372,9 @@ export class BdbOperasiSatgasService {
 
         const rows = await this.dataSource.query(
             `select
-                lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama,
+                lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan,
                 os.id as ops_id, os.jenis as ops_jenis, os.nama as ops_nama,
+                coalesce(os.is_pinned, false) as ops_is_pinned, os.pinned_at as ops_pinned_at,
                 coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama,
                 (select string_agg(x.txt, '; ') from (
                     select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''),'(tanpa kategori)') as txt
@@ -371,7 +387,22 @@ export class BdbOperasiSatgasService {
              join bdb_operasi_satgas os on os.id = lp.operasi_satgas_id
              left join bdb_status_master sm on sm.id = lp.status_id
              where ${whereSql}
-             order by lp.synced_at desc, lp.id desc
+             order by
+                coalesce(os.is_pinned, false) desc,
+                os.pinned_at desc nulls last,
+                coalesce(
+                    case
+                        when lp.tgl_laporan ~ '^\\d{2}[-/]\\d{2}[-/]\\d{4}' then to_date(replace(left(lp.tgl_laporan, 10), '/', '-'), 'DD-MM-YYYY')
+                        when lp.tgl_laporan ~ '^\\d{4}[-/]\\d{2}[-/]\\d{2}' then replace(left(lp.tgl_laporan, 10), '/', '-')::date
+                        else null
+                    end,
+                    os.tanggal_mulai,
+                    os.tanggal_dibentuk,
+                    (lp.synced_at at time zone 'Asia/Jakarta')::date
+                ) desc nulls last,
+                (select count(*)::int from bdb_laporan_polisi lp_cnt where lp_cnt.operasi_satgas_id = os.id and lp_cnt.deleted_at is null) desc,
+                lp.synced_at desc,
+                lp.id desc
              limit $${params.length + 1} offset $${params.length + 2}`,
             [...params, limit, offset]
         );
@@ -483,6 +514,25 @@ export class BdbOperasiSatgasService {
         this.assertNotViewer(actor);
         await this.findOne(id);
         await this.dataSource.query('update bdb_operasi_satgas set is_aktif = $2, updated_by = $3, updated_at = now() where id = $1', [id, aktif, actor.id]);
+        return this.findOne(id);
+    }
+
+    /** Toggle "Sematkan" (Pin) -- otomatis menjadi Rank #1 di daftar & dashboard. */
+    async setPin(id: number, pinned?: any, userId?: number) {
+        await this.ensureTable();
+        const actor = await this.actor(userId);
+        this.assertNotViewer(actor);
+        const existing = await this.findOne(id);
+        const nextPin = pinned !== undefined && pinned !== null ? this.toBoolean(pinned, false) : !Boolean(existing.is_pinned);
+        await this.dataSource.query(
+            `update bdb_operasi_satgas
+             set is_pinned = $2,
+                 pinned_at = case when $2 then now() else null end,
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1 and deleted_at is null`,
+            [id, nextPin, actor.id]
+        );
         return this.findOne(id);
     }
 
