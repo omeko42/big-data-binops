@@ -5572,6 +5572,153 @@ div[style*="margin-top:-1.6rem"] > span {
   color: #f1f5f9 !important;
 }
 
+/* ============================================================================
+ * ROUND 16 — KINERJA PERKARA: COMPACT KPI STRIP, UNIFIED FILTER BAR,
+ *            [+] / [-] EXPANDER, CLICKABLE LP METRIC LINKS & 1920x1080 FIT
+ * ============================================================================ */
+#kp-summary-strip .kp-kpi-card {
+  min-height: auto !important;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+
+#kp-summary-strip .kp-kpi-card.is-clickable:hover {
+  transform: translateY(-1px);
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.14);
+}
+
+:root[data-theme="dark"] #kp-summary-strip .kp-kpi-card.is-clickable:hover {
+  border-color: #60a5fa !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+.kp-toolbar-row {
+  padding: 0.5rem 0.85rem !important;
+  gap: 0.55rem !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.kp-toolbar-row .att-btn {
+  height: 2.15rem !important;
+  padding: 0 0.75rem !important;
+  font-size: 0.78rem !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.kp-chips-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  flex-wrap: wrap;
+}
+
+.kp-plusminus-btn {
+  width: 1.18rem;
+  height: 1.18rem;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 0.82rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.kp-plusminus-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.kp-plusminus-btn.is-expanded {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+:root[data-theme="dark"] .kp-plusminus-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+:root[data-theme="dark"] .kp-plusminus-btn:hover {
+  background: #334155;
+  border-color: #475569;
+}
+
+:root[data-theme="dark"] .kp-plusminus-btn.is-expanded {
+  background: rgba(37, 99, 235, 0.25);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.kp-metric-link {
+  background: transparent;
+  border: none;
+  padding: 0.08rem 0.22rem;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.kp-metric-link:hover {
+  background: rgba(37, 99, 235, 0.12);
+  text-decoration-style: solid;
+}
+
+:root[data-theme="dark"] .kp-metric-link:hover {
+  background: rgba(96, 165, 250, 0.2);
+}
+
+.kp-tt .p-treetable-toggler {
+  display: none !important;
+}
+
+.kp-tt-default .p-treetable-wrapper,
+.kp-tt-default .p-treetable-table-container {
+  overflow-x: hidden !important;
+}
+
+.kp-tt-default .p-treetable-thead > tr > th {
+  padding: 0.36rem 0.22rem !important;
+  font-size: 0.68rem !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  line-height: 1.15 !important;
+  text-align: center !important;
+}
+
+.kp-tt-default .p-treetable-tbody > tr > td {
+  padding: 0.34rem 0.25rem !important;
+  font-size: 0.72rem !important;
+}
+
+.kp-lp-drill-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+:root[data-theme="dark"] .kp-lp-drill-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+
 
 
 
