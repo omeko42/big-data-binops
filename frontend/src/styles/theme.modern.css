@@ -5720,6 +5720,7 @@ div[style*="margin-top:-1.6rem"] > span {
 .kp-tt > .p-treetable-wrapper,
 .kp-tt .p-treetable-table-container {
   max-height: calc(100vh - var(--cms-header-h, 6.9rem) - 11.8rem) !important;
+  overflow-x: auto !important;
   overflow-y: auto !important;
   position: relative !important;
 }
@@ -5727,7 +5728,7 @@ div[style*="margin-top:-1.6rem"] > span {
 .kp-tt-default > .p-treetable-wrapper,
 .kp-tt-default .p-treetable-wrapper,
 .kp-tt-default .p-treetable-table-container {
-  overflow-x: hidden !important;
+  overflow-x: auto !important;
   overflow-y: auto !important;
 }
 
@@ -5739,7 +5740,7 @@ div[style*="margin-top:-1.6rem"] > span {
 }
 
 .kp-tt .p-treetable-thead > tr:first-child {
-  height: 34px !important;
+  height: 36px !important;
 }
 
 .kp-tt .p-treetable-thead > tr:first-child > th,
@@ -5747,15 +5748,16 @@ div[style*="margin-top:-1.6rem"] > span {
 [data-theme="dark"] .kp-tt .p-treetable-thead > tr:first-child > th {
   position: sticky !important;
   top: 0 !important;
-  height: 34px !important;
-  max-height: 34px !important;
+  height: 36px !important;
+  max-height: 36px !important;
   z-index: 6 !important;
-  padding: 0.18rem 0.22rem !important;
-  font-size: 0.68rem !important;
-  line-height: 1.1 !important;
+  padding: 0.25rem 0.35rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1.15 !important;
   text-align: center !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
+  white-space: nowrap !important;
 }
 
 .kp-tt .p-treetable-thead > tr:first-child > th[rowspan="2"],
@@ -5763,37 +5765,39 @@ div[style*="margin-top:-1.6rem"] > span {
 [data-theme="dark"] .kp-tt .p-treetable-thead > tr:first-child > th[rowspan="2"] {
   position: sticky !important;
   top: 0 !important;
-  height: 62px !important;
-  max-height: 62px !important;
+  height: 68px !important;
+  max-height: 68px !important;
   z-index: 7 !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
+  white-space: nowrap !important;
 }
 
 .kp-tt .p-treetable-thead > tr:nth-child(2) {
-  height: 28px !important;
+  height: 32px !important;
 }
 
 .kp-tt .p-treetable-thead > tr:nth-child(2) > th,
 :root[data-theme="dark"] .kp-tt .p-treetable-thead > tr:nth-child(2) > th,
 [data-theme="dark"] .kp-tt .p-treetable-thead > tr:nth-child(2) > th {
   position: sticky !important;
-  top: 34px !important;
-  height: 28px !important;
-  max-height: 28px !important;
+  top: 36px !important;
+  height: 32px !important;
+  max-height: 32px !important;
   z-index: 6 !important;
-  padding: 0.15rem 0.2rem !important;
-  font-size: 0.64rem !important;
-  line-height: 1.1 !important;
+  padding: 0.2rem 0.3rem !important;
+  font-size: 0.71rem !important;
+  line-height: 1.15 !important;
   text-align: center !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
+  white-space: nowrap !important;
   box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1) !important;
 }
 
 .kp-tt-default .p-treetable-tbody > tr > td {
-  padding: 0.34rem 0.25rem !important;
-  font-size: 0.72rem !important;
+  padding: 0.42rem 0.38rem !important;
+  font-size: 0.78rem !important;
 }
 
 .kp-lp-drill-table tbody tr:hover {
