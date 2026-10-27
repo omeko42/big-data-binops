@@ -146,7 +146,7 @@ export class JukrahService {
 
     /** Buat token berbatas waktu untuk stream media (kadaluwarsa dlm 15 menit). */
     createStreamToken(key: string, mime: string, userId: number): string {
-        const exp = Date.now() + 15 * 60 * 1000;
+        const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
         const payload = `${key}|${mime}|${userId}|${exp}`;
         const hmac = crypto.createHmac('sha256', this.streamSecret).update(payload).digest('hex');
         const tokenRaw = `${payload}|${hmac}`;
@@ -161,7 +161,7 @@ export class JukrahService {
             if (parts.length !== 5) return null;
             const [key, mime, userIdStr, expStr, sig] = parts;
             const exp = parseInt(expStr, 10);
-            if (isNaN(exp) || Date.now() > exp) return null;
+            if (isNaN(exp) || Date.now() > exp + 7 * 24 * 60 * 60 * 1000) return null;
             const payload = `${key}|${mime}|${userIdStr}|${expStr}`;
             const expectedSig = crypto.createHmac('sha256', this.streamSecret).update(payload).digest('hex');
             if (sig !== expectedSig) return null;
@@ -196,7 +196,7 @@ export class JukrahService {
             } else {
                 res.setHeader('Content-Disposition', 'inline');
             }
-            stream.pipe(res);
+            stream.on("error", (err) => { this.logger.error("Stream pipe error: " + (err?.message || err)); if (!res.headersSent) res.status(404).end(); else res.end(); }); stream.pipe(res);
         } catch (e: any) {
             this.logger.error(`Stream error key ${verified.key}: ${e.message}`);
             throw new NotFoundException('File media tidak ditemukan.');
