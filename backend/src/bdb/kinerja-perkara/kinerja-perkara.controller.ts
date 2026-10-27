@@ -317,6 +317,56 @@ export class KinerjaPerkaraController {
         );
     }
 
+    @Get('lp-list')
+    lpList(
+        @Query('from') from: string | undefined,
+        @Query('to') to: string | undefined,
+        @Query('date_from') dateFrom: string | undefined,
+        @Query('date_to') dateTo: string | undefined,
+        @Query('mode') mode: string | undefined,
+        @Query('jenis_kejahatan_id') jk: string | undefined,
+        @Query('golongan_id') golongan: string | undefined,
+        @Query('iccs_kategori_id') iccs: string | undefined,
+        @Query('visibility') visibility: string | undefined,
+        @Query('functionDomain') functionDomain: string | undefined,
+        @Query('organizationDomain') organizationDomain: string | undefined,
+        @Query('modelLp') modelLp: string | undefined,
+        @Query('closureReason') closureReason: string | undefined,
+        @Query('bucketMode') bucketMode: string | undefined,
+        @Query('kelompok_hitung') kelompokHitung: string | undefined,
+        @Query('scope_satker_id') scopeSatkerId: string | undefined,
+        @Query('satker_kode') satkerKode: string | undefined,
+        @Query('satker_id') satkerId: string | undefined,
+        @Query('bucket') bucket: string | undefined,
+        @Query('search') search: string | undefined,
+        @Query('page') page: string | undefined,
+        @Query('limit') limit: string | undefined,
+        @Req() req: any
+    ) {
+        return this.service.lpList(
+            this.uid(req),
+            from || dateFrom,
+            to || dateTo,
+            mode,
+            this.jk(jk),
+            this.jk(golongan),
+            this.jk(iccs),
+            this.visibility(visibility),
+            this.taxonomy(functionDomain, organizationDomain),
+            this.model(modelLp),
+            this.closureReason(closureReason),
+            this.bucketMode(bucketMode),
+            this.groups(kelompokHitung),
+            this.scopeSatkerId(scopeSatkerId),
+            satkerKode,
+            this.scopeSatkerId(satkerId),
+            bucket,
+            search,
+            this.positiveInt(page, 'page'),
+            this.positiveInt(limit, 'limit')
+        );
+    }
+
     @Get('status')
     async status() {
         return { status: 1, data: { last_refreshed_at: await this.service.lastRefreshedAt() } };

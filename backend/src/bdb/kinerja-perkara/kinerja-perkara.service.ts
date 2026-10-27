@@ -7,6 +7,7 @@ import { clearanceMetrics } from './clearance-rate.util';
 import { processedMetrics } from './processed-rate.util';
 import { AnevService } from '../anev/anev.service';
 import { isPrimaryClusterInstance } from '../common/cluster-instance.util';
+import { encodeId } from '../laporan-polisi/id-cipher.util';
 
 // tgl_laporan = teks 'DD-MM-YYYY HH:MM:SS'; fallback ke synced_at bila format tak sesuai.
 // Sama persis dgn DATE_EXPR di anev.service.ts, supaya konsisten dgn laporan lain.
@@ -2738,5 +2739,437 @@ export class KinerjaPerkaraService implements OnModuleInit {
         });
         this.jkCache = { data: enriched, expiresAt: now + 10 * 60 * 1000 };
         return { status: 1, data: enriched };
+    }
+
+    /** Drill-down daftar Laporan Polisi (LP) untuk sel angka yang diklik pada tabel/kartu Kinerja Perkara. */
+    async lpList(
+        userId: number | undefined,
+        fromIn?: string,
+        toIn?: string,
+        modeIn?: string,
+        jenisKejahatanIdsIn?: number[],
+        golonganIds?: number[],
+        iccsKategoriIds?: number[],
+        visibility: KinerjaReadVisibility = 'scoped',
+        taxonomy: KinerjaTaxonomyFilter = DEFAULT_TAXONOMY_FILTER,
+        modelFilter?: KinerjaModelFilter,
+        closureReason?: KinerjaClosureReasonFilter,
+        bucketMode: KinerjaBucketMode = 'age',
+        kelompokHitung: KinerjaCountingGroup[] = [],
+        scopeSatkerId?: number,
+        satkerKode?: string,
+        satkerIdIn?: number,
+        bucketIn?: string,
+        searchIn?: string,
+        pageIn?: number,
+        limitIn?: number
+    ) {
+        const { from, to } = this.normPeriod(fromIn, toIn);
+        const mode: 'mulai' | 'selesai' | 'both' = modeIn === 'mulai' || modeIn === 'selesai' ? modeIn : 'both';
+        const limit = Math.max(1, Math.min(100, Math.trunc(Number(limitIn) || 20)));
+        const reqPage = Math.max(1, Math.trunc(Number(pageIn) || 1));
+        const emptyResult = () => ({
+            status: 1,
+            data: {
+                items: [] as any[],
+                pagination: { page: 1, limit, total: 0, total_pages: 0 }
+            }
+        });
+
+        const scope = await resolveScope(this.ds, userId);
+        const satkers = await this.getSatkerTree();
+        const nationalRead = visibility === 'national';
+        let allowed: number[] | null = null;
+        const accountPlan = !scope.all && scope.satkerId
+            ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId)
+            : null;
+        const regionalPlan = nationalRead
+            ? null
+            : scope.all
+                ? scopeSatkerId
+                    ? buildKinerjaRegionalScopePlan(satkers, scopeSatkerId, scopeSatkerId)
+                    : null
+                : scope.satkerId
+                    ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, scopeSatkerId)
+                    : null;
+
+        const effectiveKelompokHitung: KinerjaCountingGroup[] = kelompokHitung.length
+            ? kelompokHitung
+            : accountPlan?.functionGroup
+                ? [accountPlan.functionGroup]
+                : [];
+        const crime = await this.crimeGroupResolver.resolve(
+            jenisKejahatanIdsIn,
+            golonganIds,
+            iccsKategoriIds,
+            effectiveKelompokHitung
+        );
+        const jenisKejahatanIds = crime.baseIds;
+        if (!nationalRead) {
+            if ((!scope.all && !scope.satkerId) || (scope.all && !scopeSatkerId) || !regionalPlan) {
+                return emptyResult();
+            }
+            allowed = regionalPlan.allowedIds;
+        }
+
+        const groupPlan = buildKinerjaGroupPlan(satkers, crime);
+        const manuallyExcludedSatkerIds = await this.getExcludedSatkerIds();
+        const manuallyExcludedSet = new Set(manuallyExcludedSatkerIds.map((id) => String(id)));
+        const parentOf = new Map<number, number | null>();
+        const childrenOf = new Map<number, number[]>();
+        for (const s of satkers) {
+            parentOf.set(s.id, s.parent_id);
+            if (s.parent_id != null) {
+                const list = childrenOf.get(s.parent_id) || [];
+                list.push(s.id);
+                childrenOf.set(s.parent_id, list);
+            }
+        }
+        const underManualExclusionMemo = new Map<number, boolean>();
+        const isUnderManualExclusion = (id: number): boolean => {
+            if (underManualExclusionMemo.has(id)) return underManualExclusionMemo.get(id)!;
+            underManualExclusionMemo.set(id, false);
+            const pid = parentOf.get(id);
+            const res = pid != null && (manuallyExcludedSet.has(String(pid)) || isUnderManualExclusion(pid));
+            underManualExclusionMemo.set(id, res);
+            return res;
+        };
+
+        const taxonomyMatchedIds = new Set(
+            satkers
+                .filter(
+                    (s) =>
+                        s.function_domain_resolved === taxonomy.functionDomain &&
+                        s.organization_domain_resolved === taxonomy.organizationDomain
+                )
+                .map((s) => Number(s.id))
+        );
+        const includeStructuralOwnerFallback =
+            taxonomy.functionDomain === 'INTERNAL_RESERSE' &&
+            taxonomy.organizationDomain === 'INTERNAL_POLRI';
+        const taxonomyAggregateIds = new Set<number>(taxonomyMatchedIds);
+        if (includeStructuralOwnerFallback) {
+            for (const s of satkers) {
+                if (
+                    s.function_domain_resolved === 'STRUCTURAL' &&
+                    s.organization_domain_resolved === 'INTERNAL_POLRI'
+                ) {
+                    taxonomyAggregateIds.add(Number(s.id));
+                }
+            }
+        }
+        const taxonomyExcludedSatkerIds = satkers
+            .map((s) => Number(s.id))
+            .filter((id) => !taxonomyAggregateIds.has(id) || isUnderManualExclusion(id));
+        const excludedSatkerIds = [
+            ...new Set([...manuallyExcludedSatkerIds, ...taxonomyExcludedSatkerIds])
+        ];
+
+        let targetSubtreeIds: number[] | null = null;
+        const effectiveTargetSatkerId = satkerIdIn != null ? satkerIdIn : (!satkerKode && !scope.all && scope.satkerId && !scopeSatkerId && Number(scope.satkerId) !== 13 ? Number(scope.satkerId) : undefined);
+        if (effectiveTargetSatkerId != null || (satkerKode && satkerKode.trim())) {
+            const targetSatker = satkers.find(
+                (s) =>
+                    (effectiveTargetSatkerId != null && Number(s.id) === Number(effectiveTargetSatkerId)) ||
+                    (satkerKode && String(s.kode) === String(satkerKode.trim()))
+            );
+            if (!targetSatker) return emptyResult();
+            const collected: number[] = [];
+            const queue: number[] = [Number(targetSatker.id)];
+            const visited = new Set<number>();
+            while (queue.length > 0) {
+                const cur = queue.shift()!;
+                if (visited.has(cur)) continue;
+                visited.add(cur);
+                collected.push(cur);
+                const kids = childrenOf.get(cur) || [];
+                for (const k of kids) queue.push(k);
+            }
+            const exSet = new Set(excludedSatkerIds);
+            let filteredSubtree = collected.filter((id) => !exSet.has(id));
+            if (allowed) {
+                const allowedSet = new Set(allowed);
+                filteredSubtree = filteredSubtree.filter((id) => allowedSet.has(id));
+            }
+            if (!filteredSubtree.length) return emptyResult();
+            targetSubtreeIds = filteredSubtree;
+        }
+
+        const bucket = String(bucketIn || 'ct').trim().toLowerCase();
+        const search = String(searchIn || '').trim();
+        const ex = this.countExprs(mode, bucketMode);
+        const belumUpdateStatus = "coalesce(status_code,'LP') not in ('PENYELIDIKAN','PENYIDIKAN','SPDP','TAHAP_I','P19','P21')";
+        const belumUpdateAktual = `(tanggal_mulai_penanganan between $1 and $2 and tanggal_selesai is null and ${belumUpdateStatus})`;
+        const belumUpdateTunggakan = `(tanggal_mulai_penanganan < $1 and tanggal_selesai is null and ${belumUpdateStatus})`;
+        const cpStatusList = "status_code in ('PENYELIDIKAN','PENYIDIKAN','SPDP','TAHAP_I','P19','P21')";
+        const closureBreakdownCondition = closureReason
+            ? ` and is_rj = ${closureReason === 'RJ' ? 'true' : 'false'}`
+            : '';
+
+        const params: any[] = [from, to];
+        let snapSql = '';
+
+        if (bucket === 'limpah_eksternal') {
+            let externalWhere = 'where satker_id is not null and tanggal_limpah between $1 and $2';
+            if (targetSubtreeIds) {
+                params.push(targetSubtreeIds);
+                externalWhere += ` and satker_id = any($${params.length})`;
+            } else if (allowed) {
+                params.push(allowed);
+                externalWhere += ` and satker_id = any($${params.length})`;
+            }
+            if (jenisKejahatanIds !== undefined) {
+                params.push(jenisKejahatanIds);
+                externalWhere += ` and jenis_kejahatan_id = any($${params.length})`;
+            }
+            if (modelFilter) {
+                params.push(modelFilter);
+                externalWhere += ` and model_lp = $${params.length}`;
+            }
+            if (excludedSatkerIds.length) {
+                params.push(excludedSatkerIds);
+                externalWhere += ` and satker_id <> all($${params.length})`;
+            }
+            externalWhere = appendKinerjaGroupWhere(externalWhere, params, groupPlan);
+            snapSql = `
+                select
+                    lp_id,
+                    satker_id,
+                    tanggal_limpah as tanggal_mulai_penanganan,
+                    null::date as tanggal_selesai,
+                    null::text as tingkat_kesulitan,
+                    'LIMPAH_EKSTERNAL'::text as status_code,
+                    jenis_kejahatan_id,
+                    model_lp,
+                    false as is_rj
+                from (
+                    select distinct on (lp.id)
+                           lp.id as lp_id, coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                           lp.jenis_kejahatan_id, lp.model_lp, p.created_at::date as tanggal_limpah
+                    from bdb_laporan_polisi lp
+                    join bdb_lp_pelimpahan p on p.lp_id = lp.id and p.satker_eksternal_id is not null
+                    where lp.deleted_at is null and coalesce(lp.dilimpahkan_eksternal, false)
+                    order by lp.id, p.created_at desc, p.id desc
+                ) active_external
+                ${externalWhere}
+            `;
+        } else {
+            let bucketCond = ex.ct;
+            if (bucket === 'ct') {
+                bucketCond = ex.ct;
+            } else if (bucket === 'sisa' || bucket === 'belum_update') {
+                bucketCond = `(${belumUpdateAktual} or ${belumUpdateTunggakan})`;
+            } else if (bucket === 'sisa_akt' || bucket === 'belum_update_aktual') {
+                bucketCond = belumUpdateAktual;
+            } else if (bucket === 'sisa_tgk' || bucket === 'belum_update_tunggakan') {
+                bucketCond = belumUpdateTunggakan;
+            } else if (bucket === 'cp') {
+                bucketCond = `((${ex.cp_berjalan} or ${ex.cp_tunggakan}) and ${cpStatusList})`;
+            } else if (bucket === 'cp_akt' || bucket === 'cp_berjalan') {
+                bucketCond = `(${ex.cp_berjalan} and ${cpStatusList})`;
+            } else if (bucket === 'cp_tgk' || bucket === 'cp_tunggakan') {
+                bucketCond = `(${ex.cp_tunggakan} and ${cpStatusList})`;
+            } else if (bucket.startsWith('cp_akt_')) {
+                const subKey = bucket.replace('cp_akt_', '');
+                const found = CP_BREAKDOWN.find((b) => b.key === subKey);
+                bucketCond = found ? `(${ex.cp_berjalan} and status_code = '${found.code}')` : 'false';
+            } else if (bucket.startsWith('cp_tgk_')) {
+                const subKey = bucket.replace('cp_tgk_', '');
+                const found = CP_BREAKDOWN.find((b) => b.key === subKey);
+                bucketCond = found ? `(${ex.cp_tunggakan} and status_code = '${found.code}')` : 'false';
+            } else if (bucket === 'cc') {
+                bucketCond = `(${ex.cc_aktual} or ${ex.cc_tunggakan})`;
+            } else if (bucket === 'cc_akt' || bucket === 'cc_aktual') {
+                bucketCond = ex.cc_aktual;
+            } else if (bucket === 'cc_tgk' || bucket === 'cc_tunggakan') {
+                bucketCond = ex.cc_tunggakan;
+            } else if (bucket.startsWith('cc_akt_')) {
+                const subKey = bucket.replace('cc_akt_', '');
+                const found = CC_BREAKDOWN.find((b) => b.key === subKey);
+                const closureCond = subKey === 'sp2lid' || subKey === 'sp3' ? closureBreakdownCondition : '';
+                bucketCond = found ? `(${ex.cc_aktual} and ${found.cond}${closureCond})` : 'false';
+            } else if (bucket.startsWith('cc_tgk_')) {
+                const subKey = bucket.replace('cc_tgk_', '');
+                const found = CC_BREAKDOWN.find((b) => b.key === subKey);
+                const closureCond = subKey === 'sp2lid' || subKey === 'sp3' ? closureBreakdownCondition : '';
+                bucketCond = found ? `(${ex.cc_tunggakan} and ${found.cond}${closureCond})` : 'false';
+            } else if (bucket === 'belum_kesulitan') {
+                bucketCond = ex.belum_kesulitan;
+            }
+
+            let where = 'where satker_id is not null and ($1::date is not null and $2::date is not null)';
+            if (targetSubtreeIds) {
+                params.push(targetSubtreeIds);
+                where += ` and satker_id = any($${params.length})`;
+            } else if (allowed) {
+                params.push(allowed);
+                where += ` and satker_id = any($${params.length})`;
+            }
+            if (jenisKejahatanIds !== undefined) {
+                params.push(jenisKejahatanIds);
+                where += ` and jenis_kejahatan_id = any($${params.length})`;
+            }
+            if (modelFilter) {
+                params.push(modelFilter);
+                where += ` and model_lp = $${params.length}`;
+            }
+            if (excludedSatkerIds.length) {
+                params.push(excludedSatkerIds);
+                where += ` and satker_id <> all($${params.length})`;
+            }
+            where = appendKinerjaGroupWhere(where, params, groupPlan);
+            where += ` and (${bucketCond})`;
+
+            snapSql = `
+                select
+                    lp_id,
+                    satker_id,
+                    tanggal_mulai_penanganan,
+                    tanggal_selesai,
+                    tingkat_kesulitan,
+                    status_code,
+                    jenis_kejahatan_id,
+                    model_lp,
+                    is_rj
+                from bdb_kinerja_perkara_snapshot
+                ${where}
+            `;
+        }
+
+        let searchFilter = '';
+        if (search) {
+            params.push(`%${search}%`);
+            const sp = `$${params.length}`;
+            searchFilter = `where (coalesce(lp.no_laporan, '') ilike ${sp} or coalesce(jk.keterangan, '') ilike ${sp} or coalesce(sat.deskripsi, '') ilike ${sp} or coalesce(lp.uraian_singkat, '') ilike ${sp})`;
+        }
+
+        const countSql = search
+            ? `with snap as (${snapSql})
+               select count(*)::int as total
+               from snap s
+               join bdb_laporan_polisi lp on lp.id = s.lp_id
+               left join bdb_satker sat on sat.id = s.satker_id
+               left join cm_jenis_kejahatan jk on jk.id = s.jenis_kejahatan_id
+               ${searchFilter}`
+            : `with snap as (${snapSql}) select count(*)::int as total from snap`;
+
+        const countRows = await this.ds.query(countSql, params);
+        const total = Number(countRows[0]?.total || 0);
+        const totalPages = total > 0 ? Math.ceil(total / limit) : 0;
+        const page = totalPages > 0 ? Math.min(reqPage, totalPages) : 1;
+        const offset = (page - 1) * limit;
+
+        if (total === 0) {
+            return {
+                status: 1,
+                data: {
+                    items: [],
+                    pagination: { page: 1, limit, total: 0, total_pages: 0 }
+                }
+            };
+        }
+
+        const dataParams = [...params, limit, offset];
+        const limitParam = `$${dataParams.length - 1}`;
+        const offsetParam = `$${dataParams.length}`;
+
+        const rowsSql = search
+            ? `with snap as (${snapSql})
+               select
+                   s.lp_id,
+                   s.satker_id,
+                   s.tanggal_mulai_penanganan,
+                   s.tanggal_selesai,
+                   s.tingkat_kesulitan,
+                   s.status_code,
+                   s.model_lp,
+                   s.is_rj,
+                   lp.no_laporan,
+                   lp.tgl_laporan,
+                   lp.unit_nama,
+                   lp.uraian_singkat,
+                   sat.deskripsi as satker_nama,
+                   jk.keterangan as jenis_kejahatan,
+                   st.nama as status_nama
+               from snap s
+               join bdb_laporan_polisi lp on lp.id = s.lp_id
+               left join bdb_satker sat on sat.id = s.satker_id
+               left join cm_jenis_kejahatan jk on jk.id = s.jenis_kejahatan_id
+               left join bdb_status_master st on st.code = s.status_code
+               ${searchFilter}
+               order by s.tanggal_mulai_penanganan desc nulls last, s.lp_id desc
+               limit ${limitParam} offset ${offsetParam}`
+            : `with snap as (${snapSql}),
+               paged as (
+                   select *
+                   from snap
+                   order by tanggal_mulai_penanganan desc nulls last, lp_id desc
+                   limit ${limitParam} offset ${offsetParam}
+               )
+               select
+                   s.lp_id,
+                   s.satker_id,
+                   s.tanggal_mulai_penanganan,
+                   s.tanggal_selesai,
+                   s.tingkat_kesulitan,
+                   s.status_code,
+                   s.model_lp,
+                   s.is_rj,
+                   lp.no_laporan,
+                   lp.tgl_laporan,
+                   lp.unit_nama,
+                   lp.uraian_singkat,
+                   sat.deskripsi as satker_nama,
+                   jk.keterangan as jenis_kejahatan,
+                   st.nama as status_nama
+               from paged s
+               left join bdb_laporan_polisi lp on lp.id = s.lp_id
+               left join bdb_satker sat on sat.id = s.satker_id
+               left join cm_jenis_kejahatan jk on jk.id = s.jenis_kejahatan_id
+               left join bdb_status_master st on st.code = s.status_code
+               order by s.tanggal_mulai_penanganan desc nulls last, s.lp_id desc`;
+
+        const rows = await this.ds.query(rowsSql, dataParams);
+        const items = rows.map((r: any) => {
+            const noLp = r.no_laporan || '-';
+            const tglLp = r.tgl_laporan ? String(r.tgl_laporan).slice(0, 10) : (r.tanggal_mulai_penanganan ? String(r.tanggal_mulai_penanganan).slice(0, 10) : '-');
+            const satkerNama = r.satker_nama || '-';
+            const statusNama = r.status_nama || r.status_code || 'Belum Update';
+            return {
+                id: Number(r.lp_id),
+                pid: encodeId(Number(r.lp_id)),
+                no_laporan: noLp,
+                nomor_lp: noLp,
+                tgl_laporan: tglLp,
+                tanggal_lp: tglLp,
+                tanggal_mulai_penanganan: r.tanggal_mulai_penanganan ? String(r.tanggal_mulai_penanganan).slice(0, 10) : null,
+                tanggal_selesai: r.tanggal_selesai ? String(r.tanggal_selesai).slice(0, 10) : null,
+                satker_id: Number(r.satker_id),
+                satker_nama: satkerNama,
+                nama_satker: satkerNama,
+                unit_nama: r.unit_nama || null,
+                jenis_kejahatan: r.jenis_kejahatan || '-',
+                model_lp: r.model_lp === 'lp_model_a' ? 'Model A' : r.model_lp === 'lp_model_b' ? 'Model B' : (r.model_lp || '-'),
+                status_code: r.status_code || 'LP',
+                status_nama: statusNama,
+                status: statusNama,
+                tingkat_kesulitan: r.tingkat_kesulitan || 'Belum dipilih',
+                uraian_singkat: r.uraian_singkat || '',
+                is_rj: Boolean(r.is_rj)
+            };
+        });
+
+        return {
+            status: 1,
+            data: {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    total_pages: totalPages
+                }
+            }
+        };
     }
 }
