@@ -982,7 +982,7 @@ let WorkflowService = class WorkflowService {
             statusId = base[0]?.id ?? null;
             isCc = false;
         }
-        await db.query('update bdb_laporan_polisi set status_id=$2, tanggal_selesai=case when $3::date > current_date then current_date else $3::date end, updated_at=now() where id=$1', [lpId, statusId, isCc ? (ccDate || this.getTodayWib()) : null]);
+        await db.query("update bdb_laporan_polisi set status_id=$2, status=coalesce((select case when kategori='CC' then 'SELESAI' when code='LP' then 'BARU' else 'PROSES' end from bdb_status_master where id=$2), status), tanggal_selesai=case when $3::date > current_date then current_date else $3::date end, updated_at=now() where id=$1", [lpId, statusId, isCc ? (ccDate || this.getTodayWib()) : null]);
     }
     async reconcileAllLpStatus() {
         const [{ total }] = await this.dataSource.query('select count(*)::int as total from bdb_laporan_polisi where deleted_at is null');

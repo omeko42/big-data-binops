@@ -1110,11 +1110,11 @@ export class SatkerService implements OnModuleInit {
 
             cteAllowed =
                 "with recursive sub as (" +
-                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker, s.kinerja_aktif, s.dors_mapping_aktif " +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                 "from bdb_satker s " +
                 "where s.id = $" + pTerr + " or s.id = $" + pActor + " " +
                 "union all " +
-                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker, s.kinerja_aktif, s.dors_mapping_aktif " +
+                "select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                 "from bdb_satker s " +
                 "join sub on s.parent_id = sub.id" +
                 "), " +

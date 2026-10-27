@@ -28,11 +28,16 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
     logger = new common_1.Logger(PihakTerlibatService_1.name);
     summaryCache = new Map();
     rankingCache = new Map();
-    rankingCacheTtlMs = 4 * 60 * 1000;
+    recentGlobalCache = new Map();
+    rankingCacheTtlMs = 2 * 60 * 1000;
     async onApplicationBootstrap() {
         if (!(0, cluster_instance_util_1.isPrimaryClusterInstance)())
             return;
         try {
+            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta text;`);
+            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS pihak_terkait jsonb DEFAULT '[]'::jsonb;`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_main ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, tipe_subjek, nasional_score DESC);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_kasta ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta);`);
             const checkRes = await this.dataSource.query(`SELECT count(*)::int as c FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND bulan IS NULL;`);
             const count = Number(checkRes[0]?.c || 0);
             if (count === 0) {
@@ -135,13 +140,18 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             if (cleanSearch.startsWith('KORP:')) {
                 cleanSearch = cleanSearch.replace(/^KORP:/, '').replace(/_/g, ' ').trim();
             }
-            const isNik = /^\d{8,16}$/.test(cleanSearch);
-            if (isNik) {
+            const isFullNik = /^\d{15,16}$/.test(cleanSearch);
+            const isNik = !isFullNik && /^\d{8,14}$/.test(cleanSearch);
+            if (isFullNik) {
+                params.push(cleanSearch);
+                where.push(`c.nik = $${params.length}`);
+            }
+            else if (isNik) {
                 params.push(cleanSearch);
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(c.nik = $${pExact} or c.nik like $${pLike} or lower(coalesce(c.nama,'')) like $${pLike})`);
+                where.push(`(c.nik = $${pExact} or c.nik like $${pLike})`);
             }
             else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
@@ -173,7 +183,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             if (!datePattern.test(value))
                 throw new common_1.BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
             params.push(value);
-            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) ${op} $${params.length}::date`);
         }
         addLike('jk.keterangan', query.kejahatan);
         const area = this.toText(query.area);
@@ -221,26 +231,42 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         if (isDpoQuery && (source === 'DORS' || source === 'MANUAL')) {
             return { params, where: ['1=0'], skip: true };
         }
+        if (includeFacetFilters && keterlibatan === 'TERSANGKA' && source === 'DORS') {
+            return { params, where: ['1=0'], skip: true };
+        }
         const search = this.toText(query.search);
         if (search) {
             let cleanSearch = search.trim();
             if (cleanSearch.startsWith('KORP:')) {
                 cleanSearch = cleanSearch.replace(/^KORP:/, '').replace(/_/g, ' ').trim();
             }
-            const isNik = /^\d{8,16}$/.test(cleanSearch);
-            if (isNik) {
+            const isFullNik = /^\d{15,16}$/.test(cleanSearch);
+            const isNik = !isFullNik && /^\d{6,14}$/.test(cleanSearch);
+            const isLpNo = /^(LP|STTLP|B\/|A\/)/i.test(cleanSearch) || cleanSearch.includes('/');
+            if (isFullNik) {
+                params.push(cleanSearch);
+                where.push(`${partyAlias}.nik = $${params.length}`);
+            }
+            else if (isNik) {
                 params.push(cleanSearch);
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik like $${pLike} or lower(coalesce(${partyAlias}.nama,'')) like $${pLike})`);
+                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik ilike $${pLike})`);
+            }
+            else if (isLpNo) {
+                const words = cleanSearch.split(/\s+/).filter(Boolean);
+                const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
+                params.push(wildcardPattern);
+                const p = params.length;
+                where.push(`lp.no_laporan ilike $${p}`);
             }
             else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
                 params.push(wildcardPattern);
                 const p = params.length;
-                where.push(`(lower(coalesce(${partyAlias}.nama,'')) like $${p} or lower(coalesce(${partyAlias}.nik,'')) like $${p} or lower(coalesce(lp.no_laporan,'')) like $${p})`);
+                where.push(`${partyAlias}.nama ilike $${p}`);
             }
         }
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -252,13 +278,6 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             const days = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
             if (days < 1)
                 throw new common_1.BadRequestException('Tanggal akhir tidak boleh sebelum tanggal awal.');
-            const hasSearch = Boolean(this.toText(query.search));
-            const satkerId = Number(query.satker_id || 0);
-            const hasRegionalSatker = (Number.isSafeInteger(satkerId) && satkerId > 0) || (!scope.all && Boolean(scope.satkerId));
-            const isNationalUnfiltered = !hasSearch && !hasRegionalSatker;
-            if (isNationalUnfiltered && days > 31 && !isDpoQuery) {
-                throw new common_1.BadRequestException('Query nasional tanpa filter NIK / satker regional dibatasi maksimal 31 hari. Silakan pilih Wilayah Satker atau masukkan kata kunci pencarian NIK/Nama.');
-            }
         }
         for (const [name, op] of [['from', '>='], ['to', '<=']]) {
             const value = this.toText(query[name]);
@@ -267,7 +286,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             if (!datePattern.test(value))
                 throw new common_1.BadRequestException(`Tanggal ${name === 'from' ? 'awal' : 'akhir'} tidak valid (format YYYY-MM-DD).`);
             params.push(value);
-            where.push(`to_timestamp(nullif(lp.tgl_laporan,''),'DD-MM-YYYY HH24:MI:SS')::date ${op} $${params.length}::date`);
+            where.push(`parse_tgl_laporan(lp.tgl_laporan) ${op} $${params.length}::date`);
         }
         const kejahatan = this.toText(query.kejahatan);
         if (kejahatan) {
@@ -971,8 +990,14 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         return result;
     }
     async recentGlobal(page, limit) {
+        const cacheKey = `${page}:${limit}`;
+        const cached = this.recentGlobalCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
         const offset = (page - 1) * limit;
         const fetch = offset + limit + 1;
+        const docScanLimit = Math.max(fetch * 4, 160);
         const dorsPromise = this.dataSource.query(`select 'DORS' as sumber, t.id::text as row_id, lp.id as lp_id, t.nama, t.nik,
                     upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
                     null::text as nomor_dokumen, null::date as tanggal_dokumen, null::date as bap_tanggal,
@@ -995,18 +1020,38 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
              where m.deleted_at is null
              order by m.id desc
              limit $1`, [fetch]);
-        const documentPromise = this.dataSource.query(`with ${this.documentPartiesCte()}
+        const documentPromise = this.dataSource.query(`with recent_docs as (
+                 select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen, d.data, d.created_at, dt.code
+                 from bdb_dokumen d
+                 join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                 order by d.created_at desc, d.id desc
+                 limit $2
+             ),
+             recent_parties as (
+                 select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
+                        nullif(trim(item->>'nama'),'') as nama,
+                        nullif(trim(item->>'nik'),'') as nik,
+                        case when d.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end::text as keterlibatan,
+                        coalesce(nullif(trim(d.nomor_dokumen),''), nullif(trim(d.data->>'nomor_dokumen'),'')) as nomor_dokumen,
+                        coalesce(d.tanggal_dokumen, nullif(trim(d.data->>'tanggal_dokumen'),'')::date) as tanggal_dokumen,
+                        d.created_at
+                 from recent_docs d
+                 cross join lateral jsonb_array_elements(
+                     case when jsonb_typeof(d.data->'tersangka')='array' then d.data->'tersangka' else '[]'::jsonb end
+                 ) with ordinality as party(item, ordinality)
+                 where nullif(trim(item->>'nama'),'') is not null
+             )
              select 'DOKUMEN' as sumber,
                     (x.dokumen_id::text || ':' || x.urutan::text) as row_id,
                     lp.id as lp_id,x.nama,x.nik,x.keterlibatan,x.nomor_dokumen,x.tanggal_dokumen,
                     null::date as bap_tanggal,case when x.keterlibatan='DPO' then 'Penetapan DPO aktif' else 'Surat Ketetapan Penetapan Tersangka' end::text as keterangan,
                     false as has_lampiran,x.created_at,
                     lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,lp.unit_satker_nama,jk.keterangan as kejahatan
-             from document_parties x
+             from recent_parties x
              join bdb_laporan_polisi lp on lp.id=x.lp_id and lp.deleted_at is null
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              order by x.created_at desc,x.dokumen_id desc,x.urutan desc
-             limit $1`, [fetch]);
+             limit $1`, [fetch, docScanLimit]);
         const dpoPromise = this.dataSource.query(`select 'DPO' as sumber,
                     d.id as id,
                     d.id as dpo_id,
@@ -1039,7 +1084,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const merged = [...dors, ...manual, ...document, ...dpoRows].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         const pageRows = merged.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
-        return { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'recent-key-tail' } };
+        const result = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'recent-key-tail' } };
+        this.recentGlobalCache.set(cacheKey, { expiresAt: Date.now() + 30000, data: result });
+        return result;
     }
     async list(authUser, query = {}) {
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
@@ -1052,11 +1099,26 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const isDefaultGlobal = (scope.all || query.scope === 'national') && !this.hasCommonFilter(query) && (!query.keterlibatan || String(query.keterlibatan).toUpperCase() === 'ALL') && (!query.status || String(query.status).toUpperCase() === 'ALL');
         if (isDefaultGlobal)
             return this.recentGlobal(page, limit);
+        if (!this.listCache)
+            this.listCache = new Map();
+        const listCacheKey = JSON.stringify({ scope: scope.all ? 'ALL' : Number(scope.satkerId || 0), query, page, limit });
+        const cachedList = this.listCache.get(listCacheKey);
+        if (cachedList && cachedList.expiresAt > Date.now()) {
+            return cachedList.data;
+        }
         const fetch = page * limit + 1;
         const rows = [];
         const branchTasks = [];
         const dorsWhere = this.buildDirectSummaryWhere(scope, query, 't', 'DORS', true);
         if (!dorsWhere.skip) {
+            const hasSearch = Boolean(this.toText(query.search));
+            const hasDate = Boolean(this.toText(query.from) || this.toText(query.to));
+            const hasSatker = Number(query.satker_id || 0) > 0 || (!scope.all && Boolean(scope.satkerId));
+            const dorsOrder = hasSearch
+                ? '(t.id + 0) desc'
+                : (hasDate || hasSatker)
+                    ? 'lp.id desc'
+                    : 't.id desc';
             branchTasks.push(this.readOnlyQuery(`select 'DORS' as sumber,t.id::text as row_id,lp.id as lp_id,t.nama,t.nik,
                         upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
                         null::text as nomor_dokumen,null::date as tanggal_dokumen,null::date as bap_tanggal,
@@ -1068,7 +1130,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                  left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
                  left join bdb_status_master sm on sm.id=lp.status_id
                  where ${dorsWhere.where.join(' and ')}
-                 order by d.synced_at desc,t.id desc limit $${dorsWhere.params.length + 1}`, [...dorsWhere.params, fetch], 12000));
+                 order by ${dorsOrder} limit $${dorsWhere.params.length + 1}`, [...dorsWhere.params, fetch], 12000));
         }
         const manualWhere = this.buildDirectSummaryWhere(scope, query, 'm', 'MANUAL', true);
         if (!manualWhere.skip) {
@@ -1085,15 +1147,39 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         const documentWhere = this.buildDirectSummaryWhere(scope, query, 'x', 'DOKUMEN', true);
         if (!documentWhere.skip) {
-            branchTasks.push(this.readOnlyQuery(`with ${this.documentPartiesCte()}
+            const rawDocSearch = this.toText(query.search)?.replace(/^KORP:/, '')?.replace(/_/g, ' ')?.trim();
+            const docPreFilter = rawDocSearch ? `and d.data::text ilike '%${rawDocSearch.replace(/'/g, "''")}%'` : '';
+            const docScanLimit = rawDocSearch ? 2000 : Math.max(fetch * 12, 400);
+            branchTasks.push(this.readOnlyQuery(`with recent_docs as (
+                     select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen, d.data, d.created_at, dt.code
+                     from bdb_dokumen d
+                     join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                     where 1=1 ${docPreFilter}
+                     order by d.id desc
+                     limit ${docScanLimit}
+                 ),
+                 document_parties as (
+                     select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
+                            nullif(trim(item->>'nama'),'') as nama,
+                            nullif(trim(item->>'nik'),'') as nik,
+                            case when d.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end::text as keterlibatan,
+                            coalesce(nullif(trim(d.nomor_dokumen),''), nullif(trim(d.data->>'nomor_dokumen'),'')) as nomor_dokumen,
+                            coalesce(d.tanggal_dokumen, nullif(trim(d.data->>'tanggal_dokumen'),'')::date) as tanggal_dokumen,
+                            d.created_at
+                     from recent_docs d
+                     cross join lateral jsonb_array_elements(
+                         case when jsonb_typeof(d.data->'tersangka')='array' then d.data->'tersangka' else '[]'::jsonb end
+                     ) with ordinality as party(item, ordinality)
+                     where nullif(trim(item->>'nama'),'') is not null
+                 )
                  select 'DOKUMEN' as sumber,
                         (x.dokumen_id::text || ':' || x.urutan::text) as row_id,
                         lp.id as lp_id,x.nama,x.nik,x.keterlibatan,x.nomor_dokumen,x.tanggal_dokumen,
                         null::date as bap_tanggal,case when x.keterlibatan='DPO' then 'Penetapan DPO aktif' else 'Surat Ketetapan Penetapan Tersangka' end::text as keterangan,
                         false as has_lampiran,x.created_at,
                         lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,lp.unit_satker_nama,jk.keterangan as kejahatan
-                 from bdb_laporan_polisi lp
-                 join document_parties x on x.lp_id=lp.id
+                 from document_parties x
+                 join bdb_laporan_polisi lp on lp.id=x.lp_id
                  left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
                  left join bdb_status_master sm on sm.id=lp.status_id
                  where ${documentWhere.where.join(' and ')}
@@ -1189,7 +1275,16 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const offset = (page - 1) * limit;
         const pageRows = rows.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
-        return { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
+        const listResult = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
+        if (this.listCache.size > 300) {
+            const now = Date.now();
+            for (const [k, v] of this.listCache.entries()) {
+                if (v.expiresAt <= now)
+                    this.listCache.delete(k);
+            }
+        }
+        this.listCache.set(listCacheKey, { expiresAt: Date.now() + 30000, data: listResult });
+        return listResult;
     }
     async getLaporanByNik(authUser, rawNik, query = {}) {
         const nik = String(rawNik || '').trim();
@@ -1267,6 +1362,15 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 WHERE (
                     regexp_replace(upper(trim(x.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(x.nama)) ILIKE ('%' || $2 || '%')
+                    OR EXISTS (
+                        SELECT 1 FROM bdb_dors_lp_terlibat tc
+                        WHERE tc.lp_id = d.id
+                          AND upper(coalesce(tc.keterlibatan, '')) = 'TERLAPOR'
+                          AND (
+                              regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') = $1
+                              OR upper(trim(tc.nama)) ILIKE ('%' || $2 || '%')
+                          )
+                    )
                 )
 
                 UNION ALL
@@ -1308,9 +1412,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     WHEN peran = 'DPO' THEN 1
                     WHEN peran = 'TERSANGKA' THEN 2
                     WHEN peran = 'TERLAPOR' THEN 3
-                    WHEN peran = 'KORBAN' THEN 4
-                    WHEN peran = 'PELAPOR' THEN 5
-                    WHEN peran = 'SAKSI' THEN 6
+                    WHEN peran = 'PELAPOR' THEN 4
+                    WHEN peran = 'SAKSI' THEN 5
+                    WHEN peran = 'KORBAN' THEN 6
                     ELSE 7
                 END as kasta_rank
             FROM all_parties
@@ -1414,15 +1518,52 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     WHEN peran = 'DPO' THEN 1
                     WHEN peran = 'TERSANGKA' THEN 2
                     WHEN peran = 'TERLAPOR' THEN 3
-                    WHEN peran = 'KORBAN' THEN 4
-                    WHEN peran = 'PELAPOR' THEN 5
-                    WHEN peran = 'SAKSI' THEN 6
+                    WHEN peran = 'PELAPOR' THEN 4
+                    WHEN peran = 'SAKSI' THEN 5
+                    WHEN peran = 'KORBAN' THEN 6
                     ELSE 7
                 END as kasta_rank
             FROM all_parties
             ORDER BY kasta_rank ASC, tgl_date DESC;
         `;
-        const rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        if (isCorp && rows.length === 0) {
+            const coreCorp = corpTerm.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
+            if (coreCorp.length >= 4) {
+                rows = await this.dataSource.query(`
+                    SELECT 
+                        lp.id as lp_id,
+                        coalesce(lp.no_laporan, d.no_laporan, 'LP Tanpa Nomor') as no_laporan,
+                        case 
+                            when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10)
+                            else to_char(coalesce(d.synced_at, lp.synced_at, now()), 'DD-MM-YYYY')
+                        end as tgl_laporan,
+                        case 
+                            when coalesce(lp.tgl_laporan, d.tgl_laporan) ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(coalesce(lp.tgl_laporan, d.tgl_laporan) from 1 for 10), 'DD-MM-YYYY')
+                            else coalesce(d.synced_at, lp.synced_at, now())::date
+                        end as tgl_date,
+                        coalesce(nullif(trim(d.waktu_kejadian_faktual),''), nullif(trim(d.waktu_kejadian),''), '—') as waktu_kejadian,
+                        coalesce(nullif(trim(d.tempat_kejadian), ''), nullif(trim(lp.tempat_kejadian), ''), '—') as tempat_kejadian,
+                        coalesce(nullif(trim(d.apa_terjadi), ''), jk.keterangan, '—') as kejahatan,
+                        coalesce(nullif(trim(lp.status), ''), 'PROSES') as status_lp,
+                        coalesce(nullif(trim(d.uraian_kejadian), ''), nullif(trim(d.uraian_singkat_kejadian), ''), nullif(trim(lp.uraian_singkat), ''), '—') as uraian_kejadian,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                        coalesce(p.deskripsi, 'POLRI') as wilayah_nama,
+                        'TERLAPOR' as peran,
+                        'DORS' as sumber,
+                        3 as kasta_rank
+                    FROM bdb_dors_lp d
+                    JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                    LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
+                    WHERE d.uraian_kejadian ILIKE ('%' || $1 || '%')
+                    ORDER BY tgl_date DESC
+                    LIMIT 100
+                `, [coreCorp]);
+            }
+        }
         const seen = new Set();
         const deduped = [];
         for (const r of rows) {
@@ -1451,8 +1592,120 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     satker_nama: r.satker_nama || 'POLRI',
                     wilayah_nama: r.wilayah_nama || 'POLRI',
                     in_period: inPeriod,
-                    tahun: tDateStr ? tDateStr.substring(0, 4) : '—'
+                    tahun: tDateStr ? tDateStr.substring(0, 4) : '—',
+                    pihak_lp: []
                 });
+            }
+        }
+        let pihakKorporasi = [];
+        if (isCorp && deduped.length > 0) {
+            const lpIds = deduped.map(x => Number(x.lp_id)).filter(n => Number.isFinite(n) && n > 0);
+            if (lpIds.length > 0) {
+                try {
+                    const partyRows = await this.dataSource.query(`
+                        WITH raw_p AS (
+                            SELECT lp.id as lp_id,
+                                   upper(trim(t.nama)) as nama,
+                                   nullif(trim(t.nik), '') as nik,
+                                   upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
+                                   upper(trim(coalesce(t.pekerjaan, ''))) as pekerjaan
+                            FROM bdb_laporan_polisi lp
+                            JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
+                            JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                            WHERE lp.id = ANY($1::bigint[])
+                              AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
+                              AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA')
+                              AND regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') <> $2
+                              AND NOT (upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                            UNION ALL
+                            SELECT d.lp_id,
+                                   upper(trim(item->>'nama')) as nama,
+                                   nullif(trim(item->>'nik'), '') as nik,
+                                   case when dt.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end as peran,
+                                   upper(trim(coalesce(item->>'pekerjaan', ''))) as pekerjaan
+                            FROM bdb_dokumen d
+                            JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code IN ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                            CROSS JOIN LATERAL jsonb_array_elements(
+                                CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                            ) party(item)
+                            WHERE d.lp_id = ANY($1::bigint[])
+                              AND nullif(trim(item->>'nama'), '') IS NOT NULL
+                              AND regexp_replace(upper(trim(item->>'nama')), '[^A-Z0-9]+', '', 'g') <> $2
+                              AND NOT (upper(trim(item->>'nama')) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                            UNION ALL
+                            SELECT m.lp_id,
+                                   upper(trim(m.nama)) as nama,
+                                   nullif(trim(m.nik), '') as nik,
+                                   upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as peran,
+                                   upper(trim(coalesce(m.pekerjaan, ''))) as pekerjaan
+                            FROM bdb_lp_pihak_manual m
+                            WHERE m.lp_id = ANY($1::bigint[]) AND m.deleted_at IS NULL
+                              AND m.nama IS NOT NULL AND length(trim(m.nama)) > 2
+                              AND regexp_replace(upper(trim(m.nama)), '[^A-Z0-9]+', '', 'g') <> $2
+                        )
+                        SELECT lp_id, nama, nik, peran, pekerjaan
+                        FROM raw_p
+                    `, [lpIds, cleanTerm]);
+                    const byLp = new Map();
+                    const byPerson = new Map();
+                    const roleRank = (r) => r === 'DPO' ? 1 : r === 'TERSANGKA' ? 2 : r === 'TERLAPOR' ? 3 : r === 'PELAPOR' ? 4 : r === 'SAKSI' ? 5 : r === 'KORBAN' ? 6 : 7;
+                    for (const pr of (partyRows || [])) {
+                        const lid = Number(pr.lp_id);
+                        const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
+                        const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                        const lpArr = byLp.get(lid) || [];
+                        if (!lpArr.some(x => (x.nik && pr.nik && x.nik === pr.nik) || x.nama === pr.nama)) {
+                            lpArr.push({ nama: pr.nama, nik: pr.nik || '', peran: pr.peran, jabatan });
+                            byLp.set(lid, lpArr);
+                        }
+                        const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
+                        const existing = byPerson.get(pKey);
+                        const rRank = roleRank(pr.peran);
+                        if (!existing) {
+                            const s = new Set();
+                            s.add(lid);
+                            byPerson.set(pKey, { nama: pr.nama, nik: pr.nik || '', peran: pr.peran, peranRank: rRank, jabatan, lpSet: s });
+                        }
+                        else {
+                            existing.lpSet.add(lid);
+                            if (rRank < existing.peranRank) {
+                                existing.peran = pr.peran;
+                                existing.peranRank = rRank;
+                            }
+                            if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
+                                existing.jabatan = 'DIREKTUR / PENGURUS';
+                            }
+                            if (!existing.nik && pr.nik)
+                                existing.nik = pr.nik;
+                        }
+                    }
+                    for (const item of deduped) {
+                        const lid = Number(item.lp_id);
+                        item.pihak_lp = (byLp.get(lid) || []).sort((a, b) => roleRank(a.peran) - roleRank(b.peran));
+                    }
+                    pihakKorporasi = Array.from(byPerson.values())
+                        .map(p => ({
+                        nama: p.nama,
+                        nik: p.nik,
+                        peran: p.peran,
+                        jabatan: p.jabatan,
+                        total_lp: p.lpSet.size
+                    }))
+                        .sort((a, b) => {
+                        const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        if (dirA !== dirB)
+                            return dirA - dirB;
+                        const rk = roleRank(a.peran) - roleRank(b.peran);
+                        if (rk !== 0)
+                            return rk;
+                        return b.total_lp - a.total_lp;
+                    })
+                        .slice(0, 30);
+                }
+                catch (e) {
+                    this.logger.warn('Gagal memuat pihak_korporasi: ' + e?.message);
+                }
             }
         }
         deduped.sort((a, b) => {
@@ -1467,42 +1720,209 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             meta: {
                 total_all: deduped.length,
                 total_period: periodList.length,
-                period: { from: fromStr, to: toStr }
+                period: { from: fromStr, to: toStr },
+                pihak_korporasi: pihakKorporasi
             }
         };
+    }
+    async enrichCorporationsWithParties(rows) {
+        if (!Array.isArray(rows) || rows.length === 0)
+            return;
+        const corpRows = rows.filter(r => r && (r.tipe_subjek === 'KORPORASI' || String(r.nik || '').startsWith('KORP:')) && (!Array.isArray(r.pihak_terkait) || r.pihak_terkait.length === 0));
+        if (corpRows.length === 0)
+            return;
+        const roleRank = (r) => r === 'DPO' ? 1 : r === 'TERSANGKA' ? 2 : r === 'TERLAPOR' ? 3 : r === 'PELAPOR' ? 4 : r === 'SAKSI' ? 5 : r === 'KORBAN' ? 6 : 7;
+        await Promise.all(corpRows.slice(0, 25).map(async (corp) => {
+            try {
+                const rawName = String(corp.nama || corp.nik || '').replace(/^KORP:/, '').replace(/_/g, ' ').trim();
+                const cleanTerm = rawName.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                const coreCorp = rawName.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
+                if (!cleanTerm)
+                    return;
+                let lpRowIds = await this.dataSource.query(`
+                    SELECT DISTINCT d.id as dors_id, lp.id as lp_id
+                    FROM bdb_dors_lp_terlibat tc
+                    JOIN bdb_dors_lp d ON d.id = tc.lp_id
+                    LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                    WHERE upper(trim(tc.nama)) = $1
+                       OR tc.nama ILIKE ('%' || $2 || '%')
+                    LIMIT 60
+                `, [rawName.toUpperCase(), coreCorp.length >= 4 ? coreCorp : rawName]);
+                if ((!lpRowIds || lpRowIds.length === 0) && coreCorp.length >= 4) {
+                    lpRowIds = await this.dataSource.query(`
+                        SELECT DISTINCT d.id as dors_id, lp.id as lp_id
+                        FROM bdb_dors_lp d
+                        JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                        WHERE d.uraian_kejadian ILIKE ('%' || $1 || '%')
+                        LIMIT 60
+                    `, [coreCorp]);
+                }
+                const dorsIds = (lpRowIds || []).map((x) => Number(x.dors_id)).filter((n) => Number.isFinite(n) && n > 0);
+                const lpIds = (lpRowIds || []).map((x) => Number(x.lp_id)).filter((n) => Number.isFinite(n) && n > 0);
+                if (dorsIds.length === 0 && lpIds.length === 0) {
+                    corp.pihak_terkait = [];
+                    return;
+                }
+                const partyRows = await this.dataSource.query(`
+                    WITH raw_p AS (
+                        SELECT coalesce(t.lp_id, 0) as ref_id,
+                               upper(trim(t.nama)) as nama,
+                               nullif(trim(t.nik), '') as nik,
+                               upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as peran,
+                               upper(trim(coalesce(t.pekerjaan, ''))) as pekerjaan
+                        FROM bdb_dors_lp_terlibat t
+                        WHERE t.lp_id = ANY($1::bigint[])
+                          AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
+                          AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA')
+                          AND regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') <> $3
+                          AND NOT (upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                        UNION ALL
+                        SELECT coalesce(d.lp_id, 0) as ref_id,
+                               upper(trim(item->>'nama')) as nama,
+                               nullif(trim(item->>'nik'), '') as nik,
+                               case when dt.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end as peran,
+                               upper(trim(coalesce(item->>'pekerjaan', ''))) as pekerjaan
+                        FROM bdb_dokumen d
+                        JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code IN ('PENETAPAN_TSK', 'PENETAPAN_DPO')
+                        CROSS JOIN LATERAL jsonb_array_elements(
+                            CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                        ) party(item)
+                        WHERE d.lp_id = ANY($2::bigint[])
+                          AND nullif(trim(item->>'nama'), '') IS NOT NULL
+                          AND regexp_replace(upper(trim(item->>'nama')), '[^A-Z0-9]+', '', 'g') <> $3
+                          AND NOT (upper(trim(item->>'nama')) ~ '^(PT[ .]|CV[ .]|UD[ .]|KOPERASI |YAYASAN |BANK |PERUM )')
+                    )
+                    SELECT ref_id, nama, nik, peran, pekerjaan FROM raw_p
+                `, [dorsIds, lpIds, cleanTerm]);
+                const byPerson = new Map();
+                for (const pr of (partyRows || [])) {
+                    const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
+                    const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                    const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
+                    const rRank = roleRank(pr.peran);
+                    const existing = byPerson.get(pKey);
+                    if (!existing) {
+                        const s = new Set();
+                        s.add(Number(pr.ref_id));
+                        byPerson.set(pKey, { nama: pr.nama, nik: pr.nik || '', peran: pr.peran, peranRank: rRank, jabatan, lpSet: s });
+                    }
+                    else {
+                        existing.lpSet.add(Number(pr.ref_id));
+                        if (rRank < existing.peranRank) {
+                            existing.peran = pr.peran;
+                            existing.peranRank = rRank;
+                        }
+                        if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
+                            existing.jabatan = 'DIREKTUR / PENGURUS';
+                        }
+                        if (!existing.nik && pr.nik)
+                            existing.nik = pr.nik;
+                    }
+                }
+                const list = Array.from(byPerson.values())
+                    .map(p => ({
+                    nama: p.nama,
+                    nik: p.nik,
+                    peran: p.peran,
+                    jabatan: p.jabatan,
+                    total_lp: p.lpSet.size
+                }))
+                    .sort((a, b) => {
+                    const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                    const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                    if (dirA !== dirB)
+                        return dirA - dirB;
+                    const rk = roleRank(a.peran) - roleRank(b.peran);
+                    if (rk !== 0)
+                        return rk;
+                    return b.total_lp - a.total_lp;
+                })
+                    .slice(0, 15);
+                corp.pihak_terkait = list;
+                if (corp.nik && list.length > 0) {
+                    this.dataSource.query(`UPDATE bdb_pihak_terlibat_ranking_snapshot SET pihak_terkait = $2::jsonb WHERE nik = $1`, [corp.nik, JSON.stringify(list)]).catch(() => { });
+                }
+            }
+            catch {
+                if (!Array.isArray(corp.pihak_terkait))
+                    corp.pihak_terkait = [];
+            }
+        }));
+    }
+    async resolveRankingSatkerWhere(satkerId) {
+        if (!Number.isSafeInteger(satkerId) || satkerId <= 0)
+            return '';
+        if (satkerId === 13) {
+            return "AND (satker_tier = 1 OR daftar_satker ILIKE '%BARESKRIM%' OR daftar_satker ILIKE '%DITTIPID%' OR satker_nama_tertinggi ILIKE '%BARESKRIM%' OR satker_nama_tertinggi ILIKE '%DITTIPID%')";
+        }
+        const satkerRows = await this.dataSource.query('select deskripsi, nama_singkat, parent_id from bdb_satker where id = $1', [satkerId]);
+        const satkerName = satkerRows[0]?.deskripsi || '';
+        const singkatName = satkerRows[0]?.nama_singkat || '';
+        if (/BARESKRIM|DITTIPID|MABES/i.test(satkerName) || /BARESKRIM|DITTIPID|MABES/i.test(singkatName)) {
+            return "AND (satker_tier = 1 OR daftar_satker ILIKE '%BARESKRIM%' OR daftar_satker ILIKE '%DITTIPID%' OR satker_nama_tertinggi ILIKE '%BARESKRIM%' OR satker_nama_tertinggi ILIKE '%DITTIPID%')";
+        }
+        let parentName = '';
+        if (satkerRows[0]?.parent_id) {
+            const parentRows = await this.dataSource.query('select deskripsi from bdb_satker where id = $1', [satkerRows[0].parent_id]);
+            parentName = parentRows[0]?.deskripsi || '';
+        }
+        const keywords = [];
+        if (satkerName) {
+            const cleanFull = satkerName.replace(/^POLDA\s+/i, '').trim();
+            if (cleanFull && cleanFull.length >= 3)
+                keywords.push(cleanFull);
+        }
+        if (singkatName && singkatName.length >= 3 && !keywords.includes(singkatName)) {
+            keywords.push(singkatName);
+        }
+        if (parentName && !parentName.toUpperCase().includes('POLRI') && !parentName.toUpperCase().includes('MABES')) {
+            const pClean = parentName.replace(/^POLDA\s+/i, '').trim();
+            if (pClean && !keywords.includes(pClean))
+                keywords.push(pClean);
+        }
+        if (keywords.length === 0)
+            return '';
+        const conds = keywords.map(kw => {
+            const esc = kw.replace(/'/g, "''");
+            return `(daftar_satker ILIKE '%${esc}%' OR satker_nama_tertinggi ILIKE '%${esc}%')`;
+        });
+        return `AND (${conds.join(' OR ')})`;
     }
     async ranking(authUser, query = {}) {
         const isMaster = String(query.master || '') === '1';
         const isDashboard = String(query.dashboard || '') === '1' || query.scope === 'national';
         const isNational = isMaster || isDashboard || query.scope === 'national';
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
+        const explicitSatkerId = Number(query.satker_id || 0);
+        const cacheKey = JSON.stringify({
+            isMaster,
+            isDashboard,
+            scopeKey: scope.all ? 'ALL' : (scope.satkerId || 0),
+            satkerId: explicitSatkerId > 0 ? explicitSatkerId : 0,
+            ket: (this.toText(query.keterlibatan || query.peran) || 'ALL').toUpperCase(),
+            subjek: String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase(),
+            search: (this.toText(query.search) || '').toLowerCase(),
+            from: String(query.from || query.date_from || query.startDate || '').trim(),
+            to: String(query.to || query.date_to || query.endDate || '').trim(),
+            tahun: String(query.tahun || query.year || ''),
+            bulan: String(query.bulan || query.month || ''),
+            periode: String(query.periode || query.all_time || ''),
+            page: Math.max(1, Number(query.page || 1)),
+            limit: Number(query.row || query.limit || (isMaster ? 25 : 5))
+        });
+        const cached = this.rankingCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return {
+                ...cached.data,
+                meta: { ...(cached.data.meta || {}), cached: true }
+            };
+        }
         let scopeWhereClause = '';
-        if (!isNational && !scope.all && scope.satkerId) {
-            const satkerRows = await this.dataSource.query('select deskripsi, parent_id from bdb_satker where id = $1', [scope.satkerId]);
-            const satkerName = satkerRows[0]?.deskripsi || '';
-            let parentName = '';
-            if (satkerRows[0]?.parent_id) {
-                const parentRows = await this.dataSource.query('select deskripsi from bdb_satker where id = $1', [satkerRows[0].parent_id]);
-                parentName = parentRows[0]?.deskripsi || '';
-            }
-            const keywords = [];
-            if (parentName && !parentName.toUpperCase().includes('POLRI') && !parentName.toUpperCase().includes('MABES')) {
-                const pClean = parentName.replace(/^POLDA\s+/i, '').trim();
-                if (pClean)
-                    keywords.push(pClean);
-            }
-            if (satkerName) {
-                const sClean = satkerName.replace(/^DIT\s+(RES\s+)?/i, '').replace(/\s+(JAWA|SUMATERA|KALIMANTAN|SULAWESI|PAPUA|BALI|NTB|NTT|MALUKU|BANTEN|METRO|ACEH|RIAU|JAMBI|BENGKULU|LAMPUNG|BABEL|GORONTALO|SULTENG|SULTRA|SULUT|SULSEL|KALSEL|KALTENG|KALTIM|KALBAR|KALTARA|PAPBAR).*/i, '').trim();
-                if (sClean && sClean.length >= 4)
-                    keywords.push(sClean);
-            }
-            if (keywords.length > 0) {
-                const conds = keywords.map(kw => {
-                    const esc = kw.replace(/'/g, "''");
-                    return "(daftar_satker ILIKE '%" + esc + "%' OR satker_nama_tertinggi ILIKE '%" + esc + "%')";
-                });
-                scopeWhereClause = "AND (" + conds.join(' OR ') + ")";
-            }
+        if (explicitSatkerId > 0) {
+            scopeWhereClause = await this.resolveRankingSatkerWhere(explicitSatkerId);
+        }
+        else if (!isNational && !scope.all && scope.satkerId) {
+            scopeWhereClause = await this.resolveRankingSatkerWhere(Number(scope.satkerId));
         }
         const allowed = [
             'ALL',
@@ -1522,45 +1942,47 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             const offset = (page - 1) * limit;
             const rSearch = this.toText(query.search);
             const searchClause = rSearch ? `AND (lower(d.nama_dpo) LIKE '%${rSearch.toLowerCase()}%' OR coalesce(d.nomor_identitas,'') LIKE '%${rSearch}%' OR lower(d.nomor_dpo) LIKE '%${rSearch.toLowerCase()}%')` : '';
-            const satkerClause = query.satker_id && Number(query.satker_id) > 0 ? `AND d.satker_id = ${Number(query.satker_id)}` : '';
-            const dpoRows = await this.dataSource.query(`
-                SELECT 
-                    d.id as id,
-                    d.id as dpo_id,
-                    d.nama_dpo as nama,
-                    d.nomor_identitas as nik,
-                    1 as total_lp,
-                    1 as jumlah_lp,
-                    1 as count_role,
-                    1 as count_dpo,
-                    0 as count_tersangka,
-                    0 as count_terlapor,
-                    0 as count_saksi,
-                    0 as count_korban,
-                    0 as count_pelapor,
-                    'DPO' as keterlibatan,
-                    'DPO' as kasta,
-                    1 as kasta_rank,
-                    coalesce(d.satker_nama, 'POLRI') as satker_nama,
-                    coalesce(d.satker_nama, 'POLRI') as satker_nama_tertinggi,
-                    2 as satker_tier,
-                    1 as jumlah_satker_unik,
-                    false as is_lintas_wilayah,
-                    'PERORANGAN' as tipe_subjek,
-                    'NIK' as tipe_identitas,
-                    d.created_at as last_seen,
-                    coalesce(d.scan_dokumen_url, d.foto_dpo_url) as scan_dokumen_url,
-                    coalesce(d.scan_dokumen_url, d.foto_dpo_url) as lampiran_url
-                FROM bdb_dpo d
-                WHERE d.status_dpo = 'AKTIF'
-                  ${searchClause}
-                  ${satkerClause}
-                ORDER BY d.created_at DESC, d.id DESC
-                LIMIT ${limit} OFFSET ${offset}
-            `);
-            const countRes = await this.dataSource.query(`SELECT count(*)::int as c FROM bdb_dpo d WHERE d.status_dpo = 'AKTIF' ${searchClause} ${satkerClause}`);
+            const satkerClause = explicitSatkerId > 0 ? `AND d.satker_id in (with recursive st as (select id from bdb_satker where id = ${explicitSatkerId} union all select s.id from bdb_satker s join st on s.parent_id = st.id) select id from st)` : '';
+            const [dpoRows, countRes] = await Promise.all([
+                this.dataSource.query(`
+                    SELECT 
+                        d.id as id,
+                        d.id as dpo_id,
+                        d.nama_dpo as nama,
+                        d.nomor_identitas as nik,
+                        1 as total_lp,
+                        1 as jumlah_lp,
+                        1 as count_role,
+                        1 as count_dpo,
+                        0 as count_tersangka,
+                        0 as count_terlapor,
+                        0 as count_saksi,
+                        0 as count_korban,
+                        0 as count_pelapor,
+                        'DPO' as keterlibatan,
+                        'DPO' as kasta,
+                        1 as kasta_rank,
+                        coalesce(d.satker_nama, 'POLRI') as satker_nama,
+                        coalesce(d.satker_nama, 'POLRI') as satker_nama_tertinggi,
+                        2 as satker_tier,
+                        1 as jumlah_satker_unik,
+                        false as is_lintas_wilayah,
+                        'PERORANGAN' as tipe_subjek,
+                        'NIK' as tipe_identitas,
+                        d.created_at as last_seen,
+                        coalesce(d.scan_dokumen_url, d.foto_dpo_url) as scan_dokumen_url,
+                        coalesce(d.scan_dokumen_url, d.foto_dpo_url) as lampiran_url
+                    FROM bdb_dpo d
+                    WHERE d.status_dpo = 'AKTIF'
+                      ${searchClause}
+                      ${satkerClause}
+                    ORDER BY d.created_at DESC, d.id DESC
+                    LIMIT ${limit} OFFSET ${offset}
+                `),
+                this.dataSource.query(`SELECT count(*)::int as c FROM bdb_dpo d WHERE d.status_dpo = 'AKTIF' ${searchClause} ${satkerClause}`)
+            ]);
             const totalDpo = countRes[0]?.c || 0;
-            return {
+            const dpoResult = {
                 status: 1,
                 data: dpoRows,
                 meta: {
@@ -1573,30 +1995,46 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     mode: 'direct-active-dpo'
                 }
             };
+            this.rankingCache.set(cacheKey, { expiresAt: Date.now() + this.rankingCacheTtlMs, data: dpoResult });
+            return dpoResult;
         }
-        let targetTahun = 2026;
+        let targetTahun = 0;
         let targetBulan = null;
+        const curDynamicYear = new Date().getFullYear();
         const fromStr = String(query.from || query.date_from || query.startDate || '').trim();
         const toStr = String(query.to || query.date_to || query.endDate || '').trim();
         const qTahun = query.tahun || query.year;
         const qBulan = query.bulan || query.month;
-        if (query.tahun === '0' || query.tahun === 'all' || query.all_time === '1' || query.periode === 'all') {
+        if (isDashboard && !isMaster) {
             targetTahun = 0;
             targetBulan = null;
         }
-        else if (qTahun && Number(qTahun) === 2026) {
-            targetTahun = 2026;
+        else if (query.tahun === '0' || query.tahun === 'all' || query.all_time === '1' || query.periode === 'all' || (!fromStr && !toStr && !qTahun)) {
+            targetTahun = 0;
+            targetBulan = null;
+        }
+        else if (qTahun && Number(qTahun) === curDynamicYear) {
+            targetTahun = curDynamicYear;
             targetBulan = (qBulan && Number(qBulan) >= 1 && Number(qBulan) <= 12) ? Number(qBulan) : null;
         }
-        else if (fromStr.startsWith('2026') || toStr.startsWith('2026')) {
-            targetTahun = 2026;
-            const mFrom = fromStr.match(/^2026-(\d{2})/);
-            const mTo = toStr.match(/^2026-(\d{2})/);
-            if (mFrom && mTo && mFrom[1] === mTo[1]) {
-                targetBulan = Number(mFrom[1]);
-            }
-            else {
-                targetBulan = null;
+        else if (fromStr && toStr) {
+            const mFrom = fromStr.match(/^(\d{4})-(\d{2})/);
+            const mTo = toStr.match(/^(\d{4})-(\d{2})/);
+            if (mFrom && mTo) {
+                const yFrom = Number(mFrom[1]);
+                const yTo = Number(mTo[1]);
+                if (yFrom !== yTo) {
+                    targetTahun = 0;
+                    targetBulan = null;
+                }
+                else if (yFrom === curDynamicYear) {
+                    targetTahun = curDynamicYear;
+                    targetBulan = (mFrom[2] === mTo[2]) ? Number(mFrom[2]) : null;
+                }
+                else {
+                    targetTahun = 0;
+                    targetBulan = null;
+                }
             }
         }
         const partitionWhere = targetBulan !== null
@@ -1604,13 +2042,37 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             : `tahun = ${targetTahun} AND bulan IS NULL`;
         const rawSubjek = String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase();
         const subjekWhere = rawSubjek === 'KORPORASI' ? "AND tipe_subjek = 'KORPORASI'" : (rawSubjek === 'PERORANGAN' ? "AND tipe_subjek = 'PERORANGAN'" : '');
+        const kastaCaseExpr = `
+            CASE 
+              WHEN count_dpo > 0 THEN 'DPO'
+              WHEN count_tersangka > 0 THEN 'TERSANGKA'
+              WHEN (tipe_subjek = 'KORPORASI' AND count_korban > count_terlapor * 2)
+                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
+              WHEN count_terlapor > 0 THEN 'TERLAPOR'
+              WHEN count_pelapor > 0 THEN 'PELAPOR'
+              WHEN count_saksi > 0 THEN 'SAKSI'
+              WHEN count_korban > 0 THEN 'KORBAN'
+              ELSE 'PIHAK'
+            END`;
+        const kastaRankExpr = `
+            CASE 
+              WHEN count_dpo > 0 THEN 1
+              WHEN count_tersangka > 0 THEN 2
+              WHEN (tipe_subjek = 'KORPORASI' AND count_korban > count_terlapor * 2)
+                OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 6
+              WHEN count_terlapor > 0 THEN 3
+              WHEN count_pelapor > 0 THEN 4
+              WHEN count_saksi > 0 THEN 5
+              WHEN count_korban > 0 THEN 6
+              ELSE 7
+            END`;
         if (isMaster) {
             try {
                 const page = Math.max(1, Number(query.page || 1));
                 const rowLimit = Math.max(1, Math.min(Number(query.row || query.limit || 25), 100));
                 const offset = (page - 1) * rowLimit;
                 const rSearch = this.toText(query.search)?.trim();
-                const searchClause = rSearch ? `AND (lower(nama) LIKE '%${rSearch.toLowerCase()}%' OR nik LIKE '%${rSearch}%')` : '';
+                const searchClause = rSearch ? `AND (lower(nama) LIKE '%${rSearch.toLowerCase().replace(/'/g, "''")}%' OR nik LIKE '%${rSearch.replace(/'/g, "''")}%')` : '';
                 let catFilter = 'ALL';
                 let extraWhere = '';
                 if (keterlibatan === 'LINTAS_WILAYAH') {
@@ -1621,73 +2083,87 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 }
                 const orderClauseMaster = catFilter === 'ALL'
                     ? (keterlibatan === 'LINTAS_WILAYAH'
-                        ? 'jumlah_polda_unik DESC, nasional_score DESC, total_lp DESC, last_seen DESC'
-                        : 'nasional_score DESC, total_lp DESC, last_seen DESC')
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
-                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
-                            catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
-                                catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
-                                    catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
-                                        catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
-                const snapRanking = await this.dataSource.query(`
-                    SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
-                           count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                           jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                           tipe_subjek, tipe_identitas,
-                           CASE 
-                             WHEN count_dpo > 0 THEN 'DPO'
-                             WHEN count_tersangka > 0 THEN 'TERSANGKA'
-                             WHEN count_terlapor > 0 THEN 'TERLAPOR'
-                             WHEN count_saksi > 0 THEN 'SAKSI'
-                             WHEN count_korban > 0 THEN 'KORBAN'
-                             WHEN count_pelapor > 0 THEN 'PELAPOR'
-                             ELSE 'PIHAK'
-                           END as kasta,
-                           CASE 
-                             WHEN count_dpo > 0 THEN 1
-                             WHEN count_tersangka > 0 THEN 2
-                             WHEN count_terlapor > 0 THEN 3
-                             WHEN count_saksi > 0 THEN 4
-                             WHEN count_korban > 0 THEN 5
-                             WHEN count_pelapor > 0 THEN 6
-                             ELSE 7
-                           END as kasta_rank
-                    FROM bdb_pihak_terlibat_ranking_snapshot
-                    WHERE ${partitionWhere}
-                      AND kategori_filter = '${catFilter}'
-                      AND total_lp > 1
-                      ${subjekWhere}
-                      ${searchClause}
-                      ${extraWhere}
-                    ORDER BY ${orderClauseMaster}
-                    LIMIT ${rowLimit} OFFSET ${offset}
-                `);
-                const countRes = await this.dataSource.query(`
-                    SELECT count(*)::int as total
-                    FROM bdb_pihak_terlibat_ranking_snapshot
-                    WHERE ${partitionWhere}
-                      AND kategori_filter = '${catFilter}'
-                      AND total_lp > 1
-                      ${subjekWhere}
-                      ${searchClause}
-                      ${extraWhere}
-                `);
-                const summaryRes = await this.dataSource.query(`
-                    SELECT 
-                        count(case when kategori_filter = 'ALL' then 1 end)::int as semua,
-                        count(case when kategori_filter = 'ALL' and is_lintas_wilayah = true then 1 end)::int as lintas_wilayah,
-                        coalesce((select count(*)::int from bdb_dpo where status_dpo = 'AKTIF'), 0) as dpo,
-                        count(case when kategori_filter = 'TERSANGKA' then 1 end)::int as tersangka,
-                        count(case when kategori_filter = 'TERLAPOR' then 1 end)::int as terlapor,
-                        count(case when kategori_filter = 'SAKSI' then 1 end)::int as saksi,
-                        count(case when kategori_filter = 'KORBAN' then 1 end)::int as korban,
-                        count(case when kategori_filter = 'PELAPOR' then 1 end)::int as pelapor
-                    FROM bdb_pihak_terlibat_ranking_snapshot
-                    WHERE ${partitionWhere} AND total_lp > 1 ${subjekWhere} ${searchClause};
-                `);
+                        ? `(${kastaRankExpr}) ASC, jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, last_seen DESC`
+                        : `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`)
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
+                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
+                            catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
+                                catFilter === 'SAKSI' ? 'count_saksi DESC,' :
+                                    catFilter === 'KORBAN' ? 'count_korban DESC,' :
+                                        catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
+                const [snapRanking, countRes, summaryRes] = await Promise.all([
+                    this.dataSource.query(`
+                        SELECT nama, nik,
+                               GREATEST(coalesce(total_lp, 0), coalesce(count_dpo, 0), coalesce(count_tersangka, 0), coalesce(count_terlapor, 0), coalesce(count_saksi, 0), coalesce(count_korban, 0), coalesce(count_pelapor, 0)) as total_lp,
+                               satker_tier, satker_nama_tertinggi, last_seen,
+                               count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                               jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                               tipe_subjek, tipe_identitas,
+                               coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                               ${kastaCaseExpr} as kasta,
+                               ${kastaRankExpr} as kasta_rank
+                        FROM bdb_pihak_terlibat_ranking_snapshot
+                        WHERE ${partitionWhere}
+                          AND kategori_filter = '${catFilter}'
+                          AND total_lp > 1
+                          ${subjekWhere}
+                          ${searchClause}
+                          ${scopeWhereClause}
+                          ${extraWhere}
+                        ORDER BY ${orderClauseMaster}
+                        LIMIT ${rowLimit} OFFSET ${offset}
+                    `),
+                    this.dataSource.query(`
+                        SELECT count(*)::int as total
+                        FROM bdb_pihak_terlibat_ranking_snapshot
+                        WHERE ${partitionWhere}
+                          AND kategori_filter = '${catFilter}'
+                          AND total_lp > 1
+                          ${subjekWhere}
+                          ${searchClause}
+                          ${scopeWhereClause}
+                          ${extraWhere}
+                    `),
+                    this.dataSource.query(`
+                        SELECT 
+                            count(case when kategori_filter = 'ALL' then 1 end)::int as semua,
+                            count(case when kategori_filter = 'ALL' and is_lintas_wilayah = true then 1 end)::int as lintas_wilayah,
+                            coalesce((select count(*)::int from bdb_dpo d where d.status_dpo = 'AKTIF' ${explicitSatkerId > 0 ? `and d.satker_id in (with recursive st as (select id from bdb_satker where id = ${explicitSatkerId} union all select s.id from bdb_satker s join st on s.parent_id = st.id) select id from st)` : ''}), 0) as dpo,
+                            count(case when kategori_filter = 'TERSANGKA' then 1 end)::int as tersangka,
+                            count(case when kategori_filter = 'TERLAPOR' then 1 end)::int as terlapor,
+                            count(case when kategori_filter = 'SAKSI' then 1 end)::int as saksi,
+                            count(case when kategori_filter = 'KORBAN' then 1 end)::int as korban,
+                            count(case when kategori_filter = 'PELAPOR' then 1 end)::int as pelapor,
+                            count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'TERSANGKA' then 1 end)::int as kasta_tersangka,
+                            count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'TERLAPOR' then 1 end)::int as kasta_terlapor,
+                            count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'SAKSI' then 1 end)::int as kasta_saksi,
+                            count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'KORBAN' then 1 end)::int as kasta_korban,
+                            count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'PELAPOR' then 1 end)::int as kasta_pelapor
+                        FROM bdb_pihak_terlibat_ranking_snapshot
+                        WHERE ${partitionWhere} AND total_lp > 1 ${subjekWhere} ${searchClause} ${scopeWhereClause};
+                    `)
+                ]);
                 const total = Number(countRes[0]?.total || 0);
-                const summary = summaryRes[0] || { semua: 0, lintas_wilayah: 0, tersangka: 0, terlapor: 0, korban: 0, saksi: 0, pelapor: 0, dpo: 0 };
-                return {
+                const rawSummary = summaryRes[0] || { semua: 0, lintas_wilayah: 0, tersangka: 0, terlapor: 0, korban: 0, saksi: 0, pelapor: 0, dpo: 0 };
+                const summary = {
+                    semua: Number(rawSummary.semua || 0),
+                    lintas_wilayah: Number(rawSummary.lintas_wilayah || 0),
+                    dpo: Number(rawSummary.dpo || 0),
+                    tersangka: Number(rawSummary.tersangka || 0),
+                    terlapor: Number(rawSummary.terlapor || 0),
+                    saksi: Number(rawSummary.saksi || 0),
+                    korban: Number(rawSummary.korban || 0),
+                    pelapor: Number(rawSummary.pelapor || 0),
+                    kasta_breakdown: {
+                        dpo: Number(rawSummary.dpo || 0),
+                        tersangka: Number(rawSummary.kasta_tersangka || 0),
+                        terlapor: Number(rawSummary.kasta_terlapor || 0),
+                        saksi: Number(rawSummary.kasta_saksi || 0),
+                        korban: Number(rawSummary.kasta_korban || 0),
+                        pelapor: Number(rawSummary.kasta_pelapor || 0)
+                    }
+                };
+                const masterResult = {
                     status: 1,
                     data: (snapRanking || []).map((r) => ({
                         nama: r.nama,
@@ -1713,6 +2189,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         nasional_score: Number(r.nasional_score || 0),
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
                         tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
+                        pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
                         last_seen: r.last_seen
                     })),
                     pagination: {
@@ -1723,10 +2200,20 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     },
                     meta: {
                         summary,
-                        cached: true,
+                        cached: false,
                         mode: targetTahun === 2026 ? (targetBulan ? 'snapshot-master-month-' + targetBulan : 'snapshot-master-year-2026') : 'snapshot-master-all-time'
                     }
                 };
+                await this.enrichCorporationsWithParties(masterResult.data);
+                if (this.rankingCache.size > 300) {
+                    const now = Date.now();
+                    for (const [k, v] of this.rankingCache.entries()) {
+                        if (v.expiresAt <= now)
+                            this.rankingCache.delete(k);
+                    }
+                }
+                this.rankingCache.set(cacheKey, { expiresAt: Date.now() + this.rankingCacheTtlMs, data: masterResult });
+                return masterResult;
             }
             catch (err) {
                 this.logger.error('Error in master ranking: ' + err?.message);
@@ -1739,41 +2226,29 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 const limit = Math.max(1, Math.min(requestedLimit, 10));
                 const catFilter = (keterlibatan && keterlibatan !== 'ALL' && keterlibatan !== 'LINTAS_WILAYAH') ? keterlibatan : 'ALL';
                 const orderClauseDash = catFilter === 'ALL'
-                    ? 'nasional_score DESC, total_lp DESC, last_seen DESC'
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC, nasional_score DESC,' :
-                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC, nasional_score DESC,' :
-                            catFilter === 'PELAPOR' ? 'count_pelapor DESC, nasional_score DESC,' :
-                                catFilter === 'SAKSI' ? 'count_saksi DESC, nasional_score DESC,' :
-                                    catFilter === 'KORBAN' ? 'count_korban DESC, nasional_score DESC,' :
-                                        catFilter === 'DPO' ? 'count_dpo DESC, nasional_score DESC,' : '') + ' satker_tier ASC, total_lp DESC, last_seen DESC';
+                    ? `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`
+                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
+                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
+                            catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
+                                catFilter === 'SAKSI' ? 'count_saksi DESC,' :
+                                    catFilter === 'KORBAN' ? 'count_korban DESC,' :
+                                        catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
                 const snapRanking = await this.dataSource.query(`
-                    SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
+                    SELECT nama, nik,
+                           GREATEST(coalesce(total_lp, 0), coalesce(count_dpo, 0), coalesce(count_tersangka, 0), coalesce(count_terlapor, 0), coalesce(count_saksi, 0), coalesce(count_korban, 0), coalesce(count_pelapor, 0)) as total_lp,
+                           satker_tier, satker_nama_tertinggi, last_seen,
                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                            tipe_subjek, tipe_identitas,
-                           CASE 
-                             WHEN count_dpo > 0 THEN 'DPO'
-                             WHEN count_tersangka > 0 THEN 'TERSANGKA'
-                             WHEN count_terlapor > 0 THEN 'TERLAPOR'
-                             WHEN count_saksi > 0 THEN 'SAKSI'
-                             WHEN count_korban > 0 THEN 'KORBAN'
-                             WHEN count_pelapor > 0 THEN 'PELAPOR'
-                             ELSE 'PIHAK'
-                           END as kasta,
-                           CASE 
-                             WHEN count_dpo > 0 THEN 1
-                             WHEN count_tersangka > 0 THEN 2
-                             WHEN count_terlapor > 0 THEN 3
-                             WHEN count_saksi > 0 THEN 4
-                             WHEN count_korban > 0 THEN 5
-                             WHEN count_pelapor > 0 THEN 6
-                             ELSE 7
-                           END as kasta_rank
+                           coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                           ${kastaCaseExpr} as kasta,
+                           ${kastaRankExpr} as kasta_rank
                     FROM bdb_pihak_terlibat_ranking_snapshot
                     WHERE ${partitionWhere}
                       AND kategori_filter = '${catFilter}'
                       AND total_lp > 1
                       ${subjekWhere}
+                      ${scopeWhereClause}
                     ORDER BY ${orderClauseDash}
                     LIMIT ${limit * 3}
                 `);
@@ -1789,7 +2264,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     if (uniqueSnap.length >= limit)
                         break;
                 }
-                return {
+                const dashResult = {
                     status: 1,
                     data: uniqueSnap.map((r) => {
                         const countRole = catFilter === 'KORBAN' ? Number(r.count_korban || 0)
@@ -1802,7 +2277,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         const isCorp = r.tipe_subjek === 'KORPORASI' || (r.nik && String(r.nik).startsWith('KORP:')) || r.tipe_identitas === 'BADAN HUKUM';
                         return {
                             nama: r.nama,
-                            nik: isCorp ? 'KORPORASI' : r.nik,
+                            nik: r.nik || (isCorp ? `KORP:${r.nama}` : ''),
                             raw_nik: r.nik,
                             keterlibatan: catFilter !== 'ALL' ? catFilter : (r.kasta || 'PIHAK'),
                             kasta: catFilter !== 'ALL' ? catFilter : (r.kasta || 'PIHAK'),
@@ -1825,14 +2300,18 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             nasional_score: Number(r.nasional_score || 0),
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
                             tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
+                            pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
                             last_seen: r.last_seen
                         };
                     }),
                     meta: {
-                        cached: true,
+                        cached: false,
                         mode: targetTahun === 2026 ? (targetBulan ? 'snapshot-dashboard-month-' + targetBulan : 'snapshot-dashboard-year-2026') : 'snapshot-dashboard-all-time'
                     }
                 };
+                await this.enrichCorporationsWithParties(dashResult.data);
+                this.rankingCache.set(cacheKey, { expiresAt: Date.now() + this.rankingCacheTtlMs, data: dashResult });
+                return dashResult;
             }
             catch (err) {
                 this.logger.error('Error in dashboard ranking: ' + err?.message);
@@ -1841,33 +2320,19 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         const limit = 5;
         const snap = await this.dataSource.query(`
-            SELECT nama, nik, total_lp, satker_tier, satker_nama_tertinggi, last_seen,
+            SELECT nama, nik,
+                   GREATEST(coalesce(total_lp, 0), coalesce(count_dpo, 0), coalesce(count_tersangka, 0), coalesce(count_terlapor, 0), coalesce(count_saksi, 0), coalesce(count_korban, 0), coalesce(count_pelapor, 0)) as total_lp,
+                   satker_tier, satker_nama_tertinggi, last_seen,
                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                   CASE 
-                     WHEN count_dpo > 0 THEN 'DPO'
-                     WHEN count_tersangka > 0 THEN 'TERSANGKA'
-                     WHEN count_terlapor > 0 THEN 'TERLAPOR'
-                     WHEN count_saksi > 0 THEN 'SAKSI'
-                     WHEN count_korban > 0 THEN 'KORBAN'
-                     WHEN count_pelapor > 0 THEN 'PELAPOR'
-                     ELSE 'PIHAK'
-                   END as kasta,
-                   CASE 
-                     WHEN count_dpo > 0 THEN 1
-                     WHEN count_tersangka > 0 THEN 2
-                     WHEN count_terlapor > 0 THEN 3
-                     WHEN count_saksi > 0 THEN 4
-                     WHEN count_korban > 0 THEN 5
-                     WHEN count_pelapor > 0 THEN 6
-                     ELSE 7
-                   END as kasta_rank
+                   ${kastaCaseExpr} as kasta,
+                   ${kastaRankExpr} as kasta_rank
             FROM bdb_pihak_terlibat_ranking_snapshot
-            WHERE ${partitionWhere} AND total_lp > 1
+            WHERE ${partitionWhere} AND total_lp > 1 ${scopeWhereClause}
             ORDER BY nasional_score DESC, total_lp DESC, last_seen DESC
             LIMIT ${limit}
         `);
-        return {
+        const fallbackResult = {
             status: 1,
             data: (snap || []).map((r) => ({
                 nama: r.nama,
@@ -1882,8 +2347,10 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 jumlah_satker_unik: Number(r.jumlah_satker_unik || 1),
                 last_seen: r.last_seen
             })),
-            meta: { cached: true, mode: 'snapshot-fallback' }
+            meta: { cached: false, mode: 'snapshot-fallback' }
         };
+        this.rankingCache.set(cacheKey, { expiresAt: Date.now() + this.rankingCacheTtlMs, data: fallbackResult });
+        return fallbackResult;
     }
     async assertAccess(authUser, lp, scope) {
         const roleBdb = String(authUser?.role_bdb || '').toLowerCase();

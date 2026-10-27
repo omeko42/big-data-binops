@@ -6192,27 +6192,82 @@ div[style*="margin-top:-1.6rem"] > span {
 }
 
 /* ============================================================================
- * ROUND 19 — SYSTEM-WIDE MOBILE COMPACT & EFFICIENT UI (@media <= 768px & 480px)
+ * ROUND 19 & 20 — SYSTEM-WIDE MOBILE COMPACT & EFFICIENT UI (@media <= 900px, 768px & 480px)
  * ============================================================================ */
 
-@media (max-width: 768px) {
-  :root {
-    --cms-header-h: 5.15rem !important;
+@media (max-width: 900px) {
+  .cms-content {
+    padding-top: calc(var(--cms-header-h, 6.2rem) + 0.75rem) !important;
   }
 
+  .kp-page-head {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+  }
+
+  .kp-page-head > div:first-child,
+  .kp-page-head-titles {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .kp-page-head .cms-page-title {
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
+  .kp-head-actions {
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+
+  .kp-btn-guide .kp-btn-label,
+  .kp-btn-refresh .kp-btn-label,
+  .kp-btn-export .kp-btn-label,
+  .kp-btn-text-desktop {
+    display: none !important;
+  }
+
+  .kp-head-btn .kp-head-btn-icon,
+  .kp-export-trigger-btn .kp-export-icon {
+    margin-right: 0 !important;
+  }
+
+  .kp-head-btn,
+  .kp-export-trigger-btn,
+  .kp-btn-guide,
+  .kp-btn-refresh,
+  .kp-btn-export {
+    width: 2rem !important;
+    min-width: 2rem !important;
+    height: 2rem !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 768px) {
   .cms-topbar {
     height: 2.95rem !important;
     padding: 0 0.65rem !important;
   }
 
   .cms-breadcrumb {
-    top: 2.95rem !important;
     padding: 0.28rem 0.65rem !important;
     font-size: 0.72rem !important;
   }
 
   .cms-content {
-    padding: calc(var(--cms-header-h, 5.15rem) + 0.45rem) 0.65rem 1.35rem !important;
+    padding: calc(var(--cms-header-h, 6.2rem) + 0.75rem) 0.65rem 1.35rem !important;
+    padding-top: calc(var(--cms-header-h, 6.2rem) + 0.75rem) !important;
     overflow-x: hidden !important;
   }
 
@@ -6240,18 +6295,33 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   .kp-page-head {
-    gap: 0.35rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
     margin-bottom: 0.2rem !important;
   }
 
+  .kp-page-head > div:first-child,
   .kp-page-head-titles {
     flex: 1 1 auto !important;
     min-width: 0 !important;
   }
 
+  .kp-page-head .cms-page-title {
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
   .kp-head-actions {
-    gap: 0.3rem !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
     flex-shrink: 0 !important;
   }
 
@@ -6260,6 +6330,9 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   /* Hide desktop verbose button text on mobile (Ekspor -> icon-only, Cara Perhitungan -> icon-only, etc.) */
+  .kp-btn-guide .kp-btn-label,
+  .kp-btn-refresh .kp-btn-label,
+  .kp-btn-export .kp-btn-label,
   .kp-btn-text-desktop {
     display: none !important;
   }
@@ -6270,7 +6343,10 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   .kp-head-btn,
-  .kp-export-trigger-btn {
+  .kp-export-trigger-btn,
+  .kp-btn-guide,
+  .kp-btn-refresh,
+  .kp-btn-export {
     width: 2rem !important;
     min-width: 2rem !important;
     height: 2rem !important;
@@ -6615,23 +6691,19 @@ div[style*="margin-top:-1.6rem"] > span {
 }
 
 @media (max-width: 480px) {
-  :root {
-    --cms-header-h: 4.85rem !important;
-  }
-
   .cms-topbar {
     height: 2.8rem !important;
     padding: 0 0.5rem !important;
   }
 
   .cms-breadcrumb {
-    top: 2.8rem !important;
     padding: 0.22rem 0.5rem !important;
     font-size: 0.68rem !important;
   }
 
   .cms-content {
-    padding: calc(var(--cms-header-h, 4.85rem) + 0.35rem) 0.5rem 1.15rem !important;
+    padding: calc(var(--cms-header-h, 6.2rem) + 0.75rem) 0.5rem 1.15rem !important;
+    padding-top: calc(var(--cms-header-h, 6.2rem) + 0.75rem) !important;
   }
 
   .cms-page-title {
