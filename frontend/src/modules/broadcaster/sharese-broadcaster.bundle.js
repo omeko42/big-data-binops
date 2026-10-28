@@ -944,100 +944,106 @@ e.s(["default",0,function() {
     (0,t.jsx)(d.Toast,{ref:toastRef}),
     (0,t.jsx)(m.ConfirmDialog,{}),
 
-    // Header Hero Banner: "SHARESE" without Akun Aktif card on the right
-    (0,t.jsx)("div",{
-      className:"cms-card",
-      style:{
-        background:"var(--cas-bg-surface, #ffffff)",
-        border:"1px solid var(--cas-border, #cbd5e1)",
-        borderLeft:"4px solid #2563eb",
-        borderRadius:"12px",
-        padding:"1.25rem 1.6rem",
-        marginBottom:"1.25rem",
-        boxShadow:"var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))"
-      },
-      children:(0,t.jsxs)("div",{children:[
-        (0,t.jsx)("h1",{
-          style:{
-            fontSize:"1.65rem",
-            fontWeight:900,
-            margin:0,
-            color:"var(--cas-text-primary, #0f172a)",
-            letterSpacing:"0.06em",
-            textTransform:"uppercase"
-          },
-          children:"SHARESE"
-        }),
-        (0,t.jsx)("p",{
-          style:{margin:"0.35rem 0 0",fontSize:"0.84rem",color:"var(--cas-text-secondary, #475569)",lineHeight:1.45,fontWeight:500},
-          children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal."
-        })
-      ]})
-    }),
-
-    
-    // Sticky Search Box Header
+    // Unified Sticky Header: 1-Line "SHARESE" + Info Tooltip + Search Bar
     (0,t.jsxs)("div",{
+      className:"cms-card sharese-sticky-header",
       style:{
         position:"sticky",
-        top:"calc(var(--cms-header-h, 4rem) + 0.5rem)",
+        top:"calc(var(--cms-header-h, 4.8rem) + 0.35rem)",
         zIndex:30,
         background:"var(--cas-bg-surface, #ffffff)",
         backdropFilter:"blur(12px)",
-        boxShadow:"var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))",
-        borderRadius:"12px",
         border:"1px solid var(--cas-border, #cbd5e1)",
-        padding:"0.75rem 1rem",
-        marginBottom:"1.25rem",
+        borderLeft:"4px solid #2563eb",
+        borderRadius:"12px",
+        padding:"0.65rem 0.9rem",
+        marginBottom:"0.9rem",
+        boxShadow:"var(--cas-shadow-md, 0 4px 20px rgba(0,0,0,0.06))",
         display:"flex",
-        alignItems:"center",
-        gap:"0.65rem"
+        flexDirection:"column",
+        gap:"0.5rem"
       },
       children:[
-        (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex",alignItems:"center"},children:[
-          (0,t.jsx)("div",{style:{position:"absolute",left:"0.75rem",color:"#64748b",display:"flex",alignItems:"center",pointerEvents:"none"},children:(0,t.jsx)(IconSearch,{size:15})}),
-          (0,t.jsx)(i.InputText,{
-            value:searchQuery,
-            onChange:e => { setSearchQuery(e.target.value); setCurrentPage(1); },
-            onKeyDown:e => e.key === 'Enter' && fetchFeed(),
-            placeholder:"Cari postingan, tagar #modus, penyidik, koordinasi perkara...",
-            style:{width:"100%",paddingLeft:"2.25rem",fontSize:"0.84rem",height:"2.35rem",borderRadius:"8px"}
-          })
-        ]}),
-        (searchQuery || feedCategory !== 'all' || visibilityFilter !== 'all') && (0,t.jsxs)("button",{
-          type:"button",
-          onClick:() => {
-            setSearchQuery('');
-            setFeedCategory('all');
-            setVisibilityFilter('all');
-            setCurrentPage(1);
-          },
-          title:"Kembalikan semua filter ke awal",
-          style:{
-            background:"rgba(239,68,68,0.12)",
-            border:"1px solid rgba(239,68,68,0.3)",
-            borderRadius:"8px",
-            color:"#f87171",
-            padding:"0 0.85rem",
-            height:"2.35rem",
-            fontSize:"0.8rem",
-            fontWeight:700,
-            cursor:"pointer",
-            display:"inline-flex",
-            alignItems:"center",
-            gap:"0.35rem",
-            whiteSpace:"nowrap",
-            transition:"all 0.15s ease"
-          },
-          children:["✕ Reset Filter"]
-        }),
-        (0,t.jsx)(c.Button,{
-          icon:"pi pi-refresh",
-          label:"Segarkan",
-          outlined:!0,
-          onClick:fetchFeed,
-          loading:loading,
-          style:{height:"2.35rem",fontSize:"0.8rem",borderRadius:"8px",whiteSpace:"nowrap",padding:"0 0.85rem"}
+        (0,t.jsxs)("div",{
+          className:"sharese-header-top-row",
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"nowrap",minWidth:0},
+          children:[
+            (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0},children:[
+              (0,t.jsx)("h1",{
+                className:"cms-page-title",
+                style:{
+                  fontSize:"1.15rem",
+                  fontWeight:900,
+                  margin:0,
+                  color:"var(--cas-text-primary, #0f172a)",
+                  letterSpacing:"0.05em",
+                  textTransform:"uppercase",
+                  display:"inline-flex",
+                  alignItems:"center",
+                  gap:"0.38rem",
+                  whiteSpace:"nowrap"
+                },
+                children:"SHARESE"
+              }),
+              (0,t.jsx)("p",{
+                className:"cms-page-sub",
+                style:{display:"none",margin:0},
+                children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal."
+              })
+            ]}),
+            (0,t.jsxs)("div",{
+              className:"sharese-search-inline",
+              style:{display:"flex",alignItems:"center",gap:"0.45rem",flex:"1 1 auto",justifyContent:"flex-end",minWidth:0,maxWidth:"38rem"},
+              children:[
+                (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex",alignItems:"center",minWidth:0},children:[
+                  (0,t.jsx)("div",{style:{position:"absolute",left:"0.65rem",color:"#64748b",display:"flex",alignItems:"center",pointerEvents:"none"},children:(0,t.jsx)(IconSearch,{size:14})}),
+                  (0,t.jsx)(i.InputText,{
+                    value:searchQuery,
+                    onChange:e => { setSearchQuery(e.target.value); setCurrentPage(1); },
+                    onKeyDown:e => e.key === 'Enter' && fetchFeed(),
+                    placeholder:"Cari postingan, #modus, penyidik...",
+                    style:{width:"100%",paddingLeft:"2rem",fontSize:"0.8rem",height:"2.1rem",borderRadius:"8px"}
+                  })
+                ]}),
+                (searchQuery || feedCategory !== 'all' || visibilityFilter !== 'all') && (0,t.jsxs)("button",{
+                  type:"button",
+                  onClick:() => {
+                    setSearchQuery('');
+                    setFeedCategory('all');
+                    setVisibilityFilter('all');
+                    setCurrentPage(1);
+                  },
+                  title:"Kembalikan semua filter ke awal",
+                  style:{
+                    background:"rgba(239,68,68,0.12)",
+                    border:"1px solid rgba(239,68,68,0.3)",
+                    borderRadius:"8px",
+                    color:"#f87171",
+                    padding:"0 0.65rem",
+                    height:"2.1rem",
+                    fontSize:"0.75rem",
+                    fontWeight:700,
+                    cursor:"pointer",
+                    display:"inline-flex",
+                    alignItems:"center",
+                    gap:"0.25rem",
+                    whiteSpace:"nowrap",
+                    flexShrink:0
+                  },
+                  children:["✕ Reset"]
+                }),
+                (0,t.jsx)(c.Button,{
+                  icon:"pi pi-refresh",
+                  label:"Segarkan",
+                  outlined:!0,
+                  className:"sharese-refresh-btn",
+                  onClick:fetchFeed,
+                  loading:loading,
+                  style:{height:"2.1rem",fontSize:"0.76rem",borderRadius:"8px",whiteSpace:"nowrap",padding:"0 0.7rem",flexShrink:0}
+                })
+              ]
+            })
+          ]
         })
       ]
     }),
@@ -1061,28 +1067,39 @@ e.s(["default",0,function() {
           title:"Klik untuk melihat profil akun",
           children:renderCornerAvatar(userAvatar, userInitials, myBadge, 2.5, 15, 8.5, currentUser)
         }),
-        (0,t.jsxs)("div",{style:{flex:1},children:[
+        (0,t.jsxs)("div",{style:{flex:1,minWidth:0},children:[
           (0,t.jsx)(l.InputTextarea,{
+            className:"sharese-composer-textarea",
             value:content,
-            onChange:e=>setContent(e.target.value),
+            onChange:e=>{
+              setContent(e.target.value);
+              let el=e.target;
+              if(el){
+                el.style.height="auto";
+                let sh=el.scrollHeight||44;
+                el.style.height=Math.min(Math.max(sh,44),160)+"px";
+                el.style.overflowY=sh>160?"auto":"hidden";
+              }
+            },
             placeholder:"Bagikan pengalaman lapangan, koordinasi taktis, atau cerita penanganan perkara...",
-            rows:3,
+            rows:2,
             maxLength:3000,
-            style:{width:"100%",borderRadius:"8px",resize:"vertical",fontSize:"0.88rem",lineHeight:"1.5",padding:"0.65rem 0.85rem"}
+            style:{width:"100%",borderRadius:"8px",resize:"none",minHeight:"44px",maxHeight:"160px",height:content?void 0:"44px",overflowY:"auto",fontSize:"0.85rem",lineHeight:"1.45",padding:"0.5rem 0.75rem"}
           }),
-          // Live character count & shortcut hashtags
-          (0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.4rem",flexWrap:"wrap",gap:"0.5rem"},children:[
-            (0,t.jsxs)("div",{style:{display:"flex",gap:"0.3rem",flexWrap:"wrap"},children:
+          // Live character count & 1-line horizontal scrollable shortcut hashtags
+          (0,t.jsxs)("div",{className:"sharese-hashtag-row",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.38rem",flexWrap:"nowrap",gap:"0.4rem",minWidth:0},children:[
+            (0,t.jsxs)("div",{className:"sharese-hashtag-strip",style:{display:"flex",gap:"0.3rem",flexWrap:"nowrap",overflowX:"auto",whiteSpace:"nowrap",minWidth:0,flex:"1 1 auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"},children:
               HASHTAG_SHORTCUTS.map(tag => (0,t.jsx)("button",{
                 key:tag,
                 type:"button",
+                className:"sharese-hashtag-chip",
                 onClick:() => setContent(c => (c ? (c + ' ' + tag) : tag)),
-                style:{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",color:"#60a5fa",borderRadius:"4px",fontSize:"0.7rem",padding:"0.15rem 0.45rem",cursor:"pointer",fontWeight:600},
+                style:{background:"rgba(59,130,246,0.12)",border:"1px solid rgba(59,130,246,0.25)",color:"#60a5fa",borderRadius:"4px",fontSize:"0.7rem",padding:"0.15rem 0.45rem",cursor:"pointer",fontWeight:600,flexShrink:0,whiteSpace:"nowrap"},
                 children:tag
               }))
             }),
-            (0,t.jsxs)("span",{style:{fontSize:"0.72rem",color:content.length >= 2800 ? '#ef4444' : '#94a3b8',fontWeight:600},children:[
-              content.length," / 3.000 karakter"
+            (0,t.jsxs)("span",{className:"sharese-char-count",style:{fontSize:"0.7rem",color:content.length >= 2800 ? '#ef4444' : '#94a3b8',fontWeight:600,flexShrink:0,whiteSpace:"nowrap"},children:[
+              content.length,"/3.000"
             ]})
           ]})
         ]})
@@ -1137,23 +1154,25 @@ e.s(["default",0,function() {
         })
       ]}),
 
-      // Action toolbar: attachment buttons, audience selector, official broadcast toggle, submit button
-      (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.85rem",paddingTop:"0.75rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.75rem"},children:[
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",flexWrap:"wrap",maxWidth:"100%"},children:[
+      // Action toolbar: attachment buttons, audience selector, official broadcast toggle, submit button (1 compact row)
+      (0,t.jsxs)("div",{className:"sharese-composer-toolbar",style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.7rem",paddingTop:"0.65rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"nowrap",gap:"0.4rem",minWidth:0},children:[
+        (0,t.jsxs)("div",{className:"sharese-composer-tools-left",style:{display:"flex",alignItems:"center",gap:"0.38rem",flexWrap:"nowrap",minWidth:0,flex:"1 1 auto",overflowX:"auto",scrollbarWidth:"none"},children:[
           (0,t.jsx)("input",{ref:fileInputRef,type:"file",multiple:!0,accept:"image/png,image/jpeg,image/webp,video/mp4,application/pdf",style:{display:"none"},onChange:handleFileSelect}),
-          (0,t.jsxs)("button",{type:"button",onClick:() => fileInputRef.current?.click(),style:{height:"36px",minHeight:"36px",boxSizing:"border-box",display:"inline-flex",alignItems:"center",gap:"0.35rem",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"8px",padding:"0 12px",fontSize:"0.8rem",fontWeight:600,color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap",lineHeight:1},children:[
-            (0,t.jsx)(h.Paperclip,{size:14})," Lampirkan Berkas"
+          (0,t.jsxs)("button",{type:"button",className:"sharese-btn-attach",onClick:() => fileInputRef.current?.click(),title:"Lampirkan Berkas",style:{height:"34px",minHeight:"34px",boxSizing:"border-box",display:"inline-flex",alignItems:"center",gap:"0.3rem",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"8px",padding:"0 9px",fontSize:"0.76rem",fontWeight:600,color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap",lineHeight:1,flexShrink:0},children:[
+            (0,t.jsx)(h.Paperclip,{size:13}),
+            (0,t.jsx)("span",{className:"sharese-hide-xs",children:"Lampirkan "}),
+            (0,t.jsx)("span",{children:"Berkas"})
           ]}),
-          // Audience selector (uniform 36px height)
-          (0,t.jsxs)("div",{style:{position:"relative",display:"inline-flex",alignItems:"center",height:"36px",minHeight:"36px",boxSizing:"border-box"},children:[
-            (0,t.jsx)("i",{className:audienceType === 'private' ? 'pi pi-lock' : audienceType === 'regional' ? 'pi pi-building' : audienceType === 'friends' ? 'pi pi-users' : 'pi pi-globe',style:{position:"absolute",left:"10px",fontSize:"0.78rem",color:"#38bdf8",pointerEvents:"none"}}),
+          // Audience selector (uniform 34px height)
+          (0,t.jsxs)("div",{className:"sharese-audience-wrap",style:{position:"relative",display:"inline-flex",alignItems:"center",height:"34px",minHeight:"34px",boxSizing:"border-box",flexShrink:0},children:[
+            (0,t.jsx)("i",{className:audienceType === 'private' ? 'pi pi-lock' : audienceType === 'regional' ? 'pi pi-building' : audienceType === 'friends' ? 'pi pi-users' : 'pi pi-globe',style:{position:"absolute",left:"8px",fontSize:"0.74rem",color:"#38bdf8",pointerEvents:"none"}}),
             (0,t.jsxs)("select",{
               id:"broadcaster-audience-select",
               name:"audience_type",
               "aria-label":"Visibilitas Postingan",
               value:audienceType,
               onChange:e => setAudienceType(e.target.value),
-              style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 28px 0 30px",borderRadius:"8px",fontSize:"0.8rem",fontWeight:600,background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",outline:"none"},
+              style:{height:"34px",minHeight:"34px",boxSizing:"border-box",padding:"0 22px 0 26px",borderRadius:"8px",fontSize:"0.76rem",fontWeight:600,background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",outline:"none"},
               children:[
                 (0,t.jsx)("option",{value:"public",style:{background:"#0f172a",color:"#f8fafc"},children:"Publik"}),
                 (0,t.jsx)("option",{value:"regional",style:{background:"#0f172a",color:"#f8fafc"},children:"Lingkup Satker"}),
@@ -1162,20 +1181,22 @@ e.s(["default",0,function() {
               ]
             })
           ]}),
-          // Official Jukrah checkbox (superadmin/admin only, uniform 36px height)
-          canBroadcastOfficial && (0,t.jsxs)("label",{style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 12px",borderRadius:"8px",border:isOfficialJukrah ? "1px solid rgba(245,158,11,0.4)" : "1px solid var(--cas-border, rgba(255,255,255,0.15))",background:isOfficialJukrah ? "rgba(245,158,11,0.12)" : "var(--cas-bg-subtle, rgba(255,255,255,0.03))",display:"inline-flex",alignItems:"center",gap:"0.4rem",fontSize:"0.8rem",color:isOfficialJukrah ? "#f59e0b" : "var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",lineHeight:1},children:[
+          // Official Jukrah checkbox (superadmin/admin only, uniform 34px height)
+          canBroadcastOfficial && (0,t.jsxs)("label",{className:"sharese-jukrah-toggle",title:"Siarkan sebagai Jukrah Resmi",style:{height:"34px",minHeight:"34px",boxSizing:"border-box",padding:"0 9px",borderRadius:"8px",border:isOfficialJukrah ? "1px solid rgba(245,158,11,0.4)" : "1px solid var(--cas-border, rgba(255,255,255,0.15))",background:isOfficialJukrah ? "rgba(245,158,11,0.12)" : "var(--cas-bg-subtle, rgba(255,255,255,0.03))",display:"inline-flex",alignItems:"center",gap:"0.3rem",fontSize:"0.76rem",color:isOfficialJukrah ? "#f59e0b" : "var(--cas-text-secondary, #64748b)",cursor:"pointer",fontWeight:600,whiteSpace:"nowrap",lineHeight:1,flexShrink:0},children:[
             (0,t.jsx)("input",{type:"checkbox",checked:isOfficialJukrah,onChange:e => setIsOfficialJukrah(e.target.checked)}),
-            (0,t.jsx)("i",{className:"pi pi-megaphone",style:{fontSize:"0.78rem"}}),
-            "Jukrah Resmi"
+            (0,t.jsx)("i",{className:"pi pi-megaphone",style:{fontSize:"0.74rem"}}),
+            (0,t.jsx)("span",{children:"Jukrah"}),
+            (0,t.jsx)("span",{className:"sharese-hide-xs",children:" Resmi"})
           ]})
         ]}),
 
         (0,t.jsxs)(c.Button,{
           onClick:handleSubmitPost,
           loading:submitting,
-          style:{height:"36px",minHeight:"36px",boxSizing:"border-box",padding:"0 14px",display:"inline-flex",alignItems:"center",gap:"0.4rem",borderRadius:"8px",fontWeight:700,fontSize:"0.8rem"},
+          className:"sharese-btn-publish",
+          style:{height:"34px",minHeight:"34px",boxSizing:"border-box",padding:"0 12px",display:"inline-flex",alignItems:"center",gap:"0.35rem",borderRadius:"8px",fontWeight:700,fontSize:"0.76rem",flexShrink:0,whiteSpace:"nowrap"},
           children:[
-            (0,t.jsx)(IconSend,{size:14})," Publikasikan"
+            (0,t.jsx)(IconSend,{size:13})," Publikasikan"
           ]
         })
       ]})
