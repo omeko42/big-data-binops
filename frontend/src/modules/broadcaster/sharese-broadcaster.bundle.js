@@ -102,9 +102,38 @@ function formatCallsign(rawCallsign, authorId, username) {
 
 function toTitleCase(str) {
   if (!str) return '';
-  return String(str).toLowerCase().replace(/(?:^|\s|-|\/)[a-z]/g, function(c) {
-    return c.toUpperCase();
-  });
+  return String(str)
+    .replace(/\bPAPUA\s+BARAT\s+DAYA\b/gi, 'Pabardaya')
+    .replace(/\bPABD\b/gi, 'Pabardaya')
+    .replace(/\bPAPUA\s+TENGAH\b/gi, 'Papteng')
+    .replace(/\bPATENG\b/gi, 'Papteng')
+    .replace(/\bKAWASAN\s+PELABUHAN\b/gi, 'K.P.')
+    .replace(/\bKP3\b/gi, 'K.P.')
+    .replace(/\bKAWASAN\s+BANDARA\b/gi, 'K.B.')
+    .replace(/\bTANJUNG\b/gi, 'Tj.')
+    .replace(/\bKEPULAUAN\b/gi, 'Kep.')
+    .replace(/\bPULAU\b/gi, 'P.')
+    .toLowerCase()
+    .replace(/(?:^|\s|-|\/)[a-z]/g, function(c) {
+      return c.toUpperCase();
+    })
+    .replace(/\bS\.h\b/gi, 'S.H')
+    .replace(/\bM\.h\b/gi, 'M.H')
+    .replace(/\bS\.i\.k\b/gi, 'S.I.K')
+    .replace(/\bK\.p\./gi, 'K.P.')
+    .replace(/\bK\.b\./gi, 'K.B.')
+    .replace(/\bTj\./gi, 'Tj.')
+    .replace(/\bKep\./gi, 'Kep.')
+    .replace(/\bP\./gi, 'P.')
+    .replace(/\bPolri\b/gi, 'Polri')
+    .replace(/\bPolda\b/gi, 'Polda')
+    .replace(/\bPolres\b/gi, 'Res')
+    .replace(/\bPolsek\b/gi, 'Sek')
+    .replace(/\bSat\b/gi, 'Sat')
+    .replace(/\bDit\b/gi, 'Dit')
+    .replace(/\bRes\b/gi, 'Res')
+    .replace(/\bReskrim\b/gi, 'Reskrim')
+    .replace(/\bNarkoba\b/gi, 'Narkoba');
 }
 
 function formatSatkerName(rawSatker, isSuper, fallback) {
@@ -118,10 +147,15 @@ function formatSatkerName(rawSatker, isSuper, fallback) {
 
 function isPolwanUser(u) {
   if (!u || typeof u !== 'object') return false;
-  var g = String(u.gender || u.jenis_kelamin || u.social_media?.gender || '').toLowerCase();
-  if (['p', 'perempuan', 'wanita', 'female', 'f'].includes(g)) return true;
-  var nm = String(u.name || u.author_name || u.raw_name || u.username || u.callsign || u.author_username || u.author_callsign || '');
-  return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(nm);
+  var expG = String(u.social_media?.jenis_kelamin || u.social_media?.gender || '').trim().toLowerCase();
+  if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(expG)) return true;
+  if (['l', 'laki-laki', 'laki', 'pria', 'male', 'm', 'polki'].includes(expG)) return false;
+  var g = String(u.gender || u.jenis_kelamin || '').trim().toLowerCase();
+  if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(g)) return true;
+  if (['l', 'laki-laki', 'laki', 'pria', 'male', 'm', 'polki'].includes(g)) return false;
+  var nm = String(u.name || u.author_name || u.raw_name || u.username || u.callsign || u.author_username || u.author_callsign || '').trim();
+  if (/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(nm)) return false;
+  return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(nm);
 }
 function getDefaultAvatarUrl(u) {
   return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';

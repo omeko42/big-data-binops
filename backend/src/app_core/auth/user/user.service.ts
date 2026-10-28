@@ -709,6 +709,18 @@ export class UserService {
         return payload;
     }
 
+    private isFemalePersonnel(name?: any, jenisKelamin?: any, socialMedia?: any): boolean {
+        const explicitJk = String(socialMedia?.jenis_kelamin || socialMedia?.gender || '').trim().toLowerCase();
+        if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(explicitJk)) return true;
+        if (['l', 'laki-laki', 'laki', 'pria', 'male', 'm', 'polki'].includes(explicitJk)) return false;
+        const jk = String(jenisKelamin || '').trim().toLowerCase();
+        if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(jk)) return true;
+        const n = String(name || '').trim();
+        if (!n) return false;
+        if (/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(n)) return false;
+        return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
+    }
+
     /**
      * Dapatkan profil sendiri (termasuk foto profil avatar, data personil kepolisian, dll).
      */
@@ -718,7 +730,7 @@ export class UserService {
         let policeProfile: any = null;
         try {
             const policeRows = await this.dataSource.query(
-                `select nrp, nama, satuan, no_hp, pangkat, jabatan, email, foto, is_pns, social_media
+                `select nrp, nama, jenis_kelamin, satuan, no_hp, pangkat, jabatan, email, foto, is_pns, social_media
                  from trb_police
                  where lower(email) = any($1::text[])
                  order by id desc limit 1`,
@@ -728,16 +740,26 @@ export class UserService {
         } catch {}
         const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
         let satkerNama: string | null = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
+        let satkerSingkat: string | null = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSatuan: string | null = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
         if (!satkerNama && user.scope_satker_id) {
             try {
                 const sRows = await this.dataSource.query('select deskripsi, nama_singkat from bdb_satker where id=$1', [user.scope_satker_id]);
                 if (sRows && sRows[0]) {
                     satkerNama = sRows[0].deskripsi;
+                    satkerSingkat = sRows[0].nama_singkat || sRows[0].deskripsi;
                     satkerSatuan = sRows[0].deskripsi;
                 }
             } catch {}
         }
+        const mergedSocial = {
+            ...(policeProfile?.social_media && typeof policeProfile.social_media === 'object' ? policeProfile.social_media : {}),
+            ...(user.social_media && typeof user.social_media === 'object' ? user.social_media : {})
+        };
+        const isFemale = this.isFemalePersonnel(user.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
+        const resolvedGender = isFemale ? 'P' : 'L';
+        mergedSocial.jenis_kelamin = resolvedGender;
+        mergedSocial.gender = resolvedGender;
         return {
             id: user.id,
             name: user.name,
@@ -749,15 +771,19 @@ export class UserService {
             photo_url: user.photo_url || policeProfile?.foto || null,
             nrp: policeProfile?.nrp || null,
             no_hp: policeProfile?.no_hp || null,
+            jenis_kelamin: resolvedGender,
+            gender: resolvedGender,
+            is_pns: Boolean(user.is_pns || policeProfile?.is_pns),
             satuan: satkerSatuan || policeProfile?.satuan || (isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null),
-            satker: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
-            satker_singkat: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            satker: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            satker_singkat: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             satker_nama: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
-            scope_satker_name: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            scope_satker_name: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             pangkat: policeProfile?.pangkat || null,
             jabatan: policeProfile?.jabatan || null,
             role_bdb: user.role_bdb,
-            status: user.status
+            status: user.status,
+            social_media: mergedSocial
         };
     }
 
@@ -766,12 +792,25 @@ export class UserService {
      * (nama, NRP, pangkat, jabatan, satuan, no. HP). Tidak pernah lewat sini: role, scope
      * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
      */
-    async updateOwnProfile(authUser: User, dto: { name?: string; email?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string; is_pns?: boolean; social_media?: any; photo_url?: string; foto?: string }) {
+    async updateOwnProfile(authUser: User, dto: { name?: string; email?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string; is_pns?: boolean; jenis_kelamin?: string; gender?: string; social_media?: any; photo_url?: string; foto?: string }) {
         const name = (dto.name || '').trim();
         const authUpdate: Partial<User> = {};
         if (name && name !== authUser.name) authUpdate.name = name;
         if (dto.is_pns !== undefined) authUpdate.is_pns = Boolean(dto.is_pns);
-        if (dto.social_media !== undefined) authUpdate.social_media = dto.social_media;
+        const rawJkInput = String(dto.jenis_kelamin || dto.gender || dto.social_media?.jenis_kelamin || dto.social_media?.gender || '').trim().toUpperCase();
+        let normJk: 'P' | 'L' | null = null;
+        if (['P', 'PEREMPUAN', 'WANITA', 'FEMALE', 'F', 'POLWAN'].includes(rawJkInput)) normJk = 'P';
+        else if (['L', 'LAKI-LAKI', 'LAKI', 'PRIA', 'MALE', 'M', 'POLKI'].includes(rawJkInput)) normJk = 'L';
+        if (dto.social_media !== undefined || normJk) {
+            const baseSoc = (authUser.social_media && typeof authUser.social_media === 'object') ? authUser.social_media : {};
+            const nextSoc = { ...baseSoc, ...(dto.social_media && typeof dto.social_media === 'object' ? dto.social_media : {}) };
+            if (normJk) {
+                nextSoc.jenis_kelamin = normJk;
+                nextSoc.gender = normJk;
+            }
+            authUpdate.social_media = nextSoc;
+            dto.social_media = nextSoc;
+        }
         if (dto.photo_url !== undefined || dto.foto !== undefined) {
             const rawPhoto = String(dto.photo_url || dto.foto || '').trim();
             if (rawPhoto) {
@@ -839,6 +878,7 @@ export class UserService {
         await this.upsertPoliceProfileByEmail(authUser.email, {
             nrp: dto.nrp,
             name: name || authUser.name,
+            jenis_kelamin: normJk ? normJk.toLowerCase() : undefined,
             pangkat: dto.pangkat,
             jabatan: dto.jabatan,
             satuan: dto.satuan,
@@ -847,7 +887,18 @@ export class UserService {
             social_media: dto.social_media,
             foto: dto.photo_url || dto.foto
         }, this.dataSource, authUser.email_polri);
-        return { status: 1, message: 'Profil berhasil diperbarui.' };
+        return {
+            status: 1,
+            message: 'Profil berhasil diperbarui.',
+            data: {
+                ...authUser,
+                ...authUpdate,
+                jenis_kelamin: normJk || undefined,
+                gender: normJk || undefined,
+                username: effectiveUsername,
+                callsign: (authUpdate as any).callsign || effectiveUsername
+            }
+        };
     }
 
     async selfDeactivate(authUser: User, reason?: string) {
@@ -1196,6 +1247,8 @@ export class UserService {
 
         const nrp = this.cleanOptionalText(payload?.nrp || payload?.nip || payload?.nrp_nip);
         const nama = this.cleanOptionalText(payload?.name || payload?.nama);
+        const rawJk = this.cleanOptionalText(payload?.jenis_kelamin || payload?.gender || payload?.social_media?.jenis_kelamin || payload?.social_media?.gender);
+        const jenisKelamin = rawJk ? (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(rawJk.toLowerCase()) ? 'p' : 'l') : null;
         const satuan = this.cleanOptionalText(payload?.satuan || payload?.requested_scope_label);
         const noHp = this.cleanOptionalText(payload?.no_hp || payload?.phone || payload?.no_handphone);
         const pangkat = this.cleanOptionalText(payload?.pangkat);
@@ -1206,7 +1259,7 @@ export class UserService {
         const foto = this.cleanOptionalText(payload?.foto || payload?.photo_url);
         const photoHash = foto ? crypto.createHash('sha256').update(foto).digest('hex') : null;
 
-        if (!nrp && !nama && !satuan && !noHp && !pangkat && !jabatan && isPns === null && !socialMedia && !foto && !fotoProvided) return;
+        if (!nrp && !nama && !jenisKelamin && !satuan && !noHp && !pangkat && !jabatan && isPns === null && !socialMedia && !foto && !fotoProvided) return;
 
         const emails = Array.from(new Set([normalizedEmail, previousNormalizedEmail].filter(Boolean)));
         const existingRows = await executor.query(
@@ -1239,10 +1292,11 @@ export class UserService {
                     foto = CASE WHEN $11::boolean THEN $12 ELSE foto END,
                     photo_hash = CASE WHEN $11::boolean THEN $13 ELSE photo_hash END,
                     photo_updated_at = CASE WHEN $11::boolean THEN now() ELSE photo_updated_at END,
+                    jenis_kelamin = coalesce($14, jenis_kelamin),
                     updated_at = now()
                 where id = $1
                 `,
-                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail, isPns, socialMedia, fotoProvided, foto, photoHash]
+                [existing.id, nrp, nama, satuan, noHp, pangkat, jabatan, normalizedEmail, isPns, socialMedia, fotoProvided, foto, photoHash, jenisKelamin]
             );
             return;
         }
@@ -1266,9 +1320,9 @@ export class UserService {
                 created_at,
                 updated_at
             )
-            values ($1, $2, 'l', coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, coalesce($8, false), coalesce($9::jsonb, '{}'::jsonb), $10, $11, now(), now(), now())
+            values ($1, $2, coalesce($12, 'l'), coalesce($3, '-'), coalesce($4, '-'), $5, $6, $7, coalesce($8, false), coalesce($9::jsonb, '{}'::jsonb), $10, $11, now(), now(), now())
             `,
-            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail, isPns, socialMedia, foto, photoHash]
+            [nrp, nama, pangkat, jabatan, satuan, noHp, normalizedEmail, isPns, socialMedia, foto, photoHash, jenisKelamin]
         );
     }
 
@@ -1284,6 +1338,7 @@ export class UserService {
                 lower(email) as email_key,
                 nrp,
                 nama,
+                jenis_kelamin,
                 satuan,
                 no_hp,
                 pangkat,
@@ -1311,6 +1366,9 @@ export class UserService {
             user.jabatan = profile.jabatan;
             user.is_pns = Boolean(user.is_pns || profile.is_pns);
             user.social_media = user.social_media || profile.social_media || {};
+            const isFem = this.isFemalePersonnel(user.name || profile.nama, profile.jenis_kelamin, user.social_media);
+            user.jenis_kelamin = isFem ? 'P' : 'L';
+            user.gender = isFem ? 'P' : 'L';
             user.photo_url = user.photo_url || profile.foto || null;
             user.Police = profile;
         });
