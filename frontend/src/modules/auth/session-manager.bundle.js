@@ -1,4 +1,4 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,56420,e=>{"use strict";if(typeof window!=="undefined"&&!window.__bdbErrGuard){window.__bdbErrGuard=!0,window.addEventListener("error",function(e){if(e&&e.message&&(e.message.includes("reading 'startTime'")||e.message.includes("Minified React error #418"))){e.preventDefault(),e.stopImmediatePropagation()}},!0)}var a=e.i(71645);let t=(...e)=>e.filter((e,a,t)=>!!e&&""!==e.trim()&&t.indexOf(e)===a).join(" ").trim(),r=e=>{let a=e.replace(/^([A-Z])|[\s-_]+(\w)/g,(e,a,t)=>t?t.toUpperCase():a.toLowerCase());return a.charAt(0).toUpperCase()+a.slice(1)};var s={xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"};let n=(0,a.createContext)({}),l=(0,a.forwardRef)(({color:e,size:r,strokeWidth:l,absoluteStrokeWidth:i,className:o="",children:c,iconNode:u,...d},p)=>{let{size:m=24,strokeWidth:f=2,absoluteStrokeWidth:h=!1,color:g="currentColor",className:k=""}=(0,a.useContext)(n)??{},b=i??h?24*Number(l??f)/Number(r??m):l??f;return(0,a.createElement)("svg",{ref:p,...s,width:r??m??s.width,height:r??m??s.height,stroke:e??g,strokeWidth:b,className:t("lucide",k,o),...!c&&!(e=>{for(let a in e)if(a.startsWith("aria-")||"role"===a||"title"===a)return!0;return!1})(d)&&{"aria-hidden":"true"},...d},[...u.map(([e,t])=>(0,a.createElement)(e,t)),...Array.isArray(c)?c:[c]])});e.s(["default",0,(e,s)=>{let n=(0,a.forwardRef)(({className:n,...i},o)=>(0,a.createElement)(l,{ref:o,iconNode:s,className:t(`lucide-${r(e).replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase()}`,`lucide-${e}`,n),...i}));return n.displayName=r(e),n}],56420)},18566,(e,a,t)=>{a.exports=e.r(76562)},38036,e=>{"use strict";var a=e.i(54858);function t(){try{return JSON.parse(localStorage.getItem("auth")||"null")}catch{return null}}function r(){try{return JSON.parse(localStorage.getItem("user")||"null")}catch{return null}}async function s(e){let t=await a.api.get("/Authentication/user",{headers:{Authorization:`Bearer ${e.access_token||""}`}}),r={role:{permission:[]},...t.data?.data};try{let _ou=JSON.parse(localStorage.getItem("user")||"null");if(_ou&&(_ou.id||_ou.user_id)&&r&&(r.id||r.user_id)&&String(_ou.id||_ou.user_id)!==String(r.id||r.user_id)){try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{if(window.indexedDB)indexedDB.deleteDatabase("bdb_offline_db")}catch(_e){}}}catch(_e){}return localStorage.setItem("user",JSON.stringify(r)),localStorage.setItem("auth",JSON.stringify(e)),e.expires_at&&localStorage.setItem("auth.expires_at",e.expires_at),e.access_token&&localStorage.setItem("auth.access_token",e.access_token),e.refresh_token&&localStorage.setItem("auth.refresh",e.refresh_token),r}let n="impersonator_stash";async function l(e){let a=t(),l=r();return a?.access_token&&l&&localStorage.setItem(n,JSON.stringify({auth:a,user:l})),s(e)}function i(){try{return JSON.parse(localStorage.getItem(n)||"null")}catch{return null}}e.s(["deriveRoles",0,function(e){let a=String(e?.role?.role_name||e?.role_name||"").toLowerCase(),t=String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase(),r="superadmin"===t||a.includes("super"),s="admin_binops"===t||!r&&("admin"===a||a.includes("binops")),v=!r&&!s&&(t==="viewer"||a.includes("viewer"));return{isSuperadmin:r,isAdminBinops:s,isViewer:v,isReadOnly:v,isOperator:!r&&!s&&!v,canManageUsers:r||s,canUseBroadcaster:r||s,label:t||a||(v?"viewer":"operator")}},"fetchAndStoreUser",0,s,"getAuth",0,t,"getImpersonatorStash",0,i,"getUser",0,r,"logout",0,function(){try{let _tok=localStorage.getItem("auth.access_token")||(JSON.parse(localStorage.getItem("auth")||"null")?.access_token)||"";if(_tok&&typeof fetch==="function"){fetch("/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(r=>r.forEach(reg=>reg.unregister()))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}},"startImpersonation",0,l,"stopImpersonation",0,function(){let e=i();return!!e?.auth?.access_token&&(localStorage.setItem("user",JSON.stringify(e.user)),localStorage.setItem("auth",JSON.stringify(e.auth)),e.auth.expires_at&&localStorage.setItem("auth.expires_at",String(e.auth.expires_at)),e.auth.access_token&&localStorage.setItem("auth.access_token",String(e.auth.access_token)),e.auth.refresh_token&&localStorage.setItem("auth.refresh",String(e.auth.refresh_token)),localStorage.removeItem(n),!0)}])},41120,e=>{"use strict";let a=(0,e.i(56420).default)("refresh-cw",[["path",{d:"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",key:"v9h5vc"}],["path",{d:"M21 3v5h-5",key:"1q7to0"}],["path",{d:"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16",key:"3uifl3"}],["path",{d:"M8 16H3v5",key:"1cv678"}]]);e.s(["RefreshCw",0,a],41120)},45868,e=>{"use strict";e.s(["APP_VERSION",0,"1.0.0"])},65489,e=>{"use strict";let a=(0,e.i(56420).default)("megaphone",[["path",{d:"M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",key:"q8bfy3"}],["path",{d:"M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14",key:"1853fq"}],["path",{d:"M8 6v8",key:"15ugcq"}]]);e.s(["Megaphone",0,a],65489)},71028,e=>{"use strict";let a=(0,e.i(56420).default)("gauge",[["path",{d:"m12 14 4-4",key:"9kzdfg"}],["path",{d:"M3.34 19a10 10 0 1 1 17.32 0",key:"19p75a"}]]);e.s(["Gauge",0,a],71028)},31458,e=>{"use strict";let a=(0,e.i(56420).default)("flag",[["path",{d:"M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528",key:"1jaruq"}]]);e.s(["Flag",0,a],31458)},9573,e=>{"use strict";var a=e.i(71645);e.s(["fmtUpdated",0,function(e){return e?e.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—"},"useAutoRefresh",0,function(e,t=3e5){let r=(0,a.useRef)(e);r.current=e;let s=(0,a.useRef)(!1),[n,l]=(0,a.useState)(!1),[i,o]=(0,a.useState)(null),c=(0,a.useCallback)(async()=>{if(!s.current){s.current=!0,l(!0);try{await r.current(),o(new Date)}finally{s.current=!1,l(!1)}}},[]);return(0,a.useEffect)(()=>{let e=setInterval(()=>{("u"<typeof document||"visible"===document.visibilityState)&&c()},t);return()=>clearInterval(e)},[c,t]),{refreshing:n,updatedAt:i,refresh:c}}])},95057,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={formatUrl:function(){return i},formatWithValidation:function(){return c},urlObjectKeys:function(){return o}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809)._(e.r(98183)),l=/https?|ftp|gopher|file/;function i(e){let{auth:a,hostname:t}=e,r=e.protocol||"",s=e.pathname||"",i=e.hash||"",o=e.query||"",c=!1;a=a?encodeURIComponent(a).replace(/%3A/i,":")+"@":"",e.host?c=a+e.host:t&&(c=a+(~t.indexOf(":")?`[${t}]`:t),e.port&&(c+=":"+e.port)),o&&"object"==typeof o&&(o=String(n.urlQueryToSearchParams(o)));let u=e.search||o&&`?${o}`||"";return r&&!r.endsWith(":")&&(r+=":"),e.slashes||(!r||l.test(r))&&!1!==c?(c="//"+(c||""),s&&"/"!==s[0]&&(s="/"+s)):c||(c=""),i&&"#"!==i[0]&&(i="#"+i),u&&"?"!==u[0]&&(u="?"+u),s=s.replace(/[?#]/g,encodeURIComponent),u=u.replace("#","%23"),`${r}${c}${s}${u}${i}`}let o=["auth","hash","host","hostname","href","path","pathname","port","protocol","query","search","slashes"];function c(e){return i(e)}},18581,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"useMergedRef",{enumerable:!0,get:function(){return s}});let r=e.r(71645);function s(e,a){let t=(0,r.useRef)(null),s=(0,r.useRef)(null);return(0,r.useCallback)(r=>{if(null===r){let e=t.current;e&&(t.current=null,e());let a=s.current;a&&(s.current=null,a())}else e&&(t.current=n(e,r)),a&&(s.current=n(a,r))},[e,a])}function n(e,a){if("function"!=typeof e)return e.current=a,()=>{e.current=null};{let t=e(a);return"function"==typeof t?t:()=>e(null)}}("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},73668,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"isLocalURL",{enumerable:!0,get:function(){return n}});let r=e.r(18967),s=e.r(52817);function n(e){if(!(0,r.isAbsoluteUrl)(e))return!0;try{let a=(0,r.getLocationOrigin)(),t=new URL(e,a);return t.origin===a&&(0,s.hasBasePath)(t.pathname)}catch(e){return!1}}},84508,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"errorOnce",{enumerable:!0,get:function(){return r}});let r=e=>{}},22016,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={default:function(){return k},useLinkStatus:function(){return y}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809),l=e.r(43476),i=n._(e.r(71645)),o=e.r(95057),c=e.r(8372),u=e.r(18581),d=e.r(18967),p=e.r(5550);e.r(33525);let m=e.r(88540),f=e.r(91949),h=e.r(73668),g=e.r(9396);function k(a){var t,r;let s,n,k,[y,j]=(0,i.useOptimistic)(f.IDLE_LINK_STATUS),v=(0,i.useRef)(null),{href:S,as:w,children:x,prefetch:R=null,passHref:M,replace:_,shallow:N,scroll:P,onClick:C,onMouseEnter:A,onTouchStart:L,legacyBehavior:O=!1,onNavigate:T,transitionTypes:I,ref:E,unstable_dynamicOnHover:z,...K}=a;s=x,O&&("string"==typeof s||"number"==typeof s)&&(s=(0,l.jsx)("a",{children:s}));let $=i.default.useContext(c.AppRouterContext),D=!1!==R,B=!1!==R?null===(r=R)||"auto"===r?g.FetchStrategy.PPR:g.FetchStrategy.Full:g.FetchStrategy.PPR,U="string"==typeof(t=w||S)?t:(0,o.formatUrl)(t);if(O){if(s?.$$typeof===Symbol.for("react.lazy"))throw Object.defineProperty(Error("`<Link legacyBehavior>` received a direct child that is either a Server Component, or JSX that was loaded with React.lazy(). This is not supported. Either remove legacyBehavior, or make the direct child a Client Component that renders the Link's `<a>` tag."),"__NEXT_ERROR_CODE",{value:"E863",enumerable:!1,configurable:!0});n=i.default.Children.only(s)}let q=O?n&&"object"==typeof n&&n.ref:E,J=i.default.useCallback(e=>(null!==$&&(v.current=(0,f.mountLinkInstance)(e,U,$,B,D,j)),()=>{v.current&&((0,f.unmountLinkForCurrentNavigation)(v.current),v.current=null),(0,f.unmountPrefetchableInstance)(e)}),[D,U,$,B,j]),W={ref:(0,u.useMergedRef)(J,q),onClick(a){O||"function"!=typeof C||C(a),O&&n.props&&"function"==typeof n.props.onClick&&n.props.onClick(a),!$||a.defaultPrevented||function(a,t,r,s,n,l,o){if("u">typeof window){let c,{nodeName:u}=a.currentTarget;if("A"===u.toUpperCase()&&((c=a.currentTarget.getAttribute("target"))&&"_self"!==c||a.metaKey||a.ctrlKey||a.shiftKey||a.altKey||a.nativeEvent&&2===a.nativeEvent.which)||a.currentTarget.hasAttribute("download"))return;if(!(0,h.isLocalURL)(t)){s&&(a.preventDefault(),location.replace(t));return}if(a.preventDefault(),l){let e=!1;if(l({preventDefault:()=>{e=!0}}),e)return}let{dispatchNavigateAction:d}=e.r(99781);i.default.startTransition(()=>{d(t,s?"replace":"push",!1===n?m.ScrollBehavior.NoScroll:m.ScrollBehavior.Default,r.current,o)})}}(a,U,v,_,P,T,I)},onMouseEnter(e){O||"function"!=typeof A||A(e),O&&n.props&&"function"==typeof n.props.onMouseEnter&&n.props.onMouseEnter(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)},onTouchStart:function(e){O||"function"!=typeof L||L(e),O&&n.props&&"function"==typeof n.props.onTouchStart&&n.props.onTouchStart(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)}};return(0,d.isAbsoluteUrl)(U)?W.href=U:O&&!M&&("a"!==n.type||"href"in n.props)||(W.href=(0,p.addBasePath)(U)),k=O?i.default.cloneElement(n,W):(0,l.jsx)("a",{...K,...W,children:s}),(0,l.jsx)(b.Provider,{value:y,children:k})}e.r(84508);let b=(0,i.createContext)(f.IDLE_LINK_STATUS),y=()=>(0,i.useContext)(b);("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},70187,e=>{"use strict";let a={key:"code",label:"Kode"},t={key:"name",label:"Nama"},r={key:"singkatan",label:"Singkatan"},s={key:"status",label:"Status"},n=Object.fromEntries([{slug:"agama",title:"Agama",fields:[t]},{slug:"kewarganegaraan",title:"Kewarganegaraan",fields:[a,t]},{slug:"pekerjaan",title:"Pekerjaan",fields:[a,t]},{slug:"pendidikan",title:"Pendidikan",fields:[t]},{slug:"suku",title:"Suku",fields:[t]},{slug:"golongan-kejahatan",title:"Golongan Kejahatan",fields:[t]},{slug:"kategori-lokasi",title:"Tempat Peristiwa/Kejadian",fields:[t]},{slug:"modus-operandi",title:"Modus Operandi",fields:[t]},{slug:"motif-kejahatan",title:"Motif Kejahatan",fields:[t]},{slug:"iccs-kategori",title:"Kategori ICCS",fields:[{key:"kode",label:"Kode"},{key:"nama",label:"Nama"},{key:"keterangan",label:"Keterangan"}]},{slug:"undang-undang",title:"Undang-Undang",fields:[{key:"deskripsi",label:"Deskripsi"}]},{slug:"provinsi",title:"Provinsi",fields:[a,t,r,s]},{slug:"kabupaten",title:"Kabupaten/Kota",fields:[a,t,r,s]},{slug:"kecamatan",title:"Kecamatan",fields:[a,t,r,s]},{slug:"desa",title:"Desa/Kelurahan",fields:[a,t,r,s]}].map(e=>[e.slug,{...e,endpoint:`/master/${e.slug}`}])),l=["jenis-kejahatan","golongan-kejahatan","kategori-lokasi","modus-operandi","motif-kejahatan","iccs-kategori","undang-undang"],i=Object.values(n).filter(e=>!l.includes(e.slug));e.s(["MASTERS",0,n,"MASTER_LIST",0,i])},73670,e=>{"use strict";let a=(0,e.i(56420).default)("user-cog",[["path",{d:"M10 15H6a4 4 0 0 0-4 4v2",key:"1nfge6"}],["path",{d:"m14.305 16.53.923-.382",key:"1itpsq"}],["path",{d:"m15.228 13.852-.923-.383",key:"eplpkm"}],["path",{d:"m16.852 12.228-.383-.923",key:"13v3q0"}],["path",{d:"m16.852 17.772-.383.924",key:"1i8mnm"}],["path",{d:"m19.148 12.228.383-.923",key:"1q8j1v"}],["path",{d:"m19.53 18.696-.382-.924",key:"vk1qj3"}],["path",{d:"m20.772 13.852.924-.383",key:"n880s0"}],["path",{d:"m20.772 16.148.924.383",key:"1g6xey"}],["circle",{cx:"18",cy:"15",r:"3",key:"gjjjvw"}],["circle",{cx:"9",cy:"7",r:"4",key:"nufk8"}]]);e.s(["UserCog",0,a],73670)},81539,e=>{"use strict";let a=["superadmin","admin_binops","operator","viewer","sharese"],t=["superadmin","admin_binops"],r=["superadmin"],s=[{label:"Dashboard",items:[{key:"ringkasan",label:"Ringkasan",icon:"pi pi-fw pi-home",to:"/cms/dashboard/main",defaultRoles:a}]},{label:"Sharese",items:[{key:"jukrahcaster",label:"Feed",icon:"pi pi-fw pi-globe",to:"/cms/broadcaster",defaultRoles:a},{key:"kelola-jukrahcaster",label:"Kelola feed",icon:"pi pi-fw pi-megaphone",to:"/cms/pengumuman",defaultRoles:t}]},{label:"Pengaturan",items:[{key:"profil",label:"Profile saya",icon:"pi pi-fw pi-user",to:"/cms/profile",defaultRoles:a}]},{label:"Laporan Polisi",items:[{key:"laporan-polisi",label:"Laporan Polisi",icon:"pi pi-fw pi-file-check",to:"/cms/laporan-polisi",defaultRoles:a,children:[{key:"laporan-polisi-list",label:"Daftar Laporan Polisi",icon:"pi pi-fw pi-file-check",to:"/cms/laporan-polisi",defaultRoles:a},{key:"arsip-lp-pelimpahan",label:"Arsip LP Pelimpahan",icon:"pi pi-fw pi-history",to:"/cms/laporan-polisi/arsip-pelimpahan",defaultRoles:a}]}]},{label:"Laporan",items:[{key:"kinerja-perkara",label:"Kinerja Perkara (CT/CP/CC/CR)",icon:"pi pi-fw pi-gauge",to:"/cms/report/kinerja-perkara",defaultRoles:a},{key:"anev-ctcc",label:"Lampiran Anev Periodik",icon:"pi pi-fw pi-file-edit",to:"/cms/report/anev-ctcc",defaultRoles:a}]},{label:"Operasional",items:[{key:"rekap-pihak",label:"Register Pihak Terlibat",icon:"pi pi-fw pi-users",to:"/cms/laporan/rekap-pihak-terlibat",defaultRoles:a},{key:"pihak-sering",label:"Pihak Paling Sering Terlibat",icon:"pi pi-fw pi-sitemap",to:"/cms/laporan/pihak-sering-terlibat",defaultRoles:a},{key:"rekap-bb",label:"Register BB",icon:"pi pi-fw pi-box",to:"/cms/laporan/rekap-barang-bukti",defaultRoles:a}]},{label:"Susjol & Susatensi",items:[{key:"susjol",label:"Susjol (Kasus Menonjol)",icon:"pi pi-fw pi-exclamation-triangle",to:"/cms/laporan/kasus-menonjol/lihat",defaultRoles:a},{key:"susjol-kelola",label:"Kelola Susjol",icon:"pi pi-fw pi-cog",to:"/cms/laporan/kasus-menonjol",defaultRoles:a},{key:"susatensi",label:"Susatensi (Kasus Atensi)",icon:"pi pi-fw pi-eye",to:"/cms/laporan/kasus-atensi/lihat",defaultRoles:a},{key:"susatensi-kelola",label:"Kelola Susatensi",icon:"pi pi-fw pi-cog",to:"/cms/laporan/kasus-atensi",defaultRoles:a}]},{label:"Operasi & Satgas",items:[{key:"rekap-ops-satgas",label:"Rekap LP Ops & Satgas",icon:"pi pi-fw pi-flag",to:"/cms/laporan/rekap-operasi-satgas",defaultRoles:a},{key:"master-operasi-satgas",label:"Operasi / Satgas",icon:"pi pi-fw pi-flag",to:"/cms/master/operasi-satgas",defaultRoles:t}]},{label:"Integrasi",items:[{key:"dors",label:"DORS",icon:"pi pi-fw pi-sync",to:"/cms/integrasi/dors",defaultRoles:t,children:[{key:"dors-monitor",label:"Monitor & Sync",icon:"pi pi-fw pi-sync",to:"/cms/integrasi/dors",defaultRoles:t},{key:"dors-data",label:"Data LP DORS",icon:"pi pi-fw pi-database",to:"/cms/integrasi/dors-data",defaultRoles:t},{key:"dors-unmapped",label:"LP Belum Termapping",icon:"pi pi-fw pi-exclamation-triangle",to:"/cms/integrasi/dors-unmapped",defaultRoles:t},{key:"satker-legacy",label:"LP Tanpa Satker (Perbaiki Tree)",icon:"pi pi-fw pi-sitemap",to:"/cms/integrasi/satker-legacy",defaultRoles:t},{key:"master-data-gap",label:"Master Data Tidak Termapping",icon:"pi pi-fw pi-exclamation-circle",to:"/cms/integrasi/master-data-gap",defaultRoles:t}]},{key:"integrasi-portal-keluar",label:"Portal Integrasi Keluar",icon:"pi pi-fw pi-key",to:"/cms/integrasi/portal-keluar",defaultRoles:r}]},{label:"Audit",items:[{key:"audit-log",label:"Log Audit",icon:"pi pi-fw pi-history",to:"/cms/audit-log",defaultRoles:t},{key:"uji-beban",label:"Uji Beban (Server Prod)",icon:"pi pi-fw pi-bolt",to:"/cms/audit-log/uji-beban",defaultRoles:r}]},{label:"Master Data",items:[{key:"master-pengguna",label:"Pengguna",icon:"pi pi-fw pi-users",to:"/cms/master/user",defaultRoles:[...t,"operator"]},{key:"master-satker",label:"Satker",icon:"pi pi-fw pi-sitemap",to:"/cms/master/satker-tree",defaultRoles:t,children:[{key:"master-satker-tree",label:"Struktur Satker (Puskarda)",icon:"pi pi-fw pi-share-alt",to:"/cms/master/satker-tree",defaultRoles:t},{key:"master-satker-eksternal",label:"Satker Eksternal",icon:"pi pi-fw pi-building",to:"/cms/master/satker-eksternal",defaultRoles:t}]},{key:"master-referensi",label:"Master Referensi",icon:"pi pi-fw pi-database",to:"/cms/master-ref",defaultRoles:t}]},{label:"Panduan Pengguna",items:[{key:"panduan-lihat",label:"Panduan Pengguna",icon:"pi pi-fw pi-book",to:"/cms/panduan",defaultRoles:a},{key:"panduan-kelola",label:"Kelola Panduan",icon:"pi pi-fw pi-cog",to:"/cms/panduan/kelola",defaultRoles:r}]},{label:"Kerja Sama",items:[{key:"kerma-lihat",label:"Kerma",icon:"pi pi-fw pi-briefcase",to:"/cms/kerma/lihat",defaultRoles:a},{key:"kerma-kelola",label:"Kelola Kerma",icon:"pi pi-fw pi-cog",to:"/cms/kerma",defaultRoles:t}]},{label:"Pengaturan Sistem",items:[{key:"email-smtp",label:"Email (SMTP)",icon:"pi pi-fw pi-envelope",to:"/cms/pengaturan/email",defaultRoles:t},{key:"login-otp",label:"OTP Login",icon:"pi pi-fw pi-shield",to:"/cms/pengaturan/login-otp",defaultRoles:t},{key:"maintenance",label:"Maintenance Sistem",icon:"pi pi-fw pi-wrench",to:"/cms/pengaturan/maintenance",defaultRoles:r},{key:"pusat-bantuan",label:"Pusat Bantuan",icon:"pi pi-fw pi-phone",to:"/cms/pengaturan/pusat-bantuan",defaultRoles:t},{key:"sistem-alur-dokumen",label:"Alur Dokumen LP",icon:"pi pi-fw pi-sitemap",to:"/cms/master/alur-dokumen",defaultRoles:t},{key:"sistem-organisasi-role",label:"Organisasi Role",icon:"pi pi-fw pi-id-card",to:"/cms/master/organisasi-role",defaultRoles:r},{key:"sistem-menu",label:"Menu / Form",icon:"pi pi-fw pi-th-large",to:"/cms/master/menu",defaultRoles:r}]}];e.s(["MENU_CATALOG",0,s,"isMenuAllowed",0,function(e,a,t,r){if(r)return!0;let s=t.get(`${a}|${e.key}`);return void 0!==s?s:e.defaultRoles.includes(a)}])},93989,e=>{"use strict";var a=e.i(43476),t=e.i(71645),r=e.i(18566),s=e.i(22016),n=e.i(45868);function l({sections:e,open:t,onNavigate:o}){let c=(0,r.usePathname)(),u=e=>c===e||c.startsWith(e+"/"),d=(()=>{let a=null;for(let t of e)for(let e of t.items)for(let t of(u(e.to)&&(!a||e.to.length>a.length)&&(a=e.to),e.children||[]))u(t.to)&&(!a||t.to.length>a.length)&&(a=t.to);return a})(),p=e=>(e.children||[]).some(e=>e.to===d);return(0,a.jsxs)("aside",{className:`cms-sidebar${t?" cms-sidebar-open":""}`,children:[(0,a.jsxs)("div",{className:"cms-brand",children:[(0,a.jsx)("img",{src:"/bdb-mark.svg",alt:"BDB",className:"cms-brand-logo-img"}),(0,a.jsx)("div",{children:(0,a.jsx)("div",{className:"cms-brand-name",children:"BIG DATA BINOPS"})})]}),(0,a.jsx)("nav",{className:"cms-menu",children:e.map(e=>(0,a.jsxs)("div",{className:"cms-menu-section",children:[(0,a.jsx)("div",{className:"cms-menu-title",children:e.label}),e.items.map(e=>e.children&&e.children.length?(0,a.jsx)(i,{id:"fld-0-gigr76s0g8t-1",name:"field_0_gigr76s0g8t_1",item:e,childActive:p,activeChildTo:d,onNavigate:o},e.label):(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item${e.to===d?" active":""}`,onClick:o,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))]},e.label))}),(0,a.jsxs)("div",{className:"cms-sidebar-version",children:["BDB v",n.APP_VERSION]})]})}function i({item:e,childActive:r,activeChildTo:n,onNavigate:l}){let o=r(e),[c,u]=(0,t.useState)(o),d=c||o;return(0,a.jsxs)("div",{className:"cms-menu-group",children:[(0,a.jsxs)("button",{type:"button",className:`cms-menu-item cms-menu-parent${o?" active-parent":""}`,onClick:()=>u(e=>!e),"aria-expanded":d,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label}),(0,a.jsx)("i",{className:`pi pi-angle-${d?"down":"right"} cms-menu-caret`})]}),d&&(0,a.jsx)("div",{className:"cms-submenu",children:(e.children||[]).map(e=>(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item cms-submenu-item${e.to===n?" active":""}`,onClick:l,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))})]})}var o=e.i(56420);let c=(0,o.default)("menu",[["path",{d:"M4 5h16",key:"1tepv9"}],["path",{d:"M4 12h16",key:"1lakjw"}],["path",{d:"M4 19h16",key:"1djgab"}]]),u=(0,o.default)("sun",[["circle",{cx:"12",cy:"12",r:"4",key:"4exip2"}],["path",{d:"M12 2v2",key:"tus03m"}],["path",{d:"M12 20v2",key:"1lh1kg"}],["path",{d:"m4.93 4.93 1.41 1.41",key:"149t6j"}],["path",{d:"m17.66 17.66 1.41 1.41",key:"ptbguv"}],["path",{d:"M2 12h2",key:"1t8f8n"}],["path",{d:"M20 12h2",key:"1q8mjw"}],["path",{d:"m6.34 17.66-1.41 1.41",key:"1m8zz5"}],["path",{d:"m19.07 4.93-1.41 1.41",key:"1shlcs"}]]),d=(0,o.default)("moon",[["path",{d:"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",key:"kfwtm"}]]),p=(0,o.default)("wifi",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M2 8.82a15 15 0 0 1 20 0",key:"dnpr2z"}],["path",{d:"M5 12.859a10 10 0 0 1 14 0",key:"1x1e6c"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),m=(0,o.default)("wifi-off",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}],["path",{d:"M5 12.859a10 10 0 0 1 5.17-2.69",key:"1dl1wf"}],["path",{d:"M19 12.859a10 10 0 0 0-2.007-1.523",key:"4k23kn"}],["path",{d:"M2 8.82a15 15 0 0 1 4.177-2.643",key:"1grhjp"}],["path",{d:"M22 8.82a15 15 0 0 0-11.288-3.764",key:"z3jwby"}],["path",{d:"m2 2 20 20",key:"1ooewy"}]]),f=(0,o.default)("wifi-low",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),h=(0,o.default)("log-out",[["path",{d:"m16 17 5-5-5-5",key:"1bji2h"}],["path",{d:"M21 12H9",key:"dn1m92"}],["path",{d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",key:"1uf3rs"}]]),g=(0,o.default)("panel-left",[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2",key:"afitv7"}],["path",{d:"M9 3v18",key:"fh3hqa"}]]),k=(0,o.default)("arrow-down",[["path",{d:"M12 5v14",key:"s699le"}],["path",{d:"m19 12-7 7-7-7",key:"1idqje"}]]),b=(0,o.default)("arrow-up",[["path",{d:"m5 12 7-7 7 7",key:"hav0vg"}],["path",{d:"M12 19V5",key:"x0mq9r"}]]);var y=e.i(71028);let j=(0,o.default)("bell",[["path",{d:"M10.268 21a2 2 0 0 0 3.464 0",key:"vwvbt9"}],["path",{d:"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326",key:"11g9vi"}]]);var v=e.i(65489),S=e.i(31458);let w=(0,o.default)("shield",[["path",{d:"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",key:"oel41y"}]]);var x=e.i(41120),R=e.i(38036),M=e.i(54858),_=e.i(9573);let N={jukrah:(0,a.jsx)(j,{size:15}),satgas:(0,a.jsx)(w,{id:"fld-0-gigr76s0g8t-2",name:"field_0_gigr76s0g8t_2",size:15}),operasi:(0,a.jsx)(j,{size:15})},P={excellent:"Sangat Baik",good:"Baik",weak:"Lemah",poor:"Sangat Lemah",offline:"Offline"};async function C(){if(!navigator.onLine)return null;try{let e=new AbortController,a=setTimeout(()=>e.abort(),4e3),t=performance.now();return await fetch(`${M.BACKEND_URL}/api/network/ping?_=${Date.now()}`,{signal:e.signal,cache:"no-store"}),clearTimeout(a),Math.round(performance.now()-t)}catch{return null}}async function A(e){try{let a=new AbortController,t=setTimeout(()=>a.abort(),8e3),r=performance.now(),s=0;if("down"===e){let e=await fetch(`${M.BACKEND_URL}/api/network/probe?_=${Date.now()}`,{signal:a.signal,cache:"no-store"});s=(await e.arrayBuffer()).byteLength}else await fetch(`${M.BACKEND_URL}/api/network/probe`,{method:"POST",signal:a.signal,cache:"no-store",headers:{"Content-Type":"application/octet-stream"},body:new Uint8Array(2e5)}),s=2e5;clearTimeout(t);let n=(performance.now()-r)/1e3;if(n<=0||!s)return null;return Math.round(8*s/n/1e6*10)/10}catch{return null}}
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,56420,e=>{"use strict";if(typeof window!=="undefined"&&!window.__bdbErrGuard){window.__bdbErrGuard=!0,window.addEventListener("error",function(e){if(e&&e.message&&(e.message.includes("reading 'startTime'")||e.message.includes("Minified React error #418"))){e.preventDefault(),e.stopImmediatePropagation()}},!0)}var a=e.i(71645);let t=(...e)=>e.filter((e,a,t)=>!!e&&""!==e.trim()&&t.indexOf(e)===a).join(" ").trim(),r=e=>{let a=e.replace(/^([A-Z])|[\s-_]+(\w)/g,(e,a,t)=>t?t.toUpperCase():a.toLowerCase());return a.charAt(0).toUpperCase()+a.slice(1)};var s={xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"};let n=(0,a.createContext)({}),l=(0,a.forwardRef)(({color:e,size:r,strokeWidth:l,absoluteStrokeWidth:i,className:o="",children:c,iconNode:u,...d},p)=>{let{size:m=24,strokeWidth:f=2,absoluteStrokeWidth:h=!1,color:g="currentColor",className:k=""}=(0,a.useContext)(n)??{},b=i??h?24*Number(l??f)/Number(r??m):l??f;return(0,a.createElement)("svg",{ref:p,...s,width:r??m??s.width,height:r??m??s.height,stroke:e??g,strokeWidth:b,className:t("lucide",k,o),...!c&&!(e=>{for(let a in e)if(a.startsWith("aria-")||"role"===a||"title"===a)return!0;return!1})(d)&&{"aria-hidden":"true"},...d},[...u.map(([e,t])=>(0,a.createElement)(e,t)),...Array.isArray(c)?c:[c]])});e.s(["default",0,(e,s)=>{let n=(0,a.forwardRef)(({className:n,...i},o)=>(0,a.createElement)(l,{ref:o,iconNode:s,className:t(`lucide-${r(e).replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase()}`,`lucide-${e}`,n),...i}));return n.displayName=r(e),n}],56420)},18566,(e,a,t)=>{a.exports=e.r(76562)},38036,e=>{"use strict";var a=e.i(54858);function t(){try{return JSON.parse(localStorage.getItem("auth")||"null")}catch{return null}}function r(){try{return JSON.parse(localStorage.getItem("user")||"null")}catch{return null}}async function s(e){let t=await a.api.get("/Authentication/user",{headers:{Authorization:`Bearer ${e.access_token||""}`}}),r={role:{permission:[]},...t.data?.data};try{let _ou=JSON.parse(localStorage.getItem("user")||"null");if(_ou&&(_ou.id||_ou.user_id)&&r&&(r.id||r.user_id)&&String(_ou.id||_ou.user_id)!==String(r.id||r.user_id)){try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{if(window.indexedDB)indexedDB.deleteDatabase("bdb_offline_db")}catch(_e){}}}catch(_e){}return localStorage.setItem("user",JSON.stringify(r)),localStorage.setItem("auth",JSON.stringify(e)),e.expires_at&&localStorage.setItem("auth.expires_at",e.expires_at),e.access_token&&localStorage.setItem("auth.access_token",e.access_token),e.refresh_token&&localStorage.setItem("auth.refresh",e.refresh_token),r}let n="impersonator_stash";async function l(e){let a=t(),l=r();return a?.access_token&&l&&localStorage.setItem(n,JSON.stringify({auth:a,user:l})),s(e)}function i(){try{return JSON.parse(localStorage.getItem(n)||"null")}catch{return null}}e.s(["deriveRoles",0,function(e){let a=String(e?.role?.role_name||e?.role_name||"").toLowerCase(),t=String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase(),r="superadmin"===t||a.includes("super"),s="admin_binops"===t||!r&&("admin"===a||a.includes("binops")),v=!r&&!s&&(t==="viewer"||a.includes("viewer"));return{isSuperadmin:r,isAdminBinops:s,isViewer:v,isReadOnly:v,isOperator:!r&&!s&&!v,canManageUsers:r||s,canUseBroadcaster:r||s,label:t||a||(v?"viewer":"operator")}},"fetchAndStoreUser",0,s,"getAuth",0,t,"getImpersonatorStash",0,i,"getUser",0,r,"logout",0,function(){try{let _tok=localStorage.getItem("auth.access_token")||(JSON.parse(localStorage.getItem("auth")||"null")?.access_token)||"";if(_tok&&typeof fetch==="function"){fetch("/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(r=>r.forEach(reg=>reg.unregister()))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}},"startImpersonation",0,l,"stopImpersonation",0,function(){let e=i();return!!e?.auth?.access_token&&(localStorage.setItem("user",JSON.stringify(e.user)),localStorage.setItem("auth",JSON.stringify(e.auth)),e.auth.expires_at&&localStorage.setItem("auth.expires_at",String(e.auth.expires_at)),e.auth.access_token&&localStorage.setItem("auth.access_token",String(e.auth.access_token)),e.auth.refresh_token&&localStorage.setItem("auth.refresh",String(e.auth.refresh_token)),localStorage.removeItem(n),!0)}])},41120,e=>{"use strict";let a=(0,e.i(56420).default)("refresh-cw",[["path",{d:"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",key:"v9h5vc"}],["path",{d:"M21 3v5h-5",key:"1q7to0"}],["path",{d:"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16",key:"3uifl3"}],["path",{d:"M8 16H3v5",key:"1cv678"}]]);e.s(["RefreshCw",0,a],41120)},45868,e=>{"use strict";e.s(["APP_VERSION",0,"1.0.0"])},65489,e=>{"use strict";let a=(0,e.i(56420).default)("megaphone",[["path",{d:"M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",key:"q8bfy3"}],["path",{d:"M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14",key:"1853fq"}],["path",{d:"M8 6v8",key:"15ugcq"}]]);e.s(["Megaphone",0,a],65489)},71028,e=>{"use strict";let a=(0,e.i(56420).default)("gauge",[["path",{d:"m12 14 4-4",key:"9kzdfg"}],["path",{d:"M3.34 19a10 10 0 1 1 17.32 0",key:"19p75a"}]]);e.s(["Gauge",0,a],71028)},31458,e=>{"use strict";let a=(0,e.i(56420).default)("flag",[["path",{d:"M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528",key:"1jaruq"}]]);e.s(["Flag",0,a],31458)},9573,e=>{"use strict";var a=e.i(71645);e.s(["fmtUpdated",0,function(e){return e?e.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—"},"useAutoRefresh",0,function(e,t=3e5){let r=(0,a.useRef)(e);r.current=e;let s=(0,a.useRef)(!1),[n,l]=(0,a.useState)(!1),[i,o]=(0,a.useState)(null),c=(0,a.useCallback)(async()=>{if(!s.current){s.current=!0,l(!0);try{await r.current(),o(new Date)}finally{s.current=!1,l(!1)}}},[]);return(0,a.useEffect)(()=>{let e=setInterval(()=>{("u"<typeof document||"visible"===document.visibilityState)&&c()},t);return()=>clearInterval(e)},[c,t]),{refreshing:n,updatedAt:i,refresh:c}}])},95057,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={formatUrl:function(){return i},formatWithValidation:function(){return c},urlObjectKeys:function(){return o}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809)._(e.r(98183)),l=/https?|ftp|gopher|file/;function i(e){let{auth:a,hostname:t}=e,r=e.protocol||"",s=e.pathname||"",i=e.hash||"",o=e.query||"",c=!1;a=a?encodeURIComponent(a).replace(/%3A/i,":")+"@":"",e.host?c=a+e.host:t&&(c=a+(~t.indexOf(":")?`[${t}]`:t),e.port&&(c+=":"+e.port)),o&&"object"==typeof o&&(o=String(n.urlQueryToSearchParams(o)));let u=e.search||o&&`?${o}`||"";return r&&!r.endsWith(":")&&(r+=":"),e.slashes||(!r||l.test(r))&&!1!==c?(c="//"+(c||""),s&&"/"!==s[0]&&(s="/"+s)):c||(c=""),i&&"#"!==i[0]&&(i="#"+i),u&&"?"!==u[0]&&(u="?"+u),s=s.replace(/[?#]/g,encodeURIComponent),u=u.replace("#","%23"),`${r}${c}${s}${u}${i}`}let o=["auth","hash","host","hostname","href","path","pathname","port","protocol","query","search","slashes"];function c(e){return i(e)}},18581,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"useMergedRef",{enumerable:!0,get:function(){return s}});let r=e.r(71645);function s(e,a){let t=(0,r.useRef)(null),s=(0,r.useRef)(null);return(0,r.useCallback)(r=>{if(null===r){let e=t.current;e&&(t.current=null,e());let a=s.current;a&&(s.current=null,a())}else e&&(t.current=n(e,r)),a&&(s.current=n(a,r))},[e,a])}function n(e,a){if("function"!=typeof e)return e.current=a,()=>{e.current=null};{let t=e(a);return"function"==typeof t?t:()=>e(null)}}("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},73668,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"isLocalURL",{enumerable:!0,get:function(){return n}});let r=e.r(18967),s=e.r(52817);function n(e){if(!(0,r.isAbsoluteUrl)(e))return!0;try{let a=(0,r.getLocationOrigin)(),t=new URL(e,a);return t.origin===a&&(0,s.hasBasePath)(t.pathname)}catch(e){return!1}}},84508,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"errorOnce",{enumerable:!0,get:function(){return r}});let r=e=>{}},22016,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={default:function(){return k},useLinkStatus:function(){return y}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809),l=e.r(43476),i=n._(e.r(71645)),o=e.r(95057),c=e.r(8372),u=e.r(18581),d=e.r(18967),p=e.r(5550);e.r(33525);let m=e.r(88540),f=e.r(91949),h=e.r(73668),g=e.r(9396);function k(a){var t,r;let s,n,k,[y,j]=(0,i.useOptimistic)(f.IDLE_LINK_STATUS),v=(0,i.useRef)(null),{href:S,as:w,children:x,prefetch:R=null,passHref:M,replace:_,shallow:N,scroll:P,onClick:C,onMouseEnter:A,onTouchStart:L,legacyBehavior:O=!1,onNavigate:T,transitionTypes:I,ref:E,unstable_dynamicOnHover:z,...K}=a;s=x,O&&("string"==typeof s||"number"==typeof s)&&(s=(0,l.jsx)("a",{children:s}));let $=i.default.useContext(c.AppRouterContext),D=!1!==R,B=!1!==R?null===(r=R)||"auto"===r?g.FetchStrategy.PPR:g.FetchStrategy.Full:g.FetchStrategy.PPR,U="string"==typeof(t=w||S)?t:(0,o.formatUrl)(t);if(O){if(s?.$$typeof===Symbol.for("react.lazy"))throw Object.defineProperty(Error("`<Link legacyBehavior>` received a direct child that is either a Server Component, or JSX that was loaded with React.lazy(). This is not supported. Either remove legacyBehavior, or make the direct child a Client Component that renders the Link's `<a>` tag."),"__NEXT_ERROR_CODE",{value:"E863",enumerable:!1,configurable:!0});n=i.default.Children.only(s)}let q=O?n&&"object"==typeof n&&n.ref:E,J=i.default.useCallback(e=>(null!==$&&(v.current=(0,f.mountLinkInstance)(e,U,$,B,D,j)),()=>{v.current&&((0,f.unmountLinkForCurrentNavigation)(v.current),v.current=null),(0,f.unmountPrefetchableInstance)(e)}),[D,U,$,B,j]),W={ref:(0,u.useMergedRef)(J,q),onClick(a){O||"function"!=typeof C||C(a),O&&n.props&&"function"==typeof n.props.onClick&&n.props.onClick(a),!$||a.defaultPrevented||function(a,t,r,s,n,l,o){if("u">typeof window){let c,{nodeName:u}=a.currentTarget;if("A"===u.toUpperCase()&&((c=a.currentTarget.getAttribute("target"))&&"_self"!==c||a.metaKey||a.ctrlKey||a.shiftKey||a.altKey||a.nativeEvent&&2===a.nativeEvent.which)||a.currentTarget.hasAttribute("download"))return;if(!(0,h.isLocalURL)(t)){s&&(a.preventDefault(),location.replace(t));return}if(a.preventDefault(),l){let e=!1;if(l({preventDefault:()=>{e=!0}}),e)return}let{dispatchNavigateAction:d}=e.r(99781);i.default.startTransition(()=>{d(t,s?"replace":"push",!1===n?m.ScrollBehavior.NoScroll:m.ScrollBehavior.Default,r.current,o)})}}(a,U,v,_,P,T,I)},onMouseEnter(e){O||"function"!=typeof A||A(e),O&&n.props&&"function"==typeof n.props.onMouseEnter&&n.props.onMouseEnter(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)},onTouchStart:function(e){O||"function"!=typeof L||L(e),O&&n.props&&"function"==typeof n.props.onTouchStart&&n.props.onTouchStart(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)}};return(0,d.isAbsoluteUrl)(U)?W.href=U:O&&!M&&("a"!==n.type||"href"in n.props)||(W.href=(0,p.addBasePath)(U)),k=O?i.default.cloneElement(n,W):(0,l.jsx)("a",{...K,...W,children:s}),(0,l.jsx)(b.Provider,{value:y,children:k})}e.r(84508);let b=(0,i.createContext)(f.IDLE_LINK_STATUS),y=()=>(0,i.useContext)(b);("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},70187,e=>{"use strict";let a={key:"code",label:"Kode"},t={key:"name",label:"Nama"},r={key:"singkatan",label:"Singkatan"},s={key:"status",label:"Status"},n=Object.fromEntries([{slug:"agama",title:"Agama",fields:[t]},{slug:"kewarganegaraan",title:"Kewarganegaraan",fields:[a,t]},{slug:"pekerjaan",title:"Pekerjaan",fields:[a,t]},{slug:"pendidikan",title:"Pendidikan",fields:[t]},{slug:"suku",title:"Suku",fields:[t]},{slug:"golongan-kejahatan",title:"Golongan Kejahatan",fields:[t]},{slug:"kategori-lokasi",title:"Tempat Peristiwa/Kejadian",fields:[t]},{slug:"modus-operandi",title:"Modus Operandi",fields:[t]},{slug:"motif-kejahatan",title:"Motif Kejahatan",fields:[t]},{slug:"iccs-kategori",title:"Kategori ICCS",fields:[{key:"kode",label:"Kode"},{key:"nama",label:"Nama"},{key:"keterangan",label:"Keterangan"}]},{slug:"undang-undang",title:"Undang-Undang",fields:[{key:"deskripsi",label:"Deskripsi"}]},{slug:"provinsi",title:"Provinsi",fields:[a,t,r,s]},{slug:"kabupaten",title:"Kabupaten/Kota",fields:[a,t,r,s]},{slug:"kecamatan",title:"Kecamatan",fields:[a,t,r,s]},{slug:"desa",title:"Desa/Kelurahan",fields:[a,t,r,s]}].map(e=>[e.slug,{...e,endpoint:`/master/${e.slug}`}])),l=["jenis-kejahatan","golongan-kejahatan","kategori-lokasi","modus-operandi","motif-kejahatan","iccs-kategori","undang-undang"],i=Object.values(n).filter(e=>!l.includes(e.slug));e.s(["MASTERS",0,n,"MASTER_LIST",0,i])},73670,e=>{"use strict";let a=(0,e.i(56420).default)("user-cog",[["path",{d:"M10 15H6a4 4 0 0 0-4 4v2",key:"1nfge6"}],["path",{d:"m14.305 16.53.923-.382",key:"1itpsq"}],["path",{d:"m15.228 13.852-.923-.383",key:"eplpkm"}],["path",{d:"m16.852 12.228-.383-.923",key:"13v3q0"}],["path",{d:"m16.852 17.772-.383.924",key:"1i8mnm"}],["path",{d:"m19.148 12.228.383-.923",key:"1q8j1v"}],["path",{d:"m19.53 18.696-.382-.924",key:"vk1qj3"}],["path",{d:"m20.772 13.852.924-.383",key:"n880s0"}],["path",{d:"m20.772 16.148.924.383",key:"1g6xey"}],["circle",{cx:"18",cy:"15",r:"3",key:"gjjjvw"}],["circle",{cx:"9",cy:"7",r:"4",key:"nufk8"}]]);e.s(["UserCog",0,a],73670)},81539,e=>{"use strict";let a=["superadmin","admin_binops","operator","viewer","sharese"],t=["superadmin","admin_binops"],r=["superadmin"],s=[{label:"Dashboard",items:[{key:"ringkasan",label:"Ringkasan",icon:"pi pi-fw pi-home",to:"/cms/dashboard/main",defaultRoles:a}]},{label:"Sharese",items:[{key:"profil",label:"Profile",icon:"pi pi-fw pi-user",to:"/cms/profile",defaultRoles:a},{key:"jukrahcaster",label:"Feed",icon:"pi pi-fw pi-globe",to:"/cms/broadcaster",defaultRoles:a},{key:"sharese-obrolan",label:"Obrolan",icon:"pi pi-fw pi-comments",to:"/cms/broadcaster?view=obrolan",defaultRoles:a},{key:"sharese-koneksi",label:"Koneksi",icon:"pi pi-fw pi-users",to:"/cms/broadcaster?view=koneksi",defaultRoles:a},{key:"sharese-notifikasi",label:"Notifikasi",icon:"pi pi-fw pi-bell",to:"/cms/broadcaster?view=notifikasi",defaultRoles:a},{key:"sharese-insight",label:"Insight",icon:"pi pi-fw pi-chart-line",to:"/cms/broadcaster?view=insight",defaultRoles:a},{key:"kelola-jukrahcaster",label:"Moderasi",icon:"pi pi-fw pi-megaphone",to:"/cms/pengumuman",defaultRoles:t},{key:"sharese-keamanan",label:"Keamanan",icon:"pi pi-fw pi-shield",to:"/cms/profile?view=keamanan",defaultRoles:a}]},{label:"Laporan",items:[{key:"laporan-polisi",label:"Laporan Polisi",icon:"pi pi-fw pi-file-check",to:"/cms/laporan-polisi",defaultRoles:a,children:[{key:"laporan-polisi-list",label:"Daftar LP",icon:"pi pi-fw pi-list",to:"/cms/laporan-polisi",defaultRoles:a},{key:"arsip-lp-pelimpahan",label:"Arsip Limpah",icon:"pi pi-fw pi-history",to:"/cms/laporan-polisi/arsip-pelimpahan",defaultRoles:a}]},{key:"kinerja-perkara",label:"Kinerja Perkara",icon:"pi pi-fw pi-gauge",to:"/cms/report/kinerja-perkara",defaultRoles:a},{key:"anev-ctcc",label:"Lamp. Anev Periodik",icon:"pi pi-fw pi-file-edit",to:"/cms/report/anev-ctcc",defaultRoles:a}]},{label:"Register",items:[{key:"rekap-pihak",label:"Pihak Terlibat",icon:"pi pi-fw pi-users",to:"/cms/laporan/rekap-pihak-terlibat",defaultRoles:a},{key:"pihak-sering",label:"Pihak Sering Terlibat",icon:"pi pi-fw pi-sitemap",to:"/cms/laporan/pihak-sering-terlibat",defaultRoles:a},{key:"rekap-bb",label:"Barang Bukti",icon:"pi pi-fw pi-box",to:"/cms/laporan/rekap-barang-bukti",defaultRoles:a}]},{label:"Susopsgas",items:[{key:"kasus-menonjol-lihat",label:"Rekap",icon:"pi pi-fw pi-flag",to:"/cms/laporan/kasus-menonjol/lihat",defaultRoles:a},{key:"kasus-menonjol",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/laporan/kasus-menonjol",defaultRoles:a}]},{label:"Portal Integrasi",items:[{key:"dors",label:"Masuk",icon:"pi pi-fw pi-sign-in",to:"/cms/integrasi/dors",defaultRoles:t,children:[{key:"dors-monitor",label:"Tarik Data",icon:"pi pi-fw pi-sync",to:"/cms/integrasi/dors",defaultRoles:t},{key:"dors-data",label:"Staging",icon:"pi pi-fw pi-database",to:"/cms/integrasi/dors-data",defaultRoles:t},{key:"dors-unmapped",label:"Import ke Database",icon:"pi pi-fw pi-exclamation-triangle",to:"/cms/integrasi/dors-unmapped",defaultRoles:t},{key:"satker-legacy",label:"Cek Duplikat",icon:"pi pi-fw pi-sitemap",to:"/cms/integrasi/satker-legacy",defaultRoles:t},{key:"master-data-gap",label:"Master Tidak Termapping",icon:"pi pi-fw pi-exclamation-circle",to:"/cms/integrasi/master-data-gap",defaultRoles:t}]},{key:"integrasi-portal-keluar",label:"Keluar",icon:"pi pi-fw pi-key",to:"/cms/integrasi/portal-keluar",defaultRoles:r}]},{label:"Audit",items:[{key:"audit-log",label:"Log Audit",icon:"pi pi-fw pi-history",to:"/cms/audit-log",defaultRoles:t},{key:"uji-beban",label:"Uji Beban (Server Prod)",icon:"pi pi-fw pi-bolt",to:"/cms/audit-log/uji-beban",defaultRoles:r}]},{label:"Master Data",items:[{key:"master-pengguna",label:"Pengguna",icon:"pi pi-fw pi-users",to:"/cms/master/user",defaultRoles:[...t,"operator"]},{key:"master-satker",label:"Satker",icon:"pi pi-fw pi-sitemap",to:"/cms/master/satker-tree",defaultRoles:t,children:[{key:"master-satker-tree",label:"Struktur Satker (Puskarda)",icon:"pi pi-fw pi-share-alt",to:"/cms/master/satker-tree",defaultRoles:t},{key:"master-satker-eksternal",label:"Satker Eksternal",icon:"pi pi-fw pi-building",to:"/cms/master/satker-eksternal",defaultRoles:t}]},{key:"master-referensi",label:"Master Referensi",icon:"pi pi-fw pi-database",to:"/cms/master-ref",defaultRoles:t}]},{label:"Kerja Sama",items:[{key:"kerma-lihat",label:"Rekap",icon:"pi pi-fw pi-briefcase",to:"/cms/kerma/lihat",defaultRoles:a},{key:"kerma-kelola",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/kerma",defaultRoles:t}]},{label:"Panduan Pengguna",items:[{key:"panduan-lihat",label:"Rekap",icon:"pi pi-fw pi-book",to:"/cms/panduan",defaultRoles:a},{key:"panduan-kelola",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/panduan?mode=kelola",defaultRoles:r}]},{label:"Sistem",items:[{key:"pusat-bantuan",label:"Pusat Bantuan",icon:"pi pi-fw pi-question-circle",to:"/cms/broadcaster?view=pusat-bantuan",defaultRoles:a},{key:"kelola-pengaturan",label:"Kelola Pengaturan",icon:"pi pi-fw pi-sliders-h",to:"/cms/pengaturan/email",defaultRoles:t}]}];e.s(["MENU_CATALOG",0,s,"isMenuAllowed",0,function(e,a,t,r){if(r)return!0;if(e.key==="pusat-bantuan"||e.key&&e.key.startsWith("sharese-"))return e.defaultRoles.includes(a);if(e.key==="kelola-pengaturan"){let k=t.get(`${a}|kelola-pengaturan`);if(void 0!==k)return k;let em=t.get(`${a}|email-smtp`);return void 0!==em?em:e.defaultRoles.includes(a)}let s=t.get(`${a}|${e.key}`);return void 0!==s?s:e.defaultRoles.includes(a)}])},93989,e=>{"use strict";var a=e.i(43476),t=e.i(71645),r=e.i(18566),s=e.i(22016),n=e.i(45868);function useCasLocationSearch(){let[q,setQ]=(0,t.useState)(()=>"undefined"!=typeof window?window.location.search||"":"");return(0,t.useEffect)(()=>{if("undefined"==typeof window)return;if(!window.__casHistPatched){window.__casHistPatched=!0;let origPush=history.pushState,origReplace=history.replaceState;history.pushState=function(){let res=origPush.apply(this,arguments);try{window.dispatchEvent(new Event("cas-url-change"))}catch{}return res};history.replaceState=function(){let res=origReplace.apply(this,arguments);try{window.dispatchEvent(new Event("cas-url-change"))}catch{}return res}}let sync=()=>setQ(window.location.search||""),delayed=()=>setTimeout(sync,15);sync();window.addEventListener("cas-url-change",sync);window.addEventListener("popstate",sync);document.addEventListener("click",delayed,!0);return()=>{window.removeEventListener("cas-url-change",sync);window.removeEventListener("popstate",sync);document.removeEventListener("click",delayed,!0)}},[]),q}function casNav(router,href){if("undefined"!=typeof window&&router){router.push(href);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)}}function l({sections:e,open:t,onNavigate:o}){let c=(0,r.usePathname)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),sysSettingPaths=["/cms/pengaturan/email","/cms/pengaturan/login-otp","/cms/pengaturan/maintenance","/cms/pengaturan/pusat-bantuan","/cms/master/alur-dokumen","/cms/master/organisasi-role","/cms/master/menu"],u=itemTo=>{if(!itemTo)return!1;if(itemTo.includes("?")){let[p,qs]=itemTo.split("?");if(c!==p)return!1;let isp=new URLSearchParams(qs);for(let[k,v]of isp.entries())if(sp.get(k)!==v)return!1;return!0}if(itemTo==="/cms/pengaturan/email"&&sysSettingPaths.some(p=>c===p||c.startsWith(p+"/")))return!0;if(itemTo==="/cms/laporan/kasus-menonjol/lihat"&&(c==="/cms/laporan/kasus-menonjol/lihat"||c==="/cms/laporan/kasus-atensi/lihat"||c==="/cms/laporan/rekap-operasi-satgas"))return!0;if(itemTo==="/cms/laporan/kasus-menonjol"){return c==="/cms/laporan/kasus-menonjol"||c==="/cms/laporan/kasus-atensi"||c==="/cms/master/operasi-satgas"}if(itemTo==="/cms/laporan-polisi"&&c==="/cms/laporan-polisi/arsip-pelimpahan")return!1;if(itemTo==="/cms/panduan"&&c==="/cms/panduan/kelola")return!1;if(itemTo==="/cms/panduan?mode=kelola"&&c==="/cms/panduan/kelola")return!0;if((itemTo==="/cms/broadcaster"||itemTo==="/cms/profile")&&sp.get("view"))return!1;if(itemTo==="/cms/panduan"&&sp.get("mode")==="kelola")return!1;return c===itemTo||c.startsWith(itemTo+"/")},d=(()=>{let a=null;for(let t of e)for(let e of t.items){if(u(e.to)&&(!a||e.to.includes("?")&&!a.includes("?")||e.to.length>a.length))a=e.to;for(let t of e.children||[])if(u(t.to)&&(!a||t.to.includes("?")&&!a.includes("?")||t.to.length>a.length))a=t.to}return a})(),p=e=>(e.children||[]).some(e=>e.to===d);return(0,a.jsxs)("aside",{className:`cms-sidebar${t?" cms-sidebar-open":""}`,children:[(0,a.jsxs)("div",{className:"cms-brand",children:[(0,a.jsx)("img",{src:"/bdb-mark.svg",alt:"BDB",className:"cms-brand-logo-img"}),(0,a.jsx)("div",{children:(0,a.jsx)("div",{className:"cms-brand-name",children:"BIG DATA BINOPS"})})]}),(0,a.jsx)("nav",{className:"cms-menu",children:e.map(e=>(0,a.jsxs)("div",{className:"cms-menu-section",children:[(0,a.jsx)("div",{className:"cms-menu-title",children:e.label}),e.items.map(e=>e.children&&e.children.length?(0,a.jsx)(i,{id:"fld-0-gigr76s0g8t-1",name:"field_0_gigr76s0g8t_1",item:e,childActive:p,activeChildTo:d,onNavigate:o},e.label):(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item${e.to===d?" active":""}`,onClick:()=>{o&&o();setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))]},e.label))}),(0,a.jsxs)("div",{className:"cms-sidebar-version",children:["BDB v",n.APP_VERSION]})]})}function i({item:e,childActive:r,activeChildTo:n,onNavigate:l}){let o=r(e),[c,u]=(0,t.useState)(o),d=c||o;return(0,a.jsxs)("div",{className:"cms-menu-group",children:[(0,a.jsxs)("button",{type:"button",className:`cms-menu-item cms-menu-parent${o?" active-parent":""}`,onClick:()=>u(e=>!e),"aria-expanded":d,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label}),(0,a.jsx)("i",{className:`pi pi-angle-${d?"down":"right"} cms-menu-caret`})]}),d&&(0,a.jsx)("div",{className:"cms-submenu",children:(e.children||[]).map(e=>(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item cms-submenu-item${e.to===n?" active":""}`,onClick:l,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))})]})}var o=e.i(56420);let c=(0,o.default)("menu",[["path",{d:"M4 5h16",key:"1tepv9"}],["path",{d:"M4 12h16",key:"1lakjw"}],["path",{d:"M4 19h16",key:"1djgab"}]]),u=(0,o.default)("sun",[["circle",{cx:"12",cy:"12",r:"4",key:"4exip2"}],["path",{d:"M12 2v2",key:"tus03m"}],["path",{d:"M12 20v2",key:"1lh1kg"}],["path",{d:"m4.93 4.93 1.41 1.41",key:"149t6j"}],["path",{d:"m17.66 17.66 1.41 1.41",key:"ptbguv"}],["path",{d:"M2 12h2",key:"1t8f8n"}],["path",{d:"M20 12h2",key:"1q8mjw"}],["path",{d:"m6.34 17.66-1.41 1.41",key:"1m8zz5"}],["path",{d:"m19.07 4.93-1.41 1.41",key:"1shlcs"}]]),d=(0,o.default)("moon",[["path",{d:"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",key:"kfwtm"}]]),p=(0,o.default)("wifi",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M2 8.82a15 15 0 0 1 20 0",key:"dnpr2z"}],["path",{d:"M5 12.859a10 10 0 0 1 14 0",key:"1x1e6c"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),m=(0,o.default)("wifi-off",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}],["path",{d:"M5 12.859a10 10 0 0 1 5.17-2.69",key:"1dl1wf"}],["path",{d:"M19 12.859a10 10 0 0 0-2.007-1.523",key:"4k23kn"}],["path",{d:"M2 8.82a15 15 0 0 1 4.177-2.643",key:"1grhjp"}],["path",{d:"M22 8.82a15 15 0 0 0-11.288-3.764",key:"z3jwby"}],["path",{d:"m2 2 20 20",key:"1ooewy"}]]),f=(0,o.default)("wifi-low",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),h=(0,o.default)("log-out",[["path",{d:"m16 17 5-5-5-5",key:"1bji2h"}],["path",{d:"M21 12H9",key:"dn1m92"}],["path",{d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",key:"1uf3rs"}]]),g=(0,o.default)("panel-left",[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2",key:"afitv7"}],["path",{d:"M9 3v18",key:"fh3hqa"}]]),k=(0,o.default)("arrow-down",[["path",{d:"M12 5v14",key:"s699le"}],["path",{d:"m19 12-7 7-7-7",key:"1idqje"}]]),b=(0,o.default)("arrow-up",[["path",{d:"m5 12 7-7 7 7",key:"hav0vg"}],["path",{d:"M12 19V5",key:"x0mq9r"}]]);var y=e.i(71028);let j=(0,o.default)("bell",[["path",{d:"M10.268 21a2 2 0 0 0 3.464 0",key:"vwvbt9"}],["path",{d:"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326",key:"11g9vi"}]]);var v=e.i(65489),S=e.i(31458);let w=(0,o.default)("shield",[["path",{d:"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",key:"oel41y"}]]);var x=e.i(41120),R=e.i(38036),M=e.i(54858),_=e.i(9573);let N={jukrah:(0,a.jsx)(j,{size:15}),satgas:(0,a.jsx)(w,{id:"fld-0-gigr76s0g8t-2",name:"field_0_gigr76s0g8t_2",size:15}),operasi:(0,a.jsx)(j,{size:15})},P={excellent:"Sangat Baik",good:"Baik",weak:"Lemah",poor:"Sangat Lemah",offline:"Offline"};async function C(){if(!navigator.onLine)return null;try{let e=new AbortController,a=setTimeout(()=>e.abort(),4e3),t=performance.now();return await fetch(`${M.BACKEND_URL}/api/network/ping?_=${Date.now()}`,{signal:e.signal,cache:"no-store"}),clearTimeout(a),Math.round(performance.now()-t)}catch{return null}}async function A(e){try{let a=new AbortController,t=setTimeout(()=>a.abort(),8e3),r=performance.now(),s=0;if("down"===e){let e=await fetch(`${M.BACKEND_URL}/api/network/probe?_=${Date.now()}`,{signal:a.signal,cache:"no-store"});s=(await e.arrayBuffer()).byteLength}else await fetch(`${M.BACKEND_URL}/api/network/probe`,{method:"POST",signal:a.signal,cache:"no-store",headers:{"Content-Type":"application/octet-stream"},body:new Uint8Array(2e5)}),s=2e5;clearTimeout(t);let n=(performance.now()-r)/1e3;if(n<=0||!s)return null;return Math.round(8*s/n/1e6*10)/10}catch{return null}}
 function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   /* dynamic handle */
@@ -26,6 +26,17 @@ function formatCallsign(rawCallsign, authorId, username) {
   for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
   var code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
   return '@user_' + (idStr || '0') + code;
+}
+
+function formatUserCallsign(u) {
+  const raw = String(u?.username || u?.callsign || '').trim().replace(/^@/, '');
+  if (raw && !['personil', 'null', 'undefined', '-'].includes(raw.toLowerCase())) return '@' + raw;
+  if (!u?.id && !u?.user_id) return '';
+  const seed = String(u.id || u.user_id);
+  let num = 0;
+  for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+  const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+  return '@user_' + seed + code;
 }
 
 function toTitleCase(str) {
@@ -96,7 +107,7 @@ async function switchNotifTab(t){
   }
 }(0,t.useEffect)(()=>{el()},[el]),(0,t.useEffect)(()=>{function uEv(ev){try{let u=ev?.detail||JSON.parse(localStorage.getItem("user")||"{}");let p=u?.photo_url||u?.foto||null;if(p)setLivePhoto(p);if(u&&u.id)setLiveUser(u)}catch{}}window.addEventListener("user-updated",uEv);window.addEventListener("storage",uEv);try{M.apiAuth.get("/user/me/profile").then(res=>{let d=res.data?.data;if(d&&!Array.isArray(d)&&(d.id||d.username)){setLiveUser(d);let p=d?.photo_url||d?.foto||null;if(p)setLivePhoto(p);try{let u=JSON.parse(localStorage.getItem("user")||"{}");if(p){u.photo_url=p;u.foto=p;}if(d.username){u.username=d.username;u.callsign=d.username;}else if(d.callsign)u.callsign=d.callsign;if(d.satker_nama){u.satker_nama=d.satker_nama;u.scope_satker_name=d.satker_nama;if(!u.satker||String(u.satker).toLowerCase().includes("superadmin"))u.satker=d.satker_nama;}if(d.role_bdb)u.role_bdb=d.role_bdb;localStorage.setItem("user",JSON.stringify(u))}catch(e){}}}).catch(()=>{})}catch(e){}return()=>{window.removeEventListener("user-updated",uEv);window.removeEventListener("storage",uEv)}},[]);let curUser=(liveUser&&liveUser.id)?liveUser:(e&&e.id?e:(function(){try{var lu=JSON.parse(localStorage.getItem("user")||"null");return (lu&&lu.id)?lu:null;}catch(e){return null;}})());
 let isSuper=Boolean(curUser&&(String(curUser?.id)==='1'||String(curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'||String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase().includes('super')||['1','320','15403','15404','16568','16576','16594'].includes(String(curUser?.id||curUser?.user_id))));
-let eo=(function(){if(!curUser)return"Pengguna";var uid=String(curUser.id||curUser.user_id||'');var u=curUser.username?String(curUser.username).trim().replace(/^@/,''):'';if(u&&!u.startsWith('user_')&&!['personil','null','undefined','-'].includes(u.toLowerCase()))return'@'+u;var c=curUser.callsign?String(curUser.callsign).trim().replace(/^@/,''):'';if(c&&!c.startsWith('user_')&&!['personil','null','undefined','-'].includes(c.toLowerCase()))return'@'+c;if(curUser.name&&String(curUser.name).trim())return curUser.name;/* dynamic handle */return formatCallsign(curUser.callsign,uid,curUser.username);})();
+let eo=(function(){if(!curUser)return"Pengguna";return formatUserCallsign(curUser)||curUser.name||"Pengguna";})();
 let _rawSat=[curUser?.satker_singkat,curUser?.satker_nama,curUser?.scope_satker_name,curUser?.satker,curUser?.satuan].find(x=>x&&!['bdb superadmin','superadmin','-','null','undefined'].includes(String(x).trim().toLowerCase()));let userSatkerDisp=isSuper?'Robinopsnal Bareskrim Polri':(curUser?toTitleCase(_rawSat||'Polri'):'-');
 let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'));let hasTopV2=Boolean(isOkoTop||curUser?.social_media?.avatar_v2||(curUser?.id&&typeof localStorage!=='undefined'&&localStorage.getItem('cas_avatar_v2_'+curUser.id)==='1'));let isPolwanTop=(function(u){if(!u||typeof u!=='object')return false;var expG=String(u.social_media?.jenis_kelamin||u.social_media?.gender||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(expG))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(expG))return false;var g=String(u.gender||u.jenis_kelamin||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(g))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(g))return false;var nm=String(u.name||u.username||'').trim();if(/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(nm))return false;return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid)\b/i.test(nm);})(curUser);let defTopAvatar=isPolwanTop?'/images/default-avatar-polwan.jpg':'/images/default-avatar-polki.png';let rawTopPhoto=livePhoto||curUser?.photo_url||curUser?.foto||'';let topAvatarSrc=(typeof rawTopPhoto==='string'&&rawTopPhoto.trim().length>5&&rawTopPhoto!=='null'&&rawTopPhoto!=='undefined'&&!rawTopPhoto.includes('default-avatar'))?rawTopPhoto.trim():defTopAvatar;let ec=(0,a.jsx)("img",{src:topAvatarSrc,alt:eo,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",borderRadius:"999px",objectFit:"cover"}}),eu=w?null==T?"offline":T<150?"excellent":T<400?"good":T<900?"weak":"poor":"offline";return(0,a.jsxs)("header",{className:"cms-topbar",children:[(0,a.jsx)("button",{type:"button",className:"cms-hamburger","aria-label":"Menu",onClick:l,children:(0,a.jsx)(c,{id:"fld-0-gigr76s0g8t-3",name:"field_0_gigr76s0g8t_3",size:20})}),(0,a.jsx)("button",{type:"button",className:"cms-collapse-btn","aria-label":"Sembunyikan/tampilkan menu",title:"Sembunyikan/tampilkan menu",onClick:i,children:(0,a.jsx)(g,{id:"fld-0-gigr76s0g8t-4",name:"field_0_gigr76s0g8t_4",size:19})}),(0,a.jsx)("div",{className:"cms-topbar-spacer"}),ea&&(0,a.jsxs)(s.default,{href:"/cms/integrasi/dors",title:er?`Sync DORS ${er.from_date} s/d ${er.to_date} sedang berjalan (percobaan ${er.attempt??1}/${er.max_attempts??5}, ${er.total_upserted} data baru sejauh ini). Jangan restart backend dulu.`:"Sync DORS sedang berjalan. Jangan restart backend dulu.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync DORS berjalan"]}),(("offline"===eu||!w||(typeof window!=="undefined"&&window.__bdbIsSyncing))&&(0,a.jsxs)("div",{title:"Mode Offline Aktif - Sync data cache lokal & antrean pekerjaan berjalan otomatis.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a",cursor:"default"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync Offline berjalan"]})),(0,a.jsxs)("div",{ref:U,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:`cms-status cms-status-btn q-${eu}`,onClick:()=>B(e=>!e),title:"Klik untuk lihat detail koneksi","aria-label":"Status jaringan",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-5",name:"field_0_gigr76s0g8t_5",size:15}):"weak"===eu||"poor"===eu?(0,a.jsx)(f,{id:"fld-0-gigr76s0g8t-6",name:"field_0_gigr76s0g8t_6",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-7",name:"field_0_gigr76s0g8t_7",size:15}),(0,a.jsx)("span",{children:P[eu]})]}),D&&(0,a.jsxs)("div",{className:"cms-status-pop",children:[(0,a.jsxs)("div",{className:"cms-status-pop-title",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-8",name:"field_0_gigr76s0g8t_8",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-9",name:"field_0_gigr76s0g8t_9",size:15})," Status Jaringan — ",P[eu]]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(y.Gauge,{size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Ping"]}),(0,a.jsx)("span",{className:"v",children:null!=T?`${T} ms`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(k,{id:"fld-0-gigr76s0g8t-10",name:"field_0_gigr76s0g8t_10",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unduh"]}),(0,a.jsx)("span",{className:"v",children:null!=E?`${E} Mbps`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(b,{id:"fld-0-gigr76s0g8t-11",name:"field_0_gigr76s0g8t_11",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unggah"]}),(0,a.jsx)("span",{className:"v",children:null!=K?`${K} Mbps`:"—"})]}),(0,a.jsx)("div",{className:"cms-status-pop-note",children:"Ping diperbarui tiap 15 detik, unduh/unggah tiap 45 detik. Estimasi kasar dari server BDB, bukan speedtest presisi."})]})]}),(0,a.jsxs)("div",{ref:Z,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:"cms-icon-btn",onClick:ei,title:"Notifikasi","aria-label":"Notifikasi",style:{position:"relative"},children:[(0,a.jsx)(j,{id:"fld-0-gigr76s0g8t-12",name:"field_0_gigr76s0g8t_12",size:18}),W.total>0&&(0,a.jsx)("span",{style:{position:"absolute",top:2,right:2,minWidth:15,height:15,borderRadius:999,background:"#dc2626",color:"#fff",fontSize:"0.62rem",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",lineHeight:1},children:W.total>9?"9+":W.total})]}),q&&(0,a.jsxs)("div",{className:"cms-status-pop",style:{width:"23.5rem",right:0,padding:"0.75rem"},children:[
   (0,a.jsxs)("div",{className:"cms-status-pop-title",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.5rem"},children:[
@@ -152,59 +163,82 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
       children:"💬 Sosial & Interaksi"
     })
   ]}),
-  V?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:"Memuat…"}):(!Array.isArray(F)||0===F.length)?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:notifTab==="dinas"?"Tidak ada notifikasi kedinasan baru.":"Tidak ada interaksi baru."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.4rem",maxHeight:"22rem",overflowY:"auto"},children:(Array.isArray(F)?F:[]).map((e,idx)=>(0,a.jsxs)(s.default,{href:e.link||"/cms/broadcaster",onClick:()=>J(!1),style:{display:"flex",gap:"0.55rem",alignItems:"flex-start",textDecoration:"none",color:"inherit",padding:"0.5rem 0.55rem",borderRadius:8,background:"var(--surface-hover, rgba(255,255,255,0.04))",borderLeft:e.category==="dinas"?"3px solid #3b82f6":"3px solid #8b5cf6"},children:[
+  V?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:"Memuat…"}):(!Array.isArray(F)||0===F.length)?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:notifTab==="dinas"?"Tidak ada notifikasi kedinasan baru.":"Tidak ada interaksi baru."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.4rem",maxHeight:"20rem",overflowY:"auto"},children:(Array.isArray(F)?F:[]).map((e,idx)=>(0,a.jsxs)(s.default,{href:e.link||"/cms/broadcaster",onClick:()=>J(!1),style:{display:"flex",gap:"0.55rem",alignItems:"flex-start",textDecoration:"none",color:"inherit",padding:"0.5rem 0.55rem",borderRadius:8,background:"var(--surface-hover, rgba(255,255,255,0.04))",borderLeft:e.category==="dinas"?"3px solid #3b82f6":"3px solid #8b5cf6"},children:[
     (0,a.jsx)("span",{style:{color:e.category==="dinas"?"#2563eb":"#8b5cf6",flex:"0 0 auto",marginTop:"0.15rem"},children:e.category==="dinas"?(0,a.jsx)("svg",{width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"m3 11 18-5v12L3 14v-3z"}),(0,a.jsx)("path",{d:"M11.6 16.8a3 3 0 1 1-5.8-1.6"})]}):(0,a.jsx)(j,{size:15})}),
     (0,a.jsxs)("span",{style:{minWidth:0,flex:1},children:[
       (0,a.jsx)("span",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #f8fafc)"},children:e.title||e.message}),
       (0,a.jsx)("span",{style:{display:"block",fontSize:"0.75rem",color:"var(--cas-text-secondary, #94a3b8)",margin:"0.1rem 0",wordBreak:"break-word"},children:e.message}),
       (0,a.jsx)("span",{style:{fontSize:"0.68rem",color:"#64748b"},children:function(e){if(!e)return"baru saja";let a=Math.floor((Date.now()-new Date(e).getTime())/6e4);if(a<1)return"baru saja";if(a<60)return`${a} mnt lalu`;let t=Math.floor(a/60);return t<24?`${t} jam lalu`:`${Math.floor(t/24)} hr lalu`}(e.created_at)})
     ]})
-  ]},idx))})
-]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}o.push("/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsx)("button",{type:"button",className:"cms-logout",onClick:function(){(0,R.logout)(),window.location.replace("/login")},title:"Keluar","aria-label":"Keluar",children:(0,a.jsx)(h,{id:"fld-0-gigr76s0g8t-16",name:"field_0_gigr76s0g8t_16",size:16})})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan Polisi","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Operasi/Satgas",kerma:"Kerma","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu",laporan:"Operasional","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Register Pihak Terlibat","rekap-barang-bukti":"Rekap Barang Bukti","rekap-operasi-satgas":"Rekap Ops & Satgas","kasus-menonjol":"Susjol & Susatensi","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Pengaturan",satker:"Satker",email:"Email (SMTP)",profile:"Profile Saya","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",integrasi:"Integrasi",dors:"DORS","dors-data":"Data LP DORS","dors-unmapped":"LP Belum Termapping","satker-tree":"Struktur Satker"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),t=(0,r.useRouter)(),n=e.split("/").filter(Boolean),l=n.map((e,a)=>{let t="/"+n.slice(0,a+1).join("/"),r=a===n.length-1;if("cms"===e)return{seg:e,label:"Dashboard",href:"/cms/dashboard/main",clickable:!r};if("master"===e){let s=n[a+1];return s&&I.has(s)?{seg:e,label:"Pengaturan Sistem",href:t,clickable:!1}:s&&T.has(s)?{seg:e,label:"Master Referensi",href:"/cms/master-ref",clickable:!r}:{seg:e,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===e){let r=n[a+1];return r&&E.has(r)?{seg:e,label:"Pengaturan Sistem",href:t,clickable:!1}:{seg:e,label:"Pengaturan",href:t,clickable:!1}}let s=!r&&!K.has(e);return{seg:e,label:z[e]||O.MASTERS[e]?.title||e.replace(/-/g," ").replace(/\b\w/g,e=>e.toUpperCase()),href:t,clickable:s}}),i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",children:[(0,a.jsx)("ol",{children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})})]})}
+  ]},idx))}),
+  (0,a.jsx)("div",{style:{marginTop:"0.6rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.45rem 0.75rem",borderRadius:8,background:"linear-gradient(135deg, rgba(37,99,235,0.22), rgba(2,132,199,0.28))",border:"1px solid rgba(56,189,248,0.4)",color:"#38bdf8",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Buka Halaman Penuh Notifikasi ➔"})})
+]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsx)("button",{type:"button",className:"cms-logout",onClick:function(){(0,R.logout)(),window.location.replace("/login")},title:"Keluar","aria-label":"Keluar",children:(0,a.jsx)(h,{id:"fld-0-gigr76s0g8t-16",name:"field_0_gigr76s0g8t_16",size:16})})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],uDinas=Number(nRes.data?.unread_dinas||0),uSoc=Number(nRes.data?.unread_social||0),uMsg=Number(mRes.data?.total_unread||0),convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0).forEach(c=>{combined.push({id:"msg_"+c.partner_id,badge:"PESAN BARU",color:"#34d399",text:`${c.name||c.handle}: "${String(c.last_message||"").slice(0,65)}" (${c.unread_count} belum dibaca)`})});nList.slice(0,12).forEach(it=>{let b=it.category==="dinas"?"DINAS":it.type==="connection"?"JEJARING":it.type==="message"?"OBROLAN":"SHARESE";let c=it.category==="dinas"?"#38bdf8":it.type==="connection"?"#a78bfa":"#fbbf24";combined.push({id:String(it.id),badge:b,color:c,text:`${it.title?it.title+" — ":""}${String(it.message||"").slice(0,80)}`})});if(!combined.length){combined.push({id:"default-1",badge:"INFO CAS",color:"#38bdf8",text:"Sistem Big Data Binops & Jejaring Taktis Sharese Aktif — Klik pita ini untuk membuka Halaman Penuh Notifikasi."})}setTickerItems(combined);setUnreadTotal(uDinas+uSoc+uMsg)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:3.2rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 90s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik untuk membuka Halaman Penuh Notifikasi Sharese & Kedinasan",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.6rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.32rem",color:unreadTotal>0?"#dc2626":"#0284c7",fontSize:"0.7rem",fontWeight:800,flexShrink:0,letterSpacing:"0.02em"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#0284c7",animation:"casPulseDot 2s infinite"}}),unreadTotal>0?`${unreadTotal} BARU:`:"INFO:"]}),(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:[...tickerItems,...tickerItems].map((it,idx)=>(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.38rem",fontSize:"0.74rem",color:"var(--cas-text-secondary, #475569)"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,color:it.badge==="DINAS"?"#2563eb":it.badge==="PESAN BARU"?"#16a34a":"#d97706"},children:`[${it.badge}]`}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
 function TacticalMessengerWidget() {
+  const router = (0, r.useRouter)();
   const [isOpen, setIsOpen] = (0, t.useState)(false);
   const [activeTarget, setActiveTarget] = (0, t.useState)(null);
   const [messages, setMessages] = (0, t.useState)([]);
   const [inputVal, setInputVal] = (0, t.useState)("");
+  const [sending, setSending] = (0, t.useState)(false);
   const msgEndRef = (0, t.useRef)(null);
+
+  const loadThread = (0, t.useCallback)(async (targetObj) => {
+    const tid = targetObj?.id ?? -1;
+    try {
+      const res = await M.apiAuth.get(`/bdb/jukrah/messages/thread/${tid}`);
+      const list = Array.isArray(res.data?.data) ? res.data.data : [];
+      setMessages(list.map(m => ({
+        id: m.id,
+        sender: m.is_mine ? 'me' : 'them',
+        text: m.content,
+        time: m.created_at ? new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
+      })));
+      if (res.data?.partner && !targetObj?.name) {
+        setActiveTarget({
+          id: res.data.partner.id,
+          name: res.data.partner.name,
+          callsign: res.data.partner.handle,
+          satker: res.data.partner.satker,
+          photo: res.data.partner.photo_url
+        });
+      }
+    } catch {
+      setMessages([{
+        id: 'sys-1',
+        sender: 'system',
+        text: '🔒 Jalur Komunikasi Taktis Terenkripsi Mabes Bareskrim Polri aktif.',
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }]);
+    }
+  }, []);
 
   (0, t.useEffect)(() => {
     function handleOpenChat(ev) {
       const target = ev?.detail;
       if (target) {
-        setActiveTarget(target);
+        const norm = {
+          id: target.id ?? -1,
+          name: target.name || target.callsign || 'AI Agen Taktis CAS',
+          callsign: target.callsign || target.handle || '@ai_taktis_cas',
+          satker: target.satker || 'Robinopsnal Bareskrim Polri',
+          photo: target.photo || target.photo_url || null
+        };
+        setActiveTarget(norm);
         setIsOpen(true);
-        try {
-          const raw = localStorage.getItem('cas_tactical_chat_' + (target.id || 'general'));
-          if (raw) {
-            setMessages(JSON.parse(raw));
-          } else {
-            const initial = [{
-              id: 'sys-1',
-              sender: 'system',
-              text: '🔒 Jalur Komunikasi Taktis Terenkripsi Mabes Bareskrim Polri diaktifkan untuk ' + (target.callsign || target.name || 'Personil CAS') + '.',
-              time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-            }];
-            setMessages(initial);
-            localStorage.setItem('cas_tactical_chat_' + (target.id || 'general'), JSON.stringify(initial));
-          }
-        } catch(e) {}
+        loadThread(norm);
       } else {
         setIsOpen(prev => !prev);
       }
     }
     window.addEventListener('cas-open-tactical-chat', handleOpenChat);
     return () => window.removeEventListener('cas-open-tactical-chat', handleOpenChat);
-  }, []);
+  }, [loadThread]);
 
   (0, t.useEffect)(() => {
-    if (isOpen && activeTarget) {
-      try {
-        const raw = localStorage.getItem('cas_tactical_chat_' + (activeTarget.id || 'general'));
-        if (raw) setMessages(JSON.parse(raw));
-      } catch(e) {}
+    if (isOpen) {
+      loadThread(activeTarget || { id: -1 });
     }
-  }, [isOpen, activeTarget]);
+  }, [isOpen, activeTarget, loadThread]);
 
   (0, t.useEffect)(() => {
     if (msgEndRef.current) {
@@ -212,48 +246,37 @@ function TacticalMessengerWidget() {
     }
   }, [messages, isOpen]);
 
-  const handleSend = (textToSend) => {
+  const handleSend = async (textToSend) => {
     const text = (textToSend || inputVal || "").trim();
-    if (!text) return;
-    const targetKey = activeTarget?.id || 'general';
+    if (!text || sending) return;
+    const tid = activeTarget?.id ?? -1;
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    const userMsg = {
-      id: 'msg-' + Date.now(),
-      sender: 'me',
-      text: text,
-      time: nowTime
-    };
-    const nextList = [...messages, userMsg];
-    setMessages(nextList);
     setInputVal("");
+    setSending(true);
+    setMessages(prev => [...prev, { id: 'temp-' + Date.now(), sender: 'me', text, time: nowTime }]);
     try {
-      localStorage.setItem('cas_tactical_chat_' + targetKey, JSON.stringify(nextList));
-    } catch(e) {}
-
-    setTimeout(() => {
-      const respTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      const ackMsg = {
-        id: 'ack-' + Date.now(),
-        sender: 'them',
-        text: 'Siap komandan, koordinasi taktis diterima dan tercatat di buku register operasional CAS Bareskrim.',
-        time: respTime
-      };
-      setMessages(prev => {
-        const updated = [...prev, ackMsg];
-        try {
-          localStorage.setItem('cas_tactical_chat_' + targetKey, JSON.stringify(updated));
-        } catch(e) {}
-        return updated;
-      });
-    }, 1200);
+      const res = await M.apiAuth.post('/bdb/jukrah/messages/send', { receiver_id: tid, content: text });
+      if (res.data?.ai_reply) {
+        const aiMsg = res.data.ai_reply;
+        setMessages(prev => [...prev, {
+          id: aiMsg.id,
+          sender: 'them',
+          text: aiMsg.content,
+          time: new Date(aiMsg.created_at || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        }]);
+      }
+      try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
+    } catch {} finally {
+      setSending(false);
+    }
   };
 
   const defaultTarget = activeTarget || {
-    id: 'general',
-    name: 'Pusat Koordinasi Taktis CAS',
-    callsign: '@Robinopsnal',
-    satker: 'Bareskrim Polri',
-    photo: null
+    id: -1,
+    name: 'AI Agen Taktis CAS',
+    callsign: '@ai_taktis_cas',
+    satker: 'Robinopsnal Bareskrim Polri',
+    photo: '/images/default-avatar-polki.png'
   };
 
   return (0, a.jsxs)("div",{
@@ -265,8 +288,8 @@ function TacticalMessengerWidget() {
           position: "absolute",
           bottom: "68px",
           right: "0",
-          width: "370px",
-          height: "490px",
+          width: "375px",
+          height: "500px",
           maxWidth: "92vw",
           maxHeight: "75vh",
           background: "var(--cas-bg-surface, #0f172a)",
@@ -282,16 +305,17 @@ function TacticalMessengerWidget() {
           (0, a.jsxs)("div", {
             style: {
               background: "linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #0f172a 100%)",
-              padding: "0.85rem 1rem",
+              padding: "0.75rem 0.9rem",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: "0.5rem",
               borderBottom: "1px solid rgba(255,255,255,0.15)"
             },
             children: [
               (0, a.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.6rem", minWidth: 0 },
+                style: { display: "flex", alignItems: "center", gap: "0.6rem", minWidth: 0, flex: 1 },
                 children: [
                   (0, a.jsx)("div", {
                     style: { position: "relative", width: "36px", height: "36px", borderRadius: "50%", background: "#0f172a", border: "1.5px solid #38bdf8", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.85rem", color: "#38bdf8", flexShrink: 0 },
@@ -301,25 +325,40 @@ function TacticalMessengerWidget() {
                     style: { minWidth: 0 },
                     children: [
                       (0, a.jsxs)("div", {
-                        style: { fontWeight: 800, fontSize: "0.86rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.35rem" },
+                        style: { fontWeight: 800, fontSize: "0.84rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.35rem" },
                         children: [
-                          (0, a.jsx)("span", { children: defaultTarget.callsign || defaultTarget.name }),
+                          (0, a.jsx)("span", { children: defaultTarget.name || defaultTarget.callsign }),
                           (0, a.jsx)("span", { style: { width: "8px", height: "8px", borderRadius: "50%", background: "#22c55e", display: "inline-block" } })
                         ]
                       }),
                       (0, a.jsx)("div", {
-                        style: { fontSize: "0.7rem", color: "#bae6fd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-                        children: defaultTarget.satker || "Mabes Bareskrim Polri"
+                        style: { fontSize: "0.68rem", color: "#bae6fd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                        children: defaultTarget.satker || "Robinopsnal Bareskrim Polri"
                       })
                     ]
                   })
                 ]
               }),
-              (0, a.jsx)("button", {
-                type: "button",
-                onClick: () => setIsOpen(false),
-                style: { background: "rgba(0,0,0,0.25)", border: "none", color: "#fff", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700 },
-                children: "✕"
+              (0, a.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 },
+                children: [
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    title: "Buka Fullpage di Menu Obrolan",
+                    onClick: () => {
+                      setIsOpen(false);
+                      casNav(router, `/cms/broadcaster?view=obrolan&partner=${defaultTarget.id ?? -1}`);
+                    },
+                    style: { background: "rgba(15,23,42,0.45)", border: "1px solid rgba(56,189,248,0.5)", color: "#e0f2fe", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" },
+                    children: "⛶ Fullpage"
+                  }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    onClick: () => setIsOpen(false),
+                    style: { background: "rgba(0,0,0,0.25)", border: "none", color: "#fff", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700 },
+                    children: "✕"
+                  })
+                ]
               })
             ]
           }),
@@ -327,28 +366,29 @@ function TacticalMessengerWidget() {
           (0, a.jsxs)("div", {
             style: { flex: 1, overflowY: "auto", padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem", background: "var(--cas-bg-card, rgba(15,23,42,0.95))" },
             children: [
-              messages.map(m => {
+              messages.map((m, idx) => {
                 if (m.sender === 'system') {
                   return (0, a.jsx)("div", {
-                    key: m.id,
+                    key: m.id || idx,
                     style: { background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", padding: "0.45rem 0.65rem", fontSize: "0.72rem", color: "#94a3b8", textAlign: "center", lineHeight: "1.4" },
                     children: m.text
                   });
                 }
                 const isMe = m.sender === 'me';
                 return (0, a.jsxs)("div", {
-                  key: m.id,
+                  key: m.id || idx,
                   style: { display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" },
                   children: [
                     (0, a.jsx)("div", {
                       style: {
-                        maxWidth: "80%",
+                        maxWidth: "82%",
                         padding: "0.55rem 0.85rem",
                         borderRadius: isMe ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
-                        background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-bg-subtle, #f1f5f9)",
-                        color: isMe ? "#fff" : "var(--cas-text-primary, #0f172a)",
-                        fontSize: "0.82rem",
-                        lineHeight: "1.4",
+                        background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-bg-subtle, #1e293b)",
+                        color: isMe ? "#fff" : "var(--cas-text-primary, #f8fafc)",
+                        fontSize: "0.8rem",
+                        lineHeight: "1.45",
+                        whiteSpace: "pre-wrap",
                         wordBreak: "break-word",
                         boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
                       },
@@ -373,21 +413,21 @@ function TacticalMessengerWidget() {
             children: [
               (0, a.jsx)("button", {
                 type: "button",
-                onClick: () => handleSend("Mohon koordinasi penanganan perkara."),
+                onClick: () => handleSend("Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi."),
                 style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
-                children: "⚡ Koordinasi Perkara"
+                children: "⚖️ KUHP Baru"
               }),
               (0, a.jsx)("button", {
                 type: "button",
-                onClick: () => handleSend("Izin meminta kelengkapan berkas dokumen."),
+                onClick: () => handleSend("Bagaimana tahapan sinkronisasi data LP dari DORS?"),
                 style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
-                children: "📋 Minta Dokumen"
+                children: "🔄 Panduan DORS"
               }),
               (0, a.jsx)("button", {
                 type: "button",
-                onClick: () => handleSend("Laporan atensi khusus pimpinan."),
+                onClick: () => handleSend("Mohon koordinasi progres penyelesaian perkara (Selra)."),
                 style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
-                children: "🚨 Atensi Pimpinan"
+                children: "📋 Koordinasi Selra"
               })
             ]
           }),
@@ -401,10 +441,11 @@ function TacticalMessengerWidget() {
                 onChange: ev => setInputVal(ev.target.value),
                 onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
                 placeholder: "Ketik pesan taktis kedinasan…",
-                style: { flex: 1, background: "var(--cas-bg-subtle, #f8fafc)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "20px", padding: "0.45rem 0.85rem", color: "var(--cas-text-primary, #0f172a)", fontSize: "0.82rem", outline: "none" }
+                style: { flex: 1, background: "var(--cas-bg-subtle, #1e293b)", border: "1px solid var(--cas-border, #334155)", borderRadius: "20px", padding: "0.45rem 0.85rem", color: "var(--cas-text-primary, #f8fafc)", fontSize: "0.82rem", outline: "none" }
               }),
               (0, a.jsx)("button", {
                 type: "button",
+                disabled: sending,
                 onClick: () => handleSend(),
                 style: { width: "34px", height: "34px", borderRadius: "50%", background: "#2563eb", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.4)" },
                 children: "➤"
@@ -454,4 +495,717 @@ function TacticalMessengerWidget() {
   });
 }
 
-var D=e.i(81539),B=e.i(73670);e.s(["default",0,function({children:e}){let s=(0,r.useRouter)(),n=(0,r.usePathname)(),[i,o]=(0,t.useState)(!1),[c,u]=(0,t.useState)(null),[d,p]=(0,t.useState)([]),[m,f]=(0,t.useState)(!1),[h,g]=(0,t.useState)(!1),[k,b]=(0,t.useState)(null),y=(0,t.useRef)(null);(0,t.useEffect)(()=>{let e=(0,R.getAuth)(),tok=localStorage.getItem("auth.access_token")||e?.access_token||"",lastAct=Number(localStorage.getItem("bdb.auth.last_activity")||0);if(!tok||(lastAct&&Date.now()-lastAct>144e5)){(0,R.logout)();window.location.replace("/login");return}let a=(0,R.getUser)();u(a),b((0,R.getImpersonatorStash)()),g("1"===localStorage.getItem("cms_sidebar_collapsed"));let isFresh=!1;try{let pl=JSON.parse(atob(tok.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));isFresh=Number(pl?.exp||0)*1e3>Date.now()+5e3}catch(_e){}if(isFresh)o(!0);M.apiAuth.get("/bdb/menu-access").then(e=>{if(0===e?.data?.status){(0,R.logout)();window.location.replace("/login?expired=1");return}p(e.data?.data?.overrides||[]);o(!0)}).catch(()=>{let cur=localStorage.getItem("auth.access_token")||(0,R.getAuth)()?.access_token;if(!cur||!isFresh){(0,R.logout)();window.location.replace("/login?expired=1")}}),"superadmin"!==String(a?.role_bdb||"").toLowerCase()&&M.api.get("/Authentication/maintenance-status").then(e=>{let a=e.data?.data;a?.enabled&&s.replace("/maintenance")}).catch(()=>{})},[s]),(0,t.useEffect)(()=>{document.querySelector(".cms-main")?.scrollTo({top:0})},[n]),(0,t.useEffect)(()=>{let e=y.current;if(!e)return;let a=()=>{let h=Math.ceil(e.offsetHeight||e.getBoundingClientRect().height||0);h>0&&document.documentElement.style.setProperty("--cms-header-h",`${h}px`)};a();let t=new ResizeObserver(a);return t.observe(e),window.addEventListener("resize",a),window.addEventListener("orientationchange",a),()=>{t.disconnect(),window.removeEventListener("resize",a),window.removeEventListener("orientationchange",a)}},[n,i]),(0,t.useEffect)(()=>{if("undefined"==typeof document)return;let tipEl=document.getElementById("cms-global-title-tip");if(!tipEl){tipEl=document.createElement("div");tipEl.id="cms-global-title-tip";tipEl.className="cms-global-title-tip";tipEl.style.display="none";document.body.appendChild(tipEl)}let hideTip=()=>{if(tipEl)tipEl.style.display="none"};let showTip=(btn,text)=>{if(!tipEl||!btn||!text)return;tipEl.textContent=text;tipEl.style.display="block";let r=btn.getBoundingClientRect(),vw=window.innerWidth||360,vh=window.innerHeight||640,w=Math.min(288,vw-20);tipEl.style.width=w+"px";let left=Math.max(10,Math.min(r.left+r.width/2-w/2,vw-w-10)),top=r.bottom+8;if(top+110>vh)top=Math.max(10,r.top-90);tipEl.style.left=left+"px";tipEl.style.top=top+"px"};let enhanceDom=()=>{document.querySelectorAll(".cms-page-sub").forEach(sub=>{let txt=(sub.textContent||"").trim();if(!txt)return;let parent=sub.parentElement,title=parent?.querySelector(".cms-page-title")||sub.previousElementSibling;if(title&&title.classList?.contains("cms-page-title")){sub.classList.add("cms-page-sub-hidden");let existing=title.querySelector(".cms-title-info-btn")||parent?.querySelector(".cms-title-info-btn");if(!existing){let btn=document.createElement("button");btn.type="button";btn.className="cms-title-info-btn";btn.setAttribute("aria-label","Informasi Halaman");btn.dataset.tip=txt;btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>';btn.addEventListener("click",ev=>{ev.stopPropagation();ev.preventDefault();if("block"===tipEl.style.display&&tipEl.textContent===btn.dataset.tip)hideTip();else showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseenter",()=>{if(window.innerWidth>768)showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseleave",()=>{if(window.innerWidth>768)hideTip()});title.appendChild(btn)}else if(existing.dataset.tip!==txt){existing.dataset.tip=txt}}});document.querySelectorAll(".lp-stat span, .dash-minicard span").forEach(sp=>{if(0===sp.childElementCount&&String.fromCharCode(9432)===(sp.textContent||"").trim()){sp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>'}});document.querySelectorAll(".p-datatable table").forEach(tbl=>{let ths=tbl.querySelectorAll("thead > tr:first-child > th");if(ths.length<4)return;let h1=(ths[0]?.textContent||"").trim().toUpperCase();if("NO"===h1||"NO."===h1||"#"===h1){ths[0].classList.add("cas-sticky-col-1");ths[1]?.classList.add("cas-sticky-col-2");tbl.querySelectorAll("tbody > tr").forEach(tr=>{let tds=tr.children;if(tds.length>=2&&!tds[0].hasAttribute("colspan")){tds[0].classList.add("cas-sticky-col-1");tds[1].classList.add("cas-sticky-col-2")}})}})};enhanceDom();let obs=new MutationObserver(()=>{enhanceDom()}),mainEl=document.querySelector(".cms-content")||document.body;obs.observe(mainEl,{childList:!0,subtree:!0});window.addEventListener("scroll",hideTip,!0);document.addEventListener("click",hideTip);return()=>{obs.disconnect();window.removeEventListener("scroll",hideTip,!0);document.removeEventListener("click",hideTip)}},[n,i]);let j=(0,t.useMemo)(()=>(function(e,a){let{isSuperadmin:t}=(0,R.deriveRoles)(e),r=function(e){let{isSuperadmin:a}=(0,R.deriveRoles)(e);return a?"superadmin":String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase()||"viewer"}(e),s=new Map;(a||[]).forEach(e=>s.set(`${String(e.role).toLowerCase()}|${e.menu_key}`,e.allowed));let n=[];for(let e of D.MENU_CATALOG){let a=e.items.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>{let a=e.children?.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>({label:e.label,icon:e.icon,to:e.to}));return{label:e.label,icon:e.icon,to:e.to,children:a?.length?a:void 0}});a.length&&n.push({label:e.label,items:a})}return n})(c,d),[c,d]),v=(0,t.useMemo)(()=>(0,R.deriveRoles)(c).label,[c]);return i?(0,a.jsxs)("div",{className:`cms-shell${h?" cms-collapsed":""}`,children:[(0,a.jsx)(l,{id:"fld-0-gigr76s0g8t-17",name:"field_0_gigr76s0g8t_17",sections:j,open:m,onNavigate:()=>f(!1)}),m&&(0,a.jsx)("div",{className:"cms-overlay",onClick:()=>f(!1)}),(0,a.jsxs)("div",{className:"cms-main",children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@media(max-width:900px){.cms-header-fixed{left:0!important;right:0!important;width:100%!important}.cms-main{width:100%!important;min-width:0!important;-webkit-overflow-scrolling:touch!important;overflow-y:auto!important}.cms-sticky-top{position:static!important;top:auto!important;z-index:auto!important}}@media(max-width:640px){.cms-topbar{padding:0 0.75rem!important;gap:0.4rem!important;height:3.5rem!important}.cms-user-meta{display:none!important}.cms-user-avatar{width:2rem!important;height:2rem!important;font-size:0.8rem!important}.cms-breadcrumb{padding:0.4rem 0.75rem!important;gap:0.35rem!important;font-size:0.76rem!important;overflow-x:auto!important;width:100%!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}.cms-breadcrumb::-webkit-scrollbar{display:none}.cms-bc-back{padding:0.25rem 0.5rem!important;font-size:0.75rem!important;flex-shrink:0!important;white-space:nowrap!important}.cms-breadcrumb ol{flex-wrap:nowrap!important;white-space:nowrap!important}.cms-content{padding-left:0.75rem!important;padding-right:0.75rem!important;padding-bottom:1.5rem!important;width:100%!important;box-sizing:border-box!important}}@media(max-width:768px){.p-datatable{max-width:100%!important}.p-datatable .p-datatable-wrapper{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}.p-datatable-header{padding:0.75rem!important;flex-direction:column!important;align-items:stretch!important;gap:0.5rem!important}}"}}),(0,a.jsxs)("div",{ref:y,className:"cms-header-fixed",children:[k&&(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.6rem",flexWrap:"wrap",background:"#7c3aed",color:"#fff",padding:"0.5rem 1rem",fontSize:"0.85rem",fontWeight:600},children:[(0,a.jsx)(B.UserCog,{size:16}),(0,a.jsxs)("span",{children:["Anda sedang masuk sebagai ",(0,a.jsx)("strong",{children:c?.name||c?.email})," (",(0,R.deriveRoles)(c).label,") — sesi superadmin ",(0,a.jsx)("strong",{children:k.user?.name})," tersimpan."]}),(0,a.jsx)("button",{type:"button",onClick:function(){(0,R.stopImpersonation)()&&(window.location.href="/cms/master/user")},style:{background:"#fff",color:"#7c3aed",border:"none",borderRadius:6,padding:"0.25rem 0.75rem",fontWeight:700,fontSize:"0.8rem",cursor:"pointer"},children:"Kembali ke Akun Saya"})]}),(0,a.jsx)(L,{id:"fld-0-gigr76s0g8t-18",name:"field_0_gigr76s0g8t_18",user:c,roleLabel:v,onToggleSidebar:()=>f(e=>!e),onToggleCollapse:function(){g(e=>{let a=!e;try{localStorage.setItem("cms_sidebar_collapsed",a?"1":"0")}catch{}return a})}}),(0,a.jsx)($,{id:"fld-0-gigr76s0g8t-19",name:"field_0_gigr76s0g8t_19",})]}),(0,a.jsx)("main",{className:"cms-content",children:e}),(0,a.jsx)(TacticalMessengerWidget,{})]})]}):null}],93989)}]);
+var D=e.i(81539),B=e.i(73670);
+function CasKelolaPengaturanTabs({user:u,pathname:curPath}){
+  const router=(0,r.useRouter)();
+  const{isSuperadmin:isSuper}=(0,R.deriveRoles)(u);
+  const allTabs=[
+    {key:"email",label:"✉️ Email (SMTP)",to:"/cms/pengaturan/email",superOnly:!1},
+    {key:"otp",label:"🔐 OTP Login",to:"/cms/pengaturan/login-otp",superOnly:!1},
+    {key:"maintenance",label:"🛠️ Maintenance Sistem",to:"/cms/pengaturan/maintenance",superOnly:!0},
+    {key:"pusat-bantuan",label:"🎧 Konfigurasi Pusat Bantuan",to:"/cms/pengaturan/pusat-bantuan",superOnly:!1},
+    {key:"alur-dokumen",label:"📑 Alur Dokumen LP",to:"/cms/master/alur-dokumen",superOnly:!1},
+    {key:"organisasi-role",label:"🪪 Organisasi Role",to:"/cms/master/organisasi-role",superOnly:!0},
+    {key:"menu",label:"🧩 Hak Akses Menu / Form",to:"/cms/master/menu",superOnly:!0}
+  ].filter(tb=>!tb.superOnly||isSuper);
+  return(0,a.jsxs)("div",{style:{marginBottom:"1.15rem",padding:"0.9rem 1.1rem",borderRadius:14,background:"linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.92) 100%)",border:"1px solid rgba(56,189,248,0.28)",boxShadow:"0 10px 25px rgba(0,0,0,0.25)"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",marginBottom:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.96rem",fontWeight:800,color:"#f8fafc",display:"flex",alignItems:"center",gap:"0.45rem"},children:["⚙️ Kelola Pengaturan Sistem Terpadu — Big Data Binops"]}),
+        (0,a.jsx)("div",{style:{fontSize:"0.76rem",color:"#94a3b8",marginTop:"0.15rem"},children:"Pusat konfigurasi SMTP, kebijakan OTP Login, Maintenance, Pusat Bantuan, Alur Dokumen LP, Role Organisasi, dan Matriks Menu RBAC."})
+      ]}),
+      (0,a.jsx)("span",{style:{fontSize:"0.7rem",fontWeight:800,padding:"0.22rem 0.65rem",borderRadius:999,background:"rgba(56,189,248,0.14)",border:"1px solid rgba(56,189,248,0.35)",color:"#38bdf8"},children:isSuper?"Akses Superadmin Penuh":"Akses Admin Binops"})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:allTabs.map(tb=>{
+      const active=curPath===tb.to||curPath.startsWith(tb.to+"/");
+      return(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,tb.to),style:{padding:"0.45rem 0.85rem",borderRadius:9,border:active?"1.5px solid #38bdf8":"1px solid rgba(148,163,184,0.22)",background:active?"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)":"rgba(15,23,42,0.65)",color:active?"#ffffff":"#cbd5e1",fontSize:"0.78rem",fontWeight:active?800:600,cursor:"pointer",transition:"all 0.15s ease",boxShadow:active?"0 4px 12px rgba(2,132,199,0.35)":"none"},children:tb.label},tb.key);
+    })})
+  ]});
+}
+
+function CasObrolanFullPage({user:curUser,searchStr}){
+  const router=(0,r.useRouter)();
+  const sp=new URLSearchParams(searchStr||"");
+  const initPartner=sp.get("partner")?Number(sp.get("partner")):-1;
+  const[convs,setConvs]=(0,t.useState)([]);
+  const[selectedId,setSelectedId]=(0,t.useState)(isNaN(initPartner)?-1:initPartner);
+  const[partner,setPartner]=(0,t.useState)(null);
+  const[messages,setMessages]=(0,t.useState)([]);
+  const[loadingConvs,setLoadingConvs]=(0,t.useState)(!0);
+  const[loadingThread,setLoadingThread]=(0,t.useState)(!1);
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[dirResults,setDirResults]=(0,t.useState)([]);
+  const[msgText,setMsgText]=(0,t.useState)("");
+  const[sending,setSending]=(0,t.useState)(!1);
+  const endRef=(0,t.useRef)(null);
+
+  const fetchConvs=(0,t.useCallback)(async()=>{
+    try{
+      const res=await M.apiAuth.get("/bdb/jukrah/messages/conversations");
+      setConvs(Array.isArray(res.data?.data)?res.data.data:[]);
+    }catch{}finally{setLoadingConvs(!1);}
+  },[]);
+
+  const fetchThread=(0,t.useCallback)(async(pid)=>{
+    setLoadingThread(!0);
+    try{
+      const res=await M.apiAuth.get(`/bdb/jukrah/messages/thread/${pid}`);
+      setMessages(Array.isArray(res.data?.data)?res.data.data:[]);
+      if(res.data?.partner)setPartner(res.data.partner);
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setLoadingThread(!1);}
+  },[]);
+
+  (0,t.useEffect)(()=>{fetchConvs();const iv=setInterval(fetchConvs,20000);return()=>clearInterval(iv);},[fetchConvs]);
+  (0,t.useEffect)(()=>{if(sp.get("partner")){const p=Number(sp.get("partner"));if(!isNaN(p)&&p!==selectedId)setSelectedId(p);}},[searchStr]);
+  (0,t.useEffect)(()=>{fetchThread(selectedId);const iv=setInterval(()=>fetchThread(selectedId),12000);return()=>clearInterval(iv);},[selectedId,fetchThread]);
+  (0,t.useEffect)(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
+
+  (0,t.useEffect)(()=>{
+    if(!searchQ.trim()){setDirResults([]);return;}
+    const timer=setTimeout(async()=>{
+      try{
+        const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params:{search:searchQ.trim(),limit:12}});
+        setDirResults(Array.isArray(res.data?.data)?res.data.data:[]);
+      }catch{setDirResults([]);}
+    },300);
+    return()=>clearTimeout(timer);
+  },[searchQ]);
+
+  const sendMessage=async(customText)=>{
+    const txt=(customText!==void 0?customText:msgText).trim();
+    if(!txt||sending)return;
+    setSending(!0);
+    if(customText===void 0)setMsgText("");
+    try{
+      const res=await M.apiAuth.post("/bdb/jukrah/messages/send",{receiver_id:selectedId,content:txt});
+      const sent=res.data?.data;
+      const aiRep=res.data?.ai_reply;
+      setMessages(prev=>{
+        const next=[...prev];
+        if(sent)next.push(sent);
+        if(aiRep)next.push(aiRep);
+        return next;
+      });
+      fetchConvs();
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setSending(!1);}
+  };
+
+  const filteredConvs=convs.filter(c=>{
+    if(!searchQ.trim())return!0;
+    const q=searchQ.toLowerCase();
+    return String(c.name||"").toLowerCase().includes(q)||String(c.handle||"").toLowerCase().includes(q)||String(c.satker||"").toLowerCase().includes(q);
+  });
+
+  const activePartner=partner||convs.find(c=>Number(c.partner_id)===Number(selectedId))||{
+    id:selectedId,
+    is_ai:selectedId===-1,
+    name:selectedId===-1?"AI Agen Taktis CAS":"Personil Polri",
+    handle:selectedId===-1?"@ai_taktis_cas":"@personil",
+    satker:"Robinopsnal Bareskrim Polri",
+    photo_url:"/images/default-avatar-polki.png"
+  };
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"💬 Obrolan & Asisten AI Taktis Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Saluran komunikasi terenkripsi antar personil Polri & Asisten Cerdas AI Agen Taktis CAS 24/7."})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>setSelectedId(-1),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:selectedId===-1?"1.5px solid #38bdf8":"1px solid #334155",background:selectedId===-1?"rgba(2,132,199,0.25)":"#0f172a",color:"#38bdf8",fontWeight:800,fontSize:"0.78rem",cursor:"pointer"},children:"🤖 Chat AI Agen Taktis CAS"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.35)",background:"#1e293b",color:"#e2e8f0",fontWeight:700,fontSize:"0.78rem",cursor:"pointer"},children:"👥 Cari Rekan di Koneksi"})
+      ]})
+    ]}),
+    (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"minmax(270px, 340px) 1fr",gap:"1rem",minHeight:"72vh",background:"rgba(15,23,42,0.92)",border:"1px solid rgba(56,189,248,0.25)",borderRadius:16,overflow:"hidden",boxShadow:"0 16px 40px rgba(0,0,0,0.35)"},children:[
+      (0,a.jsxs)("div",{style:{borderRight:"1px solid rgba(148,163,184,0.16)",display:"flex",flexDirection:"column",background:"rgba(2,6,23,0.55)"},children:[
+        (0,a.jsx)("div",{style:{padding:"0.85rem",borderBottom:"1px solid rgba(148,163,184,0.14)"},children:(0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>setSearchQ(e.target.value),placeholder:"🔍 Cari percakapan atau nama personil…",style:{width:"100%",padding:"0.52rem 0.8rem",borderRadius:10,border:"1px solid #334155",background:"#0f172a",color:"#f8fafc",fontSize:"0.8rem",boxSizing:"border-box"}})}),
+        (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"0.45rem",display:"grid",gap:"0.3rem",alignContent:"start"},children:[
+          loadingConvs?(0,a.jsx)("div",{style:{padding:"1rem",textAlign:"center",color:"#94a3b8",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.map(c=>{
+            const isSel=Number(c.partner_id)===Number(selectedId);
+            return(0,a.jsxs)("div",{key:"conv_"+c.partner_id,onClick:()=>setSelectedId(Number(c.partner_id)),style:{display:"flex",alignItems:"center",gap:"0.65rem",padding:"0.65rem 0.75rem",borderRadius:10,cursor:"pointer",background:isSel?"linear-gradient(135deg, rgba(2,132,199,0.28), rgba(37,99,235,0.22))":"rgba(15,23,42,0.55)",border:isSel?"1px solid rgba(56,189,248,0.5)":"1px solid transparent",transition:"all 0.15s ease"},children:[
+              (0,a.jsxs)("div",{style:{position:"relative",width:42,height:42,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:c.is_ai?"2px solid #38bdf8":"1.5px solid #475569",background:"#0f172a"},children:[
+                (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:c.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}}),
+                c.online&&(0,a.jsx)("span",{style:{position:"absolute",bottom:1,right:1,width:9,height:9,borderRadius:"50%",background:"#22c55e",border:"2px solid #0f172a"}})
+              ]}),
+              (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.35rem"},children:[
+                  (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem",color:c.is_ai?"#38bdf8":"#f8fafc",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.is_ai?"🤖 "+c.name:c.name}),
+                  c.unread_count>0&&(0,a.jsx)("span",{style:{padding:"0.1rem 0.42rem",borderRadius:999,background:"#ef4444",color:"#fff",fontSize:"0.65rem",fontWeight:800},children:c.unread_count})
+                ]}),
+                (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#38bdf8",fontWeight:600},children:`${c.handle||""} · ${c.satker||"Polri"}`}),
+                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.1rem"},children:c.last_message})
+              ]})
+            ]});
+          }),
+          searchQ.trim()&&dirResults.length>0&&(0,a.jsxs)("div",{style:{marginTop:"0.5rem",paddingTop:"0.5rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:[
+            (0,a.jsx)("div",{style:{fontSize:"0.7rem",fontWeight:800,color:"#38bdf8",padding:"0.2rem 0.5rem"},children:"DIREKTORI PERSONIL POLRI"}),
+            dirResults.map(u=>(0,a.jsxs)("div",{key:"dir_"+u.id,onClick:()=>{setSelectedId(Number(u.id));setSearchQ("");},style:{display:"flex",alignItems:"center",gap:"0.6rem",padding:"0.5rem 0.65rem",borderRadius:8,cursor:"pointer",background:"rgba(30,41,59,0.5)"},children:[
+              (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}),
+              (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:700,color:"#f8fafc",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+                (0,a.jsx)("div",{style:{fontSize:"0.68rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
+              ]})
+            ]}))
+          ]})
+        ]})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",flexDirection:"column",minWidth:0,background:"rgba(15,23,42,0.85)"},children:[
+        (0,a.jsxs)("div",{style:{padding:"0.85rem 1.15rem",borderBottom:"1px solid rgba(148,163,184,0.16)",background:"linear-gradient(90deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.9) 100%)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem"},children:[
+            (0,a.jsx)("img",{src:activePartner.photo_url||"/images/default-avatar-polki.png",alt:activePartner.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid #38bdf8"}}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
+                (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.95rem",color:"#f8fafc"},children:activePartner.name}),
+                (0,a.jsx)("span",{style:{fontSize:"0.72rem",padding:"0.1rem 0.45rem",borderRadius:999,background:selectedId===-1?"rgba(56,189,248,0.18)":"rgba(34,197,94,0.18)",color:selectedId===-1?"#38bdf8":"#4ade80",fontWeight:700},children:selectedId===-1?"AI Taktis 24/7":"Jalur Terenkripsi"})
+              ]}),
+              (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#94a3b8"},children:`${activePartner.handle||""} · ${activePartner.satker||"Robinopsnal Bareskrim Polri"}`})
+            ]})
+          ]}),
+          selectedId>0&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${selectedId}`),style:{padding:"0.4rem 0.8rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.4)",background:"rgba(2,132,199,0.18)",color:"#38bdf8",fontSize:"0.76rem",fontWeight:700,cursor:"pointer"},children:"👤 Lihat Profil Personil"})
+        ]}),
+        (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"1.1rem",display:"flex",flexDirection:"column",gap:"0.75rem",maxHeight:"54vh"},children:[
+          loadingThread&&messages.length===0?(0,a.jsx)("div",{style:{textAlign:"center",color:"#94a3b8",padding:"2rem"},children:"Memuat riwayat percakapan…"}):messages.map((m,idx)=>{
+            const isMine=Boolean(m.is_mine);
+            return(0,a.jsxs)("div",{key:m.id||idx,style:{display:"flex",flexDirection:"column",alignItems:isMine?"flex-end":"flex-start"},children:[
+              (0,a.jsx)("div",{style:{maxWidth:"75%",padding:"0.7rem 1rem",borderRadius:isMine?"16px 16px 3px 16px":"16px 16px 16px 3px",background:isMine?"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)":"rgba(30,41,59,0.95)",border:isMine?"none":"1px solid rgba(148,163,184,0.2)",color:"#f8fafc",fontSize:"0.84rem",lineHeight:1.5,whiteSpace:"pre-wrap",wordBreak:"break-word",boxShadow:"0 4px 12px rgba(0,0,0,0.2)"},children:m.content}),
+              (0,a.jsxs)("span",{style:{fontSize:"0.68rem",color:"#64748b",marginTop:"0.2rem"},children:[m.created_at?new Date(m.created_at).toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"}):"",isMine?" · ✓✓ Terkirim":""]})
+            ]});
+          }),
+          (0,a.jsx)("div",{ref:endRef})
+        ]}),
+        selectedId===-1&&(0,a.jsx)("div",{style:{padding:"0.45rem 1rem",background:"rgba(2,6,23,0.45)",borderTop:"1px solid rgba(148,163,184,0.12)",display:"flex",gap:"0.45rem",flexWrap:"wrap"},children:[
+          {label:"⚖️ Analisis Pasal KUHP Baru (UU 1/2023)",prompt:"Jelaskan pemetaan pasal KUHP Baru (UU No. 1 Tahun 2023) pada Laporan Polisi."},
+          {label:"🔄 SOP Sinkronisasi DORS",prompt:"Bagaimana langkah sinkronisasi dan cek duplikat LP dari Portal Integrasi DORS?"},
+          {label:"📋 Panduan Selra (P21/SP3/RJ)",prompt:"Jelaskan ketentuan pencatatan Penyelesaian Perkara (Selra) di sistem CAS."}
+        ].map((q,i)=>(0,a.jsx)("button",{key:i,type:"button",onClick:()=>sendMessage(q.prompt),style:{padding:"0.28rem 0.65rem",borderRadius:999,border:"1px solid rgba(56,189,248,0.35)",background:"rgba(2,132,199,0.14)",color:"#38bdf8",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},children:q.label}))}),
+        (0,a.jsxs)("form",{onSubmit:ev=>{ev.preventDefault();sendMessage();},style:{padding:"0.85rem 1.1rem",borderTop:"1px solid rgba(148,163,184,0.16)",background:"rgba(2,6,23,0.7)",display:"flex",gap:"0.65rem",alignItems:"center"},children:[
+          (0,a.jsx)("input",{type:"text",value:msgText,onChange:e=>setMsgText(e.target.value),placeholder:selectedId===-1?"Tanyakan ke AI Agen Taktis CAS (KUHP Baru, DORS, Selra, Susopsgas)…":"Ketik pesan kedinasan terenkripsi…",style:{flex:1,padding:"0.65rem 1rem",borderRadius:999,border:"1px solid #334155",background:"#0f172a",color:"#f8fafc",fontSize:"0.85rem",outline:"none"}}),
+          (0,a.jsx)("button",{type:"submit",disabled:sending||!msgText.trim(),style:{padding:"0.65rem 1.25rem",borderRadius:999,border:"none",background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:sending?"Mengirim…":"Kirim ➤"})
+        ]})
+      ]})
+    ]})
+  ]});
+}
+
+function CasKoneksiFullPage({user:curUser,searchStr}){
+  const router=(0,r.useRouter)();
+  const sp=new URLSearchParams(searchStr||"");
+  const profileIdParam=sp.get("profileId")||sp.get("id")||sp.get("u")||"";
+  const[activeTab,setActiveTab]=(0,t.useState)("all");
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[page,setPage]=(0,t.useState)(1);
+  const[users,setUsers]=(0,t.useState)([]);
+  const[total,setTotal]=(0,t.useState)(0);
+  const[totalPages,setTotalPages]=(0,t.useState)(1);
+  const[loading,setLoading]=(0,t.useState)(!0);
+  const[togglingId,setTogglingId]=(0,t.useState)(null);
+
+  const[profData,setProfData]=(0,t.useState)(null);
+  const[profPosts,setProfPosts]=(0,t.useState)([]);
+  const[profConns,setProfConns]=(0,t.useState)([]);
+  const[profTab,setProfTab]=(0,t.useState)("posts");
+  const[profLoading,setProfLoading]=(0,t.useState)(!1);
+  const[profErr,setProfErr]=(0,t.useState)("");
+
+  const loadDirectory=(0,t.useCallback)(async()=>{
+    setLoading(!0);
+    try{
+      const params={page,limit:24,search:searchQ.trim()||void 0};
+      if(activeTab==="connected"&&curUser?.id)params.connected_to=curUser.id;
+      const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params});
+      let list=Array.isArray(res.data?.data)?res.data.data:[];
+      if(activeTab==="recommendations"&&curUser?.id){
+        list=list.filter(u=>Number(u.id)!==Number(curUser.id));
+      }
+      setUsers(list);
+      setTotal(Number(res.data?.total||list.length));
+      setTotalPages(Number(res.data?.total_pages||1));
+    }catch{setUsers([]);}finally{setLoading(!1);}
+  },[page,searchQ,activeTab,curUser?.id]);
+
+  (0,t.useEffect)(()=>{
+    if(!profileIdParam){loadDirectory();}
+  },[profileIdParam,loadDirectory]);
+
+  (0,t.useEffect)(()=>{
+    if(!profileIdParam){setProfData(null);setProfErr("");return;}
+    let cancelled=!1;
+    async function fetchOtherProfile(){
+      setProfLoading(!0);setProfErr("");
+      try{
+        const res=await M.apiAuth.get(`/bdb/jukrah/network/profile/${encodeURIComponent(profileIdParam)}`);
+        const d=res.data?.data;
+        if(!cancelled&&d){
+          setProfData(d);
+          const[fRes,cRes]=await Promise.all([
+            M.apiAuth.get("/bdb/jukrah/feed",{params:{author_id:d.id,limit:20}}).catch(()=>({data:{data:[]}})),
+            M.apiAuth.get("/bdb/jukrah/network/users",{params:{connected_to:d.id,limit:24}}).catch(()=>({data:{data:[]}}))
+          ]);
+          if(!cancelled){
+            const allFeed=Array.isArray(fRes.data?.data)?fRes.data.data:[];
+            setProfPosts(allFeed.filter(p=>Number(p.author_id)===Number(d.id)));
+            setProfConns(Array.isArray(cRes.data?.data)?cRes.data.data:[]);
+          }
+        }
+      }catch(err){
+        if(!cancelled)setProfErr(err?.response?.data?.message||"Profil personil tidak ditemukan.");
+      }finally{
+        if(!cancelled)setProfLoading(!1);
+      }
+    }
+    fetchOtherProfile();
+    return()=>{cancelled=!0;};
+  },[profileIdParam]);
+
+  const handleFollowToggle=async(targetUid,inProfile=!1)=>{
+    if(!targetUid||togglingId)return;
+    setTogglingId(targetUid);
+    try{
+      const res=await M.apiAuth.post(`/bdb/jukrah/follow/${targetUid}`);
+      const isNowConn=Boolean(res.data?.data?.is_connected);
+      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:isNowConn,is_connected:isNowConn,connection_status:isNowConn?"ACCEPTED":"NONE"}:u));
+      if(inProfile&&profData&&Number(profData.id)===Number(targetUid)){
+        setProfData(prev=>({...prev,is_following:isNowConn,is_connected:isNowConn,connections_count:Math.max(0,Number(prev.connections_count||0)+(isNowConn?1:-1))}));
+      }
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setTogglingId(null);}
+  };
+
+  if(profileIdParam){
+    return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"rgba(15,23,42,0.9)",color:"#38bdf8",fontWeight:800,fontSize:"0.82rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.45rem"},children:"← Kembali ke Daftar Koneksi Personil"}),
+        (0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"#94a3b8",fontWeight:600},children:"🔒 Mode Profil Personil Kedinasan (Terenkripsi)"})
+      ]}),
+      profLoading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"rgba(15,23,42,0.88)",borderRadius:16,color:"#38bdf8",fontWeight:700},children:"⏳ Memuat profil lengkap personil…"}):profErr||!profData?(0,a.jsxs)("div",{style:{padding:"2.5rem",textAlign:"center",background:"rgba(15,23,42,0.88)",borderRadius:16,border:"1px solid #ef4444",color:"#fca5a5"},children:[
+        (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"1rem",marginBottom:"0.5rem"},children:profErr||"Profil personil tidak ditemukan."}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.45rem 1rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:700,cursor:"pointer"},children:"Kembali ke Direktori Koneksi"})
+      ]}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+        (0,a.jsxs)("div",{style:{borderRadius:18,overflow:"hidden",background:"rgba(15,23,42,0.94)",border:"1px solid rgba(56,189,248,0.28)",boxShadow:"0 18px 45px rgba(0,0,0,0.4)"},children:[
+          (0,a.jsx)("div",{style:{height:175,background:profData.banner_theme&&profData.banner_theme.startsWith("linear-gradient")?profData.banner_theme:`url(${profData.banner_theme||"/images/default-banner-polri.jpg"}) center/cover no-repeat`,position:"relative"}}),
+          (0,a.jsxs)("div",{style:{padding:"0 1.5rem 1.5rem",position:"relative"},children:[
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",flexWrap:"wrap",gap:"1rem",marginTop:"-48px",marginBottom:"1rem"},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",gap:"1rem",flexWrap:"wrap"},children:[
+                (0,a.jsx)("img",{src:profData.photo_url||"/images/default-avatar-polki.png",alt:profData.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:96,height:96,borderRadius:"50%",objectFit:"cover",border:"4px solid #0f172a",background:"#0f172a",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}),
+                (0,a.jsxs)("div",{style:{paddingBottom:"0.2rem"},children:[
+                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
+                    (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.3rem",fontWeight:800,color:"#f8fafc"},children:profData.name}),
+                    (0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,background:"rgba(56,189,248,0.16)",border:"1px solid rgba(56,189,248,0.4)",color:"#38bdf8",fontSize:"0.72rem",fontWeight:800},children:`@${profData.callsign||profData.username}`})
+                  ]}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.84rem",color:"#cbd5e1",fontWeight:600,marginTop:"0.2rem"},children:`${profData.pangkat||"Personil Polri"} · ${profData.satker_nama||profData.satker||"Polri"}`})
+                ]})
+              ]}),
+              Number(profData.id)!==Number(curUser?.id)&&(0,a.jsxs)("div",{style:{display:"flex",gap:"0.55rem",flexWrap:"wrap"},children:[
+                (0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleFollowToggle(profData.id,!0),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:profData.is_following?"1px solid #34d399":"none",background:profData.is_following?"rgba(16,185,129,0.2)":"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:profData.is_following?"#34d399":"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:profData.is_following?"✓ Terhubung (Mengikuti)":"➕ Ikuti / Hubungkan"}),
+                (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${profData.id}`),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"rgba(2,132,199,0.2)",color:"#38bdf8",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:"💬 Kirim Pesan Taktis"})
+              ]})
+            ]}),
+            profData.social_media?.bio&&(0,a.jsx)("p",{style:{margin:"0 0 1rem",fontSize:"0.85rem",color:"#e2e8f0",lineHeight:1.5,background:"rgba(2,6,23,0.45)",padding:"0.75rem 1rem",borderRadius:10,border:"1px solid rgba(148,163,184,0.14)"},children:profData.social_media.bio}),
+            (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:"0.75rem"},children:[
+              {label:"Postingan Sharese",val:profData.posts_count??profPosts.length,color:"#38bdf8"},
+              {label:"Jejaring Terhubung",val:profData.connections_count||0,color:"#34d399"},
+              {label:"Satuan Kerja",val:profData.satker||"Polri",color:"#a78bfa"},
+              {label:"Pangkat / Peran",val:profData.pangkat||profData.role_bdb||"Personil",color:"#fbbf24"}
+            ].map((st,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.75rem 0.95rem",borderRadius:12,background:"rgba(2,6,23,0.55)",border:"1px solid rgba(148,163,184,0.16)"},children:[
+              (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",fontWeight:700},children:st.label}),
+              (0,a.jsx)("div",{style:{fontSize:"1.02rem",fontWeight:800,color:st.color,marginTop:"0.2rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:st.val})
+            ]}))})
+          ]})
+        ]}),
+        (0,a.jsxs)("div",{style:{display:"flex",gap:"0.5rem",borderBottom:"1px solid rgba(148,163,184,0.2)",paddingBottom:"0.5rem"},children:[
+          {id:"posts",label:`📝 Postingan Personil (${profPosts.length})`},
+          {id:"connections",label:`🤝 Jejaring Koneksi (${profConns.length})`},
+          {id:"info",label:"🪪 Identitas Kedinasan"}
+        ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setProfTab(tb.id),style:{padding:"0.5rem 1rem",borderRadius:10,border:profTab===tb.id?"1px solid #38bdf8":"1px solid transparent",background:profTab===tb.id?"rgba(2,132,199,0.25)":"rgba(15,23,42,0.6)",color:profTab===tb.id?"#38bdf8":"#94a3b8",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:tb.label}))}),
+        profTab==="posts"&&(0,a.jsx)("div",{style:{display:"grid",gap:"0.75rem"},children:profPosts.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"rgba(15,23,42,0.8)",borderRadius:14,color:"#94a3b8"},children:"Personil ini belum memiliki postingan publik di linimasa Sharese."}):profPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"1rem 1.2rem",borderRadius:14,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.74rem",color:"#94a3b8",marginBottom:"0.45rem"},children:[
+            (0,a.jsx)("span",{style:{color:"#38bdf8",fontWeight:700},children:`@${profData.callsign} · ${profData.satker}`}),
+            (0,a.jsx)("span",{children:p.created_at?new Date(p.created_at).toLocaleString("id-ID"):""})
+          ]}),
+          (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"#f8fafc",whiteSpace:"pre-wrap",lineHeight:1.55},children:p.content}),
+          (0,a.jsxs)("div",{style:{display:"flex",gap:"1rem",marginTop:"0.65rem",fontSize:"0.75rem",color:"#94a3b8"},children:[
+            (0,a.jsx)("span",{children:`👍 ${Object.values(p.reaction_counts||{}).reduce((a,b)=>Number(a)+Number(b),0)} Apresiasi`}),
+            (0,a.jsx)("span",{children:`💬 ${p.comments_count||0} Komentar`}),
+            (0,a.jsx)("span",{children:`🔁 ${p.repost_count||0} Terusan`})
+          ]})
+        ]}))}),
+        profTab==="connections"&&(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(250px, 1fr))",gap:"0.75rem"},children:profConns.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"rgba(15,23,42,0.8)",borderRadius:14,color:"#94a3b8",gridColumn:"1 / -1"},children:"Belum ada daftar koneksi yang ditampilkan."}):profConns.map(c=>(0,a.jsxs)("div",{key:c.id,onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${c.id}`),style:{padding:"0.85rem",borderRadius:12,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(148,163,184,0.18)",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer"},children:[
+          (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:c.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}),
+          (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"#f8fafc",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.name}),
+            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#38bdf8"},children:`@${c.callsign||c.username}`}),
+            (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.satker})
+          ]})
+        ]}))}),
+        profTab==="info"&&(0,a.jsx)("div",{style:{padding:"1.25rem",borderRadius:14,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(148,163,184,0.18)",display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))",gap:"1rem"},children:[
+          {k:"Nama Lengkap",v:profData.name},
+          {k:"Callsign Sharese",v:"@"+(profData.callsign||profData.username)},
+          {k:"Pangkat / Golongan",v:profData.pangkat||"-"},
+          {k:"Jabatan",v:profData.jabatan||"-"},
+          {k:"Satuan Kerja (Satker)",v:profData.satker_nama||profData.satker||"Polri"},
+          {k:"Email Kedinasan",v:profData.email_polri||profData.email||"-"}
+        ].map((row,idx)=>(0,a.jsxs)("div",{key:idx,children:[
+          (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",fontWeight:700},children:row.k}),
+          (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"#f8fafc",fontWeight:700,marginTop:"0.2rem"},children:row.v})
+        ]}))})
+      ]})
+    ]});
+  }
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"👥 Jejaring & Koneksi Personil Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Direktori resmi personil Polri di seluruh Satker & Polda. Hubungkan jejaring dan klik kartu personil untuk membuka profil lengkap."})
+      ]}),
+      (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#38bdf8",padding:"0.4rem 0.85rem",borderRadius:999,background:"rgba(2,132,199,0.16)",border:"1px solid rgba(56,189,248,0.35)"},children:`Total Personil Aktif: ${total.toLocaleString("id-ID")}`})
+    ]}),
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",background:"rgba(15,23,42,0.9)",padding:"0.85rem 1rem",borderRadius:14,border:"1px solid rgba(56,189,248,0.22)"},children:[
+      (0,a.jsx)("div",{style:{display:"flex",gap:"0.45rem",flexWrap:"wrap"},children:[
+        {id:"all",label:"🌐 Seluruh Direktori Personil"},
+        {id:"connected",label:"🤝 Terhubung / Mengikuti"},
+        {id:"recommendations",label:"✨ Rekomendasi Rekan Sejawat"}
+      ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setActiveTab(tb.id);setPage(1);},style:{padding:"0.45rem 0.9rem",borderRadius:9,border:activeTab===tb.id?"1.5px solid #38bdf8":"1px solid #334155",background:activeTab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"#0f172a",color:"#fff",fontSize:"0.78rem",fontWeight:700,cursor:"pointer"},children:tb.label}))}),
+      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>{setSearchQ(e.target.value);setPage(1);},placeholder:"🔍 Cari nama personil, callsign, NRP, atau Satker…",style:{flex:"1 1 260px",maxWidth:"420px",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid #334155",background:"#020617",color:"#f8fafc",fontSize:"0.82rem"}})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"#94a3b8"},children:"⏳ Memuat direktori jejaring personil…"}):users.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"rgba(15,23,42,0.85)",borderRadius:14,color:"#94a3b8"},children:"Tidak ada personil yang cocok dengan pencarian Anda."}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(275px, 1fr))",gap:"0.9rem"},children:users.map(u=>{
+      const isMe=Number(u.id)===Number(curUser?.id);
+      return(0,a.jsxs)("div",{key:u.id,style:{padding:"1rem",borderRadius:14,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.18)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"0.85rem",boxShadow:"0 8px 22px rgba(0,0,0,0.22)"},children:[
+        (0,a.jsxs)("div",{onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{display:"flex",alignItems:"center",gap:"0.8rem",cursor:"pointer"},title:"Klik untuk membuka profil lengkap personil ini",children:[
+          (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:54,height:54,borderRadius:"50%",objectFit:"cover",border:"2px solid #0284c7",flexShrink:0}}),
+          (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"#f8fafc",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#38bdf8",fontWeight:700},children:`@${u.callsign||u.username}`}),
+            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:`${u.pangkat||"Personil"} · ${u.satker||"Polri"}`})
+          ]})
+        ]}),
+        (0,a.jsxs)("div",{style:{display:"flex",gap:"0.45rem"},children:[
+          (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:"1px solid rgba(148,163,184,0.28)",background:"rgba(30,41,59,0.7)",color:"#e2e8f0",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},children:"👤 Profil"}),
+          !isMe&&(0,a.jsx)("button",{type:"button",disabled:togglingId===u.id,onClick:()=>handleFollowToggle(u.id,!1),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:u.is_following?"1px solid #34d399":"none",background:u.is_following?"rgba(16,185,129,0.18)":"#2563eb",color:u.is_following?"#34d399":"#fff",fontSize:"0.74rem",fontWeight:800,cursor:"pointer"},children:u.is_following?"✓ Terhubung":"➕ Hubungkan"}),
+          !isMe&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${u.id}`),style:{padding:"0.42rem 0.65rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.4)",background:"rgba(2,132,199,0.16)",color:"#38bdf8",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},title:"Kirim Pesan",children:"💬"})
+        ]})
+      ]});
+    })}),
+    totalPages>1&&(0,a.jsxs)("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",gap:"0.75rem",marginTop:"0.5rem"},children:[
+      (0,a.jsx)("button",{type:"button",disabled:page<=1,onClick:()=>setPage(p=>Math.max(1,p-1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid #334155",background:"#0f172a",color:"#e2e8f0",cursor:page<=1?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"← Sebelumnya"}),
+      (0,a.jsx)("span",{style:{fontSize:"0.8rem",color:"#cbd5e1",fontWeight:700},children:`Halaman ${page} dari ${totalPages}`}),
+      (0,a.jsx)("button",{type:"button",disabled:page>=totalPages,onClick:()=>setPage(p=>Math.min(totalPages,p+1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid #334155",background:"#0f172a",color:"#e2e8f0",cursor:page>=totalPages?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"Berikutnya →"})
+    ]})
+  ]});
+}
+
+function CasNotifikasiFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[items,setItems]=(0,t.useState)([]);
+  const[unreadDinas,setUnreadDinas]=(0,t.useState)(0);
+  const[unreadSocial,setUnreadSocial]=(0,t.useState)(0);
+  const[filterCat,setFilterCat]=(0,t.useState)("all");
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[loading,setLoading]=(0,t.useState)(!0);
+
+  const loadAll=(0,t.useCallback)(async()=>{
+    setLoading(!0);
+    try{
+      const res=await M.apiAuth.get("/bdb/jukrah/notifications");
+      setItems(Array.isArray(res.data?.data)?res.data.data:[]);
+      setUnreadDinas(Number(res.data?.unread_dinas||0));
+      setUnreadSocial(Number(res.data?.unread_social||0));
+    }catch{setItems([]);}finally{setLoading(!1);}
+  },[]);
+
+  (0,t.useEffect)(()=>{loadAll();},[loadAll]);
+
+  const markAllRead=async()=>{
+    try{
+      await M.apiAuth.post("/bdb/jukrah/notifications/read-all",{category:filterCat==="dinas"||filterCat==="social"?filterCat:void 0});
+      setItems(prev=>prev.map(it=>({...it,is_read:!0})));
+      setUnreadDinas(0);setUnreadSocial(0);
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}
+  };
+
+  const handleClickItem=async(it)=>{
+    if(!it.is_read&&typeof it.id==="number"){
+      try{
+        await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`);
+        try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+      }catch{}
+    }
+    casNav(router,it.link||"/cms/broadcaster");
+  };
+
+  const filtered=items.filter(it=>{
+    if(filterCat==="dinas"&&it.category!=="dinas")return!1;
+    if(filterCat==="social"&&it.category!=="social")return!1;
+    if(filterCat==="unread"&&it.is_read)return!1;
+    if(searchQ.trim()){
+      const q=searchQ.toLowerCase();
+      return String(it.title||"").toLowerCase().includes(q)||String(it.message||"").toLowerCase().includes(q)||String(it.sender_handle||"").toLowerCase().includes(q);
+    }
+    return!0;
+  });
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🔔 Pusat Notifikasi Terpadu (Kedinasan & Sharese)"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Notifikasi real-time terisolasi sesuai akun & kewenangan Satker (Jukrah, Pelimpahan LP, Susopsgas, Kerma, Mention, Koneksi & Obrolan)."})
+      ]}),
+      (0,a.jsx)("button",{type:"button",onClick:markAllRead,style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"✓✓ Tandai Semua Sudah Dibaca"})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))",gap:"0.85rem"},children:[
+      {label:"Total Notifikasi Aktif",val:items.length,color:"#38bdf8"},
+      {label:"Kedinasan Belum Dibaca",val:unreadDinas,color:"#fbbf24"},
+      {label:"Sosial & Pesan Belum Dibaca",val:unreadSocial,color:"#34d399"}
+    ].map((c,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.9rem 1.1rem",borderRadius:14,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+      (0,a.jsx)("div",{style:{fontSize:"0.74rem",color:"#94a3b8",fontWeight:700},children:c.label}),
+      (0,a.jsx)("div",{style:{fontSize:"1.45rem",fontWeight:800,color:c.color,marginTop:"0.2rem"},children:c.val})
+    ]}))}),
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",padding:"0.8rem 1rem",borderRadius:14,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(56,189,248,0.2)"},children:[
+      (0,a.jsx)("div",{style:{display:"flex",gap:"0.4rem",flexWrap:"wrap"},children:[
+        {id:"all",label:"📋 Semua Notifikasi"},
+        {id:"dinas",label:"📢 Kedinasan & Operasional"},
+        {id:"social",label:"💬 Sosial, Koneksi & Obrolan"},
+        {id:"unread",label:"🔴 Belum Dibaca"}
+      ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setFilterCat(tb.id),style:{padding:"0.42rem 0.85rem",borderRadius:8,border:filterCat===tb.id?"1.5px solid #38bdf8":"1px solid #334155",background:filterCat===tb.id?"#0284c7":"#0f172a",color:"#fff",fontSize:"0.76rem",fontWeight:700,cursor:"pointer"},children:tb.label}))}),
+      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>setSearchQ(e.target.value),placeholder:"🔍 Filter isi notifikasi…",style:{padding:"0.45rem 0.85rem",borderRadius:8,border:"1px solid #334155",background:"#020617",color:"#f8fafc",fontSize:"0.8rem",minWidth:"220px"}})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"#94a3b8"},children:"⏳ Memuat daftar notifikasi…"}):filtered.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"rgba(15,23,42,0.85)",borderRadius:14,color:"#94a3b8"},children:"Tidak ada notifikasi pada kategori ini."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.55rem"},children:filtered.map((it,idx)=>(0,a.jsxs)("div",{key:it.id+"_"+idx,onClick:()=>handleClickItem(it),style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"1rem",padding:"0.9rem 1.1rem",borderRadius:12,background:it.is_read?"rgba(15,23,42,0.82)":"linear-gradient(90deg, rgba(2,132,199,0.22), rgba(15,23,42,0.92))",border:it.is_read?"1px solid rgba(148,163,184,0.16)":"1px solid rgba(56,189,248,0.5)",borderLeft:it.category==="dinas"?"4px solid #38bdf8":"4px solid #a78bfa",cursor:"pointer"},children:[
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",alignItems:"flex-start",minWidth:0,flex:1},children:[
+        (0,a.jsx)("div",{style:{width:38,height:38,borderRadius:"50%",background:it.category==="dinas"?"rgba(56,189,248,0.16)":"rgba(167,139,250,0.16)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.05rem",flexShrink:0},children:it.category==="dinas"?"📢":it.type==="message"?"💬":it.type==="connection"?"🤝":"🔔"}),
+        (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
+            (0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.1rem 0.45rem",borderRadius:4,background:it.category==="dinas"?"rgba(56,189,248,0.2)":"rgba(167,139,250,0.2)",color:it.category==="dinas"?"#38bdf8":"#c4b5fd"},children:it.category==="dinas"?"KEDINASAN":String(it.type||"SOSIAL").toUpperCase()}),
+            (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.88rem",color:"#f8fafc"},children:it.title||"Notifikasi Sistem"}),
+            !it.is_read&&(0,a.jsx)("span",{style:{width:8,height:8,borderRadius:"50%",background:"#ef4444"}})
+          ]}),
+          (0,a.jsx)("div",{style:{fontSize:"0.82rem",color:"#cbd5e1",marginTop:"0.22rem",lineHeight:1.45},children:it.message}),
+          (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#64748b",marginTop:"0.3rem"},children:`${it.sender_handle?it.sender_handle+" · ":""}${it.created_at?new Date(it.created_at).toLocaleString("id-ID"):""}`})
+        ]})
+      ]}),
+      (0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"#38bdf8",fontWeight:800,flexShrink:0,alignSelf:"center"},children:"Buka ➔"})
+    ]}))})
+  ]});
+}
+
+function CasInsightFullPage({user:curUser}){
+  const[data,setData]=(0,t.useState)(null);
+  const[loading,setLoading]=(0,t.useState)(!0);
+
+  (0,t.useEffect)(()=>{
+    M.apiAuth.get("/bdb/jukrah/insight").then(res=>{setData(res.data?.data||null);}).catch(()=>{}).finally(()=>setLoading(!1));
+  },[]);
+
+  const d=data||{};
+  const topPosts=Array.isArray(d.top_posts)?d.top_posts:[];
+  const satkerDist=Array.isArray(d.satker_distribution)?d.satker_distribution:[];
+  const maxSat=Math.max(1,...satkerDist.map(s=>Number(s.personil_count||0)));
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{children:[
+      (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"📈 Insight & Analitik Akun Sharese"}),
+      (0,a.jsx)("p",{className:"cms-page-sub",children:"Statistik jangkauan publikasi, tingkat konfirmasi baca (Read Receipts), interaksi sejawat, dan sebaran keterlibatan per Satker."})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"#94a3b8"},children:"⏳ Menghitung metrik analitik akun Anda…"}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(185px, 1fr))",gap:"0.85rem"},children:[
+        {label:"Estimasi Jangkauan (Reach)",val:Number(d.estimated_reach||0).toLocaleString("id-ID"),sub:"Impresi Linimasa Polri",color:"#38bdf8"},
+        {label:"Total Postingan Aktif",val:Number(d.total_posts||0).toLocaleString("id-ID"),sub:`${d.total_jukrah_posts||0} Jukrah Kedinasan`,color:"#a78bfa"},
+        {label:"Total Apresiasi Diterima",val:Number(d.total_reactions_received||0).toLocaleString("id-ID"),sub:"Reaksi Personil",color:"#34d399"},
+        {label:"Diskusi & Komentar",val:Number(d.total_comments_received||0).toLocaleString("id-ID"),sub:`${d.total_reposts||0} Kali Diteruskan`,color:"#fbbf24"},
+        {label:"Konfirmasi Baca Jukrah",val:Number(d.total_read_receipts||0).toLocaleString("id-ID"),sub:"Read Receipts Tercatat",color:"#f472b6"},
+        {label:"Jejaring Koneksi Aktif",val:Number(d.total_connections||0).toLocaleString("id-ID"),sub:`${d.total_messages||0} Pesan Taktis`,color:"#60a5fa"}
+      ].map((k,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"1rem 1.15rem",borderRadius:14,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"#94a3b8",fontWeight:700},children:k.label}),
+        (0,a.jsx)("div",{style:{fontSize:"1.55rem",fontWeight:800,color:k.color,margin:"0.25rem 0"},children:k.val}),
+        (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#64748b",fontWeight:600},children:k.sub})
+      ]}))}),
+      (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))",gap:"1rem"},children:[
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"#f8fafc"},children:"🏢 Sebaran Interaksi & Jejaring per Satker"}),
+          satkerDist.length===0?(0,a.jsx)("div",{style:{color:"#94a3b8",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada data distribusi Satker."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem"},children:satkerDist.map((s,idx)=>{
+            const pct=Math.max(8,Math.round(Number(s.personil_count||0)/maxSat*100));
+            return(0,a.jsxs)("div",{key:idx,children:[
+              (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.78rem",marginBottom:"0.22rem"},children:[
+                (0,a.jsx)("span",{style:{color:"#e2e8f0",fontWeight:700},children:s.satker_label}),
+                (0,a.jsxs)("span",{style:{color:"#38bdf8",fontWeight:800},children:[s.personil_count," personil"]})
+              ]}),
+              (0,a.jsx)("div",{style:{height:8,borderRadius:999,background:"#1e293b",overflow:"hidden"},children:(0,a.jsx)("div",{style:{width:`${pct}%`,height:"100%",background:"linear-gradient(90deg, #0284c7, #38bdf8)",borderRadius:999}})})
+            ]});
+          })})
+        ]}),
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"#f8fafc"},children:"🔥 Postingan dengan Performa Tertinggi"}),
+          topPosts.length===0?(0,a.jsx)("div",{style:{color:"#94a3b8",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada publikasi pada akun Anda."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem",maxHeight:"320px",overflowY:"auto"},children:topPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"0.75rem 0.9rem",borderRadius:10,background:"rgba(2,6,23,0.55)",border:"1px solid rgba(148,163,184,0.14)"},children:[
+            (0,a.jsx)("div",{style:{fontSize:"0.8rem",color:"#f8fafc",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:p.content}),
+            (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",marginTop:"0.4rem",fontSize:"0.72rem",color:"#94a3b8"},children:[
+              (0,a.jsx)("span",{style:{color:"#34d399",fontWeight:700},children:`👍 ${p.reactions_count} Reaksi`}),
+              (0,a.jsx)("span",{style:{color:"#38bdf8",fontWeight:700},children:`💬 ${p.comments_count} Komentar`}),
+              (0,a.jsx)("span",{style:{color:"#fbbf24",fontWeight:700},children:`✓✓ ${p.reads_count} Dibaca`})
+            ]})
+          ]}))})
+        ]})
+      ]})
+    ]})
+  ]});
+}
+
+function CasKeamananPengaturanFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[tab,setTab]=(0,t.useState)("password");
+  const[oldPass,setOldPass]=(0,t.useState)("");
+  const[newPass,setNewPass]=(0,t.useState)("");
+  const[confPass,setConfPass]=(0,t.useState)("");
+  const[msg,setMsg]=(0,t.useState)(null);
+  const[saving,setSaving]=(0,t.useState)(!1);
+  const[prefs,setPrefs]=(0,t.useState)(()=>{
+    try{return JSON.parse(localStorage.getItem("cas_security_prefs")||"null")||{default_audience:"public",show_online:!0,ticker_enabled:!0};}catch{return{default_audience:"public",show_online:!0,ticker_enabled:!0};}
+  });
+
+  const handlePassSubmit=async(ev)=>{
+    ev.preventDefault();
+    if(!oldPass||!newPass){setMsg({type:"err",text:"Kata sandi lama dan kata sandi baru wajib diisi."});return;}
+    if(newPass.length<8){setMsg({type:"err",text:"Kata sandi baru minimal 8 karakter."});return;}
+    if(newPass!==confPass){setMsg({type:"err",text:"Konfirmasi kata sandi baru tidak cocok."});return;}
+    setSaving(!0);setMsg(null);
+    try{
+      await M.apiAuth.post("/user/me/change-password",{old_password:oldPass,current_password:oldPass,new_password:newPass,confirm_password:confPass});
+      setMsg({type:"ok",text:"Kata sandi berhasil diperbarui."});
+      setOldPass("");setNewPass("");setConfPass("");
+    }catch(err){
+      setMsg({type:"err",text:err?.response?.data?.message||"Gagal mengubah kata sandi. Periksa kata sandi lama Anda."});
+    }finally{setSaving(!1);}
+  };
+
+  const savePrefs=async()=>{
+    setSaving(!0);setMsg(null);
+    try{
+      localStorage.setItem("cas_security_prefs",JSON.stringify(prefs));
+      await M.apiAuth.patch("/user/me/profile",{social_media:{...(curUser?.social_media||{}),privacy_prefs:prefs}}).catch(()=>{});
+      setMsg({type:"ok",text:"Preferensi keamanan & privasi Sharese berhasil disimpan."});
+    }catch{
+      setMsg({type:"err",text:"Gagal menyimpan preferensi."});
+    }finally{setSaving(!1);}
+  };
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{children:[
+      (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🛡️ Keamanan & Pengaturan Akun Sharese"}),
+      (0,a.jsx)("p",{className:"cms-page-sub",children:"Kelola kata sandi, autentikasi dua faktor (TOTP/OTP), privasi linimasa Sharese, dan keamanan sesi aktif Anda."})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+      {id:"password",label:"🔑 Ubah Kata Sandi"},
+      {id:"2fa",label:"📱 Autentikasi 2FA / TOTP"},
+      {id:"privacy",label:"👁️ Privasi & Preferensi Sharese"},
+      {id:"session",label:"💻 Informasi Sesi & Perangkat"}
+    ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setTab(tb.id);setMsg(null);},style:{padding:"0.5rem 1rem",borderRadius:10,border:tab===tb.id?"1.5px solid #38bdf8":"1px solid #334155",background:tab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"#0f172a",color:"#fff",fontSize:"0.8rem",fontWeight:800,cursor:"pointer"},children:tb.label}))}),
+    msg&&(0,a.jsx)("div",{style:{padding:"0.75rem 1rem",borderRadius:10,background:msg.type==="ok"?"rgba(16,185,129,0.2)":"rgba(239,68,68,0.2)",border:msg.type==="ok"?"1px solid #34d399":"1px solid #f87171",color:msg.type==="ok"?"#a7f3d0":"#fecaca",fontSize:"0.82rem",fontWeight:700},children:msg.text}),
+    tab==="password"&&(0,a.jsxs)("form",{onSubmit:handlePassSubmit,style:{maxWidth:"520px",padding:"1.35rem",borderRadius:16,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.2)",display:"grid",gap:"0.9rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"#f8fafc"},children:"Perbarui Kata Sandi Akun CAS"}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"#cbd5e1",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Saat Ini"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:oldPass,onChange:e=>setOldPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid #334155",background:"#020617",color:"#f8fafc",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"#cbd5e1",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Baru (Min. 8 Karakter)"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:newPass,onChange:e=>setNewPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid #334155",background:"#020617",color:"#f8fafc",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"#cbd5e1",fontWeight:700,marginBottom:"0.3rem"},children:"Konfirmasi Kata Sandi Baru"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:confPass,onChange:e=>setConfPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid #334155",background:"#020617",color:"#f8fafc",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem"},children:[
+        (0,a.jsx)("button",{type:"submit",disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer"},children:saving?"Menyimpan…":"Simpan Kata Sandi Baru"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-password"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid #334155",background:"transparent",color:"#38bdf8",fontWeight:700,cursor:"pointer"},children:"Buka Modul Reset Password Lengkap ➔"})
+      ]})
+    ]}),
+    tab==="2fa"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.2)",display:"grid",gap:"0.9rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"#f8fafc"},children:"Autentikasi Dua Faktor (TOTP Google/Microsoft Authenticator)"}),
+      (0,a.jsx)("p",{style:{margin:0,fontSize:"0.83rem",color:"#94a3b8",lineHeight:1.5},children:"Lindungi akun kedinasan Anda dengan verifikasi 2 langkah (TOTP QR Code atau OTP Email Polri) setiap kali melakukan login dari perangkat baru."}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.65rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-totp"),style:{padding:"0.55rem 1.15rem",borderRadius:8,border:"none",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,cursor:"pointer"},children:"📱 Konfigurasi / Reset QR TOTP Sekarang"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid #334155",background:"#0f172a",color:"#e2e8f0",fontWeight:700,cursor:"pointer"},children:"👤 Kembali ke Profil Saya"})
+      ]})
+    ]}),
+    tab==="privacy"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.2)",display:"grid",gap:"1rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"#f8fafc"},children:"Preferensi Privasi & Visibilitas Sharese"}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.8rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.35rem"},children:"Audiens Default Saat Membuat Postingan Baru"}),
+        (0,a.jsxs)("select",{value:prefs.default_audience,onChange:e=>setPrefs(p=>({...p,default_audience:e.target.value})),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid #334155",background:"#020617",color:"#f8fafc"},children:[
+          (0,a.jsx)("option",{value:"public",children:"🌐 Publik Seluruh Jajaran Polri"}),
+          (0,a.jsx)("option",{value:"regional",children:"🏢 Internal Satker / Polda Terkait"}),
+          (0,a.jsx)("option",{value:"friends",children:"🤝 Hanya Jejaring Koneksi"})
+        ]})
+      ]}),
+      (0,a.jsxs)("label",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.84rem",color:"#e2e8f0",cursor:"pointer"},children:[
+        (0,a.jsx)("input",{type:"checkbox",checked:Boolean(prefs.show_online),onChange:e=>setPrefs(p=>({...p,show_online:e.target.checked}))}),
+        "Tampilkan indikator status Online (Aktif) pada menu Obrolan & Koneksi"
+      ]}),
+      (0,a.jsx)("button",{type:"button",onClick:savePrefs,disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer",justifySelf:"start"},children:"Simpan Preferensi Privasi"})
+    ]}),
+    tab==="session"&&(0,a.jsxs)("div",{style:{maxWidth:"620px",padding:"1.35rem",borderRadius:16,background:"rgba(15,23,42,0.92)",border:"1px solid rgba(148,163,184,0.2)",display:"grid",gap:"0.85rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"#f8fafc"},children:"Sesi Login Kedinasan Aktif"}),
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem",fontSize:"0.82rem"},children:[
+        {k:"Nama Personil",v:curUser?.name||"-"},
+        {k:"Username / Callsign",v:formatUserCallsign(curUser)||"-"},
+        {k:"Role RBAC",v:curUser?.role_bdb||"operator"},
+        {k:"Satker",v:curUser?.satker_nama||curUser?.satker||"Polri"}
+      ].map((r,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.65rem 0.85rem",borderRadius:10,background:"#020617",border:"1px solid #1e293b"},children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#94a3b8"},children:r.k}),
+        (0,a.jsx)("div",{style:{fontWeight:800,color:"#f8fafc",marginTop:"0.15rem"},children:r.v})
+      ]}))})
+    ]})
+  ]});
+}
+
+function CasPusatBantuanFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[cards,setCards]=(0,t.useState)([]);
+  const[loading,setLoading]=(0,t.useState)(!0);
+  const canManage=["superadmin","admin_binops"].includes(String(curUser?.role_bdb||"").toLowerCase());
+
+  (0,t.useEffect)(()=>{
+    M.apiAuth.get("/bdb/jukrah/pusat-bantuan-cards").then(res=>{
+      setCards(Array.isArray(res.data?.data)?res.data.data:[]);
+    }).catch(()=>{}).finally(()=>setLoading(!1));
+  },[]);
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1.15rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🎧 Pusat Bantuan & Dukungan Operasional CAS"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Layanan Helpdesk Teknis & Operasional 24/7 Robinopsnal Bareskrim Polri untuk seluruh jajaran Polda, Polres, dan Polsek."})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.55rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=obrolan&partner=-1"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid #38bdf8",background:"rgba(2,132,199,0.22)",color:"#38bdf8",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"🤖 Tanya AI Agen Taktis CAS"}),
+        canManage&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/pengaturan/pusat-bantuan"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"⚙️ Kelola Kartu Pusat Bantuan"})
+      ]})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"#94a3b8"},children:"⏳ Memuat saluran Pusat Bantuan…"}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:"1rem"},children:cards.map((c,idx)=>(0,a.jsxs)("div",{key:c.id||idx,style:{padding:"1.25rem",borderRadius:16,background:"linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.9))",border:"1px solid rgba(56,189,248,0.28)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 12px 28px rgba(0,0,0,0.28)"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.65rem"},children:[
+          (0,a.jsx)("span",{style:{fontSize:"1.5rem"},children:c.icon==="whatsapp"?"💬":c.icon==="mail"?"✉️":c.icon==="phone"?"☎️":"📘"}),
+          c.badge&&(0,a.jsx)("span",{style:{fontSize:"0.68rem",fontWeight:800,padding:"0.18rem 0.55rem",borderRadius:999,background:"rgba(56,189,248,0.16)",color:"#38bdf8",border:"1px solid rgba(56,189,248,0.35)"},children:c.badge})
+        ]}),
+        (0,a.jsx)("h3",{style:{margin:"0 0 0.35rem",fontSize:"1rem",fontWeight:800,color:"#f8fafc"},children:c.title||c.judul}),
+        (0,a.jsx)("p",{style:{margin:0,fontSize:"0.8rem",color:"#94a3b8",lineHeight:1.45},children:c.subtitle||c.deskripsi}),
+        (0,a.jsx)("div",{style:{marginTop:"0.75rem",fontSize:"0.88rem",fontWeight:800,color:"#38bdf8",fontFamily:"monospace"},children:c.contact||c.kontak||c.nilai||""})
+      ]}),
+      (0,a.jsx)("a",{href:c.action_url||c.link||"/cms/panduan",target:(c.action_url||"").startsWith("http")?"_blank":"_self",rel:"noreferrer",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"0.55rem 1rem",borderRadius:10,background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontSize:"0.8rem",fontWeight:800,textDecoration:"none"},children:"Hubungi / Buka Layanan ➔"})
+    ]}))}),
+    (0,a.jsxs)("div",{style:{padding:"1.25rem",borderRadius:16,background:"rgba(15,23,42,0.9)",border:"1px solid rgba(148,163,184,0.18)"},children:[
+      (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.98rem",fontWeight:800,color:"#f8fafc"},children:"💡 Pertanyaan Umum (FAQ Operasional & Teknis CAS)"}),
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:"0.85rem"},children:[
+        {q:"Bagaimana cara sinkronisasi data LP dari DORS?",a:"Buka menu Portal Integrasi → Masuk → Tarik Data, pilih rentang tanggal, lalu tinjau di Staging & Cek Duplikat sebelum Import ke Database."},
+        {q:"Bagaimana cara menambahkan Penyelesaian Perkara (Selra)?",a:"Pada menu Laporan → Rekap, pilih detail LP terkait lalu unggah dokumen Selra (P21, SP3, RJ, atau Pelimpahan) sesuai alur dokumen penyidikan."},
+        {q:"Bagaimana jika lupa kode TOTP / ganti perangkat HP?",a:"Buka menu Sharese → Keamanan → Autentikasi 2FA / TOTP atau hubungi Helpdesk Robinopsnal untuk reset token perangkat."}
+      ].map((f,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.9rem",borderRadius:12,background:"rgba(2,6,23,0.55)",border:"1px solid rgba(148,163,184,0.14)"},children:[
+        (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"#38bdf8",marginBottom:"0.3rem"},children:f.q}),
+        (0,a.jsx)("div",{style:{fontSize:"0.78rem",color:"#cbd5e1",lineHeight:1.45},children:f.a})
+      ]}))})
+    ]})
+  ]});
+}
+
+e.s(["default",0,function({children:e}){let s=(0,r.useRouter)(),n=(0,r.usePathname)(),qSearch=useCasLocationSearch(),spMain=new URLSearchParams(qSearch||""),activeView=spMain.get("view")||"",activeMode=spMain.get("mode")||"",[i,o]=(0,t.useState)(!1),[c,u]=(0,t.useState)(null),[d,p]=(0,t.useState)([]),[m,f]=(0,t.useState)(!1),[h,g]=(0,t.useState)(!1),[k,b]=(0,t.useState)(null),y=(0,t.useRef)(null);(0,t.useEffect)(()=>{let e=(0,R.getAuth)(),tok=localStorage.getItem("auth.access_token")||e?.access_token||"",lastAct=Number(localStorage.getItem("bdb.auth.last_activity")||0),isPublicShare="undefined"!=typeof window&&(window.location.pathname.startsWith("/cms/panduan")||window.location.pathname.startsWith("/cms/broadcaster"))&&new URLSearchParams(window.location.search).has("share");if(!tok||(lastAct&&Date.now()-lastAct>144e5)){if(isPublicShare){o(!0);return}(0,R.logout)();window.location.replace("/login");return}let a=(0,R.getUser)();u(a),b((0,R.getImpersonatorStash)()),g("1"===localStorage.getItem("cms_sidebar_collapsed"));let isFresh=!1;try{let pl=JSON.parse(atob(tok.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));isFresh=Number(pl?.exp||0)*1e3>Date.now()+5e3}catch(_e){}if(isFresh)o(!0);M.apiAuth.get("/bdb/menu-access").then(e=>{if(0===e?.data?.status){if(isPublicShare){u(null);o(!0);return}(0,R.logout)();window.location.replace("/login?expired=1");return}p(e.data?.data?.overrides||[]);o(!0)}).catch(()=>{let cur=localStorage.getItem("auth.access_token")||(0,R.getAuth)()?.access_token;if(!cur||!isFresh){if(isPublicShare){u(null);o(!0);return}(0,R.logout)();window.location.replace("/login?expired=1")}}),"superadmin"!==String(a?.role_bdb||"").toLowerCase()&&M.api.get("/Authentication/maintenance-status").then(e=>{let a=e.data?.data;a?.enabled&&s.replace("/maintenance")}).catch(()=>{})},[s]),(0,t.useEffect)(()=>{document.querySelector(".cms-main")?.scrollTo({top:0})},[n,qSearch]),(0,t.useEffect)(()=>{let e=y.current;if(!e)return;let a=()=>{let h=Math.ceil(e.offsetHeight||e.getBoundingClientRect().height||0);h>0&&document.documentElement.style.setProperty("--cms-header-h",`${h}px`)};a();let t=new ResizeObserver(a);return t.observe(e),window.addEventListener("resize",a),window.addEventListener("orientationchange",a),()=>{t.disconnect(),window.removeEventListener("resize",a),window.removeEventListener("orientationchange",a)}},[n,i]),(0,t.useEffect)(()=>{if("undefined"==typeof document)return;let tipEl=document.getElementById("cms-global-title-tip");if(!tipEl){tipEl=document.createElement("div");tipEl.id="cms-global-title-tip";tipEl.className="cms-global-title-tip";tipEl.style.display="none";document.body.appendChild(tipEl)}let hideTip=()=>{if(tipEl)tipEl.style.display="none"};let showTip=(btn,text)=>{if(!tipEl||!btn||!text)return;tipEl.textContent=text;tipEl.style.display="block";let r=btn.getBoundingClientRect(),vw=window.innerWidth||360,vh=window.innerHeight||640,w=Math.min(288,vw-20);tipEl.style.width=w+"px";let left=Math.max(10,Math.min(r.left+r.width/2-w/2,vw-w-10)),top=r.bottom+8;if(top+110>vh)top=Math.max(10,r.top-90);tipEl.style.left=left+"px";tipEl.style.top=top+"px"};let enhanceDom=()=>{document.querySelectorAll(".cms-page-sub").forEach(sub=>{let txt=(sub.textContent||"").trim();if(!txt)return;let parent=sub.parentElement,title=parent?.querySelector(".cms-page-title")||sub.previousElementSibling;if(title&&title.classList?.contains("cms-page-title")){sub.classList.add("cms-page-sub-hidden");let existing=title.querySelector(".cms-title-info-btn")||parent?.querySelector(".cms-title-info-btn");if(!existing){let btn=document.createElement("button");btn.type="button";btn.className="cms-title-info-btn";btn.setAttribute("aria-label","Informasi Halaman");btn.dataset.tip=txt;btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>';btn.addEventListener("click",ev=>{ev.stopPropagation();ev.preventDefault();if("block"===tipEl.style.display&&tipEl.textContent===btn.dataset.tip)hideTip();else showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseenter",()=>{if(window.innerWidth>768)showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseleave",()=>{if(window.innerWidth>768)hideTip()});title.appendChild(btn)}else if(existing.dataset.tip!==txt){existing.dataset.tip=txt}}});document.querySelectorAll(".lp-stat span, .dash-minicard span").forEach(sp=>{if(0===sp.childElementCount&&String.fromCharCode(9432)===(sp.textContent||"").trim()){sp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>'}});document.querySelectorAll(".p-datatable table").forEach(tbl=>{let ths=tbl.querySelectorAll("thead > tr:first-child > th");if(ths.length<4)return;let h1=(ths[0]?.textContent||"").trim().toUpperCase();if("NO"===h1||"NO."===h1||"#"===h1){ths[0].classList.add("cas-sticky-col-1");ths[1]?.classList.add("cas-sticky-col-2");tbl.querySelectorAll("tbody > tr").forEach(tr=>{let tds=tr.children;if(tds.length>=2&&!tds[0].hasAttribute("colspan")){tds[0].classList.add("cas-sticky-col-1");tds[1].classList.add("cas-sticky-col-2")}})}})};enhanceDom();let obs=new MutationObserver(()=>{enhanceDom()}),mainEl=document.querySelector(".cms-content")||document.body;obs.observe(mainEl,{childList:!0,subtree:!0});window.addEventListener("scroll",hideTip,!0);document.addEventListener("click",hideTip);return()=>{obs.disconnect();window.removeEventListener("scroll",hideTip,!0);document.removeEventListener("click",hideTip)}},[n,qSearch,i]);let j=(0,t.useMemo)(()=>(function(e,a){let{isSuperadmin:t}=(0,R.deriveRoles)(e),r=function(e){let{isSuperadmin:a}=(0,R.deriveRoles)(e);return a?"superadmin":String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase()||"viewer"}(e),s=new Map;(a||[]).forEach(e=>s.set(`${String(e.role).toLowerCase()}|${e.menu_key}`,e.allowed));let n=[];for(let e of D.MENU_CATALOG){let a=e.items.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>{let a=e.children?.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>({label:e.label,icon:e.icon,to:e.to}));return{label:e.label,icon:e.icon,to:e.to,children:a?.length?a:void 0}});a.length&&n.push({label:e.label,items:a})}return n})(c,d),[c,d]),v=(0,t.useMemo)(()=>(0,R.deriveRoles)(c).label,[c]),isPublicShare="undefined"!=typeof window&&(window.location.pathname.startsWith("/cms/panduan")||window.location.pathname.startsWith("/cms/broadcaster"))&&new URLSearchParams(window.location.search).has("share"),isSysSettingsPage=["/cms/pengaturan/email","/cms/pengaturan/login-otp","/cms/pengaturan/maintenance","/cms/pengaturan/pusat-bantuan","/cms/master/alur-dokumen","/cms/master/organisasi-role","/cms/master/menu"].some(p=>n===p||n.startsWith(p+"/")),customViewContent=(()=>{if(n==="/cms/broadcaster"){if(activeView==="obrolan")return(0,a.jsx)(CasObrolanFullPage,{user:c,searchStr:qSearch});if(activeView==="koneksi")return(0,a.jsx)(CasKoneksiFullPage,{user:c,searchStr:qSearch});if(activeView==="notifikasi")return(0,a.jsx)(CasNotifikasiFullPage,{user:c,searchStr:qSearch});if(activeView==="insight")return(0,a.jsx)(CasInsightFullPage,{user:c,searchStr:qSearch});if(activeView==="pusat-bantuan")return(0,a.jsx)(CasPusatBantuanFullPage,{user:c,searchStr:qSearch})}if(n==="/cms/profile"&&activeView==="keamanan")return(0,a.jsx)(CasKeamananPengaturanFullPage,{user:c,searchStr:qSearch});return null})();if(i&&isPublicShare&&!c)return(0,a.jsx)("div",{className:"cms-public-share-root",style:{minHeight:"100vh",background:"#0f172a",color:"#f8fafc"},children:e});return i?(0,a.jsxs)("div",{className:`cms-shell${h?" cms-collapsed":""}`,children:[(0,a.jsx)(l,{id:"fld-0-gigr76s0g8t-17",name:"field_0_gigr76s0g8t_17",sections:j,open:m,onNavigate:()=>f(!1)}),m&&(0,a.jsx)("div",{className:"cms-overlay",onClick:()=>f(!1)}),(0,a.jsxs)("div",{className:"cms-main",children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@media(max-width:900px){.cms-header-fixed{left:0!important;right:0!important;width:100%!important}.cms-main{width:100%!important;min-width:0!important;-webkit-overflow-scrolling:touch!important;overflow-y:auto!important}.cms-sticky-top{position:static!important;top:auto!important;z-index:auto!important}}@media(max-width:640px){.cms-topbar{padding:0 0.75rem!important;gap:0.4rem!important;height:3.5rem!important}.cms-user-meta{display:none!important}.cms-user-avatar{width:2rem!important;height:2rem!important;font-size:0.8rem!important}.cms-breadcrumb{padding:0.4rem 0.75rem!important;gap:0.35rem!important;font-size:0.76rem!important;overflow-x:auto!important;width:100%!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}.cms-breadcrumb::-webkit-scrollbar{display:none}.cms-bc-back{padding:0.25rem 0.5rem!important;font-size:0.75rem!important;flex-shrink:0!important;white-space:nowrap!important}.cms-breadcrumb ol{flex-wrap:nowrap!important;white-space:nowrap!important}.cms-content{padding-left:0.75rem!important;padding-right:0.75rem!important;padding-bottom:1.5rem!important;width:100%!important;box-sizing:border-box!important}}@media(max-width:768px){.p-datatable{max-width:100%!important}.p-datatable .p-datatable-wrapper{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}.p-datatable-header{padding:0.75rem!important;flex-direction:column!important;align-items:stretch!important;gap:0.5rem!important}}"}}),(0,a.jsxs)("div",{ref:y,className:"cms-header-fixed",children:[k&&(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.6rem",flexWrap:"wrap",background:"#7c3aed",color:"#fff",padding:"0.5rem 1rem",fontSize:"0.85rem",fontWeight:600},children:[(0,a.jsx)(B.UserCog,{size:16}),(0,a.jsxs)("span",{children:["Anda sedang masuk sebagai ",(0,a.jsx)("strong",{children:c?.name||c?.email})," (",(0,R.deriveRoles)(c).label,") — sesi superadmin ",(0,a.jsx)("strong",{children:k.user?.name})," tersimpan."]}),(0,a.jsx)("button",{type:"button",onClick:function(){(0,R.stopImpersonation)()&&(window.location.href="/cms/master/user")},style:{background:"#fff",color:"#7c3aed",border:"none",borderRadius:6,padding:"0.25rem 0.75rem",fontWeight:700,fontSize:"0.8rem",cursor:"pointer"},children:"Kembali ke Akun Saya"})]}),(0,a.jsx)(L,{id:"fld-0-gigr76s0g8t-18",name:"field_0_gigr76s0g8t_18",user:c,roleLabel:v,onToggleSidebar:()=>f(e=>!e),onToggleCollapse:function(){g(e=>{let a=!e;try{localStorage.setItem("cms_sidebar_collapsed",a?"1":"0")}catch{}return a})}}),(0,a.jsx)($,{id:"fld-0-gigr76s0g8t-19",name:"field_0_gigr76s0g8t_19",})]}),(0,a.jsxs)("main",{className:"cms-content",children:[!customViewContent&&isSysSettingsPage&&(0,a.jsx)(CasKelolaPengaturanTabs,{user:c,pathname:n}),customViewContent||(n==="/cms/panduan"?(0,a.jsx)("div",{style:{display:"contents"},children:e},"panduan_"+activeMode):e)]}),(0,a.jsx)(TacticalMessengerWidget,{})]})]}):null}],93989)}]);

@@ -26,7 +26,7 @@ interface AuthRouteData {
 // 10 MB -- sebelumnya FileInterceptor('file') di bawah TANPA limits (unlimited), risiko resource
 // exhaustion krn decorator ini otomatis kepasang di SETIAP route yg pakai @Route (bukan cuma yg
 // benar2 terima file). Nilai sama dgn IMPORT_FILE_LIMITS yg dipakai terpisah di beberapa controller.
-const DEFAULT_FILE_LIMITS = { limits: { fileSize: 10 * 1024 * 1024 } };
+const DEFAULT_FILE_LIMITS = { limits: { fileSize: 25 * 1024 * 1024 } };
 
 export function Route(data: AuthRouteData): MethodDecorator {
   const name = data.name.split('.');

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { DOC_UPLOAD_LIMITS } from '../common/upload-limits';
@@ -20,12 +20,19 @@ export class BdbKasusAtensiController {
         return this.service.list(this.uid(req), query);
     }
 
-    // ===== Lampiran (MinIO) — literal path 2 segmen, tak bentrok dengan ':id' =====
+    // ===== Lampiran (MinIO) — mendukung pemisahan SPRIN (multi-revisi) vs DOKUMENTASI =====
     @Post(':id/attachments')
-    @UseInterceptors(FilesInterceptor('files', 20, DOC_UPLOAD_LIMITS))
-    uploadAttachments(@Param('id') id: string, @UploadedFiles() files: Array<any>, @Req() req: any) {
+    @UseInterceptors(AnyFilesInterceptor(DOC_UPLOAD_LIMITS))
+    uploadAttachments(@Param('id') id: string, @UploadedFiles() files: Array<any>, @Body() body: any, @Req() req: any) {
         const mapped = (files || []).map((f) => ({ buffer: f.buffer, originalname: f.originalname, mimetype: f.mimetype, size: f.size }));
-        return this.service.addAttachments(Number(id), this.uid(req), mapped);
+        return this.service.addAttachments(Number(id), this.uid(req), mapped, body || {});
+    }
+
+    @Post(':id/lampiran')
+    @UseInterceptors(AnyFilesInterceptor(DOC_UPLOAD_LIMITS))
+    uploadLampiran(@Param('id') id: string, @UploadedFiles() files: Array<any>, @Body() body: any, @Req() req: any) {
+        const mapped = (files || []).map((f) => ({ buffer: f.buffer, originalname: f.originalname, mimetype: f.mimetype, size: f.size }));
+        return this.service.addAttachments(Number(id), this.uid(req), mapped, body || {});
     }
 
     @Get(':id/attachments')
@@ -33,8 +40,18 @@ export class BdbKasusAtensiController {
         return this.service.listAttachments(Number(id), this.uid(req));
     }
 
+    @Get(':id/lampiran')
+    listLampiran(@Param('id') id: string, @Req() req: any) {
+        return this.service.listAttachments(Number(id), this.uid(req));
+    }
+
     @Delete('attachments/:attId')
     removeAttachment(@Param('attId') attId: string, @Req() req: any) {
+        return this.service.removeAttachment(Number(attId), this.uid(req));
+    }
+
+    @Delete('lampiran/:attId')
+    removeLampiran(@Param('attId') attId: string, @Req() req: any) {
         return this.service.removeAttachment(Number(attId), this.uid(req));
     }
 

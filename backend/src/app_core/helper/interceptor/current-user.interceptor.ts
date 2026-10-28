@@ -16,8 +16,8 @@ export class CurrentUserInterceptor implements NestInterceptor {
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const request = context.switchToHttp().getRequest();
-        // Allow DPO archive and photo direct preview, and secure tokenized media stream
-        if (request.url && (((request.url.includes('/dpo/') || request.url.includes('/pihak-terlibat/')) && (request.url.includes('/arsip') || request.url.includes('/foto'))) || request.url.includes('/bdb/jukrah/stream/'))) {
+        // Allow DPO archive and photo direct preview, secure tokenized media stream, and public share verification gate
+        if (request.url && (((request.url.includes('/dpo/') || request.url.includes('/pihak-terlibat/')) && (request.url.includes('/arsip') || request.url.includes('/foto'))) || request.url.includes('/bdb/jukrah/stream/') || request.url.includes('/bdb/jukrah/share-challenge') || request.url.includes('/bdb/jukrah/verify-share'))) {
             return next.handle();
         }
         const authHeader = request.headers['authorization'];

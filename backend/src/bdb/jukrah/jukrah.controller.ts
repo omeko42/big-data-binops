@@ -23,6 +23,26 @@ export class JukrahController {
     }
 
     // =========================================================================
+    // SHARE LINK BERHASH & PORTAL VERIFIKASI EKSTERNAL ("SIAPA KAMU?")
+    // =========================================================================
+    @Get('share-challenge')
+    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string) {
+        return this.service.getShareChallenge(token, id ? parseInt(id, 10) : undefined);
+    }
+
+    @Post('verify-share')
+    verifyShareViewer(@Req() req: any, @Body() body: any) {
+        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+        const userAgent = String(req.headers?.['user-agent'] || '');
+        return this.service.verifyShareViewer(body || {}, { ip, userAgent });
+    }
+
+    @Get('shared/:token')
+    getSharedPost(@Req() req: any, @Param('token') token: string) {
+        return this.service.getSharedPost(req?.user, token);
+    }
+
+    // =========================================================================
     // JUKRAHCASTER SOCIAL FEED & POSTS
     // =========================================================================
     @Get('feed')
@@ -72,7 +92,47 @@ export class JukrahController {
 
     @Get('network/profile/:id')
     getNetworkProfile(@Req() req: any, @Param('id') id: string) {
-        return this.service.getNetworkProfile(req?.user, parseInt(id, 10));
+        return this.service.getNetworkProfile(req?.user, id);
+    }
+
+    @Post('follow/:id')
+    toggleFollow(@Req() req: any, @Param('id') id: string) {
+        return this.service.toggleFollowUser(req?.user, parseInt(id, 10));
+    }
+
+    @Post('network/connect/:id')
+    connectNetworkUser(@Req() req: any, @Param('id') id: string) {
+        return this.service.connectNetworkUser(req?.user, parseInt(id, 10));
+    }
+
+    @Post('network/disconnect/:id')
+    disconnectNetworkUser(@Req() req: any, @Param('id') id: string) {
+        return this.service.disconnectNetworkUser(req?.user, parseInt(id, 10));
+    }
+
+    @Get('messages/conversations')
+    getMessageConversations(@Req() req: any, @Query() q: Record<string, any>) {
+        return this.service.getMessageConversations(req?.user, q || {});
+    }
+
+    @Get('messages/thread/:targetId')
+    getMessageThread(@Req() req: any, @Param('targetId') targetId: string) {
+        return this.service.getMessageThread(req?.user, parseInt(targetId, 10));
+    }
+
+    @Post('messages/send')
+    sendMessage(@Req() req: any, @Body() body: any) {
+        return this.service.sendSocialMessage(req?.user, body || {});
+    }
+
+    @Get('insight')
+    getAccountInsight(@Req() req: any) {
+        return this.service.getAccountInsight(req?.user);
+    }
+
+    @Get('pusat-bantuan-cards')
+    getPusatBantuanCards(@Req() req: any) {
+        return this.service.getPusatBantuanCards(req?.user);
     }
 
     @Get('post/:id/reactions')
@@ -158,6 +218,16 @@ export class JukrahController {
     @Post('post/:id/panic-takedown')
     panicTakedown(@Req() req: any, @Param('id') id: string) {
         return this.service.panicTakedown(req?.user, parseInt(id, 10));
+    }
+
+    @Post('post/:id/toggle-official')
+    toggleOfficialJukrah(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.toggleOfficialJukrah(req?.user, parseInt(id, 10), body?.is_official_jukrah);
+    }
+
+    @Post('post/:id/toggle-pin')
+    togglePinPost(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.togglePinPost(req?.user, parseInt(id, 10), body?.is_pinned);
     }
 
     // =========================================================================

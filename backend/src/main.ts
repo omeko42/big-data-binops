@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppCoreModule } from './app_core/app_core.module';
 import * as dotenv from 'dotenv';
+import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
 // somewhere in your initialization file
 import { ErrorExceptionFilter } from '@app_core/helper/service/errorException.helper.service';
@@ -25,6 +26,8 @@ async function bootstrap() {
     appCoreModule.setApplication(app);
     dotenv.config();
 
+    app.use(express.json({ limit: '50mb' }));
+    app.use(express.urlencoded({ limit: '50mb', extended: true }));
     app.use(cookieParser());
     app.useGlobalFilters(new ErrorExceptionFilter());
     app.use(compression());

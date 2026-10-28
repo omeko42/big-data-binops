@@ -1058,13 +1058,20 @@ children:[
           let roleStr = String(item.author_role || '').toLowerCase();
           let callsign = (function() {
             let idStr = String(item.author_id || '');
-            /* dynamic handle */
             let c = String(item.author_callsign || '').trim().replace(/^@/, '');
             let invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
             let u = String(item.author_username || '').trim().replace(/^@/, '');
+            if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_') && !/^\d{6,10}$/.test(u)) return '@' + u;
+            if (c && !invalid.includes(c.toLowerCase()) && !c.startsWith('user_') && !/^\d{6,10}$/.test(c)) return '@' + c;
+            let h = String(item.author_handle || '').trim().replace(/^@/, '');
+            if (h && !invalid.includes(h.toLowerCase()) && !h.startsWith('user_') && !/^\d{6,10}$/.test(h)) return '@' + h;
+            let nm = String(item.author_name || '').trim();
+            if (nm && !invalid.includes(nm.toLowerCase())) {
+              let cleanNm = nm.split(',')[0].trim().toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
+              if (cleanNm.length >= 3) return '@' + cleanNm;
+            }
             if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_')) return '@' + u;
             if (c && !invalid.includes(c.toLowerCase()) && !c.startsWith('user_')) return '@' + c;
-            if (c && !invalid.includes(c.toLowerCase())) return '@' + c;
             let seed = idStr || 'polri';
             let num = 0;
             for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
@@ -1073,11 +1080,19 @@ children:[
           })();
           let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? '#6366f1' : ((roleStr === 'operator') ? '#0095f6' : '#64748b'));
           let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
-          let satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : toTitleCase(item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || 'Mabes Bareskrim');
+          let rawSat = String(item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || '').trim();
+          let rawSatLow = rawSat.toLowerCase();
+          let satker = (isSuper || isUserOne || rawSatLow === 'bareskrim polri' || rawSatLow === 'badan reserse kriminal polri' || rawSatLow === 'robinopsnal bareskrim polri' || rawSatLow === 'mabes bareskrim' || (isSuper && rawSatLow === 'polri'))
+            ? 'Robinopsnal Bareskrim Polri'
+            : (rawSat || 'Polri');
+          let isOfficial = Boolean(item.is_official_jukrah);
+          let isPinned = Boolean(item.is_pinned);
+          let ackCount = Number(item.acknowledged_count || 0);
+          let sharePath = item.share_url || (item.share_hash ? `/cms/broadcaster?share=${item.share_hash}` : `/cms/broadcaster?post=${item.id}`);
           let timeStr = item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID", { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Baru saja';
           return (0,t.jsxs)("div",{
             key:item.id,
-            onClick:()=>e.push("/cms/broadcaster"),
+            onClick:()=>e.push(sharePath),
             title:"Klik untuk membuka postingan ini di Sharese",
             style:{
               display:"flex",
@@ -1085,8 +1100,8 @@ children:[
               gap:"0.32rem",
               padding:"0.55rem 0.75rem",
               borderRadius:"8px",
-              background:"rgba(255,255,255,0.02)",
-              border:"1px solid rgba(255,255,255,0.05)",
+              background:isOfficial ? "rgba(245, 158, 11, 0.06)" : "rgba(255,255,255,0.02)",
+              border:isOfficial ? "1px solid rgba(245, 158, 11, 0.35)" : "1px solid rgba(255,255,255,0.05)",
               cursor:"pointer",
               fontSize:"0.82rem",
               maxWidth:"100%",
@@ -1094,10 +1109,10 @@ children:[
               overflow:"hidden",
               transition:"background 0.15s ease"
             },
-            onMouseEnter:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.05)",
-            onMouseLeave:ev => ev.currentTarget.style.background = "rgba(255,255,255,0.02)",
+            onMouseEnter:ev => ev.currentTarget.style.background = isOfficial ? "rgba(245, 158, 11, 0.11)" : "rgba(255,255,255,0.05)",
+            onMouseLeave:ev => ev.currentTarget.style.background = isOfficial ? "rgba(245, 158, 11, 0.06)" : "rgba(255,255,255,0.02)",
             children:[
-              // Top row: Author & satker on left, reactions & time on right
+              // Top row: Author & satker & Jukrah Resmi badge on left, reactions & time & share icon on right
               (0,t.jsxs)("div",{
                 style:{
                   display:"flex",
@@ -1109,7 +1124,7 @@ children:[
                 },
                 children:[
                   (0,t.jsxs)("div",{
-                    style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},
+                    style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,flex:"1 1 auto",overflow:"hidden",flexWrap:"wrap"},
                     children:[
                       (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",whiteSpace:"nowrap",flexShrink:0},children:callsign}),
                       (0,t.jsx)("span",{
@@ -1137,6 +1152,14 @@ children:[
                           whiteSpace:"nowrap"
                         },
                         children:satker
+                      }),
+                      isPinned && (0,t.jsx)("span",{
+                        style:{fontSize:"0.64rem",fontWeight:800,padding:"0.05rem 0.4rem",borderRadius:"4px",background:"rgba(56,189,248,0.16)",color:"#38bdf8",border:"1px solid rgba(56,189,248,0.35)",whiteSpace:"nowrap"},
+                        children:"📌 Disematkan"
+                      }),
+                      isOfficial && (0,t.jsxs)("span",{
+                        style:{fontSize:"0.65rem",fontWeight:800,padding:"0.06rem 0.45rem",borderRadius:"4px",background:"rgba(245,158,11,0.18)",color:"#fbbf24",border:"1px solid rgba(245,158,11,0.45)",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:"0.25rem"},
+                        children:["📢 JUKRAH RESMI KEDINASAN", ackCount > 0 ? ` (${ackCount} personil telah konfirmasi)` : ""]
                       })
                     ]
                   }),
@@ -1145,7 +1168,21 @@ children:[
                     children:[
                       Boolean(item.total_reactions > 0) && (0,t.jsxs)("span",{style:{color:"#38bdf8",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.2rem",fontSize:"0.72rem"},children:["👍 ", item.total_reactions]}),
                       (0,t.jsx)("span",{style:{whiteSpace:"nowrap"},children:timeStr}),
-                      (0,t.jsx)("span",{style:{color:"#60a5fa",fontWeight:800},children:"➔"})
+                      (0,t.jsx)("button",{
+                        type:"button",
+                        title:"Salin Link Share Terenkripsi (Buka dengan Verifikasi di Luar Sistem)",
+                        onClick:ev => {
+                          ev.stopPropagation();
+                          let fullUrl = (typeof window !== 'undefined' ? window.location.origin : '') + sharePath;
+                          navigator.clipboard?.writeText(fullUrl);
+                          let btn = ev.currentTarget;
+                          let orig = btn.innerHTML;
+                          btn.innerHTML = '<span style="color:#16a34a;font-size:0.7rem;font-weight:800">✓</span>';
+                          setTimeout(() => { if (btn) btn.innerHTML = orig; }, 1800);
+                        },
+                        style:{background:"transparent",border:"none",color:"#3b82f6",padding:"0.15rem",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",borderRadius:"4px"},
+                        children:(0,t.jsxs)("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,t.jsx)("path",{d:"m15 17 5-5-5-5"}),(0,t.jsx)("path",{d:"M4 18v-2a4 4 0 0 1 4-4h12"})]})
+                      })
                     ]
                   })
                 ]

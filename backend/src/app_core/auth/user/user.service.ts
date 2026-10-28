@@ -45,6 +45,14 @@ export class UserService {
         this.tableHelper = new TableHelperService();
     }
 
+    generateDefaultHandle(id: any): string {
+        const seed = String(id || '0');
+        let num = 0;
+        for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+        return 'user_' + seed + code;
+    }
+
     sanitizeUsernameInput(raw: any): string | null {
         if (raw === undefined || raw === null) return null;
         let u = String(raw).trim().toLowerCase();
@@ -290,6 +298,14 @@ export class UserService {
             Timestamps: { created_by: authUser?.id ? Number(authUser.id) : null }
         } as any) as unknown as User;
         const savedUser = await this.userRepository.save(user);
+        const finalHandle = (savedUser.username && String(savedUser.username).trim())
+            ? String(savedUser.username).trim().replace(/^@/, '').toLowerCase()
+            : this.generateDefaultHandle(savedUser.id);
+        if (savedUser.username !== finalHandle || savedUser.callsign !== finalHandle) {
+            savedUser.username = finalHandle;
+            savedUser.callsign = finalHandle;
+            await this.dataSource.query('UPDATE auth_users SET username = $1, callsign = $1 WHERE id = $2', [finalHandle, savedUser.id]);
+        }
         await this.upsertPoliceProfileByEmail(savedUser.email, {
             ...rest,
             name: savedUser.name,
@@ -498,12 +514,16 @@ export class UserService {
             // kena bug create() (organisasiRoleId nyasar ke superadmin) tetap rusak akses menunya
             // walau adminnya sudah "perbaiki" lewat edit role di UI (lihat resolveOrganisasiRoleId).
             const organisasiRoleId = roleBdb !== this.normalizeBdbRole(user.role_bdb) ? await this.resolveOrganisasiRoleId(roleBdb) : null;
+            const resolvedUsername = ((dto as any).username !== undefined
+                ? (this.sanitizeUsernameInput((dto as any).username) || this.generateDefaultHandle(id))
+                : (user.username ? String(user.username).trim().replace(/^@/, '') : this.generateDefaultHandle(id)));
             const updatedData: Partial<User> = {
                 name: dto.name ?? user.name,
                 email: dto.email ? this.normalizeEmail(dto.email) : user.email,
                 email_google: (dto as any).email_google ?? user.email_google,
                 email_polri: (dto as any).email_polri ?? user.email_polri,
-                username: (dto as any).username ?? user.username,
+                username: resolvedUsername,
+                callsign: resolvedUsername,
                 password: dto.password ? await bcrypt.hash(dto.password, 10) : user.password,
                 role_name: dto.role_name || roleBdb,
                 role_bdb: roleBdb,
@@ -769,13 +789,18 @@ export class UserService {
         const resolvedGender = isFemale ? 'P' : 'L';
         mergedSocial.jenis_kelamin = resolvedGender;
         mergedSocial.gender = resolvedGender;
+        const resolvedHandle = (user.username && String(user.username).trim())
+            ? String(user.username).trim().replace(/^@/, '')
+            : ((user.callsign && String(user.callsign).trim())
+                ? String(user.callsign).trim().replace(/^@/, '')
+                : this.generateDefaultHandle(user.id));
         return {
             id: user.id,
             name: user.name,
             email: user.email,
             email_polri: user.email_polri,
-            username: user.username,
-            callsign: user.username || user.callsign || null,
+            username: resolvedHandle,
+            callsign: resolvedHandle,
             foto: resolvedCustomPhoto || user.photo_url || policeProfile?.foto || null,
             photo_url: resolvedCustomPhoto || user.photo_url || policeProfile?.foto || null,
             nrp: policeProfile?.nrp || null,
@@ -801,7 +826,35 @@ export class UserService {
      * (nama, NRP, pangkat, jabatan, satuan, no. HP). Tidak pernah lewat sini: role, scope
      * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
      */
-    async updateOwnProfile(authUser: User, dto: { name?: string; email?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string; is_pns?: boolean; jenis_kelamin?: string; gender?: string; social_media?: any; photo_url?: string; foto?: string }) {
+    async updateOwnProfile(authUser: User, dto: any = {}, file?: any) {
+        if (dto && typeof dto.social_media === 'string') {
+            try { dto.social_media = JSON.parse(dto.social_media); } catch { dto.social_media = {}; }
+        }
+        if (dto && typeof dto.is_pns === 'string') {
+            dto.is_pns = dto.is_pns === 'true' || dto.is_pns === '1';
+        }
+        if (file && file.buffer) {
+            const mime = (file.mimetype && String(file.mimetype).startsWith('image/')) ? file.mimetype : 'image/jpeg';
+            const serverDataUrl = `data:${mime};base64,${file.buffer.toString('base64')}`;
+            if (String(dto?.upload_target || '').toLowerCase() === 'banner') {
+                dto.social_media = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
+                dto.social_media.banner_theme = serverDataUrl;
+                dto.social_media.banner_v2 = true;
+            } else {
+                dto.photo_url = serverDataUrl;
+                dto.foto = serverDataUrl;
+                dto.social_media = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
+                dto.social_media.avatar_v2 = true;
+                if (dto.crop_zoom !== undefined) {
+                    dto.social_media.avatar_crop = {
+                        zoom: Number(dto.crop_zoom || 1),
+                        panX: Number(dto.crop_pan_x || 0),
+                        panY: Number(dto.crop_pan_y || 0),
+                        mode: String(dto.crop_mode || 'cover')
+                    };
+                }
+            }
+        }
         const dbUser = await this.userRepository.findOne({ where: { id: Number(authUser.id) } });
         let existingPoliceSoc: any = {};
         try {
@@ -877,19 +930,31 @@ export class UserService {
             }
         }
         if (dto.username !== undefined) {
-            const username = String(dto.username || '').trim();
-            if (this.normalizeEmail(username) !== this.normalizeEmail(authUser.username)) {
-                if (username) {
-                    const check = await this.checkIdentifierAvailability('username', username, Number(authUser.id));
-                    if (!check.available) {
-                        throw new ConflictException({ errors: { username: [`Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
-                    }
-                }
-                authUpdate.username = username || null;
+            const rawTrim = String(dto.username || '').trim();
+            const cleanU = rawTrim ? this.sanitizeUsernameInput(rawTrim) : null;
+            if (rawTrim && (!cleanU || cleanU.length < 3)) {
+                throw new BadRequestException({
+                    message: 'Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore).',
+                    errors: { username: ['Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore, tanpa @domain).'] }
+                });
             }
+            const nextUsername = cleanU || this.generateDefaultHandle(authUser.id);
+            if (this.normalizeEmail(nextUsername) !== this.normalizeEmail(dbUser?.username || authUser.username)) {
+                const check = await this.checkIdentifierAvailability('username', nextUsername, Number(authUser.id));
+                if (!check.available) {
+                    throw new ConflictException({ errors: { username: [`Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                }
+            }
+            authUpdate.username = nextUsername;
+            authUpdate.callsign = nextUsername;
         }
-        const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : authUser.email_polri;
-        const effectiveUsername = authUpdate.username !== undefined ? authUpdate.username : authUser.username;
+        const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : (dbUser?.email_polri || authUser.email_polri);
+        const effectiveUsername = authUpdate.username !== undefined
+            ? authUpdate.username
+            : ((dbUser?.username && String(dbUser.username).trim()) ? String(dbUser.username).trim().replace(/^@/, '') : ((authUser.username && String(authUser.username).trim()) ? String(authUser.username).trim().replace(/^@/, '') : this.generateDefaultHandle(authUser.id)));
+        if (dbUser?.callsign !== effectiveUsername) {
+            authUpdate.callsign = effectiveUsername;
+        }
         if (effectivePolri && effectiveUsername && this.normalizeEmail(effectivePolri) === this.normalizeEmail(effectiveUsername)) {
             throw new BadRequestException({
                 message: 'Username dan Email Dinas Polri tidak boleh sama. Gunakan username alfanumerik / alias unik.',
@@ -915,16 +980,20 @@ export class UserService {
             social_media: dto.social_media,
             ...(dto.photo_url !== undefined || dto.foto !== undefined ? { foto: dto.photo_url || dto.foto || '' } : {})
         }, this.dataSource, authUser.email_polri);
+        const finalPhoto = authUpdate.photo_url !== undefined ? authUpdate.photo_url : (dbUser?.photo_url || null);
         return {
             status: 1,
             message: 'Profil berhasil diperbarui.',
             data: {
                 ...authUser,
                 ...authUpdate,
+                photo_url: finalPhoto,
+                foto: finalPhoto,
+                social_media: authUpdate.social_media || dbUser?.social_media || {},
                 jenis_kelamin: normJk || undefined,
                 gender: normJk || undefined,
                 username: effectiveUsername,
-                callsign: (authUpdate as any).callsign || effectiveUsername
+                callsign: effectiveUsername
             }
         };
     }

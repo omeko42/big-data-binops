@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { DOC_UPLOAD_LIMITS } from '../common/upload-limits';
@@ -24,13 +24,20 @@ export class BdbOperasiSatgasController {
         return this.service.rekapLp(req?.user?.id ? Number(req.user.id) : undefined, query);
     }
 
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    @Get('rekap')
+    rekap(@Query() query: any, @Req() req: any) {
+        return this.service.rekapLp(req?.user?.id ? Number(req.user.id) : undefined, query);
+    }
+
     /** Master ringan "Jenis Operasi"/"Jenis Satgas" -- dropdown opsional, nilai baru otomatis tersimpan saat create/update. */
     @Get('jenis-master')
     listJenisMaster(@Query('kelompok') kelompok: string) {
         return this.service.listJenisMaster(kelompok);
     }
 
-    /** LP yang saat ini tertaut ke operasi/satgas ini -- isi awal LpPickerDialog. */
+    /** LP yang saat ini tertaut ke operasi/satgas ini -- isi awal LpPickerDialog & Drilldown. */
     @Get(':id/lp')
     listLinkedLp(@Param('id') id: string) {
         return this.service.listLinkedLp(Number(id));
@@ -44,12 +51,19 @@ export class BdbOperasiSatgasController {
         return this.service.setLinkedLp(Number(id), body?.lp_ids || [], req?.user?.id ? Number(req.user.id) : undefined);
     }
 
-    // ===== Lampiran (MinIO) — literal path 2 segmen, tak bentrok dengan ':id' =====
+    // ===== Lampiran (MinIO) — mendukung pemisahan SPRIN (multi-revisi) vs DOKUMENTASI =====
     @Post(':id/attachments')
-    @UseInterceptors(FilesInterceptor('files', 20, DOC_UPLOAD_LIMITS))
-    uploadAttachments(@Param('id') id: string, @UploadedFiles() files: Array<any>) {
+    @UseInterceptors(AnyFilesInterceptor(DOC_UPLOAD_LIMITS))
+    uploadAttachments(@Param('id') id: string, @UploadedFiles() files: Array<any>, @Body() body: any, @Req() req: any) {
         const mapped = (files || []).map((f) => ({ buffer: f.buffer, originalname: f.originalname, mimetype: f.mimetype, size: f.size }));
-        return this.service.addAttachments(Number(id), mapped);
+        return this.service.addAttachments(Number(id), mapped, body || {}, req?.user?.id ? Number(req.user.id) : undefined);
+    }
+
+    @Post(':id/lampiran')
+    @UseInterceptors(AnyFilesInterceptor(DOC_UPLOAD_LIMITS))
+    uploadLampiran(@Param('id') id: string, @UploadedFiles() files: Array<any>, @Body() body: any, @Req() req: any) {
+        const mapped = (files || []).map((f) => ({ buffer: f.buffer, originalname: f.originalname, mimetype: f.mimetype, size: f.size }));
+        return this.service.addAttachments(Number(id), mapped, body || {}, req?.user?.id ? Number(req.user.id) : undefined);
     }
 
     @Get(':id/attachments')
@@ -57,8 +71,18 @@ export class BdbOperasiSatgasController {
         return this.service.listAttachments(Number(id));
     }
 
+    @Get(':id/lampiran')
+    listLampiran(@Param('id') id: string) {
+        return this.service.listAttachments(Number(id));
+    }
+
     @Delete('attachments/:attId')
     removeAttachment(@Param('attId') attId: string) {
+        return this.service.removeAttachment(Number(attId));
+    }
+
+    @Delete('lampiran/:attId')
+    removeLampiran(@Param('attId') attId: string) {
         return this.service.removeAttachment(Number(attId));
     }
 

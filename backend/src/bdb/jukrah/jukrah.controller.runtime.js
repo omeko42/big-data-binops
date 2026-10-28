@@ -134,6 +134,45 @@ let JukrahController = class JukrahController {
     getNetworkProfile(req, id) {
         return this.service.getNetworkProfile(req?.user, id);
     }
+    toggleFollow(req, id) {
+        return this.service.toggleFollowUser(req?.user, parseInt(id, 10));
+    }
+    connectNetworkUser(req, id) {
+        return this.service.connectNetworkUser(req?.user, parseInt(id, 10));
+    }
+    disconnectNetworkUser(req, id) {
+        return this.service.disconnectNetworkUser(req?.user, parseInt(id, 10));
+    }
+    getMessageConversations(req, q) {
+        return this.service.getMessageConversations(req?.user, q || {});
+    }
+    getMessageThread(req, targetId) {
+        return this.service.getMessageThread(req?.user, parseInt(targetId, 10));
+    }
+    sendMessage(req, body) {
+        return this.service.sendSocialMessage(req?.user, body || {});
+    }
+    getAccountInsight(req) {
+        return this.service.getAccountInsight(req?.user);
+    }
+    getPusatBantuanCards(req) {
+        return this.service.getPusatBantuanCards(req?.user);
+    }
+    repostSocialPost(req, id, body) {
+        return this.service.repostPost(req?.user, parseInt(id, 10), body?.content);
+    }
+    editCommentPost(req, id, body) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+    editCommentPatch(req, id, body) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+    reactComment(req, id) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
+    }
+    likeComment(req, id) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
+    }
 };
 exports.JukrahController = JukrahController;
 
@@ -153,6 +192,111 @@ exports.JukrahController = JukrahController;
         __metadata("design:paramtypes", [Object, String]),
         __metadata("design:returntype", void 0)
     ], JukrahController.prototype, "getNetworkProfile", null);
+    __decorate([
+        (0, common_1.Post)('follow/:id'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "toggleFollow", null);
+    __decorate([
+        (0, common_1.Post)('network/connect/:id'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "connectNetworkUser", null);
+    __decorate([
+        (0, common_1.Post)('network/disconnect/:id'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "disconnectNetworkUser", null);
+    __decorate([
+        (0, common_1.Get)('messages/conversations'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Query)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "getMessageConversations", null);
+    __decorate([
+        (0, common_1.Get)('messages/thread/:targetId'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('targetId')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "getMessageThread", null);
+    __decorate([
+        (0, common_1.Post)('messages/send'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Body)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "sendMessage", null);
+    __decorate([
+        (0, common_1.Get)('insight'),
+        __param(0, (0, common_1.Req)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "getAccountInsight", null);
+    __decorate([
+        (0, common_1.Get)('pusat-bantuan-cards'),
+        __param(0, (0, common_1.Req)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "getPusatBantuanCards", null);
+    __decorate([
+        (0, common_1.Post)('post/:id/repost'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __param(2, (0, common_1.Body)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String, Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "repostSocialPost", null);
+    __decorate([
+        (0, common_1.Post)('comment/:id/edit'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __param(2, (0, common_1.Body)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String, Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "editCommentPost", null);
+    __decorate([
+        (0, common_1.Patch)('comment/:id'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __param(2, (0, common_1.Body)()),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String, Object]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "editCommentPatch", null);
+    __decorate([
+        (0, common_1.Post)('comment/:id/reaction'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "reactComment", null);
+    __decorate([
+        (0, common_1.Post)('comment/:id/like'),
+        __param(0, (0, common_1.Req)()),
+        __param(1, (0, common_1.Param)('id')),
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", [Object, String]),
+        __metadata("design:returntype", void 0)
+    ], JukrahController.prototype, "likeComment", null);
     __decorate([
     (0, common_1.Get)('stream/:token'),
     __param(0, (0, common_1.Param)('token')),
