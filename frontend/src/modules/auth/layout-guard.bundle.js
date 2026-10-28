@@ -1,773 +1,2212 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,67034,(e,t,r)=>{var n={675:function(e,t){"use strict";t.byteLength=function(e){var t=u(e),r=t[0],n=t[1];return(r+n)*3/4-n},t.toByteArray=function(e){var t,r,i=u(e),s=i[0],a=i[1],l=new o((s+a)*3/4-a),f=0,c=a>0?s-4:s;for(r=0;r<c;r+=4)t=n[e.charCodeAt(r)]<<18|n[e.charCodeAt(r+1)]<<12|n[e.charCodeAt(r+2)]<<6|n[e.charCodeAt(r+3)],l[f++]=t>>16&255,l[f++]=t>>8&255,l[f++]=255&t;return 2===a&&(t=n[e.charCodeAt(r)]<<2|n[e.charCodeAt(r+1)]>>4,l[f++]=255&t),1===a&&(t=n[e.charCodeAt(r)]<<10|n[e.charCodeAt(r+1)]<<4|n[e.charCodeAt(r+2)]>>2,l[f++]=t>>8&255,l[f++]=255&t),l},t.fromByteArray=function(e){for(var t,n=e.length,o=n%3,i=[],s=0,a=n-o;s<a;s+=16383)i.push(function(e,t,n){for(var o,i=[],s=t;s<n;s+=3)o=(e[s]<<16&0xff0000)+(e[s+1]<<8&65280)+(255&e[s+2]),i.push(r[o>>18&63]+r[o>>12&63]+r[o>>6&63]+r[63&o]);return i.join("")}(e,s,s+16383>a?a:s+16383));return 1===o?i.push(r[(t=e[n-1])>>2]+r[t<<4&63]+"=="):2===o&&i.push(r[(t=(e[n-2]<<8)+e[n-1])>>10]+r[t>>4&63]+r[t<<2&63]+"="),i.join("")};for(var r=[],n=[],o="u">typeof Uint8Array?Uint8Array:Array,i="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",s=0,a=i.length;s<a;++s)r[s]=i[s],n[i.charCodeAt(s)]=s;function u(e){var t=e.length;if(t%4>0)throw Error("Invalid string. Length must be a multiple of 4");var r=e.indexOf("=");-1===r&&(r=t);var n=r===t?0:4-r%4;return[r,n]}n[45]=62,n[95]=63},72:function(e,t,r){"use strict";var n=r(675),o=r(783),i="function"==typeof Symbol&&"function"==typeof Symbol.for?Symbol.for("nodejs.util.inspect.custom"):null;function s(e){if(e>0x7fffffff)throw RangeError('The value "'+e+'" is invalid for option "size"');var t=new Uint8Array(e);return Object.setPrototypeOf(t,a.prototype),t}function a(e,t,r){if("number"==typeof e){if("string"==typeof t)throw TypeError('The "string" argument must be of type string. Received type number');return f(e)}return u(e,t,r)}function u(e,t,r){if("string"==typeof e){var n=e,o=t;if(("string"!=typeof o||""===o)&&(o="utf8"),!a.isEncoding(o))throw TypeError("Unknown encoding: "+o);var i=0|p(n,o),u=s(i),l=u.write(n,o);return l!==i&&(u=u.slice(0,l)),u}if(ArrayBuffer.isView(e))return c(e);if(null==e)throw TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type "+typeof e);if(x(e,ArrayBuffer)||e&&x(e.buffer,ArrayBuffer)||"u">typeof SharedArrayBuffer&&(x(e,SharedArrayBuffer)||e&&x(e.buffer,SharedArrayBuffer)))return function(e,t,r){var n;if(t<0||e.byteLength<t)throw RangeError('"offset" is outside of buffer bounds');if(e.byteLength<t+(r||0))throw RangeError('"length" is outside of buffer bounds');return Object.setPrototypeOf(n=void 0===t&&void 0===r?new Uint8Array(e):void 0===r?new Uint8Array(e,t):new Uint8Array(e,t,r),a.prototype),n}(e,t,r);if("number"==typeof e)throw TypeError('The "value" argument must not be of type number. Received type number');var f=e.valueOf&&e.valueOf();if(null!=f&&f!==e)return a.from(f,t,r);var d=function(e){if(a.isBuffer(e)){var t=0|h(e.length),r=s(t);return 0===r.length||e.copy(r,0,0,t),r}return void 0!==e.length?"number"!=typeof e.length||function(e){return e!=e}(e.length)?s(0):c(e):"Buffer"===e.type&&Array.isArray(e.data)?c(e.data):void 0}(e);if(d)return d;if("u">typeof Symbol&&null!=Symbol.toPrimitive&&"function"==typeof e[Symbol.toPrimitive])return a.from(e[Symbol.toPrimitive]("string"),t,r);throw TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type "+typeof e)}function l(e){if("number"!=typeof e)throw TypeError('"size" argument must be of type number');if(e<0)throw RangeError('The value "'+e+'" is invalid for option "size"')}function f(e){return l(e),s(e<0?0:0|h(e))}function c(e){for(var t=e.length<0?0:0|h(e.length),r=s(t),n=0;n<t;n+=1)r[n]=255&e[n];return r}t.Buffer=a,t.SlowBuffer=function(e){return+e!=e&&(e=0),a.alloc(+e)},t.INSPECT_MAX_BYTES=50,t.kMaxLength=0x7fffffff,a.TYPED_ARRAY_SUPPORT=function(){try{var e=new Uint8Array(1),t={foo:function(){return 42}};return Object.setPrototypeOf(t,Uint8Array.prototype),Object.setPrototypeOf(e,t),42===e.foo()}catch(e){return!1}}(),!a.TYPED_ARRAY_SUPPORT&&"u">typeof console&&"function"==typeof console.error&&console.error("This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support."),Object.defineProperty(a.prototype,"parent",{enumerable:!0,get:function(){if(a.isBuffer(this))return this.buffer}}),Object.defineProperty(a.prototype,"offset",{enumerable:!0,get:function(){if(a.isBuffer(this))return this.byteOffset}}),a.poolSize=8192,a.from=function(e,t,r){return u(e,t,r)},Object.setPrototypeOf(a.prototype,Uint8Array.prototype),Object.setPrototypeOf(a,Uint8Array),a.alloc=function(e,t,r){return(l(e),e<=0)?s(e):void 0!==t?"string"==typeof r?s(e).fill(t,r):s(e).fill(t):s(e)},a.allocUnsafe=function(e){return f(e)},a.allocUnsafeSlow=function(e){return f(e)};function h(e){if(e>=0x7fffffff)throw RangeError("Attempt to allocate Buffer larger than maximum size: 0x7fffffff bytes");return 0|e}function p(e,t){if(a.isBuffer(e))return e.length;if(ArrayBuffer.isView(e)||x(e,ArrayBuffer))return e.byteLength;if("string"!=typeof e)throw TypeError('The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type '+typeof e);var r=e.length,n=arguments.length>2&&!0===arguments[2];if(!n&&0===r)return 0;for(var o=!1;;)switch(t){case"ascii":case"latin1":case"binary":return r;case"utf8":case"utf-8":return S(e).length;case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return 2*r;case"hex":return r>>>1;case"base64":return T(e).length;default:if(o)return n?-1:S(e).length;t=(""+t).toLowerCase(),o=!0}}function d(e,t,r){var o,i,s,a=!1;if((void 0===t||t<0)&&(t=0),t>this.length||((void 0===r||r>this.length)&&(r=this.length),r<=0||(r>>>=0)<=(t>>>=0)))return"";for(e||(e="utf8");;)switch(e){case"hex":return function(e,t,r){var n=e.length;(!t||t<0)&&(t=0),(!r||r<0||r>n)&&(r=n);for(var o="",i=t;i<r;++i)o+=P[e[i]];return o}(this,t,r);case"utf8":case"utf-8":return b(this,t,r);case"ascii":return function(e,t,r){var n="";r=Math.min(e.length,r);for(var o=t;o<r;++o)n+=String.fromCharCode(127&e[o]);return n}(this,t,r);case"latin1":case"binary":return function(e,t,r){var n="";r=Math.min(e.length,r);for(var o=t;o<r;++o)n+=String.fromCharCode(e[o]);return n}(this,t,r);case"base64":return o=this,i=t,s=r,0===i&&s===o.length?n.fromByteArray(o):n.fromByteArray(o.slice(i,s));case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return function(e,t,r){for(var n=e.slice(t,r),o="",i=0;i<n.length;i+=2)o+=String.fromCharCode(n[i]+256*n[i+1]);return o}(this,t,r);default:if(a)throw TypeError("Unknown encoding: "+e);e=(e+"").toLowerCase(),a=!0}}function y(e,t,r){var n=e[t];e[t]=e[r],e[r]=n}function g(e,t,r,n,o){var i;if(0===e.length)return -1;if("string"==typeof r?(n=r,r=0):r>0x7fffffff?r=0x7fffffff:r<-0x80000000&&(r=-0x80000000),(i=r*=1)!=i&&(r=o?0:e.length-1),r<0&&(r=e.length+r),r>=e.length)if(o)return -1;else r=e.length-1;else if(r<0)if(!o)return -1;else r=0;if("string"==typeof t&&(t=a.from(t,n)),a.isBuffer(t))return 0===t.length?-1:m(e,t,r,n,o);if("number"==typeof t){if(t&=255,"function"==typeof Uint8Array.prototype.indexOf)if(o)return Uint8Array.prototype.indexOf.call(e,t,r);else return Uint8Array.prototype.lastIndexOf.call(e,t,r);return m(e,[t],r,n,o)}throw TypeError("val must be string, number or Buffer")}function m(e,t,r,n,o){var i,s=1,a=e.length,u=t.length;if(void 0!==n&&("ucs2"===(n=String(n).toLowerCase())||"ucs-2"===n||"utf16le"===n||"utf-16le"===n)){if(e.length<2||t.length<2)return -1;s=2,a/=2,u/=2,r/=2}function l(e,t){return 1===s?e[t]:e.readUInt16BE(t*s)}if(o){var f=-1;for(i=r;i<a;i++)if(l(e,i)===l(t,-1===f?0:i-f)){if(-1===f&&(f=i),i-f+1===u)return f*s}else -1!==f&&(i-=i-f),f=-1}else for(r+u>a&&(r=a-u),i=r;i>=0;i--){for(var c=!0,h=0;h<u;h++)if(l(e,i+h)!==l(t,h)){c=!1;break}if(c)return i}return -1}a.isBuffer=function(e){return null!=e&&!0===e._isBuffer&&e!==a.prototype},a.compare=function(e,t){if(x(e,Uint8Array)&&(e=a.from(e,e.offset,e.byteLength)),x(t,Uint8Array)&&(t=a.from(t,t.offset,t.byteLength)),!a.isBuffer(e)||!a.isBuffer(t))throw TypeError('The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array');if(e===t)return 0;for(var r=e.length,n=t.length,o=0,i=Math.min(r,n);o<i;++o)if(e[o]!==t[o]){r=e[o],n=t[o];break}return r<n?-1:+(n<r)},a.isEncoding=function(e){switch(String(e).toLowerCase()){case"hex":case"utf8":case"utf-8":case"ascii":case"latin1":case"binary":case"base64":case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return!0;default:return!1}},a.concat=function(e,t){if(!Array.isArray(e))throw TypeError('"list" argument must be an Array of Buffers');if(0===e.length)return a.alloc(0);if(void 0===t)for(r=0,t=0;r<e.length;++r)t+=e[r].length;var r,n=a.allocUnsafe(t),o=0;for(r=0;r<e.length;++r){var i=e[r];if(x(i,Uint8Array)&&(i=a.from(i)),!a.isBuffer(i))throw TypeError('"list" argument must be an Array of Buffers');i.copy(n,o),o+=i.length}return n},a.byteLength=p,a.prototype._isBuffer=!0,a.prototype.swap16=function(){var e=this.length;if(e%2!=0)throw RangeError("Buffer size must be a multiple of 16-bits");for(var t=0;t<e;t+=2)y(this,t,t+1);return this},a.prototype.swap32=function(){var e=this.length;if(e%4!=0)throw RangeError("Buffer size must be a multiple of 32-bits");for(var t=0;t<e;t+=4)y(this,t,t+3),y(this,t+1,t+2);return this},a.prototype.swap64=function(){var e=this.length;if(e%8!=0)throw RangeError("Buffer size must be a multiple of 64-bits");for(var t=0;t<e;t+=8)y(this,t,t+7),y(this,t+1,t+6),y(this,t+2,t+5),y(this,t+3,t+4);return this},a.prototype.toString=function(){var e=this.length;return 0===e?"":0==arguments.length?b(this,0,e):d.apply(this,arguments)},a.prototype.toLocaleString=a.prototype.toString,a.prototype.equals=function(e){if(!a.isBuffer(e))throw TypeError("Argument must be a Buffer");return this===e||0===a.compare(this,e)},a.prototype.inspect=function(){var e="",r=t.INSPECT_MAX_BYTES;return e=this.toString("hex",0,r).replace(/(.{2})/g,"$1 ").trim(),this.length>r&&(e+=" ... "),"<Buffer "+e+">"},i&&(a.prototype[i]=a.prototype.inspect),a.prototype.compare=function(e,t,r,n,o){if(x(e,Uint8Array)&&(e=a.from(e,e.offset,e.byteLength)),!a.isBuffer(e))throw TypeError('The "target" argument must be one of type Buffer or Uint8Array. Received type '+typeof e);if(void 0===t&&(t=0),void 0===r&&(r=e?e.length:0),void 0===n&&(n=0),void 0===o&&(o=this.length),t<0||r>e.length||n<0||o>this.length)throw RangeError("out of range index");if(n>=o&&t>=r)return 0;if(n>=o)return -1;if(t>=r)return 1;if(t>>>=0,r>>>=0,n>>>=0,o>>>=0,this===e)return 0;for(var i=o-n,s=r-t,u=Math.min(i,s),l=this.slice(n,o),f=e.slice(t,r),c=0;c<u;++c)if(l[c]!==f[c]){i=l[c],s=f[c];break}return i<s?-1:+(s<i)},a.prototype.includes=function(e,t,r){return -1!==this.indexOf(e,t,r)},a.prototype.indexOf=function(e,t,r){return g(this,e,t,r,!0)},a.prototype.lastIndexOf=function(e,t,r){return g(this,e,t,r,!1)};function b(e,t,r){r=Math.min(e.length,r);for(var n=[],o=t;o<r;){var i,s,a,u,l=e[o],f=null,c=l>239?4:l>223?3:l>191?2:1;if(o+c<=r)switch(c){case 1:l<128&&(f=l);break;case 2:(192&(i=e[o+1]))==128&&(u=(31&l)<<6|63&i)>127&&(f=u);break;case 3:i=e[o+1],s=e[o+2],(192&i)==128&&(192&s)==128&&(u=(15&l)<<12|(63&i)<<6|63&s)>2047&&(u<55296||u>57343)&&(f=u);break;case 4:i=e[o+1],s=e[o+2],a=e[o+3],(192&i)==128&&(192&s)==128&&(192&a)==128&&(u=(15&l)<<18|(63&i)<<12|(63&s)<<6|63&a)>65535&&u<1114112&&(f=u)}null===f?(f=65533,c=1):f>65535&&(f-=65536,n.push(f>>>10&1023|55296),f=56320|1023&f),n.push(f),o+=c}var h=n,p=h.length;if(p<=4096)return String.fromCharCode.apply(String,h);for(var d="",y=0;y<p;)d+=String.fromCharCode.apply(String,h.slice(y,y+=4096));return d}function w(e,t,r){if(e%1!=0||e<0)throw RangeError("offset is not uint");if(e+t>r)throw RangeError("Trying to access beyond buffer length")}function E(e,t,r,n,o,i){if(!a.isBuffer(e))throw TypeError('"buffer" argument must be a Buffer instance');if(t>o||t<i)throw RangeError('"value" argument is out of bounds');if(r+n>e.length)throw RangeError("Index out of range")}function v(e,t,r,n,o,i){if(r+n>e.length||r<0)throw RangeError("Index out of range")}function R(e,t,r,n,i){return t*=1,r>>>=0,i||v(e,t,r,4,34028234663852886e22,-34028234663852886e22),o.write(e,t,r,n,23,4),r+4}function O(e,t,r,n,i){return t*=1,r>>>=0,i||v(e,t,r,8,17976931348623157e292,-17976931348623157e292),o.write(e,t,r,n,52,8),r+8}a.prototype.write=function(e,t,r,n){if(void 0===t)n="utf8",r=this.length,t=0;else if(void 0===r&&"string"==typeof t)n=t,r=this.length,t=0;else if(isFinite(t))t>>>=0,isFinite(r)?(r>>>=0,void 0===n&&(n="utf8")):(n=r,r=void 0);else throw Error("Buffer.write(string, encoding, offset[, length]) is no longer supported");var o,i,s,a,u,l,f,c,h=this.length-t;if((void 0===r||r>h)&&(r=h),e.length>0&&(r<0||t<0)||t>this.length)throw RangeError("Attempt to write outside buffer bounds");n||(n="utf8");for(var p=!1;;)switch(n){case"hex":return function(e,t,r,n){r=Number(r)||0;var o=e.length-r;n?(n=Number(n))>o&&(n=o):n=o;var i=t.length;n>i/2&&(n=i/2);for(var s=0;s<n;++s){var a,u=parseInt(t.substr(2*s,2),16);if((a=u)!=a)break;e[r+s]=u}return s}(this,e,t,r);case"utf8":case"utf-8":return o=t,i=r,C(S(e,this.length-o),this,o,i);case"ascii":return s=t,a=r,C(_(e),this,s,a);case"latin1":case"binary":return function(e,t,r,n){return C(_(t),e,r,n)}(this,e,t,r);case"base64":return u=t,l=r,C(T(e),this,u,l);case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return f=t,c=r,C(function(e,t){for(var r,n,o=[],i=0;i<e.length&&!((t-=2)<0);++i)n=(r=e.charCodeAt(i))>>8,o.push(r%256),o.push(n);return o}(e,this.length-f),this,f,c);default:if(p)throw TypeError("Unknown encoding: "+n);n=(""+n).toLowerCase(),p=!0}},a.prototype.toJSON=function(){return{type:"Buffer",data:Array.prototype.slice.call(this._arr||this,0)}},a.prototype.slice=function(e,t){var r=this.length;e=~~e,t=void 0===t?r:~~t,e<0?(e+=r)<0&&(e=0):e>r&&(e=r),t<0?(t+=r)<0&&(t=0):t>r&&(t=r),t<e&&(t=e);var n=this.subarray(e,t);return Object.setPrototypeOf(n,a.prototype),n},a.prototype.readUIntLE=function(e,t,r){e>>>=0,t>>>=0,r||w(e,t,this.length);for(var n=this[e],o=1,i=0;++i<t&&(o*=256);)n+=this[e+i]*o;return n},a.prototype.readUIntBE=function(e,t,r){e>>>=0,t>>>=0,r||w(e,t,this.length);for(var n=this[e+--t],o=1;t>0&&(o*=256);)n+=this[e+--t]*o;return n},a.prototype.readUInt8=function(e,t){return e>>>=0,t||w(e,1,this.length),this[e]},a.prototype.readUInt16LE=function(e,t){return e>>>=0,t||w(e,2,this.length),this[e]|this[e+1]<<8},a.prototype.readUInt16BE=function(e,t){return e>>>=0,t||w(e,2,this.length),this[e]<<8|this[e+1]},a.prototype.readUInt32LE=function(e,t){return e>>>=0,t||w(e,4,this.length),(this[e]|this[e+1]<<8|this[e+2]<<16)+0x1000000*this[e+3]},a.prototype.readUInt32BE=function(e,t){return e>>>=0,t||w(e,4,this.length),0x1000000*this[e]+(this[e+1]<<16|this[e+2]<<8|this[e+3])},a.prototype.readIntLE=function(e,t,r){e>>>=0,t>>>=0,r||w(e,t,this.length);for(var n=this[e],o=1,i=0;++i<t&&(o*=256);)n+=this[e+i]*o;return n>=(o*=128)&&(n-=Math.pow(2,8*t)),n},a.prototype.readIntBE=function(e,t,r){e>>>=0,t>>>=0,r||w(e,t,this.length);for(var n=t,o=1,i=this[e+--n];n>0&&(o*=256);)i+=this[e+--n]*o;return i>=(o*=128)&&(i-=Math.pow(2,8*t)),i},a.prototype.readInt8=function(e,t){return(e>>>=0,t||w(e,1,this.length),128&this[e])?-((255-this[e]+1)*1):this[e]},a.prototype.readInt16LE=function(e,t){e>>>=0,t||w(e,2,this.length);var r=this[e]|this[e+1]<<8;return 32768&r?0xffff0000|r:r},a.prototype.readInt16BE=function(e,t){e>>>=0,t||w(e,2,this.length);var r=this[e+1]|this[e]<<8;return 32768&r?0xffff0000|r:r},a.prototype.readInt32LE=function(e,t){return e>>>=0,t||w(e,4,this.length),this[e]|this[e+1]<<8|this[e+2]<<16|this[e+3]<<24},a.prototype.readInt32BE=function(e,t){return e>>>=0,t||w(e,4,this.length),this[e]<<24|this[e+1]<<16|this[e+2]<<8|this[e+3]},a.prototype.readFloatLE=function(e,t){return e>>>=0,t||w(e,4,this.length),o.read(this,e,!0,23,4)},a.prototype.readFloatBE=function(e,t){return e>>>=0,t||w(e,4,this.length),o.read(this,e,!1,23,4)},a.prototype.readDoubleLE=function(e,t){return e>>>=0,t||w(e,8,this.length),o.read(this,e,!0,52,8)},a.prototype.readDoubleBE=function(e,t){return e>>>=0,t||w(e,8,this.length),o.read(this,e,!1,52,8)},a.prototype.writeUIntLE=function(e,t,r,n){if(e*=1,t>>>=0,r>>>=0,!n){var o=Math.pow(2,8*r)-1;E(this,e,t,r,o,0)}var i=1,s=0;for(this[t]=255&e;++s<r&&(i*=256);)this[t+s]=e/i&255;return t+r},a.prototype.writeUIntBE=function(e,t,r,n){if(e*=1,t>>>=0,r>>>=0,!n){var o=Math.pow(2,8*r)-1;E(this,e,t,r,o,0)}var i=r-1,s=1;for(this[t+i]=255&e;--i>=0&&(s*=256);)this[t+i]=e/s&255;return t+r},a.prototype.writeUInt8=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,1,255,0),this[t]=255&e,t+1},a.prototype.writeUInt16LE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,2,65535,0),this[t]=255&e,this[t+1]=e>>>8,t+2},a.prototype.writeUInt16BE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,2,65535,0),this[t]=e>>>8,this[t+1]=255&e,t+2},a.prototype.writeUInt32LE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,4,0xffffffff,0),this[t+3]=e>>>24,this[t+2]=e>>>16,this[t+1]=e>>>8,this[t]=255&e,t+4},a.prototype.writeUInt32BE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,4,0xffffffff,0),this[t]=e>>>24,this[t+1]=e>>>16,this[t+2]=e>>>8,this[t+3]=255&e,t+4},a.prototype.writeIntLE=function(e,t,r,n){if(e*=1,t>>>=0,!n){var o=Math.pow(2,8*r-1);E(this,e,t,r,o-1,-o)}var i=0,s=1,a=0;for(this[t]=255&e;++i<r&&(s*=256);)e<0&&0===a&&0!==this[t+i-1]&&(a=1),this[t+i]=(e/s|0)-a&255;return t+r},a.prototype.writeIntBE=function(e,t,r,n){if(e*=1,t>>>=0,!n){var o=Math.pow(2,8*r-1);E(this,e,t,r,o-1,-o)}var i=r-1,s=1,a=0;for(this[t+i]=255&e;--i>=0&&(s*=256);)e<0&&0===a&&0!==this[t+i+1]&&(a=1),this[t+i]=(e/s|0)-a&255;return t+r},a.prototype.writeInt8=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,1,127,-128),e<0&&(e=255+e+1),this[t]=255&e,t+1},a.prototype.writeInt16LE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,2,32767,-32768),this[t]=255&e,this[t+1]=e>>>8,t+2},a.prototype.writeInt16BE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,2,32767,-32768),this[t]=e>>>8,this[t+1]=255&e,t+2},a.prototype.writeInt32LE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,4,0x7fffffff,-0x80000000),this[t]=255&e,this[t+1]=e>>>8,this[t+2]=e>>>16,this[t+3]=e>>>24,t+4},a.prototype.writeInt32BE=function(e,t,r){return e*=1,t>>>=0,r||E(this,e,t,4,0x7fffffff,-0x80000000),e<0&&(e=0xffffffff+e+1),this[t]=e>>>24,this[t+1]=e>>>16,this[t+2]=e>>>8,this[t+3]=255&e,t+4},a.prototype.writeFloatLE=function(e,t,r){return R(this,e,t,!0,r)},a.prototype.writeFloatBE=function(e,t,r){return R(this,e,t,!1,r)},a.prototype.writeDoubleLE=function(e,t,r){return O(this,e,t,!0,r)},a.prototype.writeDoubleBE=function(e,t,r){return O(this,e,t,!1,r)},a.prototype.copy=function(e,t,r,n){if(!a.isBuffer(e))throw TypeError("argument should be a Buffer");if(r||(r=0),n||0===n||(n=this.length),t>=e.length&&(t=e.length),t||(t=0),n>0&&n<r&&(n=r),n===r||0===e.length||0===this.length)return 0;if(t<0)throw RangeError("targetStart out of bounds");if(r<0||r>=this.length)throw RangeError("Index out of range");if(n<0)throw RangeError("sourceEnd out of bounds");n>this.length&&(n=this.length),e.length-t<n-r&&(n=e.length-t+r);var o=n-r;if(this===e&&"function"==typeof Uint8Array.prototype.copyWithin)this.copyWithin(t,r,n);else if(this===e&&r<t&&t<n)for(var i=o-1;i>=0;--i)e[i+t]=this[i+r];else Uint8Array.prototype.set.call(e,this.subarray(r,n),t);return o},a.prototype.fill=function(e,t,r,n){if("string"==typeof e){if("string"==typeof t?(n=t,t=0,r=this.length):"string"==typeof r&&(n=r,r=this.length),void 0!==n&&"string"!=typeof n)throw TypeError("encoding must be a string");if("string"==typeof n&&!a.isEncoding(n))throw TypeError("Unknown encoding: "+n);if(1===e.length){var o,i=e.charCodeAt(0);("utf8"===n&&i<128||"latin1"===n)&&(e=i)}}else"number"==typeof e?e&=255:"boolean"==typeof e&&(e=Number(e));if(t<0||this.length<t||this.length<r)throw RangeError("Out of range index");if(r<=t)return this;if(t>>>=0,r=void 0===r?this.length:r>>>0,e||(e=0),"number"==typeof e)for(o=t;o<r;++o)this[o]=e;else{var s=a.isBuffer(e)?e:a.from(e,n),u=s.length;if(0===u)throw TypeError('The value "'+e+'" is invalid for argument "value"');for(o=0;o<r-t;++o)this[o+t]=s[o%u]}return this};var A=/[^+/0-9A-Za-z-_]/g;function S(e,t){t=t||1/0;for(var r,n=e.length,o=null,i=[],s=0;s<n;++s){if((r=e.charCodeAt(s))>55295&&r<57344){if(!o){if(r>56319||s+1===n){(t-=3)>-1&&i.push(239,191,189);continue}o=r;continue}if(r<56320){(t-=3)>-1&&i.push(239,191,189),o=r;continue}r=(o-55296<<10|r-56320)+65536}else o&&(t-=3)>-1&&i.push(239,191,189);if(o=null,r<128){if((t-=1)<0)break;i.push(r)}else if(r<2048){if((t-=2)<0)break;i.push(r>>6|192,63&r|128)}else if(r<65536){if((t-=3)<0)break;i.push(r>>12|224,r>>6&63|128,63&r|128)}else if(r<1114112){if((t-=4)<0)break;i.push(r>>18|240,r>>12&63|128,r>>6&63|128,63&r|128)}else throw Error("Invalid code point")}return i}function _(e){for(var t=[],r=0;r<e.length;++r)t.push(255&e.charCodeAt(r));return t}function T(e){return n.toByteArray(function(e){if((e=(e=e.split("=")[0]).trim().replace(A,"")).length<2)return"";for(;e.length%4!=0;)e+="=";return e}(e))}function C(e,t,r,n){for(var o=0;o<n&&!(o+r>=t.length)&&!(o>=e.length);++o)t[o+r]=e[o];return o}function x(e,t){return e instanceof t||null!=e&&null!=e.constructor&&null!=e.constructor.name&&e.constructor.name===t.name}var P=function(){for(var e="0123456789abcdef",t=Array(256),r=0;r<16;++r)for(var n=16*r,o=0;o<16;++o)t[n+o]=e[r]+e[o];return t}()},783:function(e,t){t.read=function(e,t,r,n,o){var i,s,a=8*o-n-1,u=(1<<a)-1,l=u>>1,f=-7,c=r?o-1:0,h=r?-1:1,p=e[t+c];for(c+=h,i=p&(1<<-f)-1,p>>=-f,f+=a;f>0;i=256*i+e[t+c],c+=h,f-=8);for(s=i&(1<<-f)-1,i>>=-f,f+=n;f>0;s=256*s+e[t+c],c+=h,f-=8);if(0===i)i=1-l;else{if(i===u)return s?NaN:1/0*(p?-1:1);s+=Math.pow(2,n),i-=l}return(p?-1:1)*s*Math.pow(2,i-n)},t.write=function(e,t,r,n,o,i){var s,a,u,l=8*i-o-1,f=(1<<l)-1,c=f>>1,h=5960464477539062e-23*(23===o),p=n?0:i-1,d=n?1:-1,y=+(t<0||0===t&&1/t<0);for(isNaN(t=Math.abs(t))||t===1/0?(a=+!!isNaN(t),s=f):(s=Math.floor(Math.log(t)/Math.LN2),t*(u=Math.pow(2,-s))<1&&(s--,u*=2),s+c>=1?t+=h/u:t+=h*Math.pow(2,1-c),t*u>=2&&(s++,u/=2),s+c>=f?(a=0,s=f):s+c>=1?(a=(t*u-1)*Math.pow(2,o),s+=c):(a=t*Math.pow(2,c-1)*Math.pow(2,o),s=0));o>=8;e[r+p]=255&a,p+=d,a/=256,o-=8);for(s=s<<o|a,l+=o;l>0;e[r+p]=255&s,p+=d,s/=256,l-=8);e[r+p-d]|=128*y}}},o={};function i(e){var t=o[e];if(void 0!==t)return t.exports;var r=o[e]={exports:{}},s=!0;try{n[e](r,r.exports,i),s=!1}finally{s&&delete o[e]}return r.exports}i.ab="/ROOT/node_modules/next/dist/compiled/buffer/",t.exports=i(72)},54858,e=>{"use strict";let t,r,n,o;var i,s,a,u,l=e.i(47167);function f(e,t){return function(){return e.apply(t,arguments)}}let{toString:c}=Object.prototype,{getPrototypeOf:h}=Object,{iterator:p,toStringTag:d}=Symbol,y=(({hasOwnProperty:e})=>(t,r)=>e.call(t,r))(Object.prototype),g=(e,t)=>{let r=e,n=[];for(;null!=r&&r!==Object.prototype&&-1===n.indexOf(r);){if(n.push(r),y(r,t))return!0;r=h(r)}return!1},m=(t=Object.create(null),e=>{let r=c.call(e);return t[r]||(t[r]=r.slice(8,-1).toLowerCase())}),b=e=>(e=e.toLowerCase(),t=>m(t)===e),w=e=>t=>typeof t===e,{isArray:E}=Array,v=w("undefined");function R(e){return null!==e&&!v(e)&&null!==e.constructor&&!v(e.constructor)&&S(e.constructor.isBuffer)&&e.constructor.isBuffer(e)}let O=b("ArrayBuffer"),A=w("string"),S=w("function"),_=w("number"),T=e=>null!==e&&"object"==typeof e,C=e=>{if(!T(e))return!1;let t=h(e);return(null===t||t===Object.prototype||null===h(t))&&!g(e,d)&&!g(e,p)},x=b("Date"),P=b("File"),B=b("Blob"),U=b("FileList"),j="u">typeof globalThis?globalThis:"u">typeof self?self:"u">typeof window?window:e.g,N=void 0!==j.FormData?j.FormData:void 0,L=b("URLSearchParams"),[D,k,I,F]=["ReadableStream","Request","Response","Headers"].map(b);function M(e,t,{allOwnKeys:r=!1}={}){let n,o;if(null!=e)if("object"!=typeof e&&(e=[e]),E(e))for(n=0,o=e.length;n<o;n++)t.call(null,e[n],n,e);else{let o;if(R(e))return;let i=r?Object.getOwnPropertyNames(e):Object.keys(e),s=i.length;for(n=0;n<s;n++)o=i[n],t.call(null,e[o],o,e)}}function q(e,t){let r;if(R(e))return null;t=t.toLowerCase();let n=Object.keys(e),o=n.length;for(;o-- >0;)if(t===(r=n[o]).toLowerCase())return r;return null}let z="u">typeof globalThis?globalThis:"u">typeof self?self:"u">typeof window?window:e.g,W=e=>!v(e)&&e!==z,H=(r="u">typeof Uint8Array&&h(Uint8Array),e=>r&&e instanceof r),J=b("HTMLFormElement"),{propertyIsEnumerable:$}=Object.prototype,V=b("RegExp"),K=(e,t)=>{let r=Object.getOwnPropertyDescriptors(e),n={};M(r,(r,o)=>{let i;!1!==(i=t(r,o,e))&&(n[o]=i||r)}),Object.defineProperties(e,n)},X=b("AsyncFunction"),Y=(i="function"==typeof setImmediate,s=S(z.postMessage),i?setImmediate:s?(a=`axios@${Math.random()}`,u=[],z.addEventListener("message",({source:e,data:t})=>{e===z&&t===a&&u.length&&u.shift()()},!1),e=>{u.push(e),z.postMessage(a,"*")}):e=>setTimeout(e)),G="u">typeof queueMicrotask?queueMicrotask.bind(z):void 0!==l.default&&l.default.nextTick||Y,Q=e=>null!=e&&S(e[p]),Z={isArray:E,isArrayBuffer:O,isBuffer:R,isFormData:e=>{if(!e)return!1;if(N&&e instanceof N)return!0;let t=h(e);if(!t||t===Object.prototype||!S(e.append))return!1;let r=m(e);return"formdata"===r||"object"===r&&S(e.toString)&&"[object FormData]"===e.toString()},isArrayBufferView:function(e){return"u">typeof ArrayBuffer&&ArrayBuffer.isView?ArrayBuffer.isView(e):e&&e.buffer&&O(e.buffer)},isString:A,isNumber:_,isBoolean:e=>!0===e||!1===e,isObject:T,isPlainObject:C,isEmptyObject:e=>{if(!T(e)||R(e))return!1;try{return 0===Object.keys(e).length&&Object.getPrototypeOf(e)===Object.prototype}catch(e){return!1}},isReadableStream:D,isRequest:k,isResponse:I,isHeaders:F,isUndefined:v,isDate:x,isFile:P,isReactNativeBlob:e=>!!(e&&void 0!==e.uri),isReactNative:e=>e&&void 0!==e.getParts,isBlob:B,isRegExp:V,isFunction:S,isStream:e=>T(e)&&S(e.pipe),isURLSearchParams:L,isTypedArray:H,isFileList:U,forEach:M,merge:function e(...t){let{caseless:r,skipUndefined:n}=W(this)&&this||{},o={},i=(t,i)=>{if("__proto__"===i||"constructor"===i||"prototype"===i)return;let s=r&&"string"==typeof i&&q(o,i)||i,a=y(o,s)?o[s]:void 0;C(a)&&C(t)?o[s]=e(a,t):C(t)?o[s]=e({},t):E(t)?o[s]=t.slice():n&&v(t)||(o[s]=t)};for(let e=0,r=t.length;e<r;e++){let r=t[e];if(!r||R(r)||(M(r,i),"object"!=typeof r||E(r)))continue;let n=Object.getOwnPropertySymbols(r);for(let e=0;e<n.length;e++){let t=n[e];$.call(r,t)&&i(r[t],t)}}return o},extend:(e,t,r,{allOwnKeys:n}={})=>(M(t,(t,n)=>{r&&S(t)?Object.defineProperty(e,n,{__proto__:null,value:f(t,r),writable:!0,enumerable:!0,configurable:!0}):Object.defineProperty(e,n,{__proto__:null,value:t,writable:!0,enumerable:!0,configurable:!0})},{allOwnKeys:n}),e),trim:e=>e.trim?e.trim():e.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,""),stripBOM:e=>(65279===e.charCodeAt(0)&&(e=e.slice(1)),e),inherits:(e,t,r,n)=>{e.prototype=Object.create(t.prototype,n),Object.defineProperty(e.prototype,"constructor",{__proto__:null,value:e,writable:!0,enumerable:!1,configurable:!0}),Object.defineProperty(e,"super",{__proto__:null,value:t.prototype}),r&&Object.assign(e.prototype,r)},toFlatObject:(e,t,r,n)=>{let o,i,s,a={};if(t=t||{},null==e)return t;do{for(i=(o=Object.getOwnPropertyNames(e)).length;i-- >0;)s=o[i],(!n||n(s,e,t))&&!a[s]&&(t[s]=e[s],a[s]=!0);e=!1!==r&&h(e)}while(e&&(!r||r(e,t))&&e!==Object.prototype)return t},kindOf:m,kindOfTest:b,endsWith:(e,t,r)=>{e=String(e),(void 0===r||r>e.length)&&(r=e.length),r-=t.length;let n=e.indexOf(t,r);return -1!==n&&n===r},toArray:e=>{if(!e)return null;if(E(e))return e;let t=e.length;if(!_(t))return null;let r=Array(t);for(;t-- >0;)r[t]=e[t];return r},forEachEntry:(e,t)=>{let r,n=(e&&e[p]).call(e);for(;(r=n.next())&&!r.done;){let n=r.value;t.call(e,n[0],n[1])}},matchAll:(e,t)=>{let r,n=[];for(;null!==(r=e.exec(t));)n.push(r);return n},isHTMLForm:J,hasOwnProperty:y,hasOwnProp:y,hasOwnInPrototypeChain:g,getSafeProp:(e,t)=>null!=e&&g(e,t)?e[t]:void 0,reduceDescriptors:K,freezeMethods:e=>{K(e,(t,r)=>{if(S(e)&&["arguments","caller","callee"].includes(r))return!1;if(S(e[r])){if(t.enumerable=!1,"writable"in t){t.writable=!1;return}t.set||(t.set=()=>{throw Error("Can not rewrite read-only method '"+r+"'")})}})},toObjectSet:(e,t)=>{let r={};return(E(e)?e:String(e).split(t)).forEach(e=>{r[e]=!0}),r},toCamelCase:e=>e.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g,function(e,t,r){return t.toUpperCase()+r}),noop:()=>{},toFiniteNumber:(e,t)=>null!=e&&Number.isFinite(e*=1)?e:t,findKey:q,global:z,isContextDefined:W,isSpecCompliantForm:function(e){return!!(e&&S(e.append)&&"FormData"===e[d]&&e[p])},toJSONObject:e=>{let t=new WeakSet,r=e=>{if(T(e)){if(t.has(e))return;if(R(e))return e;if(!("toJSON"in e)){t.add(e);let n=E(e)?[]:{};return M(e,(e,t)=>{let o=r(e);v(o)||(n[t]=o)}),t.delete(e),n}}return e};return r(e)},isAsyncFn:X,isThenable:e=>e&&(T(e)||S(e))&&S(e.then)&&S(e.catch),setImmediate:Y,asap:G,isIterable:Q,isSafeIterable:e=>null!=e&&g(e,p)&&Q(e)};var ee=e.i(67034);let et=Z.toObjectSet(["age","authorization","content-length","content-type","etag","expires","from","host","if-modified-since","if-unmodified-since","last-modified","location","max-forwards","proxy-authorization","referer","retry-after","user-agent"]),er=RegExp("[\\u0000-\\u0008\\u000a-\\u001f\\u007f]+","g"),en=RegExp("[^\\u0009\\u0020-\\u007e\\u0080-\\u00ff]+","g");function eo(e,t){return Z.isArray(e)?e.map(e=>eo(e,t)):function(e){let t=0,r=e.length;for(;t<r;){let r=e.charCodeAt(t);if(9!==r&&32!==r)break;t+=1}for(;r>t;){let t=e.charCodeAt(r-1);if(9!==t&&32!==t)break;r-=1}return 0===t&&r===e.length?e:e.slice(t,r)}(String(e).replace(t,""))}function ei(e){let t=Object.create(null);return Z.forEach(e.toJSON(),(e,r)=>{t[r]=eo(e,en)}),t}let es=Symbol("internals");function ea(e){return e&&String(e).trim().toLowerCase()}function eu(e){return!1===e||null==e?e:Z.isArray(e)?e.map(eu):eo(String(e),er)}function el(e,t,r,n,o){if(Z.isFunction(n))return n.call(this,t,r);if(o&&(t=r),Z.isString(t)){if(Z.isString(n))return -1!==t.indexOf(n);if(Z.isRegExp(n))return n.test(t)}}class ef{constructor(e){e&&this.set(e)}set(e,t,r){let n=this;function o(e,t,r){let o=ea(t);if(!o)return;let i=Z.findKey(n,o);i&&void 0!==n[i]&&!0!==r&&(void 0!==r||!1===n[i])||(n[i||t]=eu(e))}let i=(e,t)=>Z.forEach(e,(e,r)=>o(e,r,t));if(Z.isPlainObject(e)||e instanceof this.constructor)i(e,t);else{let n;if(Z.isString(e)&&(e=e.trim())&&(n=e,!/^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(n.trim()))){var s;let r,n,o,a;i((a={},(s=e)&&s.split("\n").forEach(function(e){o=e.indexOf(":"),r=e.substring(0,o).trim().toLowerCase(),n=e.substring(o+1).trim(),!r||a[r]&&et[r]||("set-cookie"===r?a[r]?a[r].push(n):a[r]=[n]:a[r]=a[r]?a[r]+", "+n:n)}),a),t)}else if(Z.isObject(e)&&Z.isSafeIterable(e)){let r=Object.create(null),n,o;for(let t of e){if(!Z.isArray(t))throw TypeError("Object iterator must return a key-value pair");o=t[0],Z.hasOwnProp(r,o)?(n=r[o],r[o]=Z.isArray(n)?[...n,t[1]]:[n,t[1]]):r[o]=t[1]}i(r,t)}else null!=e&&o(t,e,r)}return this}get(e,t){if(e=ea(e)){let r=Z.findKey(this,e);if(r){let e=this[r];if(!t)return e;if(!0===t){let t,r=Object.create(null),n=/([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;for(;t=n.exec(e);)r[t[1]]=t[2];return r}if(Z.isFunction(t))return t.call(this,e,r);if(Z.isRegExp(t))return t.exec(e);throw TypeError("parser must be boolean|regexp|function")}}}has(e,t){if(e=ea(e)){let r=Z.findKey(this,e);return!!(r&&void 0!==this[r]&&(!t||el(this,this[r],r,t)))}return!1}delete(e,t){let r=this,n=!1;function o(e){if(e=ea(e)){let o=Z.findKey(r,e);o&&(!t||el(r,r[o],o,t))&&(delete r[o],n=!0)}}return Z.isArray(e)?e.forEach(o):o(e),n}clear(e){let t=Object.keys(this),r=t.length,n=!1;for(;r--;){let o=t[r];(!e||el(this,this[o],o,e,!0))&&(delete this[o],n=!0)}return n}normalize(e){let t=this,r={};return Z.forEach(this,(n,o)=>{let i=Z.findKey(r,o);if(i){t[i]=eu(n),delete t[o];return}let s=e?o.trim().toLowerCase().replace(/([a-z\d])(\w*)/g,(e,t,r)=>t.toUpperCase()+r):String(o).trim();s!==o&&delete t[o],t[s]=eu(n),r[s]=!0}),this}concat(...e){return this.constructor.concat(this,...e)}toJSON(e){let t=Object.create(null);return Z.forEach(this,(r,n)=>{null!=r&&!1!==r&&(t[n]=e&&Z.isArray(r)?r.join(", "):r)}),t}[Symbol.iterator](){return Object.entries(this.toJSON())[Symbol.iterator]()}toString(){return Object.entries(this.toJSON()).map(([e,t])=>e+": "+t).join("\n")}getSetCookie(){return this.get("set-cookie")||[]}get[Symbol.toStringTag](){return"AxiosHeaders"}static from(e){return e instanceof this?e:new this(e)}static concat(e,...t){let r=new this(e);return t.forEach(e=>r.set(e)),r}static accessor(e){let t=(this[es]=this[es]={accessors:{}}).accessors,r=this.prototype;function n(e){let n=ea(e);if(!t[n]){let o;o=Z.toCamelCase(" "+e),["get","set","has"].forEach(t=>{Object.defineProperty(r,t+o,{__proto__:null,value:function(r,n,o){return this[t].call(this,e,r,n,o)},configurable:!0})}),t[n]=!0}}return Z.isArray(e)?e.forEach(n):n(e),this}}ef.accessor(["Content-Type","Content-Length","Accept","Accept-Encoding","User-Agent","Authorization"]),Z.reduceDescriptors(ef.prototype,({value:e},t)=>{let r=t[0].toUpperCase()+t.slice(1);return{get:()=>e,set(e){this[r]=e}}}),Z.freezeMethods(ef);class ec extends Error{static from(e,t,r,n,o,i){let s=new ec(e.message,t||e.code,r,n,o);return Object.defineProperty(s,"cause",{__proto__:null,value:e,writable:!0,enumerable:!1,configurable:!0}),s.name=e.name,null!=e.status&&null==s.status&&(s.status=e.status),i&&Object.assign(s,i),s}constructor(e,t,r,n,o){super(e),Object.defineProperty(this,"message",{__proto__:null,value:e,enumerable:!0,writable:!0,configurable:!0}),this.name="AxiosError",this.isAxiosError=!0,t&&(this.code=t),r&&(this.config=r),n&&(this.request=n),o&&(this.response=o,this.status=o.status)}toJSON(){let e,t,r,n=this.config,o=n&&Z.hasOwnProp(n,"redact")?n.redact:void 0,i=Z.isArray(o)&&o.length>0?(e=new Set(o.map(e=>String(e).toLowerCase())),t=[],(r=n=>{let o;if(null===n||"object"!=typeof n||Z.isBuffer(n))return n;if(-1===t.indexOf(n)){if(n instanceof ef&&(n=n.toJSON()),t.push(n),Z.isArray(n))o=[],n.forEach((e,t)=>{let n=r(e);Z.isUndefined(n)||(o[t]=n)});else{if(!Z.isPlainObject(n)&&function(e){if(Z.hasOwnProp(e,"toJSON"))return!0;let t=Object.getPrototypeOf(e);for(;t&&t!==Object.prototype;){if(Z.hasOwnProp(t,"toJSON"))return!0;t=Object.getPrototypeOf(t)}return!1}(n))return t.pop(),n;for(let[t,i]of(o=Object.create(null),Object.entries(n))){let n=e.has(t.toLowerCase())?"[REDACTED ****]":r(i);Z.isUndefined(n)||(o[t]=n)}}return t.pop(),o}})(n)):Z.toJSONObject(n);return{message:this.message,name:this.name,description:this.description,number:this.number,fileName:this.fileName,lineNumber:this.lineNumber,columnNumber:this.columnNumber,stack:this.stack,config:i,code:this.code,status:this.status}}}ec.ERR_BAD_OPTION_VALUE="ERR_BAD_OPTION_VALUE",ec.ERR_BAD_OPTION="ERR_BAD_OPTION",ec.ECONNABORTED="ECONNABORTED",ec.ETIMEDOUT="ETIMEDOUT",ec.ECONNREFUSED="ECONNREFUSED",ec.ERR_NETWORK="ERR_NETWORK",ec.ERR_FR_TOO_MANY_REDIRECTS="ERR_FR_TOO_MANY_REDIRECTS",ec.ERR_DEPRECATED="ERR_DEPRECATED",ec.ERR_BAD_RESPONSE="ERR_BAD_RESPONSE",ec.ERR_BAD_REQUEST="ERR_BAD_REQUEST",ec.ERR_CANCELED="ERR_CANCELED",ec.ERR_NOT_SUPPORT="ERR_NOT_SUPPORT",ec.ERR_INVALID_URL="ERR_INVALID_URL",ec.ERR_FORM_DATA_DEPTH_EXCEEDED="ERR_FORM_DATA_DEPTH_EXCEEDED";let eh=ec;function ep(e){return Z.isPlainObject(e)||Z.isArray(e)}function ed(e){return Z.endsWith(e,"[]")?e.slice(0,-2):e}function ey(e,t,r){return e?e.concat(t).map(function(e,t){return e=ed(e),!r&&t?"["+e+"]":e}).join(r?".":""):t}let eg=Z.toFlatObject(Z,{},null,function(e){return/^is[A-Z]/.test(e)}),em=function(e,t,r){if(!Z.isObject(e))throw TypeError("target must be an object");t=t||new FormData;let n=(r=Z.toFlatObject(r,{metaTokens:!0,dots:!1,indexes:!1},!1,function(e,t){return!Z.isUndefined(t[e])})).metaTokens,o=r.visitor||p,i=r.dots,s=r.indexes,a=r.Blob||"u">typeof Blob&&Blob,u=void 0===r.maxDepth?100:r.maxDepth,l=a&&Z.isSpecCompliantForm(t),f=[];if(!Z.isFunction(o))throw TypeError("visitor must be a function");function c(e){if(null===e)return"";if(Z.isDate(e))return e.toISOString();if(Z.isBoolean(e))return e.toString();if(!l&&Z.isBlob(e))throw new eh("Blob is not supported. Use a Buffer instead.");if(Z.isArrayBuffer(e)||Z.isTypedArray(e)){if(l&&"function"==typeof a)return new a([e]);if(void 0!==ee.Buffer)return ee.Buffer.from(e);throw new eh("Blob is not supported. Use a Buffer instead.",eh.ERR_NOT_SUPPORT)}return e}function h(e){if(e>u)throw new eh("Object is too deeply nested ("+e+" levels). Max depth: "+u,eh.ERR_FORM_DATA_DEPTH_EXCEEDED)}function p(e,r,o){let a=e;if(Z.isReactNative(t)&&Z.isReactNativeBlob(e))return t.append(ey(o,r,i),c(e)),!1;if(e&&!o&&"object"==typeof e)if(Z.endsWith(r,"{}"))r=n?r:r.slice(0,-2),e=function(e){if(u===1/0)return JSON.stringify(e);let t=[];return JSON.stringify(e,function(e,r){if(!Z.isObject(r))return r;for(;t.length&&t[t.length-1]!==this;)t.pop();return t.push(r),h(1+t.length-1),r})}(e);else{var l;if(Z.isArray(e)&&(l=e,Z.isArray(l)&&!l.some(ep))||(Z.isFileList(e)||Z.endsWith(r,"[]"))&&(a=Z.toArray(e)))return r=ed(r),a.forEach(function(e,n){Z.isUndefined(e)||null===e||t.append(!0===s?ey([r],n,i):null===s?r:r+"[]",c(e))}),!1}return!!ep(e)||(t.append(ey(o,r,i),c(e)),!1)}let d=Object.assign(eg,{defaultVisitor:p,convertValue:c,isVisitable:ep});if(!Z.isObject(e))throw TypeError("data must be an object");return!function e(r,n,i=0){if(!Z.isUndefined(r)){if(h(i),-1!==f.indexOf(r))throw Error("Circular reference detected in "+n.join("."));f.push(r),Z.forEach(r,function(r,s){!0===(!(Z.isUndefined(r)||null===r)&&o.call(t,r,Z.isString(s)?s.trim():s,n,d))&&e(r,n?n.concat(s):[s],i+1)}),f.pop()}}(e),t};function eb(e){let t={"!":"%21","'":"%27","(":"%28",")":"%29","~":"%7E","%20":"+"};return encodeURIComponent(e).replace(/[!'()~]|%20/g,function(e){return t[e]})}function ew(e,t){this._pairs=[],e&&em(e,this,t)}let eE=ew.prototype;function ev(e){return encodeURIComponent(e).replace(/%3A/gi,":").replace(/%24/g,"$").replace(/%2C/gi,",").replace(/%20/g,"+")}function eR(e,t,r){let n;if(!t)return e;e=e||"";let o=Z.isFunction(r)?{serialize:r}:r,i=Z.getSafeProp(o,"encode")||ev,s=Z.getSafeProp(o,"serialize");if(n=s?s(t,o):Z.isURLSearchParams(t)?t.toString():new ew(t,o).toString(i)){let t=e.indexOf("#");-1!==t&&(e=e.slice(0,t)),e+=(-1===e.indexOf("?")?"?":"&")+n}return e}eE.append=function(e,t){this._pairs.push([e,t])},eE.toString=function(e){let t=e?t=>e.call(this,t,eb):eb;return this._pairs.map(function(e){return t(e[0])+"="+t(e[1])},"").join("&")};let eO=class{constructor(){this.handlers=[]}use(e,t,r){return this.handlers.push({fulfilled:e,rejected:t,synchronous:!!r&&r.synchronous,runWhen:r?r.runWhen:null}),this.handlers.length-1}eject(e){this.handlers[e]&&(this.handlers[e]=null)}clear(){this.handlers&&(this.handlers=[])}forEach(e){Z.forEach(this.handlers,function(t){null!==t&&e(t)})}},eA={silentJSONParsing:!0,forcedJSONParsing:!0,clarifyTimeoutError:!1,legacyInterceptorReqResOrdering:!0,advertiseZstdAcceptEncoding:!1,validateStatusUndefinedResolves:!0},eS="u">typeof URLSearchParams?URLSearchParams:ew,e_="u">typeof FormData?FormData:null,eT="u">typeof Blob?Blob:null,eC="u">typeof window&&"u">typeof document,ex="object"==typeof navigator&&navigator||void 0,eP=eC&&(!ex||0>["ReactNative","NativeScript","NS"].indexOf(ex.product)),eB="u">typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope&&"function"==typeof self.importScripts,eU=eC&&window.location.href||"http://localhost";e.s(["hasBrowserEnv",0,eC,"hasStandardBrowserEnv",0,eP,"hasStandardBrowserWebWorkerEnv",0,eB,"navigator",0,ex,"origin",0,eU],57536);let ej={...e.i(57536),isBrowser:!0,classes:{URLSearchParams:eS,FormData:e_,Blob:eT},protocols:["http","https","file","blob","url","data"]};function eN(e){if(e>100)throw new eh("FormData field is too deeply nested ("+e+" levels). Max depth: 100",eh.ERR_FORM_DATA_DEPTH_EXCEEDED)}let eL=function(e){if(Z.isFormData(e)&&Z.isFunction(e.entries)){let t={};return Z.forEachEntry(e,(e,r)=>{!function e(t,r,n,o){eN(o);let i=t[o++];if("__proto__"===i)return!0;let s=Number.isFinite(+i),a=o>=t.length;return(i=!i&&Z.isArray(n)?n.length:i,a)?Z.hasOwnProp(n,i)?n[i]=Z.isArray(n[i])?n[i].concat(r):[n[i],r]:n[i]=r:(Z.hasOwnProp(n,i)&&Z.isObject(n[i])||(n[i]=[]),e(t,r,n[i],o)&&Z.isArray(n[i])&&(n[i]=function(e){let t,r,n={},o=Object.keys(e),i=o.length;for(t=0;t<i;t++)n[r=o[t]]=e[r];return n}(n[i]))),!s}(function(e){let t,r=[],n=/\w+|\[(\w*)]/g;for(;null!==(t=n.exec(e));)eN(r.length),r.push("[]"===t[0]?"":t[1]||t[0]);return r}(e),r,t,0)}),t}return null},eD=(e,t)=>null!=e&&Z.hasOwnProp(e,t)?e[t]:void 0,ek={transitional:eA,adapter:["xhr","http","fetch"],transformRequest:[function(e,t){let r,n=t.getContentType()||"",o=n.indexOf("application/json")>-1,i=Z.isObject(e);if(i&&Z.isHTMLForm(e)&&(e=new FormData(e)),Z.isFormData(e))return o?JSON.stringify(eL(e)):e;if(Z.isArrayBuffer(e)||Z.isBuffer(e)||Z.isStream(e)||Z.isFile(e)||Z.isBlob(e)||Z.isReadableStream(e))return e;if(Z.isArrayBufferView(e))return e.buffer;if(Z.isURLSearchParams(e))return t.setContentType("application/x-www-form-urlencoded;charset=utf-8",!1),e.toString();if(i){let t=eD(this,"formSerializer");if(n.indexOf("application/x-www-form-urlencoded")>-1)return em(e,new ej.classes.URLSearchParams,{visitor:function(e,t,r,n){return ej.isNode&&Z.isBuffer(e)?(this.append(t,e.toString("base64")),!1):n.defaultVisitor.apply(this,arguments)},...t}).toString();if((r=Z.isFileList(e))||n.indexOf("multipart/form-data")>-1){let n=eD(this,"env"),o=n&&n.FormData;return em(r?{"files[]":e}:e,o&&new o,t)}}if(i||o){t.setContentType("application/json",!1);var s=e;if(Z.isString(s))try{return(0,JSON.parse)(s),Z.trim(s)}catch(e){if("SyntaxError"!==e.name)throw e}return(0,JSON.stringify)(s)}return e}],transformResponse:[function(e){let t=eD(this,"transitional")||ek.transitional,r=t&&t.forcedJSONParsing,n=eD(this,"responseType"),o="json"===n;if(Z.isResponse(e)||Z.isReadableStream(e))return e;if(e&&Z.isString(e)&&(r&&!n||o)){let r=t&&t.silentJSONParsing;try{return JSON.parse(e,eD(this,"parseReviver"))}catch(e){if(!r&&o){if("SyntaxError"===e.name)throw eh.from(e,eh.ERR_BAD_RESPONSE,this,null,eD(this,"response"));throw e}}}return e}],timeout:0,xsrfCookieName:"XSRF-TOKEN",xsrfHeaderName:"X-XSRF-TOKEN",maxContentLength:-1,maxBodyLength:-1,env:{FormData:ej.classes.FormData,Blob:ej.classes.Blob},validateStatus:function(e){return e>=200&&e<300},headers:{common:{Accept:"application/json, text/plain, */*","Content-Type":void 0}}};function eI(e,t){let r=this||ek,n=t||r,o=ef.from(n.headers),i=n.data;return Z.forEach(e,function(e){i=e.call(r,i,o.normalize(),t?t.status:void 0)}),o.normalize(),i}function eF(e){return!!(e&&e.__CANCEL__)}Z.forEach(["delete","get","head","post","put","patch","query"],e=>{ek.headers[e]={}});let eM=class extends eh{constructor(e,t,r){super(null==e?"canceled":e,eh.ERR_CANCELED,t,r),this.name="CanceledError",this.__CANCEL__=!0}};function eq(e,t,r){let n=r.config.validateStatus;!r.status||!n||n(r.status)?e(r):t(new eh("Request failed with status code "+r.status,r.status>=400&&r.status<500?eh.ERR_BAD_REQUEST:eh.ERR_BAD_RESPONSE,r.config,r.request,r))}let ez=function(e,t){let r,n=Array(e=e||10),o=Array(e),i=0,s=0;return t=void 0!==t?t:1e3,function(a){let u=Date.now(),l=o[s];r||(r=u),n[i]=a,o[i]=u;let f=s,c=0;for(;f!==i;)c+=n[f++],f%=e;if((i=(i+1)%e)===s&&(s=(s+1)%e),u-r<t)return;let h=l&&u-l;return h?Math.round(1e3*c/h):void 0}},eW=function(e,t){let r,n,o=0,i=1e3/t,s=(t,i=Date.now())=>{o=i,r=null,n&&(clearTimeout(n),n=null),e(...t)};return[(...e)=>{let t=Date.now(),a=t-o;a>=i?s(e,t):(r=e,n||(n=setTimeout(()=>{n=null,s(r)},i-a)))},()=>r&&s(r)]},eH=(e,t,r=3)=>{let n=0,o=ez(50,250);return eW(r=>{if(!r||"number"!=typeof r.loaded)return;let i=r.loaded,s=r.lengthComputable?r.total:void 0,a=null!=s?Math.min(i,s):i,u=Math.max(0,a-n),l=o(u);n=Math.max(n,a),e({loaded:a,total:s,progress:s?a/s:void 0,bytes:u,rate:l||void 0,estimated:l&&s?(s-a)/l:void 0,event:r,lengthComputable:null!=s,[t?"download":"upload"]:!0})},r)},eJ=(e,t)=>{let r=null!=e;return[n=>t[0]({lengthComputable:r,total:e,loaded:n}),t[1]]},e$=e=>(...t)=>Z.asap(()=>e(...t)),eV=ej.hasStandardBrowserEnv?(n=new URL(ej.origin),o=ej.navigator&&/(msie|trident)/i.test(ej.navigator.userAgent),e=>(e=new URL(e,ej.origin),n.protocol===e.protocol&&n.host===e.host&&(o||n.port===e.port))):()=>!0,eK=ej.hasStandardBrowserEnv?{write(e,t,r,n,o,i,s){if("u"<typeof document)return;let a=[`${e}=${encodeURIComponent(t)}`];Z.isNumber(r)&&a.push(`expires=${new Date(r).toUTCString()}`),Z.isString(n)&&a.push(`path=${n}`),Z.isString(o)&&a.push(`domain=${o}`),!0===i&&a.push("secure"),Z.isString(s)&&a.push(`SameSite=${s}`),document.cookie=a.join("; ")},read(e){if("u"<typeof document)return null;let t=document.cookie.split(";");for(let r=0;r<t.length;r++){let n=t[r].replace(/^\s+/,""),o=n.indexOf("=");if(-1!==o&&n.slice(0,o)===e)try{return decodeURIComponent(n.slice(o+1))}catch(e){return n.slice(o+1)}}return null},remove(e){this.write(e,"",Date.now()-864e5,"/")}}:{write(){},read:()=>null,remove(){}},eX=/^https?:(?!\/\/)/i,eY=/[\t\n\r]/g;function eG(e,t){if("string"==typeof e&&eX.test((function(e){let t=0;for(;t<e.length&&32>=e.charCodeAt(t);)t++;return e.slice(t)})(e).replace(eY,"")))throw new eh('Invalid URL: missing "//" after protocol',eh.ERR_INVALID_URL,t)}function eQ(e,t,r,n){eG(t,n);let o=!("string"==typeof t&&/^([a-z][a-z\d+\-.]*:)?\/\//i.test(t));return e&&(o||!1===r)?(eG(e,n),t?e.replace(/\/?\/$/,"")+"/"+t.replace(/^\/+/,""):e):t}let eZ=e=>e instanceof ef?{...e}:e;function e0(e,t){e=e||{},t=t||{};let r=Object.create(null);function n(e,t,r,n){return Z.isPlainObject(e)&&Z.isPlainObject(t)?Z.merge.call({caseless:n},e,t):Z.isPlainObject(t)?Z.merge({},t):Z.isArray(t)?t.slice():t}function o(e,t,r,o){return Z.isUndefined(t)?Z.isUndefined(e)?void 0:n(void 0,e,r,o):n(e,t,r,o)}function i(e,t){if(!Z.isUndefined(t))return n(void 0,t)}function s(e,t){return Z.isUndefined(t)?Z.isUndefined(e)?void 0:n(void 0,e):n(void 0,t)}function a(r,o,i){return Z.hasOwnProp(t,i)?n(r,o):Z.hasOwnProp(e,i)?n(void 0,r):void 0}Object.defineProperty(r,"hasOwnProperty",{__proto__:null,value:Object.prototype.hasOwnProperty,enumerable:!1,writable:!0,configurable:!0});let u={url:i,method:i,data:i,baseURL:s,transformRequest:s,transformResponse:s,paramsSerializer:s,timeout:s,timeoutMessage:s,withCredentials:s,withXSRFToken:s,adapter:s,responseType:s,xsrfCookieName:s,xsrfHeaderName:s,onUploadProgress:s,onDownloadProgress:s,decompress:s,maxContentLength:s,maxBodyLength:s,beforeRedirect:s,transport:s,httpAgent:s,httpsAgent:s,cancelToken:s,socketPath:s,allowedSocketPaths:s,responseEncoding:s,validateStatus:a,headers:(e,t,r)=>o(eZ(e),eZ(t),r,!0)};return Z.forEach(Object.keys({...e,...t}),function(n){if("__proto__"===n||"constructor"===n||"prototype"===n)return;let i=Z.hasOwnProp(u,n)?u[n]:o,s=i(Z.hasOwnProp(e,n)?e[n]:void 0,Z.hasOwnProp(t,n)?t[n]:void 0,n);Z.isUndefined(s)&&i!==a||(r[n]=s)}),Z.hasOwnProp(t,"validateStatus")&&Z.isUndefined(t.validateStatus)&&!1===function(r){let n=Z.hasOwnProp(t,"transitional")?t.transitional:void 0;if(!Z.isUndefined(n)){if(!Z.isPlainObject(n))return;else if(Z.hasOwnProp(n,r))return n[r]}let o=Z.hasOwnProp(e,"transitional")?e.transitional:void 0;if(Z.isPlainObject(o)&&Z.hasOwnProp(o,r))return o[r]}("validateStatusUndefinedResolves")&&(Z.hasOwnProp(e,"validateStatus")?r.validateStatus=n(void 0,e.validateStatus):delete r.validateStatus),r}let e1=["content-type","content-length"],e2=function(e){let t=e0({},e),r=e=>Z.hasOwnProp(t,e)?t[e]:void 0,n=r("data"),o=r("withXSRFToken"),i=r("xsrfHeaderName"),s=r("xsrfCookieName"),a=r("headers"),u=r("auth"),l=r("baseURL"),f=r("allowAbsoluteUrls"),c=r("url");if(t.headers=a=ef.from(a),t.url=eR(eQ(l,c,f,t),r("params"),r("paramsSerializer")),u){let t=Z.getSafeProp(u,"username")||"",r=Z.getSafeProp(u,"password")||"";try{a.set("Authorization","Basic "+btoa(t+":"+(r?encodeURIComponent(r).replace(/%([0-9A-F]{2})/gi,(e,t)=>String.fromCharCode(parseInt(t,16))):"")))}catch(t){throw eh.from(t,eh.ERR_BAD_OPTION_VALUE,e)}}if(Z.isFormData(n))if(ej.hasStandardBrowserEnv||ej.hasStandardBrowserWebWorkerEnv||Z.isReactNative(n))a.setContentType(void 0);else{var h,p;Z.isFunction(n.getHeaders)&&(h=a,p=n.getHeaders(),"content-only"!==r("formDataHeaderPolicy")?h.set(p):Object.entries(p||{}).forEach(([e,t])=>{e1.includes(e.toLowerCase())&&h.set(e,t)}))}if(ej.hasStandardBrowserEnv&&(Z.isFunction(o)&&(o=o(t)),!0===o||null==o&&eV(t.url))){let e=i&&s&&eK.read(s);e&&a.set(i,e)}return t},e5="u">typeof XMLHttpRequest&&function(e){return new Promise(function(t,r){var n;let o,i,s,a,u,l,f=e2(e),c=f.data,h=ef.from(f.headers).normalize(),{responseType:p,onUploadProgress:d,onDownloadProgress:y}=f;function g(){a&&a(),u&&u(),f.cancelToken&&f.cancelToken.unsubscribe(o),f.signal&&f.signal.removeEventListener("abort",o)}let m=new XMLHttpRequest;function b(){if(!m)return;let n=ef.from("getAllResponseHeaders"in m&&m.getAllResponseHeaders());eq(function(e){t(e),g()},function(e){r(e),g()},{data:p&&"text"!==p&&"json"!==p?m.response:m.responseText,status:m.status,statusText:m.statusText,headers:n,config:e,request:m}),m=null}m.open(f.method.toUpperCase(),f.url,!0),m.timeout=f.timeout,"onloadend"in m?m.onloadend=b:m.onreadystatechange=function(){!m||4!==m.readyState||(0!==m.status||m.responseURL&&m.responseURL.startsWith("file:"))&&setTimeout(b)},m.onabort=function(){m&&(r(new eh("Request aborted",eh.ECONNABORTED,e,m)),g(),m=null)},m.onerror=function(t){let n=new eh(t&&t.message?t.message:"Network Error",eh.ERR_NETWORK,e,m);n.event=t||null,r(n),g(),m=null},m.ontimeout=function(){let t=f.timeout?"timeout of "+f.timeout+"ms exceeded":"timeout exceeded",n=f.transitional||eA;f.timeoutErrorMessage&&(t=f.timeoutErrorMessage),r(new eh(t,n.clarifyTimeoutError?eh.ETIMEDOUT:eh.ECONNABORTED,e,m)),g(),m=null},void 0===c&&h.setContentType(null),"setRequestHeader"in m&&Z.forEach(ei(h),function(e,t){m.setRequestHeader(t,e)}),Z.isUndefined(f.withCredentials)||(m.withCredentials=!!f.withCredentials),p&&"json"!==p&&(m.responseType=f.responseType),y&&([s,u]=eH(y,!0),m.addEventListener("progress",s)),d&&m.upload&&([i,a]=eH(d),m.upload.addEventListener("progress",i),m.upload.addEventListener("loadend",a)),(f.cancelToken||f.signal)&&(o=t=>{m&&(r(!t||t.type?new eM(null,e,m):t),m.abort(),g(),m=null)},f.cancelToken&&f.cancelToken.subscribe(o),f.signal&&(f.signal.aborted?o():f.signal.addEventListener("abort",o)));let w=(n=f.url,(l=/^([-+\w]{1,25}):(?:\/\/)?/.exec(n))&&l[1]||"");if(w&&!ej.protocols.includes(w)){r(new eh("Unsupported protocol "+w+":",eh.ERR_BAD_REQUEST,e)),g();return}m.send(c||null)})},e6=function*(e,t){let r,n=e.byteLength;if(!t||n<t)return void(yield e);let o=0;for(;o<n;)r=o+t,yield e.slice(o,r),o=r},e8=async function*(e,t){for await(let r of e3(e))yield*e6(r,t)},e3=async function*(e){if(e[Symbol.asyncIterator])return void(yield*e);let t=e.getReader();try{for(;;){let{done:e,value:r}=await t.read();if(e)break;yield r}}finally{await t.cancel()}},e4=(e,t,r,n)=>{let o,i=e8(e,t),s=0,a=e=>{!o&&(o=!0,n&&n(e))};return new ReadableStream({async pull(e){try{let{done:t,value:n}=await i.next();if(t){a(),e.close();return}let o=n.byteLength;if(r){let e=s+=o;r(e)}e.enqueue(new Uint8Array(n))}catch(e){throw a(e),e}},cancel:e=>(a(e),i.return())},{highWaterMark:2})},e7=e=>e>=48&&e<=57||e>=65&&e<=70||e>=97&&e<=102,e9=(e,t,r)=>t+2<r&&e7(e.charCodeAt(t+1))&&e7(e.charCodeAt(t+2)),te="1.18.1",{isFunction:tt}=Z,tr=e=>{if(!Z.isString(e))return e;try{return decodeURIComponent(e)}catch(t){return e}},tn=(e,...t)=>{try{return!!e(...t)}catch(e){return!1}},to=e=>{let t,r=void 0!==Z.global&&null!==Z.global?Z.global:globalThis,{ReadableStream:n,TextEncoder:o}=r,{fetch:i,Request:s,Response:a}=e=Z.merge.call({skipUndefined:!0},{Request:r.Request,Response:r.Response},e),u=i?tt(i):"function"==typeof fetch,l=tt(s),f=tt(a);if(!u)return!1;let c=u&&tt(n),h=u&&("function"==typeof o?(t=new o,e=>t.encode(e)):async e=>new Uint8Array(await new s(e).arrayBuffer())),p=l&&c&&tn(()=>{let e=!1,t=new s(ej.origin,{body:new n,method:"POST",get duplex(){return e=!0,"half"}}),r=t.headers.has("Content-Type");return null!=t.body&&t.body.cancel(),e&&!r}),d=f&&c&&tn(()=>Z.isReadableStream(new a("").body)),y={stream:d&&(e=>e.body)};u&&["text","arrayBuffer","blob","formData","stream"].forEach(e=>{y[e]||(y[e]=(t,r)=>{let n=t&&t[e];if(n)return n.call(t);throw new eh(`Response type '${e}' is not supported`,eh.ERR_NOT_SUPPORT,r)})});let g=async e=>{if(null==e)return 0;if(Z.isBlob(e))return e.size;if(Z.isSpecCompliantForm(e)){let t=new s(ej.origin,{method:"POST",body:e});return(await t.arrayBuffer()).byteLength}return Z.isArrayBufferView(e)||Z.isArrayBuffer(e)?e.byteLength:(Z.isURLSearchParams(e)&&(e+=""),Z.isString(e))?(await h(e)).byteLength:void 0},m=async(e,t)=>{let r=Z.toFiniteNumber(e.getContentLength());return null==r?g(t):r};return async e=>{let t,{url:r,method:n,data:u,signal:f,cancelToken:h,timeout:b,onDownloadProgress:w,onUploadProgress:E,responseType:v,headers:R,withCredentials:O="same-origin",fetchOptions:A,maxContentLength:S,maxBodyLength:_}=e2(e),T=Z.isNumber(S)&&S>-1,C=Z.isNumber(_)&&_>-1,x=i||fetch;v=v?(v+"").toLowerCase():"text";let P=((e,t)=>{if(e=e?e.filter(Boolean):[],!t&&!e.length)return;let r=new AbortController,n=!1,o=function(e){if(!n){n=!0,s();let t=e instanceof Error?e:this.reason;r.abort(t instanceof eh?t:new eM(t instanceof Error?t.message:t))}},i=t&&setTimeout(()=>{i=null,o(new eh(`timeout of ${t}ms exceeded`,eh.ETIMEDOUT))},t),s=()=>{e&&(i&&clearTimeout(i),i=null,e.forEach(e=>{e.unsubscribe?e.unsubscribe(o):e.removeEventListener("abort",o)}),e=null)};e.forEach(e=>e.addEventListener("abort",o,{once:!0}));let{signal:a}=r;return a.unsubscribe=()=>Z.asap(s),a})([f,h&&h.toAbortSignal()],b),B=null,U=P&&P.unsubscribe&&(()=>{P.unsubscribe()}),j=null,N=()=>new eh("Request body larger than maxBodyLength limit",eh.ERR_BAD_REQUEST,e,B);try{var L;let i,f,h,b,D=(f="auth",Z.hasOwnProp(e,f)?e[f]:void 0);if(D){let e=Z.getSafeProp(D,"username")||"",t=Z.getSafeProp(D,"password")||"";i={username:e,password:t}}if(h=(L=r).indexOf("://"),b=L,-1!==h&&(b=b.slice(h+3)),b.includes("@")||b.includes(":")){let e=new URL(r,ej.origin);if(!i&&(e.username||e.password)){let t=tr(e.username),r=tr(e.password);i={username:t,password:r}}(e.username||e.password)&&(e.username="",e.password="",r=e.href)}if(i){let e;R.delete("authorization"),R.set("Authorization","Basic "+btoa((e=(i.username||"")+":"+(i.password||""),encodeURIComponent(e).replace(/%([0-9A-F]{2})/gi,(e,t)=>String.fromCharCode(parseInt(t,16))))))}if(T&&"string"==typeof r&&r.startsWith("data:")&&function(e){if(!e||"string"!=typeof e||!e.startsWith("data:"))return 0;let t=e.indexOf(",");if(t<0)return 0;let r=e.slice(5,t),n=e.slice(t+1);if(/;base64/i.test(r)){let e=n.length,t=n.length;for(let r=0;r<t;r++)if(37===n.charCodeAt(r)&&r+2<t){let t=n.charCodeAt(r+1),o=n.charCodeAt(r+2);e7(t)&&e7(o)&&(e-=2,r+=2)}let r=0,o=t-1,i=e=>e>=2&&37===n.charCodeAt(e-2)&&51===n.charCodeAt(e-1)&&(68===n.charCodeAt(e)||100===n.charCodeAt(e));o>=0&&(61===n.charCodeAt(o)?(r++,o--):i(o)&&(r++,o-=3)),1===r&&o>=0&&(61===n.charCodeAt(o)?r++:i(o)&&r++);let s=3*Math.floor(e/4)-(r||0);return s>0?s:0}let o=0;for(let e=0,t=n.length;e<t;e++){let r=n.charCodeAt(e);if(37===r&&e9(n,e,t))o+=1,e+=2;else if(r<128)o+=1;else if(r<2048)o+=2;else if(r>=55296&&r<=56319&&e+1<t){let t=n.charCodeAt(e+1);t>=56320&&t<=57343?(o+=4,e++):o+=3}else o+=3}return o}(r)>S)throw new eh("maxContentLength size of "+S+" exceeded",eh.ERR_BAD_RESPONSE,e,B);if(C&&"get"!==n&&"head"!==n){let e=await g(u);if("number"==typeof e&&isFinite(e)&&(t=e,e>_))throw N()}let k=C&&(Z.isReadableStream(u)||Z.isStream(u)),I=(e,t,r)=>e4(e,65536,e=>{if(C&&e>_)throw j=N();t&&t(e)},r);if(p&&"get"!==n&&"head"!==n&&(E||k)){if(t=null==t?await m(R,u):t,0!==t||k){let e,n=new s(r,{method:"POST",body:u,duplex:"half"});if(Z.isFormData(u)&&(e=n.headers.get("content-type"))&&R.setContentType(e),n.body){let[e,r]=E&&eJ(t,eH(e$(E)))||[];u=I(n.body,e,r)}}}else if(k&&!l&&c&&"get"!==n&&"head"!==n)u=I(u);else if(k&&l&&!p&&"get"!==n&&"head"!==n)throw new eh("Stream request bodies are not supported by the current fetch implementation",eh.ERR_NOT_SUPPORT,e,B);Z.isString(O)||(O=O?"include":"omit");let F=l&&"credentials"in s.prototype;if(Z.isFormData(u)){let e=R.getContentType();e&&/^multipart\/form-data/i.test(e)&&!/boundary=/i.test(e)&&R.delete("content-type")}R.set("User-Agent","axios/"+te,!1);let M={...A,signal:P,method:n.toUpperCase(),headers:ei(R.normalize()),body:u,duplex:"half",credentials:F?O:void 0};B=l&&new s(r,M);let q=await (l?x(B,A):x(r,M)),z=ef.from(q.headers);if(T){let t=Z.toFiniteNumber(z.getContentLength());if(null!=t&&t>S)throw new eh("maxContentLength size of "+S+" exceeded",eh.ERR_BAD_RESPONSE,e,B)}let W=d&&("stream"===v||"response"===v);if(d&&q.body&&(w||T||W&&U)){let t={};["status","statusText","headers"].forEach(e=>{t[e]=q[e]});let r=Z.toFiniteNumber(z.getContentLength()),[n,o]=w&&eJ(r,eH(e$(w),!0))||[];q=new a(e4(q.body,65536,t=>{if(T&&t>S)throw new eh("maxContentLength size of "+S+" exceeded",eh.ERR_BAD_RESPONSE,e,B);n&&n(t)},()=>{o&&o(),U&&U()}),t)}v=v||"text";let H=await y[Z.findKey(y,v)||"text"](q,e);if(T&&!d&&!W){let t;if(null!=H&&("number"==typeof H.byteLength?t=H.byteLength:"number"==typeof H.size?t=H.size:"string"==typeof H&&(t="function"==typeof o?new o().encode(H).byteLength:H.length)),"number"==typeof t&&t>S)throw new eh("maxContentLength size of "+S+" exceeded",eh.ERR_BAD_RESPONSE,e,B)}return!W&&U&&U(),await new Promise((t,r)=>{eq(t,r,{data:H,headers:ef.from(q.headers),status:q.status,statusText:q.statusText,config:e,request:B})})}catch(t){if(U&&U(),P&&P.aborted&&P.reason instanceof eh){let r=P.reason;throw r.config=e,B&&(r.request=B),t!==r&&Object.defineProperty(r,"cause",{__proto__:null,value:t,writable:!0,enumerable:!1,configurable:!0}),r}if(j)throw B&&!j.request&&(j.request=B),j;if(t instanceof eh)throw B&&!t.request&&(t.request=B),t;if(t&&"TypeError"===t.name&&/Load failed|fetch/i.test(t.message)){let r=new eh("Network Error",eh.ERR_NETWORK,e,B,t&&t.response);throw Object.defineProperty(r,"cause",{__proto__:null,value:t.cause||t,writable:!0,enumerable:!1,configurable:!0}),r}throw eh.from(t,t&&t.code,e,B,t&&t.response)}}},ti=new Map,ts=e=>{let t=e&&e.env||{},{fetch:r,Request:n,Response:o}=t,i=[n,o,r],s=i.length,a,u,l=ti;for(;s--;)a=i[s],void 0===(u=l.get(a))&&l.set(a,u=s?new Map:to(t)),l=u;return u};ts();let ta={http:null,xhr:e5,fetch:{get:ts}};Z.forEach(ta,(e,t)=>{if(e){try{Object.defineProperty(e,"name",{__proto__:null,value:t})}catch(e){}Object.defineProperty(e,"adapterName",{__proto__:null,value:t})}});let tu=e=>`- ${e}`,tl=e=>Z.isFunction(e)||null===e||!1===e,tf=function(e,t){let r,n,{length:o}=e=Z.isArray(e)?e:[e],i={};for(let s=0;s<o;s++){let o;if(n=r=e[s],!tl(r)&&void 0===(n=ta[(o=String(r)).toLowerCase()]))throw new eh(`Unknown adapter '${o}'`);if(n&&(Z.isFunction(n)||(n=n.get(t))))break;i[o||"#"+s]=n}if(!n){let e=Object.entries(i).map(([e,t])=>`adapter ${e} `+(!1===t?"is not supported by the environment":"is not available in the build"));throw new eh("There is no suitable adapter to dispatch the request "+(o?e.length>1?"since :\n"+e.map(tu).join("\n"):" "+tu(e[0]):"as no adapter specified"),eh.ERR_NOT_SUPPORT)}return n};function tc(e){if(e.cancelToken&&e.cancelToken.throwIfRequested(),e.signal&&e.signal.aborted)throw new eM(null,e)}function th(e){return tc(e),e.headers=ef.from(e.headers),e.data=eI.call(e,e.transformRequest),-1!==["post","put","patch"].indexOf(e.method)&&e.headers.setContentType("application/x-www-form-urlencoded",!1),tf(e.adapter||ek.adapter,e)(e).then(function(t){tc(e),e.response=t;try{t.data=eI.call(e,e.transformResponse,t)}finally{delete e.response}return t.headers=ef.from(t.headers),t},function(t){if(!eF(t)&&(tc(e),t&&t.response)){e.response=t.response;try{t.response.data=eI.call(e,e.transformResponse,t.response)}finally{delete e.response}t.response.headers=ef.from(t.response.headers)}return Promise.reject(t)})}let tp={};["object","boolean","number","function","string","symbol"].forEach((e,t)=>{tp[e]=function(r){return typeof r===e||"a"+(t<1?"n ":" ")+e}});let td={};tp.transitional=function(e,t,r){function n(e,t){return"[Axios v"+te+"] Transitional option '"+e+"'"+t+(r?". "+r:"")}return(r,o,i)=>{if(!1===e)throw new eh(n(o," has been removed"+(t?" in "+t:"")),eh.ERR_DEPRECATED);return t&&!td[o]&&(td[o]=!0,console.warn(n(o," has been deprecated since v"+t+" and will be removed in the near future"))),!e||e(r,o,i)}},tp.spelling=function(e){return(t,r)=>(console.warn(`${r} is likely a misspelling of ${e}`),!0)};let ty=function(e,t,r){if("object"!=typeof e||null===e)throw new eh("options must be an object",eh.ERR_BAD_OPTION_VALUE);let n=Object.keys(e),o=n.length;for(;o-- >0;){let i=n[o],s=Object.prototype.hasOwnProperty.call(t,i)?t[i]:void 0;if(s){let t=e[i],r=void 0===t||s(t,i,e);if(!0!==r)throw new eh("option "+i+" must be "+r,eh.ERR_BAD_OPTION_VALUE);continue}if(!0!==r)throw new eh("Unknown option "+i,eh.ERR_BAD_OPTION)}};class tg{constructor(e){this.defaults=e||{},this.interceptors={request:new eO,response:new eO}}async request(e,t){try{return await this._request(e,t)}catch(e){if(e instanceof Error){let t={};Error.captureStackTrace?Error.captureStackTrace(t):t=Error();let r=(()=>{if(!t.stack)return"";let e=t.stack.indexOf("\n");return -1===e?"":t.stack.slice(e+1)})();try{if(e.stack){if(r){let t=r.indexOf("\n"),n=-1===t?-1:r.indexOf("\n",t+1),o=-1===n?"":r.slice(n+1);String(e.stack).endsWith(o)||(e.stack+="\n"+r)}}else e.stack=r}catch(e){}}throw e}}_request(e,t){let r,n;"string"==typeof e?(t=t||{}).url=e:t=e||{};let{transitional:o,paramsSerializer:i,headers:s}=t=e0(this.defaults,t);void 0!==o&&ty(o,{silentJSONParsing:tp.transitional(tp.boolean),forcedJSONParsing:tp.transitional(tp.boolean),clarifyTimeoutError:tp.transitional(tp.boolean),legacyInterceptorReqResOrdering:tp.transitional(tp.boolean),advertiseZstdAcceptEncoding:tp.transitional(tp.boolean),validateStatusUndefinedResolves:tp.transitional(tp.boolean)},!1),null!=i&&(Z.isFunction(i)?t.paramsSerializer={serialize:i}:ty(i,{encode:tp.function,serialize:tp.function},!0)),void 0!==t.allowAbsoluteUrls||(void 0!==this.defaults.allowAbsoluteUrls?t.allowAbsoluteUrls=this.defaults.allowAbsoluteUrls:t.allowAbsoluteUrls=!0),ty(t,{baseUrl:tp.spelling("baseURL"),withXsrfToken:tp.spelling("withXSRFToken")},!0),t.method=(t.method||this.defaults.method||"get").toLowerCase();let a=s&&Z.merge(s.common,s[t.method]);s&&Z.forEach(["delete","get","head","post","put","patch","query","common"],e=>{delete s[e]}),t.headers=ef.concat(a,s);let u=[],l=!0;this.interceptors.request.forEach(function(e){if("function"==typeof e.runWhen&&!1===e.runWhen(t))return;l=l&&e.synchronous;let r=t.transitional||eA;r&&r.legacyInterceptorReqResOrdering?u.unshift(e.fulfilled,e.rejected):u.push(e.fulfilled,e.rejected)});let f=[];this.interceptors.response.forEach(function(e){f.push(e.fulfilled,e.rejected)});let c=0;if(!l){let e=[th.bind(this),void 0];for(e.unshift(...u),e.push(...f),n=e.length,r=Promise.resolve(t);c<n;)r=r.then(e[c++],e[c++]);return r}n=u.length;let h=t;for(;c<n;){let e=u[c++],t=u[c++];try{h=e(h)}catch(e){t.call(this,e);break}}try{r=th.call(this,h)}catch(e){return Promise.reject(e)}for(c=0,n=f.length;c<n;)r=r.then(f[c++],f[c++]);return r}getUri(e){return eR(eQ((e=e0(this.defaults,e)).baseURL,e.url,e.allowAbsoluteUrls,e),e.params,e.paramsSerializer)}}Z.forEach(["delete","get","head","options"],function(e){tg.prototype[e]=function(t,r){return this.request(e0(r||{},{method:e,url:t,data:r&&Z.hasOwnProp(r,"data")?r.data:void 0}))}}),Z.forEach(["post","put","patch","query"],function(e){function t(t){return function(r,n,o){return this.request(e0(o||{},{method:e,headers:t?{"Content-Type":"multipart/form-data"}:{},url:r,data:n}))}}tg.prototype[e]=t(),"query"!==e&&(tg.prototype[e+"Form"]=t(!0))});class tm{constructor(e){let t;if("function"!=typeof e)throw TypeError("executor must be a function.");this.promise=new Promise(function(e){t=e});const r=this;this.promise.then(e=>{if(!r._listeners)return;let t=r._listeners.length;for(;t-- >0;)r._listeners[t](e);r._listeners=null}),this.promise.then=e=>{let t,n=new Promise(e=>{r.subscribe(e),t=e}).then(e);return n.cancel=function(){r.unsubscribe(t)},n},e(function(e,n,o){r.reason||(r.reason=new eM(e,n,o),t(r.reason))})}throwIfRequested(){if(this.reason)throw this.reason}subscribe(e){this.reason?e(this.reason):this._listeners?this._listeners.push(e):this._listeners=[e]}unsubscribe(e){if(!this._listeners)return;let t=this._listeners.indexOf(e);-1!==t&&this._listeners.splice(t,1)}toAbortSignal(){let e=new AbortController,t=t=>{e.abort(t)};return this.subscribe(t),e.signal.unsubscribe=()=>this.unsubscribe(t),e.signal}static source(){let e;return{token:new tm(function(t){e=t}),cancel:e}}}let tb={Continue:100,SwitchingProtocols:101,Processing:102,EarlyHints:103,Ok:200,Created:201,Accepted:202,NonAuthoritativeInformation:203,NoContent:204,ResetContent:205,PartialContent:206,MultiStatus:207,AlreadyReported:208,ImUsed:226,MultipleChoices:300,MovedPermanently:301,Found:302,SeeOther:303,NotModified:304,UseProxy:305,Unused:306,TemporaryRedirect:307,PermanentRedirect:308,BadRequest:400,Unauthorized:401,PaymentRequired:402,Forbidden:403,NotFound:404,MethodNotAllowed:405,NotAcceptable:406,ProxyAuthenticationRequired:407,RequestTimeout:408,Conflict:409,Gone:410,LengthRequired:411,PreconditionFailed:412,PayloadTooLarge:413,UriTooLong:414,UnsupportedMediaType:415,RangeNotSatisfiable:416,ExpectationFailed:417,ImATeapot:418,MisdirectedRequest:421,UnprocessableEntity:422,Locked:423,FailedDependency:424,TooEarly:425,UpgradeRequired:426,PreconditionRequired:428,TooManyRequests:429,RequestHeaderFieldsTooLarge:431,UnavailableForLegalReasons:451,InternalServerError:500,NotImplemented:501,BadGateway:502,ServiceUnavailable:503,GatewayTimeout:504,HttpVersionNotSupported:505,VariantAlsoNegotiates:506,InsufficientStorage:507,LoopDetected:508,NotExtended:510,NetworkAuthenticationRequired:511,WebServerIsDown:521,ConnectionTimedOut:522,OriginIsUnreachable:523,TimeoutOccurred:524,SslHandshakeFailed:525,InvalidSslCertificate:526};Object.entries(tb).forEach(([e,t])=>{tb[t]=e});let tw=function e(t){let r=new tg(t),n=f(tg.prototype.request,r);return Z.extend(n,tg.prototype,r,{allOwnKeys:!0}),Z.extend(n,r,null,{allOwnKeys:!0}),n.create=function(r){return e(e0(t,r))},n}(ek);tw.Axios=tg,tw.CanceledError=eM,tw.CancelToken=tm,tw.isCancel=eF,tw.VERSION=te,tw.toFormData=em,tw.AxiosError=eh,tw.Cancel=tw.CanceledError,tw.all=function(e){return Promise.all(e)},tw.spread=function(e){return function(t){return e.apply(null,t)}},tw.isAxiosError=function(e){return Z.isObject(e)&&!0===e.isAxiosError},tw.mergeConfig=e0,tw.AxiosHeaders=ef,tw.formToJSON=e=>eL(Z.isHTMLForm(e)?new FormData(e):e),tw.getAdapter=tf,tw.HttpStatusCode=tb,tw.default=tw;let tE=("undefined"!=typeof window&&window.location&&"cas.bareskrim.polri.go.id"===window.location.hostname)?window.location.origin:"https://api-cas.bareskrim.polri.go.id",
-  tv=tw.create({baseURL:`${tE}/api`,headers:{"Content-Type":"application/json"}}),
-  tR=tw.create({baseURL:`${tE}/api`,headers:{"Content-Type":"application/json"}}),
-  bdbIdleMs=144e5,
-  bdbActivityKey="bdb.auth.last_activity",
-  bdbRetryKey="__bdbAuthRetry",
-  bdbRefreshLockName="bdb-auth-refresh",
-  bdbRefreshLockKey="bdb.auth.refresh_lock",
-  bdbRefreshPromise=null,
-  bdbLastActivityWrite=0,
-  bdbLogoutStarted=!1,
-  bdbTabId="bdb-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2);
-
-function bdbReadAuth(){
-  try{return JSON.parse(localStorage.getItem("auth")||"null")||{}}
-  catch{return{}}
-}
-
-function bdbCurrentAccess(){
-  return localStorage.getItem("auth.access_token")||(bdbReadAuth().access_token??"")
-}
-
-function bdbCurrentRefresh(){
-  return localStorage.getItem("auth.refresh")||(bdbReadAuth().refresh_token??"")
-}
-
-function bdbStoreAuth(e){
-  let t={...bdbReadAuth(),...e};
-  localStorage.setItem("auth",JSON.stringify(t));
-  e.expires_at&&localStorage.setItem("auth.expires_at",String(e.expires_at));
-  e.access_token&&localStorage.setItem("auth.access_token",String(e.access_token));
-  e.refresh_token&&localStorage.setItem("auth.refresh",String(e.refresh_token))
-}
-
-function bdbIsIdle(e=Date.now()){
-  let t=Number(localStorage.getItem(bdbActivityKey)||0);
-  return!!t&&e-t>bdbIdleMs
-}
-
-function bdbIsPublicPanduanShare(){
-  try{
-    return typeof window!=="undefined"&&window.location.pathname.startsWith("/cms/panduan")&&new URLSearchParams(window.location.search).has("share")
-  }catch{return!1}
-}
-
-function tS(reasonUrl){if(bdbIsPublicPanduanShare()&&!bdbCurrentAccess())return;if(bdbLogoutStarted)return;bdbLogoutStarted=!0;try{let _tok=bdbCurrentAccess();if(_tok&&typeof fetch==="function"){fetch(tE+"/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}if(bdbIsPublicPanduanShare()){bdbLogoutStarted=!1;return}let targetUrl=typeof reasonUrl==="string"&&reasonUrl?reasonUrl:"/login?expired=1";if(!window.location.pathname.startsWith("/login")){"function"==typeof window.location.replace?window.location.replace(targetUrl):window.location.href=targetUrl}}
-
-function bdbMarkActivity(){
-  if(!bdbCurrentAccess()||bdbLogoutStarted)return;
-  let e=Date.now(),t=Number(localStorage.getItem(bdbActivityKey)||0);
-  if(t&&e-t>bdbIdleMs)return void tS();
-  if(e-bdbLastActivityWrite>15e3){
-    bdbLastActivityWrite=e;
-    localStorage.setItem(bdbActivityKey,String(e))
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,56420,e=>{"use strict";if(typeof window!=="undefined"&&!window.__bdbErrGuard){window.__bdbErrGuard=!0,window.addEventListener("error",function(e){if(e&&e.message&&(e.message.includes("reading 'startTime'")||e.message.includes("Minified React error #418"))){e.preventDefault(),e.stopImmediatePropagation()}},!0)}var a=e.i(71645);let t=(...e)=>e.filter((e,a,t)=>!!e&&""!==e.trim()&&t.indexOf(e)===a).join(" ").trim(),r=e=>{let a=e.replace(/^([A-Z])|[\s-_]+(\w)/g,(e,a,t)=>t?t.toUpperCase():a.toLowerCase());return a.charAt(0).toUpperCase()+a.slice(1)};var s={xmlns:"http://www.w3.org/2000/svg",width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"};let n=(0,a.createContext)({}),l=(0,a.forwardRef)(({color:e,size:r,strokeWidth:l,absoluteStrokeWidth:i,className:o="",children:c,iconNode:u,...d},p)=>{let{size:m=24,strokeWidth:f=2,absoluteStrokeWidth:h=!1,color:g="currentColor",className:k=""}=(0,a.useContext)(n)??{},b=i??h?24*Number(l??f)/Number(r??m):l??f;return(0,a.createElement)("svg",{ref:p,...s,width:r??m??s.width,height:r??m??s.height,stroke:e??g,strokeWidth:b,className:t("lucide",k,o),...!c&&!(e=>{for(let a in e)if(a.startsWith("aria-")||"role"===a||"title"===a)return!0;return!1})(d)&&{"aria-hidden":"true"},...d},[...u.map(([e,t])=>(0,a.createElement)(e,t)),...Array.isArray(c)?c:[c]])});e.s(["default",0,(e,s)=>{let n=(0,a.forwardRef)(({className:n,...i},o)=>(0,a.createElement)(l,{ref:o,iconNode:s,className:t(`lucide-${r(e).replace(/([a-z0-9])([A-Z])/g,"$1-$2").toLowerCase()}`,`lucide-${e}`,n),...i}));return n.displayName=r(e),n}],56420)},18566,(e,a,t)=>{a.exports=e.r(76562)},38036,e=>{"use strict";var a=e.i(54858);function t(){try{return JSON.parse(localStorage.getItem("auth")||"null")}catch{return null}}function r(){try{return JSON.parse(localStorage.getItem("user")||"null")}catch{return null}}async function s(e){let t=await a.api.get("/Authentication/user",{headers:{Authorization:`Bearer ${e.access_token||""}`}}),r={role:{permission:[]},...t.data?.data};try{let _ou=JSON.parse(localStorage.getItem("user")||"null");if(_ou&&(_ou.id||_ou.user_id)&&r&&(r.id||r.user_id)&&String(_ou.id||_ou.user_id)!==String(r.id||r.user_id)){try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{if(window.indexedDB)indexedDB.deleteDatabase("bdb_offline_db")}catch(_e){}}}catch(_e){}return localStorage.setItem("user",JSON.stringify(r)),localStorage.setItem("auth",JSON.stringify(e)),e.expires_at&&localStorage.setItem("auth.expires_at",e.expires_at),e.access_token&&localStorage.setItem("auth.access_token",e.access_token),e.refresh_token&&localStorage.setItem("auth.refresh",e.refresh_token),r}let n="impersonator_stash";async function l(e){let a=t(),l=r();return a?.access_token&&l&&localStorage.setItem(n,JSON.stringify({auth:a,user:l})),s(e)}function i(){try{return JSON.parse(localStorage.getItem(n)||"null")}catch{return null}}e.s(["deriveRoles",0,function(e){let a=String(e?.role?.role_name||e?.role_name||"").toLowerCase(),t=String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase(),r="superadmin"===t||a.includes("super"),s="admin_binops"===t||!r&&("admin"===a||a.includes("binops")),v=!r&&!s&&(t==="viewer"||a.includes("viewer"));return{isSuperadmin:r,isAdminBinops:s,isViewer:v,isReadOnly:v,isOperator:!r&&!s&&!v,canManageUsers:r||s,canUseBroadcaster:r||s,label:t||a||(v?"viewer":"operator")}},"fetchAndStoreUser",0,s,"getAuth",0,t,"getImpersonatorStash",0,i,"getUser",0,r,"logout",0,function(){try{let _tok=localStorage.getItem("auth.access_token")||(JSON.parse(localStorage.getItem("auth")||"null")?.access_token)||"";if(_tok&&typeof fetch==="function"){fetch("/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{window.bdbClearAllCache&&window.bdbClearAllCache()}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(r=>r.forEach(reg=>reg.unregister()))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}},"startImpersonation",0,l,"stopImpersonation",0,function(){let e=i();return!!e?.auth?.access_token&&(localStorage.setItem("user",JSON.stringify(e.user)),localStorage.setItem("auth",JSON.stringify(e.auth)),e.auth.expires_at&&localStorage.setItem("auth.expires_at",String(e.auth.expires_at)),e.auth.access_token&&localStorage.setItem("auth.access_token",String(e.auth.access_token)),e.auth.refresh_token&&localStorage.setItem("auth.refresh",String(e.auth.refresh_token)),localStorage.removeItem(n),!0)}])},41120,e=>{"use strict";let a=(0,e.i(56420).default)("refresh-cw",[["path",{d:"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",key:"v9h5vc"}],["path",{d:"M21 3v5h-5",key:"1q7to0"}],["path",{d:"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16",key:"3uifl3"}],["path",{d:"M8 16H3v5",key:"1cv678"}]]);e.s(["RefreshCw",0,a],41120)},45868,e=>{"use strict";e.s(["APP_VERSION",0,"1.0.0"])},65489,e=>{"use strict";let a=(0,e.i(56420).default)("megaphone",[["path",{d:"M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",key:"q8bfy3"}],["path",{d:"M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14",key:"1853fq"}],["path",{d:"M8 6v8",key:"15ugcq"}]]);e.s(["Megaphone",0,a],65489)},71028,e=>{"use strict";let a=(0,e.i(56420).default)("gauge",[["path",{d:"m12 14 4-4",key:"9kzdfg"}],["path",{d:"M3.34 19a10 10 0 1 1 17.32 0",key:"19p75a"}]]);e.s(["Gauge",0,a],71028)},31458,e=>{"use strict";let a=(0,e.i(56420).default)("flag",[["path",{d:"M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528",key:"1jaruq"}]]);e.s(["Flag",0,a],31458)},9573,e=>{"use strict";var a=e.i(71645);e.s(["fmtUpdated",0,function(e){return e?e.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—"},"useAutoRefresh",0,function(e,t=3e5){let r=(0,a.useRef)(e);r.current=e;let s=(0,a.useRef)(!1),[n,l]=(0,a.useState)(!1),[i,o]=(0,a.useState)(null),c=(0,a.useCallback)(async()=>{if(!s.current){s.current=!0,l(!0);try{await r.current(),o(new Date)}finally{s.current=!1,l(!1)}}},[]);return(0,a.useEffect)(()=>{let e=setInterval(()=>{("u"<typeof document||"visible"===document.visibilityState)&&c()},t);return()=>clearInterval(e)},[c,t]),{refreshing:n,updatedAt:i,refresh:c}}])},95057,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={formatUrl:function(){return i},formatWithValidation:function(){return c},urlObjectKeys:function(){return o}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809)._(e.r(98183)),l=/https?|ftp|gopher|file/;function i(e){let{auth:a,hostname:t}=e,r=e.protocol||"",s=e.pathname||"",i=e.hash||"",o=e.query||"",c=!1;a=a?encodeURIComponent(a).replace(/%3A/i,":")+"@":"",e.host?c=a+e.host:t&&(c=a+(~t.indexOf(":")?`[${t}]`:t),e.port&&(c+=":"+e.port)),o&&"object"==typeof o&&(o=String(n.urlQueryToSearchParams(o)));let u=e.search||o&&`?${o}`||"";return r&&!r.endsWith(":")&&(r+=":"),e.slashes||(!r||l.test(r))&&!1!==c?(c="//"+(c||""),s&&"/"!==s[0]&&(s="/"+s)):c||(c=""),i&&"#"!==i[0]&&(i="#"+i),u&&"?"!==u[0]&&(u="?"+u),s=s.replace(/[?#]/g,encodeURIComponent),u=u.replace("#","%23"),`${r}${c}${s}${u}${i}`}let o=["auth","hash","host","hostname","href","path","pathname","port","protocol","query","search","slashes"];function c(e){return i(e)}},18581,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"useMergedRef",{enumerable:!0,get:function(){return s}});let r=e.r(71645);function s(e,a){let t=(0,r.useRef)(null),s=(0,r.useRef)(null);return(0,r.useCallback)(r=>{if(null===r){let e=t.current;e&&(t.current=null,e());let a=s.current;a&&(s.current=null,a())}else e&&(t.current=n(e,r)),a&&(s.current=n(a,r))},[e,a])}function n(e,a){if("function"!=typeof e)return e.current=a,()=>{e.current=null};{let t=e(a);return"function"==typeof t?t:()=>e(null)}}("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},73668,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"isLocalURL",{enumerable:!0,get:function(){return n}});let r=e.r(18967),s=e.r(52817);function n(e){if(!(0,r.isAbsoluteUrl)(e))return!0;try{let a=(0,r.getLocationOrigin)(),t=new URL(e,a);return t.origin===a&&(0,s.hasBasePath)(t.pathname)}catch(e){return!1}}},84508,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0}),Object.defineProperty(t,"errorOnce",{enumerable:!0,get:function(){return r}});let r=e=>{}},22016,(e,a,t)=>{"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r={default:function(){return k},useLinkStatus:function(){return y}};for(var s in r)Object.defineProperty(t,s,{enumerable:!0,get:r[s]});let n=e.r(90809),l=e.r(43476),i=n._(e.r(71645)),o=e.r(95057),c=e.r(8372),u=e.r(18581),d=e.r(18967),p=e.r(5550);e.r(33525);let m=e.r(88540),f=e.r(91949),h=e.r(73668),g=e.r(9396);function k(a){var t,r;let s,n,k,[y,j]=(0,i.useOptimistic)(f.IDLE_LINK_STATUS),v=(0,i.useRef)(null),{href:S,as:w,children:x,prefetch:R=null,passHref:M,replace:_,shallow:N,scroll:P,onClick:C,onMouseEnter:A,onTouchStart:L,legacyBehavior:O=!1,onNavigate:T,transitionTypes:I,ref:E,unstable_dynamicOnHover:z,...K}=a;s=x,O&&("string"==typeof s||"number"==typeof s)&&(s=(0,l.jsx)("a",{children:s}));let $=i.default.useContext(c.AppRouterContext),D=!1!==R,B=!1!==R?null===(r=R)||"auto"===r?g.FetchStrategy.PPR:g.FetchStrategy.Full:g.FetchStrategy.PPR,U="string"==typeof(t=w||S)?t:(0,o.formatUrl)(t);if(O){if(s?.$$typeof===Symbol.for("react.lazy"))throw Object.defineProperty(Error("`<Link legacyBehavior>` received a direct child that is either a Server Component, or JSX that was loaded with React.lazy(). This is not supported. Either remove legacyBehavior, or make the direct child a Client Component that renders the Link's `<a>` tag."),"__NEXT_ERROR_CODE",{value:"E863",enumerable:!1,configurable:!0});n=i.default.Children.only(s)}let q=O?n&&"object"==typeof n&&n.ref:E,J=i.default.useCallback(e=>(null!==$&&(v.current=(0,f.mountLinkInstance)(e,U,$,B,D,j)),()=>{v.current&&((0,f.unmountLinkForCurrentNavigation)(v.current),v.current=null),(0,f.unmountPrefetchableInstance)(e)}),[D,U,$,B,j]),W={ref:(0,u.useMergedRef)(J,q),onClick(a){O||"function"!=typeof C||C(a),O&&n.props&&"function"==typeof n.props.onClick&&n.props.onClick(a),!$||a.defaultPrevented||function(a,t,r,s,n,l,o){if("u">typeof window){let c,{nodeName:u}=a.currentTarget;if("A"===u.toUpperCase()&&((c=a.currentTarget.getAttribute("target"))&&"_self"!==c||a.metaKey||a.ctrlKey||a.shiftKey||a.altKey||a.nativeEvent&&2===a.nativeEvent.which)||a.currentTarget.hasAttribute("download"))return;if(!(0,h.isLocalURL)(t)){s&&(a.preventDefault(),location.replace(t));return}if(a.preventDefault(),l){let e=!1;if(l({preventDefault:()=>{e=!0}}),e)return}let{dispatchNavigateAction:d}=e.r(99781);i.default.startTransition(()=>{d(t,s?"replace":"push",!1===n?m.ScrollBehavior.NoScroll:m.ScrollBehavior.Default,r.current,o)})}}(a,U,v,_,P,T,I)},onMouseEnter(e){O||"function"!=typeof A||A(e),O&&n.props&&"function"==typeof n.props.onMouseEnter&&n.props.onMouseEnter(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)},onTouchStart:function(e){O||"function"!=typeof L||L(e),O&&n.props&&"function"==typeof n.props.onTouchStart&&n.props.onTouchStart(e),$&&D&&(0,f.onNavigationIntent)(e.currentTarget,!0===z)}};return(0,d.isAbsoluteUrl)(U)?W.href=U:O&&!M&&("a"!==n.type||"href"in n.props)||(W.href=(0,p.addBasePath)(U)),k=O?i.default.cloneElement(n,W):(0,l.jsx)("a",{...K,...W,children:s}),(0,l.jsx)(b.Provider,{value:y,children:k})}e.r(84508);let b=(0,i.createContext)(f.IDLE_LINK_STATUS),y=()=>(0,i.useContext)(b);("function"==typeof t.default||"object"==typeof t.default&&null!==t.default)&&void 0===t.default.__esModule&&(Object.defineProperty(t.default,"__esModule",{value:!0}),Object.assign(t.default,t),a.exports=t.default)},70187,e=>{"use strict";let a={key:"code",label:"Kode"},t={key:"name",label:"Nama"},r={key:"singkatan",label:"Singkatan"},s={key:"status",label:"Status"},n=Object.fromEntries([{slug:"agama",title:"Agama",fields:[t]},{slug:"kewarganegaraan",title:"Kewarganegaraan",fields:[a,t]},{slug:"pekerjaan",title:"Pekerjaan",fields:[a,t]},{slug:"pendidikan",title:"Pendidikan",fields:[t]},{slug:"suku",title:"Suku",fields:[t]},{slug:"golongan-kejahatan",title:"Golongan Kejahatan",fields:[t]},{slug:"kategori-lokasi",title:"Tempat Peristiwa/Kejadian",fields:[t]},{slug:"modus-operandi",title:"Modus Operandi",fields:[t]},{slug:"motif-kejahatan",title:"Motif Kejahatan",fields:[t]},{slug:"iccs-kategori",title:"Kategori ICCS",fields:[{key:"kode",label:"Kode"},{key:"nama",label:"Nama"},{key:"keterangan",label:"Keterangan"}]},{slug:"undang-undang",title:"Undang-Undang",fields:[{key:"deskripsi",label:"Deskripsi"}]},{slug:"provinsi",title:"Provinsi",fields:[a,t,r,s]},{slug:"kabupaten",title:"Kabupaten/Kota",fields:[a,t,r,s]},{slug:"kecamatan",title:"Kecamatan",fields:[a,t,r,s]},{slug:"desa",title:"Desa/Kelurahan",fields:[a,t,r,s]}].map(e=>[e.slug,{...e,endpoint:`/master/${e.slug}`}])),l=["jenis-kejahatan","golongan-kejahatan","kategori-lokasi","modus-operandi","motif-kejahatan","iccs-kategori","undang-undang"],i=Object.values(n).filter(e=>!l.includes(e.slug));e.s(["MASTERS",0,n,"MASTER_LIST",0,i])},73670,e=>{"use strict";let a=(0,e.i(56420).default)("user-cog",[["path",{d:"M10 15H6a4 4 0 0 0-4 4v2",key:"1nfge6"}],["path",{d:"m14.305 16.53.923-.382",key:"1itpsq"}],["path",{d:"m15.228 13.852-.923-.383",key:"eplpkm"}],["path",{d:"m16.852 12.228-.383-.923",key:"13v3q0"}],["path",{d:"m16.852 17.772-.383.924",key:"1i8mnm"}],["path",{d:"m19.148 12.228.383-.923",key:"1q8j1v"}],["path",{d:"m19.53 18.696-.382-.924",key:"vk1qj3"}],["path",{d:"m20.772 13.852.924-.383",key:"n880s0"}],["path",{d:"m20.772 16.148.924.383",key:"1g6xey"}],["circle",{cx:"18",cy:"15",r:"3",key:"gjjjvw"}],["circle",{cx:"9",cy:"7",r:"4",key:"nufk8"}]]);e.s(["UserCog",0,a],73670)},81539,e=>{"use strict";let a=["superadmin","admin_binops","operator","viewer","sharese"],t=["superadmin","admin_binops"],r=["superadmin"],s=[{label:"Dashboard",items:[{key:"ringkasan",label:"Ringkasan",icon:"pi pi-fw pi-home",to:"/cms/dashboard/main",defaultRoles:a},{key:"peta-kejahatan",label:"Peta Kejahatan",icon:"pi pi-fw pi-map",to:"/cms/dashboard/main?view=peta-kejahatan",defaultRoles:a}]},{label:"Sharese",items:[{key:"profil",label:"Profile",icon:"pi pi-fw pi-user",to:"/cms/profile",defaultRoles:a},{key:"jukrahcaster",label:"Feed",icon:"pi pi-fw pi-globe",to:"/cms/broadcaster",defaultRoles:a},{key:"sharese-obrolan",label:"Obrolan",icon:"pi pi-fw pi-comments",to:"/cms/broadcaster?view=obrolan",defaultRoles:a},{key:"sharese-koneksi",label:"Koneksi",icon:"pi pi-fw pi-users",to:"/cms/broadcaster?view=koneksi",defaultRoles:a},{key:"sharese-notifikasi",label:"Notifikasi",icon:"pi pi-fw pi-bell",to:"/cms/broadcaster?view=notifikasi",defaultRoles:a},{key:"sharese-insight",label:"Insight",icon:"pi pi-fw pi-chart-line",to:"/cms/broadcaster?view=insight",defaultRoles:a},{key:"kelola-jukrahcaster",label:"Moderasi",icon:"pi pi-fw pi-megaphone",to:"/cms/pengumuman",defaultRoles:t},{key:"sharese-keamanan",label:"Keamanan",icon:"pi pi-fw pi-shield",to:"/cms/profile?view=keamanan",defaultRoles:a}]},{label:"Laporan",items:[{key:"laporan-polisi",label:"Laporan Polisi",icon:"pi pi-fw pi-file-check",to:"/cms/laporan-polisi",defaultRoles:a,children:[{key:"laporan-polisi-list",label:"Daftar LP",icon:"pi pi-fw pi-list",to:"/cms/laporan-polisi",defaultRoles:a},{key:"arsip-lp-pelimpahan",label:"Arsip Limpah",icon:"pi pi-fw pi-history",to:"/cms/laporan-polisi/arsip-pelimpahan",defaultRoles:a}]},{key:"kinerja-perkara",label:"Kinerja Perkara",icon:"pi pi-fw pi-gauge",to:"/cms/report/kinerja-perkara",defaultRoles:a},{key:"anev-ctcc",label:"Lamp. Anev Periodik",icon:"pi pi-fw pi-file-edit",to:"/cms/report/anev-ctcc",defaultRoles:a}]},{label:"Register",items:[{key:"rekap-pihak",label:"Pihak Terlibat",icon:"pi pi-fw pi-users",to:"/cms/laporan/rekap-pihak-terlibat",defaultRoles:a},{key:"pihak-sering",label:"Pihak Sering Terlibat",icon:"pi pi-fw pi-sitemap",to:"/cms/laporan/pihak-sering-terlibat",defaultRoles:a},{key:"rekap-bb",label:"Barang Bukti",icon:"pi pi-fw pi-box",to:"/cms/laporan/rekap-barang-bukti",defaultRoles:a}]},{label:"Susopsgas",items:[{key:"kasus-menonjol-lihat",label:"Rekap",icon:"pi pi-fw pi-flag",to:"/cms/laporan/kasus-menonjol/lihat",defaultRoles:a},{key:"kasus-menonjol",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/laporan/kasus-menonjol",defaultRoles:a}]},{label:"Portal Integrasi",items:[{key:"dors",label:"Masuk",icon:"pi pi-fw pi-sign-in",to:"/cms/integrasi/dors",defaultRoles:t,children:[{key:"dors-monitor",label:"Tarik Data",icon:"pi pi-fw pi-sync",to:"/cms/integrasi/dors",defaultRoles:t},{key:"dors-data",label:"Staging",icon:"pi pi-fw pi-database",to:"/cms/integrasi/dors-data",defaultRoles:t},{key:"dors-unmapped",label:"Import ke Database",icon:"pi pi-fw pi-exclamation-triangle",to:"/cms/integrasi/dors-unmapped",defaultRoles:t},{key:"satker-legacy",label:"Cek Duplikat",icon:"pi pi-fw pi-sitemap",to:"/cms/integrasi/satker-legacy",defaultRoles:t},{key:"master-data-gap",label:"Master Tidak Termapping",icon:"pi pi-fw pi-exclamation-circle",to:"/cms/integrasi/master-data-gap",defaultRoles:t}]},{key:"integrasi-portal-keluar",label:"Keluar",icon:"pi pi-fw pi-key",to:"/cms/integrasi/portal-keluar",defaultRoles:r}]},{label:"Audit",items:[{key:"audit-log",label:"Log Audit",icon:"pi pi-fw pi-history",to:"/cms/audit-log",defaultRoles:t},{key:"uji-beban",label:"Uji Beban (Server Prod)",icon:"pi pi-fw pi-bolt",to:"/cms/audit-log/uji-beban",defaultRoles:r}]},{label:"Master Data",items:[{key:"master-pengguna",label:"Pengguna",icon:"pi pi-fw pi-users",to:"/cms/master/user",defaultRoles:[...t,"operator"]},{key:"master-satker",label:"Satker",icon:"pi pi-fw pi-sitemap",to:"/cms/master/satker-tree",defaultRoles:t,children:[{key:"master-satker-tree",label:"Struktur Satker (Puskarda)",icon:"pi pi-fw pi-share-alt",to:"/cms/master/satker-tree",defaultRoles:t},{key:"master-satker-eksternal",label:"Satker Eksternal",icon:"pi pi-fw pi-building",to:"/cms/master/satker-eksternal",defaultRoles:t}]},{key:"master-referensi",label:"Master Referensi",icon:"pi pi-fw pi-database",to:"/cms/master-ref",defaultRoles:t}]},{label:"Kerja Sama",items:[{key:"kerma-lihat",label:"Rekap",icon:"pi pi-fw pi-briefcase",to:"/cms/kerma/lihat",defaultRoles:a},{key:"kerma-kelola",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/kerma",defaultRoles:t}]},{label:"Panduan Pengguna",items:[{key:"panduan-lihat",label:"Rekap",icon:"pi pi-fw pi-book",to:"/cms/panduan",defaultRoles:a},{key:"panduan-kelola",label:"Kelola",icon:"pi pi-fw pi-cog",to:"/cms/panduan?mode=kelola",defaultRoles:r}]},{label:"Sistem",items:[{key:"pusat-bantuan",label:"Pusat Bantuan",icon:"pi pi-fw pi-question-circle",to:"/cms/broadcaster?view=pusat-bantuan",defaultRoles:a},{key:"kelola-pengaturan",label:"Kelola Pengaturan",icon:"pi pi-fw pi-sliders-h",to:"/cms/pengaturan/email",defaultRoles:t}]}];e.s(["MENU_CATALOG",0,s,"isMenuAllowed",0,function(e,a,t,r){if(r)return!0;if(e.key==="pusat-bantuan"||e.key==="peta-kejahatan"||e.key&&e.key.startsWith("sharese-"))return e.defaultRoles.includes(a);if(e.key==="kelola-pengaturan"){let k=t.get(`${a}|kelola-pengaturan`);if(void 0!==k)return k;let em=t.get(`${a}|email-smtp`);return void 0!==em?em:e.defaultRoles.includes(a)}let s=t.get(`${a}|${e.key}`);return void 0!==s?s:e.defaultRoles.includes(a)}])},93989,e=>{"use strict";var a=e.i(43476),t=e.i(71645),r=e.i(18566),s=e.i(22016),n=e.i(45868);function useCasLocationSearch(){let[q,setQ]=(0,t.useState)(()=>"undefined"!=typeof window?window.location.search||"":"");return(0,t.useEffect)(()=>{if("undefined"==typeof window)return;if(!window.__casHistPatched){window.__casHistPatched=!0;let origPush=history.pushState,origReplace=history.replaceState;history.pushState=function(){let res=origPush.apply(this,arguments);try{window.dispatchEvent(new Event("cas-url-change"))}catch{}return res};history.replaceState=function(){let res=origReplace.apply(this,arguments);try{window.dispatchEvent(new Event("cas-url-change"))}catch{}return res}}let sync=()=>setQ(window.location.search||""),delayed=()=>setTimeout(sync,15);sync();window.addEventListener("cas-url-change",sync);window.addEventListener("popstate",sync);document.addEventListener("click",delayed,!0);return()=>{window.removeEventListener("cas-url-change",sync);window.removeEventListener("popstate",sync);document.removeEventListener("click",delayed,!0)}},[]),q}function casNav(router,href){if("undefined"!=typeof window&&router){router.push(href);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)}}function l({sections:e,open:t,onNavigate:o}){let c=(0,r.usePathname)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),sysSettingPaths=["/cms/pengaturan/email","/cms/pengaturan/login-otp","/cms/pengaturan/maintenance","/cms/pengaturan/pusat-bantuan","/cms/master/alur-dokumen","/cms/master/organisasi-role","/cms/master/menu"],u=itemTo=>{if(!itemTo)return!1;if(itemTo.includes("?")){let[p,qs]=itemTo.split("?");if(c!==p&&!(p==="/cms/dashboard/main"&&(c==="/cms/dashboard"||c==="/cms/dashboard/heatmap")))return!1;if(c==="/cms/dashboard/heatmap"&&itemTo==="/cms/dashboard/main?view=peta-kejahatan")return!0;let isp=new URLSearchParams(qs);for(let[k,v]of isp.entries())if(sp.get(k)!==v)return!1;return!0}if(itemTo==="/cms/pengaturan/email"&&sysSettingPaths.some(p=>c===p||c.startsWith(p+"/")))return!0;if(itemTo==="/cms/laporan/kasus-menonjol/lihat"&&(c==="/cms/laporan/kasus-menonjol/lihat"||c==="/cms/laporan/kasus-atensi/lihat"||c==="/cms/laporan/rekap-operasi-satgas"))return!0;if(itemTo==="/cms/laporan/kasus-menonjol"){return c==="/cms/laporan/kasus-menonjol"||c==="/cms/laporan/kasus-atensi"||c==="/cms/master/operasi-satgas"}if(itemTo==="/cms/laporan-polisi"&&c==="/cms/laporan-polisi/arsip-pelimpahan")return!1;if(itemTo==="/cms/panduan"&&c==="/cms/panduan/kelola")return!1;if(itemTo==="/cms/panduan?mode=kelola"&&c==="/cms/panduan/kelola")return!0;if((itemTo==="/cms/broadcaster"||itemTo==="/cms/profile"||itemTo==="/cms/dashboard/main"||itemTo==="/cms/dashboard")&&sp.get("view"))return!1;if(itemTo==="/cms/panduan"&&sp.get("mode")==="kelola")return!1;return c===itemTo||c.startsWith(itemTo+"/")},d=(()=>{let a=null;for(let t of e)for(let e of t.items){if(u(e.to)&&(!a||e.to.includes("?")&&!a.includes("?")||e.to.length>a.length))a=e.to;for(let t of e.children||[])if(u(t.to)&&(!a||t.to.includes("?")&&!a.includes("?")||t.to.length>a.length))a=t.to}return a})(),p=e=>(e.children||[]).some(e=>e.to===d);return(0,a.jsxs)("aside",{className:`cms-sidebar${t?" cms-sidebar-open":""}`,children:[(0,a.jsxs)("div",{className:"cms-brand",children:[(0,a.jsx)("img",{src:"/bdb-mark.svg",alt:"BDB",className:"cms-brand-logo-img"}),(0,a.jsx)("div",{children:(0,a.jsx)("div",{className:"cms-brand-name",children:"BIG DATA BINOPS"})})]}),(0,a.jsx)("nav",{className:"cms-menu",children:e.map(e=>(0,a.jsxs)("div",{className:"cms-menu-section",children:[(0,a.jsx)("div",{className:"cms-menu-title",children:e.label}),e.items.map(e=>e.children&&e.children.length?(0,a.jsx)(i,{id:"fld-0-gigr76s0g8t-1",name:"field_0_gigr76s0g8t_1",item:e,childActive:p,activeChildTo:d,onNavigate:o},e.label):(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item${e.to===d?" active":""}`,onClick:()=>{o&&o();setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))]},e.label))}),(0,a.jsxs)("div",{className:"cms-sidebar-version",children:["BDB v",n.APP_VERSION]})]})}function i({item:e,childActive:r,activeChildTo:n,onNavigate:l}){let o=r(e),[c,u]=(0,t.useState)(o),d=c||o;return(0,a.jsxs)("div",{className:"cms-menu-group",children:[(0,a.jsxs)("button",{type:"button",className:`cms-menu-item cms-menu-parent${o?" active-parent":""}`,onClick:()=>u(e=>!e),"aria-expanded":d,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label}),(0,a.jsx)("i",{className:`pi pi-angle-${d?"down":"right"} cms-menu-caret`})]}),d&&(0,a.jsx)("div",{className:"cms-submenu",children:(e.children||[]).map(e=>(0,a.jsxs)(s.default,{href:e.to,prefetch:!1,className:`cms-menu-item cms-submenu-item${e.to===n?" active":""}`,onClick:l,children:[(0,a.jsx)("i",{className:e.icon}),(0,a.jsx)("span",{children:e.label})]},e.to))})]})}var o=e.i(56420);let c=(0,o.default)("menu",[["path",{d:"M4 5h16",key:"1tepv9"}],["path",{d:"M4 12h16",key:"1lakjw"}],["path",{d:"M4 19h16",key:"1djgab"}]]),u=(0,o.default)("sun",[["circle",{cx:"12",cy:"12",r:"4",key:"4exip2"}],["path",{d:"M12 2v2",key:"tus03m"}],["path",{d:"M12 20v2",key:"1lh1kg"}],["path",{d:"m4.93 4.93 1.41 1.41",key:"149t6j"}],["path",{d:"m17.66 17.66 1.41 1.41",key:"ptbguv"}],["path",{d:"M2 12h2",key:"1t8f8n"}],["path",{d:"M20 12h2",key:"1q8mjw"}],["path",{d:"m6.34 17.66-1.41 1.41",key:"1m8zz5"}],["path",{d:"m19.07 4.93-1.41 1.41",key:"1shlcs"}]]),d=(0,o.default)("moon",[["path",{d:"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",key:"kfwtm"}]]),p=(0,o.default)("wifi",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M2 8.82a15 15 0 0 1 20 0",key:"dnpr2z"}],["path",{d:"M5 12.859a10 10 0 0 1 14 0",key:"1x1e6c"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),m=(0,o.default)("wifi-off",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}],["path",{d:"M5 12.859a10 10 0 0 1 5.17-2.69",key:"1dl1wf"}],["path",{d:"M19 12.859a10 10 0 0 0-2.007-1.523",key:"4k23kn"}],["path",{d:"M2 8.82a15 15 0 0 1 4.177-2.643",key:"1grhjp"}],["path",{d:"M22 8.82a15 15 0 0 0-11.288-3.764",key:"z3jwby"}],["path",{d:"m2 2 20 20",key:"1ooewy"}]]),f=(0,o.default)("wifi-low",[["path",{d:"M12 20h.01",key:"zekei9"}],["path",{d:"M8.5 16.429a5 5 0 0 1 7 0",key:"1bycff"}]]),h=(0,o.default)("log-out",[["path",{d:"m16 17 5-5-5-5",key:"1bji2h"}],["path",{d:"M21 12H9",key:"dn1m92"}],["path",{d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",key:"1uf3rs"}]]),g=(0,o.default)("panel-left",[["rect",{width:"18",height:"18",x:"3",y:"3",rx:"2",key:"afitv7"}],["path",{d:"M9 3v18",key:"fh3hqa"}]]),k=(0,o.default)("arrow-down",[["path",{d:"M12 5v14",key:"s699le"}],["path",{d:"m19 12-7 7-7-7",key:"1idqje"}]]),b=(0,o.default)("arrow-up",[["path",{d:"m5 12 7-7 7 7",key:"hav0vg"}],["path",{d:"M12 19V5",key:"x0mq9r"}]]);var y=e.i(71028);let j=(0,o.default)("bell",[["path",{d:"M10.268 21a2 2 0 0 0 3.464 0",key:"vwvbt9"}],["path",{d:"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326",key:"11g9vi"}]]);var v=e.i(65489),S=e.i(31458);let w=(0,o.default)("shield",[["path",{d:"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",key:"oel41y"}]]);var x=e.i(41120),R=e.i(38036),M=e.i(54858),_=e.i(9573);let N={jukrah:(0,a.jsx)(j,{size:15}),satgas:(0,a.jsx)(w,{id:"fld-0-gigr76s0g8t-2",name:"field_0_gigr76s0g8t_2",size:15}),operasi:(0,a.jsx)(j,{size:15})},P={excellent:"Sangat Baik",good:"Baik",weak:"Lemah",poor:"Sangat Lemah",offline:"Offline"};async function C(){if(!navigator.onLine)return null;try{let e=new AbortController,a=setTimeout(()=>e.abort(),4e3),t=performance.now();return await fetch(`${M.BACKEND_URL}/api/network/ping?_=${Date.now()}`,{signal:e.signal,cache:"no-store"}),clearTimeout(a),Math.round(performance.now()-t)}catch{return null}}async function A(e){try{let a=new AbortController,t=setTimeout(()=>a.abort(),8e3),r=performance.now(),s=0;if("down"===e){let e=await fetch(`${M.BACKEND_URL}/api/network/probe?_=${Date.now()}`,{signal:a.signal,cache:"no-store"});s=(await e.arrayBuffer()).byteLength}else await fetch(`${M.BACKEND_URL}/api/network/probe`,{method:"POST",signal:a.signal,cache:"no-store",headers:{"Content-Type":"application/octet-stream"},body:new Uint8Array(2e5)}),s=2e5;clearTimeout(t);let n=(performance.now()-r)/1e3;if(n<=0||!s)return null;return Math.round(8*s/n/1e6*10)/10}catch{return null}}
+function formatCallsign(rawCallsign, authorId, username) {
+  var idStr = String(authorId || '');
+  /* dynamic handle */
+  var c = String(rawCallsign || '').trim().replace(/^@/, '');
+  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
+  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) {
+    return '@' + c;
   }
-}
-
-function bdbTokenNearExpiry(e){
-  let t=[];
-  try{
-    let r=e.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
-    r+="=".repeat((4-r.length%4)%4);
-    let n=Number(JSON.parse(atob(r)).exp);
-    Number.isFinite(n)&&t.push(1e3*n)
-  }catch{}
-  let r=Date.parse(localStorage.getItem("auth.expires_at")||"");
-  Number.isFinite(r)&&t.push(r);
-  return!!t.length&&Math.min(...t)-Date.now()<12e4
-}
-
-function bdbDelay(e){return new Promise(t=>setTimeout(t,e))}
-
-function bdbReadRefreshLock(){
-  try{return JSON.parse(localStorage.getItem(bdbRefreshLockKey)||"null")}
-  catch{return null}
-}
-
-async function bdbDoRefresh(){
-  if(bdbIsIdle())throw Error("Sesi berakhir karena tidak ada aktivitas.");
-  let e=bdbCurrentRefresh();
-  if(!e)throw Error("Refresh token tidak tersedia.");
-  let t=await tv.post("/Authentication/refresh-token",{refresh_token:e},{timeout:15e3}),r=t?.data?.data;
-  if(0===t?.data?.status||!r?.access_token||!r?.refresh_token)throw Error(t?.data?.message||"Refresh token gagal.");
-  bdbStoreAuth(r);
-  return r.access_token
-}
-
-async function bdbFallbackRefreshLock(e,t){
-  let r=Date.now()+2e4;
-  while(Date.now()<r){
-    if(bdbIsIdle())throw Error("Sesi berakhir karena tidak ada aktivitas.");
-    let n=bdbCurrentAccess();
-    if(n&&n!==t&&!bdbTokenNearExpiry(n))return n;
-    let o=Date.now(),i=bdbReadRefreshLock();
-    if(!i||!i.owner||Number(i.expires||0)<=o){
-      let i={owner:bdbTabId,expires:o+2e4};
-      localStorage.setItem(bdbRefreshLockKey,JSON.stringify(i));
-      await bdbDelay(60+Math.floor(40*Math.random()));
-      let s=bdbReadRefreshLock();
-      if(s?.owner===bdbTabId){
-        try{return await e()}
-        finally{bdbReadRefreshLock()?.owner===bdbTabId&&localStorage.removeItem(bdbRefreshLockKey)}
-      }
-    }else await bdbDelay(100)
+  var u = String(username || '').trim().replace(/^@/, '');
+  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u)) {
+    return '@' + u;
   }
-  let n=bdbCurrentAccess();
-  if(n&&n!==t&&!bdbTokenNearExpiry(n))return n;
-  throw Error("Refresh token sedang diproses terlalu lama.")
-}
-
-async function bdbRefreshUnderLock(e){
-  let t=async()=>{
-    if(bdbIsIdle())throw Error("Sesi berakhir karena tidak ada aktivitas.");
-    let t=bdbCurrentAccess();
-    return t&&t!==e&&!bdbTokenNearExpiry(t)?t:bdbDoRefresh()
-  };
-  return"undefined"!=typeof navigator&&navigator.locks?.request
-    ?navigator.locks.request(bdbRefreshLockName,{mode:"exclusive"},t)
-    :bdbFallbackRefreshLock(t,e)
-}
-
-async function bdbRefreshAccessToken(){
-  if(bdbIsIdle())throw Error("Sesi berakhir karena tidak ada aktivitas.");
-  if(bdbRefreshPromise)return bdbRefreshPromise;
-  let e=bdbCurrentAccess();
-  bdbRefreshPromise=bdbRefreshUnderLock(e).finally(()=>{bdbRefreshPromise=null});
-  return bdbRefreshPromise
-}
-
-async function bdbRecoverRequest(e){
-  if(!e||e[bdbRetryKey]||bdbIsIdle())throw Error("Sesi berakhir, silakan login ulang.");
-  e[bdbRetryKey]=!0;
-  let t=await bdbRefreshAccessToken();
-  e.headers=e.headers||{};
-  e.headers.Authorization=`Bearer ${t}`;
-  return tR.request(e)
-}
-
-if("undefined"!=typeof window&&!window.__bdbIdleRefreshBound){
-  window.__bdbIdleRefreshBound=!0;
-  let e=()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())return void tS("/login");bdbMarkActivity()};
-  ["pointerdown","mousemove","keydown","scroll","touchstart"].forEach(t=>window.addEventListener(t,e,{passive:!0}));
-  document.addEventListener("visibilitychange",()=>{"visible"===document.visibilityState&&e()});
-  window.addEventListener("focus",e);
-  window.addEventListener("storage",ev=>{if(ev.key===null||ev.key==="bdb.auth.logout_broadcast"||((ev.key==="auth.access_token"||ev.key==="auth"||ev.key==="user")&&!ev.newValue)){if(!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())tS("/login")}});
-  try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.onmessage=ev=>{if(ev?.data?.type==="LOGOUT"&&!bdbIsPublicPanduanShare())tS("/login")}}}catch(_e){}
-  bdbMarkActivity();
-  window.setInterval(()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())return void tS("/login");if(!bdbIsPublicPanduanShare()&&bdbIsIdle())tS("/login?expired=1")},4e3)
-}
-
-tv.interceptors.request.use(async e => {
-  if (typeof window !== "undefined" && !window.navigator.onLine && String(e.method || "GET").toUpperCase() === "GET") {
-    if (window.bdbOffline && typeof window.bdbOffline.getApiCache === "function") {
-      try {
-        const cached = await window.bdbOffline.getApiCache(e.url, e.params);
-        if (cached && cached.data) {
-          e.adapter = async () => ({
-            data: cached.data,
-            status: 200,
-            statusText: "OK (Offline Fast-Path)",
-            headers: { "x-bdb-cache": "hit" },
-            config: e,
-            request: {},
-            __from_cache: true
-          });
-          window.bdbShowOfflineToast && window.bdbShowOfflineToast();
-        }
-      } catch (cErr) {}
-    }
-  }
-  return e;
-});
-
-tv.interceptors.response.use(
-  e => {
-    if (e?.config && (!e.config.method || String(e.config.method).toUpperCase() === "GET") && e.status === 200) {
-      if (typeof window !== "undefined" && window.bdbOffline) {
-        window.bdbOffline.saveApiCache(e.config.url, e.config.params, e.data);
-      }
-    }
-    return e;
-  },
-  async e => {
-    const m = String(e?.config?.method || "GET").toUpperCase();
-    const isGet = m === "GET";
-    const isNetErr = typeof window !== "undefined" && (!window.navigator.onLine || !e?.response || (e?.response?.status >= 500) || e?.code === "ECONNABORTED" || String(e?.message||"").includes("Network Error"));
-    if (isGet && isNetErr && typeof window !== "undefined" && window.bdbOffline) {
-      try {
-        const _cfg = e?.config || e?.response?.config; if (!_cfg || !_cfg.url) return Promise.reject(e); const cached = await window.bdbOffline.getApiCache(_cfg.url, _cfg.params);
-        if (cached && cached.data) {
-          window.bdbShowOfflineToast && window.bdbShowOfflineToast();
-          return { data: cached.data, status: 200, statusText: "OK (Offline Cache Fallback)", headers: { "x-bdb-cache": "fallback" }, config: e.config, request: {}, __from_cache: true };
-        }
-      } catch (cErr) {}
-    }
-    return Promise.reject(e);
-  }
-);
-tR.interceptors.request.use(async e => {
-  if (bdbIsIdle()) throw tS(), Error("Sesi berakhir karena tidak ada aktivitas.");
-  let t = bdbCurrentAccess();
-  if (!t) { tS(); const err = Error("Sesi login tidak ditemukan."); err.__bdbAuthFatal = true; throw err; }
-  if (bdbTokenNearExpiry(t)) {
-    try { t = await bdbRefreshAccessToken(); }
-    catch (rErr) { tS(); if (rErr && typeof rErr === "object") rErr.__bdbAuthFatal = true; throw rErr; }
-  }
-  t && (e.headers.Authorization = "Bearer " + t);
-  if (typeof window !== "undefined" && !window.navigator.onLine && String(e.method || "GET").toUpperCase() === "GET") {
-    if (window.bdbOffline && typeof window.bdbOffline.getApiCache === "function") {
-      try {
-        const cached = await window.bdbOffline.getApiCache(e.url, e.params);
-        if (cached && cached.data) {
-          e.adapter = async () => ({
-            data: cached.data,
-            status: 200,
-            statusText: "OK (Offline Fast-Path)",
-            headers: {},
-            config: e,
-            request: {},
-            __from_cache: true
-          });
-          window.bdbShowOfflineToast && window.bdbShowOfflineToast();
-        }
-      } catch (cErr) {}
-    }
-  }
-  return e;
-});;
-
-let tO=["invalid signature","jwt expired","invalid token","token expired","authorization token not found","belum tergabung ke organisasi"];
-function tA(e){
-  if(!e||"object"!=typeof e||0!==e.status)return!1;
-  let t=String(e.message||"").toLowerCase();
-  return tO.some(e=>t.includes(e))
-}
-
-tR.interceptors.response.use(
-  e => {
-    if (tA(e?.data)) return bdbRecoverRequest(e.config).catch(t => (tS(), Promise.reject(t)));
-    // Cache successful GET API responses for offline menu availability
-    if (e?.config && (!e.config.method || String(e.config.method).toUpperCase() === 'GET') && e.status === 200) {
-      if (typeof window !== 'undefined' && window.bdbOffline) {
-        window.bdbOffline.saveApiCache(e.config.url, e.config.params, e.data);
-      }
-    }
-    return e;
-  },
-  async e => {
-    if (e?.__bdbAuthFatal) return Promise.reject(e);
-    if (e?.response?.status === 401 || tA(e?.response?.data)) {
-      return bdbRecoverRequest(e.config).catch(t => (tS(), Promise.reject(t)));
-    }
-    const m = String(e?.config?.method || 'GET').toUpperCase();
-    const isGet = m === 'GET';
-    const isMut = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(m);
-    const isNetErr = typeof window !== 'undefined' && (!window.navigator.onLine || !e?.response || (e?.response?.status >= 500) || e?.code === 'ECONNABORTED' || String(e?.message||'').includes('Network Error'));
-
-    // 1. Recover GET requests from offline cache
-    if (isGet && isNetErr && typeof window !== 'undefined' && window.bdbOffline) {
-      try {
-        const cached = await window.bdbOffline.getApiCache(e.config.url, e.config.params);
-        if (cached && cached.data) {
-                      // Bottom offline toast suppressed as per user request
-            try { let _t = document.getElementById("bdb-offline-toast"); if (_t) _t.remove(); } catch {}
-          return {
-            status: 200,
-            statusText: 'OK (Mode Offline Cache)',
-            headers: {},
-            config: e.config,
-            data: cached.data,
-            __from_cache: true
-          };
-        }
-      } catch (cErr) {
-        console.warn('[BDB Offline] Cache lookup error:', cErr);
-      }
-    }
-
-    // 2. Queue mutations into offline outbox
-    if (isMut && isNetErr && !e?.config?.__bdbSkipOfflineQueue && typeof window !== 'undefined' && window.bdbOffline) {
-      try {
-        await window.bdbOffline.queueOutbox(e.config);
-        return {
-          status: 200,
-          statusText: 'OK (Offline Queued)',
-          headers: {},
-          config: e.config,
-          data: { status: 1, message: 'Pekerjaan tersimpan di Mode Offline. Akan disinkronkan otomatis saat server online.', data: { __offline_queued: true } }
-        };
-      } catch (qErr) {
-        console.error('[BDB Offline] Queue error:', qErr);
-      }
-    }
-    return Promise.reject(e);
-  });let t_=0,tT=new Set;function tC(){tT.forEach(e=>e(t_))}function tx(){t_=Math.max(0,t_-1),tC()}[tv,tR].forEach(e=>{e.interceptors.request.use(e=>(t_+=1,tC(),e),e=>(tx(),Promise.reject(e))),e.interceptors.response.use(e=>(tx(),e),e=>(tx(),Promise.reject(e)))}),e.s(["BACKEND_URL",0,tE,"api",0,tv,"apiAuth",0,tR,"assertOk",0,function(e){if(e.data?.status===0){let t=Error(e.data.message||"Terjadi kesalahan.");throw t.response={data:e.data},t}return e.data.data},"onLoading",0,function(e){return tT.add(e),e(t_),()=>{tT.delete(e)}}],54858)}]);
-
-/* === BDB OFFLINE & AUTO-SYNC ENGINE LOGIC === */
-if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
-  window.__bdbOfflineEngineReady = true;
-  window.addEventListener("error", function(ev) {
-    if (ev && ev.message && (ev.message.includes("Minified React error #418") || ev.message.includes("reading 'startTime'"))) {
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-    }
-  }, true);
-  /* Suppress Chrome unused <link rel="preload"> warnings after React hydration finishes */
-  (function bdbCleanPreloadLinks() {
-    setTimeout(() => {
-      try {
-        const neutralize = (el) => {
-          if (!el || el.tagName !== "LINK") return;
-          const rel = (el.getAttribute("rel") || "").toLowerCase();
-          if (rel === "preload") {
-            setTimeout(() => {
-              try {
-                if (el.getAttribute("rel") === "preload") {
-                  el.removeAttribute("rel");
-                }
-              } catch (e) {}
-            }, 1500);
-          }
-        };
-        document.querySelectorAll('link[rel="preload"]').forEach(neutralize);
-        if (typeof MutationObserver !== "undefined" && document.head) {
-          const obs = new MutationObserver((mutations) => {
-            for (const m of mutations) {
-              m.addedNodes.forEach(neutralize);
-            }
-          });
-          obs.observe(document.head, { childList: true });
-        }
-      } catch (e) {}
-    }, 2500);
-  })();
-
-  const DB_NAME = "bdb_offline_db";
-  const DB_VER = 2;
-  let _idb = null;
-  function bdbOpenDB() {
-    if (_idb) return Promise.resolve(_idb);
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VER);
-      req.onupgradeneeded = (e) => {
-        const d = e.target.result;
-        if (!d.objectStoreNames.contains("drafts")) d.createObjectStore("drafts", { keyPath: "id" });
-        if (!d.objectStoreNames.contains("outbox")) {
-          const ob = d.createObjectStore("outbox", { keyPath: "id" });
-          ob.createIndex("userId", "userId", { unique: false });
-        }
-        if (!d.objectStoreNames.contains("api_cache")) {
-          const ac = d.createObjectStore("api_cache", { keyPath: "cacheKey" });
-          ac.createIndex("userId", "userId", { unique: false });
-          ac.createIndex("menuKey", "menuKey", { unique: false });
-          ac.createIndex("endpoint", "endpoint", { unique: false });
-        }
-      };
-      req.onsuccess = () => { _idb = req.result; resolve(_idb); };
-      req.onerror = () => reject(req.error);
-    });
-  }
-  function bdbGetActiveUser() {
-    try { const u = JSON.parse(localStorage.getItem("user") || "null"); return u && (u.id || u.user_id) ? u : null; } catch { return null; }
-  }
-  function bdbCurrentAccess() {
+  if (!idStr && !rawCallsign && !username) {
     try {
-      return localStorage.getItem("auth.access_token") || (JSON.parse(localStorage.getItem("auth") || "null")?.access_token) || localStorage.getItem("token") || "";
-    } catch { return ""; }
-  }
-  window.bdbShowOfflineToast = function() {
-    try { let el = document.getElementById("bdb-offline-toast"); if (el) el.remove(); } catch {}
-  };
-  function bdbShowSuccessToast(msg) {
-    try { let el = document.getElementById("bdb-offline-toast"); if (el) el.remove(); } catch {}
-  }
-  function bdbNormalizeUrl(url) {
-    let u = String(url || "").split("?")[0].trim();
-    if (u.startsWith("http://") || u.startsWith("https://")) {
-      try { u = new URL(u).pathname; } catch {}
-    }
-    if (u.startsWith("/api/")) u = u.substring(4);
-    else if (u.startsWith("/api")) u = u.substring(4);
-    if (!u.startsWith("/")) u = "/" + u;
-    return u;
-  }
-  function bdbBuildCacheKey(url, params) {
-    const user = bdbGetActiveUser();
-    const uid = user ? (user.id || user.user_id) : "anon";
-    let pStr = "";
-    if (params && typeof params === "object") {
-      const ignored = new Set(["refresh", "_t", "t", "timestamp", "_", "cache_bust"]);
-      const keys = Object.keys(params).filter(k => !ignored.has(k) && params[k] !== undefined && params[k] !== "").sort();
-      if (keys.length > 0) {
-        pStr = "?" + keys.map(k => k + "=" + encodeURIComponent(String(params[k]))).join("&");
-      }
-    }
-    const cleanUrl = bdbNormalizeUrl(url);
-    return uid + ":" + cleanUrl + pStr;
-  }
-  async function bdbSaveApiCache(url, params, data) {
-    try {
-      if (!data || data.status === 0) return;
-      const user = bdbGetActiveUser();
-      const uid = user ? (user.id || user.user_id) : "anon";
-      const db = await bdbOpenDB();
-      const cleanUrl = bdbNormalizeUrl(url);
-      const cacheKey = bdbBuildCacheKey(url, params);
-      const menuKey = typeof window !== "undefined" ? window.location.pathname : "";
-      const tx = db.transaction("api_cache", "readwrite");
-      tx.objectStore("api_cache").put({ cacheKey, menuKey, endpoint: cleanUrl, userId: uid, url: cleanUrl, params, data, timestamp: Date.now() });
-    } catch (e) {}
-  }
-  async function bdbClearAllCache() {
-    try {
-      sessionStorage.clear();
-      localStorage.removeItem("bdb_current_user_id");
-      localStorage.removeItem("bdb_last_preload_13");
-      if (_idb) {
-        try { _idb.close(); } catch(e){}
-        _idb = null;
-      }
-      if (typeof indexedDB !== "undefined") {
-        indexedDB.deleteDatabase(DB_NAME);
-      }
-    } catch (e) {}
-  }
-  window.bdbClearAllCache = bdbClearAllCache;
-
-  function bdbCheckUserSession() {
-    try {
-      const user = bdbGetActiveUser();
-      const curUid = user ? String(user.id || user.user_id || "") : "";
-      const prevUid = localStorage.getItem("bdb_current_user_id");
-      if (curUid && curUid !== "anon") {
-        if (prevUid && prevUid !== curUid) {
-          console.log("[BDB Cache] Pergantian akun terdeteksi (" + prevUid + " -> " + curUid + "). Membersihkan cache lokal lama...");
-          bdbClearAllCache();
-          localStorage.setItem("bdb_current_user_id", curUid);
-        } else if (!prevUid) {
-          localStorage.setItem("bdb_current_user_id", curUid);
-        }
-      } else if (prevUid) {
-        console.log("[BDB Cache] Sesi logout terdeteksi. Membersihkan cache lokal...");
-        bdbClearAllCache();
-      }
+      var lu = JSON.parse(localStorage.getItem('user') || '{}');
+      /* dynamic handle */
+      if (lu.callsign && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
+      if (lu.name && String(lu.name).trim()) return lu.name;
+      if (lu.username && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
     } catch(e) {}
+    return '@personil';
   }
-  try { bdbCheckUserSession(); } catch(e) {}
+  var seed = idStr || 'polri';
+  var num = 0;
+  for (var i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+  var code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+  return '@user_' + (idStr || '0') + code;
+}
 
-  async function bdbGetApiCache(url, params) {
-    try {
-      bdbCheckUserSession();
-      const user = bdbGetActiveUser();
-      if (!user) return null;
-      const uid = String(user.id || user.user_id || "");
-      if (!uid || uid === "anon") return null;
-      const db = await bdbOpenDB();
-      const exactKey = bdbBuildCacheKey(url, params);
-      return new Promise((resolve) => {
-        const tx = db.transaction("api_cache", "readonly");
-        const store = tx.objectStore("api_cache");
-        const req = store.get(exactKey);
-        req.onsuccess = () => {
-          if (req.result?.data && String(req.result.userId) === uid) return resolve(req.result);
-          const cleanUrl = bdbNormalizeUrl(url);
-          const idx = store.index("endpoint");
-          const fReq = idx.getAll(IDBKeyRange.only(cleanUrl));
-          fReq.onsuccess = () => {
-            const list = (fReq.result || []).filter(item => item && String(item.userId) === uid && item.data);
-            if (list.length > 0) {
-              list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-              resolve(list[0]);
-            } else { resolve(null); }
-          };
-          fReq.onerror = () => resolve(null);
-        };
-        req.onerror = () => resolve(null);
-      });
-    } catch { return null; }
-  }
-  async function bdbPreload13Periods(force = false) {
-    if (typeof window === "undefined" || !window.navigator.onLine) return;
-    const user = bdbGetActiveUser();
-    if (!user) return;
-    if (window.__bdbPreloading) return;
-    window.__bdbPreloading = true;
-    const lastPreload = Number(sessionStorage.getItem("bdb_last_preload_13") || 0);
-    if (!force && (Date.now() - lastPreload < 10 * 60 * 1000)) {
-      window.__bdbPreloading = false;
-      return;
+function formatUserCallsign(u) {
+  const raw = String(u?.username || u?.callsign || '').trim().replace(/^@/, '');
+  if (raw && !['personil', 'null', 'undefined', '-'].includes(raw.toLowerCase())) return '@' + raw;
+  if (!u?.id && !u?.user_id) return '';
+  const seed = String(u.id || u.user_id);
+  let num = 0;
+  for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+  const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+  return '@user_' + seed + code;
+}
+
+function toTitleCase(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/\bPAPUA\s+BARAT\s+DAYA\b/gi, 'Pabardaya')
+    .replace(/\bPABD\b/gi, 'Pabardaya')
+    .replace(/\bPAPUA\s+TENGAH\b/gi, 'Papteng')
+    .replace(/\bPATENG\b/gi, 'Papteng')
+    .replace(/\bKAWASAN\s+PELABUHAN\b/gi, 'K.P.')
+    .replace(/\bKP3\b/gi, 'K.P.')
+    .replace(/\bKAWASAN\s+BANDARA\b/gi, 'K.B.')
+    .replace(/\bTANJUNG\b/gi, 'Tj.')
+    .replace(/\bKEPULAUAN\b/gi, 'Kep.')
+    .replace(/\bPULAU\b/gi, 'P.')
+    .toLowerCase()
+    .replace(/(?:^|\s|-|\/)[a-z]/g, function(c) {
+      return c.toUpperCase();
+    })
+    .replace(/\bS\.h\b/gi, 'S.H')
+    .replace(/\bM\.h\b/gi, 'M.H')
+    .replace(/\bS\.i\.k\b/gi, 'S.I.K')
+    .replace(/\bK\.p\./gi, 'K.P.')
+    .replace(/\bK\.b\./gi, 'K.B.')
+    .replace(/\bTj\./gi, 'Tj.')
+    .replace(/\bKep\./gi, 'Kep.')
+    .replace(/\bP\./gi, 'P.')
+    .replace(/\bPolri\b/gi, 'Polri')
+    .replace(/\bPolda\b/gi, 'Polda')
+    .replace(/\bPolres\b/gi, 'Res')
+    .replace(/\bPolsek\b/gi, 'Sek')
+    .replace(/\bSat\b/gi, 'Sat')
+    .replace(/\bDit\b/gi, 'Dit')
+    .replace(/\bRes\b/gi, 'Res')
+    .replace(/\bReskrim\b/gi, 'Reskrim')
+    .replace(/\bNarkoba\b/gi, 'Narkoba');
+}
+
+function decodeCasShareHash(raw) {
+  var s = String(raw || "").trim();
+  if (!s) return { raw: "", postId: null, isSpToken: false };
+  if (/^\d+$/.test(s)) return { raw: s, postId: parseInt(s, 10), isSpToken: false };
+  try {
+    var b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4 !== 0) b64 += "=";
+    var dec = atob(b64);
+    if (dec.indexOf("sp.") === 0) {
+      var parts = dec.split(".");
+      var pid = parseInt(parts[1], 10);
+      if (!isNaN(pid) && pid > 0) return { raw: s, postId: pid, isSpToken: true };
     }
-    try {
-      const token = bdbCurrentAccess();
-      if (!token) { window.__bdbPreloading = false; return; }
-      const y = new Date().getFullYear();
-      const periods = [{ from: y + "-01-01", to: y + "-12-31", label: "Tahun " + y }];
-      for (let m = 1; m <= 12; m++) {
-        const mm = String(m).padStart(2, "0");
-        const lastDay = new Date(y, m, 0).getDate();
-        periods.push({ from: y + "-" + mm + "-01", to: y + "-" + mm + "-" + String(lastDay).padStart(2, "0"), label: "Bulan " + mm });
-      }
-      console.log("[BDB Global Cache] Auto-load 13 partisi snapshot periode (Tahun + 12 Bulan)...");
-      const roles = ["ALL", "TERLAPOR", "TERSANGKA", "SAKSI", "PELAPOR", "KORBAN"];
-      for (const p of periods) {
-        for (const r of roles) {
-          try { await tR({ url: "/bdb/pihak-terlibat/ranking", method: "GET", params: { from: p.from, to: p.to, keterlibatan: r, limit: 5, scope: "national", dashboard: 1 } }); } catch (e) {}
+    var mPref = dec.match(/^(?:sharese|post|jukrah)[:._-](\d+)/i);
+    if (mPref && mPref[1]) return { raw: s, postId: parseInt(mPref[1], 10), isSpToken: false };
+    if (/^\d+$/.test(dec.trim())) return { raw: s, postId: parseInt(dec.trim(), 10), isSpToken: false };
+  } catch (_e) {}
+  if (/^[0-9a-f]+$/i.test(s) && s.length <= 12) {
+    var hexId = parseInt(s, 16);
+    if (!isNaN(hexId) && hexId > 0) return { raw: s, postId: hexId, isSpToken: false };
+  }
+  return { raw: s, postId: null, isSpToken: false };
+}
+
+function encodeCasShareHash(postOrId) {
+  if (!postOrId) return "";
+  if (typeof postOrId === "object") {
+    if (postOrId.share_hash) return String(postOrId.share_hash);
+    if (postOrId.share_token) return String(postOrId.share_token);
+  }
+  var idVal = typeof postOrId === "object" ? postOrId.id : postOrId;
+  if (!idVal) return "";
+  try {
+    return btoa("sharese:" + String(idVal)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  } catch (_e) {
+    return Number(idVal) ? Number(idVal).toString(16) : String(idVal);
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.__decodeCasShareHash = decodeCasShareHash;
+  window.__encodeCasShareHash = encodeCasShareHash;
+}
+
+function initCasExpensivePcHpStandards() {
+  if (typeof document === "undefined" || !document.head) return;
+  if (!document.getElementById("cas-expensive-pc-hp-styles")) {
+    var st = document.createElement("style");
+    st.id = "cas-expensive-pc-hp-styles";
+    st.textContent = [
+      "/* 1EfVEH9N4A: Non-Wrapping Tabular KPI Numbers */",
+      ".tabular-nums, td, th, [class*=\"kpi\"], [class*=\"stat\"], .cms-sidebar-sublink span {",
+      "  font-variant-numeric: tabular-nums;",
+      "}",
+      "/* 1FPJYD3q6p, 1JPffo7BwR: Expensive Micro-Interactions */",
+      "button {",
+      "  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1), background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;",
+      "}",
+      "button:not(:disabled):active {",
+      "  transform: scale(0.98);",
+      "}",
+      "/* Tab Panels & Card Content Anti-Mepet */",
+      ".p-tabview .p-tabview-panels, .cas-tab-panel-body {",
+      "  padding: 1.15rem 1.25rem !important;",
+      "}",
+      "button + table, .flex + table, .flex + .overflow-x-auto, .flex + .p-datatable, .cas-unified-filter-bar + .p-datatable, .cas-unified-filter-bar + table, .cas-unified-filter-bar + .overflow-x-auto {",
+      "  margin-top: 0.75rem !important;",
+      "}",
+      ".p-datatable .p-datatable-header {",
+      "  padding: 0.85rem 1.1rem !important;",
+      "}",
+      "/* Floating Chat Button Clearance (Prevent Overlapping Bottom-Right Table Action Icons) */",
+      ".layout-main, .cms-main, .cms-content, main.cms-content {",
+      "  padding-bottom: 5rem !important;",
+      "}",
+      "/* Anti-Offside Icons, Avatars & Brand Logos Across All Devices */",
+      ".layout-sidebar img, .layout-topbar img, .cms-sidebar img, .cms-topbar img, .cas-avatar, .cms-user-avatar img, svg {",
+      "  flex-shrink: 0;",
+      "  max-width: 100%;",
+      "}",
+      "button, .p-button, .p-tag, .att-btn, .cms-icon-btn, .cms-status-btn {",
+      "  box-sizing: border-box;",
+      "  max-width: 100%;",
+      "}",
+      ".cms-brand, .layout-sidebar .cms-brand {",
+      "  display: flex !important;",
+      "  align-items: center !important;",
+      "  gap: 0.65rem !important;",
+      "  overflow: hidden !important;",
+      "  box-sizing: border-box !important;",
+      "}",
+      ".cms-brand-logo-img, .layout-sidebar .cms-brand img, .cms-sidebar .cms-brand img {",
+      "  width: 2.25rem !important;",
+      "  height: 2.25rem !important;",
+      "  min-width: 2.25rem !important;",
+      "  max-width: 2.25rem !important;",
+      "  object-fit: contain !important;",
+      "  object-position: center !important;",
+      "  flex-shrink: 0 !important;",
+      "  display: block !important;",
+      "}",
+      ".cms-collapsed .cms-brand {",
+      "  justify-content: center !important;",
+      "  padding-left: 0.35rem !important;",
+      "  padding-right: 0.35rem !important;",
+      "}",
+      ".cms-user-avatar, .cas-avatar {",
+      "  flex-shrink: 0 !important;",
+      "  overflow: hidden !important;",
+      "  border-radius: 999px !important;",
+      "}",
+      ".cms-user-avatar img, .cas-avatar img {",
+      "  width: 100% !important;",
+      "  height: 100% !important;",
+      "  object-fit: cover !important;",
+      "  display: block !important;",
+      "}",
+      "/* Global Modal Popup & Form Input Uniformity */",
+      ".p-dialog, .cas-modal {",
+      "  max-width: min(94vw, 680px) !important;",
+      "  margin: 12px auto !important;",
+      "  border-radius: 14px !important;",
+      "  overflow: hidden !important;",
+      "  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.35) !important;",
+      "}",
+      ".p-dialog.cas-dialog-wide, .cas-modal.cas-modal-wide {",
+      "  max-width: min(95vw, 1180px) !important;",
+      "}",
+      ".p-dialog.p-dialog-maximized, .cas-modal.cas-modal-maximized {",
+      "  max-width: 100vw !important;",
+      "  width: 100vw !important;",
+      "  margin: 0 !important;",
+      "  border-radius: 0 !important;",
+      "}",
+      ".p-dialog .p-dialog-header {",
+      "  padding: 1.1rem 1.35rem !important;",
+      "  border-bottom: 1px solid var(--cas-border, rgba(148,163,184,0.2)) !important;",
+      "}",
+      ".p-dialog .p-dialog-content {",
+      "  padding: 1.25rem 1.35rem !important;",
+      "}",
+      ".p-dialog .p-dialog-footer {",
+      "  padding: 0.9rem 1.35rem !important;",
+      "  border-top: 1px solid var(--cas-border, rgba(148,163,184,0.2)) !important;",
+      "  display: flex;",
+      "  justify-content: flex-end;",
+      "  gap: 0.6rem;",
+      "  flex-wrap: wrap;",
+      "}",
+      ".p-dialog input:not([type=\"checkbox\"]):not([type=\"radio\"]), .p-dialog select, .p-dialog textarea, .p-inputtext, .p-dropdown {",
+      "  border-radius: 8px !important;",
+      "  padding: 0.55rem 0.75rem;",
+      "  border: 1px solid var(--cas-border-strong, rgba(148, 163, 184, 0.38)) !important;",
+      "  box-sizing: border-box !important;",
+      "  transition: border-color 150ms ease, box-shadow 150ms ease !important;",
+      "}",
+      ".p-dropdown .p-dropdown-label.p-inputtext {",
+      "  border: none !important;",
+      "  box-shadow: none !important;",
+      "  background: transparent !important;",
+      "  padding: 0.35rem 0.65rem !important;",
+      "}",
+      ".p-dialog input:not([type=\"checkbox\"]):not([type=\"radio\"]):focus, .p-dialog select:focus, .p-dialog textarea:focus, .p-inputtext:focus, .p-dropdown:focus, .p-dropdown.p-focus, .p-inputwrapper-focus {",
+      "  border-color: #2563eb !important;",
+      "  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;",
+      "  outline: none !important;",
+      "}",
+      "/* Tablet (640px - 1024px) Specific Rules */",
+      "@media (min-width: 640px) and (max-width: 1024px) {",
+      "  .cms-topbar, .layout-topbar {",
+      "    padding: 0 0.85rem !important;",
+      "    gap: 0.45rem !important;",
+      "  }",
+      "  .cms-user-role {",
+      "    max-width: 140px !important;",
+      "    overflow: hidden !important;",
+      "    text-overflow: ellipsis !important;",
+      "    white-space: nowrap !important;",
+      "  }",
+      "  .p-dialog, .cas-modal {",
+      "    max-width: min(92vw, 660px) !important;",
+      "  }",
+      "}",
+      "/* 1EfVEH9N4A, 19ywQ9Mrju, 1K8hKD3gAB: PC vs HP Responsive Standards */",
+      "@media (max-width: 640px) {",
+      "  input:not([type=\"checkbox\"]):not([type=\"radio\"]), select, textarea {",
+      "    font-size: 16px !important;",
+      "  }",
+      "  .cms-content table, .cms-main table, .p-datatable-wrapper {",
+      "    -webkit-overflow-scrolling: touch;",
+      "    overscroll-behavior-x: contain;",
+      "  }",
+      "  .cms-topbar, .layout-topbar {",
+      "    max-width: 100vw !important;",
+      "    box-sizing: border-box !important;",
+      "  }",
+      "  .cms-collapse-btn, .cms-status-btn span {",
+      "    display: none !important;",
+      "  }",
+      "  .cms-status-btn {",
+      "    padding: 0.35rem !important;",
+      "    min-width: 32px !important;",
+      "    justify-content: center !important;",
+      "  }",
+      "  .cms-icon-btn {",
+      "    width: 32px !important;",
+      "    height: 32px !important;",
+      "    min-width: 32px !important;",
+      "    padding: 0 !important;",
+      "    flex-shrink: 0 !important;",
+      "  }",
+      "  .cms-user {",
+      "    gap: 0.35rem !important;",
+      "    flex-shrink: 0 !important;",
+      "    min-width: 0 !important;",
+      "  }",
+      "  .cms-logout {",
+      "    padding: 0.32rem 0.5rem !important;",
+      "    font-size: 0.72rem !important;",
+      "    flex-shrink: 0 !important;",
+      "  }",
+      "  .cms-status-pop {",
+      "    position: fixed !important;",
+      "    left: 0.5rem !important;",
+      "    right: 0.5rem !important;",
+      "    top: 3.6rem !important;",
+      "    width: auto !important;",
+      "    max-width: calc(100vw - 1rem) !important;",
+      "    box-sizing: border-box !important;",
+      "  }",
+      "  .p-dialog, [role=\"dialog\"], .cas-confirm-modal-card, .cas-sharese-gate-card {",
+      "    padding-bottom: max(16px, env(safe-area-inset-bottom));",
+      "  }",
+      "  .cas-sharese-gate-card {",
+      "    padding: 1.1rem 0.9rem !important;",
+      "    border-radius: 14px !important;",
+      "  }",
+      "}",
+      "/* Flip Phones & Folded Screens (280px - 370px) */",
+      "@media (max-width: 370px) {",
+      "  .cms-topbar, .layout-topbar {",
+      "    padding: 0 0.35rem !important;",
+      "    gap: 0.2rem !important;",
+      "    height: 3.15rem !important;",
+      "    max-width: 100vw !important;",
+      "    overflow: hidden !important;",
+      "  }",
+      "  .cms-hamburger, .cms-icon-btn, .cms-status-btn {",
+      "    width: 28px !important;",
+      "    height: 28px !important;",
+      "    min-width: 28px !important;",
+      "    min-height: 28px !important;",
+      "    padding: 0 !important;",
+      "    flex-shrink: 0 !important;",
+      "  }",
+      "  .cms-user-avatar {",
+      "    width: 1.65rem !important;",
+      "    height: 1.65rem !important;",
+      "    min-width: 1.65rem !important;",
+      "  }",
+      "  .cms-user {",
+      "    gap: 0.22rem !important;",
+      "  }",
+      "  .cms-logout {",
+      "    padding: 0.24rem 0.4rem !important;",
+      "    font-size: 0.68rem !important;",
+      "    gap: 0.2rem !important;",
+      "    min-height: 28px !important;",
+      "    flex-shrink: 0 !important;",
+      "  }",
+      "  .cms-logout .cas-logout-icon {",
+      "    width: 13px !important;",
+      "    height: 13px !important;",
+      "  }",
+      "  .cms-content, .layout-main {",
+      "    padding-left: 0.45rem !important;",
+      "    padding-right: 0.45rem !important;",
+      "    padding-bottom: 5rem !important;",
+      "    overflow-x: hidden !important;",
+      "  }",
+      "  .cms-page-title {",
+      "    font-size: 0.95rem !important;",
+      "    line-height: 1.25 !important;",
+      "    word-break: break-word !important;",
+      "  }",
+      "  .p-dialog, [role=\"dialog\"], .cas-modal, .cas-confirm-modal-card, .cas-sharese-gate-card {",
+      "    max-width: calc(100vw - 12px) !important;",
+      "    padding: 0.85rem !important;",
+      "    margin: 6px auto !important;",
+      "    box-sizing: border-box !important;",
+      "    border-radius: 12px !important;",
+      "  }",
+      "  .p-dialog .p-dialog-header, .p-dialog .p-dialog-content, .p-dialog .p-dialog-footer {",
+      "    padding: 0.85rem !important;",
+      "  }",
+      "  .p-dialog .p-dialog-footer > button, .p-dialog .p-dialog-footer .p-button {",
+      "    width: 100% !important;",
+      "    justify-content: center !important;",
+      "  }",
+      "  .cas-sharese-gate-grid, .cas-sharese-captcha-row, .cas-sharese-header-row {",
+      "    flex-direction: column !important;",
+      "    align-items: stretch !important;",
+      "    grid-template-columns: 1fr !important;",
+      "  }",
+      "  .cas-sharese-captcha-img {",
+      "    width: 100% !important;",
+      "    max-width: 190px !important;",
+      "    margin: 0 auto !important;",
+      "  }",
+      "  .cas-sharese-viewer-wrap {",
+      "    padding: 0.6rem 0.35rem 2rem !important;",
+      "  }",
+      "}",
+      "@media (pointer: coarse) {",
+      "  button:not(.cms-NotifItem), .cms-sidebar-link, .cms-sidebar-sublink {",
+      "    min-height: 38px;",
+      "  }",
+      "}",
+      "/* 1D9M28ZPyu: Animated Log Out Button */",
+      ".cms-logout {",
+      "  display: inline-flex;",
+      "  align-items: center;",
+      "  gap: 0.38rem;",
+      "  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;",
+      "}",
+      ".cms-logout .cas-logout-icon, .cms-logout .cas-logout-arrow {",
+      "  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;",
+      "}",
+      ".cms-logout:hover .cas-logout-icon {",
+      "  transform: translateX(2px);",
+      "}",
+      ".cms-logout.cas-logging-out {",
+      "  background-color: rgba(239, 68, 68, 0.16) !important;",
+      "  border-color: rgba(239, 68, 68, 0.55) !important;",
+      "  color: #ef4444 !important;",
+      "  box-shadow: 0 0 16px rgba(239, 68, 68, 0.42) !important;",
+      "  transform: scale(0.97);",
+      "}",
+      ".cms-logout.cas-logging-out .cas-logout-icon {",
+      "  transform: translateX(4px);",
+      "}",
+      ".cms-logout.cas-logging-out .cas-logout-arrow {",
+      "  transform: translateX(6px);",
+      "  opacity: 0.72;",
+      "}",
+      "/* 1F51AFQinZ: Sleek Animated Delete Confirmation Modal */",
+      "@keyframes casTrashLid {",
+      "  0% { transform: rotate(0deg); }",
+      "  40% { transform: rotate(-18deg) translateY(-2px); }",
+      "  100% { transform: rotate(0deg); }",
+      "}",
+      "@keyframes casConfirmIn {",
+      "  0% { opacity: 0; transform: scale(0.94) translateY(6px); }",
+      "  100% { opacity: 1; transform: scale(1) translateY(0); }",
+      "}",
+      ".cas-trash-lid-anim {",
+      "  transform-origin: 6px 6px;",
+      "  animation: casTrashLid 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;",
+      "}",
+      ".cas-confirm-modal-card {",
+      "  animation: casConfirmIn 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards;",
+      "  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;",
+      "}",
+      ".cas-confirm-modal-card.cas-deleting-shrink {",
+      "  transform: scale(0.86) translateY(8px) !important;",
+      "  opacity: 0 !important;",
+      "}",
+      "/* === GLOBAL THEME HARMONY (ANTI-BELANG-BELANG) & LEAFLET CLEANUP === */",
+      ":root, html:not([data-theme=\"dark\"]):not(.dark) {",
+      "  --cas-bg: #f8fafc;",
+      "  --cas-card-bg: #ffffff;",
+      "  --cas-surface-subtle: #f8fafc;",
+      "  --cas-surface-hover: #f1f5f9;",
+      "  --cas-border: #e2e8f0;",
+      "  --cas-border-strong: #cbd5e1;",
+      "  --cas-text-primary: #0f172a;",
+      "  --cas-text-secondary: #334155;",
+      "  --cas-text-muted: #64748b;",
+      "  --cas-bg-card: #ffffff;",
+      "  --cas-bg-surface: #ffffff;",
+      "  --cas-bg-subtle: #f8fafc;",
+      "  --cas-border-card: #e2e8f0;",
+      "  --surface-card: #ffffff;",
+      "  --surface-ground: #f8fafc;",
+      "  --surface-50: #f8fafc;",
+      "  --surface-100: #f1f5f9;",
+      "  --surface-200: #e2e8f0;",
+      "  --surface-border: #e2e8f0;",
+      "  --surface-hover: #f1f5f9;",
+      "  --text-color: #0f172a;",
+      "  --text-color-secondary: #475569;",
+      "}",
+      "html[data-theme=\"dark\"], html.dark, body.cms-dark {",
+      "  --cas-bg: #0b1120;",
+      "  --cas-card-bg: #111c35;",
+      "  --cas-surface-subtle: #16223f;",
+      "  --cas-surface-hover: #1e293b;",
+      "  --cas-border: rgba(148, 163, 184, 0.16);",
+      "  --cas-border-strong: rgba(148, 163, 184, 0.28);",
+      "  --cas-text-primary: #f8fafc;",
+      "  --cas-text-secondary: #cbd5e1;",
+      "  --cas-text-muted: #94a3b8;",
+      "  --cas-bg-card: #111c35;",
+      "  --cas-bg-surface: #111c35;",
+      "  --cas-bg-subtle: #16223f;",
+      "  --cas-border-card: rgba(148, 163, 184, 0.16);",
+      "  --surface-card: #111c35;",
+      "  --surface-ground: #0b1120;",
+      "  --surface-50: #16223f;",
+      "  --surface-100: #1e293b;",
+      "  --surface-200: #334155;",
+      "  --surface-border: rgba(148, 163, 184, 0.16);",
+      "  --surface-hover: #1e293b;",
+      "  --text-color: #f8fafc;",
+      "  --text-color-secondary: #94a3b8;",
+      "}",
+      ".leaflet-control-attribution {",
+      "  display: none !important;",
+      "}",
+      "/* Light Mode Anti-Belang-Belang Table Header & Sub-Card Harmonization */",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt .p-treetable-thead > tr:first-child > th,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .anev-tt .p-treetable-thead > tr:first-child > th,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable .p-treetable-thead > tr > th.cas-freeze-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable .p-treetable-thead > tr > th.cas-freeze-col-2,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable .p-treetable-thead > tr > th.cas-sticky-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable .p-treetable-thead > tr > th.cas-sticky-col-2,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(1),",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(2),",
+      "html:not([data-theme=\"dark\"]):not(.dark) .anev-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(1),",
+      "html:not([data-theme=\"dark\"]):not(.dark) .anev-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(2),",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable table thead th.cas-sticky-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable table thead th.cas-sticky-col-2,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable table thead th.cas-sticky-col-1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-treetable table thead th.cas-sticky-col-2 {",
+      "  background-color: #f1f5f9 !important;",
+      "  color: #0f172a !important;",
+      "  border-color: #cbd5e1 !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt .p-treetable-thead > tr:nth-child(2) > th,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .anev-tt .p-treetable-thead > tr:nth-child(2) > th {",
+      "  background-color: #f8fafc !important;",
+      "  color: #334155 !important;",
+      "  border-color: #cbd5e1 !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th .p-column-title,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt .p-treetable-thead > tr > th .p-column-title,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-tt .p-treetable-thead > tr > th .kp-label-with-tip > span:first-child {",
+      "  color: #0f172a !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-datatable .p-datatable-thead > tr > th .p-sortable-column-icon {",
+      "  color: #64748b !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-info-badge.is-hdr1,",
+      "html:not([data-theme=\"dark\"]):not(.dark) .kp-info-badge.is-hdr2 {",
+      "  color: #2563eb !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content div:not([style*=\"position: fixed\"]):not([style*=\"position:fixed\"]):not([style*=\"position: absolute\"]):not([style*=\"position:absolute\"]):not(.leaflet-container):not(#onlyoffice-iframe-container)[style*=\"rgba(15, 23, 42\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content div:not([style*=\"position: fixed\"]):not([style*=\"position:fixed\"]):not([style*=\"position: absolute\"]):not([style*=\"position:absolute\"]):not(.leaflet-container):not(#onlyoffice-iframe-container)[style*=\"rgba(30, 41, 59\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content div:not([style*=\"position: fixed\"]):not([style*=\"position:fixed\"]):not([style*=\"position: absolute\"]):not([style*=\"position:absolute\"]):not(.leaflet-container):not(#onlyoffice-iframe-container)[style*=\"rgba(2, 6, 23\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-dialog div:not([style*=\"position: fixed\"]):not([style*=\"position:fixed\"]):not([style*=\"position: absolute\"]):not([style*=\"position:absolute\"])[style*=\"rgba(15, 23, 42\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-dialog div:not([style*=\"position: fixed\"]):not([style*=\"position:fixed\"]):not([style*=\"position: absolute\"]):not([style*=\"position:absolute\"])[style*=\"rgba(30, 41, 59\"] {",
+      "  background: var(--cas-surface-subtle, #f8fafc) !important;",
+      "  border-color: var(--cas-border, #e2e8f0) !important;",
+      "  color: var(--cas-text-primary, #0f172a) !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content button[style*=\"rgba(15, 23, 42\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content button[style*=\"rgba(30, 41, 59\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content button[style*=\"rgb(15, 23, 42)\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content button[style*=\"rgb(30, 41, 59)\"] {",
+      "  background: var(--cas-surface-hover, #f1f5f9) !important;",
+      "  border-color: var(--cas-border-strong, #cbd5e1) !important;",
+      "  color: var(--cas-text-secondary, #334155) !important;",
+      "}",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content input[style*=\"rgb(15, 23, 42)\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content input[style*=\"rgb(2, 6, 23)\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content select[style*=\"rgb(15, 23, 42)\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .cms-content select[style*=\"rgb(2, 6, 23)\"],",
+      "html:not([data-theme=\"dark\"]):not(.dark) .p-dialog input[style*=\"rgb(2, 6, 23)\"] {",
+      "  background: var(--cas-card-bg, #ffffff) !important;",
+      "  border-color: var(--cas-border-strong, #cbd5e1) !important;",
+      "  color: var(--cas-text-primary, #0f172a) !important;",
+      "}"
+    ].join("\n");
+    document.head.appendChild(st);
+  }
+  if (typeof window !== "undefined" && !window.__casTileHarmonyGuard) {
+    window.__casTileHarmonyGuard = true;
+    var fixCartoTiles = function(root) {
+      if (!root || !root.querySelectorAll) return;
+      var imgs = root.querySelectorAll("img.leaflet-tile, .leaflet-tile-pane img");
+      for (var i = 0; i < imgs.length; i++) {
+        var s = imgs[i].getAttribute("src") || "";
+        if (s.indexOf("cartocdn.com") !== -1 || s.indexOf("carto.com") !== -1) {
+          var m = s.match(/\/(\d+)\/(\d+)\/(\d+)(?:@2x)?\.png/i);
+          if (m) imgs[i].src = "https://tile.openstreetmap.org/" + m[1] + "/" + m[2] + "/" + m[3] + ".png";
         }
-        try { await tR({ url: "/bdb/kinerja-perkara/summary", method: "GET", params: { from: p.from, to: p.to, visibility: "national" } }); } catch (e) {}
-        try { await tR({ url: "/bdb/kinerja-perkara/rekap", method: "GET", params: { from: p.from, to: p.to, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" } }); } catch (e) {}
-        try { await tR({ url: "/bdb/anev/dashboard", method: "GET", params: { date_from: p.from, date_to: p.to, functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" } }); } catch (e) {}
-        await new Promise(r => setTimeout(r, 40));
       }
-      try {
-        await tR({ url: "/bdb/kasus-menonjol", method: "GET", params: { row: 5, page: 1 } });
-        await tR({ url: "/bdb/kasus-atensi", method: "GET", params: { row: 5, page: 1 } });
-        await tR({ url: "/bdb/operasi-satgas", method: "GET", params: { row: 5, page: 1, status: "AKTIF" } });
-        await tR({ url: "/bdb/pihak-terlibat/ranking", method: "GET", params: { master: 1, page: 1, row: 25 } });
-        await tR({ url: "/bdb/pihak-terlibat/ranking", method: "GET", params: { master: 1, page: 1, row: 25, from: y + "-01-01", to: y + "-12-31" } });
-      } catch (e) {}
-      sessionStorage.setItem("bdb_last_preload_13", String(Date.now()));
-      console.log("[BDB Global Cache] 13 partisi snapshot periode & menu berhasil dimuat ke cache lokal!");
-    } catch (err) {
-      console.warn("[BDB Global Cache] Preload error:", err);
-    } finally {
-      window.__bdbPreloading = false;
-    }
-  }
-  async function bdbSaveDraft(key, data) {
-    const user = bdbGetActiveUser();
-    if (!user) return;
-    const db = await bdbOpenDB();
-    const id = (user.id || user.user_id) + ":" + (user.satker_id || 0) + ":" + key;
-    const tx = db.transaction("drafts", "readwrite");
-    tx.objectStore("drafts").put({ id, userId: user.id || user.user_id, satkerId: user.satker_id || 0, key, data, updatedAt: Date.now() });
-  }
-  async function bdbGetDraft(key) {
-    const user = bdbGetActiveUser();
-    if (!user) return null;
-    const db = await bdbOpenDB();
-    const id = (user.id || user.user_id) + ":" + (user.satker_id || 0) + ":" + key;
-    return new Promise((resolve) => {
-      const tx = db.transaction("drafts", "readonly");
-      const req = tx.objectStore("drafts").get(id);
-      req.onsuccess = () => resolve(req.result?.data || null);
-      req.onerror = () => resolve(null);
-    });
-  }
-  async function bdbQueueOutbox(config) {
-    const user = bdbGetActiveUser();
-    const db = await bdbOpenDB();
-    const item = {
-      id: "outbox-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9),
-      userId: user ? (user.id || user.user_id) : null,
-      satkerId: user ? (user.satker_id || null) : null,
-      url: config.url,
-      method: (config.method || "POST").toUpperCase(),
-      data: config.data,
-      params: config.params,
-      timestamp: Date.now(),
-      status: "pending"
     };
-    const tx = db.transaction("outbox", "readwrite");
-    tx.objectStore("outbox").put(item);
-    return item;
-  }
-  async function bdbGetOutboxCount() {
-    try {
-      const user = bdbGetActiveUser();
-      if (!user) return 0;
-      const uid = user.id || user.user_id;
-      const db = await bdbOpenDB();
-      return new Promise((resolve) => {
-        const tx = db.transaction("outbox", "readonly");
-        const idx = tx.objectStore("outbox").index("userId");
-        const req = idx.count(IDBKeyRange.only(uid));
-        req.onsuccess = () => resolve(req.result || 0);
-        req.onerror = () => resolve(0);
+    if (typeof MutationObserver !== "undefined" && document.body) {
+      var tileObs = new MutationObserver(function(muts) {
+        for (var i = 0; i < muts.length; i++) {
+          if (muts[i].target) fixCartoTiles(muts[i].target);
+        }
       });
-    } catch { return 0; }
-  }
-  let _isSyncing = false;
-  let _resyncAuthStopped = false;
-  async function bdbTriggerResync() {
-    if (_isSyncing || _resyncAuthStopped) return;
-    const token = bdbCurrentAccess();
-    if (!token || bdbTokenNearExpiry(token)) return;
-    const user = bdbGetActiveUser();
-    if (!user) return;
-    const outboxCount = await bdbGetOutboxCount();
-    if (!outboxCount) return;
-    const uid = user.id || user.user_id;
-    const db = await bdbOpenDB();
-    try {
-      const res = await fetch("/api/bdb/system/orchestrator/queue-status", { method: "GET", cache: "no-store", headers: { Authorization: "Bearer " + token } });
-      if (res.status === 401 || res.status === 403) { _resyncAuthStopped = true; return; }
-      if (!res.ok) return;
-    } catch { return; }
-    _isSyncing = true;
-    if (typeof window !== "undefined") {
-      window.__bdbIsSyncing = true;
-      window.dispatchEvent(new CustomEvent("bdb-sync-status", { detail: { syncing: true } }));
+      try { tileObs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] }); } catch(_e) {}
     }
-    try {
-      const tx = db.transaction("outbox", "readonly");
-      const idx = tx.objectStore("outbox").index("userId");
-      const req = idx.getAll(IDBKeyRange.only(uid));
-      req.onsuccess = async () => {
-        const items = req.result || [];
-        if (!items.length) {
-          _isSyncing = false;
-          if (typeof window !== "undefined") {
-            window.__bdbIsSyncing = false;
-            window.dispatchEvent(new CustomEvent("bdb-sync-status", { detail: { syncing: false } }));
-          }
+  }
+  if (typeof window !== "undefined" && !window.__casConfirmDelete) {
+    window.__casConfirmDelete = function(opts) {
+      return new Promise(function(resolve) {
+        if (typeof document === "undefined" || !document.body) {
+          resolve(window.confirm((opts && opts.message) || "Tindakan ini tidak dapat dibatalkan."));
           return;
         }
-        for (const item of items) {
-          if (item.userId !== uid) continue;
-          try {
-            const token = bdbCurrentAccess();
-            await tR({ url: item.url, method: item.method, data: item.data, params: item.params, headers: { Authorization: "Bearer " + token, "X-Offline-Synced": "1" }, __bdbSkipOfflineQueue: true });
-            const delTx = db.transaction("outbox", "readwrite");
-            delTx.objectStore("outbox").delete(item.id);
-          } catch (err) { break; }
-        }
-        _isSyncing = false;
-        if (typeof window !== "undefined") {
-          window.__bdbIsSyncing = false;
-          window.dispatchEvent(new CustomEvent("bdb-sync-status", { detail: { syncing: false } }));
-        }
-      };
-    } catch {
-      _isSyncing = false;
-      if (typeof window !== "undefined") {
-        window.__bdbIsSyncing = false;
-        window.dispatchEvent(new CustomEvent("bdb-sync-status", { detail: { syncing: false } }));
-      }
-    }
-  }
-  let _draftTimer = null;
-  document.addEventListener("input", (e) => {
-    const el = e.target;
-    if (!el || !["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return;
-    if (el.type === "password" || el.type === "hidden") return;
-    clearTimeout(_draftTimer);
-    _draftTimer = setTimeout(() => {
-      const form = el.closest("form") || document.querySelector("main") || document.body;
-      const fields = form.querySelectorAll("input, textarea, select");
-      const payload = {};
-      fields.forEach(f => {
-        if (f.type === "password" || f.type === "hidden" || f.type === "file" || f.type === "range" || f.type === "checkbox" || f.type === "radio") return;
-        const key = f.name || f.id || f.getAttribute("placeholder");
-        if (key && f.value) payload[key] = f.value;
-      });
-      if (Object.keys(payload).length > 0) bdbSaveDraft(window.location.pathname, payload);
-    }, 600);
-  }, { passive: true });
-  async function bdbRestoreDraft() {
-    const draft = await bdbGetDraft(window.location.pathname);
-    if (!draft) return;
-    const form = document.querySelector("main") || document.body;
-    let count = 0;
-    Object.keys(draft).forEach(key => {
-      const el = form.querySelector('[name="' + key + '"], #' + CSS.escape(key));
-      if (el && !el.value && draft[key]) {
-        el.value = draft[key];
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        count++;
-      }
-    });
-  }
-  window.addEventListener("popstate", () => setTimeout(bdbRestoreDraft, 800));
-  setTimeout(bdbRestoreDraft, 1200);
-  setTimeout(bdbPreload13Periods, 2500);
-  window.addEventListener("online", () => {
-    bdbTriggerResync();
-    setTimeout(() => bdbPreload13Periods(true), 2000);
-  });
-  window.addEventListener("storage", (e) => {
-    if (e.key === "auth" && e.newValue) setTimeout(() => bdbPreload13Periods(true), 1500);
-    if (e.key === null || e.key === "bdb.auth.logout_broadcast" || ((e.key === "auth" || e.key === "user" || e.key === "auth.access_token") && !e.newValue)) {
-      bdbClearAllCache();
-      const isPubShare = typeof window !== "undefined" && window.location.pathname.startsWith("/cms/panduan") && new URLSearchParams(window.location.search).has("share");
-      if (!bdbCurrentAccess() && !window.location.pathname.startsWith("/login") && !isPubShare) {
-        window.location.replace("/login");
-      }
-    }
-  });
-  setInterval(() => bdbPreload13Periods(true), 30 * 60 * 1000);
-  setInterval(async () => {
-    const c = await bdbGetOutboxCount();
-    if (c > 0) bdbTriggerResync();
-  }, 7000);
-  window.bdbOffline = {
-    saveDraft: bdbSaveDraft,
-    getDraft: bdbGetDraft,
-    queueOutbox: bdbQueueOutbox,
-    getOutboxCount: bdbGetOutboxCount,
-    triggerResync: bdbTriggerResync,
-    saveApiCache: bdbSaveApiCache,
-    getApiCache: bdbGetApiCache,
-    preload13Periods: bdbPreload13Periods,
-    clearAllCache: bdbClearAllCache
-  };
-  if (!window.__bdbA11yFormGuardInstalled) {
-    window.__bdbA11yFormGuardInstalled = true;
-    let _fSeq = 0;
-    const _origCE = Document.prototype.createElement;
-    const bdbFixA11yForms = () => {
-      try {
-        const fields = document.querySelectorAll("input, select, textarea");
-        for (let i = 0; i < fields.length; i++) {
-          const f = fields[i];
-          if (!f.id) f.id = f.name ? (f.name + "-" + (++_fSeq)) : ("bdb-field-" + (++_fSeq));
-          if (!f.name) f.name = f.id;
-        }
-        const labels = document.querySelectorAll("label");
-        let holder = null;
-        for (let j = 0; j < labels.length; j++) {
-          const lbl = labels[j];
-          const forId = lbl.getAttribute("for");
-          if (forId && document.getElementById(forId)) continue;
-          const nested = lbl.querySelector('input:not([type="hidden"]), select, textarea, button, output, meter, progress');
-          if (nested) {
-            if (!nested.id) nested.id = "bdb-field-" + (++_fSeq);
-            lbl.setAttribute("for", nested.id);
-            continue;
-          }
-          let target = null;
-          const sib = lbl.nextElementSibling;
-          if (sib) {
-            if (sib.matches && sib.matches('input:not([type="hidden"]), select, textarea, button')) target = sib;
-            else if (sib.querySelector) target = sib.querySelector('input:not([type="hidden"]), select, textarea, button');
-          }
-          if (!target && lbl.parentElement) {
-            target = lbl.parentElement.querySelector('input:not([type="hidden"]), select, textarea, button');
-          }
-          if (target) {
-            if (!target.id) target.id = "bdb-field-" + (++_fSeq);
-            lbl.setAttribute("for", target.id);
-          } else if (document.body) {
-            if (!holder) {
-              holder = document.getElementById("bdb-a11y-targets");
-              if (!holder) {
-                holder = _origCE.call(document, "div");
-                holder.id = "bdb-a11y-targets";
-                holder.style.display = "none";
-                holder.setAttribute("aria-hidden", "true");
-                document.body.appendChild(holder);
-              }
-            }
-            const outId = "bdb-lbl-out-" + (++_fSeq);
-            const outEl = _origCE.call(document, "output");
-            outEl.id = outId;
-            holder.appendChild(outEl);
-            lbl.setAttribute("for", outId);
+        initCasExpensivePcHpStandards();
+        var title = (opts && typeof opts === "object" && opts.title) ? opts.title : "Hapus Postingan?";
+        var message = (typeof opts === "string" ? opts : (opts && opts.message)) || "Tindakan ini tidak dapat dibatalkan.";
+        var confirmText = (opts && typeof opts === "object" && opts.confirmText) ? opts.confirmText : "Ya, Hapus";
+        var cancelText = (opts && typeof opts === "object" && opts.cancelText) ? opts.cancelText : "Batal";
+        var isDark = document.documentElement.dataset.theme === "dark" || localStorage.getItem("bdb_theme") === "dark";
+
+        var overlay = document.createElement("div");
+        overlay.className = "cas-confirm-delete-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+        overlay.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;background:" + (isDark ? "rgba(2,6,23,0.72)" : "rgba(15,23,42,0.52)") + ";backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity 180ms ease;";
+
+        var card = document.createElement("div");
+        card.className = "cas-confirm-modal-card";
+        card.style.cssText = "width:100%;max-width:400px;border-radius:16px;padding:1.4rem 1.35rem 1.25rem;background:" + (isDark ? "rgba(15,23,42,0.94)" : "rgba(255,255,255,0.96)") + ";border:1px solid " + (isDark ? "rgba(239,68,68,0.35)" : "rgba(226,232,240,0.95)") + ";box-shadow:0 24px 60px rgba(0,0,0,0.42), 0 0 0 1px rgba(239,68,68,0.12);color:" + (isDark ? "#f8fafc" : "#0f172a") + ";font-family:inherit;text-align:center;";
+
+        card.innerHTML = [
+          '<div style="width:54px;height:54px;margin:0 auto 0.9rem;border-radius:14px;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.35);display:flex;align-items:center;justify-content:center;color:#ef4444;box-shadow:0 8px 20px rgba(239,68,68,0.2);">',
+          '  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">',
+          '    <g class="cas-trash-lid-anim">',
+          '      <path d="M3 6h18"></path>',
+          '      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>',
+          '    </g>',
+          '    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>',
+          '    <line x1="10" y1="11" x2="10" y2="17"></line>',
+          '    <line x1="14" y1="11" x2="14" y2="17"></line>',
+          '  </svg>',
+          '</div>',
+          '<h3 class="cas-confirm-title" style="margin:0 0 0.45rem;font-size:1.05rem;font-weight:800;letter-spacing:-0.01em;"></h3>',
+          '<p class="cas-confirm-msg" style="margin:0 0 1.25rem;font-size:0.84rem;line-height:1.5;color:' + (isDark ? "#94a3b8" : "#475569") + ';"></p>',
+          '<div style="display:flex;gap:0.65rem;justify-content:center;">',
+          '  <button type="button" class="cas-btn-cancel" style="flex:1;padding:0.58rem 1rem;border-radius:10px;border:1px solid ' + (isDark ? "#334155" : "#cbd5e1") + ';background:' + (isDark ? "rgba(30,41,59,0.75)" : "#f8fafc") + ';color:' + (isDark ? "#e2e8f0" : "#334155") + ';font-size:0.83rem;font-weight:700;cursor:pointer;"></button>',
+          '  <button type="button" class="cas-btn-confirm" style="flex:1;padding:0.58rem 1rem;border-radius:10px;border:1px solid rgba(239,68,68,0.5);background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);color:#ffffff;font-size:0.83rem;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(239,68,68,0.35);"></button>',
+          '</div>'
+        ].join("");
+
+        card.querySelector(".cas-confirm-title").textContent = title;
+        card.querySelector(".cas-confirm-msg").textContent = message;
+        var btnCancel = card.querySelector(".cas-btn-cancel");
+        var btnConfirm = card.querySelector(".cas-btn-confirm");
+        btnCancel.textContent = cancelText;
+        btnConfirm.textContent = confirmText;
+
+        var settled = false;
+        function cleanup(val, animateShrink) {
+          if (settled) return;
+          settled = true;
+          document.removeEventListener("keydown", onKey);
+          if (animateShrink) {
+            card.classList.add("cas-deleting-shrink");
+            overlay.style.opacity = "0";
+            setTimeout(function() {
+              if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+              resolve(val);
+            }, 200);
+          } else {
+            overlay.style.opacity = "0";
+            setTimeout(function() {
+              if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+              resolve(val);
+            }, 140);
           }
         }
-      } catch (_e) {}
-    };
-    const startA11yObserver = () => {
-      bdbFixA11yForms();
-      if (typeof MutationObserver !== "undefined" && document.body) {
-        const obs = new MutationObserver(() => {
-          if (document.querySelector("label:not([for]), input:not([id]), input:not([name]), select:not([id]), select:not([name]), textarea:not([id]), textarea:not([name])")) {
-            bdbFixA11yForms();
-          }
+        function onKey(ev) {
+          if (ev.key === "Escape") cleanup(false, false);
+        }
+        document.addEventListener("keydown", onKey);
+        overlay.addEventListener("click", function(ev) {
+          if (ev.target === overlay) cleanup(false, false);
         });
-        obs.observe(document.body, { childList: true, subtree: true });
-      }
+        btnCancel.addEventListener("click", function() { cleanup(false, false); });
+        btnConfirm.addEventListener("click", function() {
+          btnConfirm.textContent = "Menghapus...";
+          cleanup(true, true);
+        });
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+        try { btnConfirm.focus(); } catch(_e) {}
+      });
     };
-    setTimeout(startA11yObserver, 2000);
   }
 }
+if (typeof window !== "undefined") {
+  try { initCasExpensivePcHpStandards(); } catch(_e) {}
+}
+
+function L({user:e,roleLabel:n,onToggleSidebar:l,onToggleCollapse:i}){let o=(0,r.useRouter)(),[livePhoto,setLivePhoto]=(0,t.useState)(()=>{try{let u=JSON.parse(localStorage.getItem("user")||"{}");return u?.photo_url||u?.foto||e?.photo_url||e?.foto||null}catch{return e?.photo_url||e?.foto||null}}),[liveUser,setLiveUser]=(0,t.useState)(()=>{try{let u=JSON.parse(localStorage.getItem("user")||"{}");return (u&&u.id)?u:(e||null)}catch{return e||null}}),[v,S]=(0,t.useState)(!1),[w,O]=(0,t.useState)(!0),[T,I]=(0,t.useState)(null),[E,z]=(0,t.useState)(null),[K,$]=(0,t.useState)(null),[D,B]=(0,t.useState)(!1),U=(0,t.useRef)(null),[q,J]=(0,t.useState)(!1),[W,G]=(0,t.useState)({total:0,per_entity:[]}),[F,H]=(0,t.useState)([]),[V,X]=(0,t.useState)(!1),Z=(0,t.useRef)(null);let [notifTab,setNotifTab]=(0,t.useState)("dinas"),[isLoggingOut,setIsLoggingOut]=(0,t.useState)(!1);(0,t.useEffect)(()=>{initCasExpensivePcHpStandards();let e="dark"===localStorage.getItem("bdb_theme");S(e),document.documentElement.dataset.theme=e?"dark":"light"},[]),(0,t.useEffect)(()=>{let e=!0,a=()=>O(navigator.onLine);async function t(){if(!navigator.onLine){e&&(O(!1),I(null));return}let a=await C();e&&(O(null!=a),I(a))}async function r(){if(!navigator.onLine)return;let[a,t]=await Promise.all([A("down"),A("up")]);e&&(z(a),$(t))}a(),window.addEventListener("online",a),window.addEventListener("offline",a),t(),r();let s=setInterval(t,15e3),n=setInterval(r,45e3);return()=>{e=!1,clearInterval(s),clearInterval(n),window.removeEventListener("online",a),window.removeEventListener("offline",a)}},[]),(0,t.useEffect)(()=>{function e(e){U.current&&!U.current.contains(e.target)&&B(!1),Z.current&&!Z.current.contains(e.target)&&J(!1)}return document.addEventListener("mousedown",e),()=>document.removeEventListener("mousedown",e)},[]);let Q=(0,t.useCallback)(async()=>{if(e)try{let e=await M.apiAuth.get("/bdb/notifications/summary");G(e.data?.data||{total:0,per_entity:[]})}catch{}},[e]),{refresh:Y}=(0,_.useAutoRefresh)(Q,6e4);(0,t.useEffect)(()=>{Y()},[Y]);let ee=["superadmin","admin_binops"].includes(String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase()),[ea,et]=(0,t.useState)(!1),[er,es]=(0,t.useState)(null),en=(0,t.useCallback)(async()=>{if(ee)try{let e=(await M.apiAuth.get("/bdb/dors/sync/logs",{params:{limit:1}})).data;let isR=Boolean(e?.running&&e?.data?.[0]?.status==="running");et(isR),es(isR&&e?.data?.[0]||null)}catch{}},[ee]),{refresh:el}=(0,_.useAutoRefresh)(en,15e3);async function ei(tab){
+  let targetTab = typeof tab === "string" ? tab : (notifTab || "dinas");
+  let e = !q;
+  if (typeof tab === "string") e = !0;
+  if (J(e), e) {
+    X(!0);
+    try {
+      let res = await M.apiAuth.get("/bdb/jukrah/notifications", { params: { category: targetTab } });
+      let notifItems = Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []); H(notifItems);
+      G({ total: 0, per_entity: [] });
+    } catch {
+      try {
+        let legacy = await M.apiAuth.get("/bdb/notifications/list");
+        let legItems = Array.isArray(legacy.data?.data) ? legacy.data.data : (Array.isArray(legacy.data) ? legacy.data : []); H(legItems);
+      } catch {}
+    } finally {
+      X(!1);
+    }
+  }
+}
+async function switchNotifTab(t){
+  setNotifTab(t);
+  X(!0);
+  try {
+    let res = await M.apiAuth.get("/bdb/jukrah/notifications", { params: { category: t } });
+    H(res.data?.data || []);
+  } catch {
+    H([]);
+  } finally {
+    X(!1);
+  }
+}(0,t.useEffect)(()=>{el()},[el]),(0,t.useEffect)(()=>{function uEv(ev){try{let u=ev?.detail||JSON.parse(localStorage.getItem("user")||"{}");let p=u?.photo_url||u?.foto||null;if(p)setLivePhoto(p);if(u&&u.id)setLiveUser(u)}catch{}}window.addEventListener("user-updated",uEv);window.addEventListener("storage",uEv);try{M.apiAuth.get("/user/me/profile").then(res=>{let d=res.data?.data;if(d&&!Array.isArray(d)&&(d.id||d.username)){setLiveUser(d);let p=d?.photo_url||d?.foto||null;if(p)setLivePhoto(p);try{let u=JSON.parse(localStorage.getItem("user")||"{}");if(p){u.photo_url=p;u.foto=p;}if(d.username){u.username=d.username;u.callsign=d.username;}else if(d.callsign)u.callsign=d.callsign;if(d.satker_nama){u.satker_nama=d.satker_nama;u.scope_satker_name=d.satker_nama;if(!u.satker||String(u.satker).toLowerCase().includes("superadmin"))u.satker=d.satker_nama;}if(d.role_bdb)u.role_bdb=d.role_bdb;localStorage.setItem("user",JSON.stringify(u))}catch(e){}}}).catch(()=>{})}catch(e){}return()=>{window.removeEventListener("user-updated",uEv);window.removeEventListener("storage",uEv)}},[]);let curUser=(liveUser&&liveUser.id)?liveUser:(e&&e.id?e:(function(){try{var lu=JSON.parse(localStorage.getItem("user")||"null");return (lu&&lu.id)?lu:null;}catch(e){return null;}})());
+let isSuper=Boolean(curUser&&(String(curUser?.id)==='1'||String(curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'||String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase().includes('super')||['1','320','15403','15404','16568','16576','16594'].includes(String(curUser?.id||curUser?.user_id))));
+let eo=(function(){if(!curUser)return"Pengguna";return formatUserCallsign(curUser)||curUser.name||"Pengguna";})();
+let _rawSat=[curUser?.satker_singkat,curUser?.satker_nama,curUser?.scope_satker_name,curUser?.satker,curUser?.satuan].find(x=>x&&!['bdb superadmin','superadmin','-','null','undefined'].includes(String(x).trim().toLowerCase()));let userSatkerDisp=isSuper?'Robinopsnal Bareskrim Polri':(curUser?toTitleCase(_rawSat||'Polri'):'-');
+let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'));let hasTopV2=Boolean(isOkoTop||curUser?.social_media?.avatar_v2||(curUser?.id&&typeof localStorage!=='undefined'&&localStorage.getItem('cas_avatar_v2_'+curUser.id)==='1'));let isPolwanTop=(function(u){if(!u||typeof u!=='object')return false;var expG=String(u.social_media?.jenis_kelamin||u.social_media?.gender||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(expG))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(expG))return false;var g=String(u.gender||u.jenis_kelamin||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(g))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(g))return false;var nm=String(u.name||u.username||'').trim();if(/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(nm))return false;return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid)\b/i.test(nm);})(curUser);let defTopAvatar=isPolwanTop?'/images/default-avatar-polwan.jpg':'/images/default-avatar-polki.png';let rawTopPhoto=livePhoto||curUser?.photo_url||curUser?.foto||'';let topAvatarSrc=(typeof rawTopPhoto==='string'&&rawTopPhoto.trim().length>5&&rawTopPhoto!=='null'&&rawTopPhoto!=='undefined'&&!rawTopPhoto.includes('default-avatar'))?rawTopPhoto.trim():defTopAvatar;let ec=(0,a.jsx)("img",{src:topAvatarSrc,alt:eo,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",borderRadius:"999px",objectFit:"cover"}}),eu=w?null==T?"offline":T<150?"excellent":T<400?"good":T<900?"weak":"poor":"offline";return(0,a.jsxs)("header",{className:"cms-topbar",children:[(0,a.jsx)("button",{type:"button",className:"cms-hamburger","aria-label":"Menu",onClick:l,children:(0,a.jsx)(c,{id:"fld-0-gigr76s0g8t-3",name:"field_0_gigr76s0g8t_3",size:20})}),(0,a.jsx)("button",{type:"button",className:"cms-collapse-btn","aria-label":"Sembunyikan/tampilkan menu",title:"Sembunyikan/tampilkan menu",onClick:i,children:(0,a.jsx)(g,{id:"fld-0-gigr76s0g8t-4",name:"field_0_gigr76s0g8t_4",size:19})}),(0,a.jsx)("div",{className:"cms-topbar-spacer"}),ea&&(0,a.jsxs)(s.default,{href:"/cms/integrasi/dors",title:er?`Sync DORS ${er.from_date} s/d ${er.to_date} sedang berjalan (percobaan ${er.attempt??1}/${er.max_attempts??5}, ${er.total_upserted} data baru sejauh ini). Jangan restart backend dulu.`:"Sync DORS sedang berjalan. Jangan restart backend dulu.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync DORS berjalan"]}),(("offline"===eu||!w||(typeof window!=="undefined"&&window.__bdbIsSyncing))&&(0,a.jsxs)("div",{title:"Mode Offline Aktif - Sync data cache lokal & antrean pekerjaan berjalan otomatis.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a",cursor:"default"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync Offline berjalan"]})),(0,a.jsxs)("div",{ref:U,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:`cms-status cms-status-btn q-${eu}`,onClick:()=>B(e=>!e),title:"Klik untuk lihat detail koneksi","aria-label":"Status jaringan",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-5",name:"field_0_gigr76s0g8t_5",size:15}):"weak"===eu||"poor"===eu?(0,a.jsx)(f,{id:"fld-0-gigr76s0g8t-6",name:"field_0_gigr76s0g8t_6",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-7",name:"field_0_gigr76s0g8t_7",size:15}),(0,a.jsx)("span",{children:P[eu]})]}),D&&(0,a.jsxs)("div",{className:"cms-status-pop",children:[(0,a.jsxs)("div",{className:"cms-status-pop-title",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-8",name:"field_0_gigr76s0g8t_8",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-9",name:"field_0_gigr76s0g8t_9",size:15})," Status Jaringan — ",P[eu]]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(y.Gauge,{size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Ping"]}),(0,a.jsx)("span",{className:"v",children:null!=T?`${T} ms`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(k,{id:"fld-0-gigr76s0g8t-10",name:"field_0_gigr76s0g8t_10",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unduh"]}),(0,a.jsx)("span",{className:"v",children:null!=E?`${E} Mbps`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(b,{id:"fld-0-gigr76s0g8t-11",name:"field_0_gigr76s0g8t_11",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unggah"]}),(0,a.jsx)("span",{className:"v",children:null!=K?`${K} Mbps`:"—"})]}),(0,a.jsx)("div",{className:"cms-status-pop-note",children:"Ping diperbarui tiap 15 detik, unduh/unggah tiap 45 detik. Estimasi kasar dari server BDB, bukan speedtest presisi."})]})]}),(0,a.jsxs)("div",{ref:Z,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:"cms-icon-btn",onClick:ei,title:"Notifikasi","aria-label":"Notifikasi",style:{position:"relative"},children:[(0,a.jsx)(j,{id:"fld-0-gigr76s0g8t-12",name:"field_0_gigr76s0g8t_12",size:18}),W.total>0&&(0,a.jsx)("span",{className:"tabular-nums",style:{position:"absolute",top:1,right:1,minWidth:16,height:16,borderRadius:999,background:"#dc2626",color:"#fff",fontSize:"0.6rem",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 4px",lineHeight:1,whiteSpace:"nowrap"},children:W.total>99?"99+":W.total})]}),q&&(0,a.jsxs)("div",{className:"cms-status-pop",style:{width:"23.5rem",right:0,padding:"0.75rem"},children:[
+  (0,a.jsxs)("div",{className:"cms-status-pop-title",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.5rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+      (0,a.jsx)(j,{size:15}),
+      (0,a.jsx)("span",{style:{fontWeight:800},children:"Notifikasi CAS"})
+    ]}),
+    (0,a.jsx)("button",{
+      type:"button",
+      onClick:async()=>{
+        try {
+          await M.apiAuth.post("/bdb/jukrah/notifications/read-all", { category: notifTab });
+          H(prev => prev.map(item => ({ ...item, is_read: !0 })));
+        } catch {}
+      },
+      style:{background:"none",border:"none",color:"#3b82f6",fontSize:"0.72rem",cursor:"pointer",fontWeight:700},
+      children:"Tandai Semua Dibaca"
+    })
+  ]}),
+  (0,a.jsxs)("div",{style:{display:"flex",gap:"0.3rem",marginBottom:"0.5rem",background:"rgba(255,255,255,0.06)",padding:"0.2rem",borderRadius:"8px"},children:[
+    (0,a.jsx)("button",{
+      type:"button",
+      onClick:()=>switchNotifTab("dinas"),
+      style:{
+        flex:1,
+        padding:"0.3rem 0.5rem",
+        fontSize:"0.76rem",
+        fontWeight:700,
+        borderRadius:"6px",
+        border:"none",
+        cursor:"pointer",
+        background:notifTab==="dinas"?"#2563eb":"transparent",
+        color:notifTab==="dinas"?"#fff":"var(--cas-text-secondary, #94a3b8)",
+        transition:"all 0.15s ease"
+      },
+      children:"📢 Dinas / Jukrah"
+    }),
+    (0,a.jsx)("button",{
+      type:"button",
+      onClick:()=>switchNotifTab("social"),
+      style:{
+        flex:1,
+        padding:"0.3rem 0.5rem",
+        fontSize:"0.76rem",
+        fontWeight:700,
+        borderRadius:"6px",
+        border:"none",
+        cursor:"pointer",
+        background:notifTab==="social"?"#2563eb":"transparent",
+        color:notifTab==="social"?"#fff":"var(--cas-text-secondary, #94a3b8)",
+        transition:"all 0.15s ease"
+      },
+      children:"💬 Sosial & Interaksi"
+    })
+  ]}),
+  V?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:"Memuat…"}):(!Array.isArray(F)||0===F.length)?(0,a.jsx)("p",{style:{fontSize:"0.8rem",color:"#94a3b8",padding:"0.75rem 0",textAlign:"center"},children:notifTab==="dinas"?"Tidak ada notifikasi kedinasan baru.":"Tidak ada interaksi baru."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.4rem",maxHeight:"20rem",overflowY:"auto"},children:(Array.isArray(F)?F:[]).map((e,idx)=>(0,a.jsxs)(s.default,{href:e.link||"/cms/broadcaster",onClick:()=>J(!1),style:{display:"flex",gap:"0.55rem",alignItems:"flex-start",textDecoration:"none",color:"inherit",padding:"0.5rem 0.55rem",borderRadius:8,background:"var(--surface-hover, rgba(255,255,255,0.04))",borderLeft:e.category==="dinas"?"3px solid #3b82f6":"3px solid #8b5cf6"},children:[
+    (0,a.jsx)("span",{style:{color:e.category==="dinas"?"#2563eb":"#8b5cf6",flex:"0 0 auto",marginTop:"0.15rem"},children:e.category==="dinas"?(0,a.jsx)("svg",{width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"m3 11 18-5v12L3 14v-3z"}),(0,a.jsx)("path",{d:"M11.6 16.8a3 3 0 1 1-5.8-1.6"})]}):(0,a.jsx)(j,{size:15})}),
+    (0,a.jsxs)("span",{style:{minWidth:0,flex:1},children:[
+      (0,a.jsx)("span",{style:{display:"block",fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary, #f8fafc)"},children:e.title||e.message}),
+      (0,a.jsx)("span",{style:{display:"block",fontSize:"0.75rem",color:"var(--cas-text-secondary, #94a3b8)",margin:"0.1rem 0",wordBreak:"break-word"},children:e.message}),
+      (0,a.jsx)("span",{style:{fontSize:"0.68rem",color:"#64748b"},children:function(e){if(!e)return"baru saja";let a=Math.floor((Date.now()-new Date(e).getTime())/6e4);if(a<1)return"baru saja";if(a<60)return`${a} mnt lalu`;let t=Math.floor(a/60);return t<24?`${t} jam lalu`:`${Math.floor(t/24)} hr lalu`}(e.created_at)})
+    ]})
+  ]},idx))}),
+  (0,a.jsx)("div",{style:{marginTop:"0.6rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.45rem 0.75rem",borderRadius:8,background:"linear-gradient(135deg, rgba(37,99,235,0.22), rgba(2,132,199,0.28))",border:"1px solid rgba(56,189,248,0.4)",color:"#38bdf8",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Buka Halaman Penuh Notifikasi ➔"})})
+]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0.36rem 0.65rem",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],uDinas=Number(nRes.data?.unread_dinas||0),uSoc=Number(nRes.data?.unread_social||0),uMsg=Number(mRes.data?.total_unread||0),convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0).forEach(c=>{combined.push({id:"msg_"+c.partner_id,badge:"PESAN BARU",color:"#34d399",text:`${c.name||c.handle}: "${String(c.last_message||"").slice(0,65)}" (${c.unread_count} belum dibaca)`})});nList.slice(0,12).forEach(it=>{let b=it.category==="dinas"?"DINAS":it.type==="connection"?"JEJARING":it.type==="message"?"OBROLAN":"SHARESE";let c=it.category==="dinas"?"#38bdf8":it.type==="connection"?"#a78bfa":"#fbbf24";combined.push({id:String(it.id),badge:b,color:c,text:`${it.title?it.title+" — ":""}${String(it.message||"").slice(0,80)}`})});if(!combined.length){combined.push({id:"default-1",badge:"INFO CAS",color:"#38bdf8",text:"Sistem Big Data Binops & Jejaring Taktis Sharese Aktif — Klik pita ini untuk membuka Halaman Penuh Notifikasi."})}setTickerItems(combined);setUnreadTotal(uDinas+uSoc+uMsg)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:3.2rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 90s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik untuk membuka Halaman Penuh Notifikasi Sharese & Kedinasan",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.6rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.32rem",color:unreadTotal>0?"#dc2626":"#0284c7",fontSize:"0.7rem",fontWeight:800,flexShrink:0,letterSpacing:"0.02em"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#0284c7",animation:"casPulseDot 2s infinite"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} BARU:`:"INFO:"]}),(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:[...tickerItems,...tickerItems].map((it,idx)=>(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.38rem",fontSize:"0.74rem",color:"var(--cas-text-secondary, #475569)"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,color:it.badge==="DINAS"?"#2563eb":it.badge==="PESAN BARU"?"#16a34a":"#d97706"},children:`[${it.badge}]`}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
+function TacticalMessengerWidget() {
+  const router = (0, r.useRouter)();
+  const [isOpen, setIsOpen] = (0, t.useState)(false);
+  const [activeTarget, setActiveTarget] = (0, t.useState)(null);
+  const [messages, setMessages] = (0, t.useState)([]);
+  const [inputVal, setInputVal] = (0, t.useState)("");
+  const [sending, setSending] = (0, t.useState)(false);
+  const msgEndRef = (0, t.useRef)(null);
+
+  const loadThread = (0, t.useCallback)(async (targetObj) => {
+    const tid = targetObj?.id ?? -1;
+    try {
+      const res = await M.apiAuth.get(`/bdb/jukrah/messages/thread/${tid}`);
+      const list = Array.isArray(res.data?.data) ? res.data.data : [];
+      setMessages(list.map(m => ({
+        id: m.id,
+        sender: m.is_mine ? 'me' : 'them',
+        text: m.content,
+        time: m.created_at ? new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
+      })));
+      if (res.data?.partner && !targetObj?.name) {
+        setActiveTarget({
+          id: res.data.partner.id,
+          name: res.data.partner.name,
+          callsign: res.data.partner.handle,
+          satker: res.data.partner.satker,
+          photo: res.data.partner.photo_url
+        });
+      }
+    } catch {
+      setMessages([{
+        id: 'sys-1',
+        sender: 'system',
+        text: '🔒 Jalur Komunikasi Taktis Terenkripsi Mabes Bareskrim Polri aktif.',
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      }]);
+    }
+  }, []);
+
+  (0, t.useEffect)(() => {
+    function handleOpenChat(ev) {
+      const target = ev?.detail;
+      if (target) {
+        const norm = {
+          id: target.id ?? -1,
+          name: target.name || target.callsign || 'AI Agen Taktis CAS',
+          callsign: target.callsign || target.handle || '@ai_taktis_cas',
+          satker: target.satker || 'Robinopsnal Bareskrim Polri',
+          photo: target.photo || target.photo_url || null
+        };
+        setActiveTarget(norm);
+        setIsOpen(true);
+        loadThread(norm);
+      } else {
+        setIsOpen(prev => !prev);
+      }
+    }
+    window.addEventListener('cas-open-tactical-chat', handleOpenChat);
+    return () => window.removeEventListener('cas-open-tactical-chat', handleOpenChat);
+  }, [loadThread]);
+
+  (0, t.useEffect)(() => {
+    if (isOpen) {
+      loadThread(activeTarget || { id: -1 });
+    }
+  }, [isOpen, activeTarget, loadThread]);
+
+  (0, t.useEffect)(() => {
+    if (msgEndRef.current) {
+      msgEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen]);
+
+  const handleSend = async (textToSend) => {
+    const text = (textToSend || inputVal || "").trim();
+    if (!text || sending) return;
+    const tid = activeTarget?.id ?? -1;
+    const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    setInputVal("");
+    setSending(true);
+    setMessages(prev => [...prev, { id: 'temp-' + Date.now(), sender: 'me', text, time: nowTime }]);
+    try {
+      const res = await M.apiAuth.post('/bdb/jukrah/messages/send', { receiver_id: tid, content: text });
+      if (res.data?.ai_reply) {
+        const aiMsg = res.data.ai_reply;
+        setMessages(prev => [...prev, {
+          id: aiMsg.id,
+          sender: 'them',
+          text: aiMsg.content,
+          time: new Date(aiMsg.created_at || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        }]);
+      }
+      try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
+    } catch {} finally {
+      setSending(false);
+    }
+  };
+
+  const defaultTarget = activeTarget || {
+    id: -1,
+    name: 'AI Agen Taktis CAS',
+    callsign: '@ai_taktis_cas',
+    satker: 'Robinopsnal Bareskrim Polri',
+    photo: '/images/default-avatar-polki.png'
+  };
+
+  return (0, a.jsxs)("div",{
+    id: "cas-floating-tactical-messenger",
+    style: { position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, fontFamily: "inherit" },
+    children: [
+      isOpen && (0, a.jsxs)("div", {
+        style: {
+          position: "absolute",
+          bottom: "68px",
+          right: "0",
+          width: "375px",
+          height: "500px",
+          maxWidth: "92vw",
+          maxHeight: "75vh",
+          background: "var(--cas-bg-surface, #0f172a)",
+          border: "1.5px solid rgba(56, 189, 248, 0.35)",
+          borderRadius: "16px",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.65)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          backdropFilter: "blur(12px)"
+        },
+        children: [
+          (0, a.jsxs)("div", {
+            style: {
+              background: "linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #0f172a 100%)",
+              padding: "0.75rem 0.9rem",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+              borderBottom: "1px solid rgba(255,255,255,0.15)"
+            },
+            children: [
+              (0, a.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.6rem", minWidth: 0, flex: 1 },
+                children: [
+                  (0, a.jsx)("div", {
+                    style: { position: "relative", width: "36px", height: "36px", borderRadius: "50%", background: "#0f172a", border: "1.5px solid #38bdf8", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.85rem", color: "#38bdf8", flexShrink: 0 },
+                    children: defaultTarget.photo ? (0, a.jsx)("img", { src: defaultTarget.photo, alt: "Avatar", style: { width: "100%", height: "100%", objectFit: "cover" } }) : (defaultTarget.name || 'P').charAt(0).toUpperCase()
+                  }),
+                  (0, a.jsxs)("div", {
+                    style: { minWidth: 0 },
+                    children: [
+                      (0, a.jsxs)("div", {
+                        style: { fontWeight: 800, fontSize: "0.84rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.35rem" },
+                        children: [
+                          (0, a.jsx)("span", { children: defaultTarget.name || defaultTarget.callsign }),
+                          (0, a.jsx)("span", { style: { width: "8px", height: "8px", borderRadius: "50%", background: "#22c55e", display: "inline-block" } })
+                        ]
+                      }),
+                      (0, a.jsx)("div", {
+                        style: { fontSize: "0.68rem", color: "#bae6fd", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                        children: defaultTarget.satker || "Robinopsnal Bareskrim Polri"
+                      })
+                    ]
+                  })
+                ]
+              }),
+              (0, a.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 },
+                children: [
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    title: "Buka Fullpage di Menu Obrolan",
+                    onClick: () => {
+                      setIsOpen(false);
+                      casNav(router, `/cms/broadcaster?view=obrolan&partner=${defaultTarget.id ?? -1}`);
+                    },
+                    style: { background: "rgba(15,23,42,0.45)", border: "1px solid rgba(56,189,248,0.5)", color: "#e0f2fe", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" },
+                    children: "⛶ Fullpage"
+                  }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    onClick: () => setIsOpen(false),
+                    style: { background: "rgba(0,0,0,0.25)", border: "none", color: "#fff", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700 },
+                    children: "✕"
+                  })
+                ]
+              })
+            ]
+          }),
+
+          (0, a.jsxs)("div", {
+            style: { flex: 1, overflowY: "auto", padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem", background: "var(--cas-bg-card, rgba(15,23,42,0.95))" },
+            children: [
+              messages.map((m, idx) => {
+                if (m.sender === 'system') {
+                  return (0, a.jsx)("div", {
+                    key: m.id || idx,
+                    style: { background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: "8px", padding: "0.45rem 0.65rem", fontSize: "0.72rem", color: "#94a3b8", textAlign: "center", lineHeight: "1.4" },
+                    children: m.text
+                  });
+                }
+                const isMe = m.sender === 'me';
+                return (0, a.jsxs)("div", {
+                  key: m.id || idx,
+                  style: { display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" },
+                  children: [
+                    (0, a.jsx)("div", {
+                      style: {
+                        maxWidth: "82%",
+                        padding: "0.55rem 0.85rem",
+                        borderRadius: isMe ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
+                        background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-bg-subtle, #1e293b)",
+                        color: isMe ? "#fff" : "var(--cas-text-primary, #f8fafc)",
+                        fontSize: "0.8rem",
+                        lineHeight: "1.45",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                      },
+                      children: m.text
+                    }),
+                    (0, a.jsxs)("div", {
+                      style: { fontSize: "0.65rem", color: "#64748b", marginTop: "0.15rem", display: "flex", gap: "0.25rem", alignItems: "center" },
+                      children: [
+                        m.time,
+                        isMe && (0, a.jsx)("span", { style: { color: "#38bdf8" }, children: "✓✓" })
+                      ]
+                    })
+                  ]
+                });
+              }),
+              (0, a.jsx)("div", { ref: msgEndRef })
+            ]
+          }),
+
+          (0, a.jsxs)("div", {
+            style: { display: "flex", gap: "0.35rem", padding: "0.4rem 0.6rem", background: "rgba(0,0,0,0.25)", overflowX: "auto", borderTop: "1px solid rgba(255,255,255,0.06)" },
+            children: [
+              (0, a.jsx)("button", {
+                type: "button",
+                onClick: () => handleSend("Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi."),
+                style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+                children: "⚖️ KUHP Baru"
+              }),
+              (0, a.jsx)("button", {
+                type: "button",
+                onClick: () => handleSend("Bagaimana tahapan sinkronisasi data LP dari DORS?"),
+                style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+                children: "🔄 Panduan DORS"
+              }),
+              (0, a.jsx)("button", {
+                type: "button",
+                onClick: () => handleSend("Mohon koordinasi progres penyelesaian perkara (Selra)."),
+                style: { background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", borderRadius: "12px", color: "#38bdf8", padding: "0.2rem 0.5rem", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" },
+                children: "📋 Koordinasi Selra"
+              })
+            ]
+          }),
+
+          (0, a.jsxs)("div", {
+            style: { padding: "0.6rem 0.8rem", background: "var(--cas-bg-surface, #0f172a)", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: "0.5rem", alignItems: "center" },
+            children: [
+              (0, a.jsx)("input", {
+                type: "text",
+                value: inputVal,
+                onChange: ev => setInputVal(ev.target.value),
+                onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
+                placeholder: "Ketik pesan taktis kedinasan…",
+                style: { flex: 1, background: "var(--cas-bg-subtle, #1e293b)", border: "1px solid var(--cas-border, #334155)", borderRadius: "20px", padding: "0.45rem 0.85rem", color: "var(--cas-text-primary, #f8fafc)", fontSize: "0.82rem", outline: "none" }
+              }),
+              (0, a.jsx)("button", {
+                type: "button",
+                disabled: sending,
+                onClick: () => handleSend(),
+                style: { width: "34px", height: "34px", borderRadius: "50%", background: "#2563eb", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.4)" },
+                children: "➤"
+              })
+            ]
+          })
+        ]
+      }),
+
+      (0, a.jsxs)("button", {
+        type: "button",
+        onClick: () => setIsOpen(prev => !prev),
+        title: "Pesan Taktis CAS (Enkripsi Kedinasan)",
+        style: {
+          width: "52px",
+          height: "52px",
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f172a 100%)",
+          border: "2px solid rgba(56, 189, 248, 0.6)",
+          boxShadow: "0 8px 24px rgba(2, 132, 199, 0.45), 0 2px 6px rgba(0,0,0,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontSize: "1.4rem",
+          cursor: "pointer",
+          position: "relative",
+          outline: "none"
+        },
+        children: [
+          (0, a.jsx)("span", { children: isOpen ? "✕" : "💬" }),
+          !isOpen && (0, a.jsx)("span", {
+            style: {
+              position: "absolute",
+              top: "-2px",
+              right: "-2px",
+              width: "14px",
+              height: "14px",
+              borderRadius: "50%",
+              background: "#22c55e",
+              border: "2.5px solid #0f172a"
+            }
+          })
+        ]
+      })
+    ]
+  });
+}
+
+var D=e.i(81539),B=e.i(73670);
+function CasKelolaPengaturanTabs({user:u,pathname:curPath}){
+  const router=(0,r.useRouter)();
+  const{isSuperadmin:isSuper}=(0,R.deriveRoles)(u);
+  const allTabs=[
+    {key:"email",label:"✉️ Email (SMTP)",to:"/cms/pengaturan/email",superOnly:!1},
+    {key:"otp",label:"🔐 OTP Login",to:"/cms/pengaturan/login-otp",superOnly:!1},
+    {key:"maintenance",label:"🛠️ Maintenance Sistem",to:"/cms/pengaturan/maintenance",superOnly:!0},
+    {key:"pusat-bantuan",label:"🎧 Konfigurasi Pusat Bantuan",to:"/cms/pengaturan/pusat-bantuan",superOnly:!1},
+    {key:"alur-dokumen",label:"📑 Alur Dokumen LP",to:"/cms/master/alur-dokumen",superOnly:!1},
+    {key:"organisasi-role",label:"🪪 Organisasi Role",to:"/cms/master/organisasi-role",superOnly:!0},
+    {key:"menu",label:"🧩 Hak Akses Menu / Form",to:"/cms/master/menu",superOnly:!0}
+  ].filter(tb=>!tb.superOnly||isSuper);
+  return(0,a.jsxs)("div",{style:{marginBottom:"1.15rem",padding:"0.9rem 1.1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",boxShadow:"0 4px 16px rgba(15,23,42,0.06)"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",marginBottom:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.96rem",fontWeight:800,color:"var(--cas-text-primary)",display:"flex",alignItems:"center",gap:"0.45rem"},children:["⚙️ Kelola Pengaturan Sistem Terpadu — Big Data Binops"]}),
+        (0,a.jsx)("div",{style:{fontSize:"0.76rem",color:"var(--cas-text-muted)",marginTop:"0.15rem"},children:"Pusat konfigurasi SMTP, kebijakan OTP Login, Maintenance, Pusat Bantuan, Alur Dokumen LP, Role Organisasi, dan Matriks Menu RBAC."})
+      ]}),
+      (0,a.jsx)("span",{style:{fontSize:"0.7rem",fontWeight:800,padding:"0.22rem 0.65rem",borderRadius:999,background:"rgba(56,189,248,0.14)",border:"1px solid rgba(56,189,248,0.35)",color:"#0284c7"},children:isSuper?"Akses Superadmin Penuh":"Akses Admin Binops"})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:allTabs.map(tb=>{
+      const active=curPath===tb.to||curPath.startsWith(tb.to+"/");
+      return(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,tb.to),style:{padding:"0.45rem 0.85rem",borderRadius:9,border:active?"1.5px solid #38bdf8":"1px solid var(--cas-border)",background:active?"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)":"var(--cas-surface-subtle)",color:active?"#ffffff":"var(--cas-text-secondary)",fontSize:"0.78rem",fontWeight:active?800:600,cursor:"pointer",transition:"all 0.15s ease",boxShadow:active?"0 4px 12px rgba(2,132,199,0.35)":"none"},children:tb.label},tb.key);
+    })})
+  ]});
+}
+
+function CasObrolanFullPage({user:curUser,searchStr}){
+  const router=(0,r.useRouter)();
+  const sp=new URLSearchParams(searchStr||"");
+  const initPartner=sp.get("partner")?Number(sp.get("partner")):-1;
+  const[convs,setConvs]=(0,t.useState)([]);
+  const[selectedId,setSelectedId]=(0,t.useState)(isNaN(initPartner)?-1:initPartner);
+  const[partner,setPartner]=(0,t.useState)(null);
+  const[messages,setMessages]=(0,t.useState)([]);
+  const[loadingConvs,setLoadingConvs]=(0,t.useState)(!0);
+  const[loadingThread,setLoadingThread]=(0,t.useState)(!1);
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[dirResults,setDirResults]=(0,t.useState)([]);
+  const[msgText,setMsgText]=(0,t.useState)("");
+  const[sending,setSending]=(0,t.useState)(!1);
+  const endRef=(0,t.useRef)(null);
+
+  const fetchConvs=(0,t.useCallback)(async()=>{
+    try{
+      const res=await M.apiAuth.get("/bdb/jukrah/messages/conversations");
+      setConvs(Array.isArray(res.data?.data)?res.data.data:[]);
+    }catch{}finally{setLoadingConvs(!1);}
+  },[]);
+
+  const fetchThread=(0,t.useCallback)(async(pid)=>{
+    setLoadingThread(!0);
+    try{
+      const res=await M.apiAuth.get(`/bdb/jukrah/messages/thread/${pid}`);
+      setMessages(Array.isArray(res.data?.data)?res.data.data:[]);
+      if(res.data?.partner)setPartner(res.data.partner);
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setLoadingThread(!1);}
+  },[]);
+
+  (0,t.useEffect)(()=>{fetchConvs();const iv=setInterval(fetchConvs,20000);return()=>clearInterval(iv);},[fetchConvs]);
+  (0,t.useEffect)(()=>{if(sp.get("partner")){const p=Number(sp.get("partner"));if(!isNaN(p)&&p!==selectedId)setSelectedId(p);}},[searchStr]);
+  (0,t.useEffect)(()=>{fetchThread(selectedId);const iv=setInterval(()=>fetchThread(selectedId),12000);return()=>clearInterval(iv);},[selectedId,fetchThread]);
+  (0,t.useEffect)(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
+
+  (0,t.useEffect)(()=>{
+    if(!searchQ.trim()){setDirResults([]);return;}
+    const timer=setTimeout(async()=>{
+      try{
+        const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params:{search:searchQ.trim(),limit:12}});
+        setDirResults(Array.isArray(res.data?.data)?res.data.data:[]);
+      }catch{setDirResults([]);}
+    },300);
+    return()=>clearTimeout(timer);
+  },[searchQ]);
+
+  const sendMessage=async(customText)=>{
+    const txt=(customText!==void 0?customText:msgText).trim();
+    if(!txt||sending)return;
+    setSending(!0);
+    if(customText===void 0)setMsgText("");
+    try{
+      const res=await M.apiAuth.post("/bdb/jukrah/messages/send",{receiver_id:selectedId,content:txt});
+      const sent=res.data?.data;
+      const aiRep=res.data?.ai_reply;
+      setMessages(prev=>{
+        const next=[...prev];
+        if(sent)next.push(sent);
+        if(aiRep)next.push(aiRep);
+        return next;
+      });
+      fetchConvs();
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setSending(!1);}
+  };
+
+  const filteredConvs=convs.filter(c=>{
+    if(!searchQ.trim())return!0;
+    const q=searchQ.toLowerCase();
+    return String(c.name||"").toLowerCase().includes(q)||String(c.handle||"").toLowerCase().includes(q)||String(c.satker||"").toLowerCase().includes(q);
+  });
+
+  const activePartner=partner||convs.find(c=>Number(c.partner_id)===Number(selectedId))||{
+    id:selectedId,
+    is_ai:selectedId===-1,
+    name:selectedId===-1?"AI Agen Taktis CAS":"Personil Polri",
+    handle:selectedId===-1?"@ai_taktis_cas":"@personil",
+    satker:"Robinopsnal Bareskrim Polri",
+    photo_url:"/images/default-avatar-polki.png"
+  };
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"💬 Obrolan & Asisten AI Taktis Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Saluran komunikasi terenkripsi antar personil Polri & Asisten Cerdas AI Agen Taktis CAS 24/7."})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>setSelectedId(-1),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:selectedId===-1?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:selectedId===-1?"rgba(2,132,199,0.18)":"var(--cas-surface-subtle)",color:"#0284c7",fontWeight:800,fontSize:"0.78rem",cursor:"pointer"},children:"🤖 Chat AI Agen Taktis CAS"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontWeight:700,fontSize:"0.78rem",cursor:"pointer"},children:"👥 Cari Rekan di Koneksi"})
+      ]})
+    ]}),
+    (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"minmax(270px, 340px) 1fr",gap:"1rem",minHeight:"72vh",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",borderRadius:16,overflow:"hidden",boxShadow:"0 12px 32px rgba(15,23,42,0.08)"},children:[
+      (0,a.jsxs)("div",{style:{borderRight:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",background:"var(--cas-surface-subtle)"},children:[
+        (0,a.jsx)("div",{style:{padding:"0.85rem",borderBottom:"1px solid var(--cas-border)"},children:(0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>setSearchQ(e.target.value),placeholder:"🔍 Cari percakapan atau nama personil…",style:{width:"100%",padding:"0.52rem 0.8rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",fontSize:"0.8rem",boxSizing:"border-box"}})}),
+        (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"0.45rem",display:"grid",gap:"0.3rem",alignContent:"start"},children:[
+          loadingConvs?(0,a.jsx)("div",{style:{padding:"1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.map(c=>{
+            const isSel=Number(c.partner_id)===Number(selectedId);
+            return(0,a.jsxs)("div",{key:"conv_"+c.partner_id,onClick:()=>setSelectedId(Number(c.partner_id)),style:{display:"flex",alignItems:"center",gap:"0.65rem",padding:"0.65rem 0.75rem",borderRadius:10,cursor:"pointer",background:isSel?"linear-gradient(135deg, rgba(2,132,199,0.22), rgba(37,99,235,0.16))":"var(--cas-card-bg)",border:isSel?"1px solid rgba(56,189,248,0.5)":"1px solid var(--cas-border)",transition:"all 0.15s ease"},children:[
+              (0,a.jsxs)("div",{style:{position:"relative",width:42,height:42,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:c.is_ai?"2px solid #38bdf8":"1.5px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)"},children:[
+                (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:c.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",objectFit:"cover"}}),
+                c.online&&(0,a.jsx)("span",{style:{position:"absolute",bottom:1,right:1,width:9,height:9,borderRadius:"50%",background:"#22c55e",border:"2px solid var(--cas-card-bg)"}})
+              ]}),
+              (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.35rem"},children:[
+                  (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem",color:c.is_ai?"#0284c7":"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.is_ai?"🤖 "+c.name:c.name}),
+                  c.unread_count>0&&(0,a.jsx)("span",{className:"tabular-nums",style:{padding:"0.1rem 0.42rem",borderRadius:999,background:"#ef4444",color:"#fff",fontSize:"0.65rem",fontWeight:800},children:c.unread_count>99?"99+":c.unread_count})
+                ]}),
+                (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"#0284c7",fontWeight:600},children:`${c.handle||""} · ${c.satker||"Polri"}`}),
+                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.1rem"},children:c.last_message})
+              ]})
+            ]});
+          }),
+          searchQ.trim()&&dirResults.length>0&&(0,a.jsxs)("div",{style:{marginTop:"0.5rem",paddingTop:"0.5rem",borderTop:"1px solid var(--cas-border)"},children:[
+            (0,a.jsx)("div",{style:{fontSize:"0.7rem",fontWeight:800,color:"#0284c7",padding:"0.2rem 0.5rem"},children:"DIREKTORI PERSONIL POLRI"}),
+            dirResults.map(u=>(0,a.jsxs)("div",{key:"dir_"+u.id,onClick:()=>{setSelectedId(Number(u.id));setSearchQ("");},style:{display:"flex",alignItems:"center",gap:"0.6rem",padding:"0.5rem 0.65rem",borderRadius:8,cursor:"pointer",background:"var(--cas-card-bg)"},children:[
+              (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:32,height:32,borderRadius:"50%",objectFit:"cover"}}),
+              (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:700,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+                (0,a.jsx)("div",{style:{fontSize:"0.68rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
+              ]})
+            ]}))
+          ]})
+        ]})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",flexDirection:"column",minWidth:0,background:"var(--cas-card-bg)"},children:[
+        (0,a.jsxs)("div",{style:{padding:"0.85rem 1.15rem",borderBottom:"1px solid var(--cas-border)",background:"var(--cas-surface-subtle)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.75rem"},children:[
+            (0,a.jsx)("img",{src:activePartner.photo_url||"/images/default-avatar-polki.png",alt:activePartner.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid #38bdf8"}}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
+                (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary)"},children:activePartner.name}),
+                (0,a.jsx)("span",{style:{fontSize:"0.72rem",padding:"0.1rem 0.45rem",borderRadius:999,background:selectedId===-1?"rgba(56,189,248,0.18)":"rgba(34,197,94,0.18)",color:selectedId===-1?"#0284c7":"#16a34a",fontWeight:700},children:selectedId===-1?"AI Taktis 24/7":"Jalur Terenkripsi"})
+              ]}),
+              (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"var(--cas-text-muted)"},children:`${activePartner.handle||""} · ${activePartner.satker||"Robinopsnal Bareskrim Polri"}`})
+            ]})
+          ]}),
+          selectedId>0&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${selectedId}`),style:{padding:"0.4rem 0.8rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.4)",background:"rgba(2,132,199,0.14)",color:"#0284c7",fontSize:"0.76rem",fontWeight:700,cursor:"pointer"},children:"👤 Lihat Profil Personil"})
+        ]}),
+        (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"1.1rem",display:"flex",flexDirection:"column",gap:"0.75rem",maxHeight:"54vh"},children:[
+          loadingThread&&messages.length===0?(0,a.jsx)("div",{style:{textAlign:"center",color:"var(--cas-text-muted)",padding:"2rem"},children:"Memuat riwayat percakapan…"}):messages.map((m,idx)=>{
+            const isMine=Boolean(m.is_mine);
+            return(0,a.jsxs)("div",{key:m.id||idx,style:{display:"flex",flexDirection:"column",alignItems:isMine?"flex-end":"flex-start"},children:[
+              (0,a.jsx)("div",{style:{maxWidth:"75%",padding:"0.7rem 1rem",borderRadius:isMine?"16px 16px 3px 16px":"16px 16px 16px 3px",background:isMine?"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)":"var(--cas-surface-subtle)",border:isMine?"none":"1px solid var(--cas-border-strong)",color:isMine?"#ffffff":"var(--cas-text-primary)",fontSize:"0.84rem",lineHeight:1.5,whiteSpace:"pre-wrap",wordBreak:"break-word",boxShadow:"0 2px 8px rgba(15,23,42,0.08)"},children:m.content}),
+              (0,a.jsxs)("span",{style:{fontSize:"0.68rem",color:"var(--cas-text-muted)",marginTop:"0.2rem"},children:[m.created_at?new Date(m.created_at).toLocaleString("id-ID",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"}):"",isMine?" · ✓✓ Terkirim":""]})
+            ]});
+          }),
+          (0,a.jsx)("div",{ref:endRef})
+        ]}),
+        selectedId===-1&&(0,a.jsx)("div",{style:{padding:"0.45rem 1rem",background:"var(--cas-surface-subtle)",borderTop:"1px solid var(--cas-border)",display:"flex",gap:"0.45rem",flexWrap:"wrap"},children:[
+          {label:"⚖️ Analisis Pasal KUHP Baru (UU 1/2023)",prompt:"Jelaskan pemetaan pasal KUHP Baru (UU No. 1 Tahun 2023) pada Laporan Polisi."},
+          {label:"🔄 SOP Sinkronisasi DORS",prompt:"Bagaimana langkah sinkronisasi dan cek duplikat LP dari Portal Integrasi DORS?"},
+          {label:"📋 Panduan Selra (P21/SP3/RJ)",prompt:"Jelaskan ketentuan pencatatan Penyelesaian Perkara (Selra) di sistem CAS."}
+        ].map((q,i)=>(0,a.jsx)("button",{key:i,type:"button",onClick:()=>sendMessage(q.prompt),style:{padding:"0.28rem 0.65rem",borderRadius:999,border:"1px solid rgba(56,189,248,0.35)",background:"rgba(2,132,199,0.12)",color:"#0284c7",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},children:q.label}))}),
+        (0,a.jsxs)("form",{onSubmit:ev=>{ev.preventDefault();sendMessage();},style:{padding:"0.85rem 1.1rem",borderTop:"1px solid var(--cas-border)",background:"var(--cas-surface-subtle)",display:"flex",gap:"0.65rem",alignItems:"center"},children:[
+          (0,a.jsx)("input",{type:"text",value:msgText,onChange:e=>setMsgText(e.target.value),placeholder:selectedId===-1?"Tanyakan ke AI Agen Taktis CAS (KUHP Baru, DORS, Selra, Susopsgas)…":"Ketik pesan kedinasan terenkripsi…",style:{flex:1,padding:"0.65rem 1rem",borderRadius:999,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",fontSize:"0.85rem",outline:"none"}}),
+          (0,a.jsx)("button",{type:"submit",disabled:sending||!msgText.trim(),style:{padding:"0.65rem 1.25rem",borderRadius:999,border:"none",background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:sending?"Mengirim…":"Kirim ➤"})
+        ]})
+      ]})
+    ]})
+  ]});
+}
+
+function CasKoneksiFullPage({user:curUser,searchStr}){
+  const router=(0,r.useRouter)();
+  const sp=new URLSearchParams(searchStr||"");
+  const profileIdParam=sp.get("profileId")||sp.get("id")||sp.get("u")||"";
+  const[activeTab,setActiveTab]=(0,t.useState)("all");
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[page,setPage]=(0,t.useState)(1);
+  const[users,setUsers]=(0,t.useState)([]);
+  const[total,setTotal]=(0,t.useState)(0);
+  const[totalPages,setTotalPages]=(0,t.useState)(1);
+  const[loading,setLoading]=(0,t.useState)(!0);
+  const[togglingId,setTogglingId]=(0,t.useState)(null);
+
+  const[profData,setProfData]=(0,t.useState)(null);
+  const[profPosts,setProfPosts]=(0,t.useState)([]);
+  const[profConns,setProfConns]=(0,t.useState)([]);
+  const[profTab,setProfTab]=(0,t.useState)("posts");
+  const[profLoading,setProfLoading]=(0,t.useState)(!1);
+  const[profErr,setProfErr]=(0,t.useState)("");
+
+  const loadDirectory=(0,t.useCallback)(async()=>{
+    setLoading(!0);
+    try{
+      const params={page,limit:24,search:searchQ.trim()||void 0};
+      if(activeTab==="connected"&&curUser?.id)params.connected_to=curUser.id;
+      const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params});
+      let list=Array.isArray(res.data?.data)?res.data.data:[];
+      if(activeTab==="recommendations"&&curUser?.id){
+        list=list.filter(u=>Number(u.id)!==Number(curUser.id));
+      }
+      setUsers(list);
+      setTotal(Number(res.data?.total||list.length));
+      setTotalPages(Number(res.data?.total_pages||1));
+    }catch{setUsers([]);}finally{setLoading(!1);}
+  },[page,searchQ,activeTab,curUser?.id]);
+
+  (0,t.useEffect)(()=>{
+    if(!profileIdParam){loadDirectory();}
+  },[profileIdParam,loadDirectory]);
+
+  (0,t.useEffect)(()=>{
+    if(!profileIdParam){setProfData(null);setProfErr("");return;}
+    let cancelled=!1;
+    async function fetchOtherProfile(){
+      setProfLoading(!0);setProfErr("");
+      try{
+        const res=await M.apiAuth.get(`/bdb/jukrah/network/profile/${encodeURIComponent(profileIdParam)}`);
+        const d=res.data?.data;
+        if(!cancelled&&d){
+          setProfData(d);
+          const[fRes,cRes]=await Promise.all([
+            M.apiAuth.get("/bdb/jukrah/feed",{params:{author_id:d.id,limit:20}}).catch(()=>({data:{data:[]}})),
+            M.apiAuth.get("/bdb/jukrah/network/users",{params:{connected_to:d.id,limit:24}}).catch(()=>({data:{data:[]}}))
+          ]);
+          if(!cancelled){
+            const allFeed=Array.isArray(fRes.data?.data)?fRes.data.data:[];
+            setProfPosts(allFeed.filter(p=>Number(p.author_id)===Number(d.id)));
+            setProfConns(Array.isArray(cRes.data?.data)?cRes.data.data:[]);
+          }
+        }
+      }catch(err){
+        if(!cancelled)setProfErr(err?.response?.data?.message||"Profil personil tidak ditemukan.");
+      }finally{
+        if(!cancelled)setProfLoading(!1);
+      }
+    }
+    fetchOtherProfile();
+    return()=>{cancelled=!0;};
+  },[profileIdParam]);
+
+  const handleFollowToggle=async(targetUid,inProfile=!1)=>{
+    if(!targetUid||togglingId)return;
+    setTogglingId(targetUid);
+    try{
+      const res=await M.apiAuth.post(`/bdb/jukrah/follow/${targetUid}`);
+      const isNowConn=Boolean(res.data?.data?.is_connected);
+      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:isNowConn,is_connected:isNowConn,connection_status:isNowConn?"ACCEPTED":"NONE"}:u));
+      if(inProfile&&profData&&Number(profData.id)===Number(targetUid)){
+        setProfData(prev=>({...prev,is_following:isNowConn,is_connected:isNowConn,connections_count:Math.max(0,Number(prev.connections_count||0)+(isNowConn?1:-1))}));
+      }
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setTogglingId(null);}
+  };
+
+  if(profileIdParam){
+    return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"var(--cas-card-bg)",color:"#0284c7",fontWeight:800,fontSize:"0.82rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.45rem"},children:"← Kembali ke Daftar Koneksi Personil"}),
+        (0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"var(--cas-text-muted)",fontWeight:600},children:"🔒 Mode Profil Personil Kedinasan (Terenkripsi)"})
+      ]}),
+      profLoading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",borderRadius:16,color:"#0284c7",fontWeight:700},children:"⏳ Memuat profil lengkap personil…"}):profErr||!profData?(0,a.jsxs)("div",{style:{padding:"2.5rem",textAlign:"center",background:"var(--cas-card-bg)",borderRadius:16,border:"1px solid #ef4444",color:"#ef4444"},children:[
+        (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"1rem",marginBottom:"0.5rem"},children:profErr||"Profil personil tidak ditemukan."}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.45rem 1rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:700,cursor:"pointer"},children:"Kembali ke Direktori Koneksi"})
+      ]}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+        (0,a.jsxs)("div",{style:{borderRadius:18,overflow:"hidden",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",boxShadow:"0 12px 32px rgba(15,23,42,0.08)"},children:[
+          (0,a.jsx)("div",{style:{height:175,background:profData.banner_theme&&profData.banner_theme.startsWith("linear-gradient")?profData.banner_theme:`url(${profData.banner_theme||"/images/default-banner-polri.jpg"}) center/cover no-repeat`,position:"relative"}}),
+          (0,a.jsxs)("div",{style:{padding:"0 1.5rem 1.5rem",position:"relative"},children:[
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",flexWrap:"wrap",gap:"1rem",marginTop:"-48px",marginBottom:"1rem"},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",gap:"1rem",flexWrap:"wrap"},children:[
+                (0,a.jsx)("img",{src:profData.photo_url||"/images/default-avatar-polki.png",alt:profData.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:96,height:96,borderRadius:"50%",objectFit:"cover",border:"4px solid var(--cas-card-bg)",background:"var(--cas-surface-subtle)",boxShadow:"0 8px 24px rgba(15,23,42,0.2)"}}),
+                (0,a.jsxs)("div",{style:{paddingBottom:"0.2rem"},children:[
+                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
+                    (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.3rem",fontWeight:800,color:"var(--cas-text-primary)"},children:profData.name}),
+                    (0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,background:"rgba(56,189,248,0.16)",border:"1px solid rgba(56,189,248,0.4)",color:"#0284c7",fontSize:"0.72rem",fontWeight:800},children:`@${profData.callsign||profData.username}`})
+                  ]}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.84rem",color:"var(--cas-text-secondary)",fontWeight:600,marginTop:"0.2rem"},children:`${profData.pangkat||"Personil Polri"} · ${profData.satker_nama||profData.satker||"Polri"}`})
+                ]})
+              ]}),
+              Number(profData.id)!==Number(curUser?.id)&&(0,a.jsxs)("div",{style:{display:"flex",gap:"0.55rem",flexWrap:"wrap"},children:[
+                (0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleFollowToggle(profData.id,!0),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:profData.is_following?"1px solid #10b981":"none",background:profData.is_following?"rgba(16,185,129,0.16)":"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:profData.is_following?"#059669":"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:profData.is_following?"✓ Terhubung (Mengikuti)":"➕ Ikuti / Hubungkan"}),
+                (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${profData.id}`),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"rgba(2,132,199,0.16)",color:"#0284c7",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:"💬 Kirim Pesan Taktis"})
+              ]})
+            ]}),
+            profData.social_media?.bio&&(0,a.jsx)("p",{style:{margin:"0 0 1rem",fontSize:"0.85rem",color:"var(--cas-text-secondary)",lineHeight:1.5,background:"var(--cas-surface-subtle)",padding:"0.75rem 1rem",borderRadius:10,border:"1px solid var(--cas-border)"},children:profData.social_media.bio}),
+            (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:"0.75rem"},children:[
+              {label:"Postingan Sharese",val:profData.posts_count??profPosts.length,color:"#0284c7"},
+              {label:"Jejaring Terhubung",val:profData.connections_count||0,color:"#059669"},
+              {label:"Satuan Kerja",val:profData.satker||"Polri",color:"#7c3aed"},
+              {label:"Pangkat / Peran",val:profData.pangkat||profData.role_bdb||"Personil",color:"#d97706"}
+            ].map((st,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.75rem 0.95rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+              (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:700},children:st.label}),
+              (0,a.jsx)("div",{style:{fontSize:"1.02rem",fontWeight:800,color:st.color,marginTop:"0.2rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:st.val})
+            ]}))})
+          ]})
+        ]}),
+        (0,a.jsxs)("div",{style:{display:"flex",gap:"0.5rem",borderBottom:"1px solid var(--cas-border)",paddingBottom:"0.5rem"},children:[
+          {id:"posts",label:`📝 Postingan Personil (${profPosts.length})`},
+          {id:"connections",label:`🤝 Jejaring Koneksi (${profConns.length})`},
+          {id:"info",label:"🪪 Identitas Kedinasan"}
+        ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setProfTab(tb.id),style:{padding:"0.5rem 1rem",borderRadius:10,border:profTab===tb.id?"1px solid #38bdf8":"1px solid var(--cas-border)",background:profTab===tb.id?"rgba(2,132,199,0.16)":"var(--cas-card-bg)",color:profTab===tb.id?"#0284c7":"var(--cas-text-secondary)",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:tb.label}))}),
+        profTab==="posts"&&(0,a.jsx)("div",{style:{display:"grid",gap:"0.75rem"},children:profPosts.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Personil ini belum memiliki postingan publik di linimasa Sharese."}):profPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"1rem 1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.74rem",color:"var(--cas-text-muted)",marginBottom:"0.45rem"},children:[
+            (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`@${profData.callsign} · ${profData.satker}`}),
+            (0,a.jsx)("span",{children:p.created_at?new Date(p.created_at).toLocaleString("id-ID"):""})
+          ]}),
+          (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"var(--cas-text-primary)",whiteSpace:"pre-wrap",lineHeight:1.55},children:p.content}),
+          (0,a.jsxs)("div",{style:{display:"flex",gap:"1rem",marginTop:"0.65rem",fontSize:"0.75rem",color:"var(--cas-text-muted)"},children:[
+            (0,a.jsx)("span",{children:`👍 ${Object.values(p.reaction_counts||{}).reduce((a,b)=>Number(a)+Number(b),0)} Apresiasi`}),
+            (0,a.jsx)("span",{children:`💬 ${p.comments_count||0} Komentar`}),
+            (0,a.jsx)("span",{children:`🔁 ${p.repost_count||0} Terusan`})
+          ]})
+        ]}))}),
+        profTab==="connections"&&(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(250px, 1fr))",gap:"0.75rem"},children:profConns.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)",gridColumn:"1 / -1"},children:"Belum ada daftar koneksi yang ditampilkan."}):profConns.map(c=>(0,a.jsxs)("div",{key:c.id,onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${c.id}`),style:{padding:"0.85rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer"},children:[
+          (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:c.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}),
+          (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.name}),
+            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#0284c7"},children:`@${c.callsign||c.username}`}),
+            (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.satker})
+          ]})
+        ]}))}),
+        profTab==="info"&&(0,a.jsx)("div",{style:{padding:"1.25rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))",gap:"1rem"},children:[
+          {k:"Nama Lengkap",v:profData.name},
+          {k:"Callsign Sharese",v:"@"+(profData.callsign||profData.username)},
+          {k:"Pangkat / Golongan",v:profData.pangkat||"-"},
+          {k:"Jabatan",v:profData.jabatan||"-"},
+          {k:"Satuan Kerja (Satker)",v:profData.satker_nama||profData.satker||"Polri"},
+          {k:"Email Kedinasan",v:profData.email_polri||profData.email||"-"}
+        ].map((row,idx)=>(0,a.jsxs)("div",{key:idx,children:[
+          (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",fontWeight:700},children:row.k}),
+          (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"var(--cas-text-primary)",fontWeight:700,marginTop:"0.2rem"},children:row.v})
+        ]}))})
+      ]})
+    ]});
+  }
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"👥 Jejaring & Koneksi Personil Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Direktori resmi personil Polri di seluruh Satker & Polda. Hubungkan jejaring dan klik kartu personil untuk membuka profil lengkap."})
+      ]}),
+      (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#0284c7",padding:"0.4rem 0.85rem",borderRadius:999,background:"rgba(2,132,199,0.14)",border:"1px solid rgba(56,189,248,0.35)"},children:`Total Personil Aktif: ${total.toLocaleString("id-ID")}`})
+    ]}),
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",background:"var(--cas-card-bg)",padding:"0.85rem 1rem",borderRadius:14,border:"1px solid var(--cas-border-strong)"},children:[
+      (0,a.jsx)("div",{style:{display:"flex",gap:"0.45rem",flexWrap:"wrap"},children:[
+        {id:"all",label:"🌐 Seluruh Direktori Personil"},
+        {id:"connected",label:"🤝 Terhubung / Mengikuti"},
+        {id:"recommendations",label:"✨ Rekomendasi Rekan Sejawat"}
+      ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setActiveTab(tb.id);setPage(1);},style:{padding:"0.45rem 0.9rem",borderRadius:9,border:activeTab===tb.id?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:activeTab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"var(--cas-surface-subtle)",color:activeTab===tb.id?"#fff":"var(--cas-text-primary)",fontSize:"0.78rem",fontWeight:700,cursor:"pointer"},children:tb.label}))}),
+      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>{setSearchQ(e.target.value);setPage(1);},placeholder:"🔍 Cari nama personil, callsign, NRP, atau Satker…",style:{flex:"1 1 260px",maxWidth:"420px",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem"}})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat direktori jejaring personil…"}):users.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Tidak ada personil yang cocok dengan pencarian Anda."}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(275px, 1fr))",gap:"0.9rem"},children:users.map(u=>{
+      const isMe=Number(u.id)===Number(curUser?.id);
+      return(0,a.jsxs)("div",{key:u.id,style:{padding:"1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"0.85rem",boxShadow:"0 4px 14px rgba(15,23,42,0.06)"},children:[
+        (0,a.jsxs)("div",{onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{display:"flex",alignItems:"center",gap:"0.8rem",cursor:"pointer"},title:"Klik untuk membuka profil lengkap personil ini",children:[
+          (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:54,height:54,borderRadius:"50%",objectFit:"cover",border:"2px solid #0284c7",flexShrink:0}}),
+          (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#0284c7",fontWeight:700},children:`@${u.callsign||u.username}`}),
+            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:`${u.pangkat||"Personil"} · ${u.satker||"Polri"}`})
+          ]})
+        ]}),
+        (0,a.jsxs)("div",{style:{display:"flex",gap:"0.45rem"},children:[
+          (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},children:"👤 Profil"}),
+          !isMe&&(0,a.jsx)("button",{type:"button",disabled:togglingId===u.id,onClick:()=>handleFollowToggle(u.id,!1),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:u.is_following?"1px solid #10b981":"none",background:u.is_following?"rgba(16,185,129,0.16)":"#2563eb",color:u.is_following?"#059669":"#fff",fontSize:"0.74rem",fontWeight:800,cursor:"pointer"},children:u.is_following?"✓ Terhubung":"➕ Hubungkan"}),
+          !isMe&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${u.id}`),style:{padding:"0.42rem 0.65rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.4)",background:"rgba(2,132,199,0.14)",color:"#0284c7",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},title:"Kirim Pesan",children:"💬"})
+        ]})
+      ]});
+    })}),
+    totalPages>1&&(0,a.jsxs)("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",gap:"0.75rem",marginTop:"0.5rem"},children:[
+      (0,a.jsx)("button",{type:"button",disabled:page<=1,onClick:()=>setPage(p=>Math.max(1,p-1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",cursor:page<=1?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"← Sebelumnya"}),
+      (0,a.jsx)("span",{style:{fontSize:"0.8rem",color:"var(--cas-text-secondary)",fontWeight:700},children:`Halaman ${page} dari ${totalPages}`}),
+      (0,a.jsx)("button",{type:"button",disabled:page>=totalPages,onClick:()=>setPage(p=>Math.min(totalPages,p+1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",cursor:page>=totalPages?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"Berikutnya →"})
+    ]})
+  ]});
+}
+
+function CasNotifikasiFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[items,setItems]=(0,t.useState)([]);
+  const[unreadDinas,setUnreadDinas]=(0,t.useState)(0);
+  const[unreadSocial,setUnreadSocial]=(0,t.useState)(0);
+  const[filterCat,setFilterCat]=(0,t.useState)("all");
+  const[searchQ,setSearchQ]=(0,t.useState)("");
+  const[loading,setLoading]=(0,t.useState)(!0);
+
+  const loadAll=(0,t.useCallback)(async()=>{
+    setLoading(!0);
+    try{
+      const res=await M.apiAuth.get("/bdb/jukrah/notifications");
+      setItems(Array.isArray(res.data?.data)?res.data.data:[]);
+      setUnreadDinas(Number(res.data?.unread_dinas||0));
+      setUnreadSocial(Number(res.data?.unread_social||0));
+    }catch{setItems([]);}finally{setLoading(!1);}
+  },[]);
+
+  (0,t.useEffect)(()=>{loadAll();},[loadAll]);
+
+  const markAllRead=async()=>{
+    try{
+      await M.apiAuth.post("/bdb/jukrah/notifications/read-all",{category:filterCat==="dinas"||filterCat==="social"?filterCat:void 0});
+      setItems(prev=>prev.map(it=>({...it,is_read:!0})));
+      setUnreadDinas(0);setUnreadSocial(0);
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}
+  };
+
+  const handleClickItem=async(it)=>{
+    if(!it.is_read&&typeof it.id==="number"){
+      try{
+        await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`);
+        try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+      }catch{}
+    }
+    casNav(router,it.link||"/cms/broadcaster");
+  };
+
+  const filtered=items.filter(it=>{
+    if(filterCat==="dinas"&&it.category!=="dinas")return!1;
+    if(filterCat==="social"&&it.category!=="social")return!1;
+    if(filterCat==="unread"&&it.is_read)return!1;
+    if(searchQ.trim()){
+      const q=searchQ.toLowerCase();
+      return String(it.title||"").toLowerCase().includes(q)||String(it.message||"").toLowerCase().includes(q)||String(it.sender_handle||"").toLowerCase().includes(q);
+    }
+    return!0;
+  });
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🔔 Pusat Notifikasi Terpadu (Kedinasan & Sharese)"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Notifikasi real-time terisolasi sesuai akun & kewenangan Satker (Jukrah, Pelimpahan LP, Susopsgas, Kerma, Mention, Koneksi & Obrolan)."})
+      ]}),
+      (0,a.jsx)("button",{type:"button",onClick:markAllRead,style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"✓✓ Tandai Semua Sudah Dibaca"})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))",gap:"0.85rem"},children:[
+      {label:"Total Notifikasi Aktif",val:items.length,color:"#0284c7"},
+      {label:"Kedinasan Belum Dibaca",val:unreadDinas,color:"#d97706"},
+      {label:"Sosial & Pesan Belum Dibaca",val:unreadSocial,color:"#059669"}
+    ].map((c,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.9rem 1.1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+      (0,a.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)",fontWeight:700},children:c.label}),
+      (0,a.jsx)("div",{style:{fontSize:"1.45rem",fontWeight:800,color:c.color,marginTop:"0.2rem"},children:c.val})
+    ]}))}),
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",padding:"0.8rem 1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)"},children:[
+      (0,a.jsx)("div",{style:{display:"flex",gap:"0.4rem",flexWrap:"wrap"},children:[
+        {id:"all",label:"📋 Semua Notifikasi"},
+        {id:"dinas",label:"📢 Kedinasan & Operasional"},
+        {id:"social",label:"💬 Sosial, Koneksi & Obrolan"},
+        {id:"unread",label:"🔴 Belum Dibaca"}
+      ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setFilterCat(tb.id),style:{padding:"0.42rem 0.85rem",borderRadius:8,border:filterCat===tb.id?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:filterCat===tb.id?"#0284c7":"var(--cas-surface-subtle)",color:filterCat===tb.id?"#fff":"var(--cas-text-primary)",fontSize:"0.76rem",fontWeight:700,cursor:"pointer"},children:tb.label}))}),
+      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>setSearchQ(e.target.value),placeholder:"🔍 Filter isi notifikasi…",style:{padding:"0.45rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",minWidth:"220px"}})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat daftar notifikasi…"}):filtered.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Tidak ada notifikasi pada kategori ini."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.55rem"},children:filtered.map((it,idx)=>(0,a.jsxs)("div",{key:it.id+"_"+idx,onClick:()=>handleClickItem(it),style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"1rem",padding:"0.9rem 1.1rem",borderRadius:12,background:it.is_read?"var(--cas-card-bg)":"linear-gradient(90deg, rgba(2,132,199,0.14), var(--cas-card-bg))",border:it.is_read?"1px solid var(--cas-border)":"1px solid rgba(56,189,248,0.5)",borderLeft:it.category==="dinas"?"4px solid #0284c7":"4px solid #7c3aed",cursor:"pointer"},children:[
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",alignItems:"flex-start",minWidth:0,flex:1},children:[
+        (0,a.jsx)("div",{style:{width:38,height:38,borderRadius:"50%",background:it.category==="dinas"?"rgba(56,189,248,0.16)":"rgba(167,139,250,0.16)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.05rem",flexShrink:0},children:it.category==="dinas"?"📢":it.type==="message"?"💬":it.type==="connection"?"🤝":"🔔"}),
+        (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
+            (0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.1rem 0.45rem",borderRadius:4,background:it.category==="dinas"?"rgba(56,189,248,0.18)":"rgba(167,139,250,0.18)",color:it.category==="dinas"?"#0284c7":"#7c3aed"},children:it.category==="dinas"?"KEDINASAN":String(it.type||"SOSIAL").toUpperCase()}),
+            (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.88rem",color:"var(--cas-text-primary)"},children:it.title||"Notifikasi Sistem"}),
+            !it.is_read&&(0,a.jsx)("span",{style:{width:8,height:8,borderRadius:"50%",background:"#ef4444"}})
+          ]}),
+          (0,a.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--cas-text-secondary)",marginTop:"0.22rem",lineHeight:1.45},children:it.message}),
+          (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",marginTop:"0.3rem"},children:`${it.sender_handle?it.sender_handle+" · ":""}${it.created_at?new Date(it.created_at).toLocaleString("id-ID"):""}`})
+        ]})
+      ]}),
+      (0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"#0284c7",fontWeight:800,flexShrink:0,alignSelf:"center"},children:"Buka ➔"})
+    ]}))})
+  ]});
+}
+
+function CasInsightFullPage({user:curUser}){
+  const[data,setData]=(0,t.useState)(null);
+  const[loading,setLoading]=(0,t.useState)(!0);
+
+  (0,t.useEffect)(()=>{
+    M.apiAuth.get("/bdb/jukrah/insight").then(res=>{setData(res.data?.data||null);}).catch(()=>{}).finally(()=>setLoading(!1));
+  },[]);
+
+  const d=data||{};
+  const topPosts=Array.isArray(d.top_posts)?d.top_posts:[];
+  const satkerDist=Array.isArray(d.satker_distribution)?d.satker_distribution:[];
+  const maxSat=Math.max(1,...satkerDist.map(s=>Number(s.personil_count||0)));
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{children:[
+      (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"📈 Insight & Analitik Akun Sharese"}),
+      (0,a.jsx)("p",{className:"cms-page-sub",children:"Statistik jangkauan publikasi, tingkat konfirmasi baca (Read Receipts), interaksi sejawat, dan sebaran keterlibatan per Satker."})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Menghitung metrik analitik akun Anda…"}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(185px, 1fr))",gap:"0.85rem"},children:[
+        {label:"Estimasi Jangkauan (Reach)",val:Number(d.estimated_reach||0).toLocaleString("id-ID"),sub:"Impresi Linimasa Polri",color:"#0284c7"},
+        {label:"Total Postingan Aktif",val:Number(d.total_posts||0).toLocaleString("id-ID"),sub:`${d.total_jukrah_posts||0} Jukrah Kedinasan`,color:"#7c3aed"},
+        {label:"Total Apresiasi Diterima",val:Number(d.total_reactions_received||0).toLocaleString("id-ID"),sub:"Reaksi Personil",color:"#059669"},
+        {label:"Diskusi & Komentar",val:Number(d.total_comments_received||0).toLocaleString("id-ID"),sub:`${d.total_reposts||0} Kali Diteruskan`,color:"#d97706"},
+        {label:"Konfirmasi Baca Jukrah",val:Number(d.total_read_receipts||0).toLocaleString("id-ID"),sub:"Read Receipts Tercatat",color:"#db2777"},
+        {label:"Jejaring Koneksi Aktif",val:Number(d.total_connections||0).toLocaleString("id-ID"),sub:`${d.total_messages||0} Pesan Taktis`,color:"#2563eb"}
+      ].map((k,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"1rem 1.15rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",fontWeight:700},children:k.label}),
+        (0,a.jsx)("div",{style:{fontSize:"1.55rem",fontWeight:800,color:k.color,margin:"0.25rem 0"},children:k.val}),
+        (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:600},children:k.sub})
+      ]}))}),
+      (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))",gap:"1rem"},children:[
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"🏢 Sebaran Interaksi & Jejaring per Satker"}),
+          satkerDist.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada data distribusi Satker."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem"},children:satkerDist.map((s,idx)=>{
+            const pct=Math.max(8,Math.round(Number(s.personil_count||0)/maxSat*100));
+            return(0,a.jsxs)("div",{key:idx,children:[
+              (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.78rem",marginBottom:"0.22rem"},children:[
+                (0,a.jsx)("span",{style:{color:"var(--cas-text-secondary)",fontWeight:700},children:s.satker_label}),
+                (0,a.jsxs)("span",{style:{color:"#0284c7",fontWeight:800},children:[s.personil_count," personil"]})
+              ]}),
+              (0,a.jsx)("div",{style:{height:8,borderRadius:999,background:"var(--cas-surface-hover)",overflow:"hidden"},children:(0,a.jsx)("div",{style:{width:`${pct}%`,height:"100%",background:"linear-gradient(90deg, #0284c7, #38bdf8)",borderRadius:999}})})
+            ]});
+          })})
+        ]}),
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"🔥 Postingan dengan Performa Tertinggi"}),
+          topPosts.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada publikasi pada akun Anda."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem",maxHeight:"320px",overflowY:"auto"},children:topPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"0.75rem 0.9rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+            (0,a.jsx)("div",{style:{fontSize:"0.8rem",color:"var(--cas-text-primary)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:p.content}),
+            (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",marginTop:"0.4rem",fontSize:"0.72rem",color:"var(--cas-text-muted)"},children:[
+              (0,a.jsx)("span",{style:{color:"#059669",fontWeight:700},children:`👍 ${p.reactions_count} Reaksi`}),
+              (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`💬 ${p.comments_count} Komentar`}),
+              (0,a.jsx)("span",{style:{color:"#d97706",fontWeight:700},children:`✓✓ ${p.reads_count} Dibaca`})
+            ]})
+          ]}))})
+        ]})
+      ]})
+    ]})
+  ]});
+}
+
+function CasKeamananPengaturanFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[tab,setTab]=(0,t.useState)("password");
+  const[oldPass,setOldPass]=(0,t.useState)("");
+  const[newPass,setNewPass]=(0,t.useState)("");
+  const[confPass,setConfPass]=(0,t.useState)("");
+  const[msg,setMsg]=(0,t.useState)(null);
+  const[saving,setSaving]=(0,t.useState)(!1);
+  const[prefs,setPrefs]=(0,t.useState)(()=>{
+    try{return JSON.parse(localStorage.getItem("cas_security_prefs")||"null")||{default_audience:"public",show_online:!0,ticker_enabled:!0};}catch{return{default_audience:"public",show_online:!0,ticker_enabled:!0};}
+  });
+
+  const handlePassSubmit=async(ev)=>{
+    ev.preventDefault();
+    if(!oldPass||!newPass){setMsg({type:"err",text:"Kata sandi lama dan kata sandi baru wajib diisi."});return;}
+    if(newPass.length<8){setMsg({type:"err",text:"Kata sandi baru minimal 8 karakter."});return;}
+    if(newPass!==confPass){setMsg({type:"err",text:"Konfirmasi kata sandi baru tidak cocok."});return;}
+    setSaving(!0);setMsg(null);
+    try{
+      await M.apiAuth.post("/user/me/change-password",{old_password:oldPass,current_password:oldPass,new_password:newPass,confirm_password:confPass});
+      setMsg({type:"ok",text:"Kata sandi berhasil diperbarui."});
+      setOldPass("");setNewPass("");setConfPass("");
+    }catch(err){
+      setMsg({type:"err",text:err?.response?.data?.message||"Gagal mengubah kata sandi. Periksa kata sandi lama Anda."});
+    }finally{setSaving(!1);}
+  };
+
+  const savePrefs=async()=>{
+    setSaving(!0);setMsg(null);
+    try{
+      localStorage.setItem("cas_security_prefs",JSON.stringify(prefs));
+      await M.apiAuth.patch("/user/me/profile",{social_media:{...(curUser?.social_media||{}),privacy_prefs:prefs}}).catch(()=>{});
+      setMsg({type:"ok",text:"Preferensi keamanan & privasi Sharese berhasil disimpan."});
+    }catch{
+      setMsg({type:"err",text:"Gagal menyimpan preferensi."});
+    }finally{setSaving(!1);}
+  };
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+    (0,a.jsxs)("div",{children:[
+      (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🛡️ Keamanan & Pengaturan Akun Sharese"}),
+      (0,a.jsx)("p",{className:"cms-page-sub",children:"Kelola kata sandi, autentikasi dua faktor (TOTP/OTP), privasi linimasa Sharese, dan keamanan sesi aktif Anda."})
+    ]}),
+    (0,a.jsx)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+      {id:"password",label:"🔑 Ubah Kata Sandi"},
+      {id:"2fa",label:"📱 Autentikasi 2FA / TOTP"},
+      {id:"privacy",label:"👁️ Privasi & Preferensi Sharese"},
+      {id:"session",label:"💻 Informasi Sesi & Perangkat"}
+    ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setTab(tb.id);setMsg(null);},style:{padding:"0.5rem 1rem",borderRadius:10,border:tab===tb.id?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:tab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"var(--cas-card-bg)",color:tab===tb.id?"#fff":"var(--cas-text-primary)",fontSize:"0.8rem",fontWeight:800,cursor:"pointer"},children:tb.label}))}),
+    msg&&(0,a.jsx)("div",{style:{padding:"0.75rem 1rem",borderRadius:10,background:msg.type==="ok"?"rgba(16,185,129,0.16)":"rgba(239,68,68,0.16)",border:msg.type==="ok"?"1px solid #10b981":"1px solid #ef4444",color:msg.type==="ok"?"#059669":"#dc2626",fontSize:"0.82rem",fontWeight:700},children:msg.text}),
+    tab==="password"&&(0,a.jsxs)("form",{onSubmit:handlePassSubmit,style:{maxWidth:"520px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.9rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Perbarui Kata Sandi Akun CAS"}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Saat Ini"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:oldPass,onChange:e=>setOldPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Baru (Min. 8 Karakter)"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:newPass,onChange:e=>setNewPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Konfirmasi Kata Sandi Baru"}),
+        (0,a.jsx)("input",{type:"password",required:!0,value:confPass,onChange:e=>setConfPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem"},children:[
+        (0,a.jsx)("button",{type:"submit",disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer"},children:saving?"Menyimpan…":"Simpan Kata Sandi Baru"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-password"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"#0284c7",fontWeight:700,cursor:"pointer"},children:"Buka Modul Reset Password Lengkap ➔"})
+      ]})
+    ]}),
+    tab==="2fa"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.9rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Autentikasi Dua Faktor (TOTP Google/Microsoft Authenticator)"}),
+      (0,a.jsx)("p",{style:{margin:0,fontSize:"0.83rem",color:"var(--cas-text-muted)",lineHeight:1.5},children:"Lindungi akun kedinasan Anda dengan verifikasi 2 langkah (TOTP QR Code atau OTP Email Polri) setiap kali melakukan login dari perangkat baru."}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.65rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-totp"),style:{padding:"0.55rem 1.15rem",borderRadius:8,border:"none",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,cursor:"pointer"},children:"📱 Konfigurasi / Reset QR TOTP Sekarang"}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontWeight:700,cursor:"pointer"},children:"👤 Kembali ke Profil Saya"})
+      ]})
+    ]}),
+    tab==="privacy"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"1rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Preferensi Privasi & Visibilitas Sharese"}),
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.8rem",fontWeight:700,color:"var(--cas-text-secondary)",marginBottom:"0.35rem"},children:"Audiens Default Saat Membuat Postingan Baru"}),
+        (0,a.jsxs)("select",{value:prefs.default_audience,onChange:e=>setPrefs(p=>({...p,default_audience:e.target.value})),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)"},children:[
+          (0,a.jsx)("option",{value:"public",children:"🌐 Publik Seluruh Jajaran Polri"}),
+          (0,a.jsx)("option",{value:"regional",children:"🏢 Internal Satker / Polda Terkait"}),
+          (0,a.jsx)("option",{value:"friends",children:"🤝 Hanya Jejaring Koneksi"})
+        ]})
+      ]}),
+      (0,a.jsxs)("label",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.84rem",color:"var(--cas-text-secondary)",cursor:"pointer"},children:[
+        (0,a.jsx)("input",{type:"checkbox",checked:Boolean(prefs.show_online),onChange:e=>setPrefs(p=>({...p,show_online:e.target.checked}))}),
+        "Tampilkan indikator status Online (Aktif) pada menu Obrolan & Koneksi"
+      ]}),
+      (0,a.jsx)("button",{type:"button",onClick:savePrefs,disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer",justifySelf:"start"},children:"Simpan Preferensi Privasi"})
+    ]}),
+    tab==="session"&&(0,a.jsxs)("div",{style:{maxWidth:"620px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.85rem"},children:[
+      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Sesi Login Kedinasan Aktif"}),
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem",fontSize:"0.82rem"},children:[
+        {k:"Nama Personil",v:curUser?.name||"-"},
+        {k:"Username / Callsign",v:formatUserCallsign(curUser)||"-"},
+        {k:"Role RBAC",v:curUser?.role_bdb||"operator"},
+        {k:"Satker",v:curUser?.satker_nama||curUser?.satker||"Polri"}
+      ].map((r,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.65rem 0.85rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+        (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)"},children:r.k}),
+        (0,a.jsx)("div",{style:{fontWeight:800,color:"var(--cas-text-primary)",marginTop:"0.15rem"},children:r.v})
+      ]}))})
+    ]})
+  ]});
+}
+
+function CasPusatBantuanFullPage({user:curUser}){
+  const router=(0,r.useRouter)();
+  const[cards,setCards]=(0,t.useState)([]);
+  const[loading,setLoading]=(0,t.useState)(!0);
+  const canManage=["superadmin","admin_binops"].includes(String(curUser?.role_bdb||"").toLowerCase());
+
+  (0,t.useEffect)(()=>{
+    M.apiAuth.get("/bdb/jukrah/pusat-bantuan-cards").then(res=>{
+      setCards(Array.isArray(res.data?.data)?res.data.data:[]);
+    }).catch(()=>{}).finally(()=>setLoading(!1));
+  },[]);
+
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1.15rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🎧 Pusat Bantuan & Dukungan Operasional CAS"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",children:"Layanan Helpdesk Teknis & Operasional 24/7 Robinopsnal Bareskrim Polri untuk seluruh jajaran Polda, Polres, dan Polsek."})
+      ]}),
+      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.55rem",flexWrap:"wrap"},children:[
+        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=obrolan&partner=-1"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid #38bdf8",background:"rgba(2,132,199,0.16)",color:"#0284c7",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"🤖 Tanya AI Agen Taktis CAS"}),
+        canManage&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/pengaturan/pusat-bantuan"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:"⚙️ Kelola Kartu Pusat Bantuan"})
+      ]})
+    ]}),
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat saluran Pusat Bantuan…"}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:"1rem"},children:cards.map((c,idx)=>(0,a.jsxs)("div",{key:c.id||idx,style:{padding:"1.25rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 8px 20px rgba(15,23,42,0.06)"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"0.65rem"},children:[
+          (0,a.jsx)("span",{style:{fontSize:"1.5rem"},children:c.icon==="whatsapp"?"💬":c.icon==="mail"?"✉️":c.icon==="phone"?"☎️":"📘"}),
+          c.badge&&(0,a.jsx)("span",{style:{fontSize:"0.68rem",fontWeight:800,padding:"0.18rem 0.55rem",borderRadius:999,background:"rgba(56,189,248,0.16)",color:"#0284c7",border:"1px solid rgba(56,189,248,0.35)"},children:c.badge})
+        ]}),
+        (0,a.jsx)("h3",{style:{margin:"0 0 0.35rem",fontSize:"1rem",fontWeight:800,color:"var(--cas-text-primary)"},children:c.title||c.judul}),
+        (0,a.jsx)("p",{style:{margin:0,fontSize:"0.8rem",color:"var(--cas-text-muted)",lineHeight:1.45},children:c.subtitle||c.deskripsi}),
+        (0,a.jsx)("div",{style:{marginTop:"0.75rem",fontSize:"0.88rem",fontWeight:800,color:"#0284c7",fontFamily:"monospace"},children:c.contact||c.kontak||c.nilai||""})
+      ]}),
+      (0,a.jsx)("a",{href:c.action_url||c.link||"/cms/panduan",target:(c.action_url||"").startsWith("http")?"_blank":"_self",rel:"noreferrer",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"0.55rem 1rem",borderRadius:10,background:"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:"#fff",fontSize:"0.8rem",fontWeight:800,textDecoration:"none"},children:"Hubungi / Buka Layanan ➔"})
+    ]}))}),
+    (0,a.jsxs)("div",{style:{padding:"1.25rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+      (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.98rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"💡 Pertanyaan Umum (FAQ Operasional & Teknis CAS)"}),
+      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(280px, 1fr))",gap:"0.85rem"},children:[
+        {q:"Bagaimana cara sinkronisasi data LP dari DORS?",a:"Buka menu Portal Integrasi → Masuk → Tarik Data, pilih rentang tanggal, lalu tinjau di Staging & Cek Duplikat sebelum Import ke Database."},
+        {q:"Bagaimana cara menambahkan Penyelesaian Perkara (Selra)?",a:"Pada menu Laporan → Rekap, pilih detail LP terkait lalu unggah dokumen Selra (P21, SP3, RJ, atau Pelimpahan) sesuai alur dokumen penyidikan."},
+        {q:"Bagaimana jika lupa kode TOTP / ganti perangkat HP?",a:"Buka menu Sharese → Keamanan → Autentikasi 2FA / TOTP atau hubungi Helpdesk Robinopsnal untuk reset token perangkat."}
+      ].map((f,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.9rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+        (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"#0284c7",marginBottom:"0.3rem"},children:f.q}),
+        (0,a.jsx)("div",{style:{fontSize:"0.78rem",color:"var(--cas-text-secondary)",lineHeight:1.45},children:f.a})
+      ]}))})
+    ]})
+  ]});
+}
+
+function CasPublicShareseGateway({shareHash:rawHashProp}){
+  const rawHash=(0,t.useMemo)(()=>{
+    if(rawHashProp)return String(rawHashProp).trim();
+    if("undefined"!=typeof window){
+      const sp=new URLSearchParams(window.location.search||"");
+      return String(sp.get("share")||sp.get("post")||"").trim();
+    }
+    return "";
+  },[rawHashProp]);
+  const decoded=(0,t.useMemo)(()=>decodeCasShareHash(rawHash),[rawHash]);
+  const[challenge,setChallenge]=(0,t.useState)(null);
+  const[captchaMode,setCaptchaMode]=(0,t.useState)("jukrah");
+  const[loadingCh,setLoadingCh]=(0,t.useState)(!0);
+  const[nrp,setNrp]=(0,t.useState)("");
+  const[checkingNrp,setCheckingNrp]=(0,t.useState)(!1);
+  const[nrpProfile,setNrpProfile]=(0,t.useState)(null);
+  const[nama,setNama]=(0,t.useState)("");
+  const[satker,setSatker]=(0,t.useState)("");
+  const[jenisPersonel,setJenisPersonel]=(0,t.useState)("POLRI");
+  const[captchaAns,setCaptchaAns]=(0,t.useState)("");
+  const[verifying,setVerifying]=(0,t.useState)(!1);
+  const[errMsg,setErrMsg]=(0,t.useState)("");
+  const[verifiedPost,setVerifiedPost]=(0,t.useState)(null);
+  const[verifiedViewer,setVerifiedViewer]=(0,t.useState)(null);
+  const[comments,setComments]=(0,t.useState)([]);
+  const[wmPos,setWmPos]=(0,t.useState)({top:18,left:12});
+
+  const loadChallenge=(0,t.useCallback)(async()=>{
+    if(!rawHash)return;
+    setLoadingCh(!0);
+    setErrMsg("");
+    try{
+      const qs=[];
+      if(decoded.isSpToken)qs.push("token="+encodeURIComponent(rawHash));
+      if(decoded.postId)qs.push("id="+encodeURIComponent(String(decoded.postId)));
+      if(!qs.length)qs.push("token="+encodeURIComponent(rawHash));
+      let jukData=null;
+      try{
+        const rJ=await fetch("/api/bdb/jukrah/share-challenge?"+qs.join("&"));
+        const jJ=await rJ.json();
+        if(rJ.ok&&jJ?.data)jukData=jJ.data;
+      }catch(_e){}
+      if(jukData){
+        setCaptchaMode("jukrah");
+        setChallenge(jukData);
+        setCaptchaAns("");
+        return;
+      }
+      const rP=await fetch("/api/bdb/panduan/public/captcha");
+      const jP=await rP.json();
+      const dP=jP?.data||jP;
+      if(rP.ok&&(dP?.svg||dP?.captcha_svg||dP?.image)){
+        setCaptchaMode("public");
+        setChallenge({
+          challenge_token:dP.challenge_id||dP.captcha_id||dP.token||dP.id||"",
+          captcha_svg:dP.captcha_svg||dP.svg||dP.image||"",
+          post_preview:null
+        });
+        setCaptchaAns("");
+        return;
+      }
+      throw new Error("Tautan berhash Sharese tidak valid atau sudah kedaluwarsa.");
+    }catch(e){
+      setErrMsg(e?.message||"Gagal memuat gerbang keamanan Sharese.");
+    }finally{
+      setLoadingCh(!1);
+    }
+  },[rawHash,decoded]);
+
+  (0,t.useEffect)(()=>{loadChallenge()},[loadChallenge]);
+
+  (0,t.useEffect)(()=>{
+    if(!verifiedPost)return;
+    const iv=setInterval(()=>{
+      setWmPos({top:10+Math.floor(Math.random()*70),left:6+Math.floor(Math.random()*56)});
+    },4000);
+    return()=>clearInterval(iv);
+  },[verifiedPost]);
+
+  const handleCheckNrp=async(rawVal)=>{
+    const clean=String(rawVal??nrp).trim();
+    if(clean.length<5)return null;
+    setCheckingNrp(!0);
+    try{
+      let prof=null;
+      try{
+        const r1=await fetch("/api/bdb/panduan/public/verify-nrp",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({nrp:clean})
+        });
+        const j1=await r1.json();
+        const d1=j1?.data||j1;
+        if(r1.ok&&d1&&(d1.nama||d1.masked_name||d1.name||d1.valid)){
+          prof={
+            nama:d1.masked_name||d1.nama||d1.name||("Personel "+clean),
+            pangkat:d1.pangkat||d1.rank||"",
+            satker:d1.satker||d1.jabatan||"Polri",
+            nrp:d1.nrp||clean
+          };
+        }
+      }catch(_e){}
+      if(!prof){
+        try{
+          const r2=await fetch("/api/bdb/panduan/public/verify-nrp?nrp="+encodeURIComponent(clean));
+          const j2=await r2.json();
+          const d2=j2?.data||j2;
+          if(r2.ok&&d2&&(d2.nama||d2.masked_name||d2.name||d2.valid)){
+            prof={
+              nama:d2.masked_name||d2.nama||d2.name||("Personel "+clean),
+              pangkat:d2.pangkat||d2.rank||"",
+              satker:d2.satker||d2.jabatan||"Polri",
+              nrp:d2.nrp||clean
+            };
+          }
+        }catch(_e){}
+      }
+      if(prof){
+        setNrpProfile(prof);
+        if(!nama)setNama((prof.pangkat?prof.pangkat+" ":"")+prof.nama);
+        if(!satker)setSatker(prof.satker||"Polri");
+      }
+      return prof;
+    }finally{
+      setCheckingNrp(!1);
+    }
+  };
+
+  const handleSubmit=async(ev)=>{
+    if(ev&&ev.preventDefault)ev.preventDefault();
+    const cleanNrp=nrp.trim();
+    const cleanAns=captchaAns.trim().toUpperCase();
+    if(cleanNrp.length<4){
+      setErrMsg("Masukkan NRP / NIP Personel yang valid (minimal 4 digit).");
+      return;
+    }
+    if(!cleanAns){
+      setErrMsg("Masukkan 6 karakter kode Captcha.");
+      return;
+    }
+    setVerifying(!0);
+    setErrMsg("");
+    try{
+      let prof=nrpProfile;
+      if(!prof)prof=await handleCheckNrp(cleanNrp);
+      const finalNama=(prof&&((prof.pangkat?prof.pangkat+" ":"")+prof.nama))||nama.trim()||("Personel NRP "+cleanNrp);
+      const finalSatker=(prof&&prof.satker)||satker.trim()||"Polri";
+
+      let postObj=null;
+      let viewerObj={
+        jenis_personel:jenisPersonel,
+        nama:finalNama,
+        pangkat:prof?.pangkat||"",
+        nrp_nip:cleanNrp,
+        satker:finalSatker,
+        verified_at:new Date().toISOString()
+      };
+
+      if(captchaMode==="jukrah"&&challenge?.challenge_token){
+        const rV=await fetch("/api/bdb/jukrah/verify-share",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({
+            challenge_token:challenge.challenge_token,
+            share_token:decoded.isSpToken?rawHash:undefined,
+            post_id:decoded.postId||challenge?.post_preview?.id||undefined,
+            jenis_personel:jenisPersonel,
+            nama:finalNama,
+            nrp_nip:cleanNrp,
+            satker:finalSatker,
+            captcha_answer:cleanAns
+          })
+        });
+        const jV=await rV.json();
+        if(!rV.ok||!jV?.data?.post){
+          throw new Error(jV?.message||"Verifikasi gagal. Periksa kembali NRP dan kode Captcha Anda.");
+        }
+        postObj=jV.data.post;
+        if(jV.data.viewer)viewerObj={...viewerObj,...jV.data.viewer,pangkat:prof?.pangkat||""};
+      }else{
+        try{
+          await fetch("/api/bdb/panduan/public/verify-nrp",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+              nrp:cleanNrp,
+              challenge_id:challenge?.challenge_token,
+              captcha_id:challenge?.challenge_token,
+              captcha_answer:cleanAns,
+              captcha_code:cleanAns
+            })
+          });
+        }catch(_e){}
+        const targetRef=decoded.postId||rawHash;
+        const rPub=await fetch("/api/bdb/sharese/public/post/"+encodeURIComponent(String(targetRef))+"?nrp="+encodeURIComponent(cleanNrp));
+        const jPub=await rPub.json();
+        const dPub=jPub?.data||jPub;
+        postObj=dPub?.post||dPub;
+        if(!rPub.ok||!postObj?.id){
+          throw new Error(jPub?.message||"Gagal memuat siaran Sharese terproteksi.");
+        }
+      }
+
+      try{
+        const targetId=postObj.id||decoded.postId||rawHash;
+        const rPub2=await fetch("/api/bdb/sharese/public/post/"+encodeURIComponent(String(targetId))+"?nrp="+encodeURIComponent(cleanNrp));
+        if(rPub2.ok){
+          const jPub2=await rPub2.json();
+          const d2=jPub2?.data||jPub2;
+          const cList=d2?.comments||d2?.recent_comments||d2?.post?.comments||d2?.post?.recent_comments;
+          if(Array.isArray(cList))setComments(cList);
+        }
+      }catch(_e){}
+
+      setVerifiedPost(postObj);
+      setVerifiedViewer(viewerObj);
+    }catch(e){
+      setErrMsg(e?.message||"Verifikasi gagal.");
+      loadChallenge();
+    }finally{
+      setVerifying(!1);
+    }
+  };
+
+  const wmText=verifiedViewer
+    ?`SHARESE CAS BARESKRIM • ${verifiedViewer.nama} (${verifiedViewer.nrp_nip}) • ${verifiedViewer.satker}`
+    :"SHARESE CAS BARESKRIM POLRI • TERPROTEKSI";
+
+  return(0,a.jsx)("div",{
+    className:"cas-sharese-viewer-wrap",
+    onContextMenu:ev=>ev.preventDefault(),
+    style:{minHeight:"100vh",background:"radial-gradient(circle at top, #0f172a 0%, #020617 100%)",color:"#f8fafc",padding:"1.25rem 0.75rem 2.5rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",boxSizing:"border-box",overflowX:"hidden"},
+    children:(0,a.jsxs)("div",{
+      className:"cas-sharese-gate-card",
+      style:{width:"100%",maxWidth:"46rem",background:"rgba(15,23,42,0.94)",border:"1px solid rgba(56,189,248,0.32)",borderRadius:"16px",padding:"1.35rem",boxShadow:"0 20px 60px rgba(0,0,0,0.65)",position:"relative",overflow:"hidden",boxSizing:"border-box"},
+      children:[
+        (0,a.jsxs)("div",{
+          className:"cas-sharese-header-row",
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.65rem",borderBottom:"1px solid rgba(148,163,184,0.18)",paddingBottom:"0.85rem",marginBottom:"1.1rem",flexWrap:"wrap"},
+          children:[
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",minWidth:0},children:[
+              (0,a.jsx)("div",{style:{width:"2.4rem",height:"2.4rem",borderRadius:"10px",background:"linear-gradient(135deg, #2563eb, #0284c7)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.15rem",flexShrink:0},children:"🛡️"}),
+              (0,a.jsxs)("div",{style:{minWidth:0},children:[
+                (0,a.jsx)("div",{style:{fontWeight:900,fontSize:"0.98rem",color:"#f8fafc",lineHeight:1.25},children:"SHARESE — GERBANG VERIFIKASI ANGGOTA"}),
+                (0,a.jsx)("div",{style:{fontSize:"0.74rem",color:"#94a3b8"},children:"Siaran Kedinasan Terenkripsi • CAS Bareskrim Polri"})
+              ]})
+            ]}),
+            (0,a.jsx)("a",{href:"/login",title:"Masuk ke sistem lengkap CAS menggunakan akun kedinasan Anda",style:{padding:"0.42rem 0.85rem",borderRadius:"8px",background:"rgba(56,189,248,0.14)",border:"1px solid rgba(56,189,248,0.38)",color:"#38bdf8",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"},children:"🔐 Masuk ke Sistem Lengkap"})
+          ]
+        }),
+        !verifiedPost?(
+          (0,a.jsxs)("form",{onSubmit:handleSubmit,style:{display:"grid",gap:"0.9rem"},children:[
+            challenge?.post_preview&&(0,a.jsxs)("div",{style:{padding:"0.75rem 0.95rem",borderRadius:"10px",background:"rgba(30,41,59,0.7)",border:"1px solid rgba(148,163,184,0.22)"},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap",marginBottom:"0.25rem"},children:[
+                challenge.post_preview.is_official_jukrah&&(0,a.jsx)("span",{style:{fontSize:"0.65rem",fontWeight:800,padding:"0.1rem 0.45rem",borderRadius:"4px",background:"rgba(245,158,11,0.22)",color:"#fbbf24",border:"1px solid rgba(245,158,11,0.45)"},children:"📢 JUKRAH RESMI"}),
+                (0,a.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",fontSize:"0.84rem"},children:challenge.post_preview.author_handle}),
+                (0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"#94a3b8"},children:"• "+challenge.post_preview.author_satker})
+              ]}),
+              (0,a.jsx)("div",{style:{fontSize:"0.82rem",color:"#e2e8f0",fontWeight:600},children:`"${challenge.post_preview.title}..."`})
+            ]}),
+            (0,a.jsxs)("div",{style:{background:"rgba(2,6,23,0.65)",border:"1px solid rgba(56,189,248,0.25)",borderRadius:"12px",padding:"1rem",display:"grid",gap:"0.8rem"},children:[
+              (0,a.jsxs)("div",{children:[
+                (0,a.jsx)("h2",{style:{margin:0,fontSize:"0.95rem",fontWeight:800,color:"#38bdf8"},children:'🛡️ "Siapa Saya?" — Verifikasi NRP Personel & Captcha'}),
+                (0,a.jsx)("p",{style:{margin:"0.2rem 0 0",fontSize:"0.76rem",color:"#94a3b8",lineHeight:1.4},children:"Masukkan NRP/NIP dan kode Captcha untuk membuka siaran & lampiran terproteksi."})
+              ]}),
+              errMsg&&(0,a.jsx)("div",{style:{padding:"0.55rem 0.75rem",borderRadius:"8px",background:"rgba(239,68,68,0.16)",border:"1px solid rgba(239,68,68,0.45)",color:"#fca5a5",fontSize:"0.78rem",fontWeight:700},children:"⚠️ "+errMsg}),
+              nrpProfile&&(0,a.jsxs)("div",{style:{padding:"0.55rem 0.75rem",borderRadius:"8px",background:"rgba(16,185,129,0.14)",border:"1px solid rgba(16,185,129,0.4)",color:"#6ee7b7",fontSize:"0.78rem",fontWeight:700},children:[
+                '✅ Terdeteksi Anggota ("Siapa Saya?"): ',
+                (0,a.jsx)("strong",{children:(nrpProfile.pangkat?nrpProfile.pangkat+" ":"")+nrpProfile.nama}),
+                " • ",nrpProfile.satker
+              ]}),
+              (0,a.jsxs)("div",{className:"cas-sharese-gate-grid",style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(190px, 1fr))",gap:"0.65rem"},children:[
+                (0,a.jsxs)("div",{children:[
+                  (0,a.jsx)("label",{style:{display:"block",fontSize:"0.72rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.25rem"},children:"NRP / NIP Personel *"}),
+                  (0,a.jsxs)("div",{style:{display:"flex",gap:"0.35rem"},children:[
+                    (0,a.jsx)("input",{
+                      type:"text",
+                      required:!0,
+                      value:nrp,
+                      onChange:e=>setNrp(e.target.value),
+                      onBlur:e=>handleCheckNrp(e.target.value),
+                      placeholder:"Ketik NRP / NIP",
+                      style:{flex:1,minWidth:0,padding:"0.5rem 0.65rem",borderRadius:"8px",background:"#0f172a",border:"1px solid #334155",color:"#f8fafc",fontSize:"0.82rem",boxSizing:"border-box"}
+                    }),
+                    (0,a.jsx)("button",{
+                      type:"button",
+                      onClick:()=>handleCheckNrp(nrp),
+                      disabled:checkingNrp,
+                      title:'Cek identitas NRP otomatis ("Siapa Saya?")',
+                      style:{padding:"0.5rem 0.65rem",borderRadius:"8px",border:"1px solid rgba(56,189,248,0.4)",background:"rgba(56,189,248,0.15)",color:"#38bdf8",fontWeight:800,fontSize:"0.74rem",cursor:"pointer",whiteSpace:"nowrap"},
+                      children:checkingNrp?"⏳":"🔍 Cek"
+                    })
+                  ]})
+                ]}),
+                (0,a.jsxs)("div",{children:[
+                  (0,a.jsx)("label",{style:{display:"block",fontSize:"0.72rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.25rem"},children:"Nama / Pangkat"}),
+                  (0,a.jsx)("input",{
+                    type:"text",
+                    value:nama,
+                    onChange:e=>setNama(e.target.value),
+                    placeholder:"Otomatis / isi nama",
+                    style:{width:"100%",padding:"0.5rem 0.65rem",borderRadius:"8px",background:"#0f172a",border:"1px solid #334155",color:"#f8fafc",fontSize:"0.82rem",boxSizing:"border-box"}
+                  })
+                ]}),
+                (0,a.jsxs)("div",{children:[
+                  (0,a.jsx)("label",{style:{display:"block",fontSize:"0.72rem",fontWeight:700,color:"#cbd5e1",marginBottom:"0.25rem"},children:"Satker / Polda / Polres"}),
+                  (0,a.jsx)("input",{
+                    type:"text",
+                    value:satker,
+                    onChange:e=>setSatker(e.target.value),
+                    placeholder:"Otomatis / isi satker",
+                    style:{width:"100%",padding:"0.5rem 0.65rem",borderRadius:"8px",background:"#0f172a",border:"1px solid #334155",color:"#f8fafc",fontSize:"0.82rem",boxSizing:"border-box"}
+                  })
+                ]})
+              ]}),
+              (0,a.jsxs)("div",{className:"cas-sharese-captcha-row",style:{display:"flex",alignItems:"center",gap:"0.75rem",flexWrap:"wrap",padding:"0.65rem",borderRadius:"10px",background:"rgba(15,23,42,0.85)",border:"1px solid rgba(148,163,184,0.2)"},children:[
+                challenge?.captcha_svg?(
+                  (0,a.jsx)("img",{className:"cas-sharese-captcha-img",src:challenge.captcha_svg,alt:"Captcha",style:{width:"190px",height:"56px",borderRadius:"8px",border:"1px solid #334155",flexShrink:0}})
+                ):(
+                  (0,a.jsx)("div",{style:{width:"190px",height:"56px",borderRadius:"8px",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",color:"#94a3b8",fontSize:"0.74rem"},children:loadingCh?"Memuat Captcha...":"Captcha"})
+                ),
+                (0,a.jsxs)("div",{style:{flex:"1 1 160px",minWidth:0,display:"grid",gap:"0.3rem"},children:[
+                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
+                    (0,a.jsx)("label",{style:{fontSize:"0.72rem",fontWeight:700,color:"#cbd5e1"},children:"Kode Captcha (6 Karakter) *"}),
+                    (0,a.jsx)("button",{type:"button",onClick:loadChallenge,title:"Muat ulang kode Captcha baru",style:{background:"none",border:"none",color:"#38bdf8",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},children:"🔄 Ganti"})
+                  ]}),
+                  (0,a.jsx)("input",{
+                    type:"text",
+                    required:!0,
+                    maxLength:6,
+                    value:captchaAns,
+                    onChange:e=>setCaptchaAns(e.target.value.toUpperCase()),
+                    placeholder:"KETIK KODE",
+                    style:{width:"100%",padding:"0.5rem 0.65rem",borderRadius:"8px",background:"#020617",border:"1px solid #38bdf8",color:"#f8fafc",fontSize:"0.92rem",fontWeight:800,letterSpacing:"0.16em",fontFamily:"monospace",textTransform:"uppercase",boxSizing:"border-box"}
+                  })
+                ]})
+              ]}),
+              (0,a.jsx)("button",{
+                type:"submit",
+                disabled:verifying||loadingCh,
+                style:{padding:"0.65rem 1.1rem",borderRadius:"10px",border:"none",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,fontSize:"0.86rem",cursor:"pointer"},
+                children:verifying?"⏳ Memverifikasi NRP & Captcha...":"🔓 Verifikasi & Buka Siaran Sharese"
+              })
+            ]})
+          ]})
+        ):(
+          (0,a.jsxs)("div",{className:"cas-sharese-post-card",style:{position:"relative",display:"grid",gap:"0.95rem"},children:[
+            (0,a.jsx)("div",{style:{position:"absolute",top:`${wmPos.top}%`,left:`${wmPos.left}%`,transform:"rotate(-14deg)",pointerEvents:"none",zIndex:30,padding:"0.25rem 0.65rem",borderRadius:"6px",background:"rgba(15,23,42,0.45)",border:"1px solid rgba(248,250,252,0.16)",color:"rgba(248,250,252,0.5)",fontSize:"0.68rem",fontWeight:800,whiteSpace:"nowrap",maxWidth:"90%",overflow:"hidden",textOverflow:"ellipsis",transition:"top 1.8s ease, left 1.8s ease"},children:wmText}),
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.45rem",padding:"0.55rem 0.8rem",borderRadius:"8px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.35)",fontSize:"0.75rem",color:"#6ee7b7"},children:[
+              (0,a.jsxs)("span",{children:['✅ Terverifikasi Anggota ("Siapa Saya?"): ',(0,a.jsx)("strong",{children:verifiedViewer?.nama})," (",verifiedViewer?.nrp_nip," • ",verifiedViewer?.satker,")"]}),
+              (0,a.jsx)("span",{style:{fontSize:"0.68rem",color:"#94a3b8"},children:"Dilindungi Watermark Dinamis"})
+            ]}),
+            verifiedPost.is_official_jukrah&&(0,a.jsxs)("div",{style:{padding:"0.55rem 0.8rem",borderRadius:"8px",background:"rgba(245,158,11,0.15)",border:"1px solid rgba(245,158,11,0.45)",color:"#fbbf24",fontWeight:800,fontSize:"0.78rem"},children:["📢 JUKRAH RESMI KEDINASAN (",verifiedPost.acknowledged_count||0," konfirmasi)"]}),
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem"},children:[
+              (0,a.jsx)("img",{src:verifiedPost.author_photo||"/images/default-avatar-polki.png",alt:verifiedPost.author_handle,style:{width:"40px",height:"40px",borderRadius:"50%",objectFit:"cover",border:"2px solid #38bdf8",flexShrink:0}}),
+              (0,a.jsxs)("div",{style:{minWidth:0},children:[
+                (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"#38bdf8"},children:verifiedPost.author_handle||verifiedPost.author_name}),
+                (0,a.jsxs)("div",{style:{fontSize:"0.74rem",color:"#94a3b8"},children:[verifiedPost.author_satker," • ",verifiedPost.created_at?new Date(verifiedPost.created_at).toLocaleString("id-ID"):""]})
+              ]})
+            ]}),
+            (0,a.jsx)("div",{style:{fontSize:"0.9rem",lineHeight:1.6,color:"#f1f5f9",whiteSpace:"pre-wrap",wordBreak:"break-word",padding:"0.8rem 0.95rem",borderRadius:"10px",background:"rgba(2,6,23,0.55)",border:"1px solid rgba(148,163,184,0.16)"},children:verifiedPost.content}),
+            Array.isArray(verifiedPost.media)&&verifiedPost.media.length>0&&(0,a.jsxs)("div",{style:{display:"grid",gap:"0.7rem"},children:[
+              (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#38bdf8"},children:`📎 Lampiran Media Terproteksi (${verifiedPost.media.length})`}),
+              verifiedPost.media.map((m,idx)=>{
+                const mUrl=m.stream_url||m.url||"";
+                const mime=String(m.mime||"").toLowerCase();
+                const isPdf=mime==="application/pdf"||String(m.name||"").toLowerCase().endsWith(".pdf");
+                const isVideo=mime.startsWith("video/")||/\.(mp4|webm|mkv)$/i.test(String(m.name||""));
+                const isImg=mime.startsWith("image/")||/\.(png|jpe?g|webp|gif)$/i.test(String(m.name||""));
+                return(0,a.jsxs)("div",{key:idx,style:{padding:"0.7rem",borderRadius:"10px",background:"rgba(15,23,42,0.85)",border:"1px solid rgba(56,189,248,0.28)",display:"grid",gap:"0.55rem"},children:[
+                  isImg&&(0,a.jsx)("img",{src:mUrl,alt:m.name,style:{maxWidth:"100%",maxHeight:"22rem",borderRadius:"8px",margin:"0 auto",display:"block",objectFit:"contain"}}),
+                  isVideo&&(0,a.jsx)("video",{src:mUrl,controls:!0,controlsList:"nodownload",style:{width:"100%",maxHeight:"22rem",borderRadius:"8px",background:"#000"}}),
+                  isPdf&&(0,a.jsx)("iframe",{src:`${mUrl}#toolbar=0&navpanes=0`,title:m.name||"Dokumen PDF",style:{width:"100%",height:"22rem",borderRadius:"8px",border:"1px solid #334155",background:"#020617"}}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:700,color:"#e2e8f0"},children:m.name||`Lampiran #${idx+1}`})
+                ]});
+              })
+            ]}),
+            (0,a.jsxs)("div",{className:"cas-sharese-action-bar",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem",paddingTop:"0.5rem",borderTop:"1px solid rgba(148,163,184,0.16)",fontSize:"0.76rem",color:"#94a3b8"},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",flexWrap:"wrap"},children:[
+                (0,a.jsxs)("span",{children:["👍 ",verifiedPost.total_reactions||0," Reaksi"]}),
+                (0,a.jsxs)("span",{children:["💬 ",verifiedPost.comments_count||comments.length||0," Komentar"]}),
+                (0,a.jsxs)("span",{children:["🔁 ",verifiedPost.repost_count||0," Repost"]})
+              ]}),
+              (0,a.jsx)("a",{href:"/login",style:{padding:"0.42rem 0.85rem",borderRadius:"8px",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,fontSize:"0.76rem",textDecoration:"none"},children:"💬 Masuk untuk Membalas / Interaksi ➔"})
+            ]})
+          ]})
+        )
+      ]
+    })
+  });
+}
+if("undefined"!=typeof window){window.CasPublicShareseGateway=CasPublicShareseGateway}
+
+e.s(["default",0,function({children:e}){let s=(0,r.useRouter)(),n=(0,r.usePathname)(),qSearch=useCasLocationSearch(),spMain=new URLSearchParams(qSearch||""),activeView=spMain.get("view")||"",activeMode=spMain.get("mode")||"",[i,o]=(0,t.useState)(!1),[c,u]=(0,t.useState)(null),[d,p]=(0,t.useState)([]),[m,f]=(0,t.useState)(!1),[h,g]=(0,t.useState)(!1),[k,b]=(0,t.useState)(null),y=(0,t.useRef)(null);(0,t.useEffect)(()=>{initCasExpensivePcHpStandards();let e=(0,R.getAuth)(),tok=localStorage.getItem("auth.access_token")||e?.access_token||"",lastAct=Number(localStorage.getItem("bdb.auth.last_activity")||0),isPublicShare="undefined"!=typeof window&&(new URLSearchParams(window.location.search).has("share")||window.location.pathname.startsWith("/sharese-publik"));if(!tok||(lastAct&&Date.now()-lastAct>144e5)){if(isPublicShare){o(!0);return}(0,R.logout)();window.location.replace("/login");return}let a=(0,R.getUser)();u(a),b((0,R.getImpersonatorStash)()),g("1"===localStorage.getItem("cms_sidebar_collapsed"));let isFresh=!1;try{let pl=JSON.parse(atob(tok.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));isFresh=Number(pl?.exp||0)*1e3>Date.now()+5e3}catch(_e){}if(isFresh)o(!0);M.apiAuth.get("/bdb/menu-access").then(e=>{if(0===e?.data?.status){if(isPublicShare){u(null);o(!0);return}(0,R.logout)();window.location.replace("/login?expired=1");return}p(e.data?.data?.overrides||[]);o(!0)}).catch(()=>{let cur=localStorage.getItem("auth.access_token")||(0,R.getAuth)()?.access_token;if(!cur||!isFresh){if(isPublicShare){u(null);o(!0);return}(0,R.logout)();window.location.replace("/login?expired=1")}}),"superadmin"!==String(a?.role_bdb||"").toLowerCase()&&M.api.get("/Authentication/maintenance-status").then(e=>{let a=e.data?.data;a?.enabled&&s.replace("/maintenance")}).catch(()=>{})},[s]),(0,t.useEffect)(()=>{document.querySelector(".cms-main")?.scrollTo({top:0})},[n,qSearch]),(0,t.useEffect)(()=>{let e=y.current;if(!e)return;let a=()=>{let h=Math.ceil(e.offsetHeight||e.getBoundingClientRect().height||0);h>0&&document.documentElement.style.setProperty("--cms-header-h",`${h}px`)};a();let t=new ResizeObserver(a);return t.observe(e),window.addEventListener("resize",a),window.addEventListener("orientationchange",a),()=>{t.disconnect(),window.removeEventListener("resize",a),window.removeEventListener("orientationchange",a)}},[n,i]),(0,t.useEffect)(()=>{if("undefined"==typeof document)return;let tipEl=document.getElementById("cms-global-title-tip");if(!tipEl){tipEl=document.createElement("div");tipEl.id="cms-global-title-tip";tipEl.className="cms-global-title-tip";tipEl.style.display="none";document.body.appendChild(tipEl)}let hideTip=()=>{if(tipEl)tipEl.style.display="none"};let showTip=(btn,text)=>{if(!tipEl||!btn||!text)return;tipEl.textContent=text;tipEl.style.display="block";let r=btn.getBoundingClientRect(),vw=window.innerWidth||360,vh=window.innerHeight||640,w=Math.min(288,vw-20);tipEl.style.width=w+"px";let left=Math.max(10,Math.min(r.left+r.width/2-w/2,vw-w-10)),top=r.bottom+8;if(top+110>vh)top=Math.max(10,r.top-90);tipEl.style.left=left+"px";tipEl.style.top=top+"px"};let enhanceDom=()=>{document.querySelectorAll(".cms-page-sub").forEach(sub=>{let txt=(sub.textContent||"").trim();if(!txt)return;let parent=sub.parentElement,title=parent?.querySelector(".cms-page-title")||sub.previousElementSibling;if(title&&title.classList?.contains("cms-page-title")){sub.classList.add("cms-page-sub-hidden");let existing=title.querySelector(".cms-title-info-btn")||parent?.querySelector(".cms-title-info-btn");if(!existing){let btn=document.createElement("button");btn.type="button";btn.className="cms-title-info-btn";btn.setAttribute("aria-label","Informasi Halaman");btn.dataset.tip=txt;btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>';btn.addEventListener("click",ev=>{ev.stopPropagation();ev.preventDefault();if("block"===tipEl.style.display&&tipEl.textContent===btn.dataset.tip)hideTip();else showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseenter",()=>{if(window.innerWidth>768)showTip(btn,btn.dataset.tip)});btn.addEventListener("mouseleave",()=>{if(window.innerWidth>768)hideTip()});title.appendChild(btn)}else if(existing.dataset.tip!==txt){existing.dataset.tip=txt}}});document.querySelectorAll(".lp-stat span, .dash-minicard span").forEach(sp=>{if(0===sp.childElementCount&&String.fromCharCode(9432)===(sp.textContent||"").trim()){sp.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cas-info-svg"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>'}});document.querySelectorAll(".p-datatable table").forEach(tbl=>{let ths=tbl.querySelectorAll("thead > tr:first-child > th");if(ths.length<4)return;let h1=(ths[0]?.textContent||"").trim().toUpperCase();if("NO"===h1||"NO."===h1||"#"===h1){ths[0].classList.add("cas-sticky-col-1");ths[1]?.classList.add("cas-sticky-col-2");tbl.querySelectorAll("tbody > tr").forEach(tr=>{let tds=tr.children;if(tds.length>=2&&!tds[0].hasAttribute("colspan")){tds[0].classList.add("cas-sticky-col-1");tds[1].classList.add("cas-sticky-col-2")}})}})};enhanceDom();let obs=new MutationObserver(()=>{enhanceDom()}),mainEl=document.querySelector(".cms-content")||document.body;obs.observe(mainEl,{childList:!0,subtree:!0});window.addEventListener("scroll",hideTip,!0);document.addEventListener("click",hideTip);return()=>{obs.disconnect();window.removeEventListener("scroll",hideTip,!0);document.removeEventListener("click",hideTip)}},[n,qSearch,i]);let j=(0,t.useMemo)(()=>(function(e,a){let{isSuperadmin:t}=(0,R.deriveRoles)(e),r=function(e){let{isSuperadmin:a}=(0,R.deriveRoles)(e);return a?"superadmin":String(e?.role_bdb||e?.requested_role_bdb||"").toLowerCase()||"viewer"}(e),s=new Map;(a||[]).forEach(e=>s.set(`${String(e.role).toLowerCase()}|${e.menu_key}`,e.allowed));let n=[];for(let e of D.MENU_CATALOG){let a=e.items.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>{let a=e.children?.filter(e=>(0,D.isMenuAllowed)(e,r,s,t)).map(e=>({label:e.label,icon:e.icon,to:e.to}));return{label:e.label,icon:e.icon,to:e.to,children:a?.length?a:void 0}});a.length&&n.push({label:e.label,items:a})}return n})(c,d),[c,d]),v=(0,t.useMemo)(()=>(0,R.deriveRoles)(c).label,[c]),isPublicShare="undefined"!=typeof window&&(new URLSearchParams(window.location.search).has("share")||window.location.pathname.startsWith("/sharese-publik")),isSysSettingsPage=["/cms/pengaturan/email","/cms/pengaturan/login-otp","/cms/pengaturan/maintenance","/cms/pengaturan/pusat-bantuan","/cms/master/alur-dokumen","/cms/master/organisasi-role","/cms/master/menu"].some(p=>n===p||n.startsWith(p+"/")),customViewContent=(()=>{if(n==="/cms/broadcaster"){if(activeView==="obrolan")return(0,a.jsx)(CasObrolanFullPage,{user:c,searchStr:qSearch});if(activeView==="koneksi")return(0,a.jsx)(CasKoneksiFullPage,{user:c,searchStr:qSearch});if(activeView==="notifikasi")return(0,a.jsx)(CasNotifikasiFullPage,{user:c,searchStr:qSearch});if(activeView==="insight")return(0,a.jsx)(CasInsightFullPage,{user:c,searchStr:qSearch});if(activeView==="pusat-bantuan")return(0,a.jsx)(CasPusatBantuanFullPage,{user:c,searchStr:qSearch})}if(n==="/cms/profile"&&activeView==="keamanan")return(0,a.jsx)(CasKeamananPengaturanFullPage,{user:c,searchStr:qSearch});return null})();if(i&&isPublicShare&&!c){const hasNativeGate=n.startsWith("/cms/panduan")||n.startsWith("/cms/broadcaster");return(0,a.jsx)("div",{className:"cms-public-share-root",style:{minHeight:"100vh",background:"#0f172a",color:"#f8fafc"},children:hasNativeGate?e:(0,a.jsx)(CasPublicShareseGateway,{shareHash:spMain.get("share")||""})})}return i?(0,a.jsxs)("div",{className:`cms-shell${h?" cms-collapsed":""}`,children:[(0,a.jsx)(l,{id:"fld-0-gigr76s0g8t-17",name:"field_0_gigr76s0g8t_17",sections:j,open:m,onNavigate:()=>f(!1)}),m&&(0,a.jsx)("div",{className:"cms-overlay",onClick:()=>f(!1)}),(0,a.jsxs)("div",{className:"cms-main",children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@media(max-width:900px){.cms-header-fixed{left:0!important;right:0!important;width:100%!important}.cms-main{width:100%!important;min-width:0!important;-webkit-overflow-scrolling:touch!important;overflow-y:auto!important}.cms-sticky-top{position:static!important;top:auto!important;z-index:auto!important}}@media(max-width:640px){.cms-topbar{padding:0 0.75rem!important;gap:0.4rem!important;height:3.5rem!important}.cms-user-meta{display:none!important}.cms-user-avatar{width:2rem!important;height:2rem!important;font-size:0.8rem!important}.cms-breadcrumb{padding:0.4rem 0.75rem!important;gap:0.35rem!important;font-size:0.76rem!important;overflow-x:auto!important;width:100%!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}.cms-breadcrumb::-webkit-scrollbar{display:none}.cms-bc-back{padding:0.25rem 0.5rem!important;font-size:0.75rem!important;flex-shrink:0!important;white-space:nowrap!important}.cms-breadcrumb ol{flex-wrap:nowrap!important;white-space:nowrap!important}.cms-content{padding-left:0.75rem!important;padding-right:0.75rem!important;padding-bottom:5rem!important;width:100%!important;box-sizing:border-box!important}}@media(max-width:768px){.p-datatable{max-width:100%!important}.p-datatable .p-datatable-wrapper{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}.p-datatable-header{padding:0.75rem!important;flex-direction:column!important;align-items:stretch!important;gap:0.5rem!important}}"}}),(0,a.jsxs)("div",{ref:y,className:"cms-header-fixed",children:[k&&(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.6rem",flexWrap:"wrap",background:"#7c3aed",color:"#fff",padding:"0.5rem 1rem",fontSize:"0.85rem",fontWeight:600},children:[(0,a.jsx)(B.UserCog,{size:16}),(0,a.jsxs)("span",{children:["Anda sedang masuk sebagai ",(0,a.jsx)("strong",{children:c?.name||c?.email})," (",(0,R.deriveRoles)(c).label,") — sesi superadmin ",(0,a.jsx)("strong",{children:k.user?.name})," tersimpan."]}),(0,a.jsx)("button",{type:"button",onClick:function(){(0,R.stopImpersonation)()&&(window.location.href="/cms/master/user")},style:{background:"#fff",color:"#7c3aed",border:"none",borderRadius:6,padding:"0.25rem 0.75rem",fontWeight:700,fontSize:"0.8rem",cursor:"pointer"},children:"Kembali ke Akun Saya"})]}),(0,a.jsx)(L,{id:"fld-0-gigr76s0g8t-18",name:"field_0_gigr76s0g8t_18",user:c,roleLabel:v,onToggleSidebar:()=>f(e=>!e),onToggleCollapse:function(){g(e=>{let a=!e;try{localStorage.setItem("cms_sidebar_collapsed",a?"1":"0")}catch{}return a})}}),(0,a.jsx)($,{id:"fld-0-gigr76s0g8t-19",name:"field_0_gigr76s0g8t_19",})]}),(0,a.jsxs)("main",{className:"cms-content",children:[!customViewContent&&isSysSettingsPage&&(0,a.jsx)(CasKelolaPengaturanTabs,{user:c,pathname:n}),customViewContent||(n==="/cms/panduan"?(0,a.jsx)("div",{style:{display:"contents"},children:e},"panduan_"+activeMode):e)]}),(0,a.jsx)(TacticalMessengerWidget,{})]})]}):null}],93989)}]);

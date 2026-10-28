@@ -46,11 +46,11 @@ pgDefaults.parseInputDatesAsUTC = true;
             // connectionTimeoutMillis: WAJIB diisi -- default pg Pool (0 = tunggu tanpa batas) bikin
             // request "menggantung" diam2 kalau pool penuh, bukan gagal cepat dgn pesan jelas.
             extra: {
-                max: 25,
+                max: 8,
                 connectionTimeoutMillis: 5000,
                 idleTimeoutMillis: 30000
             },
-            poolSize: 25,
+            poolSize: 8,
             entities: ['dist/**/*.entity{.ts,.js}'],
             migrations: ['dist/app_core/migrations/**/*.ts'],
             subscribers: ['dist/subscriber/**/*.ts']

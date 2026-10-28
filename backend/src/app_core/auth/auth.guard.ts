@@ -23,12 +23,28 @@ export class AuthGuard implements CanActivate {
                 reqObj.url.includes('/bdb/jukrah/stream/') ||
                 reqObj.url.includes('/bdb/jukrah/share-challenge') ||
                 reqObj.url.includes('/bdb/jukrah/verify-share') ||
+                reqObj.url.includes('/bdb/jukrah/shared/') ||
+                reqObj.url.includes('/bdb/jukrah/public/') ||
+                reqObj.url.includes('/bdb/sharese/stream/') ||
+                reqObj.url.includes('/bdb/sharese/share-challenge') ||
+                reqObj.url.includes('/bdb/sharese/verify-share') ||
+                reqObj.url.includes('/bdb/sharese/shared/') ||
+                reqObj.url.includes('/bdb/sharese/public/') ||
                 reqObj.url.includes('/bdb/panduan/stream/') ||
                 reqObj.url.includes('/bdb/panduan/share-challenge') ||
                 reqObj.url.includes('/bdb/panduan/verify-viewer') ||
+                reqObj.url.includes('/bdb/panduan/public/') ||
                 reqObj.url.includes('/bdb/system/orchestrator/queue-status'))
         ) {
-            // Allow internal DPO archive/photo viewing, self-authenticating tokenized media stream, panduan verification gate, and read-only queue status
+            // Allow internal DPO archive/photo viewing, self-authenticating tokenized media stream, public sharese/panduan verification gate, and read-only queue status
+            const optToken = this.extractTokenFromHeader(reqObj);
+            if (optToken) {
+                try {
+                    reqObj['user'] = await this.jwtService.verifyAsync(optToken, {
+                        secret: jwtConstants.secret
+                    });
+                } catch {}
+            }
             return true;
         }
         const request = context.switchToHttp().getRequest();

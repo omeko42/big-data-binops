@@ -45,12 +45,89 @@ export class UserService {
         this.tableHelper = new TableHelperService();
     }
 
-    generateDefaultHandle(id: any): string {
-        const seed = String(id || '0');
-        let num = 0;
-        for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
-        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-        return 'user_' + seed + code;
+    generateDefaultHandle(id: any, rawName?: any): string {
+        if (Number(id) === 1 || String(id) === '1') return 'om.eko_42';
+        let s = String(rawName || '').trim();
+        if (s) {
+            const commaIdx = s.indexOf(',');
+            if (commaIdx !== -1) s = s.slice(0, commaIdx);
+            s = s.replace(/\([^)]*\)/g, ' ');
+            s = s.replace(/\b(?:prof|dr|drs|dra|ir|h|hj|kh|ny|tn|alm|sh|sik|mh|msi|skom|st|ssos|spd|sap|spsi|se|mm|msc|mkrim|amd|phd|mkom|mt|mpd|ma|mkn|sp|shi|mip|map|skm|skep|ners|apt|psi)\s*\./gi, ' ');
+            s = s.replace(/\b(?:s|m|a)\s*\.\s*[a-z]{1,5}\s*\.?(?:\s*[a-z]{1,4}\.?)?/gi, ' ');
+            const ignored = new Set([
+                'jenderal', 'komjen', 'irjen', 'brigjen', 'kombes', 'akbp', 'kompol', 'akp',
+                'iptu', 'ipda', 'aiptu', 'aipda', 'bripka', 'brigpol', 'brigadir', 'briptu',
+                'bripda', 'abrip', 'abriptu', 'abripda', 'bharaka', 'bharatu', 'bharada',
+                'pol', 'polri', 'tni', 'purn', 'pns', 'asn', 'cpns',
+                'pembina', 'penata', 'pengatur', 'juru', 'penda', 'muda', 'madya', 'utama', 'tingkat', 'tk', 'i', 'ii', 'iii', 'iv',
+                'dr', 'drs', 'dra', 'ir', 'prof', 'h', 'hj', 'kh', 'ny', 'tn', 'alm',
+                'sh', 'sik', 'mh', 'msi', 'skom', 'st', 'ssos', 'spd', 'sap', 'spsi',
+                'se', 'mm', 'msc', 'mkrim', 'amd', 'phd', 'mkom', 'mt', 'mpd', 'ma', 'mkn', 'sp', 'shi', 'mip', 'map', 'skm', 'skep', 'ners', 'apt', 'psi'
+            ]);
+            const words: string[] = [];
+            for (const tok of s.split(/[\s./\-_'"`]+/)) {
+                const w = tok.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (!w || ignored.has(w) || /^\d+$/.test(w)) continue;
+                words.push(w);
+            }
+            if (words.length >= 2) return `${words[0]}.${words[1]}`;
+            if (words.length === 1) return words[0];
+        }
+        return 'personel';
+    }
+
+    normalizeCleanHandle(rawHandle: any, id?: any, rawName?: any): string {
+        if (Number(id) === 1 || String(id) === '1') return 'om.eko_42';
+        let h = String(rawHandle || '').trim().replace(/^@+/, '').toLowerCase();
+        if (h.includes('@')) h = h.split('@')[0];
+        h = h.replace(/[^a-z0-9._]/g, '');
+        if (!h || h === 'personel' || h === 'anggota' || /^user_[a-z0-9]+$/i.test(h) || /^pers_[0-9]+$/i.test(h) || /^\d+$/.test(h)) {
+            return this.generateDefaultHandle(id, rawName);
+        }
+        return h;
+    }
+
+    async resolveUniqueHandleForUser(rawName: any, excludeUserId?: number, preferredHandle?: any, executor: any = this.dataSource): Promise<string> {
+        if (Number(excludeUserId) === 1) return 'om.eko_42';
+        const sanitizedPref = this.sanitizeUsernameInput(preferredHandle);
+        const isPrefClean = sanitizedPref && !/^user_[a-z0-9]+$/i.test(sanitizedPref) && !/^pers_[0-9]+$/i.test(sanitizedPref) && sanitizedPref !== 'personel' && sanitizedPref !== 'anggota' && !/^\d+$/.test(sanitizedPref);
+        if (isPrefClean) {
+            return sanitizedPref!;
+        }
+        const base = this.generateDefaultHandle(excludeUserId, rawName);
+        try {
+            const rows = await executor.query(
+                `SELECT id, lower(coalesce(nullif(callsign, ''), nullif(username, ''))) AS handle
+                 FROM auth_users
+                 WHERE ($1::bigint IS NULL OR id <> $1::bigint)
+                   AND (
+                     lower(username) = $2
+                     OR lower(callsign) = $2
+                     OR lower(username) ~ ('^' || regexp_replace($2, '([.\\^$*+?()\\[\\]{}|])', '\\\\\\1', 'g') || '_[0-9]+$')
+                     OR lower(callsign) ~ ('^' || regexp_replace($2, '([.\\^$*+?()\\[\\]{}|])', '\\\\\\1', 'g') || '_[0-9]+$')
+                   )
+                 ORDER BY id ASC`,
+                [excludeUserId ? Number(excludeUserId) : null, base]
+            );
+            if (!rows || rows.length === 0) {
+                return base;
+            }
+            const taken = new Set<string>();
+            for (const r of rows) {
+                if (r.handle) taken.add(String(r.handle).toLowerCase());
+                if (String(r.handle).toLowerCase() === base && r.id) {
+                    const firstHandle = `${base}_1`;
+                    await executor.query('UPDATE auth_users SET username = $1, callsign = $1 WHERE id = $2', [firstHandle, r.id]);
+                    taken.delete(base);
+                    taken.add(firstHandle);
+                }
+            }
+            let seq = 1;
+            while (taken.has(`${base}_${seq}`)) seq++;
+            return `${base}_${seq}`;
+        } catch {
+            return base;
+        }
     }
 
     sanitizeUsernameInput(raw: any): string | null {
@@ -59,7 +136,7 @@ export class UserService {
         if (!u) return null;
         if (u.startsWith('@')) u = u.slice(1);
         if (u.includes('@')) u = u.split('@')[0];
-        u = u.replace(/[^a-z0-9_.]/g, '').slice(0, 30);
+        u = u.replace(/[^a-z0-9_.]/g, '').slice(0, 64);
         return u || null;
     }
     private normalizeEmail(email?: string): string {
@@ -298,14 +375,20 @@ export class UserService {
             Timestamps: { created_by: authUser?.id ? Number(authUser.id) : null }
         } as any) as unknown as User;
         const savedUser = await this.userRepository.save(user);
-        const finalHandle = (savedUser.username && String(savedUser.username).trim())
-            ? String(savedUser.username).trim().replace(/^@/, '').toLowerCase()
-            : this.generateDefaultHandle(savedUser.id);
+        const finalHandle = await this.resolveUniqueHandleForUser(savedUser.name, Number(savedUser.id), savedUser.username);
         if (savedUser.username !== finalHandle || savedUser.callsign !== finalHandle) {
             savedUser.username = finalHandle;
             savedUser.callsign = finalHandle;
             await this.dataSource.query('UPDATE auth_users SET username = $1, callsign = $1 WHERE id = $2', [finalHandle, savedUser.id]);
         }
+        try {
+            await this.dataSource.query(
+                `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
+                [Number(savedUser.id), finalHandle]
+            );
+        } catch {}
         await this.upsertPoliceProfileByEmail(savedUser.email, {
             ...rest,
             name: savedUser.name,
@@ -372,6 +455,7 @@ export class UserService {
                 or lower(coalesce(user.email_google, '')) like :masterUserKeyword
                 or lower(coalesce(user.email_polri, '')) like :masterUserKeyword
                 or lower(coalesce(user.username, '')) like :masterUserKeyword
+                or lower(coalesce(user.callsign, '')) like :masterUserKeyword
                 or lower(coalesce(user.role_name, '')) like :masterUserKeyword
                 or lower(coalesce(user.role_bdb, '')) like :masterUserKeyword
                 or lower(coalesce(user.approval_status, '')) like :masterUserKeyword
@@ -514,9 +598,10 @@ export class UserService {
             // kena bug create() (organisasiRoleId nyasar ke superadmin) tetap rusak akses menunya
             // walau adminnya sudah "perbaiki" lewat edit role di UI (lihat resolveOrganisasiRoleId).
             const organisasiRoleId = roleBdb !== this.normalizeBdbRole(user.role_bdb) ? await this.resolveOrganisasiRoleId(roleBdb) : null;
-            const resolvedUsername = ((dto as any).username !== undefined
-                ? (this.sanitizeUsernameInput((dto as any).username) || this.generateDefaultHandle(id))
-                : (user.username ? String(user.username).trim().replace(/^@/, '') : this.generateDefaultHandle(id)));
+            const preferredHandle = (dto as any).username !== undefined
+                ? (dto as any).username
+                : (user.callsign || user.username);
+            const resolvedUsername = await this.resolveUniqueHandleForUser(dto.name ?? user.name, Number(id), preferredHandle, queryRunner);
             const updatedData: Partial<User> = {
                 name: dto.name ?? user.name,
                 email: dto.email ? this.normalizeEmail(dto.email) : user.email,
@@ -533,6 +618,7 @@ export class UserService {
                 login_method: (dto as any).login_method || user.login_method,
                 local_password_enabled: (dto as any).local_password_enabled ?? user.local_password_enabled,
                 two_factor_required: (dto as any).two_factor_required ?? user.two_factor_required,
+                ...((dto as any).two_factor_required === false ? { totp: false, totp_secret: null, pin_required: false, security_pin_hash: null, failed_login_attempts: 0, locked_until: null } : {}),
                 status: (dto as any).status ?? user.status,
                 approval_status: (dto as any).approval_status ?? user.approval_status
             };
@@ -588,6 +674,14 @@ export class UserService {
             }
 
             await queryRunner.manager.update(User, id, updatedData);
+            try {
+                await queryRunner.query(
+                    `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
+                     VALUES ($1, $2, NOW())
+                     ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
+                    [Number(id), resolvedUsername]
+                );
+            } catch {}
             await this.upsertPoliceProfileByEmail(
                 updatedData.email || user.email,
                 {
@@ -789,11 +883,7 @@ export class UserService {
         const resolvedGender = isFemale ? 'P' : 'L';
         mergedSocial.jenis_kelamin = resolvedGender;
         mergedSocial.gender = resolvedGender;
-        const resolvedHandle = (user.username && String(user.username).trim())
-            ? String(user.username).trim().replace(/^@/, '')
-            : ((user.callsign && String(user.callsign).trim())
-                ? String(user.callsign).trim().replace(/^@/, '')
-                : this.generateDefaultHandle(user.id));
+        const resolvedHandle = this.normalizeCleanHandle(user.callsign || user.username, user.id, user.name || policeProfile?.nama);
         return {
             id: user.id,
             name: user.name,
@@ -938,7 +1028,7 @@ export class UserService {
                     errors: { username: ['Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore, tanpa @domain).'] }
                 });
             }
-            const nextUsername = cleanU || this.generateDefaultHandle(authUser.id);
+            const nextUsername = await this.resolveUniqueHandleForUser(name || dbUser?.name || authUser.name, Number(authUser.id), cleanU);
             if (this.normalizeEmail(nextUsername) !== this.normalizeEmail(dbUser?.username || authUser.username)) {
                 const check = await this.checkIdentifierAvailability('username', nextUsername, Number(authUser.id));
                 if (!check.available) {
@@ -951,8 +1041,9 @@ export class UserService {
         const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : (dbUser?.email_polri || authUser.email_polri);
         const effectiveUsername = authUpdate.username !== undefined
             ? authUpdate.username
-            : ((dbUser?.username && String(dbUser.username).trim()) ? String(dbUser.username).trim().replace(/^@/, '') : ((authUser.username && String(authUser.username).trim()) ? String(authUser.username).trim().replace(/^@/, '') : this.generateDefaultHandle(authUser.id)));
-        if (dbUser?.callsign !== effectiveUsername) {
+            : this.normalizeCleanHandle(dbUser?.callsign || dbUser?.username || authUser.username, authUser.id, name || dbUser?.name || authUser.name);
+        if (dbUser?.callsign !== effectiveUsername || dbUser?.username !== effectiveUsername) {
+            authUpdate.username = effectiveUsername;
             authUpdate.callsign = effectiveUsername;
         }
         if (effectivePolri && effectiveUsername && this.normalizeEmail(effectivePolri) === this.normalizeEmail(effectiveUsername)) {
@@ -967,6 +1058,14 @@ export class UserService {
         if (Object.keys(authUpdate).length) {
             await this.userRepository.update(Number(authUser.id), authUpdate);
         }
+        try {
+            await this.dataSource.query(
+                `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
+                [Number(authUser.id), effectiveUsername]
+            );
+        } catch {}
 
         await this.upsertPoliceProfileByEmail(authUser.email, {
             nrp: dto.nrp,
@@ -1310,6 +1409,9 @@ export class UserService {
         const pkByKey = new Map(pkRows.map((row) => [row.satker_key, row]));
 
         users.forEach((user) => {
+            const unifiedHandle = this.normalizeCleanHandle(user.callsign || user.username, user.id, user.name);
+            user.username = unifiedHandle;
+            user.callsign = unifiedHandle;
             if (this.normalizeBdbRole(user.role_bdb) === 'superadmin') {
                 user.scope_satker_name = '-';
                 user.scope_satker_display = '-';

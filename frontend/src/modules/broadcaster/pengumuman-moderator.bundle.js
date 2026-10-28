@@ -110,23 +110,65 @@ e.s(["default", 0, function() {
     return '@personil';
   };
 
+  let decodeShareHash = (raw) => {
+    if (typeof window !== 'undefined' && typeof window.__decodeCasShareHash === 'function') {
+      return window.__decodeCasShareHash(raw);
+    }
+    let s = String(raw || '').trim();
+    if (!s) return { raw: '', postId: null, isSpToken: false };
+    if (/^\d+$/.test(s)) return { raw: s, postId: parseInt(s, 10), isSpToken: false };
+    try {
+      let b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4 !== 0) b64 += '=';
+      let dec = atob(b64);
+      if (dec.indexOf('sp.') === 0) {
+        let parts = dec.split('.');
+        let pid = parseInt(parts[1], 10);
+        if (!isNaN(pid) && pid > 0) return { raw: s, postId: pid, isSpToken: true };
+      }
+      let mPref = dec.match(/^(?:sharese|post|jukrah)[:._-](\d+)/i);
+      if (mPref && mPref[1]) return { raw: s, postId: parseInt(mPref[1], 10), isSpToken: false };
+    } catch (_e) {}
+    if (/^[0-9a-f]+$/i.test(s) && s.length <= 12) {
+      let hexId = parseInt(s, 16);
+      if (!isNaN(hexId) && hexId > 0) return { raw: s, postId: hexId, isSpToken: false };
+    }
+    return { raw: s, postId: null, isSpToken: false };
+  };
+
   let getPostShareUrl = (post) => {
     if (!post) return '';
     let origin = typeof window !== 'undefined' ? window.location.origin : '';
     if (post.share_url) return origin + post.share_url;
-    let tok = post.share_hash || post.share_token || post.id;
-    return origin + '/cms/broadcaster?share=' + encodeURIComponent(String(tok));
+    let tok = post.share_hash || post.share_token || '';
+    if (!tok && post.id) {
+      try {
+        tok = typeof window !== 'undefined' && typeof window.__encodeCasShareHash === 'function'
+          ? window.__encodeCasShareHash(post)
+          : btoa('sharese:' + String(post.id)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      } catch (_e) {
+        tok = Number(post.id) ? Number(post.id).toString(16) : String(post.id);
+      }
+    }
+    return origin + '/cms/broadcaster?share=' + encodeURIComponent(String(tok || post.id));
   };
 
-  // Support URL query parameter ?post=<id> & ?tab=<tab>
+  // Support URL query parameter ?post=<id>, ?share=<hash> & ?tab=<tab>
   (0, n.useEffect)(() => {
     try {
       let sp = new URLSearchParams(window.location.search);
       let qPost = sp.get('post');
+      let qShare = sp.get('share');
       let qTab = sp.get('tab');
       if (qPost && Number(qPost) > 0) {
         setSelectedPostId(Number(qPost));
         setActiveTab('reports');
+      } else if (qShare) {
+        let dec = decodeShareHash(qShare);
+        if (dec.postId) {
+          setSelectedPostId(Number(dec.postId));
+          setActiveTab('reports');
+        }
       } else if (qTab && ['broadcast', 'reports', 'moderation'].includes(qTab)) {
         setActiveTab(qTab);
       }
@@ -285,7 +327,7 @@ e.s(["default", 0, function() {
 
   // Panic Takedown action
   let handlePanicTakedown = async (post) => {
-    if (!window.confirm('PERINGATAN DARURAT: Lakukan PANIC TAKEDOWN untuk postingan ini? Postingan akan langsung dicabut dari linimasa publik demi keamanan data.')) {
+    if (!(window.__casConfirmDelete ? await window.__casConfirmDelete({ title: 'Konfirmasi Panic Takedown', message: 'PERINGATAN DARURAT: Lakukan PANIC TAKEDOWN untuk postingan ini? Postingan akan langsung dicabut dari linimasa publik demi keamanan data.', confirmText: 'Ya, Takedown' }) : window.confirm('PERINGATAN DARURAT: Lakukan PANIC TAKEDOWN untuk postingan ini? Postingan akan langsung dicabut dari linimasa publik demi keamanan data.'))) {
       return;
     }
     try {
@@ -300,7 +342,7 @@ e.s(["default", 0, function() {
 
   // Delete Post action
   let handleDeletePost = async (pId) => {
-    if (!window.confirm('Hapus permanen postingan ini?')) return;
+    if (!(window.__casConfirmDelete ? await window.__casConfirmDelete({ title: 'Konfirmasi Hapus', message: 'Hapus permanen postingan ini? Tindakan ini tidak dapat dibatalkan.', confirmText: 'Ya, Hapus' }) : window.confirm('Hapus permanen postingan ini?'))) return;
     try {
       await u.apiAuth.post('/bdb/jukrah/post/' + pId + '/delete', {});
       setFeedbackMsg({ type: 'success', text: 'Postingan berhasil dihapus.' });
@@ -889,7 +931,7 @@ e.s(["default", 0, function() {
                         }),
                         (0, t.jsx)("button", {
                           type: "button",
-                          title: "Salin Link Share Berhash (Seperti Panduan Pengguna)",
+                          title: 'Bagikan Tautan Berhash ("Siapa Saya?" NRP + Captcha)',
                           onClick: () => {
                             let sUrl = getPostShareUrl(post);
                             navigator.clipboard?.writeText(sUrl);
@@ -1669,7 +1711,7 @@ e.s(["default", 0, function() {
             }),
             (0, t.jsx)("p", {
               style: { margin: "0 0 0.85rem", fontSize: "0.8rem", color: "var(--cas-text-secondary, #475569)", lineHeight: 1.5 },
-              children: "Tautan berhash HMAC-SHA256 ini dapat dikirim ke Grup WhatsApp kedinasan. Penerima yang sudah login langsung membuka postingan, sedangkan tamu eksternal wajib melewati verifikasi keamanan 'Siapa Kamu?' + Captcha SVG."
+              children: 'Tautan berhash terenkripsi siap dikirim ke Grup WhatsApp kedinasan. Penerima yang sudah login langsung membuka postingan, sedangkan penerima eksternal wajib melewati verifikasi "Siapa Saya?" (NRP Personel + Captcha 6 Karakter).'
             }),
             (0, t.jsxs)("div", {
               style: {

@@ -1,4 +1,4 @@
-﻿(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,21663,e=>{"use strict";var t=e.i(71645),a=e.i(48264),n=e.i(43456),r=e.i(29168),l=e.i(8630),i=e.i(40623),s=e.i(73193);function o(){return(o=Object.assign.bind()).apply(null,arguments)}function c(e){return(c="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function u(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,n=Array(t);a<t;a++)n[a]=e[a];return n}var d=n.ComponentBase.extend({defaultProps:{__TYPE:"Checkbox",autoFocus:!1,checked:!1,className:null,disabled:!1,falseValue:!1,icon:null,id:null,inputId:null,inputRef:null,invalid:!1,variant:null,name:null,onChange:null,onContextMenu:null,onMouseDown:null,readOnly:!1,required:!1,style:null,tabIndex:null,tooltip:null,tooltipOptions:null,trueValue:!0,value:null,children:void 0},css:{classes:{box:"p-checkbox-box",input:"p-checkbox-input",icon:"p-checkbox-icon",root:function(e){var t=e.props,a=e.checked,n=e.context;return(0,s.classNames)("p-checkbox p-component",{"p-highlight":a,"p-disabled":t.disabled,"p-invalid":t.invalid,"p-variant-filled":t.variant?"filled"===t.variant:n&&"filled"===n.inputStyle})}}}});function p(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var n=Object.getOwnPropertySymbols(e);t&&(n=n.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,n)}return a}function m(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?p(Object(a),!0).forEach(function(t){!function(e,t,a){var n;(n=function(e,t){if("object"!=c(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var n=a.call(e,t||"default");if("object"!=c(n))return n;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==c(n)?n:n+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a}(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):p(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var h=t.memo(t.forwardRef(function(e,c){var p,h,f,b,y,g,x,v=(0,r.useMergeProps)(),j=t.useContext(a.PrimeReactContext),k=d.getProps(e,j),C=function(e){if(Array.isArray(e))return e}(p=t.useState(!1))||function(e){var t=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=t){var a,n,r,l,i=[],s=!0,o=!1;try{r=(t=t.call(e)).next,!1;for(;!(s=(a=r.call(t)).done)&&(i.push(a.value),2!==i.length);s=!0);}catch(e){o=!0,n=e}finally{try{if(!s&&null!=t.return&&(l=t.return(),Object(l)!==l))return}finally{if(o)throw n}}return i}}(p)||function(e){if(e){if("string"==typeof e)return u(e,2);var t=({}).toString.call(e).slice(8,-1);return"Object"===t&&e.constructor&&(t=e.constructor.name),"Map"===t||"Set"===t?Array.from(e):"Arguments"===t||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)?u(e,2):void 0}}(p)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}(),S=C[0],w=C[1],I=d.setMetaData({props:k,state:{focused:S},context:{checked:k.checked===k.trueValue,disabled:k.disabled}}),O=I.ptm,T=I.cx,P=I.isUnstyled;(0,n.useHandleStyle)(d.css.styles,P,{name:"checkbox"});var D=t.useRef(null),N=t.useRef(k.inputRef),R=function(){return k.checked===k.trueValue},E=function(e){if(!k.disabled&&!k.readOnly&&k.onChange){var t,a=R()?k.falseValue:k.trueValue,n={originalEvent:e,value:k.value,checked:a,stopPropagation:function(){null==e||e.stopPropagation()},preventDefault:function(){null==e||e.preventDefault()},target:{type:"checkbox",name:k.name,id:k.id,value:k.value,checked:a}};null==k||null==(t=k.onChange)||t.call(k,n),e.defaultPrevented||s.DomHandler.focus(N.current)}},M=function(e){var t;w(!0),null==k||null==(t=k.onFocus)||t.call(k,e)},W=function(e){var t;w(!1),null==k||null==(t=k.onBlur)||t.call(k,e)};t.useImperativeHandle(c,function(){return{props:k,focus:function(){return s.DomHandler.focus(N.current)},getElement:function(){return D.current},getInput:function(){return N.current}}}),t.useEffect(function(){s.ObjectUtils.combinedRefs(N,k.inputRef)},[N,k.inputRef]),(0,r.useUpdateEffect)(function(){N.current.checked=R()},[k.checked,k.trueValue]),(0,r.useMountEffect)(function(){k.autoFocus&&s.DomHandler.focus(N.current,k.autoFocus)});var A=R(),L=s.ObjectUtils.isNotEmpty(k.tooltip),z=d.getOtherProps(k),U=v({id:k.id,className:(0,s.classNames)(k.className,T("root",{checked:A,context:j})),style:k.style,"data-p-highlight":A,"data-p-disabled":k.disabled,onContextMenu:k.onContextMenu,onMouseDown:k.onMouseDown},z,O("root"));return t.createElement(t.Fragment,null,t.createElement("div",o({ref:D},U),(h=s.ObjectUtils.reduceKeys(z,s.DomHandler.ARIA_PROPS),f=v(m({id:k.inputId,type:"checkbox",className:T("input"),name:k.name,tabIndex:k.tabIndex,onFocus:function(e){return M(e)},onBlur:function(e){return W(e)},onChange:function(e){return E(e)},disabled:k.disabled,readOnly:k.readOnly,required:k.required,"aria-invalid":k.invalid,checked:A},h),O("input")),t.createElement("input",o({ref:N},f))),(b=v({className:T("icon")},O("icon")),y=v({className:T("box",{checked:A}),"data-p-highlight":A,"data-p-disabled":k.disabled},O("box")),g=A?k.icon||t.createElement(l.CheckIcon,b):null,x=s.IconUtils.getJSXIcon(g,m({},b),{props:k,checked:A}),t.createElement("div",y,x))),L&&t.createElement(i.Tooltip,o({target:D,content:k.tooltip,pt:O("tooltip")},k.tooltipOptions)))}));h.displayName="Checkbox",e.s(["Checkbox",0,h])},62368,e=>{"use strict";let t=(0,e.i(56420).default)("download",[["path",{d:"M12 15V3",key:"m9g1x1"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",key:"ih7n3h"}],["path",{d:"m7 10 5 5 5-5",key:"brsn70"}]]);e.s(["Download",0,t],62368)},71407,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function n(){return(n=Object.assign.bind()).apply(null,arguments)}var r=t.memo(t.forwardRef(function(e,r){var l=a.IconBase.getPTI(e);return t.createElement("svg",n({ref:r,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M13.2222 7.77778H0.777778C0.571498 7.77778 0.373667 7.69584 0.227806 7.54998C0.0819442 7.40412 0 7.20629 0 7.00001C0 6.79373 0.0819442 6.5959 0.227806 6.45003C0.373667 6.30417 0.571498 6.22223 0.777778 6.22223H13.2222C13.4285 6.22223 13.6263 6.30417 13.7722 6.45003C13.9181 6.5959 14 6.79373 14 7.00001C14 7.20629 13.9181 7.40412 13.7722 7.54998C13.6263 7.69584 13.4285 7.77778 13.2222 7.77778Z",fill:"currentColor"}))}));r.displayName="MinusIcon",e.s(["MinusIcon",0,r])},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:n,onRefresh:r}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(n)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:r,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"MemuatΓÇª":"Refresh"]})]})}])},38266,e=>{
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,21663,e=>{"use strict";var t=e.i(71645),a=e.i(48264),n=e.i(43456),r=e.i(29168),l=e.i(8630),i=e.i(40623),s=e.i(73193);function o(){return(o=Object.assign.bind()).apply(null,arguments)}function c(e){return(c="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function u(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,n=Array(t);a<t;a++)n[a]=e[a];return n}var d=n.ComponentBase.extend({defaultProps:{__TYPE:"Checkbox",autoFocus:!1,checked:!1,className:null,disabled:!1,falseValue:!1,icon:null,id:null,inputId:null,inputRef:null,invalid:!1,variant:null,name:null,onChange:null,onContextMenu:null,onMouseDown:null,readOnly:!1,required:!1,style:null,tabIndex:null,tooltip:null,tooltipOptions:null,trueValue:!0,value:null,children:void 0},css:{classes:{box:"p-checkbox-box",input:"p-checkbox-input",icon:"p-checkbox-icon",root:function(e){var t=e.props,a=e.checked,n=e.context;return(0,s.classNames)("p-checkbox p-component",{"p-highlight":a,"p-disabled":t.disabled,"p-invalid":t.invalid,"p-variant-filled":t.variant?"filled"===t.variant:n&&"filled"===n.inputStyle})}}}});function p(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var n=Object.getOwnPropertySymbols(e);t&&(n=n.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,n)}return a}function m(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?p(Object(a),!0).forEach(function(t){!function(e,t,a){var n;(n=function(e,t){if("object"!=c(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var n=a.call(e,t||"default");if("object"!=c(n))return n;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==c(n)?n:n+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a}(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):p(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var h=t.memo(t.forwardRef(function(e,c){var p,h,f,b,y,g,x,v=(0,r.useMergeProps)(),j=t.useContext(a.PrimeReactContext),k=d.getProps(e,j),C=function(e){if(Array.isArray(e))return e}(p=t.useState(!1))||function(e){var t=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=t){var a,n,r,l,i=[],s=!0,o=!1;try{r=(t=t.call(e)).next,!1;for(;!(s=(a=r.call(t)).done)&&(i.push(a.value),2!==i.length);s=!0);}catch(e){o=!0,n=e}finally{try{if(!s&&null!=t.return&&(l=t.return(),Object(l)!==l))return}finally{if(o)throw n}}return i}}(p)||function(e){if(e){if("string"==typeof e)return u(e,2);var t=({}).toString.call(e).slice(8,-1);return"Object"===t&&e.constructor&&(t=e.constructor.name),"Map"===t||"Set"===t?Array.from(e):"Arguments"===t||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)?u(e,2):void 0}}(p)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}(),S=C[0],w=C[1],I=d.setMetaData({props:k,state:{focused:S},context:{checked:k.checked===k.trueValue,disabled:k.disabled}}),O=I.ptm,T=I.cx,P=I.isUnstyled;(0,n.useHandleStyle)(d.css.styles,P,{name:"checkbox"});var D=t.useRef(null),N=t.useRef(k.inputRef),R=function(){return k.checked===k.trueValue},E=function(e){if(!k.disabled&&!k.readOnly&&k.onChange){var t,a=R()?k.falseValue:k.trueValue,n={originalEvent:e,value:k.value,checked:a,stopPropagation:function(){null==e||e.stopPropagation()},preventDefault:function(){null==e||e.preventDefault()},target:{type:"checkbox",name:k.name,id:k.id,value:k.value,checked:a}};null==k||null==(t=k.onChange)||t.call(k,n),e.defaultPrevented||s.DomHandler.focus(N.current)}},M=function(e){var t;w(!0),null==k||null==(t=k.onFocus)||t.call(k,e)},W=function(e){var t;w(!1),null==k||null==(t=k.onBlur)||t.call(k,e)};t.useImperativeHandle(c,function(){return{props:k,focus:function(){return s.DomHandler.focus(N.current)},getElement:function(){return D.current},getInput:function(){return N.current}}}),t.useEffect(function(){s.ObjectUtils.combinedRefs(N,k.inputRef)},[N,k.inputRef]),(0,r.useUpdateEffect)(function(){N.current.checked=R()},[k.checked,k.trueValue]),(0,r.useMountEffect)(function(){k.autoFocus&&s.DomHandler.focus(N.current,k.autoFocus)});var A=R(),L=s.ObjectUtils.isNotEmpty(k.tooltip),z=d.getOtherProps(k),U=v({id:k.id,className:(0,s.classNames)(k.className,T("root",{checked:A,context:j})),style:k.style,"data-p-highlight":A,"data-p-disabled":k.disabled,onContextMenu:k.onContextMenu,onMouseDown:k.onMouseDown},z,O("root"));return t.createElement(t.Fragment,null,t.createElement("div",o({ref:D},U),(h=s.ObjectUtils.reduceKeys(z,s.DomHandler.ARIA_PROPS),f=v(m({id:k.inputId,type:"checkbox",className:T("input"),name:k.name,tabIndex:k.tabIndex,onFocus:function(e){return M(e)},onBlur:function(e){return W(e)},onChange:function(e){return E(e)},disabled:k.disabled,readOnly:k.readOnly,required:k.required,"aria-invalid":k.invalid,checked:A},h),O("input")),t.createElement("input",o({ref:N},f))),(b=v({className:T("icon")},O("icon")),y=v({className:T("box",{checked:A}),"data-p-highlight":A,"data-p-disabled":k.disabled},O("box")),g=A?k.icon||t.createElement(l.CheckIcon,b):null,x=s.IconUtils.getJSXIcon(g,m({},b),{props:k,checked:A}),t.createElement("div",y,x))),L&&t.createElement(i.Tooltip,o({target:D,content:k.tooltip,pt:O("tooltip")},k.tooltipOptions)))}));h.displayName="Checkbox",e.s(["Checkbox",0,h])},62368,e=>{"use strict";let t=(0,e.i(56420).default)("download",[["path",{d:"M12 15V3",key:"m9g1x1"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",key:"ih7n3h"}],["path",{d:"m7 10 5 5 5-5",key:"brsn70"}]]);e.s(["Download",0,t],62368)},71407,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function n(){return(n=Object.assign.bind()).apply(null,arguments)}var r=t.memo(t.forwardRef(function(e,r){var l=a.IconBase.getPTI(e);return t.createElement("svg",n({ref:r,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M13.2222 7.77778H0.777778C0.571498 7.77778 0.373667 7.69584 0.227806 7.54998C0.0819442 7.40412 0 7.20629 0 7.00001C0 6.79373 0.0819442 6.5959 0.227806 6.45003C0.373667 6.30417 0.571498 6.22223 0.777778 6.22223H13.2222C13.4285 6.22223 13.6263 6.30417 13.7722 6.45003C13.9181 6.5959 14 6.79373 14 7.00001C14 7.20629 13.9181 7.40412 13.7722 7.54998C13.6263 7.69584 13.4285 7.77778 13.2222 7.77778Z",fill:"currentColor"}))}));r.displayName="MinusIcon",e.s(["MinusIcon",0,r])},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:n,onRefresh:r}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(n)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:r,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"MemuatΓÇª":"Refresh"]})]})}])},38266,e=>{
 "use strict";
 var t = e.i(43476), // jsx-runtime
     a = e.i(71645), // React
@@ -590,7 +590,7 @@ e.s(["default", 0, function() {
 
     // 9. Delete Doc
     let handleDeleteDoc = async (docId) => {
-        if (!confirm("Apakah Anda yakin ingin menghapus dokumen ini dari arsip?")) return;
+        if (!(window.__casConfirmDelete ? await window.__casConfirmDelete({ title: "Konfirmasi Hapus Dokumen", message: "Apakah Anda yakin ingin menghapus dokumen ini dari arsip? Tindakan ini tidak dapat dibatalkan.", confirmText: "Ya, Hapus" }) : window.confirm("Apakah Anda yakin ingin menghapus dokumen ini dari arsip?"))) return;
         try {
             await docFetch("/doc-api/delete?id=" + encodeURIComponent(docId), { method: "POST" });
             toastRef.current?.show({ severity: "success", summary: "Terhapus", detail: "Dokumen telah dihapus dari arsip." });
@@ -688,7 +688,7 @@ e.s(["default", 0, function() {
                         children: [
                             (0, t.jsxs)("h1", {
                                 className: "cms-page-title",
-                                style: { display: "flex", alignItems: "center", gap: "0.6rem", margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "#1e293b" },
+                                style: { display: "flex", alignItems: "center", gap: "0.6rem", margin: 0, fontSize: "1.35rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" },
                                 children: [
                                     (0, t.jsx)("i", { className: "pi pi-file-edit", style: { fontSize: "1.4rem", color: "#2563eb" } }),
                                     "Penyusunan & Analisis Laporan Anev CT/CC"
@@ -704,7 +704,7 @@ e.s(["default", 0, function() {
 
                     // Top Action Tabs (Clean 2-tab design)
                     (0, t.jsxs)("div", {
-                        style: { display: "flex", gap: "0.4rem", background: "#f1f5f9", padding: "0.3rem", borderRadius: "8px" },
+                        style: { display: "flex", gap: "0.4rem", background: "var(--cas-surface-hover, #f1f5f9)", padding: "0.3rem", borderRadius: "8px", border: "1px solid var(--cas-border, #e2e8f0)" },
                         children: [
                             (0, t.jsxs)(c.Button, {
                                 size: "small",
@@ -749,8 +749,8 @@ e.s(["default", 0, function() {
                     // Toolbar & Integrated Filter Bar (Clean Single Row)
                     (0, t.jsxs)("div", {
                         style: {
-                            background: "#ffffff",
-                            border: "1px solid #cbd5e1",
+                            background: "var(--cas-card-bg, #ffffff)",
+                            border: "1px solid var(--cas-border-strong, #cbd5e1)",
                             borderRadius: "8px",
                             padding: "0.6rem 0.85rem",
                             marginBottom: "0.75rem",
@@ -810,22 +810,22 @@ e.s(["default", 0, function() {
                                                             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
                                                             borderRadius: "14px",
                                                             overflow: "hidden",
-                                                            background: "#ffffff"
+                                                            background: "var(--cas-card-bg, #ffffff)"
                                                         },
                                                         children: (0, t.jsxs)("div", {
                                                             className: "kp-modal-card",
-                                                            style: { width: "100%", maxWidth: "100%", margin: 0, borderRadius: "14px", background: "#ffffff" },
+                                                            style: { width: "100%", maxWidth: "100%", margin: 0, borderRadius: "14px", background: "var(--cas-card-bg, #ffffff)" },
                                                             children: [
                                                                 // Header
                                                                 (0, t.jsxs)("div", {
                                                                     className: "kp-modal-header",
-                                                                    style: { padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", background: "#f8fafc" },
+                                                                    style: { padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-surface-subtle, #f8fafc)" },
                                                                     children: [
                                                                         (0, t.jsxs)("div", {
                                                                             children: [
                                                                                 (0, t.jsx)("div", {
                                                                                     className: "kp-modal-title",
-                                                                                    style: { fontWeight: 800, fontSize: "1.05rem", color: "#0f172a" },
+                                                                                    style: { fontWeight: 800, fontSize: "1.05rem", color: "var(--cas-text-primary, #0f172a)" },
                                                                                     children: "\uD83C\uDF9B\uFE0F Filter & Parameter Kinerja Perkara"
                                                                                 }),
                                                                                 (0, t.jsx)("div", {
@@ -847,7 +847,7 @@ e.s(["default", 0, function() {
                                                                 // Tab Bar (4 Tabs)
                                                                 (0, t.jsx)("div", {
                                                                     className: "kp-tab-bar",
-                                                                    style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderBottom: "1px solid #e2e8f0", background: "#f1f5f9" },
+                                                                    style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-surface-hover, #f1f5f9)" },
                                                                     children: [
                                                                         { idx: 0, label: "\uD83D\uDCC5 Periode" },
                                                                         { idx: 1, label: "\uD83C\uDFDB\uFE0F Satker & Wilayah" },
@@ -864,7 +864,7 @@ e.s(["default", 0, function() {
                                                                                 fontSize: "0.8rem",
                                                                                 fontWeight: unifiedFilterTab === tb.idx ? 800 : 600,
                                                                                 color: unifiedFilterTab === tb.idx ? "#dc2626" : "#64748b",
-                                                                                background: unifiedFilterTab === tb.idx ? "#ffffff" : "transparent",
+                                                                                background: unifiedFilterTab === tb.idx ? "var(--cas-card-bg, #ffffff)" : "transparent",
                                                                                 border: "none",
                                                                                 borderBottom: unifiedFilterTab === tb.idx ? "2px solid #dc2626" : "2px solid transparent",
                                                                                 cursor: "pointer"
@@ -977,7 +977,7 @@ e.s(["default", 0, function() {
                                                                                 // Info Banner
                                                                                 (0, t.jsx)("div", {
                                                                                     className: "kp-modal-tip",
-                                                                                    style: { fontSize: "0.75rem", color: "#1d4ed8", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px", padding: "0.65rem 0.85rem", lineHeight: 1.4 },
+                                                                                    style: { fontSize: "0.75rem", color: "#2563eb", background: "rgba(37, 99, 235, 0.1)", border: "1px solid rgba(37, 99, 235, 0.3)", borderRadius: "8px", padding: "0.65rem 0.85rem", lineHeight: 1.4 },
                                                                                     children: "\u26A1 Periode menentukan rentang tanggal pelaporan atau kejadian perkara yang akan dievaluasi kinerjanya."
                                                                                 })
                                                                             ]
@@ -1142,7 +1142,7 @@ e.s(["default", 0, function() {
                                                                 // Footer
                                                                 (0, t.jsxs)("div", {
                                                                     className: "kp-modal-footer",
-                                                                    style: { padding: "0.85rem 1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", background: "#f8fafc" },
+                                                                    style: { padding: "0.85rem 1.25rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-surface-subtle, #f8fafc)" },
                                                                     children: [
                                                                         (0, t.jsx)(c.Button, {
                                                                             label: "Reset Default",
@@ -1182,12 +1182,12 @@ e.s(["default", 0, function() {
                                                     display: "inline-flex",
                                                     alignItems: "center",
                                                     gap: "0.4rem",
-                                                    background: "#f8fafc",
-                                                    border: "1px solid #e2e8f0",
+                                                    background: "var(--cas-surface-subtle, #f8fafc)",
+                                                    border: "1px solid var(--cas-border, #e2e8f0)",
                                                     padding: "0.35rem 0.65rem",
                                                     borderRadius: "6px",
                                                     fontSize: "0.8rem",
-                                                    color: "#334155"
+                                                    color: "var(--cas-text-secondary, #334155)"
                                                 },
                                                 children: [
                                                     (0, t.jsx)("span", { style: { color: "#64748b" }, children: "\uD83D\uDCC5" }),
@@ -1297,7 +1297,7 @@ e.s(["default", 0, function() {
                         children: [
                             (0, t.jsxs)("div", {
                                 children: [
-                                    (0, t.jsx)("h2", { style: { margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#1e293b" }, children: "Daftar Arsip & Riwayat Laporan Anev" }),
+                                    (0, t.jsx)("h2", { style: { margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" }, children: "Daftar Arsip & Riwayat Laporan Anev" }),
                                     (0, t.jsx)("p", { style: { margin: "0.2rem 0 0", color: "#64748b", fontSize: "0.8rem" }, children: "Dokumen-dokumen laporan anev resmi yang telah disusun, tersimpan aman di sistem penyimpanan CAS." })
                                 ]
                             }),
@@ -1317,7 +1317,7 @@ e.s(["default", 0, function() {
                             style: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" },
                             children: [
                                 (0, t.jsx)("thead", {
-                                    style: { background: "#f8fafc", borderBottom: "2px solid #e2e8f0", textAlign: "left", color: "#475569" },
+                                    style: { background: "var(--cas-surface-subtle, #f8fafc)", borderBottom: "2px solid var(--cas-border, #e2e8f0)", textAlign: "left", color: "var(--cas-text-secondary, #334155)" },
                                     children: (0, t.jsxs)("tr", {
                                         children: [
                                             (0, t.jsx)("th", { style: { padding: "0.75rem" }, children: "Judul Dokumen" }),
@@ -1338,10 +1338,10 @@ e.s(["default", 0, function() {
                                     ) : docList.map(doc => (
                                         (0, t.jsxs)("tr", {
                                             key: doc.id,
-                                            style: { borderBottom: "1px solid #f1f5f9" },
+                                            style: { borderBottom: "1px solid var(--cas-border, #e2e8f0)" },
                                             children: [
                                                 (0, t.jsxs)("td", {
-                                                    style: { padding: "0.75rem", fontWeight: 700, color: "#1e293b" },
+                                                    style: { padding: "0.75rem", fontWeight: 700, color: "var(--cas-text-primary, #0f172a)" },
                                                     children: [
                                                         (0, t.jsx)("i", { className: "pi pi-file-word", style: { color: "#2563eb", marginRight: "0.5rem" } }),
                                                         doc.title
@@ -1350,7 +1350,7 @@ e.s(["default", 0, function() {
                                                 (0, t.jsxs)("td", {
                                                     style: { padding: "0.75rem" },
                                                     children: [
-                                                        (0, t.jsx)("div", { style: { fontWeight: 600, color: "#334155" }, children: doc.satker_nama || "BARESKRIM POLRI" }),
+                                                        (0, t.jsx)("div", { style: { fontWeight: 600, color: "var(--cas-text-secondary, #334155)" }, children: doc.satker_nama || "BARESKRIM POLRI" }),
                                                         (0, t.jsx)("div", { style: { fontSize: "0.74rem", color: "#64748b" }, children: doc.periode_label || "-" })
                                                     ]
                                                 }),
@@ -1474,7 +1474,7 @@ e.s(["default", 0, function() {
                 },
                 children: (0, t.jsxs)("div", {
                     style: {
-                        background: "#ffffff",
+                        background: "var(--cas-card-bg, #ffffff)",
                         borderRadius: "12px",
                         maxWidth: "500px",
                         width: "100%",
@@ -1482,7 +1482,7 @@ e.s(["default", 0, function() {
                         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)"
                     },
                     children: [
-                        (0, t.jsx)("h3", { style: { margin: "0 0 1rem", fontSize: "1.15rem", fontWeight: 800, color: "#0f172a" }, children: "Buat Draf Laporan Anev Baru" }),
+                        (0, t.jsx)("h3", { style: { margin: "0 0 1rem", fontSize: "1.15rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" }, children: "Buat Draf Laporan Anev Baru" }),
                         (0, t.jsxs)("div", {
                             style: { display: "grid", gap: "0.8rem" },
                             children: [

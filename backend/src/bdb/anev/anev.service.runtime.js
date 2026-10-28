@@ -1787,7 +1787,7 @@ let AnevService = class AnevService {
         let userNama = 'OPERATOR';
         let userNrp = '-';
         if (body.userId) {
-            const u = await this.ds.query('SELECT name, username FROM auth_users WHERE id = $1', [body.userId]);
+            const u = await this.ds.query("SELECT name, COALESCE(NULLIF(callsign, ''), NULLIF(username, '')) AS username FROM auth_users WHERE id = $1", [body.userId]);
             if (u.length) {
                 userNama = u[0].name || 'OPERATOR';
                 userNrp = u[0].username || '-';

@@ -10,7 +10,7 @@ import { JukrahService } from './jukrah.service';
 
 @UseGuards(AuthGuard)
 @UseInterceptors(CurrentUserInterceptor)
-@Controller('bdb/jukrah')
+@Controller(['bdb/sharese', 'bdb/jukrah'])
 export class JukrahController {
     constructor(private readonly service: JukrahService) {}
 
@@ -23,23 +23,64 @@ export class JukrahController {
     }
 
     // =========================================================================
-    // SHARE LINK BERHASH & PORTAL VERIFIKASI EKSTERNAL ("SIAPA KAMU?")
+    // SHARE LINK BERHASH & PORTAL VERIFIKASI EKSTERNAL ("SIAPA KAMU?" / "SIAPA SAYA?")
     // =========================================================================
-    @Get('share-challenge')
-    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string) {
-        return this.service.getShareChallenge(token, id ? parseInt(id, 10) : undefined);
+    @Get(['share-challenge', 'public/captcha'])
+    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string, @Query('hash') hash?: string) {
+        const svc = this.service as any;
+        if (typeof svc.getPublicCaptcha === 'function' && !token && !id && !hash) {
+            return svc.getPublicCaptcha();
+        }
+        return svc.getShareChallenge(token || hash, id ? parseInt(id, 10) : undefined);
     }
 
-    @Post('verify-share')
+    @Post(['verify-share', 'public/verify-nrp'])
     verifyShareViewer(@Req() req: any, @Body() body: any) {
         const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
         const userAgent = String(req.headers?.['user-agent'] || '');
-        return this.service.verifyShareViewer(body || {}, { ip, userAgent });
+        const svc = this.service as any;
+        if (typeof svc.verifyPublicNrp === 'function' && req.url?.includes('/public/verify-nrp')) {
+            return svc.verifyPublicNrp(body || {}, { ip, userAgent });
+        }
+        return svc.verifyShareViewer(body || {}, { ip, userAgent });
+    }
+
+    @Get('public/post/:idOrHash')
+    getPublicPost(
+        @Req() req: any,
+        @Param('idOrHash') idOrHash: string,
+        @Query('nrp') nrp?: string,
+        @Query('nrp_nip') nrpNip?: string,
+        @Query('token') viewerToken?: string
+    ) {
+        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+        const userAgent = String(req.headers?.['user-agent'] || '');
+        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || viewerToken || '').trim();
+        const svc = this.service as any;
+        if (typeof svc.getPublicPostByHash === 'function') {
+            return svc.getPublicPostByHash(idOrHash, effectiveNrp, req?.user, { ip, userAgent });
+        }
+        return svc.getPublicSharedPost(idOrHash, effectiveNrp, req?.user, { ip, userAgent });
     }
 
     @Get('shared/:token')
-    getSharedPost(@Req() req: any, @Param('token') token: string) {
-        return this.service.getSharedPost(req?.user, token);
+    getSharedPost(
+        @Req() req: any,
+        @Param('token') token: string,
+        @Query('nrp') nrp?: string,
+        @Query('nrp_nip') nrpNip?: string
+    ) {
+        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || '').trim();
+        const svc = this.service as any;
+        if (effectiveNrp) {
+            const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+            const userAgent = String(req.headers?.['user-agent'] || '');
+            if (typeof svc.getPublicPostByHash === 'function') {
+                return svc.getPublicPostByHash(token, effectiveNrp, req?.user, { ip, userAgent });
+            }
+            return svc.getPublicSharedPost(token, effectiveNrp, req?.user, { ip, userAgent });
+        }
+        return svc.getSharedPost(req?.user, token);
     }
 
     // =========================================================================

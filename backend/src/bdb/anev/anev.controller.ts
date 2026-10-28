@@ -14,7 +14,7 @@ export class AnevController {
     }
 
     /** Ringkasan dashboard CT/CC (di-scope per role: superadmin/admin=semua, operator=subtree satkernya). */
-    @Get('dashboard')
+    @Get(['dashboard', 'peta-kejahatan'])
     dashboard(@Query() q: Record<string, any>, @Req() req: any) {
         const uid = req?.user?.id ? Number(req.user.id) : undefined;
         return this.service.dashboard(q || {}, uid);

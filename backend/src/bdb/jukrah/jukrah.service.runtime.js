@@ -98,8 +98,63 @@ let JukrahService = class JukrahService {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
         }
         catch { }
+        await this.ensureMasterUserCallsignSync();
         this.clearNetworkUsersCache();
         this.ready = true;
+    }
+    async ensureMasterUserCallsignSync() {
+        try {
+            const pathMod = require('path');
+            const fsMod = require('fs');
+            const candidates = [
+                pathMod.join(__dirname, '..', '..', '..', 'scripts', 'sync_master_user_callsigns.js'),
+                pathMod.join(process.cwd(), 'scripts', 'sync_master_user_callsigns.js'),
+                pathMod.join(process.cwd(), 'backend', 'scripts', 'sync_master_user_callsigns.js')
+            ];
+            for (const scriptPath of candidates) {
+                if (fsMod.existsSync(scriptPath)) {
+                    const { syncMasterUserCallsigns } = require(scriptPath);
+                    await syncMasterUserCallsigns(this.dataSource);
+                    break;
+                }
+            }
+        }
+        catch (err) {
+            this.logger.warn('ensureMasterUserCallsignSync warning: ' + (err?.message || err));
+        }
+    }
+    extractTwoWordCallsignFromName(rawName, authorId) {
+        if (Number(authorId) === 1)
+            return 'om.eko_42';
+        const str = String(rawName || '').trim();
+        let beforeComma = str.split(',')[0] || '';
+        beforeComma = beforeComma
+            .replace(/\b(s\.h|s\.i\.k|s\.kom|s\.t|s\.sos|s\.pd|s\.psi|s\.e|s\.ap|s\.ip|m\.h|m\.si|m\.m|m\.sc|m\.kom|m\.krim|ph\.d|a\.md|dr|drs|dra|ir|prof|h|hj)\b\.?/gi, ' ')
+            .replace(/\([^)]*\)/g, ' ');
+        const stopwords = new Set([
+            'jenderal', 'komjen', 'irjen', 'brigjen', 'kombes', 'akbp', 'kompol', 'akp',
+            'iptu', 'ipda', 'aiptu', 'aipda', 'bripka', 'brigpol', 'brigadir', 'briptu', 'bripda',
+            'abrip', 'abriptu', 'abripda', 'bharaka', 'bharatu', 'bharada',
+            'pol', 'polri', 'tni', 'purn', 'pns', 'asn', 'cpns',
+            'pembina', 'penata', 'pengatur', 'juru', 'penda',
+            'dr', 'drs', 'dra', 'ir', 'prof', 'h', 'hj', 'kh', 'ny', 'tn', 'alm',
+            'sh', 'sik', 'mh', 'msi', 'skom', 'st', 'ssos', 'spd', 'sap', 'spsi', 'se',
+            'mm', 'msc', 'mkrim', 'amd', 'phd', 'mkom', 'mt', 'mpd', 'ma', 'mkn',
+            'sp', 'shi', 'mip', 'map', 'skm', 'skep', 'ners', 'apt', 'psi'
+        ]);
+        const tokens = beforeComma
+            .toLowerCase()
+            .replace(/[^a-z0-9\s.\-']/g, ' ')
+            .split(/[\s.\-']+/)
+            .map(w => w.replace(/[^a-z0-9]/g, ''))
+            .filter(w => w && !/^\d+$/.test(w) && !stopwords.has(w));
+        const multiChar = tokens.filter(w => w.length >= 2);
+        const pool = multiChar.length >= 2 ? multiChar : (multiChar.length >= 1 ? multiChar : tokens);
+        if (pool.length >= 2)
+            return `${pool[0]}.${pool[1]}`.slice(0, 60);
+        if (pool.length === 1)
+            return pool[0].slice(0, 60);
+        return `personil.${String(authorId || '0').replace(/[^0-9]/g, '') || '0'}`;
     }
     isFemalePersonnel(name, jenisKelamin, socialMedia) {
         const explicitJk = String(socialMedia?.jenis_kelamin || socialMedia?.gender || '').trim().toLowerCase();
@@ -139,30 +194,570 @@ let JukrahService = class JukrahService {
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
         return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
     }
-    formatCallsign(rawCallsign, authorId, username) {
+    resolveAuthorSatker(satkerSingkat, satkerNama, roleBdb, isUserOne) {
+        if (isUserOne)
+            return 'Robinopsnal Bareskrim Polri';
+        const raw = String(satkerSingkat || satkerNama || '').trim();
+        const role = String(roleBdb || '').toLowerCase();
+        const isGlobal = role === 'superadmin' || role === 'admin_binops';
+        const low = raw.toLowerCase();
+        if (!raw || low === 'polri' || low === 'mabes polri' || low === 'bareskrim' || low === 'bareskrim polri' || low === 'robinopsnal' || low === 'robinopsnal bareskrim polri') {
+            return isGlobal ? 'Robinopsnal Bareskrim Polri' : (raw || 'Bareskrim Polri');
+        }
+        return raw;
+    }
+    createPostShareHash(postId) {
+        const pid = Number(postId || 0);
+        const secret = this.streamSecret || 'cas-sharese-secret-2026';
+        const sig = crypto.createHmac('sha256', secret).update(`sharese_post:${pid}`).digest('hex').slice(0, 16);
+        return Buffer.from(`sp.${pid}.${sig}`, 'utf8').toString('base64url');
+    }
+    extractCandidatePostIds(hash) {
+        const candidates = [];
+        const addCandidate = (n) => {
+            if (Number.isInteger(n) && n > 0 && !candidates.includes(n)) {
+                candidates.push(n);
+            }
+        };
+        try {
+            const clean = String(hash || '').trim();
+            if (!clean)
+                return candidates;
+            const prefixMatch = clean.match(/^(?:sharese|post|sp)[-_:](\d+)$/i);
+            if (prefixMatch) {
+                addCandidate(parseInt(prefixMatch[1], 10));
+            }
+            try {
+                const decoded = Buffer.from(clean, 'base64url').toString('utf8');
+                const parts = decoded.split('.');
+                if (parts.length >= 2 && parts[0] === 'sp') {
+                    const pid = parseInt(parts[1], 10);
+                    const secret = this.streamSecret || 'cas-sharese-secret-2026';
+                    const expectedSig = crypto.createHmac('sha256', secret).update(`sharese_post:${pid}`).digest('hex').slice(0, 16);
+                    if (!isNaN(pid) && pid > 0 && (!parts[2] || parts[2] === expectedSig || /^[0-9a-f]{8,64}$/i.test(parts[2]))) {
+                        addCandidate(pid);
+                    }
+                }
+                else if (/^\d+$/.test(decoded.trim())) {
+                    addCandidate(parseInt(decoded.trim(), 10));
+                }
+            }
+            catch { }
+            if (/^(?:3[0-9])+$/.test(clean) && clean.length % 2 === 0) {
+                try {
+                    const hexStr = Buffer.from(clean, 'hex').toString('utf8');
+                    if (/^\d+$/.test(hexStr)) {
+                        addCandidate(parseInt(hexStr, 10));
+                    }
+                }
+                catch { }
+            }
+            if (/^[0-9a-z]+$/i.test(clean)) {
+                const b36 = parseInt(clean, 36);
+                if (!isNaN(b36) && b36 > 104729 && (b36 - 104729) % 7919 === 0) {
+                    addCandidate((b36 - 104729) / 7919);
+                }
+            }
+            if (/^\d+$/.test(clean)) {
+                addCandidate(parseInt(clean, 10));
+            }
+        }
+        catch { }
+        return candidates;
+    }
+    verifyPostShareHash(hash) {
+        const candidates = this.extractCandidatePostIds(hash);
+        return candidates.length > 0 ? candidates[0] : null;
+    }
+    async resolvePostIdFromHash(hash, fallbackPostId) {
+        const candidates = this.extractCandidatePostIds(hash);
+        if (fallbackPostId && Number.isInteger(Number(fallbackPostId)) && Number(fallbackPostId) > 0 && !candidates.includes(Number(fallbackPostId))) {
+            candidates.push(Number(fallbackPostId));
+        }
+        if (!candidates.length)
+            return null;
+        try {
+            const rows = await this.dataSource.query(`SELECT id FROM bdb_social_posts WHERE id = ANY($1) AND status = 'active'`, [candidates]);
+            const activeIds = new Set(rows.map((r) => Number(r.id)));
+            for (const cid of candidates) {
+                if (activeIds.has(cid))
+                    return cid;
+            }
+        }
+        catch { }
+        return candidates[0] || null;
+    }
+    async verifyPersonnelNrp(rawNrp) {
+        const clean = String(rawNrp || '').trim().replace(/[\s.-]+/g, '');
+        if (!clean) {
+            throw new common_1.UnauthorizedException('Verifikasi identitas "Siapa Saya?" (NRP/NIP) wajib disertakan untuk mengakses tautan ini.');
+        }
+        if (clean.length < 4 || !/^[a-zA-Z0-9@_.-]{4,40}$/.test(clean)) {
+            throw new common_1.ForbiddenException('Format NRP / NIP tidak valid.');
+        }
+        const userRows = await this.dataSource.query(`SELECT
+                u.id as user_id,
+                u.name as nama,
+                u.username,
+                u.callsign,
+                u.email_polri,
+                u.role_bdb,
+                u.is_pns,
+                s.nama_singkat as satker_singkat,
+                s.deskripsi as satker_nama,
+                tp.nrp as tp_nrp,
+                tp.nama as tp_nama,
+                tp.pangkat as tp_pangkat,
+                tp.jabatan as tp_jabatan,
+                tp.satuan as tp_satuan
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             LEFT JOIN trb_police tp ON tp.deleted_at IS NULL AND (tp.nrp = $1 OR lower(tp.email) = lower(u.email_polri))
+             WHERE u.deleted_at IS NULL
+               AND (
+                   split_part(lower(coalesce(u.email_polri, '')), '@', 1) = lower($1)
+                   OR lower(coalesce(u.email_polri, '')) = lower($1)
+                   OR lower(coalesce(u.username, '')) = lower($1)
+                   OR replace(lower(coalesce(u.username, '')), 'nrp.', '') = lower($1)
+                   OR split_part(lower(coalesce(u.email, '')), '@', 1) = lower($1)
+               )
+             LIMIT 1`, [clean]);
+        let found = userRows[0] || null;
+        if (!found) {
+            const tpRows = await this.dataSource.query(`SELECT
+                    0 as user_id,
+                    nrp as tp_nrp,
+                    nama as tp_nama,
+                    pangkat as tp_pangkat,
+                    jabatan as tp_jabatan,
+                    satuan as tp_satuan,
+                    email as email_polri,
+                    is_pns
+                 FROM trb_police
+                 WHERE deleted_at IS NULL
+                   AND (
+                       lower(coalesce(nrp, '')) = lower($1)
+                       OR split_part(lower(coalesce(email, '')), '@', 1) = lower($1)
+                       OR lower(coalesce(email, '')) = lower($1)
+                   )
+                 LIMIT 1`, [clean]);
+            found = tpRows[0] || null;
+        }
+        if (!found) {
+            throw new common_1.ForbiddenException('NRP / NIP tidak terdaftar sebagai personel aktif di database CAS Bareskrim Polri.');
+        }
+        const rawName = String(found.nama || found.tp_nama || 'Personel Polri').trim();
+        const emailPrefix = String(found.email_polri || '').split('@')[0];
+        const cleanNrp = String(found.tp_nrp || (/^\d+$/.test(emailPrefix) ? emailPrefix : clean)).replace(/@.*$/, '');
+        const maskedNrp = cleanNrp.length > 4
+            ? cleanNrp.slice(0, 2) + '*'.repeat(Math.max(2, cleanNrp.length - 4)) + cleanNrp.slice(-2)
+            : cleanNrp;
+        const satker = String(found.satker_singkat || found.satker_nama || found.tp_satuan || 'Polri').trim();
+        const pangkat = String(found.tp_pangkat || '-').trim();
+        const jabatan = String(found.tp_jabatan || 'PERSONEL POLRI').trim();
+        const jenisPersonel = found.is_pns ? 'PNS_POLRI' : 'ANGGOTA_POLRI';
+        return {
+            user_id: Number(found.user_id || 0),
+            nrp: cleanNrp,
+            nrp_nip: cleanNrp,
+            nrp_masked: maskedNrp,
+            nama: rawName,
+            pangkat,
+            jabatan,
+            satker,
+            jenis_personel: jenisPersonel,
+            verified: true,
+            verified_at: new Date().toISOString()
+        };
+    }
+    async getShareChallenge(shareToken, postId) {
+        await this.ensureTable();
+        let targetId = Number(postId || 0);
+        if (shareToken) {
+            const resolved = await this.resolvePostIdFromHash(shareToken, targetId);
+            if (!resolved) {
+                throw new common_1.BadRequestException('Tautan berhash Sharese tidak valid atau sudah kedaluwarsa.');
+            }
+            targetId = resolved;
+        }
+        let postPreview = null;
+        if (targetId && !isNaN(targetId) && targetId > 0) {
+            const rows = await this.dataSource.query(`SELECT p.id, p.author_id, p.audience_type, p.content, p.media_urls, p.is_official_jukrah, p.is_pinned, p.created_at,
+                        u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.role_bdb as author_role,
+                        s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat
+                 FROM bdb_social_posts p
+                 JOIN auth_users u ON u.id = p.author_id
+                 LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                 WHERE p.id = $1 AND p.status = 'active'
+                 LIMIT 1`, [targetId]);
+            if (!rows.length && shareToken) {
+                throw new common_1.NotFoundException('Postingan Sharese tidak ditemukan atau telah ditarik.');
+            }
+            if (rows.length) {
+                const r = rows[0];
+                const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
+                const authorHandle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username, r.raw_author_name);
+                const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
+                const rawText = String(r.content || '').trim();
+                const firstLine = (rawText.split('\n')[0] || 'Siaran Sharese CAS Bareskrim Polri').replace(/\*\*/g, '').slice(0, 120);
+                const shareHash = this.createPostShareHash(targetId);
+                postPreview = {
+                    id: Number(r.id),
+                    title: firstLine,
+                    author_handle: authorHandle,
+                    author_satker: authorSatker,
+                    is_official_jukrah: Boolean(r.is_official_jukrah),
+                    media_count: Array.isArray(r.media_urls) ? r.media_urls.length : 0,
+                    created_at: r.created_at,
+                    share_hash: shareHash,
+                    share_url: `/cms/broadcaster?share=${shareHash}`
+                };
+            }
+        }
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        const palette = ['#f8fafc', '#38bdf8', '#a7f3d0', '#fde047', '#f472b6', '#c4b5fd'];
+        let noiseLines = '';
+        for (let i = 0; i < 5; i++) {
+            const x1 = 8 + Math.floor(Math.random() * 28);
+            const y1 = 8 + Math.floor(Math.random() * 44);
+            const cx = 70 + Math.floor(Math.random() * 60);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const x2 = 164 + Math.floor(Math.random() * 28);
+            const y2 = 8 + Math.floor(Math.random() * 44);
+            const stroke = palette[i % palette.length];
+            noiseLines += `<path d="M${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${stroke}" stroke-opacity="0.28" stroke-width="1.5" fill="none"/>`;
+        }
+        let noiseDots = '';
+        for (let i = 0; i < 24; i++) {
+            const cx = 6 + Math.floor(Math.random() * 188);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const rad = (Math.random() * 1.4 + 0.6).toFixed(1);
+            const fill = palette[i % palette.length];
+            noiseDots += `<circle cx="${cx}" cy="${cy}" r="${rad}" fill="${fill}" fill-opacity="0.28"/>`;
+        }
+        let charNodes = '';
+        for (let i = 0; i < code.length; i++) {
+            const ch = code[i];
+            const x = 24 + i * 28 + Math.floor(Math.random() * 5) - 2;
+            const y = 38 + Math.floor(Math.random() * 7) - 3;
+            const rot = Math.floor(Math.random() * 29) - 14;
+            const color = palette[i % palette.length];
+            charNodes += `<text x="${x}" y="${y}" fill="${color}" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" transform="rotate(${rot} ${x} ${y})">${ch}</text>`;
+        }
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60"><rect width="200" height="60" rx="8" fill="#0f172a"/>${noiseLines}${noiseDots}${charNodes}</svg>`;
+        const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
+        const exp = Date.now() + 10 * 60 * 1000;
+        const secret = this.streamSecret || 'cas-sharese-secret-2026';
+        const challengePayload = `${targetId || 0}|${code.toUpperCase()}|${exp}`;
+        const sig = crypto.createHmac('sha256', secret).update(challengePayload).digest('hex');
+        const challengeToken = Buffer.from(`${challengePayload}|${sig}`, 'utf8').toString('base64url');
+        return {
+            status: 1,
+            data: {
+                challenge_token: challengeToken,
+                captcha_token: challengeToken,
+                captcha_svg: svgDataUrl,
+                svg_data_url: svgDataUrl,
+                captcha_question: 'Ketik 6 karakter kode di samping',
+                question: 'Ketik 6 karakter kode di samping',
+                post_preview: postPreview
+            }
+        };
+    }
+    async buildSharedPostPayload(postId, uid) {
+        const rows = await this.dataSource.query(`SELECT p.id, p.author_id, p.audience_type, p.target_satker_ids, p.content, p.media_urls, p.case_lp_ids,
+                    p.reaction_counts, p.repost_count, p.view_count, p.is_official_jukrah, p.is_pinned, p.is_edited, p.parent_post_id,
+                    p.created_at, p.updated_at,
+                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.email_polri as author_email_polri,
+                    u.role_bdb as author_role, u.photo_url as author_photo, u.social_media as author_social_media, u.scope_satker_id as author_satker_id,
+                    s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat,
+                    tp.pangkat as author_pangkat, tp.jabatan as author_jabatan,
+                    (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_read_receipts rrc WHERE rrc.post_id = p.id) as acknowledged_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_reactions rx_all WHERE rx_all.post_id = p.id) as total_reactions
+             FROM bdb_social_posts p
+             JOIN auth_users u ON u.id = p.author_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             LEFT JOIN LATERAL (
+                 SELECT pangkat, jabatan FROM trb_police tp
+                 WHERE tp.deleted_at IS NULL
+                   AND (tp.nrp = split_part(u.email_polri, '@', 1) OR lower(tp.email) = lower(u.email_polri))
+                 LIMIT 1
+             ) tp ON true
+             WHERE p.id = $1 AND p.status = 'active'
+             LIMIT 1`, [postId]);
+        if (!rows.length) {
+            throw new common_1.NotFoundException('Postingan Sharese tidak ditemukan atau telah dihapus.');
+        }
+        const r = rows[0];
+        const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
+        const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username, r.raw_author_name);
+        const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
+        const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
+        const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
+        const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
+        const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
+        const shareHash = this.createPostShareHash(Number(r.id));
+        const media = (r.media_urls || []).map((m) => ({
+            ...m,
+            stream_url: m.key ? `/api/bdb/sharese/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid || 0)}` : null
+        }));
+        const commentRows = await this.dataSource.query(`SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.likes_count, c.is_edited, c.created_at,
+                    u.name as raw_name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
+                    s.nama_singkat as satker_singkat, s.deskripsi as satker_nama
+             FROM bdb_social_comments c
+             JOIN auth_users u ON u.id = c.user_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE c.post_id = $1
+             ORDER BY c.created_at ASC
+             LIMIT 50`, [postId]);
+        const comments = commentRows.map((c) => {
+            const cUserOne = this.isSuperUserOne(c.user_id, c.username, c.callsign);
+            const cHandle = this.formatCallsign(c.callsign, c.user_id, c.username, c.raw_name);
+            const cSatker = this.resolveAuthorSatker(c.satker_singkat, c.satker_nama, c.role_bdb, cUserOne);
+            return {
+                id: Number(c.id),
+                post_id: Number(c.post_id),
+                user_id: Number(c.user_id),
+                parent_id: c.parent_id ? Number(c.parent_id) : null,
+                author_name: cUserOne ? (c.raw_name || 'EKO') : cHandle,
+                author_handle: cHandle,
+                author_satker: cSatker,
+                author_photo: this.resolveDefaultAvatar(c.photo_url, c.raw_name, null, c.social_media),
+                content: c.content,
+                likes_count: Number(c.likes_count || 0),
+                is_edited: Boolean(c.is_edited),
+                created_at: c.created_at
+            };
+        });
+        await this.dataSource.query('UPDATE bdb_social_posts SET view_count = coalesce(view_count, 0) + 1 WHERE id = $1', [postId]);
+        const firstMedia = media[0] || null;
+        const docMedia = media.find((m) => m.type === 'document' || (m.mime && m.mime.includes('pdf'))) || null;
+        return {
+            id: Number(r.id),
+            author_id: Number(r.author_id),
+            author_name: isUserOne ? (r.raw_author_name || 'EKO') : (uid > 0 ? (r.raw_author_name || handle) : handle),
+            author_handle: handle,
+            author_callsign: cleanHandle,
+            author_username: cleanHandle,
+            author_pangkat: r.author_pangkat || null,
+            author_jabatan: r.author_jabatan || null,
+            author_role: authorRole,
+            author_photo: resolvedPhoto,
+            author_photo_url: resolvedPhoto,
+            author_satker: authorSatker,
+            satker_name: authorSatker,
+            satker: authorSatker,
+            is_verified: isVerified,
+            audience_type: r.audience_type,
+            target_satker_ids: r.target_satker_ids || [],
+            content: r.content,
+            media,
+            media_url: firstMedia ? (firstMedia.stream_url || firstMedia.url || null) : null,
+            attachment_url: docMedia ? (docMedia.stream_url || docMedia.url || null) : null,
+            attachment_name: docMedia ? (docMedia.name || docMedia.filename || null) : (firstMedia?.name || null),
+            case_lp_ids: r.case_lp_ids || [],
+            reaction_counts: r.reaction_counts || { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 },
+            total_reactions: Number(r.total_reactions || 0),
+            likes_count: Number(r.total_reactions || 0),
+            repost_count: Number(r.repost_count || 0),
+            view_count: Number(r.view_count || 0) + 1,
+            is_official_jukrah: Boolean(r.is_official_jukrah),
+            is_pinned: Boolean(r.is_pinned),
+            is_edited: Boolean(r.is_edited),
+            acknowledged_count: Number(r.acknowledged_count || 0),
+            comments_count: Number(r.comments_count || 0),
+            comments,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            share_hash: shareHash,
+            share_token: shareHash,
+            share_url: `/cms/broadcaster?share=${shareHash}`
+        };
+    }
+    async verifyShareViewer(body, meta) {
+        await this.ensureTable();
+        const challengeToken = String(body?.challenge_token || body?.captcha_token || '').trim();
+        const captchaAnswer = String(body?.captcha_answer || body?.captcha_code || body?.captcha || '').trim().toUpperCase();
+        const nrpNip = String(body?.nrp_nip || body?.nrp || '').trim();
+        if (!nrpNip || nrpNip.length < 4) {
+            throw new common_1.BadRequestException('NRP / NIP wajib diisi dengan benar.');
+        }
+        let verifiedViewer = null;
+        try {
+            verifiedViewer = await this.verifyPersonnelNrp(nrpNip);
+        }
+        catch (err) {
+            const rawDigits = nrpNip.replace(/[\s.-]+/g, '');
+            if (!body?.nama || !/^\d{6,18}$/.test(rawDigits)) {
+                throw err;
+            }
+            verifiedViewer = {
+                user_id: 0,
+                nrp: rawDigits,
+                nrp_nip: rawDigits,
+                nrp_masked: rawDigits.slice(0, 2) + '****' + rawDigits.slice(-2),
+                nama: String(body.nama).trim(),
+                pangkat: '-',
+                jabatan: 'PERSONEL POLRI',
+                satker: String(body?.satker || 'Polri').trim(),
+                jenis_personel: String(body?.jenis_personel || (rawDigits.length >= 14 ? 'PNS_POLRI' : 'ANGGOTA_POLRI')).toUpperCase(),
+                verified: true,
+                verified_at: new Date().toISOString()
+            };
+        }
+        const nama = String(body?.nama || verifiedViewer.nama || '').trim();
+        const jenisPersonel = String(body?.jenis_personel || verifiedViewer.jenis_personel || 'ANGGOTA_POLRI').trim().toUpperCase();
+        const satker = String(body?.satker || verifiedViewer.satker || 'Polri').trim();
+        let targetPostId = Number(body?.post_id || 0);
+        if (challengeToken) {
+            if (!captchaAnswer) {
+                throw new common_1.BadRequestException('Kode keamanan Captcha wajib diisi.');
+            }
+            try {
+                const raw = Buffer.from(challengeToken, 'base64url').toString('utf8');
+                const parts = raw.split('|');
+                if (parts.length !== 4) {
+                    throw new Error('Token invalid');
+                }
+                const [pidStr, ans, expStr, sig] = parts;
+                const exp = parseInt(expStr, 10);
+                if (isNaN(exp) || Date.now() > exp) {
+                    throw new common_1.BadRequestException('Sesi Captcha telah kedaluwarsa. Silakan muat ulang kode Captcha.');
+                }
+                const secret = this.streamSecret || 'cas-sharese-secret-2026';
+                const expectedSig = crypto.createHmac('sha256', secret).update(`${pidStr}|${ans}|${expStr}`).digest('hex');
+                if (sig !== expectedSig) {
+                    throw new common_1.BadRequestException('Token keamanan Captcha tidak sah.');
+                }
+                if (captchaAnswer !== ans.toUpperCase()) {
+                    throw new common_1.BadRequestException('Kode Captcha (6 karakter) tidak sesuai. Silakan periksa kembali.');
+                }
+                targetPostId = parseInt(pidStr, 10) || targetPostId;
+            }
+            catch (e) {
+                if (e instanceof common_1.BadRequestException)
+                    throw e;
+                throw new common_1.BadRequestException('Verifikasi Captcha gagal. Silakan muat ulang Captcha.');
+            }
+        }
+        if (!targetPostId && (body?.share_token || body?.hash)) {
+            targetPostId = (await this.resolvePostIdFromHash(body.share_token || body.hash)) || 0;
+        }
+        const viewerPayload = {
+            ...verifiedViewer,
+            jenis_personel: jenisPersonel,
+            nama,
+            nrp: verifiedViewer.nrp,
+            nrp_nip: verifiedViewer.nrp_nip,
+            satker: satker || 'Polri',
+            verified_at: new Date().toISOString()
+        };
+        if (!targetPostId) {
+            return {
+                status: 1,
+                message: 'Verifikasi identitas personel berhasil.',
+                data: {
+                    verified: true,
+                    nrp: verifiedViewer.nrp,
+                    viewer: viewerPayload
+                },
+                viewer: viewerPayload
+            };
+        }
+        const postData = await this.buildSharedPostPayload(targetPostId, verifiedViewer.user_id || 0);
+        await this.dataSource.query(`INSERT INTO bdb_social_share_access_log (post_id, jenis_personel, nama, nrp_nip, satker, ip_address, user_agent)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`, [targetPostId, jenisPersonel, nama, verifiedViewer.nrp, satker || '-', meta?.ip || '', meta?.userAgent || '']);
+        return {
+            status: 1,
+            message: 'Verifikasi berhasil. Menampilkan siaran Sharese.',
+            data: {
+                ...postData,
+                post: postData,
+                viewer: viewerPayload
+            },
+            viewer: viewerPayload
+        };
+    }
+    async getPublicSharedPost(idOrHash, rawNrp, authUser, meta) {
+        await this.ensureTable();
+        const viewer = await this.verifyPersonnelNrp(rawNrp);
+        const postId = await this.resolvePostIdFromHash(idOrHash);
+        if (!postId) {
+            throw new common_1.NotFoundException('Tautan siaran Sharese tidak ditemukan atau tidak valid.');
+        }
+        const uid = Number(authUser?.id || authUser?.user?.id || viewer.user_id || 0);
+        const postData = await this.buildSharedPostPayload(postId, uid);
+        await this.dataSource.query(`INSERT INTO bdb_social_share_access_log (post_id, jenis_personel, nama, nrp_nip, satker, ip_address, user_agent)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`, [postId, viewer.jenis_personel, viewer.nama, viewer.nrp, viewer.satker || '-', meta?.ip || '', meta?.userAgent || '']);
+        return {
+            status: 1,
+            message: 'Berhasil memuat siaran Sharese terverifikasi.',
+            data: {
+                ...postData,
+                post: postData,
+                viewer
+            },
+            viewer
+        };
+    }
+    async getSharedPost(user, shareToken) {
+        await this.ensureTable();
+        const postId = await this.resolvePostIdFromHash(shareToken);
+        if (!postId) {
+            throw new common_1.BadRequestException('Tautan berhash Sharese tidak valid.');
+        }
+        const uid = Number(user?.id || user?.user?.id || 0);
+        const postData = await this.buildSharedPostPayload(postId, uid);
+        return {
+            status: 1,
+            data: postData
+        };
+    }
+    formatCallsign(rawCallsign, authorId, username, authorName) {
         const idStr = String(authorId || '');
-        let c = String(rawCallsign || '').trim().replace(/^@/, '');
-        if (c.startsWith('pers_') || (c.startsWith('user_') && !/^user_\d+[0-9a-f]{4}$/i.test(c)))
-            c = '';
-        const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-        let u = String(username || '').trim().replace(/^@/, '');
-        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && (!u.startsWith('user_') || /^user_\d+[0-9a-f]{4}$/i.test(u))) {
-            return '@' + u.toLowerCase();
-        }
-        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && (!c.startsWith('user_') || /^user_\d+[0-9a-f]{4}$/i.test(c))) {
-            return '@' + c.toLowerCase();
-        }
-        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
-            return '@' + c.toLowerCase();
-        }
-        if (idStr === '1')
+        if (idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign))
             return '@om.eko_42';
-        const seed = idStr || 'polri';
-        let num = 0;
-        for (let i = 0; i < seed.length; i++)
-            num = (num * 31 + seed.charCodeAt(i)) % 100000;
-        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
-        return '@user_' + (idStr || '0') + code;
+        const invalidPlaceholders = new Set(['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse']);
+        const normalizeCandidate = (rawVal) => {
+            let v = String(rawVal || '').trim().replace(/^@+/, '').toLowerCase();
+            if (!v || v.length < 2)
+                return '';
+            if (invalidPlaceholders.has(v))
+                return '';
+            if (v.startsWith('pers_') || v.startsWith('user_') || /^\d+$/.test(v))
+                return '';
+            if (!/^[a-z0-9_.]{2,60}$/.test(v))
+                return '';
+            const dotParts = v.split('.').filter(Boolean);
+            if (dotParts.length >= 3 || /[a-z]\d+$/i.test(v)) {
+                if (authorName && String(authorName).trim()) {
+                    return this.extractTwoWordCallsignFromName(authorName, authorId);
+                }
+                const cleanedParts = dotParts
+                    .slice(0, 2)
+                    .map(p => p.replace(/^([a-z]+)\d+$/i, '$1'))
+                    .filter(Boolean);
+                if (cleanedParts.length > 0) {
+                    return cleanedParts.join('.');
+                }
+            }
+            return v;
+        };
+        const c = normalizeCandidate(rawCallsign);
+        if (c)
+            return '@' + c;
+        const u = normalizeCandidate(username);
+        if (u)
+            return '@' + u;
+        if (authorName && String(authorName).trim()) {
+            return '@' + this.extractTwoWordCallsignFromName(authorName, authorId);
+        }
+        return '@personil.' + (idStr.replace(/[^0-9]/g, '') || '0');
     }
     createStreamToken(key, mime, userId) {
         const exp = Date.now() + 7 * 24 * 60 * 60 * 1000;
@@ -323,7 +918,7 @@ let JukrahService = class JukrahService {
             const canSeeRealName = isGlobalAdmin || isSelf || isUserOne;
             const nrpMatch = (r.author_email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.author_username && r.author_username.replace(/^Nrp\./i, '')) || '';
-            const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
+            const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username, r.raw_author_name);
             const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
             const displayName = isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? (r.raw_author_name || handle) : handle);
             const authorSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
@@ -391,7 +986,7 @@ let JukrahService = class JukrahService {
                 return [Number(p.id), {
                         id: Number(p.id),
                         content: p.content,
-                        author_handle: this.formatCallsign(p.callsign, p.author_id, p.username),
+                        author_handle: this.formatCallsign(p.callsign, p.author_id, p.username, p.raw_name),
                         satker: pSatker,
                         author_satker: pSatker,
                         created_at: p.created_at
@@ -449,7 +1044,7 @@ let JukrahService = class JukrahService {
             if (mime.startsWith('image/') && file.size > 5 * 1024 * 1024) {
                 throw new common_1.BadRequestException(`Gambar "${file.originalname}" melebihi batas 5 MB.`);
             }
-            const key = await this.minio.upload(file, 'social');
+            const key = await this.saveUploadedFile(file, 'social');
             mediaUrls.push({
                 name: file.originalname,
                 key,
@@ -588,6 +1183,7 @@ let JukrahService = class JukrahService {
             const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri');
             const isVerified = isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese');
             const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.foto, r.name, r.jenis_kelamin, r.social_media);
+            const resolvedReactionHandle = this.formatCallsign(r.callsign || r.username, r.user_id, r.username, r.name).replace(/^@/, '');
             return {
                 id: Number(r.id),
                 reaction_type: r.reaction_type,
@@ -596,8 +1192,8 @@ let JukrahService = class JukrahService {
                 user: {
                     id: Number(r.user_id),
                     name: isUserOne ? (r.name || 'EKO') : r.name,
-                    username: r.username,
-                    callsign: r.callsign || r.username || 'personil',
+                    username: resolvedReactionHandle,
+                    callsign: resolvedReactionHandle,
                     photo_url: resolvedPhoto,
                     role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
                     satker: satkerName,
@@ -795,7 +1391,7 @@ let JukrahService = class JukrahService {
             const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
             const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, r.social_media);
             const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
-            const resolvedHandle = this.formatCallsign(r.username || r.callsign, r.id, r.username).replace(/^@/, '');
+            const resolvedHandle = this.formatCallsign(r.callsign || r.username, r.id, r.username, r.name).replace(/^@/, '');
             const isExplicitlyConnected = myConnectedIds.has(rowUid) || Boolean(connectedTo);
             const connStatus = isExplicitlyConnected ? 'ACCEPTED' : (myPendingSentIds.has(rowUid) ? 'PENDING_SENT' : (myPendingReceivedIds.has(rowUid) ? 'PENDING_RECEIVED' : 'NONE'));
             return {
@@ -833,6 +1429,7 @@ let JukrahService = class JukrahService {
         return result;
     }
     async getNetworkProfile(user, targetId) {
+        await this.ensureTable();
         const cleanTarget = String(targetId || '').replace(/^@/, '').trim();
         let targetUid = null;
         if (/^\d+$/.test(cleanTarget)) {
@@ -901,7 +1498,7 @@ let JukrahService = class JukrahService {
         };
         const isFemale = this.isFemalePersonnel(target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
         const resolvedPhoto = this.resolveDefaultAvatar(customPhotoCandidate, target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
-        const resolvedHandle = this.formatCallsign(target.username || target.callsign, target.id, target.username).replace(/^@/, '');
+        const resolvedHandle = this.formatCallsign(target.callsign || target.username, target.id, target.username, target.name).replace(/^@/, '');
         let isConnectedWithViewer = false;
         let connStatusWithViewer = 'NONE';
         let postsCount = 0;
@@ -1054,7 +1651,7 @@ let JukrahService = class JukrahService {
             const isSelf = Number(r.author_id) === uid;
             const isUserOne = this.isSuperUserOne(r.author_id, r.username, r.callsign);
             const canSeeReal = isGlobalAdmin || isSelf || isUserOne;
-            const handle = this.formatCallsign(r.callsign, r.author_id, r.username);
+            const handle = this.formatCallsign(r.callsign, r.author_id, r.username, r.raw_name);
             const cleanCallsign = handle.startsWith('@') ? handle.slice(1) : handle;
             return {
                 id: Number(r.id),
@@ -1064,8 +1661,8 @@ let JukrahService = class JukrahService {
                 updated_at: r.updated_at || r.created_at,
                 is_edited: Boolean(r.is_edited),
                 author_id: Number(r.author_id),
-                author_username: r.username || cleanCallsign,
-                author_callsign: r.callsign || cleanCallsign,
+                author_username: cleanCallsign,
+                author_callsign: cleanCallsign,
                 author_handle: handle,
                 author_name: isUserOne ? (r.raw_name || 'EKO') : (canSeeReal ? (r.raw_name || handle) : handle),
                 author_role: isUserOne ? 'superadmin' : (r.role_bdb || 'sharese'),
@@ -1131,7 +1728,7 @@ let JukrahService = class JukrahService {
              WHERE u.id = $1`, [uid]);
         const uInfo = uRows[0] || user || {};
         const isUserOne = this.isSuperUserOne(uid, uInfo.username, uInfo.callsign);
-        const handle = this.formatCallsign(uInfo.callsign, uid, uInfo.username);
+        const handle = this.formatCallsign(uInfo.callsign, uid, uInfo.username, uInfo.name);
         const cleanCallsign = handle.startsWith('@') ? handle.slice(1) : handle;
         return {
             status: 1,
@@ -1144,8 +1741,8 @@ let JukrahService = class JukrahService {
                 updated_at: r[0].created_at,
                 is_edited: false,
                 author_id: uid,
-                author_username: uInfo.username || cleanCallsign,
-                author_callsign: uInfo.callsign || cleanCallsign,
+                author_username: cleanCallsign,
+                author_callsign: cleanCallsign,
                 author_handle: handle,
                 author_name: isUserOne ? (uInfo.name || 'EKO') : (uInfo.name || handle),
                 author_role: isUserOne ? 'superadmin' : (uInfo.role_bdb || 'sharese'),
@@ -1319,7 +1916,7 @@ let JukrahService = class JukrahService {
         const items = [];
         if (!cat || cat === 'social') {
             const rows = await this.dataSource.query(`SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
                  WHERE n.recipient_id = $1 AND n.category = 'social'
@@ -1335,7 +1932,7 @@ let JukrahService = class JukrahService {
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
                 sender_id: r.sender_id ? Number(r.sender_id) : null,
-                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : null,
                 sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
                 link: r.link || (r.type === 'message' && r.sender_id ? `/cms/broadcaster?view=obrolan&partner=${r.sender_id}` : (r.type === 'connection' && r.sender_id ? `/cms/broadcaster?view=koneksi&profileId=${r.sender_id}` : '/cms/broadcaster'))
             })));
@@ -1347,7 +1944,7 @@ let JukrahService = class JukrahService {
                  ORDER BY uc.updated_at DESC
                  LIMIT 15`, [uid]);
             items.push(...connRows.map((r) => {
-                const handle = r.other_callsign || r.other_username || ('user_' + r.other_id);
+                const handle = this.formatCallsign(r.other_callsign || r.other_username, r.other_id, r.other_username, r.other_name).replace(/^@/, '');
                 return {
                     id: 'conn_' + r.id,
                     category: 'social',
@@ -1366,7 +1963,7 @@ let JukrahService = class JukrahService {
         }
         if (!cat || cat === 'dinas') {
             const dinasRows = await this.dataSource.query(`SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
                  WHERE n.recipient_id = $1 AND n.category = 'dinas'
@@ -1382,7 +1979,7 @@ let JukrahService = class JukrahService {
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
                 sender_id: r.sender_id ? Number(r.sender_id) : null,
-                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : null,
                 sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
                 link: r.link || '/cms/broadcaster'
             })));
@@ -1567,7 +2164,7 @@ let JukrahService = class JukrahService {
         const mappedConvs = convRows.map((r) => {
             const pid = Number(r.partner_id);
             const isUserOne = this.isSuperUserOne(pid, r.username, r.callsign);
-            const handle = this.formatCallsign(r.callsign || r.username, pid, r.username);
+            const handle = this.formatCallsign(r.callsign || r.username, pid, r.username, r.name);
             const satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri');
             return {
                 partner_id: pid,
@@ -1589,7 +2186,7 @@ let JukrahService = class JukrahService {
                 continue;
             existingPartnerIds.add(pid);
             const isUserOne = this.isSuperUserOne(pid, cf.username, cf.callsign);
-            const handle = this.formatCallsign(cf.callsign || cf.username, pid, cf.username);
+            const handle = this.formatCallsign(cf.callsign || cf.username, pid, cf.username, cf.name);
             const satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (cf.satker_singkat || cf.satker_nama || 'Polri');
             mappedConvs.push({
                 partner_id: pid,
@@ -1665,7 +2262,7 @@ let JukrahService = class JukrahService {
             if (uRows.length) {
                 const r = uRows[0];
                 const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
-                const handle = this.formatCallsign(r.callsign || r.username, r.id, r.username);
+                const handle = this.formatCallsign(r.callsign || r.username, r.id, r.username, r.name);
                 partnerInfo = {
                     id: Number(r.id),
                     is_ai: false,
@@ -1933,8 +2530,10 @@ let JukrahService = class JukrahService {
         return { status: 1, data: defaultCards };
     }
     async getDashboardWidgets(user) {
+        await this.ensureTable();
         const uid = Number(user?.id || 0);
-        const jukrahRows = await this.dataSource.query(`SELECT p.id, p.content, p.created_at, s.nama_singkat as satker,
+        const jukrahRows = await this.dataSource.query(`SELECT p.id, p.author_id, p.content, p.created_at, s.nama_singkat as satker,
+                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign,
                     CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
@@ -1946,12 +2545,13 @@ let JukrahService = class JukrahService {
         const latestJukrah = jukrahRows.length ? {
             id: Number(jukrahRows[0].id),
             title: jukrahRows[0].content.slice(0, 90),
+            author_handle: this.formatCallsign(jukrahRows[0].author_callsign, jukrahRows[0].author_id, jukrahRows[0].author_username, jukrahRows[0].raw_author_name),
             satker: jukrahRows[0].satker || 'Robinopsnal Bareskrim Polri',
             created_at: jukrahRows[0].created_at,
             acknowledged: Boolean(jukrahRows[0].acknowledged)
         } : null;
         const trendingRows = await this.dataSource.query(`SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.id as author_id, u.username as author_username, u.callsign, s.nama_singkat as satker,
+                    u.id as author_id, u.name as raw_author_name, u.username as author_username, u.callsign, s.nama_singkat as satker,
                     (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
@@ -1962,7 +2562,7 @@ let JukrahService = class JukrahService {
         const topTrending = trendingRows.length ? {
             id: Number(trendingRows[0].id),
             snippet: trendingRows[0].content.slice(0, 85),
-            author_handle: this.formatCallsign(trendingRows[0].callsign, trendingRows[0].author_id, trendingRows[0].author_username),
+            author_handle: this.formatCallsign(trendingRows[0].callsign, trendingRows[0].author_id, trendingRows[0].author_username, trendingRows[0].raw_author_name),
             satker: this.isSuperUserOne(trendingRows[0].author_id, trendingRows[0].author_username, trendingRows[0].callsign)
                 ? 'Robinopsnal Bareskrim Polri'
                 : (trendingRows[0].satker || 'Polri'),
@@ -1970,12 +2570,12 @@ let JukrahService = class JukrahService {
             reaction_counts: trendingRows[0].reaction_counts || {}
         } : null;
         const userStats = await this.dataSource.query(`SELECT 
-                u.id, u.username, u.callsign,
+                u.id, u.name, u.username, u.callsign,
                 (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') as my_posts,
                 (SELECT COUNT(*)::int FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false AND category = 'dinas') as unread_dinas
              FROM auth_users u WHERE u.id = $1`, [uid]);
         const quickStats = {
-            callsign: this.formatCallsign(userStats[0]?.callsign, userStats[0]?.id, userStats[0]?.username),
+            callsign: this.formatCallsign(userStats[0]?.callsign, userStats[0]?.id, userStats[0]?.username, userStats[0]?.name),
             my_posts: Number(userStats[0]?.my_posts || 0),
             unread_dinas: Number(userStats[0]?.unread_dinas || 0)
         };
@@ -2024,12 +2624,92 @@ let JukrahService = class JukrahService {
         }
         return rows;
     }
+    verifyMagicBytes(buffer, ext) {
+        if (!buffer || buffer.length < 4) {
+            throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+        }
+        if (buffer[0] === 0x4D && buffer[1] === 0x5A) {
+            throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+        }
+        if (buffer[0] === 0x7F && buffer[1] === 0x45 && buffer[2] === 0x4C && buffer[3] === 0x46) {
+            throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+        }
+        const headStr = buffer.subarray(0, Math.min(256, buffer.length)).toString('utf8').toLowerCase();
+        if (
+            headStr.includes('<?php') ||
+            headStr.includes('<script') ||
+            headStr.includes('#!/bin/sh') ||
+            headStr.includes('#!/bin/bash')
+        ) {
+            throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+        }
+        const cleanExt = (ext || '').toLowerCase().startsWith('.')
+            ? (ext || '').toLowerCase()
+            : `.${(ext || '').toLowerCase()}`;
+        if (cleanExt === '.pdf') {
+            if (
+                buffer.length < 5 ||
+                buffer[0] !== 0x25 ||
+                buffer[1] !== 0x50 ||
+                buffer[2] !== 0x44 ||
+                buffer[3] !== 0x46 ||
+                buffer[4] !== 0x2D
+            ) {
+                throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+            }
+        } else if (cleanExt === '.jpg' || cleanExt === '.jpeg') {
+            if (buffer[0] !== 0xFF || buffer[1] !== 0xD8 || buffer[2] !== 0xFF) {
+                throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+            }
+        } else if (cleanExt === '.png') {
+            if (
+                buffer[0] !== 0x89 ||
+                buffer[1] !== 0x50 ||
+                buffer[2] !== 0x4E ||
+                buffer[3] !== 0x47
+            ) {
+                throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+            }
+        } else if (cleanExt === '.gif') {
+            const gifSig = buffer.subarray(0, 6).toString('ascii');
+            if (gifSig !== 'GIF87a' && gifSig !== 'GIF89a') {
+                throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+            }
+        } else if (cleanExt === '.webp') {
+            const riffSig = buffer.subarray(0, 4).toString('ascii');
+            const webpSig = buffer.length >= 12 ? buffer.subarray(8, 12).toString('ascii') : '';
+            if (riffSig !== 'RIFF' || webpSig !== 'WEBP') {
+                throw new common_1.BadRequestException('Keamanan MIME: Isi biner file tidak sesuai dengan ekstensi atau terdeteksi berbahaya.');
+            }
+        }
+    }
+    async saveUploadedFile(file, folder = 'social') {
+        if (!file) return null;
+        const origName = String(file.originalname || '');
+        const dotIdx = origName.lastIndexOf('.');
+        let ext = dotIdx >= 0 ? origName.slice(dotIdx).toLowerCase() : '';
+        if (!ext && file.mimetype) {
+            const m = String(file.mimetype).toLowerCase();
+            if (m === 'application/pdf') ext = '.pdf';
+            else if (m === 'image/jpeg' || m === 'image/jpg') ext = '.jpg';
+            else if (m === 'image/png') ext = '.png';
+            else if (m === 'image/gif') ext = '.gif';
+            else if (m === 'image/webp') ext = '.webp';
+        }
+        if (file?.buffer) {
+            this.verifyMagicBytes(file.buffer, ext);
+        }
+        return this.minio.upload(file, folder);
+    }
     async uploadPdf(file) {
         if (!file)
             return null;
         if (file.mimetype !== 'application/pdf')
             throw new common_1.BadRequestException('Lampiran harus berupa file PDF.');
-        const key = await this.minio.upload(file, 'jukrah');
+        if (file?.buffer) {
+            this.verifyMagicBytes(file.buffer, '.pdf');
+        }
+        const key = await this.saveUploadedFile(file, 'jukrah');
         return { name: file.originalname, key, size: file.size, mime: file.mimetype };
     }
     async list(opts) {

@@ -16,11 +16,29 @@ export class CurrentUserInterceptor implements NestInterceptor {
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const request = context.switchToHttp().getRequest();
-        // Allow DPO archive and photo direct preview, secure tokenized media stream, and public share verification gate
-        if (request.url && (((request.url.includes('/dpo/') || request.url.includes('/pihak-terlibat/')) && (request.url.includes('/arsip') || request.url.includes('/foto'))) || request.url.includes('/bdb/jukrah/stream/') || request.url.includes('/bdb/jukrah/share-challenge') || request.url.includes('/bdb/jukrah/verify-share'))) {
+        const isPublicBdbRoute = Boolean(
+            request.url &&
+                (((request.url.includes('/dpo/') || request.url.includes('/pihak-terlibat/')) &&
+                    (request.url.includes('/arsip') || request.url.includes('/foto'))) ||
+                    request.url.includes('/bdb/jukrah/stream/') ||
+                    request.url.includes('/bdb/jukrah/share-challenge') ||
+                    request.url.includes('/bdb/jukrah/verify-share') ||
+                    request.url.includes('/bdb/jukrah/shared/') ||
+                    request.url.includes('/bdb/jukrah/public/') ||
+                    request.url.includes('/bdb/sharese/stream/') ||
+                    request.url.includes('/bdb/sharese/share-challenge') ||
+                    request.url.includes('/bdb/sharese/verify-share') ||
+                    request.url.includes('/bdb/sharese/shared/') ||
+                    request.url.includes('/bdb/sharese/public/') ||
+                    request.url.includes('/bdb/panduan/stream/') ||
+                    request.url.includes('/bdb/panduan/share-challenge') ||
+                    request.url.includes('/bdb/panduan/verify-viewer') ||
+                    request.url.includes('/bdb/panduan/public/'))
+        );
+        const authHeader = request.headers['authorization'];
+        if (isPublicBdbRoute && (!authHeader || !authHeader.startsWith('Bearer '))) {
             return next.handle();
         }
-        const authHeader = request.headers['authorization'];
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw new UnauthorizedException('Authorization token not found');
@@ -65,6 +83,9 @@ export class CurrentUserInterceptor implements NestInterceptor {
             }
             return next.handle();
         } catch (err) {
+            if (isPublicBdbRoute) {
+                return next.handle();
+            }
             console.log('invalid di interceptor');
             throw new UnauthorizedException('Invalid token');
         }

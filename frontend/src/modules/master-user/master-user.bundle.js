@@ -656,7 +656,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                     }),
                     ((mutUser.deactivation_reason || "").trim() || mutHistory.find(m => m.status === 'PENDING')?.keterangan) ? (0,a.jsxs)("div",{
                         style:{
-                            background:"rgba(0, 0, 0, 0.16)",
+                            background:"var(--cas-surface-subtle, rgba(0, 0, 0, 0.06))",
                             borderLeft:"3px solid #38bdf8",
                             padding:"0.5rem 0.75rem",
                             borderRadius:"0 6px 6px 0",
@@ -755,8 +755,8 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                     (0,a.jsxs)("div",{
                         style:{background:"rgba(245, 158, 11, 0.1)",border:"1px solid rgba(245, 158, 11, 0.3)",borderRadius:"8px",padding:"0.65rem 0.85rem",display:"flex",flexDirection:"column",gap:"0.25rem"},
                         children:[
-                            (0,a.jsxs)("div",{style:{fontWeight:600,fontSize:"0.82rem",color:"#fbbf24",display:"flex",alignItems:"center",gap:"0.35rem"},children:[(0,a.jsx)("i",{className:"pi pi-info-circle"}),"Penonaktifan Akses Sementara"]}),
-                            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#fef3c7",lineHeight:1.45},children:"Personil yang mutasi keluar fungsi Reserse akan dinonaktifkan dari akses CAS Reskrim, namun SELURUH REKAM JEJAK & HISTORI LP TETAP TERSIMPAN UTUH. Jika kelak personil kembali ke jajaran Reserse, akun dapat dimutasikan kembali dan langsung tersambung."})
+                            (0,a.jsxs)("div",{style:{fontWeight:600,fontSize:"0.82rem",color:"#d97706",display:"flex",alignItems:"center",gap:"0.35rem"},children:[(0,a.jsx)("i",{className:"pi pi-info-circle"}),"Penonaktifan Akses Sementara"]}),
+                            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"var(--cas-text-secondary, #334155)",lineHeight:1.45},children:"Personil yang mutasi keluar fungsi Reserse akan dinonaktifkan dari akses CAS Reskrim, namun SELURUH REKAM JEJAK & HISTORI LP TETAP TERSIMPAN UTUH. Jika kelak personil kembali ke jajaran Reserse, akun dapat dimutasikan kembali dan langsung tersambung."})
                         ]
                     }),
                     (0,a.jsx)(ee,{
@@ -933,9 +933,9 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
       }))})
     ]}),
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",margin:"0.1rem 0"},children:[
-      (0,a.jsx)("div",{style:{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}}),
-      (0,a.jsx)("span",{style:{fontSize:"0.66rem",color:"#64748b",fontWeight:700,letterSpacing:"0.5px"},children:"ATAU PILIH BERJENJANG"}),
-      (0,a.jsx)("div",{style:{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}})
+      (0,a.jsx)("div",{style:{flex:1,height:"1px",background:"var(--cas-border, #e2e8f0)"}}),
+      (0,a.jsx)("span",{style:{fontSize:"0.66rem",color:"var(--cas-text-muted, #64748b)",fontWeight:700,letterSpacing:"0.5px"},children:"ATAU PILIH BERJENJANG"}),
+      (0,a.jsx)("div",{style:{flex:1,height:"1px",background:"var(--cas-border, #e2e8f0)"}})
     ]}),
     satkerFetchError&&(0,a.jsx)("div",{style:{color:"#ef4444",fontSize:"0.78rem",background:"rgba(239,68,68,0.1)",padding:"0.4rem 0.6rem",borderRadius:6,border:"1px solid rgba(239,68,68,0.25)"},children:satkerFetchError}),
     satkerLoading&&(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",fontSize:"0.78rem",color:"#38bdf8"},children:[(0,a.jsx)("i",{className:"pi pi-spin pi-spinner"}),"Memuat daftar satuan kerja..."]}),

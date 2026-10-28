@@ -30,22 +30,34 @@ async function runPendingMigrations() {
         const pending = files.filter((f) => !appliedSet.has(f));
         if (!pending.length) {
             console.log(`[migrations] semua ${files.length} migration sudah jalan, tak ada yg baru.`);
-            return;
         }
-        console.log(`[migrations] menjalankan ${pending.length} migration yg belum tercatat...`);
-        for (const f of pending) {
-            const sql = fs.readFileSync(path.join(dir, f), 'utf8');
-            try {
-                await pool.query(sql);
-                await pool.query('insert into bdb_schema_migrations (filename) values ($1) on conflict (filename) do update set applied_at=now()', [f]);
-                console.log(`[migrations] APPLIED ${f}`);
+        else {
+            console.log(`[migrations] menjalankan ${pending.length} migration yg belum tercatat...`);
+            for (const f of pending) {
+                const sql = fs.readFileSync(path.join(dir, f), 'utf8');
+                try {
+                    await pool.query(sql);
+                    await pool.query('insert into bdb_schema_migrations (filename) values ($1) on conflict (filename) do update set applied_at=now()', [f]);
+                    console.log(`[migrations] APPLIED ${f}`);
+                }
+                catch (e) {
+                    console.error(`[migrations] GAGAL menjalankan ${f}: ${e?.message || e}`);
+                    throw e;
+                }
             }
-            catch (e) {
-                console.error(`[migrations] GAGAL menjalankan ${f}: ${e?.message || e}`);
-                throw e;
+            console.log(`[migrations] selesai, ${pending.length} migration baru diterapkan.`);
+        }
+        try {
+            const syncScriptPath = path.join(__dirname, '..', 'scripts', 'sync_master_user_callsigns.js');
+            if (fs.existsSync(syncScriptPath)) {
+                const { syncMasterUserCallsigns } = require(syncScriptPath);
+                const syncRes = await syncMasterUserCallsigns(pool);
+                console.log(`[migrations] syncMasterUserCallsigns selesai (total=${syncRes.totalUsers}, updated=${syncRes.updatedCount}).`);
             }
         }
-        console.log(`[migrations] selesai, ${pending.length} migration baru diterapkan.`);
+        catch (syncErr) {
+            console.warn(`[migrations] syncMasterUserCallsigns warning: ${syncErr?.message || syncErr}`);
+        }
     }
     finally {
         await pool.end();

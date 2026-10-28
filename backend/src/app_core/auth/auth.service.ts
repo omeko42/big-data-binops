@@ -763,6 +763,9 @@ export class AuthService {
 
         // Step 7: Transform Result
         console.time('Step 7: Transform Final Object');
+        const unifiedHandle = Number(user.id) === 1
+            ? 'om.eko_42'
+            : (String(user.callsign || user.username || '').trim().replace(/^@+/, '').toLowerCase() || user.username || null);
         const transformUser = {
             id: user.id,
             user_name: user.name,
@@ -770,8 +773,8 @@ export class AuthService {
             email: user.email,
             email_google: user.email_google,
             email_polri: user.email_polri,
-            username: user.username,
-            callsign: user.callsign,
+            username: unifiedHandle,
+            callsign: unifiedHandle,
             login_method: user.login_method,
             local_password_enabled: user.local_password_enabled,
             role_bdb: user.role_bdb,
@@ -1622,7 +1625,11 @@ export class AuthService {
             await queryRunner.manager.update(User, user.id, {
                 password: hashedPassword,
                 local_password_enabled: true,
-                login_method: loginMethod
+                login_method: loginMethod,
+                pin_required: false,
+                security_pin_hash: null,
+                failed_login_attempts: 0,
+                locked_until: null
             });
 
             await queryRunner.commitTransaction();
