@@ -106,15 +106,15 @@ let JukrahService = class JukrahService {
     }
     resolveDefaultAvatar(photoUrl, name, jenisKelamin, socialMedia) {
         const clean = String(photoUrl || '').trim();
-        if (clean.length > 5 && clean !== 'null' && clean !== 'undefined')
+        if (clean.length > 5 && clean !== 'null' && clean !== 'undefined' && !clean.includes('default-avatar'))
             return clean;
         return this.isFemalePersonnel(name, jenisKelamin, socialMedia)
             ? '/images/default-avatar-polwan.jpg'
             : '/images/default-avatar-polki.png';
     }
     resolveDefaultBanner(socialMedia) {
-        const b = socialMedia?.banner_theme;
-        if (typeof b === 'string' && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/'))) {
+        const b = typeof socialMedia?.banner_theme === 'string' ? socialMedia.banner_theme.trim() : '';
+        if (b && !b.includes('default-banner') && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient') || b.startsWith('radial-gradient'))) {
             return b;
         }
         return '/images/default-banner-polri.jpg';
@@ -830,11 +830,23 @@ let JukrahService = class JukrahService {
         }
         catch { }
         const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri');
-        const rawSocial = { ...(policeProfile?.social_media || {}), ...(target.social_media || {}) };
+        const pSoc = (policeProfile?.social_media && typeof policeProfile.social_media === 'object') ? policeProfile.social_media : {};
+        const uSoc = (target.social_media && typeof target.social_media === 'object') ? target.social_media : {};
+        const rawSocial = { ...pSoc, ...uSoc };
+        const isCustomBanner = (val) => typeof val === 'string' && val.trim().length > 5 && !val.includes('default-banner');
+        if (isCustomBanner(uSoc.banner_theme)) rawSocial.banner_theme = uSoc.banner_theme.trim();
+        else if (isCustomBanner(pSoc.banner_theme)) rawSocial.banner_theme = pSoc.banner_theme.trim();
         const resolvedBanner = this.resolveDefaultBanner(rawSocial);
-        const mergedSocial = { ...rawSocial, banner_theme: resolvedBanner };
+        const isCustomPhoto = (val) => typeof val === 'string' && val.trim().length > 5 && val !== 'null' && val !== 'undefined' && !val.includes('default-avatar');
+        const customPhotoCandidate = isCustomPhoto(target.photo_url) ? target.photo_url.trim() : (isCustomPhoto(policeProfile?.foto) ? policeProfile.foto.trim() : null);
+        const mergedSocial = {
+            ...rawSocial,
+            banner_theme: resolvedBanner,
+            ...(customPhotoCandidate ? { avatar_v2: true } : {}),
+            ...(isCustomBanner(resolvedBanner) ? { banner_v2: true } : {})
+        };
         const isFemale = this.isFemalePersonnel(target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
-        const resolvedPhoto = this.resolveDefaultAvatar(target.photo_url || policeProfile?.foto, target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
+        const resolvedPhoto = this.resolveDefaultAvatar(customPhotoCandidate, target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
         return {
             status: 1,
             data: {
