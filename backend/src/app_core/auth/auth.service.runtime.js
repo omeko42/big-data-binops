@@ -656,6 +656,8 @@ let AuthService = class AuthService {
         const roleBdb = this.normalizeBdbRole(user.role_bdb);
         if (scopeRow?.nama_satker_canonical && roleBdb !== 'superadmin') {
             satker = scopeRow.nama_satker_canonical;
+        } else if (roleBdb !== 'superadmin' && satker && String(satker).toLowerCase().includes('superadmin')) {
+            satker = policeProfile?.satuan || 'Polri';
         }
         const scopeAccessDisplay = roleBdb === 'superadmin'
             ? 'Nasional'
@@ -681,6 +683,7 @@ let AuthService = class AuthService {
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
             scope_satker_name: roleBdb === 'superadmin' ? '-' : scopeRow?.nama_satker_canonical || null,
+            satker_nama: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : scopeRow?.nama_satker_canonical || satker || null,
             scope_satker_level: roleBdb === 'superadmin' ? null : scopeRow?.level || null,
             scope_access_display: scopeAccessDisplay,
             nrp: policeProfile?.nrp || null,

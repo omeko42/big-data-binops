@@ -125,14 +125,14 @@ let JukrahService = class JukrahService {
         if (c.startsWith('pers_') || (c.startsWith('user_') && !/^[a-zA-Z0-9_]{15,}$/.test(c)))
             c = '';
         const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
-        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && !c.startsWith('user_')) {
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !/^\d{6,18}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && !c.startsWith('user_')) {
             return '@' + c.toLowerCase();
         }
         let u = String(username || '').trim().replace(/^@/, '');
-        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && !u.startsWith('user_')) {
+        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !/^\d{6,18}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && !u.startsWith('user_')) {
             return '@' + u.toLowerCase();
         }
-        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !/^\d{6,18}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
             return '@' + c.toLowerCase();
         }
         if (idStr === '1')
