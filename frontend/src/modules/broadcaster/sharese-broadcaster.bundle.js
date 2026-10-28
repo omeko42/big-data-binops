@@ -1686,6 +1686,34 @@ e.s(["default",0,function() {
                   onClick:fetchFeed,
                   loading:loading,
                   style:{height:"2.1rem",fontSize:"0.76rem",borderRadius:"8px",whiteSpace:"nowrap",padding:"0 0.7rem",flexShrink:0}
+                }),
+                (0,t.jsx)("button",{
+                  type:"button",
+                  onClick:() => {
+                    try {
+                      window.history.pushState({}, "", "/cms/broadcaster?view=obrolan");
+                      window.dispatchEvent(new Event("cas-url-change"));
+                    } catch {
+                      window.location.href = "/cms/broadcaster?view=obrolan";
+                    }
+                  },
+                  title:"Buka Obrolan & Pesan Langsung",
+                  style:{height:"2.1rem",padding:"0 0.75rem",borderRadius:"8px",border:"1px solid rgba(37,99,235,0.35)",background:"rgba(37,99,235,0.1)",color:"#2563eb",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem",whiteSpace:"nowrap",flexShrink:0},
+                  children:"💬 Obrolan"
+                }),
+                (0,t.jsx)("button",{
+                  type:"button",
+                  onClick:() => {
+                    try {
+                      window.history.pushState({}, "", "/cms/broadcaster?view=notifikasi");
+                      window.dispatchEvent(new Event("cas-url-change"));
+                    } catch {
+                      window.location.href = "/cms/broadcaster?view=notifikasi";
+                    }
+                  },
+                  title:"Buka Notifikasi",
+                  style:{height:"2.1rem",padding:"0 0.75rem",borderRadius:"8px",border:"1px solid var(--cas-border-strong, rgba(148,163,184,0.35))",background:"var(--cas-surface-subtle, rgba(255,255,255,0.06))",color:"var(--cas-text-primary, #0f172a)",fontSize:"0.76rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem",whiteSpace:"nowrap",flexShrink:0},
+                  children:"🔔 Notifikasi"
                 })
               ]
             })
@@ -3008,21 +3036,51 @@ e.s(["default",0,function() {
             var usrPhoto = isThisUserMe ? (currentUser?.photo_url || currentUser?.foto || usr.photo_url || usr.foto || null) : (usr.photo_url || usr.foto || null);
             var usrSatker = formatSatkerName(usr.satker, isUsrSuper, 'Polri');
 
-            return (0,t.jsx)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem"},children:
+            var rxTypeMap = {
+              like: "👍 Suka",
+              salute: "🫡 Hormat",
+              insightful: "💡 Berwawasan",
+              support: "👏 Apresiasi",
+              fire: "🔥 Semangat"
+            };
+            var rxLabel = rxTypeMap[String(rx.reaction_type || "like").toLowerCase()] || "👍 Suka";
+
+            return (0,t.jsxs)("div",{key:rx.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"10px",padding:"0.6rem 0.85rem"},children:[
               (0,t.jsxs)("div",{
                 onClick:() => { setReactionsPostId(null); handleOpenUserProfile(usr.id, usr); },
-                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",width:"100%"},
+                style:{display:"flex",alignItems:"center",gap:"0.65rem",cursor:"pointer",flex:1,minWidth:0},
                 title:"Klik untuk melihat profil personil",
                 children:[
                   renderCornerAvatar(usrPhoto, initials, usrBadge, 2.2, 14, 8, usr),
-                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
-                    (0,t.jsx)("span",{style:{color:"#38bdf8",fontWeight:700,fontSize:"0.84rem"},children:usrHandle}),
-                    renderMetaVerifiedBadge(usrBadge, 14),
-                    (0,t.jsx)("span",{style:{color:"#94a3b8",fontSize:"0.76rem"},children:"• " + usrSatker})
+                  (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",minWidth:0},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                      (0,t.jsx)("span",{style:{color:"var(--cas-text-primary, #f8fafc)",fontWeight:800,fontSize:"0.84rem"},children:usr.name || usrHandle}),
+                      (0,t.jsx)("span",{style:{color:"#2563eb",fontWeight:700,fontSize:"0.76rem"},children:usrHandle}),
+                      renderMetaVerifiedBadge(usrBadge, 14)
+                    ]}),
+                    (0,t.jsx)("span",{style:{color:"#94a3b8",fontSize:"0.74rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:usrSatker})
                   ]})
                 ]
-              })
-            });
+              }),
+              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",flexShrink:0},children:[
+                (0,t.jsx)("span",{style:{fontSize:"0.72rem",fontWeight:700,padding:"0.2rem 0.55rem",borderRadius:"999px",background:"rgba(37,99,235,0.1)",color:"#2563eb"},children:rxLabel}),
+                !isThisUserMe && usr.id && (0,t.jsx)("button",{
+                  type:"button",
+                  onClick:() => {
+                    setReactionsPostId(null);
+                    try {
+                      window.history.pushState({}, "", `/cms/broadcaster?view=obrolan&partner=${usr.id}`);
+                      window.dispatchEvent(new Event("cas-url-change"));
+                    } catch {
+                      window.location.href = `/cms/broadcaster?view=obrolan&partner=${usr.id}`;
+                    }
+                  },
+                  style:{padding:"0.25rem 0.6rem",borderRadius:"999px",border:"1px solid rgba(37,99,235,0.35)",background:"transparent",color:"#2563eb",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},
+                  title:"Kirim Pesan Langsung",
+                  children:"💬 Pesan"
+                })
+              ]})
+            ]});
           })
         })
       )
@@ -3338,14 +3396,30 @@ e.s(["default",0,function() {
                 children:[(0,t.jsx)("i",{className:"pi pi-user",style:{fontSize:"0.78rem"}}),"Buka Halaman Profil Saya"]
               })
             ) : (
-              (0,t.jsxs)("button",{
-                type:"button",
-                onClick:() => {
-                  handleOpenUserProfile(previewUser.id, previewUser);
-                },
-                style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 1.15rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
-                children:[(0,t.jsx)("i",{className:"pi pi-user",style:{fontSize:"0.78rem"}}),"Buka Profil Lengkap"]
-              })
+              (0,t.jsxs)(t.Fragment,{children:[
+                (0,t.jsx)("button",{
+                  type:"button",
+                  onClick:() => {
+                    setProfileModalOpen(!1);
+                    try {
+                      window.history.pushState({}, "", `/cms/broadcaster?view=obrolan&partner=${previewUser.id}`);
+                      window.dispatchEvent(new Event("cas-url-change"));
+                    } catch {
+                      window.location.href = `/cms/broadcaster?view=obrolan&partner=${previewUser.id}`;
+                    }
+                  },
+                  style:{background:"rgba(37,99,235,0.12)",color:"#2563eb",border:"1px solid rgba(37,99,235,0.4)",borderRadius:"8px",padding:"0.45rem 1rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+                  children:"💬 Kirim Pesan"
+                }),
+                (0,t.jsxs)("button",{
+                  type:"button",
+                  onClick:() => {
+                    handleOpenUserProfile(previewUser.id, previewUser);
+                  },
+                  style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"8px",padding:"0.45rem 1.15rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
+                  children:[(0,t.jsx)("i",{className:"pi pi-user",style:{fontSize:"0.78rem"}}),"Buka Profil Lengkap"]
+                })
+              ]})
             )
           ]})
         ]})

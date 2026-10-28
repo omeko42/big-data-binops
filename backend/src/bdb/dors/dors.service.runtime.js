@@ -311,7 +311,7 @@ let DorsService = class DorsService {
     assertAdmin(authUser) {
         const role = String(authUser?.role_bdb || authUser?.role_name || '').toLowerCase();
         const orgRole = String(authUser?.OrganisasiRole?.role_name || '').toLowerCase();
-        if (['superadmin', 'admin_binops', 'operator'].includes(role) ||
+        if (['superadmin', 'admin_binops', 'operator', 'vendor_mitra', 'vendor', 'mitra'].includes(role) ||
             role.includes('admin') ||
             role.includes('super') ||
             orgRole.includes('admin') ||

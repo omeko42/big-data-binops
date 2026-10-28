@@ -11,7 +11,7 @@ import { MailService } from '@app_core/helper/service/mail.service';
 import { AuditService } from 'src/bdb/audit/audit.service';
 import { resolveOrganisasiRoleId } from '@app_core/auth/organisasi-role.util';
 
-const BDB_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'] as const;
+const BDB_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'] as const;
 type BdbRole = (typeof BDB_ROLES)[number];
 type ScopeRow = { id: string; satker_key: string };
 
@@ -145,6 +145,7 @@ export class UserService {
 
     private normalizeBdbRole(role?: string): BdbRole {
         const value = String(role || '').trim().toLowerCase();
+        if (value === 'vendor' || value === 'mitra' || value === 'vendor_mitra') return 'vendor_mitra';
         return (BDB_ROLES as readonly string[]).includes(value) ? (value as BdbRole) : 'viewer';
     }
 
@@ -159,7 +160,7 @@ export class UserService {
     }
 
     private shouldRequireScope(role: BdbRole, status?: string, approvalStatus?: string, isSuperadmin = false): boolean {
-        if (role === 'superadmin') return false;
+        if (role === 'superadmin' || role === 'vendor_mitra') return false;
         if (role === 'viewer' && isSuperadmin) return false;
         return this.normalizeStatus(status || 'AKTIF') === 'AKTIF' && this.normalizeStatus(approvalStatus || 'APPROVED') === 'APPROVED';
     }
@@ -446,6 +447,16 @@ export class UserService {
             }
         }
 
+        const rawRoleFilter = request?.query?.roleFilter;
+        const roleFilter = String(Array.isArray(rawRoleFilter) ? rawRoleFilter[0] : rawRoleFilter || '').trim().toLowerCase();
+        if (roleFilter) {
+            if (roleFilter === 'vendor_mitra' || roleFilter === 'vendor' || roleFilter === 'mitra') {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, '')) in ('vendor_mitra', 'vendor', 'mitra')");
+            } else {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, 'viewer')) = :roleFilter", { roleFilter });
+            }
+        }
+
         const rawSearchAll = request?.query?.searchAll;
         const masterUserKeyword = String(Array.isArray(rawSearchAll) ? rawSearchAll[0] : rawSearchAll || '').trim().toLowerCase();
         if (masterUserKeyword) {
@@ -513,6 +524,7 @@ export class UserService {
         delete filterQuery.sort;
         delete filterQuery['sort[]'];
         delete filterQuery['sort[0]'];
+        delete filterQuery.roleFilter;
         if (masterUserKeyword) {
             delete filterQuery.searchAll;
         }
@@ -707,8 +719,8 @@ export class UserService {
         const params: any[] = [];
         let where = "u.approval_status = 'PENDING_APPROVAL'";
 
-        if (role === 'superadmin') {
-            // Superadmin melihat semua antrian.
+        if (role === 'superadmin' || role === 'vendor_mitra') {
+            // Superadmin & Vendor/Mitra melihat semua antrian.
         } else if (role === 'admin_binops') {
             const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
             const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
@@ -1310,7 +1322,7 @@ export class UserService {
     }
 
     private async resolveScope(role: BdbRole, scopeSatkerId?: number, scopeSatkerKey?: string, required = true) {
-        if (role === 'superadmin') {
+        if (role === 'superadmin' || role === 'vendor_mitra') {
             return { scope_satker_id: null, scope_satker_key: null };
         }
 
@@ -1412,10 +1424,11 @@ export class UserService {
             const unifiedHandle = this.normalizeCleanHandle(user.callsign || user.username, user.id, user.name);
             user.username = unifiedHandle;
             user.callsign = unifiedHandle;
-            if (this.normalizeBdbRole(user.role_bdb) === 'superadmin') {
+            const normRole = this.normalizeBdbRole(user.role_bdb);
+            if (normRole === 'superadmin' || normRole === 'vendor_mitra') {
                 user.scope_satker_name = '-';
                 user.scope_satker_display = '-';
-                user.scope_access_display = 'Nasional';
+                user.scope_access_display = normRole === 'vendor_mitra' ? 'Nasional (Read-Only)' : 'Nasional';
                 return;
             }
 
@@ -1607,8 +1620,8 @@ export class UserService {
         }
 
         const currentTargetRole = this.normalizeBdbRole(target.role_bdb);
-        if (currentTargetRole === 'superadmin' || currentTargetRole === 'admin_binops') {
-            throw new ForbiddenException('Admin/Binops tidak boleh mengelola Superadmin atau Admin/Binops lain');
+        if (currentTargetRole === 'superadmin' || currentTargetRole === 'admin_binops' || currentTargetRole === 'vendor_mitra') {
+            throw new ForbiddenException('Admin/Binops tidak boleh mengelola Superadmin, Admin/Binops, atau Vendor/Mitra');
         }
 
         await this.assertCanReview(authUser, targetRole, targetScopeId, targetScopeKey);
@@ -1647,7 +1660,7 @@ export class UserService {
             throw new ForbiddenException('Tidak berwenang approve user');
         }
 
-        if (targetRole === 'superadmin' || targetRole === 'admin_binops') {
+        if (targetRole === 'superadmin' || targetRole === 'admin_binops' || targetRole === 'vendor_mitra') {
             throw new ForbiddenException('Admin/Binops hanya boleh approve Operator atau Viewer');
         }
 
@@ -1820,7 +1833,7 @@ export class UserService {
 
     // ===================== Import Massal Pengguna (Excel) =====================
     private static readonly IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email Dinas Polri (Utama)', 'Email Sekunder (Opsional)', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
-    private static readonly IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
+    private static readonly IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'];
     private static readonly IMPORT_STATUS_OPTS = ['AKTIF', 'NONAKTIF'];
 
     /** Password acak (huruf besar+kecil+angka, 10 karakter) -- dipakai baris import yg tak isi password. */
@@ -1940,7 +1953,7 @@ export class UserService {
                 const status = UserService.IMPORT_STATUS_OPTS.includes(r.status) ? r.status : 'AKTIF';
 
                 let satker: { key: string; name: string } | null = null;
-                if (roleBdb !== 'superadmin') {
+                if (roleBdb !== 'superadmin' && roleBdb !== 'vendor_mitra') {
                     if (!r.satker_raw) throw new BadRequestException('Kode/Nama Satker wajib diisi untuk role selain Superadmin.');
                     satker = await this.resolveSatkerForImport(r.satker_raw);
                     if (!satker) throw new BadRequestException(`Satker "${r.satker_raw}" tidak ditemukan (isi kode Puskarda persis, atau nama satker persis & unik).`);

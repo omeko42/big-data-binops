@@ -111,7 +111,7 @@ export class PanduanService {
      * lihat yang AKTIF. Superadmin di halaman Kelola minta includeInactive=true utk lihat semua.
      */
     async list(authUser: any, includeInactive: boolean) {
-        const isSuper = ['superadmin', 'admin_binops'].includes(String(authUser?.role_bdb || '').toLowerCase());
+        const isSuper = ['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(String(authUser?.role_bdb || '').toLowerCase());
         const where = includeInactive && isSuper ? '' : "where status = 'AKTIF'";
         const rows = await this.dataSource.query(
             `select id, judul, deskripsi, kategori, tipe, file_name, content_type, size, urutan, status, created_at
@@ -146,7 +146,7 @@ export class PanduanService {
         );
         if (!rows.length) throw new NotFoundException('Panduan tidak ditemukan.');
         const row = rows[0];
-        const isSuper = ['superadmin', 'admin_binops'].includes(String(authUser?.role_bdb || '').toLowerCase());
+        const isSuper = ['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(String(authUser?.role_bdb || '').toLowerCase());
         if (row.status !== 'AKTIF' && !isSuper) {
             throw new NotFoundException('Panduan tidak ditemukan.');
         }

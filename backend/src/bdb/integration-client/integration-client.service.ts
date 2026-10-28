@@ -28,7 +28,7 @@ export class IntegrationClientService {
 
     private assertSuperadmin(authUser: any) {
         const role = (authUser?.role_bdb || '').toLowerCase();
-        if (role !== 'superadmin') {
+        if (!['superadmin', 'vendor_mitra', 'vendor', 'mitra'].includes(role)) {
             throw new ForbiddenException('Hanya superadmin yang dapat mengelola Portal Integrasi Keluar.');
         }
     }

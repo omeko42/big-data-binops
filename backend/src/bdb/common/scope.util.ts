@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 
-export type DataScope = { all: boolean; isSuper: boolean; satkerId: number | null };
+export type DataScope = { all: boolean; isSuper: boolean; isVendorMitra?: boolean; satkerId: number | null };
 
 /**
  * Scope data per role:
@@ -23,6 +23,8 @@ export async function resolveScope(ds: DataSource, userId?: number): Promise<Dat
     const u = rows[0];
     const roleBdb = String(u?.role_bdb || '').toLowerCase();
     const roleName = String(u?.role_name || '').toLowerCase();
+    const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb) || ['vendor_mitra', 'vendor', 'mitra'].includes(roleName);
+    if (isVendorMitra) return { all: true, isSuper: true, isVendorMitra: true, satkerId: null };
     const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
     const isAdmin = roleBdb === 'admin_binops';
     if (isSuper || isAdmin) return { all: true, isSuper, satkerId: null };

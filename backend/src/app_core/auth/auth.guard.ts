@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtConstants } from './constants';
@@ -80,9 +80,44 @@ export class AuthGuard implements CanActivate {
         if (!device) {
             console.log('tidak ada device');
             throw new UnauthorizedException('Invalid token');
-        } else {
-            return true;
         }
+
+        const method = String(request.method || '').toUpperCase();
+        if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+            const url = String(request.url || reqObj.url || '');
+            const isAllowedSessionEndpoint =
+                url.includes('/Authentication/logout') ||
+                url.includes('/Authentication/refresh') ||
+                url.includes('/network/probe');
+            if (!isAllowedSessionEndpoint) {
+                let roleBdb = String(
+                    payload?.role_bdb ||
+                    payload?.user?.role_bdb ||
+                    payload?.role_name ||
+                    payload?.user?.role_name ||
+                    ''
+                ).trim().toLowerCase();
+                const userId = payload?.id || payload?.user?.id;
+                if (!['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb) && userId) {
+                    try {
+                        const rows = await this.dataSource.query(
+                            'SELECT role_bdb, role_name FROM auth_users WHERE id = $1 LIMIT 1',
+                            [Number(userId)]
+                        );
+                        if (rows?.[0]) {
+                            roleBdb = String(rows[0].role_bdb || rows[0].role_name || roleBdb).trim().toLowerCase();
+                        }
+                    } catch {}
+                }
+                if (['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb)) {
+                    throw new ForbiddenException(
+                        'Akses akun Vendor / Mitra bersifat Read-Only (Hanya Lihat). Anda tidak diizinkan mengubah, menambah, atau menghapus data.'
+                    );
+                }
+            }
+        }
+
+        return true;
     }
 
     private extractTokenFromHeader(request: Request): string | undefined {

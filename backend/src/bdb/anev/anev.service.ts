@@ -427,6 +427,8 @@ export class AnevService {
         const u = rows[0];
         const roleBdb = String(u?.role_bdb || '').toLowerCase();
         const roleName = String(u?.role_name || '').toLowerCase();
+        const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb) || ['vendor_mitra', 'vendor', 'mitra'].includes(roleName);
+        if (isVendorMitra) return { all: true, isSuper: true, isVendorMitra: true, satkerId: null as number | null };
         const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
         const isAdmin = roleBdb === 'admin_binops';
         if (isSuper || isAdmin) return { all: true, isSuper, satkerId: null as number | null };

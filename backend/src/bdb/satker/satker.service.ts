@@ -27,11 +27,11 @@ export class SatkerService implements OnModuleInit {
      *  bersamaan saat boot bikin deadlock beruntun di Postgres). */
     async onModuleInit() {
         if (!isPrimaryClusterInstance()) return;
-        try {
-            await this.rebuildHierarchy();
-        } catch (e: any) {
-            this.logger.warn('gagal rebuild hierarki satker saat boot: ' + (e?.message || e));
-        }
+        setTimeout(() => {
+            this.rebuildHierarchy().catch((e: any) =>
+                this.logger.warn('gagal rebuild hierarki satker saat boot: ' + (e?.message || e))
+            );
+        }, 2500);
     }
 
     private tableEnsured = false;
@@ -354,7 +354,13 @@ export class SatkerService implements OnModuleInit {
             await this.dataSource.query(
                 `update bdb_satker s set parent_id=v.pid, root_id=$${params.length + 1}, depth=v.depth, parent_kode=v.pkode, updated_at=now()
                  from (values ${tuples}) as v(id,pid,depth,pkode)
-                 where s.id=v.id`,
+                 where s.id=v.id
+                   and (
+                     s.parent_id is distinct from v.pid
+                     or s.root_id is distinct from $${params.length + 1}
+                     or s.depth is distinct from v.depth
+                     or s.parent_kode is distinct from v.pkode
+                   )`,
                 [...params, rootId]
             );
         }
@@ -586,7 +592,7 @@ export class SatkerService implements OnModuleInit {
     // Beda dari update() di atas: id diambil dari sesi (scope_satker_id), bukan dari client, dan
     // HANYA kolom EXTRA_COLS (alamat/lokasi/jumlah_penduduk) yg bisa diubah -- tak pernah kode/deskripsi/
     // hierarki, itu tetap eksklusif superadmin lewat menu Struktur Satker.
-    private static readonly SELF_EDIT_ROLES = ['operator', 'admin_binops'];
+    private static readonly SELF_EDIT_ROLES = ['operator', 'admin_binops', 'admin_satker'];
 
     private assertSelfEditAllowed(authUser: any): number {
         if (!authUser) throw new UnauthorizedException('Sesi tidak valid.');
@@ -614,17 +620,24 @@ export class SatkerService implements OnModuleInit {
         }
     }
 
-    /** Data wilayah/demografi satker milik akun yg sedang login (operator/admin_binops). */
+    /** Data wilayah/demografi satker milik akun yg sedang login (operator/admin_binops/admin_satker, atau read-only fallback untuk superadmin/vendor_mitra/pimpinan). */
     async getMyProfile(authUser: any) {
+        if (!authUser) throw new UnauthorizedException('Sesi tidak valid.');
         await this.ensureTable();
-        const id = this.assertSelfEditAllowed(authUser);
-        const rows = await this.dataSource.query(
-            `select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
-             from bdb_satker where id=$1`,
-            [id]
-        );
+        const role = String(authUser.role_bdb || '').toLowerCase();
+        const id = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
+        const rows = id
+            ? await this.dataSource.query(
+                  `select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+                   from bdb_satker where id=$1`,
+                  [id]
+              )
+            : await this.dataSource.query(
+                  `select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+                   from bdb_satker where kode='01' or is_root=true order by (kode='01') desc, is_root desc, id asc limit 1`
+              );
         if (!rows.length) throw new NotFoundException('Satker Anda tidak ditemukan di master data.');
-        return { status: 1, data: rows[0] };
+        return { status: 1, data: rows[0], readOnly: !SatkerService.SELF_EDIT_ROLES.includes(role) || !id };
     }
 
     /** Ubah data wilayah/demografi satker milik akun yg sedang login -- HANYA kolom EXTRA_COLS. */
@@ -818,7 +831,7 @@ export class SatkerService implements OnModuleInit {
             const u = uRows[0];
             const roleBdb = String(u?.role_bdb || '').toLowerCase();
             const roleName = String(u?.role_name || '').toLowerCase();
-            const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
+            const isSuper = roleBdb === 'superadmin' || roleName.includes('super') || ['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb);
             const scopeId = u?.scope_satker_id ? Number(u.scope_satker_id) : null;
             const isMabesLeader = !scopeId || scopeId === 1 || scopeId === 13;
 

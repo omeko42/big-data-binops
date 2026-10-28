@@ -83,12 +83,18 @@ let JukrahService = class JukrahService {
                 id bigserial primary key,
                 sender_id bigint not null,
                 receiver_id bigint not null,
+                channel_type varchar(32) not null default 'direct',
                 content text not null,
                 media_url text,
+                attachment_url text,
+                attachment_name text,
+                reply_to_json text,
+                reactions_json text,
                 is_read boolean not null default false,
                 created_at timestamptz not null default now()
             )`);
         try {
+            await this.dataSource.query("ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS channel_type VARCHAR(32) NOT NULL DEFAULT 'direct', ADD COLUMN IF NOT EXISTS media_url TEXT, ADD COLUMN IF NOT EXISTS attachment_url TEXT, ADD COLUMN IF NOT EXISTS attachment_name TEXT, ADD COLUMN IF NOT EXISTS reply_to_json TEXT, ADD COLUMN IF NOT EXISTS reactions_json TEXT");
             await this.dataSource.query('ALTER TABLE bdb_social_notifications ADD COLUMN IF NOT EXISTS link TEXT');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_social_msg_sender_rec ON bdb_social_messages (sender_id, receiver_id, created_at DESC)');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_social_msg_rec_read ON bdb_social_messages (receiver_id, is_read, created_at DESC)');
@@ -823,7 +829,9 @@ let JukrahService = class JukrahService {
         const uid = Number(user?.id || 0);
         const userSatkerId = Number(user?.scope_satker_id || 0);
         const userRole = String(user?.role_bdb || 'sharese').toLowerCase();
+        const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(userRole);
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
+        const isGlobalReader = isGlobalAdmin || isVendorMitra;
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(200, Math.max(1, Number(opts.limit) || 100));
         const offset = (page - 1) * limit;
@@ -832,7 +840,7 @@ let JukrahService = class JukrahService {
         const audienceFilter = `(
             p.author_id = $1
             OR p.audience_type = 'public'
-            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR u.scope_satker_id = $2::int OR ${isGlobalAdmin ? 'true' : 'false'}))
+            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR u.scope_satker_id = $2::int OR ${isGlobalReader ? 'true' : 'false'}))
             OR (p.audience_type = 'friends' AND (p.author_id = $1 OR u.scope_satker_id = $2::int))
         )`;
         conditions.push(audienceFilter);
@@ -915,7 +923,7 @@ let JukrahService = class JukrahService {
         const posts = rows.map((r) => {
             const isSelf = Number(r.author_id) === uid;
             const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
-            const canSeeRealName = isGlobalAdmin || isSelf || isUserOne;
+            const canSeeRealName = isGlobalReader || isSelf || isUserOne;
             const nrpMatch = (r.author_email_polri || '').match(/^(\d+)@/);
             const derivedNrp = nrpMatch ? nrpMatch[1] : (r.author_username && r.author_username.replace(/^Nrp\./i, '')) || '';
             const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username, r.raw_author_name);
@@ -967,9 +975,9 @@ let JukrahService = class JukrahService {
                 comments_count: Number(r.comments_count || 0),
                 created_at: r.created_at,
                 updated_at: r.updated_at,
-                can_edit: isSelf || isGlobalAdmin,
-                can_delete: isSelf || isGlobalAdmin,
-                can_modify_visibility: isSelf
+                can_edit: !isVendorMitra && (isSelf || isGlobalAdmin),
+                can_delete: !isVendorMitra && (isSelf || isGlobalAdmin),
+                can_modify_visibility: !isVendorMitra && isSelf
             };
         });
         const parentIds = posts.filter(p => p.parent_post_id).map(p => p.parent_post_id);
@@ -1070,6 +1078,8 @@ let JukrahService = class JukrahService {
         if (isOfficial) {
             await this.broadcastDinasNotification(newPostId, user, content);
         }
+        const actorName = user?.name || user?.username || 'Rekan Personil';
+        const actorHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username, user?.name);
         const mentionMatches = content.match(/@([a-z0-9_.]{3,30})/gi);
         if (mentionMatches && mentionMatches.length) {
             const handles = Array.from(new Set(mentionMatches.map(m => m.slice(1).toLowerCase())));
@@ -1082,8 +1092,8 @@ let JukrahService = class JukrahService {
                         category: 'social',
                         type: 'mention',
                         postId: newPostId,
-                        title: 'Sebutan Baru (Mention)',
-                        message: `Seseorang menyebut Anda dalam sebuah postingan: "${content.slice(0, 75)}..."`
+                        title: `🏷️ ${actorName} (${actorHandle}) menyebut Anda dalam diskusi perkara`,
+                        message: `«${content.slice(0, 85)}${content.length > 85 ? '...' : ''}»`
                     });
                 }
             }
@@ -1100,8 +1110,8 @@ let JukrahService = class JukrahService {
                     category: 'social',
                     type: 'repost',
                     postId: newPostId,
-                    title: 'Postingan Anda Dibagikan',
-                    message: `Seseorang membagikan ulang (repost) postingan Anda.`
+                    title: `🔁 ${actorName} (${actorHandle}) membagikan ulang kiriman Anda di Sharese`,
+                    message: `«${content.slice(0, 85)}${content.length > 85 ? '...' : ''}»`
                 });
                 await this.dataSource.query('UPDATE bdb_social_posts SET repost_count = repost_count + 1 WHERE id = $1', [dto.parent_post_id]);
             }
@@ -1137,15 +1147,17 @@ let JukrahService = class JukrahService {
             await this.dataSource.query('INSERT INTO bdb_social_reactions (post_id, user_id, reaction_type) VALUES ($1, $2, $3)', [postId, uid, type]);
             currentReaction = type;
             if (Number(post[0].author_id) !== uid) {
-                const rxLabel = type === 'respect' ? 'menghormati (respect)' : type === 'insightful' ? 'mengapresiasi wawasan' : 'menyukai';
+                const actorName = user?.name || user?.username || 'Rekan Personil';
+                const actorHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username, user?.name);
+                const rxEmoji = type === 'respect' ? '🫡' : type === 'insightful' ? '💡' : type === 'applause' ? '👏' : type === 'fire' ? '🔥' : '👍';
                 await this.createNotification({
                     recipientId: Number(post[0].author_id),
                     senderId: uid,
                     category: 'social',
-                    type: 'reaction',
+                    type: type || 'reaction',
                     postId,
-                    title: 'Reaksi Baru',
-                    message: `Seseorang ${rxLabel} postingan Anda.`
+                    title: `${rxEmoji} ${actorName} (${actorHandle}) mengapresiasi kiriman Anda di Sharese`,
+                    message: `Ketuk untuk melihat apresiasi pada kiriman Anda.`
                 });
             }
         }
@@ -1276,7 +1288,7 @@ let JukrahService = class JukrahService {
     async getNetworkUsers(user, opts) {
         await this.ensureTable();
         const uid = Number(user?.id || 0);
-        const isSuperadmin = String(user?.role_bdb || '').toLowerCase() === 'superadmin';
+        const isSuperadmin = ['superadmin', 'vendor_mitra', 'vendor', 'mitra'].includes(String(user?.role_bdb || '').toLowerCase());
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
         const offset = (page - 1) * limit;
@@ -1580,13 +1592,15 @@ let JukrahService = class JukrahService {
             );
         }
         this.clearNetworkUsersCache();
+        const actorName = user?.name || user?.username || 'Rekan Personil';
+        const senderHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username, user?.name);
         await this.createNotification({
             recipientId: tid,
             senderId: uid,
             category: 'social',
             type: 'connection',
-            title: 'Jejaring Personil Baru',
-            message: `Terhubung dengan akun Anda di Jejaring Koneksi Sharese.`,
+            title: `🤝 ${actorName} (${senderHandle}) mulai terhubung dengan Anda`,
+            message: `Kini Anda terhubung di jejaring Sharese — ketuk untuk menyapa atau melihat profil.`,
             link: `/cms/broadcaster?view=koneksi&profileId=${uid}`
         });
         return {
@@ -1634,7 +1648,10 @@ let JukrahService = class JukrahService {
     async getComments(user, postId) {
         await this.ensureTable();
         const uid = Number(user?.id || 0);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
+        const userRole = String(user?.role_bdb || '').toLowerCase();
+        const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(userRole);
+        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
+        const isGlobalReader = isGlobalAdmin || isVendorMitra;
         const rows = await this.dataSource.query(`SELECT c.id, c.parent_id, c.content, c.created_at, c.is_edited, c.updated_at,
                     p.author_id as post_author_id,
                     u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url, u.social_media,
@@ -1650,7 +1667,7 @@ let JukrahService = class JukrahService {
         const comments = rows.map((r) => {
             const isSelf = Number(r.author_id) === uid;
             const isUserOne = this.isSuperUserOne(r.author_id, r.username, r.callsign);
-            const canSeeReal = isGlobalAdmin || isSelf || isUserOne;
+            const canSeeReal = isGlobalReader || isSelf || isUserOne;
             const handle = this.formatCallsign(r.callsign, r.author_id, r.username, r.raw_name);
             const cleanCallsign = handle.startsWith('@') ? handle.slice(1) : handle;
             return {
@@ -1671,8 +1688,8 @@ let JukrahService = class JukrahService {
                 is_verified: isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese'),
                 likes_count: Number(r.likes_count || 0),
                 is_liked: Boolean(r.is_liked),
-                can_edit: isSelf || isGlobalAdmin,
-                can_delete: isSelf || Number(r.post_author_id) === uid || isGlobalAdmin
+                can_edit: !isVendorMitra && (isSelf || isGlobalAdmin),
+                can_delete: !isVendorMitra && (isSelf || Number(r.post_author_id) === uid || isGlobalAdmin)
             };
         });
         return { status: 1, data: comments };
@@ -1689,6 +1706,8 @@ let JukrahService = class JukrahService {
         if (!post.length)
             throw new common_1.NotFoundException('Postingan tidak ditemukan.');
         const r = await this.dataSource.query('INSERT INTO bdb_social_comments (post_id, user_id, parent_id, content) VALUES ($1, $2, $3, $4) RETURNING id, created_at', [postId, uid, parentId ? Number(parentId) : null, text]);
+        const actorName = user?.name || user?.username || 'Rekan Personil';
+        const actorHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username, user?.name);
         const cMentionMatches = text.match(/@([a-z0-9_.]{3,30})/gi);
         if (cMentionMatches && cMentionMatches.length) {
             const cHandles = Array.from(new Set(cMentionMatches.map(m => m.slice(1).toLowerCase())));
@@ -1701,8 +1720,8 @@ let JukrahService = class JukrahService {
                         category: 'social',
                         type: 'mention',
                         postId,
-                        title: 'Sebutan Baru di Komentar',
-                        message: `Seseorang menyebut Anda dalam sebuah komentar: "${text.slice(0, 75)}..."`
+                        title: `🏷️ ${actorName} (${actorHandle}) menyebut Anda dalam diskusi perkara`,
+                        message: `«${text.slice(0, 85)}${text.length > 85 ? '...' : ''}»`
                     });
                 }
             }
@@ -1717,8 +1736,8 @@ let JukrahService = class JukrahService {
                 category: 'social',
                 type: 'comment',
                 postId,
-                title: 'Komentar Baru',
-                message: `Seseorang mengomentari postingan Anda.`
+                title: `💬 ${actorName} (${actorHandle}) mengomentari kiriman Anda: «${text.slice(0, 75)}${text.length > 75 ? '...' : ''}»`,
+                message: `«${text.slice(0, 110)}${text.length > 110 ? '...' : ''}»`
             });
         }
         const uRows = await this.dataSource.query(`SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
@@ -1899,132 +1918,322 @@ let JukrahService = class JukrahService {
         }
     }
     async broadcastDinasNotification(postId, authorUser, content) {
-        const snippet = content.length > 70 ? content.slice(0, 70) + '...' : content;
+        const snippet = content.length > 75 ? content.slice(0, 75) + '...' : content;
         await this.dataSource.query(`INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
-             SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Jukrah Resmi Kedinasan Baru', $3
+             SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Arahan Resmi Baru dari Robinopsnal Bareskrim Polri — ketuk untuk membaca & konfirmasi', $3
              FROM auth_users
-             WHERE id <> $1 AND status = 'active'
-             LIMIT 5000`, [authorUser.id, postId, snippet]);
+             WHERE id <> $1 AND (UPPER(status) = 'AKTIF' OR LOWER(status) = 'active')
+             LIMIT 5000`, [authorUser.id, postId, `«${snippet}»`]);
+    }
+    humanizeNotificationItem(raw) {
+        const type = String(raw.type || '').toLowerCase();
+        const cat = String(raw.category || 'social').toLowerCase();
+        const isSuperSender = raw.sender_id && this.isSuperUserOne(raw.sender_id, raw.sender_username, raw.sender_callsign);
+        const actorName = raw.sender_name || (isSuperSender ? 'Robinopsnal Bareskrim Polri' : (raw.sender_username || (cat === 'dinas' ? 'Robinopsnal Bareskrim Polri' : 'Rekan Personil')));
+        const actorHandle = raw.sender_handle || (raw.sender_id ? this.formatCallsign(raw.sender_callsign || raw.sender_username, raw.sender_id, raw.sender_username, raw.sender_name) : (cat === 'dinas' ? '@bareskrim' : '@rekan'));
+        const photo = raw.sender_photo || this.resolveDefaultAvatar(null, actorName, null, null);
+        const rawMsg = String(raw.message || '').replace(/^Seseorang [^:]+:\s*/i, '').replace(/^[«"]|[»"]$/g, '').trim();
+        const rawSnippet = String(raw.comment_snippet || raw.post_snippet || rawMsg || '').replace(/^[«"]|[»"]$/g, '').trim();
+
+        let title = raw.title || '';
+        let message = raw.message || '';
+        let badgeIcon = '🔔';
+        let badgeColor = '#2563eb';
+        let filterGroup = 'all';
+
+        if (type === 'comment' || type === 'reply') {
+            const snip = rawSnippet || 'Siap komandan, segera kami tindak lanjuti...';
+            const shortSnip = snip.length > 72 ? snip.slice(0, 72) + '...' : snip;
+            title = `💬 ${actorName} (${actorHandle}) mengomentari kiriman Anda: «${shortSnip}»`;
+            message = `«${shortSnip}»`;
+            badgeIcon = '💬';
+            badgeColor = '#2563eb';
+            filterGroup = 'comment_mention';
+        }
+        else if (['reaction', 'like', 'respect', 'insightful', 'applause', 'fire'].includes(type)) {
+            const emoji = type === 'respect' || rawMsg.includes('respect') ? '🫡'
+                : type === 'insightful' || rawMsg.includes('wawasan') ? '💡'
+                    : type === 'applause' ? '👏'
+                        : type === 'fire' ? '🔥' : '👍';
+            title = `${emoji} ${actorName} (${actorHandle}) mengapresiasi kiriman Anda di Sharese`;
+            message = raw.post_snippet ? `Pada kiriman: «${String(raw.post_snippet).slice(0, 80)}»` : 'Ketuk untuk melihat kiriman Anda di Sharese';
+            badgeIcon = emoji;
+            badgeColor = '#e11d48';
+            filterGroup = 'reaction';
+        }
+        else if (type === 'mention') {
+            const snip = rawSnippet || 'Diskusi penanganan perkara di Sharese';
+            const shortSnip = snip.length > 75 ? snip.slice(0, 75) + '...' : snip;
+            title = `🏷️ ${actorName} (${actorHandle}) menyebut Anda dalam diskusi perkara`;
+            message = `«${shortSnip}»`;
+            badgeIcon = '💬';
+            badgeColor = '#2563eb';
+            filterGroup = 'comment_mention';
+        }
+        else if (type === 'repost') {
+            title = `🔁 ${actorName} (${actorHandle}) meneruskan kiriman Anda di Sharese`;
+            message = rawSnippet ? `«${rawSnippet.slice(0, 80)}»` : 'Kiriman Anda dibagikan ulang ke linimasa rekan sejawat.';
+            badgeIcon = '🔁';
+            badgeColor = '#0284c7';
+            filterGroup = 'comment_mention';
+        }
+        else if (type === 'connection' || type === 'follow') {
+            title = `🤝 ${actorName} (${actorHandle}) mulai terhubung dengan Anda`;
+            message = raw.status === 'PENDING' ? `Mengajukan koneksi jejaring dengan Anda (${actorHandle})` : 'Kini Anda terhubung di jejaring Sharese — ketuk untuk menyapa atau melihat profil';
+            badgeIcon = '🤝';
+            badgeColor = '#16a34a';
+            filterGroup = 'connection';
+        }
+        else if (type === 'message' || type === 'dm') {
+            const snip = rawSnippet || 'Mengirim pesan baru di ruang Obrolan';
+            title = `✉️ ${actorName} (${actorHandle}) mengirim pesan baru kepada Anda`;
+            message = `«${snip.length > 85 ? snip.slice(0, 85) + '...' : snip}»`;
+            badgeIcon = '💬';
+            badgeColor = '#2563eb';
+            filterGroup = 'message';
+        }
+        else if (cat === 'dinas' || ['official_broadcast', 'official_jukrah', 'directive', 'satgas', 'operasi', 'kerma', 'pelimpahan'].includes(type)) {
+            if (type === 'pelimpahan') {
+                title = `📢 Arahan Resmi Pelimpahan Perkara — ${raw.title || 'Pelimpahan LP'}`;
+                message = rawMsg || 'Ketuk untuk memeriksa berkas arsip pelimpahan perkara.';
+            }
+            else if (type === 'kerma') {
+                title = `📢 Arahan Resmi & Kerja Sama Baru — ${raw.title || 'Kerma Polri'}`;
+                message = rawMsg || 'Ketuk untuk membaca dokumen kerja sama.';
+            }
+            else if (type === 'satgas' || type === 'operasi') {
+                title = `📢 Arahan Resmi Operasi/Satgas dari Robinopsnal Bareskrim Polri — ${raw.title || 'Susopsgas'}`;
+                message = 'Ketuk untuk membaca rincian operasi & konfirmasi kesiapan Satker.';
+            }
+            else {
+                title = `📢 Arahan Resmi Baru dari Robinopsnal Bareskrim Polri — ketuk untuk membaca & konfirmasi`;
+                message = rawSnippet ? `«${rawSnippet.slice(0, 95)}${rawSnippet.length > 95 ? '...' : ''}»` : 'Ketuk untuk membaca arahan resmi & konfirmasi keterbacaan.';
+            }
+            badgeIcon = '📢';
+            badgeColor = '#d97706';
+            filterGroup = 'official';
+        }
+
+        return {
+            id: raw.id,
+            category: cat,
+            type: raw.type || 'social',
+            filter_group: filterGroup,
+            post_id: raw.post_id ? Number(raw.post_id) : null,
+            title,
+            message,
+            actor_name: actorName,
+            sender_name: actorName,
+            sender_handle: actorHandle,
+            sender_photo: photo,
+            badge_icon: badgeIcon,
+            badge_color: badgeColor,
+            is_read: Boolean(raw.is_read),
+            created_at: raw.created_at,
+            sender_id: raw.sender_id ? Number(raw.sender_id) : null,
+            link: raw.link || (type === 'message' && raw.sender_id ? `/cms/broadcaster?view=obrolan&partner=${raw.sender_id}` : type === 'connection' && raw.sender_id ? `/cms/broadcaster?view=koneksi&profileId=${raw.sender_id}` : '/cms/broadcaster')
+        };
     }
     async getNotifications(user, category) {
         await this.ensureTable();
         const uid = Number(user?.id);
         const satkerId = Number(user?.scope_satker_id || 0);
         const role = String(user?.role_bdb || '').toLowerCase();
-        const isAdmin = role === 'superadmin' || role === 'admin_binops';
+        const isAdmin = ['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(role);
         const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
         const items = [];
         if (!cat || cat === 'social') {
-            const rows = await this.dataSource.query(`SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+            const rows = await this.dataSource.query(`SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
+                        LEFT(p.content, 110) as post_snippet,
+                        (SELECT LEFT(c.content, 110) FROM bdb_social_comments c WHERE c.post_id = n.post_id AND c.user_id = n.sender_id ORDER BY c.created_at DESC LIMIT 1) as comment_snippet
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
+                 LEFT JOIN bdb_social_posts p ON p.id = n.post_id
                  WHERE n.recipient_id = $1 AND n.category = 'social'
                  ORDER BY n.created_at DESC
-                 LIMIT 35`, [uid]);
-            items.push(...rows.map((r) => ({
+                 LIMIT 40`, [uid]);
+            items.push(...rows.map((r) => this.humanizeNotificationItem({
+                ...r,
                 id: Number(r.id),
-                category: 'social',
-                type: r.type,
-                post_id: r.post_id ? Number(r.post_id) : null,
-                title: r.title,
-                message: r.message,
-                is_read: Boolean(r.is_read),
-                created_at: r.created_at,
-                sender_id: r.sender_id ? Number(r.sender_id) : null,
-                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : null,
-                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
-                link: r.link || (r.type === 'message' && r.sender_id ? `/cms/broadcaster?view=obrolan&partner=${r.sender_id}` : (r.type === 'connection' && r.sender_id ? `/cms/broadcaster?view=koneksi&profileId=${r.sender_id}` : '/cms/broadcaster'))
+                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@rekan',
+                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null)
             })));
+            try {
+                const recentComments = await this.dataSource.query(`SELECT c.id, c.post_id, c.user_id as sender_id, LEFT(c.content, 110) as comment_snippet, c.created_at,
+                            u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                     FROM bdb_social_comments c
+                     JOIN bdb_social_posts p ON p.id = c.post_id
+                     JOIN auth_users u ON u.id = c.user_id
+                     WHERE c.user_id <> $1 AND p.status = 'active'
+                     ORDER BY (p.author_id = $1) DESC, c.created_at DESC
+                     LIMIT 6`, [uid]);
+                for (const rc of recentComments) {
+                    const dup = items.some(it => it.type === 'comment' && Number(it.post_id) === Number(rc.post_id) && Number(it.sender_id) === Number(rc.sender_id));
+                    if (!dup) {
+                        items.push(this.humanizeNotificationItem({
+                            id: 'cm_' + rc.id,
+                            category: 'social',
+                            type: 'comment',
+                            post_id: Number(rc.post_id),
+                            comment_snippet: rc.comment_snippet,
+                            is_read: false,
+                            created_at: rc.created_at,
+                            sender_id: Number(rc.sender_id),
+                            sender_name: rc.sender_name,
+                            sender_callsign: rc.sender_callsign,
+                            sender_username: rc.sender_username,
+                            sender_handle: this.formatCallsign(rc.sender_callsign || rc.sender_username, rc.sender_id, rc.sender_username, rc.sender_name),
+                            sender_photo: this.resolveDefaultAvatar(rc.sender_photo, rc.sender_name, null, null),
+                            link: '/cms/broadcaster'
+                        }));
+                    }
+                }
+                const recentReactions = await this.dataSource.query(`SELECT r.post_id, r.user_id as sender_id, r.reaction_type, r.created_at, LEFT(p.content, 90) as post_snippet,
+                            u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                     FROM bdb_social_reactions r
+                     JOIN bdb_social_posts p ON p.id = r.post_id
+                     JOIN auth_users u ON u.id = r.user_id
+                     WHERE r.user_id <> $1 AND p.status = 'active'
+                     ORDER BY (p.author_id = $1) DESC, r.created_at DESC
+                     LIMIT 6`, [uid]);
+                for (const rx of recentReactions) {
+                    const dup = items.some(it => ['reaction', 'like', 'respect', 'insightful'].includes(it.type) && Number(it.post_id) === Number(rx.post_id) && Number(it.sender_id) === Number(rx.sender_id));
+                    if (!dup) {
+                        items.push(this.humanizeNotificationItem({
+                            id: `rx_${rx.post_id}_${rx.sender_id}`,
+                            category: 'social',
+                            type: rx.reaction_type || 'like',
+                            post_id: Number(rx.post_id),
+                            post_snippet: rx.post_snippet,
+                            is_read: true,
+                            created_at: rx.created_at,
+                            sender_id: Number(rx.sender_id),
+                            sender_name: rx.sender_name,
+                            sender_callsign: rx.sender_callsign,
+                            sender_username: rx.sender_username,
+                            sender_handle: this.formatCallsign(rx.sender_callsign || rx.sender_username, rx.sender_id, rx.sender_username, rx.sender_name),
+                            sender_photo: this.resolveDefaultAvatar(rx.sender_photo, rx.sender_name, null, null),
+                            link: '/cms/broadcaster'
+                        }));
+                    }
+                }
+            }
+            catch { }
             const connRows = await this.dataSource.query(`SELECT uc.id, uc.status, uc.updated_at as created_at,
                         u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
                  FROM user_connections uc
                  JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
-                 WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED'))
+                 WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED') OR (uc.addressee_id = $1 AND uc.status = 'ACCEPTED'))
                  ORDER BY uc.updated_at DESC
-                 LIMIT 15`, [uid]);
+                 LIMIT 12`, [uid]);
             items.push(...connRows.map((r) => {
-                const handle = this.formatCallsign(r.other_callsign || r.other_username, r.other_id, r.other_username, r.other_name).replace(/^@/, '');
-                return {
+                const handle = this.formatCallsign(r.other_callsign || r.other_username, r.other_id, r.other_username, r.other_name);
+                return this.humanizeNotificationItem({
                     id: 'conn_' + r.id,
                     category: 'social',
                     type: 'connection',
+                    status: r.status,
                     post_id: null,
-                    title: 'Jejaring: ' + (r.other_name || handle),
-                    message: r.status === 'PENDING' ? `Mengajukan koneksi dengan Anda (@${handle})` : `Anda sekarang terkoneksi dengan @${handle}`,
-                    is_read: true,
+                    is_read: r.status !== 'PENDING',
                     created_at: r.created_at,
                     sender_id: Number(r.other_id),
-                    sender_handle: '@' + handle,
+                    sender_name: r.other_name,
+                    sender_handle: handle,
                     sender_photo: this.resolveDefaultAvatar(r.other_photo, r.other_name, null, null),
                     link: `/cms/broadcaster?view=koneksi&profileId=${r.other_id}`
-                };
+                });
             }));
         }
         if (!cat || cat === 'dinas') {
-            const dinasRows = await this.dataSource.query(`SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        n.sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+            const dinasRows = await this.dataSource.query(`SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
+                        LEFT(p.content, 110) as post_snippet
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
+                 LEFT JOIN bdb_social_posts p ON p.id = n.post_id
                  WHERE n.recipient_id = $1 AND n.category = 'dinas'
                  ORDER BY n.created_at DESC
-                 LIMIT 20`, [uid]);
-            items.push(...dinasRows.map((r) => ({
+                 LIMIT 30`, [uid]);
+            items.push(...dinasRows.map((r) => this.humanizeNotificationItem({
+                ...r,
                 id: Number(r.id),
-                category: 'dinas',
-                type: r.type,
-                post_id: r.post_id ? Number(r.post_id) : null,
-                title: r.title,
-                message: r.message,
-                is_read: Boolean(r.is_read),
-                created_at: r.created_at,
-                sender_id: r.sender_id ? Number(r.sender_id) : null,
-                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : null,
-                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
-                link: r.link || '/cms/broadcaster'
+                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@bareskrim',
+                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name || 'Robinopsnal Bareskrim Polri', null, null)
             })));
+            try {
+                const jukPosts = await this.dataSource.query(`SELECT p.id, LEFT(p.content, 110) as post_snippet, p.created_at,
+                            u.id as sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                     FROM bdb_social_posts p
+                     LEFT JOIN auth_users u ON u.id = p.author_id
+                     WHERE p.is_official_jukrah = true AND p.status = 'active'
+                     ORDER BY p.created_at DESC
+                     LIMIT 5`);
+                for (const jp of jukPosts) {
+                    const dup = items.some(it => Number(it.post_id) === Number(jp.id));
+                    if (!dup) {
+                        items.push(this.humanizeNotificationItem({
+                            id: 'juk_' + jp.id,
+                            category: 'dinas',
+                            type: 'official_jukrah',
+                            post_id: Number(jp.id),
+                            post_snippet: jp.post_snippet,
+                            is_read: false,
+                            created_at: jp.created_at,
+                            sender_id: Number(jp.sender_id || 1),
+                            sender_name: 'Robinopsnal Bareskrim Polri',
+                            sender_handle: '@om.eko_42',
+                            sender_photo: this.resolveDefaultAvatar(jp.sender_photo, jp.sender_name || 'EKO', null, null),
+                            link: '/cms/broadcaster'
+                        }));
+                    }
+                }
+            }
+            catch { }
             const satgasRows = await this.dataSource.query(`SELECT id, jenis, nama as title, deskripsi, created_at
                  FROM bdb_operasi_satgas
                  WHERE deleted_at IS NULL
                  ORDER BY created_at DESC
-                 LIMIT 6`);
-            items.push(...satgasRows.map((r) => ({
+                 LIMIT 5`);
+            items.push(...satgasRows.map((r) => this.humanizeNotificationItem({
                 id: 'satgas_' + r.id,
                 category: 'dinas',
                 type: r.jenis.toLowerCase(),
                 post_id: null,
                 title: r.title,
-                message: `Ada ${r.jenis === 'SATGAS' ? 'Satgas Operasi' : 'Operasi Kepolisian'} Baru dari Robinops Bareskrim`,
+                message: `Ada ${r.jenis === 'SATGAS' ? 'Satgas Operasi' : 'Operasi Kepolisian'} Baru dari Robinopsnal Bareskrim Polri`,
                 is_read: true,
                 created_at: r.created_at,
+                sender_name: 'Robinopsnal Bareskrim Polri',
                 sender_handle: '@bareskrim',
-                sender_photo: null,
-                link: '/cms/master/operasi-satgas'
+                sender_photo: '/images/default-avatar-polki.png',
+                link: '/cms/laporan/kasus-menonjol/lihat'
             })));
             const kermaRows = await this.dataSource.query(`SELECT id, institusi, tentang as title, created_at
                  FROM bdb_kerma_master
                  WHERE deleted_at IS NULL
                  ORDER BY created_at DESC
-                 LIMIT 5`);
-            items.push(...kermaRows.map((r) => ({
+                 LIMIT 4`);
+            items.push(...kermaRows.map((r) => this.humanizeNotificationItem({
                 id: 'kerma_' + r.id,
                 category: 'dinas',
                 type: 'kerma',
                 post_id: null,
                 title: r.title,
-                message: `Kerjasama (Kerma) Baru dengan ${r.institusi}`,
+                message: `Kerja Sama (Kerma) Baru bersama ${r.institusi}`,
                 is_read: true,
                 created_at: r.created_at,
+                sender_name: 'Divisi Kerma Polri',
                 sender_handle: '@kerma_polri',
-                sender_photo: null,
-                link: '/cms/master/kerma'
+                sender_photo: '/images/default-avatar-polki.png',
+                link: '/cms/kerma/lihat'
             })));
             const lpSql = isAdmin
-                ? `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan ORDER BY created_at DESC LIMIT 6`
-                : `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $1 OR satker_asal_id = $1) ORDER BY created_at DESC LIMIT 6`;
+                ? `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan ORDER BY created_at DESC LIMIT 5`
+                : `SELECT id, lp_id, satker_asal_nama, satker_tujuan_nama, created_at FROM bdb_lp_pelimpahan WHERE (satker_tujuan_id = $1 OR satker_asal_id = $1) ORDER BY created_at DESC LIMIT 5`;
             const lpParams = isAdmin ? [] : [satkerId];
             const lpRows = await this.dataSource.query(lpSql, lpParams);
-            items.push(...lpRows.map((r) => ({
+            items.push(...lpRows.map((r) => this.humanizeNotificationItem({
                 id: 'lp_' + r.id,
                 category: 'dinas',
                 type: 'pelimpahan',
@@ -2033,9 +2242,10 @@ let JukrahService = class JukrahService {
                 message: `LP #${r.lp_id} dilimpahkan dari ${r.satker_asal_nama || 'Satker Asal'}`,
                 is_read: true,
                 created_at: r.created_at,
+                sender_name: 'Robinopsnal Bareskrim Polri',
                 sender_handle: '@robinops',
-                sender_photo: null,
-                link: '/cms/laporan-polisi'
+                sender_photo: '/images/default-avatar-polki.png',
+                link: '/cms/laporan-polisi/arsip-pelimpahan'
             })));
         }
         items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -2053,15 +2263,18 @@ let JukrahService = class JukrahService {
         });
         return {
             status: 1,
-            data: items.slice(0, 45),
+            data: items.slice(0, 60),
             unread_dinas: unreadDinas,
-            unread_social: unreadSocial
+            unread_social: unreadSocial,
+            unread_total: unreadDinas + unreadSocial
         };
     }
     async markNotificationRead(user, notifId) {
         await this.ensureTable();
         const uid = Number(user?.id);
-        await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2', [notifId, uid]);
+        if (!isNaN(Number(notifId))) {
+            await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2', [Number(notifId), uid]);
+        }
         return { status: 1 };
     }
     async markAllNotificationsRead(user, category) {
@@ -2078,6 +2291,7 @@ let JukrahService = class JukrahService {
     async getMessageConversations(user) {
         await this.ensureTable();
         const uid = Number(user?.id || 0);
+        const satkerId = Number(user?.scope_satker_id || 0);
         if (!uid)
             throw new common_1.ForbiddenException('Sesi tidak valid.');
         const aiRows = await this.dataSource.query(
@@ -2089,123 +2303,116 @@ let JukrahService = class JukrahService {
         );
         const aiLast = aiRows[0] || null;
         const aiChannel = {
+            id: -1,
             partner_id: -1,
             is_ai: true,
+            is_official: true,
+            is_same_satker: true,
             name: 'AI Agen Taktis CAS',
             handle: '@ai_taktis_cas',
+            username: '@ai_taktis_cas',
+            callsign: 'ai_taktis_cas',
             satker: 'Robinopsnal Bareskrim Polri',
+            satker_nama: 'Robinopsnal Bareskrim Polri',
             pangkat: 'Asisten Cerdas 24/7',
+            jabatan: 'Asisten Taktis Penyidik & Analis',
             photo_url: '/images/default-avatar-polki.png',
-            last_message: aiLast ? aiLast.content : 'Siap membantu analisis LP, DORS, KUHP Baru (UU 1/2023), dan SOP Penyidikan.',
+            last_message: aiLast ? aiLast.content : 'Siap Komandan! Tanyakan analisis LP, KUHP Baru (UU 1/2023), DORS, Selra, atau panduan CAS.',
+            last_sender_id: aiLast ? Number(aiLast.sender_id) : -1,
+            last_is_mine: Boolean(aiLast && Number(aiLast.sender_id) === uid),
             last_time: aiLast ? aiLast.created_at : new Date().toISOString(),
             unread_count: 0,
-            online: true
+            online: true,
+            is_online: true,
+            channel_type: 'ai_agent'
         };
-        const convRows = await this.dataSource.query(
-            `WITH ranked_msgs AS (
-                SELECT
-                    m.id,
-                    m.sender_id,
-                    m.receiver_id,
-                    m.content,
-                    m.media_url,
-                    m.is_read,
-                    m.created_at,
-                    CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END AS partner_id,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY (CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END)
-                        ORDER BY m.created_at DESC, m.id DESC
-                    ) AS rn
-                FROM bdb_social_messages m
-                WHERE (m.sender_id = $1 OR m.receiver_id = $1)
-                  AND m.sender_id <> -1 AND m.receiver_id <> -1
-            ),
-            unread_agg AS (
-                SELECT sender_id AS partner_id, COUNT(*)::int AS unread_count
+        const peerRows = await this.dataSource.query(
+            `WITH peer_ids AS (
+                SELECT DISTINCT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END AS peer_id
                 FROM bdb_social_messages
-                WHERE receiver_id = $1 AND is_read = false AND sender_id > 0
-                GROUP BY sender_id
+                WHERE (sender_id = $1 OR receiver_id = $1) AND sender_id > 0 AND receiver_id > 0
+                UNION
+                SELECT CASE WHEN requester_id = $1 THEN addressee_id ELSE requester_id END AS peer_id
+                FROM user_connections
+                WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED'
+                UNION
+                SELECT id AS peer_id FROM auth_users WHERE id = 1 AND $1 <> 1
+                UNION
+                (SELECT id AS peer_id FROM auth_users WHERE id <> $1 AND (UPPER(status) = 'AKTIF' OR LOWER(status) = 'active') ORDER BY (scope_satker_id = $2) DESC, last_login_at DESC NULLS LAST LIMIT 18)
             )
-            SELECT
-                rm.partner_id,
-                rm.content AS last_message,
-                rm.created_at AS last_time,
-                COALESCE(ua.unread_count, 0)::int AS unread_count,
-                u.name,
-                u.username,
-                u.callsign,
-                u.role_bdb,
-                u.photo_url,
-                u.social_media,
-                u.last_login_at,
-                s.nama_singkat AS satker_singkat,
-                s.deskripsi AS satker_nama
-            FROM ranked_msgs rm
-            JOIN auth_users u ON u.id = rm.partner_id
+            SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
+                   s.deskripsi as satker_nama, s.nama_singkat as satker_singkat,
+                   tp.pangkat, tp.jabatan, tp.jenis_kelamin, tp.foto as police_foto,
+                   lm.content as last_message, lm.created_at as last_time, lm.channel_type as last_channel, lm.sender_id as last_sender_id,
+                   COALESCE(ur.unread_count, 0)::int as unread_count,
+                   EXISTS(SELECT 1 FROM user_connections uc WHERE ((uc.requester_id = $1 AND uc.addressee_id = u.id) OR (uc.requester_id = u.id AND uc.addressee_id = $1)) AND uc.status = 'ACCEPTED') as is_connected
+            FROM peer_ids pid
+            JOIN auth_users u ON u.id = pid.peer_id
             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-            LEFT JOIN unread_agg ua ON ua.partner_id = rm.partner_id
-            WHERE rm.rn = 1
-            ORDER BY rm.created_at DESC
+            LEFT JOIN LATERAL (
+                SELECT pangkat, jabatan, jenis_kelamin, foto
+                FROM trb_police tp
+                WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
+                LIMIT 1
+            ) tp ON true
+            LEFT JOIN LATERAL (
+                SELECT content, created_at, channel_type, sender_id
+                FROM bdb_social_messages m
+                WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
+                ORDER BY m.created_at DESC LIMIT 1
+            ) lm ON true
+            LEFT JOIN LATERAL (
+                SELECT count(*)::int as unread_count
+                FROM bdb_social_messages m2
+                WHERE m2.sender_id = u.id AND m2.receiver_id = $1 AND m2.is_read = false
+            ) ur ON true
+            WHERE u.id <> $1
+            ORDER BY lm.created_at DESC NULLS LAST, (u.id = 1) DESC, (u.scope_satker_id = $2) DESC, u.last_login_at DESC NULLS LAST
             LIMIT 60`,
-            [uid]
+            [uid, satkerId]
         );
-        const existingPartnerIds = new Set(convRows.map((r) => Number(r.partner_id)));
-        const connFriends = await this.dataSource.query(
-            `SELECT u.id AS partner_id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media, u.last_login_at,
-                    s.nama_singkat AS satker_singkat, s.deskripsi AS satker_nama, uc.updated_at AS conn_time
-             FROM user_connections uc
-             JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
-             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-             WHERE (uc.requester_id = $1 OR uc.addressee_id = $1) AND uc.status = 'ACCEPTED'
-             ORDER BY uc.updated_at DESC
-             LIMIT 30`,
-            [uid]
-        );
-        const mappedConvs = convRows.map((r) => {
-            const pid = Number(r.partner_id);
+        const mappedConvs = peerRows.map((r) => {
+            const pid = Number(r.id);
             const isUserOne = this.isSuperUserOne(pid, r.username, r.callsign);
             const handle = this.formatCallsign(r.callsign || r.username, pid, r.username, r.name);
             const satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri');
+            const roleBdb = isUserOne ? 'superadmin' : String(r.role_bdb || 'operator').toLowerCase();
+            const isOfficial = isUserOne || ['superadmin', 'admin_binops'].includes(roleBdb);
+            const isSameSatker = Boolean((satkerId > 0 && Number(r.scope_satker_id) === satkerId) || r.is_connected);
+            const isOnline = Boolean(isUserOne || (r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime() < 36 * 3600 * 1000)));
             return {
+                id: pid,
                 partner_id: pid,
                 is_ai: false,
+                is_official: isOfficial,
+                is_same_satker: isSameSatker,
                 name: isUserOne ? (r.name || 'EKO') : (r.name || handle),
                 handle,
+                username: handle,
+                callsign: handle.replace(/^@/, ''),
                 satker,
-                pangkat: isUserOne ? 'KOMPOL' : (r.role_bdb || 'Personil Polri'),
-                photo_url: this.resolveDefaultAvatar(r.photo_url, r.name, null, r.social_media),
-                last_message: r.last_message || '',
-                last_time: r.last_time,
+                satker_nama: satker,
+                pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (isOfficial ? 'Admin Binops' : 'Personil Polri')),
+                jabatan: r.jabatan || (isUserOne ? 'Kasubdit Robinopsnal' : roleBdb),
+                photo_url: this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media),
+                last_message: r.last_message || (isUserOne ? 'Saluran Koordinasi Resmi Robinopsnal Bareskrim Polri' : 'Terhubung di Jejaring Sharese — Ketuk untuk mulai mengobrol'),
+                last_sender_id: r.last_sender_id ? Number(r.last_sender_id) : null,
+                last_is_mine: Boolean(r.last_sender_id && Number(r.last_sender_id) === uid),
+                last_time: r.last_time || r.last_login_at || new Date().toISOString(),
                 unread_count: Number(r.unread_count || 0),
-                online: Boolean(r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime() < 24 * 3600 * 1000))
+                online: isOnline,
+                is_online: isOnline,
+                is_connected: Boolean(r.is_connected),
+                channel_type: isOfficial ? 'official' : (r.last_channel || 'direct')
             };
         });
-        for (const cf of connFriends) {
-            const pid = Number(cf.partner_id);
-            if (existingPartnerIds.has(pid) || pid === uid)
-                continue;
-            existingPartnerIds.add(pid);
-            const isUserOne = this.isSuperUserOne(pid, cf.username, cf.callsign);
-            const handle = this.formatCallsign(cf.callsign || cf.username, pid, cf.username, cf.name);
-            const satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (cf.satker_singkat || cf.satker_nama || 'Polri');
-            mappedConvs.push({
-                partner_id: pid,
-                is_ai: false,
-                name: isUserOne ? (cf.name || 'EKO') : (cf.name || handle),
-                handle,
-                satker,
-                pangkat: isUserOne ? 'KOMPOL' : (cf.role_bdb || 'Personil Polri'),
-                photo_url: this.resolveDefaultAvatar(cf.photo_url, cf.name, null, cf.social_media),
-                last_message: 'Terkoneksi di Jejaring Sharese — Mulai percakapan',
-                last_time: cf.conn_time || new Date().toISOString(),
-                unread_count: 0,
-                online: Boolean(cf.last_login_at && (Date.now() - new Date(cf.last_login_at).getTime() < 24 * 3600 * 1000))
-            });
-        }
         const totalUnread = mappedConvs.reduce((acc, c) => acc + Number(c.unread_count || 0), 0);
+        const allConvs = [aiChannel, ...mappedConvs];
         return {
             status: 1,
-            data: [aiChannel, ...mappedConvs],
+            data: allConvs,
+            conversations: allConvs,
+            helpdesk_contacts: allConvs.filter(c => c.is_ai || c.is_official),
             total_unread: totalUnread
         };
     }
@@ -2230,7 +2437,7 @@ let JukrahService = class JukrahService {
             );
         }
         const rows = await this.dataSource.query(
-            `SELECT id, sender_id, receiver_id, content, media_url, is_read, created_at
+            `SELECT id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at
              FROM bdb_social_messages
              WHERE (sender_id = $1 AND receiver_id = $2)
                 OR (sender_id = $2 AND receiver_id = $1)
@@ -2242,20 +2449,34 @@ let JukrahService = class JukrahService {
         if (isAiTarget) {
             partnerInfo = {
                 id: -1,
+                partner_id: -1,
                 is_ai: true,
+                is_official: true,
                 name: 'AI Agen Taktis CAS',
                 handle: '@ai_taktis_cas',
+                username: '@ai_taktis_cas',
+                callsign: 'ai_taktis_cas',
                 satker: 'Robinopsnal Bareskrim Polri',
+                satker_nama: 'Robinopsnal Bareskrim Polri',
                 pangkat: 'Asisten Cerdas 24/7',
-                photo_url: '/images/default-avatar-polki.png'
+                photo_url: '/images/default-avatar-polki.png',
+                online: true,
+                is_online: true
             };
         }
         else {
             const uRows = await this.dataSource.query(
-                `SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
-                        s.nama_singkat AS satker_singkat, s.deskripsi AS satker_nama
+                `SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media, u.last_login_at,
+                        s.nama_singkat AS satker_singkat, s.deskripsi AS satker_nama,
+                        tp.pangkat, tp.jabatan, tp.jenis_kelamin, tp.foto as police_foto
                  FROM auth_users u
                  LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                 LEFT JOIN LATERAL (
+                     SELECT pangkat, jabatan, jenis_kelamin, foto
+                     FROM trb_police tp
+                     WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
+                     LIMIT 1
+                 ) tp ON true
                  WHERE u.id = $1 LIMIT 1`,
                 [targetId]
             );
@@ -2263,35 +2484,62 @@ let JukrahService = class JukrahService {
                 const r = uRows[0];
                 const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
                 const handle = this.formatCallsign(r.callsign || r.username, r.id, r.username, r.name);
+                const satker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri');
                 partnerInfo = {
                     id: Number(r.id),
+                    partner_id: Number(r.id),
                     is_ai: false,
+                    is_official: isUserOne || ['superadmin', 'admin_binops'].includes(String(r.role_bdb || '').toLowerCase()),
                     name: isUserOne ? (r.name || 'EKO') : (r.name || handle),
                     handle,
-                    satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri'),
-                    pangkat: isUserOne ? 'KOMPOL' : (r.role_bdb || 'Personil Polri'),
-                    photo_url: this.resolveDefaultAvatar(r.photo_url, r.name, null, r.social_media)
+                    username: handle,
+                    callsign: handle.replace(/^@/, ''),
+                    satker,
+                    satker_nama: satker,
+                    pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (r.role_bdb || 'Personil Polri')),
+                    jabatan: r.jabatan || (isUserOne ? 'Kasubdit Robinopsnal' : 'Penyidik'),
+                    photo_url: this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media),
+                    online: true,
+                    is_online: true
                 };
             }
         }
-        let messages = rows.map((m) => ({
-            id: Number(m.id),
-            sender_id: Number(m.sender_id),
-            receiver_id: Number(m.receiver_id),
-            is_mine: Number(m.sender_id) === uid,
-            content: m.content,
-            media_url: m.media_url || null,
-            is_read: Boolean(m.is_read),
-            created_at: m.created_at
-        }));
+        let messages = rows.map((m) => {
+            const isMine = Number(m.sender_id) === uid;
+            let replyTo = null;
+            let reactions = {};
+            try { if (m.reply_to_json) replyTo = JSON.parse(m.reply_to_json); } catch {}
+            try { if (m.reactions_json) reactions = JSON.parse(m.reactions_json); } catch {}
+            return {
+                id: Number(m.id),
+                sender_id: Number(m.sender_id),
+                receiver_id: Number(m.receiver_id),
+                is_mine: isMine,
+                is_me: isMine,
+                channel_type: m.channel_type || 'direct',
+                content: m.content,
+                media_url: m.media_url || m.attachment_url || null,
+                attachment_url: m.attachment_url || m.media_url || null,
+                attachment_name: m.attachment_name || null,
+                reply_to: replyTo,
+                reactions,
+                is_read: Boolean(m.is_read),
+                created_at: m.created_at
+            };
+        });
         if (isAiTarget && messages.length === 0) {
             messages = [{
                 id: 0,
                 sender_id: -1,
                 receiver_id: uid,
                 is_mine: false,
+                is_me: false,
                 content: `Selamat bertugas, Rekan! Saya AI Agen Taktis CAS Robinopsnal Bareskrim Polri. Silakan tanyakan terkait Analisis LP, Sinkronisasi DORS, Referensi Pasal KUHP Baru (UU No. 1 Tahun 2023), maupun Panduan SOP Penyidikan.`,
                 media_url: null,
+                attachment_url: null,
+                attachment_name: null,
+                reply_to: null,
+                reactions: {},
                 is_read: true,
                 created_at: new Date().toISOString()
             }];
@@ -2299,22 +2547,23 @@ let JukrahService = class JukrahService {
         return {
             status: 1,
             partner: partnerInfo,
-            data: messages
+            data: messages,
+            messages
         };
     }
     buildAiTacticalReply(prompt, user) {
         const q = String(prompt || '').toLowerCase();
         const callerName = user?.name || user?.username || 'Rekan Penyidik';
         if (q.includes('kuhp') || q.includes('pasal') || q.includes('uu 1') || q.includes('pidana')) {
-            return `📋 **[Analisis Regulasi & KUHP Baru — UU No. 1 Tahun 2023]**\nHalo ${callerName}, terkait pertanyaan Anda:\n1. Pastikan pemetaan unsur delik pada Laporan Polisi (LP) telah mencantumkan padanan pasal transisi KUHP Lama ke **UU No. 1 Tahun 2023**.\n2. Gunakan fitur **Smart Import PDF** atau **Audit Kesesuaian Pasal** pada menu *Laporan → Rekap* untuk memvalidasi kelengkapan administrasi penyidikan (Mindik).`;
+            return `⚖️ **[Analisis Regulasi & KUHP Baru — UU No. 1 Tahun 2023]**\nHalo ${callerName}, terkait pertanyaan Anda:\n1. Pastikan pemetaan unsur delik pada Laporan Polisi (LP) telah mencantumkan padanan pasal transisi KUHP Lama ke **UU No. 1 Tahun 2023**.\n2. Gunakan fitur **Smart Import PDF** atau **Audit Kesesuaian Pasal** pada menu *Laporan → Rekap* untuk memvalidasi kelengkapan administrasi penyidikan (Mindik).`;
         }
         if (q.includes('dors') || q.includes('integrasi') || q.includes('tarik') || q.includes('sinkron')) {
             return `🔄 **[Panduan Taktis Portal Integrasi DORS]**\nHalo ${callerName}, untuk sinkronisasi data DORS Robinopsnal:\n1. Buka menu **Portal Integrasi → Masuk → Tarik Data** untuk mengambil data LP terbaru dari sumber DORS.\n2. Lanjutkan ke **Staging** & **Cek Duplikat** sebelum melakukan *Import ke Database* utama agar tidak terjadi duplikasi nomor LP.`;
         }
-        if (q.includes('selra') || q.includes('p21') || q.includes('sp3') || q.includes('rj') || q.includes('restorative')) {
-            return `⚖️ **[Monitoring Penyelesaian Perkara (Selra)]**\nHalo ${callerName}, pencatatan penyelesaian perkara (**P-21, SP3, RJ, SP2Lid, maupun Pelimpahan**) wajib disertai dokumen lampiran PDF resmi dan mengacu pada alur dokumen penyidikan di menu **Register** serta **Laporan → Kinerja Perkara**.`;
+        if (q.includes('selra') || q.includes('p21') || q.includes('sp3') || q.includes('rj') || q.includes('restorative') || q.includes('ct') || q.includes('cc') || q.includes('cr')) {
+            return `📊 **[Monitoring Kinerja & Penyelesaian Perkara (Selra)]**\nHalo ${callerName}, pencatatan penyelesaian perkara (**P-21, SP3, RJ, SP2Lid, maupun Pelimpahan**) wajib disertai dokumen lampiran PDF resmi dan mengacu pada alur dokumen penyidikan di menu **Register** serta **Laporan → Kinerja Perkara**.`;
         }
-        return `🛡️ **[AI Agen Taktis CAS — Robinopsnal Bareskrim Polri]**\nTerima kasih ${callerName}. Pesan Anda: *"${String(prompt || '').slice(0, 120)}"* telah dicatat oleh asisten taktis.\n\nSaya siap membantu Anda dalam:\n• Pemeriksaan kelengkapan **Laporan Polisi & Selra**\n• Panduan **Portal Integrasi (DORS Masuk & Keluar)**\n• Pemantauan **Susopsgas (Operasi & Satgas)** serta **Kerja Sama (Kerma)**.\nKetik topik spesifik (misal: *KUHP*, *DORS*, *Selra*, atau *Susopsgas*) untuk instruksi detail.`;
+        return `🛡️ **[AI Agen Taktis CAS — Robinopsnal Bareskrim Polri]**\nTerima kasih ${callerName}. Pesan Anda: *"${String(prompt || '').slice(0, 120)}"* telah dicatat oleh asisten taktis.\n\nSaya siap membantu Anda dalam:\n• Pemeriksaan kelengkapan **Laporan Polisi & Selra (CT/CC/CR)**\n• Panduan **Portal Integrasi (DORS Masuk & Keluar)**\n• Pemantauan **Susopsgas (Operasi & Satgas)** serta **Kerja Sama (Kerma)**.\nKetik topik spesifik (misal: *KUHP*, *DORS*, *Selra*, atau *Susopsgas*) untuk instruksi detail.`;
     }
     async sendSocialMessage(user, body) {
         await this.ensureTable();
@@ -2325,7 +2574,11 @@ let JukrahService = class JukrahService {
         const isAiTarget = rawTarget === 'ai' || rawTarget === -1 || String(rawTarget) === '-1';
         const receiverId = isAiTarget ? -1 : Number(rawTarget);
         const text = String(body?.content || '').trim();
-        const mediaUrl = body?.media_url ? String(body.media_url).trim() : null;
+        const channelType = String(body?.channel_type || (isAiTarget ? 'ai_agent' : 'direct')).trim();
+        const mediaUrl = body?.media_url || body?.attachment_url ? String(body.media_url || body.attachment_url).trim() : null;
+        const attachmentName = body?.attachment_name ? String(body.attachment_name).trim() : null;
+        const replyToObj = body?.reply_to && typeof body.reply_to === 'object' ? body.reply_to : null;
+        const replyToJson = replyToObj ? JSON.stringify(replyToObj) : null;
         if (!text && !mediaUrl) {
             throw new common_1.BadRequestException('Pesan tidak boleh kosong.');
         }
@@ -2333,25 +2586,28 @@ let JukrahService = class JukrahService {
             throw new common_1.BadRequestException('Penerima pesan tidak valid.');
         }
         const inserted = await this.dataSource.query(
-            `INSERT INTO bdb_social_messages (sender_id, receiver_id, content, media_url, is_read, created_at)
-             VALUES ($1, $2, $3, $4, $5, NOW())
-             RETURNING id, sender_id, receiver_id, content, media_url, is_read, created_at`,
-            [uid, receiverId, text, mediaUrl, isAiTarget ? true : false]
+            `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, is_read, created_at)
+             VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8, NOW())
+             RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at`,
+            [uid, receiverId, channelType, text, mediaUrl, attachmentName, replyToJson, isAiTarget ? true : false]
         );
         const sentMsg = {
             ...inserted[0],
             id: Number(inserted[0].id),
             sender_id: uid,
             receiver_id: receiverId,
-            is_mine: true
+            is_mine: true,
+            is_me: true,
+            reply_to: replyToObj,
+            reactions: {}
         };
         let aiReplyMsg = null;
         if (isAiTarget) {
             const replyText = this.buildAiTacticalReply(text, user);
             const aiIns = await this.dataSource.query(
-                `INSERT INTO bdb_social_messages (sender_id, receiver_id, content, media_url, is_read, created_at)
-                 VALUES (-1, $1, $2, NULL, true, NOW() + interval '1 millisecond')
-                 RETURNING id, sender_id, receiver_id, content, media_url, is_read, created_at`,
+                `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, media_url, is_read, created_at)
+                 VALUES (-1, $1, 'ai_agent', $2, NULL, true, NOW() + interval '1 millisecond')
+                 RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at`,
                 [uid, replyText]
             );
             aiReplyMsg = {
@@ -2359,25 +2615,34 @@ let JukrahService = class JukrahService {
                 id: Number(aiIns[0].id),
                 sender_id: -1,
                 receiver_id: uid,
-                is_mine: false
+                is_mine: false,
+                is_me: false,
+                reply_to: null,
+                reactions: {}
             };
         }
         else {
-            const senderHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username);
+            const actorName = user?.name || user?.username || 'Rekan Personil';
+            const senderHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username, user?.name);
             await this.createNotification({
                 recipientId: receiverId,
                 senderId: uid,
-                category: 'social',
+                category: channelType === 'helpdesk' ? 'dinas' : 'social',
                 type: 'message',
-                title: `Pesan Baru dari ${user?.name || senderHandle}`,
-                message: text.length > 80 ? text.slice(0, 80) + '...' : text,
+                title: `✉️ ${actorName} (${senderHandle}) mengirim pesan baru kepada Anda`,
+                message: `«${(text || attachmentName || 'Lampiran berkas').slice(0, 90)}»`,
                 link: `/cms/broadcaster?view=obrolan&partner=${uid}`
             });
         }
         return {
             status: 1,
             message: 'Pesan terkirim.',
-            data: sentMsg,
+            data: {
+                ...sentMsg,
+                sent_message: sentMsg,
+                ai_reply: aiReplyMsg
+            },
+            sent_message: sentMsg,
             ai_reply: aiReplyMsg
         };
     }
