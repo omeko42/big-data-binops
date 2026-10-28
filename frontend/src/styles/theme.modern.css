@@ -6397,38 +6397,107 @@ div[style*="margin-top:-1.6rem"] > span {
     padding: 0.14rem 0.42rem !important;
   }
 
-  /* Compact 3x3 KPI Grid on Mobile (No orphan card, no clipped label) */
+  /* Slide 1: 1-Row Horizontal Expandable KPI Pill Strip on Mobile */
   #kp-summary-strip,
   #kp-summary-strip.kp-summary-grid-default,
   #kp-summary-strip.kp-summary-grid-detail {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 0.32rem !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 0.35rem !important;
+    align-items: stretch !important;
+    padding-bottom: 0.2rem !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  #kp-summary-strip > .kp-kpi-card:last-child:nth-child(3n + 1) {
-    grid-column: 1 / -1 !important;
+  #kp-summary-strip::-webkit-scrollbar {
+    display: none !important;
   }
 
-  #kp-summary-strip > .kp-kpi-card:last-child:nth-child(3n + 2) {
-    grid-column: span 2 !important;
+  #kp-summary-strip .kp-kpi-card.is-pill-collapsed {
+    flex: 0 0 auto !important;
+    padding: 0.3rem 0.58rem !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    min-height: 2rem !important;
   }
 
-  #kp-summary-strip .kp-kpi-card {
-    padding: 0.32rem 0.45rem !important;
-    border-radius: 8px !important;
+  #kp-summary-strip .kp-kpi-card.is-pill-collapsed .kp-kpi-body {
+    display: none !important;
+  }
+
+  #kp-summary-strip .kp-kpi-card.is-pill-expanded {
+    flex: 0 0 auto !important;
+    min-width: 8.6rem !important;
+    max-width: 12.5rem !important;
+    padding: 0.36rem 0.58rem !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.1rem !important;
+  }
+
+  #kp-summary-strip .kp-kpi-card.is-pill-expanded .kp-kpi-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.08rem !important;
   }
 
   #kp-summary-strip .kp-kpi-label {
-    font-size: 0.63rem !important;
-    line-height: 1.25 !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
     overflow: visible !important;
+    white-space: nowrap !important;
   }
 
   #kp-summary-strip .kp-kpi-val {
-    font-size: 0.9rem !important;
+    font-size: 0.92rem !important;
     line-height: 1.15 !important;
-    margin-top: 0.08rem !important;
+    margin-top: 0.05rem !important;
+  }
+
+  #kp-summary-strip .kp-kpi-mobile-sub {
+    display: block !important;
+    font-size: 0.6rem !important;
+    color: #64748b !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+  }
+
+  #kp-summary-strip .kp-kpi-mobile-drill-btn {
+    display: inline-flex !important;
+    align-self: flex-start !important;
+    margin-top: 0.12rem !important;
+    padding: 0.1rem 0.38rem !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    border-radius: 4px !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    color: #2563eb !important;
+    border: 1px solid rgba(37, 99, 235, 0.25) !important;
+    cursor: pointer !important;
+  }
+
+  #kp-summary-strip .kp-pill-toggle-all-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+    padding: 0.28rem 0.62rem !important;
+    border-radius: 999px !important;
+    font-size: 0.66rem !important;
+    font-weight: 700 !important;
+    background: rgba(37, 99, 235, 0.12) !important;
+    color: #3b82f6 !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    min-height: 2rem !important;
   }
 
   /* LP Drill-Down Modal switches to Compact Mobile Card List on Mobile */
@@ -6715,19 +6784,14 @@ div[style*="margin-top:-1.6rem"] > span {
     display: none !important;
   }
 
-  /* Keep 9 default KPI cards in 3x3 compact grid on phones so it only takes 3 rows! */
-  #kp-summary-strip.kp-summary-grid-default {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 0.28rem !important;
-  }
-
+  /* Keep 1-Row Horizontal Expandable KPI Pill Strip on phones */
+  #kp-summary-strip,
+  #kp-summary-strip.kp-summary-grid-default,
   #kp-summary-strip.kp-summary-grid-detail {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.28rem !important;
-  }
-
-  #kp-summary-strip.kp-summary-grid-detail > .kp-kpi-card:last-child:nth-child(odd) {
-    grid-column: 1 / -1 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.32rem !important;
   }
 
   .dash-hero-grid {
@@ -6737,6 +6801,252 @@ div[style*="margin-top:-1.6rem"] > span {
 
   .dash-hero-grid > .dash-hero-card:last-child:nth-child(odd) {
     grid-column: 1 / -1 !important;
+  }
+}
+
+/* ============================================================================
+   11-SLIDE USER PDF UI/UX REVISION (DESKTOP & MOBILE SYSTEM-WIDE)
+   ============================================================================ */
+
+/* 1. Global 1-Line Page Title + Info Tooltip Button (.cms-title-info-btn) */
+.cms-page-sub.cms-page-sub-hidden,
+.cms-page-title + .cms-page-sub {
+  display: none !important;
+}
+
+.cms-page-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.38rem !important;
+  flex-wrap: nowrap !important;
+}
+
+.cms-title-info-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.12rem !important;
+  height: 1.12rem !important;
+  min-width: 1.12rem !important;
+  border-radius: 999px !important;
+  background: rgba(37, 99, 235, 0.14) !important;
+  border: 1px solid rgba(59, 130, 246, 0.42) !important;
+  color: #2563eb !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  font-style: italic !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  margin-left: 0.15rem !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.cms-title-info-btn:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+:root[data-theme="dark"] .cms-title-info-btn,
+[data-theme="dark"] .cms-title-info-btn {
+  background: rgba(56, 189, 248, 0.16) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  color: #38bdf8 !important;
+}
+
+.cms-global-title-tip {
+  position: fixed !important;
+  z-index: 99995 !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(148, 163, 184, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 0.55rem 0.75rem !important;
+  font-size: 0.74rem !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.55) !important;
+  pointer-events: auto !important;
+}
+
+/* 2. Kinerja Perkara Desktop vs Mobile Helpers */
+@media (min-width: 769px) {
+  .kp-satker-name-short,
+  .kp-kpi-mobile-sub,
+  .kp-kpi-mobile-drill-btn,
+  .kp-pill-toggle-all-btn {
+    display: none !important;
+  }
+  .kp-satker-name-full {
+    display: inline !important;
+  }
+}
+
+/* 3. Sharese (Slide 9) Scrollbar & Compact Rules */
+.sharese-hashtag-strip::-webkit-scrollbar,
+.sharese-composer-tools-left::-webkit-scrollbar {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  /* Kinerja Perkara Mobile Satker Abbreviation */
+  .kp-satker-name-full {
+    display: none !important;
+  }
+  .kp-satker-name-short {
+    display: inline !important;
+    font-weight: 700 !important;
+    font-size: 0.7rem !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* Universal Sticky Column 1 (No) & Column 2 (Satker / Nomor LP / Nama) on Mobile */
+  .p-treetable table th.cas-sticky-col-1,
+  .p-treetable table td.cas-sticky-col-1,
+  .p-datatable table th.cas-sticky-col-1,
+  .p-datatable table td.cas-sticky-col-1 {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 4 !important;
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    max-width: 2.1rem !important;
+    padding: 0.3rem 0.2rem !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .p-treetable table th.cas-sticky-col-2,
+  .p-treetable table td.cas-sticky-col-2,
+  .p-datatable table th.cas-sticky-col-2,
+  .p-datatable table td.cas-sticky-col-2 {
+    position: sticky !important;
+    left: 2.1rem !important;
+    z-index: 4 !important;
+    min-width: 7.4rem !important;
+    max-width: 9.2rem !important;
+    padding: 0.32rem 0.42rem !important;
+    box-sizing: border-box !important;
+    box-shadow: 3px 0 8px -2px rgba(15, 23, 42, 0.16) !important;
+  }
+
+  .p-treetable table thead th.cas-sticky-col-1,
+  .p-treetable table thead th.cas-sticky-col-2,
+  .p-datatable table thead th.cas-sticky-col-1,
+  .p-datatable table thead th.cas-sticky-col-2 {
+    z-index: 8 !important;
+    background-color: #16324f !important;
+    color: #ffffff !important;
+  }
+
+  :root[data-theme="dark"] .p-treetable table thead th.cas-sticky-col-1,
+  :root[data-theme="dark"] .p-treetable table thead th.cas-sticky-col-2,
+  :root[data-theme="dark"] .p-datatable table thead th.cas-sticky-col-1,
+  :root[data-theme="dark"] .p-datatable table thead th.cas-sticky-col-2,
+  [data-theme="dark"] .p-treetable table thead th.cas-sticky-col-1,
+  [data-theme="dark"] .p-treetable table thead th.cas-sticky-col-2,
+  [data-theme="dark"] .p-datatable table thead th.cas-sticky-col-1,
+  [data-theme="dark"] .p-datatable table thead th.cas-sticky-col-2 {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+  }
+
+  .p-treetable table tbody td.cas-sticky-col-1,
+  .p-treetable table tbody td.cas-sticky-col-2,
+  .p-datatable table tbody td.cas-sticky-col-1,
+  .p-datatable table tbody td.cas-sticky-col-2 {
+    background-color: #ffffff !important;
+  }
+
+  :root[data-theme="dark"] .p-treetable table tbody td.cas-sticky-col-1,
+  :root[data-theme="dark"] .p-treetable table tbody td.cas-sticky-col-2,
+  :root[data-theme="dark"] .p-datatable table tbody td.cas-sticky-col-1,
+  :root[data-theme="dark"] .p-datatable table tbody td.cas-sticky-col-2,
+  [data-theme="dark"] .p-treetable table tbody td.cas-sticky-col-1,
+  [data-theme="dark"] .p-treetable table tbody td.cas-sticky-col-2,
+  [data-theme="dark"] .p-datatable table tbody td.cas-sticky-col-1,
+  [data-theme="dark"] .p-datatable table tbody td.cas-sticky-col-2 {
+    background-color: #111a2e !important;
+  }
+
+  /* Sharese Mobile Sticky Header & Composer 1-Line Toolbar */
+  .sharese-sticky-header {
+    top: calc(var(--cms-header-h, 5.2rem) + 0.25rem) !important;
+    padding: 0.5rem 0.65rem !important;
+    margin-bottom: 0.65rem !important;
+    border-radius: 10px !important;
+  }
+
+  .sharese-header-top-row {
+    gap: 0.4rem !important;
+  }
+
+  .sharese-sticky-header .cms-page-title {
+    font-size: 0.98rem !important;
+  }
+
+  .sharese-refresh-btn .p-button-label,
+  .sharese-hide-xs {
+    display: none !important;
+  }
+
+  .sharese-refresh-btn .p-button-icon {
+    margin-right: 0 !important;
+  }
+
+  .sharese-refresh-btn {
+    width: 2rem !important;
+    min-width: 2rem !important;
+    height: 2rem !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+
+  .sharese-composer-toolbar {
+    gap: 0.3rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .sharese-btn-attach,
+  .sharese-jukrah-toggle,
+  .sharese-btn-publish {
+    padding: 0 0.5rem !important;
+    font-size: 0.72rem !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+  }
+
+  .sharese-audience-wrap,
+  .sharese-audience-wrap select {
+    height: 2rem !important;
+    min-height: 2rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* Global Full-Width Odd Last Card on 2-Column Mobile Grids */
+  .dash-today-grid > *:last-child:nth-child(odd),
+  .dash-hero-grid > *:last-child:nth-child(odd),
+  .lp-status-cards > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Dashboard Panel Head 1 Line (Title + Dropdown) */
+  .dash-panel-head {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .dash-panel-head .p-dropdown {
+    width: auto !important;
+    max-width: 9.5rem !important;
+    flex: 0 0 auto !important;
   }
 }
 
