@@ -87,24 +87,21 @@ ePostFileInputRef=(0,n.useRef)(null),
 [eSocUrls,setSocUrls]=(0,n.useState)([""]),[ePhotoModal,setPhotoModal]=(0,n.useState)(!1),[ePhotoPreview,setPhotoPreview]=(0,n.useState)(null),[eRawPhoto,setRawPhoto]=(0,n.useState)(null),[ePhotoZoom,setPhotoZoom]=(0,n.useState)(1),[ePhotoPanX,setPhotoPanX]=(0,n.useState)(0),[ePhotoPanY,setPhotoPanY]=(0,n.useState)(0),[ePhotoLoading,setPhotoLoading]=(0,n.useState)(!1),[eTotpModal,setTotpModal]=(0,n.useState)(!1),[ePasskeyDevices,setPasskeyDevices]=(0,n.useState)([]),[ePasskeyModal,setPasskeyModal]=(0,n.useState)(!1),[ePasskeyLoading,setPasskeyLoading]=(0,n.useState)(!1),[eRevokeTarget,setRevokeTarget]=(0,n.useState)(null),[eRevokeCode,setRevokeCode]=(0,n.useState)(""),[eRevokeError,setRevokeError]=(0,n.useState)(""),[eRevokeLoading,setRevokeLoading]=(0,n.useState)(!1),[eRevokeShowPass,setRevokeShowPass]=(0,n.useState)(!1),[eTotpData,setTotpData]=(0,n.useState)(null),[eTotpInputCode,setTotpInputCode]=(0,n.useState)(""),[eTotpEmailOtp,setTotpEmailOtp]=(0,n.useState)(""),[eTotpLoading,setTotpLoading]=(0,n.useState)(!1),[eTotpError,setTotpError]=(0,n.useState)(""),[eEmailChoice,setEmailChoice]=(0,n.useState)("dinas"),[eOtpCooldown,setOtpCooldown]=(0,n.useState)(0),[eOtpAttempts,setOtpAttempts]=(0,n.useState)(0),[eOtpVerifyFails,setOtpVerifyFails]=(0,n.useState)(0),[eExistingPassword,setExistingPassword]=(0,n.useState)(""),[eOtpStep,setOtpStep]=(0,n.useState)(1),[eOtpSentTo,setOtpSentTo]=(0,n.useState)(""),[eTotpStep,setTotpStep]=(0,n.useState)(1),[eShowPassword,setShowPassword]=(0,n.useState)(!1),[eDisableModal,setDisableModal]=(0,n.useState)(!1),[eDisableTarget,setDisableTarget]=(0,n.useState)(""),[eDisableCode,setDisableCode]=(0,n.useState)(""),[eDisableLoading,setDisableLoading]=(0,n.useState)(!1),[eDisableError,setDisableError]=(0,n.useState)(""),[J,Y]=(0,n.useState)(!1),X=(0,m.useAvailabilityCheck)(a?.id),[Q,ee]=(0,n.useState)(!1),[et,en]=(0,n.useState)("enable_pin"),[ea,er]=(0,n.useState)(""),[ei,el]=(0,n.useState)(""),[eo,es]=(0,n.useState)(""),[eu,ec]=(0,n.useState)(""),[ed,ep]=(0,n.useState)(!1),[em,ef]=(0,n.useState)(!1),[ey,eh]=(0,n.useState)(!1),[eg,ev]=(0,n.useState)(""),[eb,ex]=(0,n.useState)(null),[ej,ek]=(0,n.useState)(!1),[ew,eS]=(0,n.useState)(""),[eO,eP]=(0,n.useState)(!1),[eN,eE]=(0,n.useState)(U),[eC,eI]=(0,n.useState)(!1);function formatCallsign(rawCallsign, authorId, username) {
   var idStr = String(authorId || '');
   /* dynamic handle */
-  var c = String(rawCallsign || '').trim().replace(/^@/, '');
-  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
-  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c) && !c.startsWith('user_')) {
-    return '@' + c;
-  }
   var u = String(username || '').trim().replace(/^@/, '');
-  if (u && !invalid.includes(u.toLowerCase()) && !/^\d{6,10}$/.test(u) && !u.startsWith('user_')) {
+  var invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-'];
+  if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_')) {
     return '@' + u;
   }
-  if (c && !invalid.includes(c.toLowerCase()) && !/^\d{6,10}$/.test(c)) {
+  var c = String(rawCallsign || '').trim().replace(/^@/, '');
+  if (c && !invalid.includes(c.toLowerCase()) && !c.startsWith('user_')) {
     return '@' + c;
   }
   if (!idStr && !rawCallsign && !username) {
     try {
       var lu = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       /* dynamic handle */
-      if (lu.callsign && !/^\d{6,18}$/.test(String(lu.callsign).replace(/^@/, '')) && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
-      if (lu.username && !/^\d{6,18}$/.test(String(lu.username).replace(/^@/, '')) && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
+      if (lu.username && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
+      if (lu.callsign && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
       if (lu.name && String(lu.name).trim()) return lu.name;
     } catch(e) {}
     return '@personil';
@@ -2811,10 +2808,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var c = a?.callsign ? String(a.callsign).trim().replace(/^@/, '') : '';
             var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
-            if (c && !/^\d{6,18}$/.test(c) && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
-            if (u && !/^\d{6,18}$/.test(u) && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
+            var c = a?.callsign ? String(a.callsign).trim().replace(/^@/, '') : '';
+            if (u && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
+            if (c && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
             if (a?.name && String(a.name).trim()) return a.name;
             /* dynamic handle */
             return formatCallsign(a?.callsign, a?.id, a?.username);
@@ -2841,7 +2838,6 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           var s = [a?.scope_satker_name, a?.satker_nama, a?.satker, a?.satuan].find(function(x){ return x && !['bdb superadmin', 'superadmin', '-', 'null', 'undefined'].includes(String(x).trim().toLowerCase()); });
           if (!s) s = "Polri";
           var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
-          sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
           sClean = sClean.toLowerCase().replace(/(?:^|\s|-|\/)[a-z]/g, function(c){return c.toUpperCase();});
           sClean = sClean.replace(/\bDit\s*Res\b/gi, 'Dit Res').replace(/\bDitres\b/gi, 'Dit Res').replace(/\bSat\s*Res\b/gi, 'Sat Res').replace(/\bSatres\b/gi, 'Sat Res').replace(/\bUnit\s*Res\b/gi, 'Unit Res').replace(/\bUnitres\b/gi, 'Unit Res').replace(/\bPolri\b/gi, 'Polri').replace(/\bPolda\b/gi, 'Polda');
           return sClean;
