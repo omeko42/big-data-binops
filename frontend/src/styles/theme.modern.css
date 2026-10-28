@@ -7285,6 +7285,66 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 }
 
+/* ============================================================================
+   UX ENGINE 2.3 & LINEAR DESIGN PRECISION (ANTI-BLOAT / PC vs MOBILE STANDARD)
+   ============================================================================ */
+
+/* 1. Tabular Numbers & One-Line KPI Figures (No orphan wrapping) */
+.dash-hero-value,
+.dash-hero-val,
+.kp-kpi-val,
+.lp-stat .n,
+.kp-metric-link,
+.p-datatable-tbody > tr > td,
+.p-treetable-tbody > tr > td {
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-hero-value,
+.kp-kpi-val,
+.lp-stat .n {
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+
+/* 2. Snappy Micro-Latency (80ms hover, 140ms transition, zero bounce) */
+.cms-nav-item,
+.att-btn,
+.kp-modal-btn,
+.lp-stat,
+.kp-kpi-card,
+.dash-hero-card,
+.kp-metric-link {
+  transition: background-color 120ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 120ms cubic-bezier(0.2, 0, 0, 1),
+              color 120ms cubic-bezier(0.2, 0, 0, 1),
+              transform 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 3. PC (pointer: fine) vs HP/Touch (pointer: coarse) Ergonomics */
+@media (pointer: fine) and (min-width: 769px) {
+  .p-datatable-tbody > tr > td,
+  .p-treetable-tbody > tr > td {
+    letter-spacing: -0.01em;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 640px) {
+  /* Prevent iOS Safari / Mobile Browser Auto-Zoom on Input Focus (<16px) */
+  input.p-inputtext:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea.p-inputtextarea {
+    font-size: 16px !important;
+  }
+
+  /* Safe-area bottom padding so fixed bars/dialogs never hide under Home Indicator */
+  .p-dialog .p-dialog-footer,
+  .cms-main {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+
 
 
 
