@@ -700,7 +700,7 @@ let UserService = class UserService {
             email: user.email,
             email_polri: user.email_polri,
             username: user.username,
-            callsign: (user.callsign && !/^\d{6,18}$/.test(String(user.callsign).trim())) ? user.callsign : ((user.username && !/^\d{6,18}$/.test(String(user.username).trim())) ? user.username : null),
+            callsign: user.username || user.callsign || null,
             foto: user.photo_url || policeProfile?.foto || null,
             photo_url: user.photo_url || policeProfile?.foto || null,
             nrp: policeProfile?.nrp || null,
