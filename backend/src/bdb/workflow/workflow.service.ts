@@ -739,7 +739,7 @@ export class WorkflowService {
 
         // Guard validasi tanggal dokumen terhadap tanggal LP dan tanggal hari ini (WIB)
         const tglLpCreate = lp[0]?.tgl_lp;
-        const isPenyelidikan = dt.status_target_code === 'PENYELIDIKAN' || Number(dt.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK'].includes(dt.code);
+        const isPenyelidikan = dt.status_target_code === 'PENYELIDIKAN' || Number(dt.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'SP2_LIDIK'].includes(dt.code);
         this.validateDocumentDates(data, tglLpCreate, isPenyelidikan);
         const fields: FieldDef[] = dt.form_schema?.fields || [];
         if (dt.code === 'PERMA') {
@@ -921,7 +921,7 @@ export class WorkflowService {
 
         // Guard validasi tanggal dokumen terhadap tanggal LP dan tanggal hari ini (WIB)
         const tglLpUpdate = doc.tgl_lp;
-        const isPenyelidikan = doc.target_status_code === 'PENYELIDIKAN' || Number(doc.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK'].includes(doc.type_code);
+        const isPenyelidikan = doc.target_status_code === 'PENYELIDIKAN' || Number(doc.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'SP2_LIDIK'].includes(doc.type_code);
         this.validateDocumentDates(data, tglLpUpdate, isPenyelidikan);
         const fields: FieldDef[] = doc.form_schema?.fields || [];
         if (doc.type_code === 'PERMA') {

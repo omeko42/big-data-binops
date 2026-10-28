@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JukrahController = void 0;
 const common_1 = require("@nestjs/common");
@@ -26,6 +27,29 @@ let JukrahController = class JukrahController {
     }
     streamMedia(token, res) {
         return this.service.streamMedia(token, res);
+    }
+    getShareChallenge(token, id, hash) {
+        return this.service.getShareChallenge(token || hash, id ? parseInt(id, 10) : undefined);
+    }
+    verifyShareViewer(req, body) {
+        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+        const userAgent = String(req.headers?.['user-agent'] || '');
+        return this.service.verifyShareViewer(body || {}, { ip, userAgent });
+    }
+    getPublicPost(req, idOrHash, nrp, nrpNip, viewerToken) {
+        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+        const userAgent = String(req.headers?.['user-agent'] || '');
+        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || viewerToken || '').trim();
+        return this.service.getPublicSharedPost(idOrHash, effectiveNrp, req?.user, { ip, userAgent });
+    }
+    getSharedPost(req, token, nrp, nrpNip) {
+        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || '').trim();
+        if (effectiveNrp) {
+            const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+            const userAgent = String(req.headers?.['user-agent'] || '');
+            return this.service.getPublicSharedPost(token, effectiveNrp, req?.user, { ip, userAgent });
+        }
+        return this.service.getSharedPost(req?.user, token);
     }
     getFeed(req, q) {
         return this.service.getFeed(req?.user, q || {});
@@ -59,6 +83,48 @@ let JukrahController = class JukrahController {
             parent_post_id: body.parent_post_id ? parseInt(body.parent_post_id, 10) : undefined
         }, files || []);
     }
+    getNetworkUsers(req, q) {
+        return this.service.getNetworkUsers(req?.user, q || {});
+    }
+    getNetworkProfile(req, id) {
+        return this.service.getNetworkProfile(req?.user, id);
+    }
+    toggleFollow(req, id) {
+        return this.service.toggleFollowUser(req?.user, parseInt(id, 10));
+    }
+    connectNetworkUser(req, id) {
+        return this.service.connectNetworkUser(req?.user, parseInt(id, 10));
+    }
+    disconnectNetworkUser(req, id) {
+        return this.service.disconnectNetworkUser(req?.user, parseInt(id, 10));
+    }
+    getMessageConversations(req, q) {
+        return this.service.getMessageConversations(req?.user, q || {});
+    }
+    getMessageThread(req, targetId) {
+        return this.service.getMessageThread(req?.user, parseInt(targetId, 10));
+    }
+    sendMessage(req, body) {
+        return this.service.sendSocialMessage(req?.user, body || {});
+    }
+    getAccountInsight(req) {
+        return this.service.getAccountInsight(req?.user);
+    }
+    getPusatBantuanCards(req) {
+        return this.service.getPusatBantuanCards(req?.user);
+    }
+    getPostReactions(req, id) {
+        return this.service.getPostReactions(req?.user, parseInt(id, 10));
+    }
+    toggleBookmark(req, id) {
+        return this.service.toggleBookmark(req?.user, parseInt(id, 10));
+    }
+    editSocialPost(req, id, body) {
+        return this.service.editPost(req?.user, parseInt(id, 10), body || {});
+    }
+    repostSocialPost(req, id, body) {
+        return this.service.repostPost(req?.user, parseInt(id, 10), body?.content);
+    }
     reactPost(req, id, reactionType) {
         return this.service.reactPost(req?.user, parseInt(id, 10), reactionType || 'like');
     }
@@ -71,23 +137,24 @@ let JukrahController = class JukrahController {
     deleteComment(req, id) {
         return this.service.deleteComment(req?.user, parseInt(id, 10));
     }
+    editCommentPost(req, id, body) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+    editCommentPatch(req, id, body) {
+        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
+    }
+    reactComment(req, id) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
+    }
+    likeComment(req, id) {
+        return this.service.reactComment(req?.user, parseInt(id, 10));
+    }
     acknowledgePost(req, id) {
         return this.service.acknowledgePost(req?.user, parseInt(id, 10));
     }
     updateVisibility(req, id, aud) {
         return this.service.updateVisibility(req?.user, parseInt(id, 10), aud);
     }
-    
-    getReactions(req, id) {
-        return this.service.getReactions(req?.user, parseInt(id, 10));
-    }
-    toggleBookmark(req, id) {
-        return this.service.toggleBookmark(req?.user, parseInt(id, 10));
-    }
-    editSocialPost(req, id, body) {
-        return this.service.editPost(req?.user, parseInt(id, 10), body || {});
-    }
-
     deleteSocialPost(req, id) {
         return this.service.deletePost(req?.user, parseInt(id, 10));
     }
@@ -96,6 +163,12 @@ let JukrahController = class JukrahController {
     }
     panicTakedown(req, id) {
         return this.service.panicTakedown(req?.user, parseInt(id, 10));
+    }
+    toggleOfficialJukrah(req, id, body) {
+        return this.service.toggleOfficialJukrah(req?.user, parseInt(id, 10), body?.is_official_jukrah);
+    }
+    togglePinPost(req, id, body) {
+        return this.service.togglePinPost(req?.user, parseInt(id, 10), body?.is_pinned);
     }
     getNotifications(req, category) {
         return this.service.getNotifications(req?.user, category);
@@ -127,177 +200,9 @@ let JukrahController = class JukrahController {
     remove(req, id) {
         return this.service.remove(req?.user, parseInt(id, 10));
     }
-
-    getNetworkUsers(req, q) {
-        return this.service.getNetworkUsers(req?.user, q || {});
-    }
-    getNetworkProfile(req, id) {
-        return this.service.getNetworkProfile(req?.user, id);
-    }
-    toggleFollow(req, id) {
-        return this.service.toggleFollowUser(req?.user, parseInt(id, 10));
-    }
-    connectNetworkUser(req, id) {
-        return this.service.connectNetworkUser(req?.user, parseInt(id, 10));
-    }
-    disconnectNetworkUser(req, id) {
-        return this.service.disconnectNetworkUser(req?.user, parseInt(id, 10));
-    }
-    getMessageConversations(req, q) {
-        return this.service.getMessageConversations(req?.user, q || {});
-    }
-    getMessageThread(req, targetId) {
-        return this.service.getMessageThread(req?.user, parseInt(targetId, 10));
-    }
-    sendMessage(req, body) {
-        return this.service.sendSocialMessage(req?.user, body || {});
-    }
-    getAccountInsight(req) {
-        return this.service.getAccountInsight(req?.user);
-    }
-    getPusatBantuanCards(req) {
-        return this.service.getPusatBantuanCards(req?.user);
-    }
-    repostSocialPost(req, id, body) {
-        return this.service.repostPost(req?.user, parseInt(id, 10), body?.content);
-    }
-    editCommentPost(req, id, body) {
-        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
-    }
-    editCommentPatch(req, id, body) {
-        return this.service.editComment(req?.user, parseInt(id, 10), body?.content);
-    }
-    reactComment(req, id) {
-        return this.service.reactComment(req?.user, parseInt(id, 10));
-    }
-    likeComment(req, id) {
-        return this.service.reactComment(req?.user, parseInt(id, 10));
-    }
 };
 exports.JukrahController = JukrahController;
-
-    __decorate([
-        (0, common_1.Get)('network/users'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Query)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getNetworkUsers", null);
-    __decorate([
-        (0, common_1.Get)('network/profile/:id'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getNetworkProfile", null);
-    __decorate([
-        (0, common_1.Post)('follow/:id'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "toggleFollow", null);
-    __decorate([
-        (0, common_1.Post)('network/connect/:id'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "connectNetworkUser", null);
-    __decorate([
-        (0, common_1.Post)('network/disconnect/:id'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "disconnectNetworkUser", null);
-    __decorate([
-        (0, common_1.Get)('messages/conversations'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Query)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getMessageConversations", null);
-    __decorate([
-        (0, common_1.Get)('messages/thread/:targetId'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('targetId')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getMessageThread", null);
-    __decorate([
-        (0, common_1.Post)('messages/send'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Body)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "sendMessage", null);
-    __decorate([
-        (0, common_1.Get)('insight'),
-        __param(0, (0, common_1.Req)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getAccountInsight", null);
-    __decorate([
-        (0, common_1.Get)('pusat-bantuan-cards'),
-        __param(0, (0, common_1.Req)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "getPusatBantuanCards", null);
-    __decorate([
-        (0, common_1.Post)('post/:id/repost'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __param(2, (0, common_1.Body)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "repostSocialPost", null);
-    __decorate([
-        (0, common_1.Post)('comment/:id/edit'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __param(2, (0, common_1.Body)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "editCommentPost", null);
-    __decorate([
-        (0, common_1.Patch)('comment/:id'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __param(2, (0, common_1.Body)()),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String, Object]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "editCommentPatch", null);
-    __decorate([
-        (0, common_1.Post)('comment/:id/reaction'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "reactComment", null);
-    __decorate([
-        (0, common_1.Post)('comment/:id/like'),
-        __param(0, (0, common_1.Req)()),
-        __param(1, (0, common_1.Param)('id')),
-        __metadata("design:type", Function),
-        __metadata("design:paramtypes", [Object, String]),
-        __metadata("design:returntype", void 0)
-    ], JukrahController.prototype, "likeComment", null);
-    __decorate([
+__decorate([
     (0, common_1.Get)('stream/:token'),
     __param(0, (0, common_1.Param)('token')),
     __param(1, (0, common_1.Res)()),
@@ -306,11 +211,49 @@ exports.JukrahController = JukrahController;
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "streamMedia", null);
 __decorate([
+    (0, common_1.Get)(['share-challenge', 'public/captcha']),
+    __param(0, (0, common_1.Query)('token')),
+    __param(1, (0, common_1.Query)('id')),
+    __param(2, (0, common_1.Query)('hash')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getShareChallenge", null);
+__decorate([
+    (0, common_1.Post)(['verify-share', 'public/verify-nrp']),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "verifyShareViewer", null);
+__decorate([
+    (0, common_1.Get)(['public/post/:idOrHash', 'public/:idOrHash']),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('idOrHash')),
+    __param(2, (0, common_1.Query)('nrp')),
+    __param(3, (0, common_1.Query)('nrp_nip')),
+    __param(4, (0, common_1.Query)('viewer_token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getPublicPost", null);
+__decorate([
+    (0, common_1.Get)('shared/:token'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('token')),
+    __param(2, (0, common_1.Query)('nrp')),
+    __param(3, (0, common_1.Query)('nrp_nip')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getSharedPost", null);
+__decorate([
     (0, common_1.Get)('feed'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof Record !== "undefined" && Record) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "getFeed", null);
 __decorate([
@@ -323,6 +266,118 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, Array]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "createSocialPost", null);
+__decorate([
+    (0, common_1.Get)('network/users'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_c = typeof Record !== "undefined" && Record) === "function" ? _c : Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getNetworkUsers", null);
+__decorate([
+    (0, common_1.Get)('network/profile/:id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getNetworkProfile", null);
+__decorate([
+    (0, common_1.Post)('follow/:id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "toggleFollow", null);
+__decorate([
+    (0, common_1.Post)('network/connect/:id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "connectNetworkUser", null);
+__decorate([
+    (0, common_1.Post)('network/disconnect/:id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "disconnectNetworkUser", null);
+__decorate([
+    (0, common_1.Get)('messages/conversations'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_d = typeof Record !== "undefined" && Record) === "function" ? _d : Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getMessageConversations", null);
+__decorate([
+    (0, common_1.Get)('messages/thread/:targetId'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('targetId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getMessageThread", null);
+__decorate([
+    (0, common_1.Post)('messages/send'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "sendMessage", null);
+__decorate([
+    (0, common_1.Get)('insight'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getAccountInsight", null);
+__decorate([
+    (0, common_1.Get)('pusat-bantuan-cards'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getPusatBantuanCards", null);
+__decorate([
+    (0, common_1.Get)('post/:id/reactions'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getPostReactions", null);
+__decorate([
+    (0, common_1.Post)('post/:id/bookmark'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "toggleBookmark", null);
+__decorate([
+    (0, common_1.Post)('post/:id/edit'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "editSocialPost", null);
+__decorate([
+    (0, common_1.Post)('post/:id/repost'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "repostSocialPost", null);
 __decorate([
     (0, common_1.Post)('post/:id/reaction'),
     __param(0, (0, common_1.Req)()),
@@ -359,6 +414,40 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "deleteComment", null);
 __decorate([
+    (0, common_1.Post)('comment/:id/edit'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "editCommentPost", null);
+__decorate([
+    (0, common_1.Patch)('comment/:id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "editCommentPatch", null);
+__decorate([
+    (0, common_1.Post)('comment/:id/reaction'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "reactComment", null);
+__decorate([
+    (0, common_1.Post)('comment/:id/like'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "likeComment", null);
+__decorate([
     (0, common_1.Post)('post/:id/acknowledge'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),
@@ -375,33 +464,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "updateVisibility", null);
-
-__decorate([
-    (0, common_1.Get)('post/:id/reactions'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", void 0)
-], JukrahController.prototype, "getReactions", null);
-__decorate([
-    (0, common_1.Post)('post/:id/bookmark'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", void 0)
-], JukrahController.prototype, "toggleBookmark", null);
-__decorate([
-    (0, common_1.Post)('post/:id/edit'),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Object]),
-    __metadata("design:returntype", void 0)
-], JukrahController.prototype, "editSocialPost", null);
-
 __decorate([
     (0, common_1.Post)('post/:id/delete'),
     __param(0, (0, common_1.Req)()),
@@ -428,6 +490,24 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "panicTakedown", null);
 __decorate([
+    (0, common_1.Post)('post/:id/toggle-official'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "toggleOfficialJukrah", null);
+__decorate([
+    (0, common_1.Post)('post/:id/toggle-pin'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "togglePinPost", null);
+__decorate([
     (0, common_1.Get)('notifications'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)('category')),
@@ -452,7 +532,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "markAllNotificationsRead", null);
 __decorate([
-    (0, common_1.Get)('dashboard-widgets'),
+    (0, common_1.Get)(['dashboard-widgets', 'dashboard']),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -470,7 +550,7 @@ __decorate([
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_e = typeof Record !== "undefined" && Record) === "function" ? _e : Object]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "list", null);
 __decorate([
@@ -478,7 +558,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, typeof (_f = typeof Record !== "undefined" && Record) === "function" ? _f : Object]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "active", null);
 __decorate([
@@ -513,7 +593,6 @@ __decorate([
 exports.JukrahController = JukrahController = __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UseInterceptors)(current_user_interceptor_1.CurrentUserInterceptor),
-    (0, common_1.Controller)('bdb/jukrah'),
+    (0, common_1.Controller)(['bdb/sharese', 'bdb/jukrah']),
     __metadata("design:paramtypes", [jukrah_service_1.JukrahService])
 ], JukrahController);
-//# sourceMappingURL=jukrah.controller.js.map

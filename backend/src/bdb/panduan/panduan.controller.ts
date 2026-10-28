@@ -11,12 +11,12 @@ const UPLOAD_LIMITS = { limits: { fileSize: 300 * 1024 * 1024 } }; // 300MB, cuk
 export class PanduanController {
     constructor(private readonly service: PanduanService) {}
 
-    @Get('share-challenge')
+    @Get(['share-challenge', 'public/captcha'])
     getShareChallenge(@Query('token') token?: string, @Query('id') id?: string) {
         return this.service.getShareChallenge(token, id ? parseInt(id, 10) : undefined);
     }
 
-    @Post('verify-viewer')
+    @Post(['verify-viewer', 'public/verify-nrp'])
     verifyViewer(@Req() req: any, @Body() body: any) {
         const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
         const userAgent = String(req.headers?.['user-agent'] || '');

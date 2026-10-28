@@ -71,6 +71,7 @@ export class BdbKermaService {
     }
 
     private async ensureTable() {
+        await this.ensureAttachmentTable();
         await this.dataSource.query(`
             create table if not exists bdb_kerma_master (
                 id bigserial primary key,
@@ -252,7 +253,7 @@ export class BdbKermaService {
                     else upper(coalesce(status, 'AKTIF'))
                 end as status_tampil,
                 file_dokumen_url,
-                (select count(*)::int from bdb_attachment a where a.owner_type = 'kerma' and a.owner_id = bdb_kerma_master.id) as attachment_count,
+                (select count(*)::int from bdb_kerma_attachments a where a.kerma_id = bdb_kerma_master.id) as attachment_count,
                 is_tampil,
                 created_by,
                 updated_by,
@@ -355,6 +356,7 @@ export class BdbKermaService {
         const aktif0 = Number(summaryRows?.[0]?.aktif || 0);
 
         return {
+            status: 1,
             data: rows,
             meta: {
                 total,

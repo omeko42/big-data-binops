@@ -957,6 +957,8 @@
 
         // KINERJA-PERKARA-STYLE LP & LAMPIRAN DRILLDOWN MODAL
         drillRow && jsx("div", {
+          role: "dialog",
+          "aria-modal": true,
           onClick: function() { setDrillRow(null); },
           style: {
             position: "fixed",
@@ -970,6 +972,7 @@
             padding: drillFull ? "0.4rem" : "1.25rem"
           },
           children: jsxs("div", {
+            className: "cas-modal cas-modal-wide",
             onClick: function(ev) { ev.stopPropagation(); },
             style: {
               width: drillFull ? "99vw" : "92vw",
@@ -982,7 +985,7 @@
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
-              border: "1px solid #cbd5e1"
+              border: "1px solid var(--cas-border, #cbd5e1)"
             },
             children: [
               // Modal Header
@@ -994,7 +997,8 @@
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: "1rem"
+                  gap: "1rem",
+                  flexWrap: "wrap"
                 },
                 children: [
                   jsxs("div", {
@@ -1003,7 +1007,7 @@
                       jsx("span", { style: { fontSize: "1.15rem" }, children: "📋" }),
                       jsx("span", { style: { fontWeight: 800, fontSize: "1rem", letterSpacing: "0.01em" }, children: "Daftar Laporan Polisi (LP) & Detail Lampiran — Susopsgas" }),
                       jsx(Tag, {
-                        value: String(drillRow._source_type || drillRow.kategori || "SUSJOL").toUpperCase(),
+                        value: String(drillRow._source_type || drillRow.kategori || "SUSJOL").toUpperCase().replace("OPS_SATGAS", "OPERASI & SATGAS").replace("SUSATENSI", "KASUS ATENSI").replace("SUSJOL", "KASUS MENONJOL"),
                         severity: "info"
                       })
                     ]
@@ -1496,33 +1500,36 @@
 
         // QUICK UPDATE SPRIN MODAL
         sprinQuickRow && jsx("div", {
+          role: "dialog",
+          "aria-modal": true,
           onClick: function() { setSprinQuickRow(null); },
-          style: { position: "fixed", inset: 0, zIndex: 9995, background: "rgba(15,23,42,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
+          style: { position: "fixed", inset: 0, zIndex: 9995, background: "rgba(15,23,42,0.7)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
           children: jsxs("div", {
+            className: "cas-modal",
             onClick: function(ev) { ev.stopPropagation(); },
-            style: { width: "36rem", maxWidth: "95vw", background: "#ffffff", borderRadius: "12px", padding: "1.2rem 1.35rem", boxShadow: "0 20px 40px rgba(0,0,0,0.35)", display: "grid", gap: "0.8rem" },
+            style: { width: "36rem", maxWidth: "min(94vw, 680px)", background: "var(--cas-bg-surface, #ffffff)", color: "var(--cas-text-primary, #0f172a)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "14px", padding: "1.25rem 1.35rem", boxShadow: "0 20px 50px rgba(2,6,23,0.35)", display: "grid", gap: "0.85rem" },
             children: [
               jsxs("div", {
-                style: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+                style: { display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "0.65rem", borderBottom: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
-                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "#92400e" }, children: "📜 Tambah / Update Revisi Lampiran Sprin" }),
-                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, style: { border: "none", background: "transparent", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
+                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "#d97706" }, children: "📜 Tambah / Update Revisi Lampiran Sprin" }),
+                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
                 ]
               }),
-              jsx("div", { style: { fontSize: "0.8rem", fontWeight: 700, color: "#334155" }, children: sprinQuickRow.judul || sprinQuickRow.nama }),
+              jsx("div", { style: { fontSize: "0.8rem", fontWeight: 700, color: "var(--cas-text-secondary, #334155)" }, children: sprinQuickRow.judul || sprinQuickRow.nama }),
               jsxs("div", {
-                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" },
+                style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))", gap: "0.65rem" },
                 children: [
                   jsxs("div", {
                     children: [
                       jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Nomor Sprin / Revisi" }),
-                      jsx(InputText, { value: sprinNomor, onChange: function(e) { setSprinNomor(e.target.value); }, placeholder: "Sprin/124/III/OPS.1.3./2026", style: { width: "100%", height: "36px", boxSizing: "border-box" } })
+                      jsx(InputText, { value: sprinNomor, onChange: function(e) { setSprinNomor(e.target.value); }, placeholder: "Sprin/124/III/OPS.1.3./2026", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                     ]
                   }),
                   jsxs("div", {
                     children: [
                       jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Sprin" }),
-                      jsx("input", { type: "date", value: sprinTgl, onChange: function(e) { setSprinTgl(e.target.value); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box", padding: "0 0.5rem" } })
+                      jsx("input", { type: "date", value: sprinTgl, onChange: function(e) { setSprinTgl(e.target.value); }, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box", padding: "0 0.5rem" } })
                     ]
                   })
                 ]
@@ -1530,7 +1537,7 @@
               jsxs("div", {
                 children: [
                   jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Catatan Perubahan / Perpanjangan Sprin" }),
-                  jsx(InputText, { value: sprinCatatan, onChange: function(e) { setSprinCatatan(e.target.value); }, placeholder: "Mis: Sprin Awal / Perpanjangan Tahap II / Penambahan Satgas...", style: { width: "100%", height: "36px", boxSizing: "border-box" } })
+                  jsx(InputText, { value: sprinCatatan, onChange: function(e) { setSprinCatatan(e.target.value); }, placeholder: "Mis: Sprin Awal / Perpanjangan Tahap II / Penambahan Satgas...", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                 ]
               }),
               jsxs("div", {
@@ -1540,10 +1547,10 @@
                 ]
               }),
               jsxs("div", {
-                style: { display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.4rem" },
+                style: { display: "flex", justifyContent: "flex-end", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", paddingTop: "0.75rem", borderTop: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
-                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, className: "att-btn", style: { padding: "0.4rem 0.85rem", cursor: "pointer" }, children: "Batal" }),
-                  jsx("button", { type: "button", disabled: sprinSaving, onClick: handleQuickSprinUpload, className: "att-btn primary", style: { padding: "0.4rem 0.95rem", cursor: "pointer", fontWeight: 800 }, children: sprinSaving ? "Menyimpan…" : "☁️ Simpan Revisi Sprin" })
+                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, className: "att-btn", style: { padding: "0.45rem 0.9rem", cursor: "pointer" }, children: "Batal" }),
+                  jsx("button", { type: "button", disabled: sprinSaving, onClick: handleQuickSprinUpload, className: "att-btn primary", style: { padding: "0.45rem 1rem", cursor: "pointer", fontWeight: 800 }, children: sprinSaving ? "Menyimpan…" : "☁️ Simpan Revisi Sprin" })
                 ]
               })
             ]
@@ -1552,17 +1559,20 @@
 
         // LP TIMELINE MODAL
         lpTimelineModal && jsx("div", {
+          role: "dialog",
+          "aria-modal": true,
           onClick: function() { setLpTimelineModal(null); },
-          style: { position: "fixed", inset: 0, zIndex: 9996, background: "rgba(15,23,42,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
+          style: { position: "fixed", inset: 0, zIndex: 9996, background: "rgba(15,23,42,0.7)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
           children: jsxs("div", {
+            className: "cas-modal",
             onClick: function(ev) { ev.stopPropagation(); },
-            style: { width: "48rem", maxWidth: "96vw", maxHeight: "86vh", overflowY: "auto", background: "#ffffff", borderRadius: "12px", padding: "1.2rem 1.35rem", boxShadow: "0 20px 40px rgba(0,0,0,0.35)", display: "grid", gap: "0.75rem" },
+            style: { width: "48rem", maxWidth: "min(94vw, 680px)", maxHeight: "86vh", overflowY: "auto", background: "var(--cas-bg-surface, #ffffff)", color: "var(--cas-text-primary, #0f172a)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "14px", padding: "1.2rem 1.35rem", boxShadow: "0 20px 50px rgba(2,6,23,0.35)", display: "grid", gap: "0.75rem" },
             children: [
               jsxs("div", {
-                style: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+                style: { display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "0.65rem", borderBottom: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
-                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "#0f172a" }, children: "🔍 Rincian Alur & Dokumen Penyidikan LP: " + (lpTimelineModal.no_laporan || "") }),
-                  jsx("button", { type: "button", onClick: function() { setLpTimelineModal(null); }, style: { border: "none", background: "transparent", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
+                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "var(--cas-text-primary, #0f172a)" }, children: "🔍 Rincian Alur & Dokumen Penyidikan LP: " + (lpTimelineModal.no_laporan || "") }),
+                  jsx("button", { type: "button", onClick: function() { setLpTimelineModal(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
                 ]
               }),
               lpTimelineLoading ? jsx("div", { style: { padding: "1.5rem", textAlign: "center", color: "#64748b" }, children: "Memuat timeline dokumen LP…" }) :

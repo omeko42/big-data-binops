@@ -2725,7 +2725,7 @@ export class LaporanPolisiService {
                             (CASE WHEN (SELECT count(*) FROM bdb_dokumen d WHERE d.lp_id = lp.id) > 0 THEN 1 ELSE 0 END) DESC,
                             (CASE WHEN lp.payload_json->>'pelimpahan' = '1' THEN 1 ELSE 0 END) DESC,
                             (CASE WHEN lp.payload_json->>'dilimpahkan' = '1' THEN 0 ELSE 1 END) DESC,
-                            coalesce(nullif(regexp_replace(lp.dors_lp_id, '[^0-9]', '', 'g'), ''), '0')::bigint DESC,
+                            coalesce(nullif(regexp_replace(lp.dors_lp_id::text, '[^0-9]', '', 'g'), ''), '0')::bigint DESC,
                             lp.id DESC
                     ) as rn
                 FROM bdb_laporan_polisi lp

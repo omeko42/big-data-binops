@@ -665,6 +665,9 @@ let AuthService = class AuthService {
                 ? `${scopeRow.nama_satker_canonical} dan bawahannya`
                 : satker || 'Belum pilih';
         console.time('Step 7: Transform Final Object');
+        const unifiedHandle = Number(user.id) === 1
+            ? 'om.eko_42'
+            : (String(user.callsign || user.username || '').trim().replace(/^@+/, '').toLowerCase() || user.username || null);
         const transformUser = {
             id: user.id,
             user_name: user.name,
@@ -672,8 +675,8 @@ let AuthService = class AuthService {
             email: user.email,
             email_google: user.email_google,
             email_polri: user.email_polri,
-            username: user.username,
-            callsign: user.callsign,
+            username: unifiedHandle,
+            callsign: unifiedHandle,
             login_method: user.login_method,
             local_password_enabled: user.local_password_enabled,
             role_bdb: user.role_bdb,

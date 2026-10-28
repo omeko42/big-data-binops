@@ -23,7 +23,7 @@ export class ErrorExceptionFilter implements ExceptionFilter {
             errorDetails = errorResponse as any;
         } else if (exception instanceof QueryFailedError) {
             status = HttpStatus.BAD_REQUEST; // Or another suitable status code
-            errorMessage = (exception.driverError && exception.driverError.constraint === 'chk_auth_users_username_format') ? 'Format Username tidak valid: gunakan 3-30 karakter huruf kecil, angka, titik (.), atau garis bawah (_) tanpa @domain.' : (exception.driverError && exception.driverError.detail ? 'Gagal menyimpan ke database: ' + exception.driverError.detail : 'Database query failed');
+            errorMessage = (exception.driverError && exception.driverError.constraint === 'chk_auth_users_username_format') ? 'Format Username tidak valid: gunakan 3-30 karakter huruf kecil, angka, titik (.), atau garis bawah (_) tanpa @domain.' : (exception.driverError && exception.driverError.code === 'P0001' && exception.driverError.message ? exception.driverError.message : (exception.driverError && exception.driverError.detail ? 'Gagal menyimpan ke database: ' + exception.driverError.detail : 'Database query failed'));
             const errorCode = exception.driverError?.code;
             systemMessage = [
                 `Error Code: ${errorCode || 'DB_QUERY_ERROR'}`

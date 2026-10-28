@@ -129,7 +129,2641 @@ function abbrSatkerName(raw, stripPoldaPrefix) {
   return s;
 }
 if (typeof window !== 'undefined') window.__casAbbrSatker = abbrSatkerName;
-function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 0.95rem",minHeight:"auto"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:"10.5rem",flex:"1 1 11rem"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.76rem",fontWeight:800,lineHeight:1.25},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.8,lineHeight:1.2},children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.2rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.42rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.1rem 0.45rem",borderRadius:999,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"1.25rem",fontWeight:800,color:"inherit",marginTop:"0.2rem"},children:a})]})}function E({rows:e,loading:a,total:r}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 5px",borderRadius:4,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:a,color:r,suffix:n,empty:l}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"4px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:999,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} e.s(["default",0,function(){let e=(0,v.useRouter)(),[r,n]=(0,a.useState)(null),[l,s]=(0,a.useState)(null),[i,o]=(0,a.useState)(null),[u,x]=(0,a.useState)([]),[k,W]=(0,a.useState)([]),[B,H]=(0,a.useState)([]),[dpoRows,setDpoRows]=(0,a.useState)([]),[casFeed,setCasFeed]=(0,a.useState)([]),[casFeedLoading,setCasFeedLoading]=(0,a.useState)(!0),[pihakJenis,setPihakJenis]=(0,a.useState)("ALL"),[pihakLoading,setPihakLoading]=(0,a.useState)(!1),[$,U]=(0,a.useState)([]),[F,K]=(0,a.useState)("ct_cc"),[J,V]=(0,a.useState)(!0),[Y,X]=(0,a.useState)("custom"),[q,G]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),0,1))}),[Z,Q]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),11,31))}),[appliedCustomFrom,setAppliedCustomFrom]=(0,a.useState)(q),[appliedCustomTo,setAppliedCustomTo]=(0,a.useState)(Z),[kejTab,setKejTab]=(0,a.useState)("semua"),[dashWelcomeOpen,setDashWelcomeOpen]=(0,a.useState)(!1),[dashKinerjaCompact,setDashKinerjaCompact]=(0,a.useState)(!1),[dashShowAllStatNums,setDashShowAllStatNums]=(0,a.useState)(!0),[dashStatTip,setDashStatTip]=(0,a.useState)(null),{from:ee,to:et}=(0,a.useMemo)(()=>(function(e,t,a){let r=new Date,n=N(r),l=r.getFullYear();if("semua"===e)return{from:"2000-01-01",to:n};if("custom"===e)return{from:t||n,to:a||n};if("hari"===e)return{from:n,to:n};if("minggu"===e){let e=r.getDay()||7,t=new Date(l,r.getMonth(),r.getDate()-(e-1)),a=new Date(l,r.getMonth(),r.getDate()-(e-1)+6);return{from:N(t),to:N(a)}}if("bulan"===e){let e=new Date(l,r.getMonth(),1),t=new Date(l,r.getMonth()+1,0);return{from:N(e),to:N(t)}}if("triwulan"===e){let e=3*Math.floor(r.getMonth()/3),t=new Date(l,e,1),a=new Date(l,e+3,0);return{from:N(t),to:N(a)}}if("semester"===e){let e=6>r.getMonth()?0:6,t=new Date(l,e,1),a=new Date(l,e+6,0);return{from:N(t),to:N(a)}}return{from:`${l}-01-01`,to:`${l}-12-31`}})(Y,appliedCustomFrom,appliedCustomTo),[Y,appliedCustomFrom,appliedCustomTo]),[dashPeriodOpen,setDashPeriodOpen]=(0,a.useState)(!1),
+
+const CAS_INDONESIA_GEO_DATA = [{"id":"ACEH","polda":"Polda Aceh","abbr":"ACEH","pulau":"Sumatera","lat":4.695,"lng":96.749,"cx":85,"cy":68,"bx":85,"by":88,"bw":75,"bh":86,"d":"M121,78L118,78L116,80L115,85L112,87L110,91L112,95L114,99L116,101L112,103L114,106L114,110L116,113L118,117L117,120L119,123L119,129L114,126L111,127L107,123L106,117L106,113L104,111L101,110L98,107L97,104L95,102L93,99L91,96L88,94L85,91L79,91L76,89L73,85L71,83L69,81L64,76L62,74L60,72L57,70L54,68L52,65L51,62L49,58L47,53L48,50L50,47L53,45L57,46L60,47L64,49L68,53L71,55L76,56L79,56L82,56L86,54L89,55L94,56L101,56L104,56L106,59L111,63L114,67L115,70L117,72L122,75L121,78ZM66,118L63,117L60,115L61,112L64,111L66,114L69,115L71,118L75,119L77,121L78,124L74,124L72,122L69,120L66,118ZM98,131L94,128L97,127L99,129Z"},{"id":"SUMUT","polda":"Polda Sumatera Utara","abbr":"SUMUT","pulau":"Sumatera","lat":2.115,"lng":99.545,"cx":152,"cy":130,"bx":133,"by":137,"bw":82,"bh":117,"d":"M121,78L119,81L122,83L125,84L128,84L130,87L132,89L134,91L139,93L142,95L146,97L148,99L151,100L152,103L155,104L159,107L161,109L163,112L163,115L166,116L169,116L171,120L171,123L172,127L171,132L170,137L173,138L174,141L173,144L171,146L165,147L166,150L167,153L167,156L167,159L168,162L165,161L162,159L159,159L160,164L163,167L161,169L158,169L155,169L151,167L147,172L143,175L142,172L141,166L141,163L139,161L138,158L137,155L135,150L134,146L134,143L135,140L132,138L130,136L127,134L124,132L121,131L119,129L119,125L118,122L117,119L117,115L115,111L113,107L113,103L116,101L114,99L113,95L111,93L113,89L114,86L116,80L118,78L121,78ZM103,158L100,158L99,155L97,151L95,149L92,146L95,147L99,145L102,145L104,147L107,152L110,153L112,155L112,159L112,163L111,167L108,166L106,163L105,160L103,158ZM125,195L123,193L124,189L126,186L127,189L127,192L125,195ZM124,180L126,182L127,185L129,187L125,185L124,182ZM129,178L132,176L136,177L133,179L129,178Z"},{"id":"SUMBAR","polda":"Polda Sumatera Barat","abbr":"SUMBAR","pulau":"Sumatera","lat":-0.739,"lng":100.8,"cx":183,"cy":198,"bx":169,"by":210,"bw":78,"bh":100,"d":"M143,175L145,172L149,168L153,168L157,169L161,169L163,167L161,164L160,160L165,161L168,162L168,166L170,171L173,172L175,175L178,176L181,176L182,179L182,182L182,186L184,188L188,188L189,192L192,193L194,195L198,198L200,200L204,203L208,204L208,207L205,210L204,214L201,218L198,221L195,221L192,220L191,223L191,226L194,229L195,234L191,237L188,240L185,236L184,233L185,229L184,226L182,224L180,220L177,214L175,211L173,208L173,205L172,201L170,199L166,195L163,191L161,189L159,186L157,184L157,181L154,179L151,177L148,175L145,175ZM146,221L143,223L139,222L136,220L134,217L132,213L130,211L131,207L131,204L134,203L137,202L137,206L139,208L141,210L141,213L143,216L145,219ZM174,252L175,255L173,257L175,260L172,258L171,255L169,253L168,250L168,247L172,249L174,252ZM163,246L163,240L165,242L169,246L166,248L163,246ZM159,235L155,235L152,232L153,229L156,230L158,235Z"},{"id":"RIAU","polda":"Polda Riau","abbr":"RIAU","pulau":"Sumatera","lat":0.507,"lng":101.447,"cx":199,"cy":168,"bx":211,"by":164,"bw":91,"bh":87,"d":"M210,202L208,204L203,203L197,198L194,195L192,193L189,192L189,189L186,188L182,186L181,181L184,180L183,177L183,174L180,176L174,175L173,172L170,172L168,166L170,163L167,161L165,158L167,156L168,153L166,149L171,146L174,144L174,141L174,138L170,137L172,128L171,124L171,120L172,123L174,126L179,130L182,131L182,126L189,126L195,132L196,138L198,140L201,141L206,141L212,145L216,147L216,152L217,156L222,161L226,163L234,163L239,169L234,172L227,175L224,174L226,177L229,174L233,174L240,171L244,167L250,171L253,173L256,181L251,180L249,182L246,185L249,185L247,189L249,185L253,186L255,188L251,190L246,193L245,196L247,198L239,198L236,198L234,201L231,204L227,207L224,206L221,205L219,202L216,202L212,201ZM241,163L243,165L240,168L240,164ZM198,136L197,132L200,132L202,130L205,130L207,133L205,138L203,140L199,139L198,136ZM213,142L223,144L224,150L219,146L216,146L212,142ZM223,154L224,158L221,158L219,156L218,152L217,148L224,151L223,154ZM228,155L230,153L233,153L236,155L240,159L233,157L233,154L231,156L227,156ZM225,153L227,155L224,158L223,155L225,153ZM234,162L229,161L226,162L223,161L223,158L226,156L230,156L228,158L231,159L231,156L237,161L236,164L234,162ZM181,129L181,126L182,130Z"},{"id":"KEPRI","polda":"Polda Kepulauan Riau","abbr":"KEPRI","pulau":"Sumatera","lat":0.917,"lng":104.446,"cx":271,"cy":158,"bx":315,"by":131,"bw":141,"bh":129,"d":"M260,153L263,153L262,156L259,156L258,153ZM256,157L259,156L259,159L256,157ZM265,162L263,159L267,160L265,162ZM265,161L267,163L265,161ZM245,153L247,157L244,155ZM259,162L256,160L259,162ZM248,163L246,165L244,161L246,159L248,161ZM254,159L256,161L254,159ZM246,159L249,162L246,160ZM266,155L269,153L273,152L276,155L276,158L275,161L272,160L270,157L273,156L270,156L267,156ZM270,173L268,171L271,172ZM268,172L270,174L268,172ZM273,175L278,179L275,178L273,176ZM271,179L270,176L272,179ZM276,183L280,185L285,187L282,187L277,185L273,187L271,185L273,183L272,180L276,182ZM268,189L271,189L275,191L273,194L270,195L268,193L267,190ZM357,69L358,66L357,69ZM360,91L364,92L362,89L359,89L357,85L359,83L363,79L363,82L367,86L367,90L365,93L361,94L360,91ZM315,100L316,103L315,100ZM314,103L316,107L314,103ZM305,109L303,112L302,109L305,109ZM378,108L379,111L376,111L378,108ZM383,121L381,119L385,120Z"},{"id":"JAMBI","polda":"Polda Jambi","abbr":"JAMBI","pulau":"Sumatera","lat":-1.61,"lng":103.613,"cx":251,"cy":219,"bx":232,"by":222,"bw":81,"bh":47,"d":"M195,235L195,231L192,228L191,223L191,220L194,221L198,220L201,218L204,216L205,212L207,209L209,207L208,204L212,201L215,202L218,202L221,204L224,206L227,206L231,205L234,202L236,198L239,198L244,199L248,199L250,201L252,203L257,204L262,204L266,206L269,205L270,210L272,212L271,215L272,218L269,220L268,223L263,223L260,223L257,223L253,223L250,225L247,226L250,228L249,232L247,234L244,234L241,232L241,236L237,236L233,235L233,238L231,240L227,243L224,244L221,244L218,243L215,245L212,245L209,245L205,243L202,241L196,235Z"},{"id":"BENGKULU","polda":"Polda Bengkulu","abbr":"BENGKULU","pulau":"Sumatera","lat":-3.792,"lng":102.26,"cx":218,"cy":271,"bx":222,"by":274,"bw":67,"bh":76,"d":"M255,295L252,296L249,298L246,295L243,293L239,290L234,288L231,284L229,282L220,276L219,273L218,270L214,265L210,263L207,261L203,258L200,255L199,252L197,250L196,246L191,243L188,240L191,237L194,236L201,239L204,241L209,245L212,245L214,247L217,250L218,253L221,253L224,254L224,258L226,260L229,260L232,260L236,261L236,265L232,265L230,267L230,270L227,271L230,273L233,276L239,276L241,280L244,282L247,284L246,288L249,290L252,290L253,293L255,295ZM216,307L222,309L221,312L217,309L214,308Z"},{"id":"SUMSEL","polda":"Polda Sumatera Selatan","abbr":"SUMSEL","pulau":"Sumatera","lat":-3.319,"lng":104.914,"cx":283,"cy":260,"bx":263,"by":259,"bw":96,"bh":78,"d":"M304,279L300,278L299,274L296,272L293,271L291,274L288,276L286,279L280,282L276,282L271,283L268,286L268,290L268,294L268,297L265,296L263,298L259,297L256,295L253,293L252,290L250,288L246,288L248,284L244,283L241,282L240,278L235,276L231,275L229,272L230,269L232,266L235,265L236,261L233,261L231,259L227,260L224,258L224,254L221,253L218,253L217,250L215,248L215,245L218,244L221,244L224,245L227,243L230,242L233,238L233,235L236,236L239,237L241,234L243,232L246,235L247,232L249,230L247,226L250,225L253,223L257,223L260,223L263,223L267,222L269,220L273,220L273,223L272,226L276,226L281,228L282,232L281,235L285,236L288,237L292,237L295,237L298,238L299,241L302,244L304,249L306,251L309,251L310,254L311,257L309,259L307,261L305,265L305,269L307,271L306,276L305,280Z"},{"id":"BABEL","polda":"Polda Kep. Bangka Belitung","abbr":"BABEL","pulau":"Sumatera","lat":-2.741,"lng":106.44,"cx":320,"cy":246,"bx":326,"by":238,"bw":77,"bh":41,"d":"M287,229L289,226L293,224L294,221L296,218L299,217L302,220L302,223L303,220L303,217L306,217L309,218L310,221L312,225L313,228L313,232L315,236L317,239L320,239L326,241L325,245L323,250L327,252L325,254L322,255L319,251L316,250L313,249L309,248L307,246L306,243L307,239L304,237L304,234L302,231L299,231L295,231L292,231L288,230ZM348,246L349,243L351,241L355,242L358,242L362,244L364,246L363,250L363,253L361,256L359,258L357,256L354,253L352,256L349,257L347,254L348,250L348,247ZM330,252L326,251L328,249L331,250ZM345,248L343,251L343,248Z"},{"id":"LAMPUNG","polda":"Polda Lampung","abbr":"LAMPUNG","pulau":"Sumatera","lat":-4.558,"lng":105.406,"cx":295,"cy":289,"bx":279,"by":296,"bw":54,"bh":53,"d":"M255,295L257,298L261,297L264,298L268,297L268,294L268,291L268,288L271,283L275,281L278,282L284,280L287,276L289,274L292,272L293,269L295,271L297,273L300,278L303,279L305,283L306,287L306,290L306,294L306,297L305,302L306,306L305,314L304,317L303,320L299,320L299,317L295,315L292,310L291,314L289,316L289,319L284,317L280,315L278,312L275,312L276,316L278,320L275,322L271,318L268,315L264,311L260,307L258,305L257,302L255,300L252,299L252,296L255,295Z"},{"id":"BANTEN","polda":"Polda Banten","abbr":"BANTEN","pulau":"Jawa","lat":-6.405,"lng":106.064,"cx":310,"cy":333,"bx":309,"by":334,"bw":38,"bh":26,"d":"M326,326L328,331L323,332L320,331L320,334L319,338L321,342L319,344L319,347L315,347L312,345L309,343L303,344L299,344L296,344L292,343L290,341L294,339L296,343L299,339L300,335L303,336L305,334L305,330L306,325L309,321L312,322L314,324L316,322L319,324L322,324L326,324Z"},{"id":"METRO JAYA","polda":"Polda Metro Jaya","abbr":"METRO JAYA","pulau":"Jawa","lat":-6.208,"lng":106.845,"cx":329,"cy":329,"bx":330,"by":329,"bw":16,"bh":14,"d":"M326,326L327,326L330,326L333,326L333,328L332,330L331,330L331,331L331,332L328,331L326,328L326,326Z"},{"id":"JABAR","polda":"Polda Jawa Barat","abbr":"JABAR","pulau":"Jawa","lat":-6.914,"lng":107.609,"cx":348,"cy":345,"bx":348,"by":344,"bw":60,"bh":46,"d":"M319,347L319,344L321,342L319,340L319,336L319,332L322,332L328,332L331,332L333,328L334,325L334,321L337,323L341,323L344,327L348,328L351,329L355,329L360,332L362,330L365,329L368,334L371,335L371,340L374,342L378,341L376,345L377,348L375,350L371,352L371,355L374,356L375,359L375,362L377,364L373,364L370,364L369,367L364,367L360,366L356,365L352,364L350,362L343,359L339,359L335,358L330,358L322,357L319,356L318,353L320,351L322,349L320,346Z"},{"id":"JATENG","polda":"Polda Jawa Tengah","abbr":"JATENG","pulau":"Jawa","lat":-7.15,"lng":110.14,"cx":409,"cy":351,"bx":409,"by":355,"bw":76,"bh":43,"d":"M378,341L381,344L385,344L389,344L392,344L394,342L396,344L399,344L402,345L406,346L409,345L413,345L415,347L418,346L420,343L421,340L423,336L426,333L431,334L432,338L435,340L439,340L442,338L447,342L445,344L445,347L444,352L441,354L439,356L436,355L433,355L434,361L435,364L437,366L437,370L434,370L433,373L429,373L428,376L425,375L424,372L425,369L424,366L420,367L418,365L417,360L415,362L412,364L409,363L407,367L403,368L398,366L393,366L388,364L384,364L381,365L378,362L375,362L375,359L374,356L371,355L371,352L374,351L377,348L376,345L378,341ZM378,364L381,365L377,365Z"},{"id":"DIY","polda":"Polda D.I. Yogyakarta","abbr":"DIY","pulau":"Jawa","lat":-7.875,"lng":110.426,"cx":416,"cy":368,"bx":416,"by":368,"bw":20,"bh":16,"d":"M406,369L407,369L407,367L409,365L409,363L412,363L412,364L415,362L417,360L418,365L419,367L420,367L422,366L424,366L424,367L425,367L425,369L424,372L425,374L425,375L426,376L422,376L420,375L417,374L415,373L414,372L411,371L409,370L406,369Z"},{"id":"JATIM","polda":"Polda Jawa Timur","abbr":"JATIM","pulau":"Jawa","lat":-7.536,"lng":112.238,"cx":460,"cy":360,"bx":489,"by":354,"bw":121,"bh":73,"d":"M447,342L450,343L453,342L455,344L459,345L464,344L467,345L469,347L470,351L473,353L475,355L475,359L475,362L479,363L481,365L484,365L487,366L490,364L493,365L496,364L499,364L504,362L506,365L509,364L512,365L514,367L513,373L511,381L512,384L514,387L517,387L516,390L513,389L511,386L508,386L505,386L502,386L498,384L494,383L491,382L489,380L486,378L480,378L477,381L473,381L468,381L465,381L462,379L458,379L455,379L452,379L449,378L447,380L443,379L440,378L436,377L433,377L428,376L429,373L432,373L434,370L437,370L437,366L435,364L434,361L433,357L434,354L439,356L441,354L444,352L445,349L444,346L446,343ZM494,345L498,345L501,344L505,346L503,348L500,349L495,350L492,353L487,353L481,353L478,352L475,351L472,352L471,349L474,347L480,345L489,345L494,345ZM539,346L535,347L532,346L533,343L537,344L541,345ZM471,320L468,320L471,317L472,320ZM510,349L513,352L509,350ZM549,350L547,352L549,350ZM485,382L488,382L486,384ZM515,351L518,351L515,351Z"},{"id":"BALI","polda":"Polda Bali","abbr":"BALI","pulau":"Bali & Nusra","lat":-8.409,"lng":115.188,"cx":532,"cy":381,"bx":529,"by":383,"bw":32,"bh":19,"d":"M532,389L533,390L531,392L529,391L531,390L531,389L531,387L530,387L529,386L526,383L522,381L520,381L518,381L517,381L516,379L514,377L513,375L514,374L515,374L516,375L517,374L520,375L521,375L524,376L527,376L530,373L532,373L535,374L538,375L541,377L543,379L544,380L545,381L544,382L543,382L542,383L540,383L539,384L538,385L536,385L534,387L534,388L532,389ZM542,390L542,391L539,390L538,389L539,387L541,387L542,389L542,390Z"},{"id":"NTB","polda":"Polda Nusa Tenggara Barat","abbr":"NTB","pulau":"Bali & Nusra","lat":-8.652,"lng":117.361,"cx":585,"cy":387,"bx":588,"by":386,"bw":81,"bh":25,"d":"M591,383L594,385L594,388L597,388L601,387L605,388L606,385L602,383L599,383L596,380L592,377L595,374L598,373L602,374L604,378L606,380L609,379L612,377L616,378L617,382L618,379L622,378L624,380L626,382L625,385L628,387L625,389L622,388L618,388L620,390L623,391L620,391L616,391L613,392L609,391L610,387L608,389L605,391L602,392L599,393L594,394L590,395L586,396L581,396L576,398L573,397L569,395L569,392L571,390L570,386L572,384L576,383L578,381L581,381L585,383L587,381L591,382ZM561,394L558,393L552,393L550,391L547,390L552,389L554,387L554,384L554,381L558,377L562,377L566,378L569,380L568,383L567,386L565,390L565,393L562,393ZM590,375L590,379L587,380L587,376L590,375ZM626,374L627,377L624,377L626,374Z"},{"id":"NTT","polda":"Polda Nusa Tenggara Timur","abbr":"NTT","pulau":"Bali & Nusra","lat":-9.657,"lng":121.079,"cx":675,"cy":411,"bx":704,"by":408,"bw":162,"bh":67,"d":"M712,381L715,380L718,378L715,376L717,374L721,375L722,378L720,380L716,382L717,386L713,387L710,389L706,390L702,390L699,389L695,391L691,393L688,392L682,390L682,393L679,393L676,393L673,394L669,392L666,392L663,391L658,390L654,391L651,390L647,391L644,390L644,387L646,383L649,382L651,380L655,378L658,378L661,378L664,378L667,380L672,380L677,382L680,383L683,385L687,384L691,383L695,383L698,382L700,384L703,386L706,386L709,386L709,383L712,381ZM747,403L749,406L751,404L753,407L755,404L757,400L761,399L763,397L766,396L769,394L770,397L773,395L774,400L771,399L770,402L772,405L770,408L769,411L766,413L764,416L762,418L758,420L756,423L751,423L748,423L746,426L743,426L741,428L738,428L734,427L734,424L737,422L739,420L735,420L735,417L737,415L737,411L739,409L741,407L744,405L747,403ZM641,415L638,414L634,414L629,413L625,412L623,409L624,406L629,404L632,404L636,404L639,404L643,404L647,402L651,407L654,407L655,411L659,410L661,412L663,414L665,417L668,418L668,421L666,423L663,425L660,425L657,425L654,425L649,422L647,419L645,417L641,416ZM754,380L756,378L757,375L760,374L764,375L770,375L773,377L773,380L767,380L762,381L759,382L756,382L754,380ZM734,380L736,378L740,375L743,377L740,378L738,382L735,383L732,384L729,384L730,381L733,379L735,377L733,379ZM726,433L731,430L732,435L729,436L727,439L723,439L719,441L717,439L721,437L724,435L726,433ZM744,381L747,378L750,378L752,376L753,379L750,381L749,384L746,382ZM725,381L721,381L725,377L729,378L728,381L725,381ZM694,434L691,434L693,431L697,430L694,434ZM635,389L633,385L635,382L638,383L636,385L635,388ZM729,427L730,424L732,422L731,425L729,427ZM721,383L720,386L718,384L721,382L724,382L721,383ZM640,386L644,386L642,388L639,389L640,386ZM783,379L785,375L784,379Z"},{"id":"KALBAR","polda":"Polda Kalimantan Barat","abbr":"KALBAR","pulau":"Kalimantan","lat":-0.278,"lng":111.475,"cx":442,"cy":187,"bx":443,"by":192,"bw":130,"bh":120,"d":"M409,244L407,246L409,244ZM379,217L378,220L381,219L379,217ZM394,204L392,209L393,212L396,210L399,208L400,205L397,204L394,204ZM388,196L388,199L389,202L392,203L394,201L396,203L399,204L400,201L397,199L394,198L391,197L388,196ZM393,195L395,197L393,195ZM385,185L383,187L386,186ZM508,147L506,145L503,146L500,147L498,149L495,151L493,149L490,149L487,148L484,147L481,146L478,147L480,145L478,143L475,143L472,143L469,143L466,143L463,144L460,146L459,149L458,152L455,153L452,154L450,157L447,156L444,157L441,156L438,155L435,155L432,155L429,156L426,158L423,159L420,160L417,159L416,156L413,156L411,154L409,152L407,150L405,148L403,146L401,144L399,142L398,139L396,137L395,134L397,132L393,133L390,134L390,137L388,139L387,142L383,144L383,148L381,150L379,152L380,155L381,158L379,160L379,163L380,166L380,169L380,172L383,173L385,175L386,178L388,180L386,182L386,185L384,187L385,191L385,194L388,195L391,194L394,195L396,197L399,197L397,199L399,201L399,204L402,206L405,207L404,210L407,212L407,215L407,218L406,221L404,223L406,226L408,228L409,231L408,234L409,237L410,240L410,243L412,245L412,248L412,251L415,250L418,249L421,249L421,252L424,252L426,250L429,249L431,247L434,246L433,243L433,240L433,237L431,234L432,231L432,228L430,226L430,223L430,220L427,220L429,218L432,217L434,215L437,214L440,212L442,209L444,207L445,204L448,203L451,202L453,199L456,199L459,198L459,195L462,197L465,196L468,197L471,196L473,194L476,193L479,192L482,192L485,191L484,188L486,186L488,184L489,181L489,178L487,176L485,174L488,174L491,173L493,171L495,169L497,167L499,165L500,162L500,159L501,156L503,153L506,153L508,151L508,148Z"},{"id":"KALTENG","polda":"Polda Kalimantan Tengah","abbr":"KALTENG","pulau":"Kalimantan","lat":-1.681,"lng":113.382,"cx":488,"cy":220,"bx":485,"by":214,"bw":122,"bh":103,"d":"M546,212L546,209L545,206L543,204L541,202L539,200L536,199L536,195L535,192L533,190L533,187L534,184L534,181L532,183L529,184L526,185L525,182L525,179L522,178L523,175L525,173L528,172L530,170L528,167L527,164L525,162L522,163L519,163L517,165L515,167L512,168L509,168L507,166L505,164L502,164L499,164L497,167L495,169L493,171L491,173L488,174L485,174L487,176L489,178L489,181L488,184L486,186L484,188L485,191L482,191L479,192L476,193L473,194L471,196L468,197L465,196L462,197L460,195L458,197L455,198L452,200L450,202L447,203L445,205L444,208L441,210L438,212L436,214L433,215L432,218L429,218L427,220L430,220L431,223L430,226L432,228L432,231L431,234L432,237L433,240L434,243L434,246L431,247L429,249L426,249L424,251L427,252L430,254L433,253L437,251L440,250L443,251L446,251L448,248L449,251L450,254L450,257L450,261L449,264L452,265L455,263L459,260L462,259L465,260L467,262L470,262L472,260L476,258L479,256L477,254L479,252L482,253L484,255L486,257L489,258L491,256L494,257L494,260L493,263L496,263L499,263L501,261L504,260L507,261L510,262L512,260L514,257L515,254L516,251L518,249L519,246L522,245L522,242L524,240L527,238L533,234L535,232L537,229L538,226L536,224L536,221L538,219L539,216L541,214L543,212L546,212Z"},{"id":"KALSEL","polda":"Polda Kalimantan Selatan","abbr":"KALSEL","pulau":"Kalimantan","lat":-3.092,"lng":115.283,"cx":534,"cy":254,"bx":538,"by":246,"bw":54,"bh":68,"d":"M561,261L560,264L560,267L561,264L562,261ZM558,257L555,259L553,262L553,265L552,268L553,271L553,274L553,277L556,276L558,274L558,271L560,269L559,266L559,263L558,260L558,257ZM565,238L561,237L558,236L555,235L552,236L549,236L547,234L547,230L545,228L545,225L544,222L543,219L543,216L545,214L543,212L541,214L539,216L538,219L536,221L536,224L538,226L537,229L535,231L533,233L527,238L524,240L522,242L522,245L519,246L517,248L516,251L516,254L514,256L512,259L511,262L513,264L516,265L518,267L518,270L518,273L518,276L518,279L521,280L523,278L526,277L529,275L532,274L536,273L539,271L542,270L545,269L547,267L550,267L551,264L552,261L554,259L556,257L554,255L557,255L555,253L554,250L557,252L560,250L561,247L560,244L560,241L558,243L560,241L563,240L565,238Z"},{"id":"KALTIM","polda":"Polda Kalimantan Timur","abbr":"KALTIM","pulau":"Kalimantan","lat":0.538,"lng":116.419,"cx":562,"cy":167,"bx":562,"by":178,"bw":124,"bh":120,"d":"M587,198L589,200L587,198ZM587,197L589,199L587,197ZM584,197L583,200L585,202L584,199ZM584,195L584,198L585,201L585,198L584,195ZM585,195L587,197L585,195ZM589,192L588,195L590,193ZM589,191L586,193L589,192ZM588,189L587,192L589,190ZM588,188L586,190L588,188ZM611,145L613,147L611,145ZM598,131L596,129L598,131ZM614,125L614,128L614,125ZM600,122L597,123L595,125L593,123L591,121L588,120L586,118L583,118L579,118L576,119L572,120L569,121L566,122L563,121L561,123L560,126L559,129L557,131L556,134L556,137L555,140L552,142L550,145L548,147L546,149L543,150L540,150L537,152L536,155L533,155L530,153L527,153L525,151L521,150L519,148L517,145L514,145L511,145L508,146L508,149L508,152L505,154L502,154L500,156L500,159L500,162L500,165L503,165L506,164L508,166L510,168L513,168L516,167L518,165L520,163L523,163L526,162L527,166L529,168L530,171L528,173L525,173L523,175L522,178L525,179L525,182L525,185L528,185L531,184L533,182L534,185L533,188L533,191L535,193L536,197L537,200L540,201L543,204L545,206L548,208L546,210L545,213L543,215L543,218L543,221L545,223L545,226L545,229L548,229L547,232L548,235L551,236L555,236L558,236L561,237L565,238L566,235L566,232L564,234L561,233L564,232L561,231L563,229L563,226L562,223L559,223L561,221L564,219L564,216L566,214L569,213L570,210L573,211L575,209L577,207L579,205L581,202L582,199L583,196L585,194L587,191L586,187L587,183L588,180L588,177L588,174L589,171L591,168L592,165L594,163L596,161L599,161L600,158L598,156L601,158L604,159L608,160L611,160L614,161L617,160L620,161L622,159L624,157L622,155L619,154L618,151L616,149L613,148L610,147L609,144L606,143L604,141L602,139L599,137L597,135L595,133L593,131L592,128L595,128L598,128L601,128L602,125L600,123Z"},{"id":"KALTARA","polda":"Polda Kalimantan Utara","abbr":"KALTARA","pulau":"Kalimantan","lat":3.073,"lng":116.041,"cx":552,"cy":107,"bx":559,"by":115,"bw":82,"bh":80,"d":"M590,111L593,112L590,111ZM587,110L590,110L587,110ZM592,109L589,110L592,110ZM587,110L589,108L587,110ZM591,107L588,108L591,108ZM589,107L586,108L589,107ZM587,106L585,108L587,106ZM587,100L585,102L588,102ZM591,98L588,99L590,101L592,99ZM587,95L589,97L587,95ZM582,95L584,97L587,98L585,96L582,95ZM591,95L588,95L591,96ZM596,95L594,97L597,98L596,95ZM586,94L583,94L586,95ZM592,90L594,92L592,90ZM590,90L587,90L588,93L592,94L593,91L590,90ZM594,88L596,90L594,88ZM588,84L588,87L592,87L590,85ZM592,81L590,83L592,86L594,84L592,81ZM598,81L592,81L596,83L598,81ZM600,122L597,120L595,118L595,115L592,114L590,112L587,110L584,110L584,107L587,106L585,104L582,104L585,103L586,99L583,97L580,96L578,94L581,93L584,94L587,93L587,90L590,90L593,90L591,88L588,87L586,85L586,82L589,82L586,80L584,78L582,76L579,76L576,77L573,76L570,76L567,77L565,75L563,77L560,76L557,76L554,77L551,76L548,76L547,79L544,80L544,83L543,86L542,89L541,92L542,95L543,98L541,100L540,103L540,106L538,108L535,109L532,110L530,113L530,116L530,119L533,119L531,121L529,123L526,124L524,126L522,128L523,131L524,134L522,136L520,138L520,141L518,143L518,146L520,148L523,152L526,152L528,154L531,154L534,155L537,154L538,151L541,150L544,150L546,148L548,146L551,144L553,141L555,139L556,136L556,133L557,130L559,126L561,124L562,121L565,122L568,122L572,120L575,119L578,118L581,118L584,118L587,119L590,120L592,122L594,124L597,123L600,122Z"},{"id":"SULUT","polda":"Polda Sulawesi Utara","abbr":"SULUT","pulau":"Sulawesi","lat":0.624,"lng":123.975,"cx":745,"cy":165,"bx":770,"by":123,"bw":90,"bh":101,"d":"M733,172L734,167L730,164L728,162L725,159L728,158L731,158L735,159L739,160L744,160L747,158L750,157L753,156L754,153L757,152L760,152L758,149L760,147L764,146L766,144L768,140L770,138L773,141L775,143L774,146L772,148L770,153L767,156L765,158L762,160L761,163L759,165L758,169L755,170L752,171L748,171L745,172L741,172L738,173L735,173ZM811,76L812,72L815,73L815,76L813,81L813,84L810,83L813,79L811,76ZM786,96L785,100L782,98L782,95L779,93L782,91L784,94L786,96ZM779,113L781,115L778,115ZM814,91L812,89L815,90Z"},{"id":"GORONTALO","polda":"Polda Gorontalo","abbr":"GORONTALO","pulau":"Sulawesi","lat":0.699,"lng":122.446,"cx":708,"cy":164,"bx":706,"by":164,"bw":57,"bh":18,"d":"M702,155L705,156L708,156L711,157L714,159L718,161L720,159L723,159L727,160L730,164L733,165L734,170L731,173L728,172L725,171L723,168L719,169L714,169L710,168L707,168L704,169L701,169L698,169L694,170L690,168L687,167L684,169L681,169L679,166L677,164L679,162L682,159L685,160L688,159L691,158L694,157L696,159L699,156L702,155Z"},{"id":"SULTENG","polda":"Polda Sulawesi Tengah","abbr":"SULTENG","pulau":"Sulawesi","lat":-1.43,"lng":121.445,"cx":684,"cy":214,"bx":689,"by":203,"bw":107,"bh":110,"d":"M638,201L641,199L642,196L644,200L645,197L643,192L643,187L643,183L639,181L642,180L643,183L646,181L645,178L643,176L646,175L645,172L646,169L649,169L649,166L650,163L654,161L654,157L657,157L656,160L660,162L663,162L663,159L665,157L668,156L668,152L669,149L672,148L675,149L678,151L681,150L684,149L683,152L686,155L690,155L694,154L697,156L700,155L698,158L695,158L691,158L688,159L685,160L682,159L680,161L678,163L679,166L681,169L677,169L675,171L670,171L666,169L663,168L657,169L654,172L652,175L651,178L651,181L649,184L649,187L649,190L650,195L651,198L654,200L656,203L660,204L663,208L664,212L669,213L672,214L676,214L678,211L680,208L682,204L684,202L687,201L691,204L696,204L699,203L701,201L705,199L708,199L712,199L715,200L719,199L716,197L720,195L724,194L728,194L731,196L732,199L731,203L728,205L725,203L724,200L721,202L718,202L716,204L714,207L712,210L709,213L707,215L705,217L702,218L698,219L695,221L692,222L691,225L689,227L686,227L684,225L681,223L680,227L683,227L686,229L686,232L689,232L692,235L695,238L696,241L698,244L699,247L701,249L704,249L703,252L705,254L709,256L707,258L704,258L704,255L702,253L699,251L696,250L695,247L692,245L690,241L687,240L682,238L678,236L672,234L668,233L663,231L660,228L658,225L657,228L653,229L651,227L648,227L646,229L645,225L643,222L642,219L640,217L640,214L637,215L635,212L638,211L639,208L638,205L638,201ZM725,219L726,216L725,212L722,215L720,217L718,219L717,216L716,213L718,210L721,209L724,208L727,210L727,214L730,210L733,211L734,214L732,217L729,214L727,218ZM733,220L733,216L735,219L735,222L733,220ZM695,191L691,193L693,190ZM725,223L723,226L724,223ZM699,190L699,187L701,190ZM742,228L740,226L742,228ZM706,189L704,187L706,189Z"},{"id":"SULBAR","polda":"Polda Sulawesi Barat","abbr":"SULBAR","pulau":"Sulawesi","lat":-2.844,"lng":119.232,"cx":630,"cy":248,"bx":632,"by":234,"bw":27,"bh":65,"d":"M628,264L625,264L623,266L621,261L620,256L621,249L618,247L620,243L625,242L628,239L627,236L628,233L629,228L632,227L632,223L632,218L631,215L632,211L632,208L636,206L638,201L638,204L638,207L638,210L635,213L639,214L643,221L645,223L645,227L642,230L639,233L641,236L641,239L642,243L640,246L636,246L637,251L640,255L637,255L634,257L636,264L633,263L630,263Z"},{"id":"SULSEL","polda":"Polda Sulawesi Selatan","abbr":"SULSEL","pulau":"Sulawesi","lat":-3.668,"lng":119.974,"cx":648,"cy":268,"bx":663,"by":292,"bw":60,"bh":133,"d":"M639,289L639,286L640,283L640,280L640,275L638,277L635,269L637,266L635,260L634,257L637,255L640,255L637,251L637,247L640,246L643,244L641,241L642,237L639,235L640,232L642,230L646,229L648,227L651,227L657,229L658,225L663,231L666,233L672,234L677,236L681,237L685,240L690,241L692,245L689,249L685,252L682,252L680,254L678,251L675,247L672,248L675,245L674,242L672,244L669,244L665,243L662,245L660,248L657,249L655,251L655,256L658,257L658,264L659,268L657,272L657,276L658,280L657,283L657,286L658,290L660,292L658,296L656,301L657,308L660,315L656,312L652,314L647,313L645,315L640,316L638,314L635,314L635,311L633,308L634,302L637,298L636,294L639,289ZM660,333L660,330L660,326L659,323L660,319L662,325L661,329L661,333L660,336L660,333ZM659,326L659,329L659,326ZM664,348L668,349L664,351L664,348ZM670,354L673,354L668,354ZM693,355L691,358L693,355Z"},{"id":"SULTRA","polda":"Polda Sulawesi Tenggara","abbr":"SULTRA","pulau":"Sulawesi","lat":-4.144,"lng":122.174,"cx":701,"cy":279,"bx":708,"by":285,"bw":78,"bh":79,"d":"M672,248L675,247L677,251L679,253L685,252L687,250L690,247L692,245L694,247L696,250L699,251L702,253L704,255L704,258L706,261L703,261L704,265L703,268L706,270L709,272L713,273L713,276L713,279L716,280L716,277L719,279L719,283L717,286L714,284L716,287L712,285L709,287L706,287L703,287L699,289L698,293L700,295L697,297L693,296L690,296L686,295L684,292L685,286L685,282L688,279L685,276L681,275L678,272L674,269L671,266L669,262L671,260L673,258L674,254L675,250L672,248ZM721,302L723,304L725,306L725,309L722,310L719,310L719,313L717,315L713,316L711,313L713,310L714,307L716,305L716,302L717,299L718,295L717,292L719,287L722,285L725,287L726,290L726,293L725,296L725,293L722,295L721,298L721,302ZM705,304L706,298L706,294L710,293L713,290L715,292L715,295L715,299L713,301L711,304L713,308L710,310L710,307L708,309L704,309L705,305ZM692,306L693,303L696,301L698,303L698,306L698,311L694,309L692,306ZM721,276L725,276L727,279L725,282L721,281L720,278ZM734,308L737,307L735,309ZM747,324L745,322L747,324ZM739,311L741,313L739,311ZM707,261L708,264L707,261Z"},{"id":"MALUT","polda":"Polda Maluku Utara","abbr":"MALUT","pulau":"Maluku & Papua","lat":1.57,"lng":127.808,"cx":838,"cy":143,"bx":817,"by":179,"bw":126,"bh":121,"d":"M836,161L839,161L841,159L842,154L845,153L847,151L846,148L848,146L851,145L854,143L859,142L859,145L861,149L859,152L859,155L856,157L852,159L849,160L849,163L853,165L856,167L859,167L859,172L862,173L857,173L854,171L850,171L846,169L842,169L840,171L841,174L841,177L840,180L841,183L842,187L845,192L847,195L850,199L848,201L844,197L841,192L839,189L836,188L834,185L835,182L836,179L835,176L836,173L833,172L832,168L832,164L834,160L831,160L830,155L828,152L831,146L831,143L832,140L835,134L839,130L844,128L842,131L839,134L839,137L842,138L842,141L843,145L842,148L841,151L838,153L834,156L834,159L836,161ZM768,226L764,226L762,228L758,228L755,229L754,225L755,222L757,220L761,220L765,221L769,221L772,222L775,222L778,223L777,226L774,225L771,225L768,226ZM830,221L828,219L828,216L831,214L836,212L838,214L841,215L844,218L847,219L845,221L840,220L835,221L830,221ZM849,132L849,127L849,124L851,120L854,118L858,119L859,122L858,125L855,131L852,131L849,132ZM827,194L825,191L827,188L829,190L831,188L835,191L833,194L834,197L838,196L840,199L838,201L835,200L832,199L829,198L829,195ZM794,226L790,226L784,226L781,227L778,224L781,223L787,224L791,224L797,224L801,224L798,225L794,226ZM794,239L793,236L791,233L791,230L792,227L794,229L793,232L796,238ZM825,190L823,193L821,189L822,186L825,187L825,190ZM822,198L826,197L824,199ZM830,211L831,208L835,210L832,210ZM878,182L880,184L876,182ZM825,161L828,160L826,162ZM828,174L828,171L829,174ZM846,123L847,126L846,123ZM855,194L857,196L855,194Z"},{"id":"MALUKU","polda":"Polda Maluku","abbr":"MALUKU","pulau":"Maluku & Papua","lat":-3.238,"lng":130.145,"cx":895,"cy":258,"bx":899,"by":314,"bw":220,"bh":133,"d":"M911,263L912,266L911,269L911,273L906,271L902,269L900,267L894,264L891,263L889,260L886,260L883,260L880,259L880,262L877,262L874,262L871,261L866,260L866,257L863,258L859,261L855,263L852,262L850,260L849,257L846,256L847,253L845,255L844,258L843,261L841,263L840,259L839,256L842,254L845,254L845,251L848,248L851,248L855,248L858,248L861,248L866,248L869,250L872,250L875,248L878,247L882,248L886,249L891,252L895,252L898,251L901,253L904,254L906,259L907,262L911,262ZM794,259L794,256L797,256L801,254L804,254L809,254L813,253L815,255L818,255L821,257L819,260L822,260L824,263L824,266L821,268L817,270L812,272L807,271L801,268L798,266L795,263L794,259ZM919,365L920,362L921,359L924,358L926,355L928,353L929,350L931,352L931,355L931,361L929,363L927,365L924,368L924,371L921,371L918,371L917,368L919,365ZM789,371L789,368L791,366L793,363L799,365L802,364L806,362L810,361L812,363L815,365L812,365L809,367L806,370L803,370L798,370L793,369L791,371ZM999,340L997,342L995,345L992,345L990,343L990,339L991,335L991,332L990,328L993,329L996,331L998,333L1000,336L1000,340ZM995,325L998,324L1001,322L1004,322L1006,325L1007,328L1006,331L1001,332L999,330L996,329L995,325ZM1006,320L1005,323L1002,322L999,324L996,324L995,321L997,318L994,318L997,316L999,313L1001,315L1003,317L1005,319ZM849,267L847,270L843,270L840,269L843,266L847,266L849,264L851,266ZM886,373L881,369L883,366L887,368L886,372ZM962,319L963,316L965,312L967,306L967,313L964,316L963,319L961,322L962,319ZM915,286L919,286L924,286L927,286L924,288L921,288L917,287L914,287ZM956,318L955,315L958,316L959,320L957,322L956,319ZM995,328L998,330L995,330L992,328L991,325L994,324L994,327ZM998,331L1001,332L1003,334L1001,336L999,334L997,332ZM837,375L841,375L845,375L844,378L841,377L838,376ZM917,376L913,377L910,380L911,377L914,376L916,373L919,374L917,376ZM1004,314L1006,317L1003,317L1001,315L1004,314ZM1002,310L1005,312L1003,314L1000,313L1000,310ZM937,352L933,352L937,350L939,352ZM859,350L858,353L855,351L857,349ZM827,360L830,360L828,362ZM853,265L856,265L854,267ZM1005,341L1005,338L1005,341ZM857,266L860,264L858,267ZM915,284L919,284L916,285ZM916,359L919,357L916,359ZM834,257L837,255L837,258L834,258ZM1009,331L1009,334L1009,331ZM841,252L843,250L841,252ZM845,377L848,377L845,378ZM867,378L863,376L866,376ZM830,260L832,258L830,260ZM1006,335L1004,337L1005,334ZM912,359L915,360L912,361ZM930,340L928,343L929,340Z"},{"id":"PABARDAYA","polda":"Polda Papua Barat Daya","abbr":"PABARDAYA","pulau":"Maluku & Papua","lat":-1.1,"lng":131.3,"cx":923,"cy":207,"bx":917,"by":216,"bw":63,"bh":71,"d":"M948,251L945,250L942,251L940,249L940,246L943,244L948,244L948,234L944,232L940,230L939,227L938,224L940,222L937,221L937,218L934,218L931,217L929,215L926,216L923,212L923,215L920,217L918,215L915,215L916,211L919,210L921,206L922,202L925,199L928,198L936,197L938,195L941,193L946,189ZM896,185L898,183L901,182L905,181L910,181L914,182L918,182L921,184L923,187L921,189L917,188L914,188L912,186L908,184L909,187L913,188L911,191L907,188L904,188L901,186L898,186ZM900,228L897,229L894,230L890,228L886,226L889,223L893,221L896,221L899,220L901,223L900,226ZM906,203L910,203L913,202L916,202L916,209L915,212L912,212L909,210L908,206L906,203ZM903,199L906,199L909,200L913,199L911,201L907,202L904,202L902,200ZM902,192L905,191L908,191L906,193L902,192ZM885,208L888,207L887,210L885,208ZM894,180L894,183L894,180Z"},{"id":"PABAR","polda":"Polda Papua Barat","abbr":"PABAR","pulau":"Maluku & Papua","lat":-1.95,"lng":133.45,"cx":975,"cy":227,"bx":994,"by":239,"bw":92,"bh":99,"d":"M1004,248L1000,251L999,254L996,256L994,259L998,263L1001,264L1011,267L1015,269L1018,270L1026,273L1029,274L1031,280L1037,281L1040,280L1039,284L1037,286L1035,288L1032,287L1027,287L1022,286L1017,287L1011,284L1008,282L1005,279L1004,275L1007,274L1010,275L1007,274L1004,274L1002,276L999,276L997,273L995,275L992,273L992,270L990,272L987,273L986,269L984,267L981,266L979,263L981,261L980,258L983,256L984,253L984,250L983,253L980,256L980,260L977,262L978,266L975,268L973,270L975,272L971,276L969,278L966,277L963,278L959,275L958,270L957,267L961,267L961,263L959,261L959,258L957,260L955,258L953,255L950,252L948,244L951,244L955,245L957,247L963,243L965,240L967,238L971,239L973,241L974,245L977,243L980,241L982,243L983,240L986,240L988,237L988,234L987,231L984,230L981,231L978,232L974,233L971,233L968,233L965,234L962,235L959,234L955,235L953,233L948,234L948,189L951,189L954,189L957,189L961,191L966,193L969,194L972,197L977,198L981,198L984,198L987,197L989,199L989,202L990,205L993,209L995,212L993,214L993,218L990,220L991,225L991,228L991,232L992,235L993,238L996,241L998,246L999,249L1000,244L999,241L1002,239L1004,241L1004,247ZM976,282L973,281L977,281ZM997,228L997,231L997,228ZM992,227L992,224L992,227ZM985,237L987,239L985,237ZM976,239L979,239L976,239ZM981,241L983,243L981,241ZM992,276L990,274L992,276ZM1002,235L1002,238L1002,235ZM985,237L988,237L985,237Z"},{"id":"PAPTENG","polda":"Polda Papua Tengah","abbr":"PAPTENG","pulau":"Maluku & Papua","lat":-3.85,"lng":136.35,"cx":1045,"cy":272,"bx":1045,"by":249,"bw":102,"bh":107,"d":"M1004,248L1005,251L1009,250L1008,255L1009,258L1012,260L1015,261L1018,261L1022,261L1026,259L1027,256L1031,255L1032,252L1035,251L1036,247L1037,244L1041,243L1043,240L1045,237L1047,233L1051,234L1054,233L1057,232L1060,231L1063,230L1066,229L1063,225L1066,222L1070,220L1072,218L1076,217L1079,216L1082,215L1082,220L1082,223L1082,227L1081,230L1084,232L1086,236L1089,238L1093,243L1096,246L1096,249L1092,251L1083,253L1080,253L1077,253L1074,253L1071,253L1068,256L1065,256L1065,260L1063,266L1062,269L1062,273L1061,277L1060,280L1070,280L1075,280L1080,280L1079,283L1079,287L1081,290L1079,295L1076,300L1074,302L1071,302L1072,299L1069,301L1070,297L1066,300L1064,298L1062,295L1061,298L1058,296L1055,295L1051,295L1048,293L1045,292L1039,291L1035,288L1037,286L1039,284L1040,280L1037,281L1032,280L1030,276L1027,273L1018,270L1015,269L1011,267L1001,264L998,263L994,261L996,256L999,254L1000,251L1003,249ZM1032,205L1031,200L1028,202L1025,199L1022,198L1021,195L1025,196L1028,196L1031,198L1035,199L1038,200L1039,203L1041,205L1045,206L1042,208L1038,209L1035,208L1032,207ZM1046,221L1051,222L1056,222L1054,224L1049,225L1044,225L1040,225L1037,224L1034,222L1031,221L1028,221L1024,220L1027,219L1031,219L1035,219L1042,220L1045,221ZM1011,207L1007,205L1009,202L1012,205ZM1071,302L1070,299L1071,302ZM1068,300L1069,297L1068,300ZM1017,216L1020,216L1017,216Z"},{"id":"PAPUA","polda":"Polda Papua","abbr":"PAPUA","pulau":"Maluku & Papua","lat":-4.25,"lng":139.35,"cx":1118,"cy":282,"bx":1109,"by":307,"bw":98,"bh":182,"d":"M1083,216L1087,218L1090,219L1092,221L1095,222L1100,223L1103,225L1106,227L1109,227L1112,229L1116,231L1120,232L1122,234L1125,235L1129,237L1135,237L1139,238L1142,239L1146,239L1151,240L1150,243L1156,243L1158,256L1158,272L1158,284L1158,300L1158,314L1158,331L1156,335L1155,338L1154,341L1156,343L1158,345L1158,360L1158,377L1158,389L1158,398L1155,398L1153,395L1148,391L1146,388L1143,384L1141,382L1138,380L1135,378L1133,376L1131,374L1126,374L1123,375L1118,376L1115,373L1111,375L1108,378L1106,376L1106,373L1108,369L1110,366L1111,363L1112,360L1109,360L1107,356L1104,354L1102,352L1107,352L1110,353L1114,353L1117,353L1120,353L1118,351L1115,348L1110,344L1107,342L1105,340L1102,338L1098,334L1095,332L1094,329L1094,326L1092,322L1094,320L1096,318L1099,318L1101,316L1104,317L1107,316L1110,318L1111,321L1109,319L1109,316L1106,316L1103,315L1100,317L1097,316L1100,315L1097,314L1095,316L1091,316L1091,313L1091,310L1088,311L1085,309L1087,307L1089,305L1087,303L1082,307L1079,308L1077,305L1074,304L1076,300L1078,297L1080,291L1079,287L1079,283L1080,280L1077,280L1072,280L1060,280L1061,277L1062,273L1062,269L1063,266L1065,260L1065,256L1068,256L1071,253L1074,253L1077,253L1080,253L1083,253L1091,253L1095,250L1096,246L1093,243L1090,240L1088,237L1084,234L1082,231L1082,227L1082,223L1082,220L1083,216ZM1099,378L1096,380L1092,381L1086,381L1082,381L1078,381L1078,377L1079,374L1081,371L1082,368L1084,365L1086,362L1089,360L1094,357L1101,356L1104,356L1106,358L1108,360L1111,361L1110,364L1109,367L1107,369L1107,372L1104,375L1101,376L1099,378ZM1111,352L1107,351L1104,350L1101,348L1099,346L1103,345L1107,344L1112,347L1115,348L1118,349L1119,353L1116,353L1113,352ZM1099,378L1102,375L1105,375L1108,379L1103,381L1100,380ZM1091,319L1092,316L1096,315L1101,315L1097,315L1094,317L1092,320ZM1087,316L1087,313L1089,310L1091,313L1091,316L1087,317ZM1088,305L1086,308L1086,311L1082,308L1085,307L1087,305L1089,303ZM1105,343L1103,341L1101,339L1104,340L1105,343ZM1101,344L1100,341L1103,342L1101,344ZM1102,345L1103,342L1103,345ZM1091,381L1096,380L1092,382Z"}];
+const CAS_KABKOTA_COORDS = {"SIMEULUE":[2.6167,96.0833],"ACEH SINGKIL":[2.4167,97.9167],"ACEH SELATAN":[3.1667,97.4167],"ACEH TENGGARA":[3.3667,97.7],"ACEH TIMUR":[4.6333,97.6333],"ACEH TENGAH":[4.51,96.855],"ACEH BARAT":[4.45,96.1667],"ACEH BESAR":[5.3833,95.5167],"PIDIE":[5.08,96.11],"BIREUEN":[5.0833,96.5833],"ACEH UTARA":[4.97,97.14],"ACEH BARAT DAYA":[3.8333,96.8833],"GAYO LUES":[3.95,97.39],"ACEH TAMIANG":[4.25,97.9667],"NAGAN RAYA":[4.1667,96.5167],"ACEH JAYA":[4.86,95.64],"BENER MERIAH":[4.7302,96.8616],"PIDIE JAYA":[5.15,96.2167],"BANDA ACEH":[5.5417,95.3333],"SABANG":[5.8216,95.3109],"LANGSA":[4.47,97.93],"LHOKSEUMAWE":[5.1333,97.0667],"SUBULUSSALAM":[2.75,97.9333],"NIAS":[1.0333,97.7667],"MANDAILING NATAL":[0.7838,99.2549],"TAPANULI SELATAN":[1.5167,99.25],"TAPANULI TENGAH":[1.9,98.6667],"TAPANULI UTARA":[2.0028,99.0707],"TOBA SAMOSIR":[2.3979,99.2168],"LABUHAN BATU":[2.2667,100.1],"ASAHAN":[2.7833,99.55],"SIMALUNGUN":[2.9,99],"DAIRI":[2.8667,98.2333],"KARO":[3.1167,98.3],"DELI SERDANG":[3.4167,98.6667],"LANGKAT":[3.7167,98.2167],"NIAS SELATAN":[0.77,97.75],"HUMBANG HASUNDUTAN":[2.2655,98.5038],"PAKPAK BHARAT":[2.5667,98.2833],"SAMOSIR":[2.6402,98.7152],"SERDANG BEDAGAI":[3.3667,99.0333],"BATU BARA":[3.1617,99.5265],"PADANG LAWAS UTARA":[1.4601,99.6735],"PADANG LAWAS":[1.4468,99.9921],"LABUHAN BATU SELATAN":[1.983,100.0976],"LABUHAN BATU UTARA":[2.3335,99.6378],"NIAS UTARA":[1.3304,97.3196],"NIAS BARAT":[1.0597,97.5861],"SIBOLGA":[1.7333,98.8],"TANJUNG BALAI":[2.9583,99.7917],"PEMATANG SIANTAR":[2.9667,99.05],"TEBING TINGGI":[3.325,99.1417],"MEDAN":[3.65,98.6667],"BINJAI":[3.8,108.2333],"PADANG SIDEMPUAN":[1.3738,99.2684],"GUNUNGSITOLI":[1.3273,97.5502],"KEPULAUAN MENTAWAI":[1.9892,99.5189],"PESISIR SELATAN":[-1.5833,100.85],"SOLOK":[-0.7667,100.6167],"SIJUNJUNG":[-1.1827,101.6056],"TANAH DATAR":[-0.4555,100.5771],"PADANG PARIAMAN":[-0.6,100.2833],"AGAM":[-0.25,100.1667],"LIMA PULUH KOTA":[-0.0168,100.5872],"PASAMAN":[0.425,99.9461],"SOLOK SELATAN":[-1.2333,101.417],"DHARMASRAYA":[-1.05,101.367],"PASAMAN BARAT":[0.2815,99.5196],"PADANG":[-0.9833,100.45],"SAWAH LUNTO":[-0.6,100.75],"PADANG PANJANG":[-0.45,100.4333],"BUKITTINGGI":[-0.275,100.375],"PAYAKUMBUH":[-0.2333,100.6333],"PARIAMAN":[-0.6268,100.1205],"KUANTAN SINGINGI":[-0.4753,101.4586],"INDRAGIRI HULU":[-0.55,102.3167],"INDRAGIRI HILIR":[-0.3333,103.1667],"PELALAWAN":[0.2082,102.1861],"SIAK":[0.9745,102.0135],"KAMPAR":[0.2344,101.2131],"ROKAN HULU":[0.8833,100.4833],"BENGKALIS":[0.9838,102.5096],"ROKAN HILIR":[2.166,100.8251],"KEPULAUAN MERANTI":[0.9749,102.6954],"PEKANBARU":[0.5333,101.4667],"DUMAI":[1.6159,101.4917],"KERINCI":[-2.0333,101.5333],"MERANGIN":[-2.0693,102.133],"SAROLANGUN":[-2.3,102.65],"BATANG HARI":[-1.75,103.1167],"MUARO JAMBI":[-1.5521,103.8216],"TANJUNG JABUNG TIMUR":[-1.132,103.6175],"TANJUNG JABUNG BARAT":[-1.1544,103.244],"TEBO":[-1.4558,102.3747],"BUNGO":[-1.5022,101.96],"JAMBI":[-1.6167,103.65],"SUNGAI PENUH":[-2.109,101.3217],"OGAN KOMERING ULU":[-4.1333,104.0333],"OGAN KOMERING ILIR":[-3.3667,105.3667],"MUARA ENIM":[-4.2327,103.6141],"LAHAT":[-3.7864,103.5428],"MUSI RAWAS":[-3.0833,103.2],"MUSI BANYU ASIN":[-2.4167,103.75],"BANYU ASIN":[-2.8833,104.3831],"OGAN KOMERING ULU SELATAN":[-4.6573,104.0066],"OGAN KOMERING ULU TIMUR":[-3.8568,104.7521],"OGAN ILIR":[-3.4319,104.6273],"EMPAT LAWANG":[3.2267,99.0926],"PENUKAL ABAB LEMATANG ILIR":[-3.2134,104.0872],"MUSI RAWAS UTARA":[-2.4853,103.2935],"PALEMBANG":[-3,104.7167],"PRABUMULIH":[-3.462,104.2229],"PAGAR ALAM":[-4.1306,103.2682],"LUBUK LINGGAU":[-3.2931,102.855],"BENGKULU SELATAN":[-4.35,103.0333],"REJANG LEBONG":[-3.4333,102.7167],"BENGKULU UTARA":[-3.3333,102.05],"KAUR":[-4.7818,103.3611],"SELUMA":[-3.9664,102.4743],"MUKOMUKO":[-3.0744,101.5477],"LEBONG":[-3.2428,102.3349],"KEPAHIANG":[-3.6019,102.5642],"BENGKULU TENGAH":[-3.2068,102.1262],"BENGKULU":[-3.8167,102.3167],"LAMPUNG BARAT":[-5.149,104.1931],"TANGGAMUS":[-5.3851,104.6235],"LAMPUNG SELATAN":[-5.4531,104.9877],"LAMPUNG TIMUR":[-5.1027,105.68],"LAMPUNG TENGAH":[-4.8667,105.2667],"LAMPUNG UTARA":[-4.8167,104.8],"WAY KANAN":[-4.447,104.5275],"TULANGBAWANG":[-4.206,105.58],"PESAWARAN":[-5.4298,105.179],"PRINGSEWU":[-5.4221,104.9345],"MESUJI":[-4.0439,105.4013],"TULANG BAWANG BARAT":[-4.4398,105.0444],"PESISIR BARAT":[-5.1932,103.9398],"BANDAR LAMPUNG":[-5.4167,105.25],"METRO":[-5.1186,105.2995],"BANGKA":[-1.9167,105.9333],"BELITUNG":[-2.8667,107.7],"BANGKA BARAT":[-1.9584,105.5374],"BANGKA TENGAH":[-2.3399,106.1142],"BANGKA SELATAN":[-2.668,106.0126],"BELITUNG TIMUR":[-2.9627,108.1522],"PANGKAL PINANG":[-2.1333,106.1333],"KARIMUN":[0.8076,103.4191],"BINTAN":[0.95,104.6194],"NATUNA":[4.7142,107.9764],"LINGGA":[0.2,104.6167],"KEPULAUAN ANAMBAS":[3,106],"BATAM":[1.0521,104.0285],"TANJUNG PINANG":[0.9168,104.4433],"KEPULAUAN SERIBU":[-5.5986,106.5527],"JAKARTA SELATAN":[-6.2615,106.8106],"JAKARTA TIMUR":[-6.225,106.9004],"JAKARTA PUSAT":[-6.1805,106.8284],"JAKARTA BARAT":[-6.1674,106.7637],"JAKARTA UTARA":[-6.1214,106.9004],"BOGOR":[-6.5971,106.806],"SUKABUMI":[-6.95,106.9333],"CIANJUR":[-6.7725,107.0831],"BANDUNG":[-6.9175,107.6244],"GARUT":[-7.3833,107.7667],"TASIKMALAYA":[-7.35,108.2167],"CIAMIS":[-7.2833,108.4167],"KUNINGAN":[-7,108.55],"CIREBON":[-6.75,108.55],"MAJALENGKA":[-6.8167,108.2833],"SUMEDANG":[-6.8167,107.9833],"INDRAMAYU":[-6.45,108.1667],"SUBANG":[-6.5083,107.7025],"PURWAKARTA":[-6.5833,107.45],"KARAWANG":[-6.2667,107.4167],"BEKASI":[-6.2383,106.9756],"BANDUNG BARAT":[-6.8333,107.4833],"PANGANDARAN":[-7.6673,108.6404],"DEPOK":[-6.4025,106.7942],"CIMAHI":[-6.8722,107.5425],"BANJAR":[-3.3167,115.0833],"CILACAP":[-7.5742,108.9886],"BANYUMAS":[-7.45,109.1667],"PURBALINGGA":[-7.2842,109.3503],"BANJARNEGARA":[-7.3511,109.5875],"KEBUMEN":[-7.6392,109.6606],"PURWOREJO":[-7.7,109.9667],"WONOSOBO":[-7.3614,109.9267],"MAGELANG":[-7.5,110.225],"BOYOLALI":[-7.5,110.7],"KLATEN":[-7.6833,110.6167],"SUKOHARJO":[-7.6833,110.8333],"WONOGIRI":[-7.9167,111],"KARANGANYAR":[-7.6281,111.0625],"SRAGEN":[-7.4128,110.935],"GROBOGAN":[-7.1167,110.9167],"BLORA":[-7.0667,111.3833],"REMBANG":[-6.7833,111.4667],"PATI":[-6.7667,111.1],"KUDUS":[-6.8,110.8667],"JEPARA":[-6.5833,110.7667],"DEMAK":[-6.8993,110.6122],"SEMARANG":[-7.0333,110.3833],"TEMANGGUNG":[-7.25,110.1167],"KENDAL":[-7.0256,110.1685],"BATANG":[-7.0333,109.8833],"PEKALONGAN":[-6.9,109.6833],"PEMALANG":[-7.0333,109.4],"TEGAL":[-6.8686,109.1129],"BREBES":[-7.05,108.9],"SURAKARTA":[-7.5666,110.8167],"SALATIGA":[-7.3328,110.4833],"KULON PROGO":[-7.645,110.0269],"BANTUL":[-7.9,110.3667],"GUNUNG KIDUL":[-7.9833,110.6167],"SLEMAN":[-7.6817,110.3233],"YOGYAKARTA":[-7.8,110.375],"PACITAN":[-8.1333,111.1667],"PONOROGO":[-7.9333,111.5],"TRENGGALEK":[-8.1667,111.6167],"TULUNGAGUNG":[-8.1167,111.9167],"BLITAR":[-8.1,112.1667],"KEDIRI":[-7.8333,112.0167],"MALANG":[-7.975,112.6333],"LUMAJANG":[-8.1167,113.15],"JEMBER":[-8.25,113.65],"BANYUWANGI":[-8.3333,114.2],"BONDOWOSO":[-7.9404,113.9834],"SITUBONDO":[-7.7167,114.05],"PROBOLINGGO":[-7.7833,113.2167],"PASURUAN":[-7.65,112.9],"SIDOARJO":[-7.45,112.7],"MOJOKERTO":[-7.4667,112.4333],"JOMBANG":[-7.55,112.25],"NGANJUK":[-7.6,111.9333],"MADIUN":[-7.6333,111.5333],"MAGETAN":[-7.6447,111.3592],"NGAWI":[-7.4744,111.3344],"BOJONEGORO":[-7.25,111.8],"TUBAN":[-6.9667,111.9],"LAMONGAN":[-7.1333,112.3167],"GRESIK":[-7.1933,112.553],"BANGKALAN":[-7.05,112.9333],"SAMPANG":[-7.05,113.25],"PAMEKASAN":[-7.0667,113.5],"SUMENEP":[-7.1167,114.3333],"SURABAYA":[-7.2667,112.7167],"BATU":[-7.8327,112.5375],"PANDEGLANG":[-6.6333,105.75],"LEBAK":[-6.65,106.2167],"TANGERANG":[-6.1783,106.6319],"SERANG":[-6.1256,106.15],"CILEGON":[-6.0167,106.0167],"TANGERANG SELATAN":[-6.2886,106.7179],"JEMBRANA":[-8.3,114.6667],"TABANAN":[-8.4333,115.0667],"BADUNG":[-8.5167,115.2],"GIANYAR":[-8.4667,115.2833],"KLUNGKUNG":[-8.55,115.4],"BANGLI":[-8.2833,115.35],"KARANG ASEM":[-8.3891,115.5393],"BULELENG":[-8.25,114.9667],"DENPASAR":[-8.6667,115.2166],"LOMBOK BARAT":[-8.6958,116.1167],"LOMBOK TENGAH":[-8.7,116.3],"LOMBOK TIMUR":[-8.5333,116.5333],"SUMBAWA":[-8.7439,117.3324],"DOMPU":[-8.5094,118.4816],"BIMA":[-8.4673,118.7526],"SUMBAWA BARAT":[-8.7516,116.9213],"LOMBOK UTARA":[-8.3521,116.4015],"MATARAM":[-8.5833,116.1167],"SUMBA BARAT":[-9.5667,119.45],"SUMBA TIMUR":[-9.8833,120.25],"KUPANG":[-10.2167,123.6],"TIMOR TENGAH SELATAN":[-9.8333,124.4],"TIMOR TENGAH UTARA":[-9.3314,124.519],"BELU":[-9.4126,124.9507],"ALOR":[-8.3,124.5667],"LEMBATA":[-8.414,123.5523],"FLORES TIMUR":[-8.2422,122.9682],"SIKKA":[-8.6667,122.3667],"ENDE":[-8.8406,121.6639],"NGADA":[-8.6667,121],"MANGGARAI":[-8.5667,120.4167],"ROTE NDAO":[-10.7362,123.1205],"MANGGARAI BARAT":[-8.6448,119.8828],"SUMBA TENGAH":[-9.6294,119.6191],"SUMBA BARAT DAYA":[-9.5622,119.0891],"NAGEKEO":[-8.8721,121.2096],"MANGGARAI TIMUR":[-8.5553,120.5976],"SABU RAIJUA":[-10.5629,121.7889],"MALAKA":[-9.5632,124.8948],"SAMBAS":[1.4167,109.3333],"BENGKAYANG":[1.0691,109.6639],"LANDAK":[0.4237,109.7592],"MEMPAWAH":[0.25,109.1667],"SANGGAU":[0.2547,110.45],"KETAPANG":[-1.5833,110.5],"SINTANG":[-0.0833,112.0833],"KAPUAS HULU":[0.8167,112.7667],"SEKADAU":[0.0348,110.9507],"MELAWI":[-0.3362,111.698],"KAYONG UTARA":[-1.4371,110.7978],"KUBU RAYA":[0.0164,109.3373],"PONTIANAK":[-0.0833,109.3667],"SINGKAWANG":[0.9073,109.001],"KOTAWARINGIN BARAT":[-2.4,111.7333],"KOTAWARINGIN TIMUR":[-2.0833,112.75],"KAPUAS":[-2.0167,114.3833],"BARITO SELATAN":[-1.8667,114.7333],"BARITO UTARA":[-0.9833,115.1],"SUKAMARA":[-2.6267,111.2368],"LAMANDAU":[-1.8383,111.2869],"SERUYAN":[-2.3333,112.25],"KATINGAN":[-2.0667,113.4],"PULANG PISAU":[-3.1186,113.8623],"GUNUNG MAS":[-0.95,113.5],"BARITO TIMUR":[-1.9333,115.1],"MURUNG RAYA":[-0.0167,114.2667],"PALANGKA RAYA":[-1.7698,113.7313],"TANAH LAUT":[-3.8833,114.8667],"KOTA BARU":[-3,116],"BARITO KUALA":[-3.0833,114.6167],"TAPIN":[-2.9167,115.0333],"HULU SUNGAI SELATAN":[-2.75,115.2],"HULU SUNGAI TENGAH":[-2.6167,115.4167],"HULU SUNGAI UTARA":[-2.45,115.1333],"TABALONG":[-1.8833,115.5],"TANAH BUMBU":[-3.4541,115.7037],"BALANGAN":[-2.3231,115.6292],"BANJARMASIN":[-3.3244,114.591],"BANJAR BARU":[-3.4167,114.8333],"PASER":[-1.4352,116.2353],"KUTAI BARAT":[-0.5942,115.5157],"KUTAI KARTANEGARA":[-0.4402,116.9814],"KUTAI TIMUR":[1.0377,117.8311],"BERAU":[2,117.3],"PENAJAM PASER UTARA":[-1.25,116.8333],"MAHAKAM HULU":[0.3782,115.3805],"BALIKPAPAN":[-1.1667,116.8833],"SAMARINDA":[-0.4333,117.1833],"BONTANG":[0.1253,117.496],"MALINAU":[2.45,115.6833],"BULUNGAN":[3,117.1667],"TANA TIDUNG":[3.55,117.25],"NUNUKAN":[4.1333,116.7],"TARAKAN":[3.3667,117.6],"BOLAANG MONGONDOW":[0.75,124.0833],"MINAHASA":[1.2537,124.83],"KEPULAUAN SANGIHE":[3.5,125.55],"KEPULAUAN TALAUD":[4.3118,126.7809],"MINAHASA SELATAN":[1.2129,124.5971],"MINAHASA UTARA":[1.4025,124.96],"BOLAANG MONGONDOW UTARA":[0.7853,123.4177],"SIAU TAGULANDANG BIARO":[2.1173,125.3751],"MINAHASA TENGGARA":[1.0563,124.7925],"BOLAANG MONGONDOW SELATAN":[0.4091,123.7596],"BOLAANG MONGONDOW TIMUR":[0.7207,124.5026],"MANADO":[1.5167,124.8833],"BITUNG":[1.4833,125.15],"TOMOHON":[1.3131,124.834],"KOTAMOBAGU":[0.6892,124.3268],"BANGGAI KEPULAUAN":[-1.6424,123.5488],"BANGGAI":[-1.2835,122.8892],"MOROWALI":[-1.8934,121.2547],"POSO":[-1.65,120.5],"DONGGALA":[-0.5833,119.85],"TOLI-TOLI":[1.3086,120.8864],"BUOL":[0.75,120.75],"PARIGI MOUTONG":[0.3368,120.1784],"TOJO UNA-UNA":[-1.2036,121.482],"SIGI":[-1.385,119.9669],"BANGGAI LAUT":[-1.6184,123.4939],"MOROWALI UTARA":[-1.7207,121.2465],"PALU":[-0.8697,119.9],"KEPULAUAN SELAYAR":[-6.8167,120.8],"BULUKUMBA":[-5.4167,120.2333],"BANTAENG":[-5.4833,119.9833],"JENEPONTO":[-5.6333,119.7333],"TAKALAR":[-5.4167,119.5167],"GOWA":[-5.3167,119.75],"SINJAI":[-5.2167,120.15],"MAROS":[-5.05,119.7167],"PANGKAJENE DAN KEPULAUAN":[-4.7827,119.5506],"BARRU":[-4.4333,119.6833],"BONE":[-4.7,120.1333],"SOPPENG":[-4.3842,119.89],"WAJO":[-4,120.1667],"SIDENRENG RAPPANG":[-3.85,119.9667],"PINRANG":[-3.6167,119.6],"ENREKANG":[-3.5,119.8667],"LUWU":[-2.5577,121.3242],"TANA TORAJA":[-3.0024,119.7965],"LUWU UTARA":[-2.6,120.25],"LUWU TIMUR":[-2.5096,120.3978],"TORAJA UTARA":[-2.9274,119.7922],"MAKASSAR":[-5.1477,119.4327],"PARE-PARE":[-4.0333,119.65],"PALOPO":[-2.9784,120.1108],"BUTON":[-5.3167,122.5833],"MUNA":[-4.9667,122.6667],"KONAWE":[-3.9172,122.0882],"KOLAKA":[-4.0833,121.6667],"KONAWE SELATAN":[-4.1919,122.4485],"BOMBANA":[-4.6257,121.8164],"WAKATOBI":[-5.3193,123.5948],"KOLAKA UTARA":[-3.1045,121.1243],"BUTON UTARA":[-5.0146,122.9301],"KONAWE UTARA":[-3.4155,121.9908],"KOLAKA TIMUR":[-4.0181,121.8617],"KONAWE KEPULAUAN":[-4.1166,123.1018],"MUNA BARAT":[-4.8333,122.4833],"BUTON TENGAH":[-5.3167,122.3333],"BUTON SELATAN":[-5.5667,122.7],"KENDARI":[-3.9833,122.5],"BAUBAU":[-5.477,122.6166],"BOALEMO":[0.6269,122.3568],"GORONTALO":[0.5333,123.1],"POHUWATO":[0.7098,121.5958],"BONE BOLANGO":[0.503,123.275],"GORONTALO UTARA":[0.77,122.3167],"MAJENE":[-3.15,118.8667],"POLEWALI MANDAR":[-3.3,119.1667],"MAMASA":[-2.9649,119.3063],"MAMUJU":[-2.5,119.4167],"MAMUJU UTARA":[-1.5164,119.4214],"MAMUJU TENGAH":[-2.8212,119.2662],"MALUKU TENGGARA BARAT":[-7.6119,131.38],"MALUKU TENGGARA":[-5.75,132.7333],"MALUKU TENGAH":[-3.2917,128.9675],"BURU":[-3.3277,126.6841],"KEPULAUAN ARU":[-6.1706,134.4699],"SERAM BAGIAN BARAT":[-3.1027,128.43],"SERAM BAGIAN TIMUR":[-3.3985,130.3917],"MALUKU BARAT DAYA":[-7.8296,126.1739],"BURU SELATAN":[-3.5219,126.5927],"AMBON":[-3.7,128.1833],"TUAL":[-5.643,132.7493],"HALMAHERA BARAT":[1.4171,127.5526],"HALMAHERA TENGAH":[0.4806,128.25],"KEPULAUAN SULA":[-1.8646,125.6905],"HALMAHERA SELATAN":[-0.3955,127.9083],"HALMAHERA UTARA":[1.7319,128.0078],"HALMAHERA TIMUR":[1.3352,128.4863],"PULAU MOROTAI":[2.1992,128.4055],"PULAU TALIABU":[-1.8458,124.7899],"TERNATE":[0.8962,127.3102],"TIDORE KEPULAUAN":[0.6096,127.5698],"FAK-FAK":[-2.9264,132.2961],"KAIMANA":[-3.6609,133.7745],"TELUK WONDAMA":[-2.7,134.5],"TELUK BINTUNI":[-1.8804,133.3311],"MANOKWARI":[-0.8615,134.062],"SORONG SELATAN":[-1.505,132.2864],"SORONG":[-0.8762,131.2558],"RAJA AMPAT":[-0.5,130],"TAMBRAUW":[-0.6051,132.4896],"MAYBRAT":[-1.2155,132.3509],"MANOKWARI SELATAN":[-1.0798,133.9673],"PEGUNUNGAN ARFAK":[-0.9352,133.8959],"MERAUKE":[-8.4932,140.4018],"JAYAWIJAYA":[-4.0958,138.9464],"JAYAPURA":[-2.5337,140.7181],"NABIRE":[-3.3626,135.5015],"KEPULAUAN YAPEN":[-1.7877,136.2772],"BIAK NUMFOR":[-1.0333,136],"PANIAI":[-3.9,136.6],"PUNCAK JAYA":[-3.6724,137.439],"MIMIKA":[-4.5468,136.887],"BOVEN DIGOEL":[-5.7052,140.3635],"MAPPI":[-6.4997,139.3444],"ASMAT":[-5.3795,138.4634],"YAHUKIMO":[-4.604,139.584],"PEGUNUNGAN BINTANG":[-4.5217,140.2954],"TOLIKARA":[-3.4266,137.417],"SARMI":[-2.4167,139.0833],"KEEROM":[-3.3,140.6167],"WAROPEN":[-2.286,137.0184],"SUPIORI":[-0.7388,135.6111],"MAMBERAMO RAYA":[-2.2356,137.7823],"NDUGA":[-4.4509,138.1009],"LANNY JAYA":[-3.9124,138.2877],"MAMBERAMO TENGAH":[-2.4606,138.4524],"YALIMO":[-3.8604,138.4731],"PUNCAK":[-4.142,137.097],"DOGIYAI":[-4.0319,135.4394],"INTAN JAYA":[-3.4102,136.7084],"DEIYAI":[-3.9474,135.9503],"JAKPUS":[-6.1805,106.8284],"JAKUT":[-6.1214,106.9004],"JAKBAR":[-6.1674,106.7637],"JAKSEL":[-6.2615,106.8106],"JAKTIM":[-6.225,106.9004],"KEP. SERIBU":[-5.5986,106.5527],"TANJUNG PRIOK":[-6.1045,106.8805],"TJ. PRIOK":[-6.1045,106.8805],"TANJUNG PERAK":[-7.2048,112.7318],"TJ. PERAK":[-7.2048,112.7318],"SOEKARNO HATTA":[-6.1256,106.6558],"BANDARA SOEKARNO HATTA":[-6.1256,106.6558],"BELAWAN":[3.7844,98.6836],"PELABUHAN BELAWAN":[3.7844,98.6836],"BARELANG":[1.0456,104.0305],"SOLO":[-7.5666,110.8167],"PELABUHAN MAKASSAR":[-5.1225,119.4068],"TANGSEL":[-6.2886,106.7179],"WAMENA":[-4.0958,138.9464],"TIMIKA":[-4.5468,136.887]};
+const CAS_KECAMATAN_RAW = "TEUPAH SELATAN:2.386,96.429|SIMEULUE TIMUR:2.514,96.312|TEUPAH BARAT:2.505,96.216|TEUPAH TENGAH:2.416,96.333|SIMEULUE TENGAH:2.624,96.047|TELUK DALAM:0.605,97.84|SIMEULUE CUT:2.6,95.936|SALANG:2.664,95.878|SIMEULUE BARAT:2.783,95.92|ALAFAN:2.784,95.751|PULAU BANYAK:2.32,97.414|PULAU BANYAK BARAT:2.147,97.287|SINGKIL:2.284,97.799|SINGKIL UTARA:2.3,97.981|KUALA BARU:2.389,97.731|SIMPANG KANAN:1.86,100.372|GUNUNG MERIAH:3.122,98.682|DANAU PARIS:2.299,98.112|SURO:-7.49,109.325|SINGKOHOR:2.535,97.937|KOTA BAHARU:-3.467,114.749|TRUMON:2.634,97.742|TRUMON TIMUR:2.891,97.807|TRUMON TENGAH:2.901,97.666|BAKONGAN:2.962,97.471|BAKONGAN TIMUR:2.902,97.579|KOTA BAHAGIA:3.011,97.546|KLUET SELATAN:3.052,97.46|KLUET TIMUR:3.171,97.46|KLUET UTARA:3.122,97.341|PASIE RAJA:3.202,97.298|KLUET TENGAH:3.432,97.308|TAPAK TUAN:3.262,97.18|SAMA DUA:3.343,97.19|SAWANG:5.044,96.899|MEUKEK:3.593,97.222|LABUHAN HAJI:-8.647,116.579|LABUHAN HAJI TIMUR:3.604,97.125|LABUHAN HAJI BARAT:3.585,96.975|LAWE ALAS:3.438,97.818|TANOH ALAS:3.269,97.655|LAWE SIGALA-GALA:3.357,97.927|BABUL MAKMUR:3.317,97.992|SEMADAM:3.392,97.888|LAUSER:3.128,97.937|BAMBEL:3.457,97.905|BUKIT TUSAM:3.412,97.867|LAWE SUMUR:3.482,97.888|BABUSSALAM:3.493,97.801|LAWE BULAN:3.503,97.867|BADAR:3.578,97.818|DARUL HASANAH:3.51,97.568|KETAMBE:3.69,97.72|DELENG POKHKISEN:3.538,97.861|SERBA JADI:4.442,97.525|SIMPANG JERNIH:4.379,97.677|PEUNARON:4.625,97.633|BIREM BAYEUN:4.479,97.829|RANTAU SELAMAT:4.623,97.763|SUNGAI RAYA:-0.247,109.616|PEUREULAK:4.809,97.892|PEUREULAK TIMUR:4.714,97.883|PEUREULAK BARAT:4.858,97.861|IDI RAYEUK:4.962,97.753|PEUDAWA:4.879,97.818|BANDA ALAM:4.86,97.687|IDI TUNONG:4.916,97.725|DARUL IHSAN:4.906,97.758|IDI TIMUR:4.915,97.791|DARUL AMAN:4.963,97.709|NURUSSALAM:4.979,97.66|DARUL FALAH:5.01,97.639|JULOK:5.036,97.59|INDRA MAKMUR:4.871,97.59|PANTE BIDARI:4.807,97.49|SIMPANG ULIM:5.109,97.579|MADAT:5.172,97.514|LINGE:4.324,97.05|ATU LINTANG:4.439,96.782|JAGONG JEGET:4.388,96.728|BINTANG:1.137,104.426|LUT TAWAR:4.581,96.889|KEBAYAKAN:4.648,96.873|PEGASING:4.51,96.771|BIES:4.607,96.787|BEBESEN:4.643,96.803|KUTE PANANG:4.685,96.782|SILIH NARA:4.634,96.728|KETOL:4.82,96.621|CELALA:4.552,96.685|RUSIP ANTARA:4.739,96.45|JOHAN PAHLAWAN:4.199,96.121|SAMATIGA:4.23,96.047|BUBON:4.301,96.121|ARONGAN LAMBALEK:4.343,95.952|WOYLA:4.383,96.079|WOYLA BARAT:4.394,96.004|WOYLA TIMUR:4.475,96.089|KAWAY XVI:4.27,96.216|MEUREUBO:4.147,96.216|PANTAI CEUREMEN:4.493,96.365|PANTON REU:4.444,96.206|SUNGAI MAS:4.578,96.11|LHOONG:5.267,95.289|LHOKNGA:5.465,95.258|LEUPUNG:5.392,95.255|INDRAPURI:5.422,95.446|KUTA COT GLIE:5.307,95.499|SEULIMEUM:5.472,95.625|KOTA JANTHO:5.284,95.631|LEMBAH SEULAWAH:5.388,95.709|MESJID RAYA:5.568,95.509|DARUSSALAM:5.595,95.42|BAITUSSALAM:5.605,95.389|KUTA BARO:5.547,95.425|MONTASIK:5.466,95.423|BLANG BINTANG:5.506,95.425|INGIN JAYA:5.511,95.368|KRUENG BARONA JAYA:5.551,95.365|SUKA MAKMUR:3.514,98.681|KUTA MALAKA:5.428,95.389|SIMPANG TIGA:0.455,101.462|DARUL IMARAH:5.501,95.315|DARUL KAMAL:5.465,95.321|PEUKAN BADA:5.533,95.242|PULO ACEH:5.462,95.635|GEUMPANG:4.824,96.195|MANE:4.887,96.089|GLUMPANG TIGA:5.208,96.036|GLUMPANG BARO:5.276,96.031|MUTIARA:5.287,95.978|MUTIARA TIMUR:5.255,95.989|TIRO/TRUSEB:5.178,95.962|TANGSE:5.009,95.911|KEUMALA:5.231,95.867|TITEUE:5.209,95.909|SAKTI:-8.717,115.479|MILA:5.288,95.883|PADANG TIJI:5.345,95.835|DELIMA:0.483,101.406|GRONG GRONG:5.371,95.904|INDRAJAYA:5.318,95.936|PEUKAN BARO:5.328,95.967|KEMBANG TANJONG:5.312,96.036|KOTA SIGLI:5.384,95.959|PIDIE:5.37,95.936|BATEE:5.58,95.199|MUARA TIGA:5.513,95.793|SAMALANGA:5.08,96.376|SIMPANG MAMPLAM:5.101,96.418|PANDRAH:-7.491,111.601|JEUNIEB:5.171,96.482|PEULIMBANG:5.038,96.504|PEUDADA:5.048,96.557|JULI:5.046,96.685|JEUMPA:5.161,96.653|KOTA JUANG:5.207,96.712|KUALA:3.483,98.375|JANGKA:0.881,103.715|PEUSANGAN:5.201,96.76|PEUSANGAN SELATAN:5.056,96.76|PEUSANGAN SIBLAH KRUENG:5.076,96.803|MAKMUR:5.138,96.846|GANDA PURA:5.22,96.889|KUTA BLANG:5.205,96.83|NISAM:5.177,97.018|NISAM ANTARA:5.033,96.953|BANDA BARO:5.193,96.969|KUTA MAKMUR:5.094,97.039|SIMPANG KERAMAT:5.032,97.082|SYAMTALIRA BAYU:5.077,97.184|GEUREUDONG PASE:4.95,97.018|MEURAH MULIA:5.072,97.211|MATANGKULI:5.035,97.271|PAYA BAKONG:4.917,97.244|PIRAK TIMU:4.988,97.276|COT GIREK:4.833,97.33|TANAH JAMBO AYE:5.09,97.449|LANGKAHAN:4.873,97.46|BAKTIYA:5.09,97.406|BAKTIYA BARAT:5.132,97.341|LHOKSUKON:5.052,97.318|TANAH LUAS:4.969,97.147|NIBONG:5.033,97.219|SAMUDERA:5.128,97.228|SYAMTALIRA ARON:5.091,97.259|TANAH PASIR:5.138,97.26|LAPANG:5.148,97.292|MUARA BATU:5.246,96.948|DEWANTARA:5.24,97.018|MANGGENG:3.608,96.919|LEMBAH SABIL:3.625,97.018|TANGAN-TANGAN:3.696,96.942|SETIA:3.702,96.873|BLANG PIDIE:3.743,96.833|SUSOH:3.729,96.813|KUALA BATEE:3.939,96.814|BABAH ROT:3.92,96.707|KUTA PANJANG:4.018,97.277|BLANG JERANGO:3.977,97.157|BLANGKEJEREN:3.997,97.342|PUTRI BETUNG:3.752,97.481|DABUN GELANG:3.934,97.503|BLANG PEGAYON:3.814,97.287|PINING:3.993,97.655|RIKIT GAIB:4.138,97.287|PANTAN CUACA:4.18,97.201|TERANGUN:3.999,96.964|TRIPE JAYA:4.141,96.985|TAMIANG HULU:4.153,97.829|BANDAR PUSAKA:4.285,97.84|KEJURUAN MUDA:4.212,98.025|TENGGULUN:3.99,97.916|RANTAU:-2.938,115.144|KOTA KUALA SIMPANG:4.286,98.06|SERUWAY:4.361,98.185|BENDAHARA:4.404,98.188|BANDA MULIA:4.445,98.145|KARANG BARU:4.333,98.076|SEKERAK:4.325,97.927|MANYAK PAYED:4.426,98.057|DARUL MAKMUR:4.003,96.536|TRIPA MAKMUR:3.933,96.418|KUALA PESISIR:4.096,96.227|TADU RAYA:4.065,96.386|BEUTONG:4.45,96.55|BEUTONG ATEUH BANGGALANG:4.461,96.525|SEUNAGAN:4.239,96.291|SUKA MAKMUE:4.177,96.312|SEUNAGAN TIMUR:4.31,96.344|TEUNOM:4.436,95.878|PASIE RAYA:4.599,95.962|PANGA:4.642,95.793|KRUENG SABEE:4.827,95.856|SETIA BAKTI:4.746,95.604|SAMPOINIET:4.933,95.499|DARUL HIKMAH:4.891,95.625|JAYA:-4.085,137.187|INDRA JAYA:5.017,95.415|TIMANG GAJAH:4.767,96.782|GAJAH PUTIH:4.808,96.76|PINTU RIME GAYO:4.88,96.771|WIH PESAM:4.725,96.803|BANDAR:2.05,99.75|BENER KELIPAH:4.771,96.916|SYIAH UTAMA:4.65,97.136|MESIDAH:4.754,97.028|PERMATA:4.837,96.942|MEUREUDU:4.988,96.28|MEURAH DUA:5.233,96.26|BANDAR DUA:5.092,96.301|JANGKA BUYA:5.221,96.328|ULIM:5.201,96.285|TRIENGGADENG:5.207,96.163|PANTERAJA:5.254,96.147|BANDAR BARU:5.565,95.338|MEURAXA:5.554,95.295|JAYA BARU:5.536,95.297|BANDA RAYA:-4.554,129.93|BAITURRAHMAN:5.546,95.318|LUENG BATA:5.54,95.334|KUTA ALAM:5.564,95.326|KUTA RAJA:-7.018,108.563|SYIAH KUALA:5.585,95.347|ULEE KARENG:5.551,95.349|SUKAJAYA:-6.619,106.464|SUKAKARYA:-6.134,107.184|LANGSA TIMUR:4.447,98.014|LANGSA LAMA:4.452,97.965|LANGSA BARAT:4.508,97.992|LANGSA BARO:4.488,97.927|LANGSA KOTA:4.476,97.964|BLANG MANGAT:5.119,97.131|MUARA DUA:5.161,97.131|MUARA SATU:5.197,97.082|BANDA SAKTI:5.181,97.141|SIMPANG KIRI:2.682,97.97|PENANGGALAN:-7.56,112.362|RUNDENG:2.693,97.85|SULTAN DAULAT:2.791,97.916|LONGKIB:2.565,97.818|IDANO GAWO:1.03,97.763|BAWOLATO:0.954,97.85|ULUGAWO:0.983,97.709|GIDO:1.135,97.687|SOGAEADU:1.096,97.753|MA U:-3.234,126.076|SOMOLO - MOLO:1.021,97.666|HILIDUHO:1.249,97.536|HILI SERANGKAI:1.178,97.606|BOTOMUZOI:1.173,97.536|BATAHAN:0.396,99.142|SINUNUKAN:0.463,99.212|BATANG NATAL:0.706,99.412|LINGGA BAYU:0.612,99.256|RANTO BAEK:0.537,99.39|KOTANOPAN:0.649,99.746|ULU PUNGKUT:0.555,99.768|TAMBANGAN:-3.544,104.468|LEMBAH SORIK MARAPI:0.733,99.601|PUNCAK SORIK MARAPI:0.677,99.578|MUARA SIPONGI:0.611,99.879|PAKANTAN:0.527,99.891|PANYABUNGAN:0.874,99.612|PANYABUNGAN SELATAN:0.752,99.534|PANYABUNGAN BARAT:0.827,99.49|PANYABUNGAN UTARA:0.921,99.534|PANYABUNGAN TIMUR:0.78,99.768|HUTA BARGOT:0.884,99.445|NATAL:0.556,99.117|MUARA BATANG GADIS:0.97,99.101|SIABU:1.016,99.491|BUKIT MALINTANG:0.978,99.556|NAGA JUANG:0.94,99.445|BATANG ANGKOLA:1.215,99.256|SAYUR MATINGGI:1.139,99.301|ANGKOLA TIMUR:1.482,99.345|ANGKOLA SELATAN:1.33,99.168|ANGKOLA  BARAT:1.406,99.123|ANGKOLA SANGKUNUR:1.368,99.035|BATANG TORU:1.559,99.079|MARANCAR:1.517,99.167|MUARA BATANG TORU:1.369,98.902|SIPIROK:1.613,99.262|ARSE:1.711,99.345|SAIPAR DOLOK HOLE:1.846,99.412|AEK BILAH:1.98,99.523|PINANG SORI:1.531,98.869|BADIRI:1.599,98.858|SIBABANGUN:1.588,99.002|LUMUT:-0.066,111.765|SUKABANGUN:1.459,98.93|PANDAN:-1.867,111.867|TUKKA:1.713,98.947|SARUDIK:1.743,98.869|TAPIAN NAULI:1.791,98.77|SITAHUIS:1.801,98.825|KOLANG:1.869,98.726|SORKAM:1.901,98.59|SORKAM BARAT:1.918,98.561|PASARIBU TOBING:1.985,98.638|BARUS:2.012,98.399|SOSOR GADONG:2.024,98.506|ANDAM DEWI:2.074,98.386|BARUS UTARA:2.059,98.435|MANDUAMAS:2.181,98.243|SIRANDORUNG:2.103,98.331|PARMONANGAN:2.408,99.082|ADIAN KOTING:2.511,98.586|SIPOHOLON:2.061,98.902|TARUTUNG:2.012,98.98|SIATAS BARITA:2.012,99.046|PAHAE JULU:1.867,99.079|PAHAE JAE:1.828,99.168|PURBATUA:1.751,99.079|SIMANGUMBAN:1.76,99.223|PANGARIBUAN:2.006,99.163|GAROGA:2.001,99.323|SIPAHUTAR:2.104,99.085|SIBORONG-BORONG:2.216,99.035|PAGARAN:2.177,98.902|MUARA:-0.67,100.963|BALIGE:2.334,99.083|TAMPAHAN:2.308,99.018|LAGUBOTI:2.331,99.168|HABINSARAN:2.369,99.345|BORBOR:2.214,99.301|NASSAU:2.267,99.417|SILAEN:2.448,99.301|SIGUMPAR:2.4,99.179|PORSEA:2.462,99.136|PINTU POHAN MERANTI:2.535,99.423|SIANTAR NARUMONDA:2.477,99.245|PARMAKSIAN:2.497,99.201|LUMBAN JULU:2.567,99.035|ULUAN:2.439,99.09|AJIBATA:2.597,98.958|BONATUA LUNASI:2.537,99.135|BILAH HULU:2.016,99.924|PANGKATAN:2.15,100|BILAH BARAT:2.056,99.746|BILAH HILIR:2.325,100.058|PANAI HULU:2.432,100.159|PANAI TENGAH:2.363,100.238|PANAI HILIR:2.636,100.193|RANTAU SELATAN:2.065,99.846|RANTAU UTARA:2.123,99.824|BANDAR PASIR MANDOGE:2.781,99.323|BANDAR PULAU:2.643,99.39|AEK SONGSONGAN:2.604,99.256|RAHUNING:2.71,99.534|PULAU RAKYAT:2.719,99.701|AEK KUASAN:2.67,99.712|AEK LEDONG:2.611,99.668|SEI KEPAYANG:2.855,99.857|SEI KEPAYANG BARAT:2.958,99.852|SEI KEPAYANG TIMUR:2.943,99.958|TANJUNG BALAI:2.966,99.799|SIMPANG EMPAT:0.514,101.45|AIR BATU:2.867,99.623|SEI DADAP:2.926,99.645|BUNTU PANE:2.838,99.478|TINGGI RAJA:2.808,99.534|SETIA JANJI:2.947,99.49|MERANTI:0.682,109.742|PULO BANDRING:3.005,99.556|RAWANG PANCA ARGA:3.064,99.668|AIR JOMAN:3.004,99.712|SILAU LAUT:3.05,99.698|KISARAN BARAT:2.981,99.616|KISARAN TIMUR:2.99,99.64|SILIMAKUTA:2.954,98.627|PURBA:2.923,98.726|HARANGGAOL HORISON:2.872,98.668|DOLOK PARDAMEAN:2.844,98.814|SIDAMANIK:2.853,98.936|PEMATANG SIDAMANIK:2.774,98.869|GIRSANG SIPANGAN BOLON:2.646,98.991|TANAH JAWA:2.89,99.179|HATONDUHAN:2.763,99.123|DOLOK PANRIBUAN:2.763,99.035|JORLANG HATARAN:2.852,99.024|PANEI:2.892,98.936|PANOMBEAN PANEI:2.961,98.991|RAYA:-0.789,113.921|DOLOK SILAU:3.052,98.671|SILAU KAHEAN:3.2,98.858|RAYA KAHEAN:3.12,98.902|TAPIAN DOLOK:3.079,99.079|SIANTAR:2.97,99.068|GUNUNG MALELA:-7.34,107.445|GUNUNG MALIGAS:3.048,99.157|HUTABAYU RAJA:2.988,99.29|JAWA MARAJA BAH JAMBI:2.969,99.223|PEMATANG BANDAR:3.107,99.245|BANDAR HULUAN:3.147,99.201|BANDAR MASILAM:3.246,99.29|BOSAR MALIGAS:3.076,99.39|UJUNG PADANG:3.036,99.478|SIDIKALANG:2.744,98.314|BERAMPU:2.739,98.254|SITINJO:2.68,98.364|PARBULUAN:2.649,98.462|SUMBUL:2.767,98.25|SILAHI SABUNGAN:2.757,98.539|SILIMA PUNGGA-PUNGGA:2.859,98.057|LAE PARIRA:2.779,98.188|SIEMPAT NEMPU:2.838,98.188|SIEMPAT NEMPU HULU:2.848,98.243|SIEMPAT NEMPU HILIR:2.899,98.079|TIGA LINGGA:2.897,98.254|GUNUNG SITEMBER:2.938,98.145|PEGAGAN HILIR:2.847,98.375|TANAH PINEM:3.008,98.068|MARDINGDING:3.157,98.372|LAUBALENG:3.137,98.079|TIGA BINANGA:3.086,98.243|JUHAR:3.006,98.287|MUNTE:0.48,119.934|KUTA BULUH:3.205,98.243|PAYUNG:-2.611,106.135|TIGANDERKET:3.164,98.331|NAMAN TERAN:3.203,98.418|MERDEKA:-6.914,107.62|KABANJAHE:3.106,98.498|BERASTAGI:3.185,98.505|TIGAPANAH:3.077,98.525|DOLAT RAYAT:3.168,98.534|MEREK:2.941,98.518|BARUSJAHE:3.133,98.583|SINEMBAH TANJUNG MUDA HULU:3.241,98.682|SIBOLANGIT:3.322,98.55|KUTALIMBARU:3.412,98.517|PANCUR BATU:3.471,98.583|NAMO RAMBE:3.451,98.649|BIRU-BIRU:3.371,98.649|SINEMBAH TANJUNG MUDA HILIR:3.36,98.726|BANGUN PURBA:3.359,98.814|GALANG:0.739,104.228|TANJUNG MORAWA:3.519,98.814|PATUMBAK:3.495,98.721|DELI TUA:3.49,98.693|SUNGGAL:3.611,98.583|HAMPARAN PERAK:3.762,98.594|LABUHAN DELI:3.671,98.627|PERCUT SEI TUAN:3.64,98.77|BATANG KUIS:3.629,98.825|PANTAI LABU:3.669,98.869|BERINGIN:3.629,98.869|LUBUK PAKAM:3.566,98.875|PAGAR MERBAU:3.528,98.913|BOHOROK:3.516,98.153|SIRAPIT:3.561,98.301|SALAPIAN:3.484,98.287|KUTAMBARU:3.324,98.287|SEI BINGAI:3.362,98.462|SELESAI:3.603,98.418|BINJAI:3.614,98.503|STABAT:3.751,98.471|WAMPU:3.684,98.331|BATANG SERANGAN:3.667,98.003|SAWIT SEBERANG:3.806,98.243|PADANG TUALANG:3.815,98.342|HINAI:3.834,98.429|SECANGGANG:3.883,98.55|TANJUNG PURA:3.899,98.421|GEBANG:-6.828,108.73|BABALAN:4.037,98.342|SEI LEPAN:3.807,98.112|BRANDAN BARAT:4.018,98.232|BESITANG:3.989,98.09|PANGKALAN SUSU:4.099,98.232|PEMATANG JAYA:4.211,98.156|HIBALA:-0.464,98.462|TANAH MASA:-0.25,98.495|PULAU-PULAU BATU TIMUR:0.129,98.638|SIMUK:-0.079,97.867|PULAU-PULAU BATU BARAT:-0.109,98.312|PULAU-PULAU BATU UTARA:-0.028,98.386|FANAYAMA:0.605,97.774|TOMA:0.666,97.878|MANIAMOLO:0.643,97.731|MAZINO:0.699,97.84|AMANDRAYA:0.681,97.687|ARAMO:0.737,97.753|ULUSUSUA:0.817,97.704|LAHUSA:0.765,97.85|SIDUAORI:0.831,97.84|SOMAMBAWA:0.836,97.888|GOMO:0.888,97.796|SUSUA:-3.503,120.886|MAZO:0.827,97.769|UMBUNASI:0.926,97.731|IDANOTAE:1.166,97.668|BORONADU:0.869,97.753|LOLOMATUA:0.959,97.639|ULUNOYO:0.879,97.677|HURUNA:0.978,97.66|LOLOWA'U:0.888,97.579|HILIMEGAI:0.874,97.628|OOU:0.789,97.649|ONOHAZUMBA:0.983,97.579|HILISALAWAAHE:0.94,97.563|PAKKAT:2.145,98.474|ONAN GANJANG:2.14,98.638|SIJAMA POLANG:2.179,98.726|DOLOK SANGGUL:2.252,98.749|LINTONG NIHUTA:2.256,98.858|PARANGINAN:2.304,98.936|BAKTI RAJA:2.309,98.809|POLLUNG:2.374,98.682|PARLILITAN:2.318,98.457|TARA BINTANG:2.258,98.375|SALAK:-6.716,106.734|SITELLU TALI URANG JEHE:2.632,98.178|PAGINDAR:2.455,98.156|SITELLU TALI URANG JULU:2.503,98.386|PERGETTENG-GETTENG SENGKUT:2.543,98.254|KERAJAAN:2.641,98.298|TINADA:2.596,98.325|SIEMPAT RUBE:2.571,98.375|SIANJUR MULA MULA:2.609,98.594|HARIAN:2.531,98.594|SITIO-TIO:2.481,98.737|ONAN RUNGGU:2.499,98.936|NAINGGOLAN:2.434,98.884|PALIPI:2.529,98.814|RONGGUR NIHUTA:2.618,98.803|PANGURURAN:2.622,98.717|SIMANINDO:2.676,98.803|KOTARIH:3.269,98.847|SILINDA:3.27,98.803|BINTANG BAYU:3.302,98.929|DOLOK MASIHUL:3.317,99.035|SERBAJADI:3.388,98.936|SIPISPIS:3.168,99.024|DOLOK MERAWAN:3.197,99.123|TEBINGTINGGI:3.326,99.157|TEBING SYAHBANDAR:3.276,99.212|BANDAR KHALIPAH:3.425,99.267|TANJUNG BERINGIN:3.485,99.223|SEI RAMPAH:3.494,99.126|SEI BAMBAN:3.436,99.168|TELUK MENGKUDU:3.546,99.112|PERBAUNGAN:3.568,98.947|PEGAJAHAN:-2.626,104.948|PANTAI CERMIN:3.628,98.98|SEI BALAI:3.124,99.578|TANJUNG TIRAM:3.153,99.656|TALAWI:-0.609,100.777|LIMAPULUH:0.536,101.459|AIR PUTIH:-0.479,117.118|SEI SUKA:3.325,99.334|MEDANG DERAS:3.384,99.356|BATANG ONANG:1.329,99.478|PADANG BOLAK JULU:1.481,99.478|PORTIBI:1.404,99.656|PADANG BOLAK:1.538,99.59|SIMANGAMBAT:1.535,100.126|HALONGONAN:1.613,99.768|DOLOK:-7.826,138.239|DOLOK SIGOMPULON:1.979,99.656|HULU SIHAPAS:1.434,99.423|SOSOPAN:1.233,99.483|ULU BARUMUN:1.063,99.612|BARUMUN:0.996,99.69|BARUMUN SELATAN:0.959,99.734|LUBUK BARUMUN:1.138,99.79|SOSA:1.005,99.857|BATANG LUBU SUTAM:0.911,100.058|HUTA RAJA TINGGI:1.156,100.036|HURISTAK:1.471,99.88|BARUMUN TENGAH:1.366,99.746|AEK NABARA BARUMUN:1.252,99.746|SIHAPAS BARUMUN:1.299,99.668|SUNGAI KANAN:1.747,99.879|TORGAMBA:1.688,100.215|KOTA PINANG:1.89,100.092|SILANGKITANG:1.843,99.947|KAMPUNG RAKYAT:2.072,100.215|NA IX-X:2.153,99.679|MARBAU:2.23,99.857|AEK KUO:2.366,99.835|AEK NATAS:2.329,99.612|KUALUH SELATAN:2.465,99.59|KUALUH HILIR:2.541,99.947|KUALUH HULU:2.562,99.701|KUALUH LEIDONG:2.717,99.924|TUGALA OYO:1.116,97.427|ALASA:1.183,97.373|ALASA TALU MUZOI:1.25,97.449|NAMOHALU ESIWA:1.336,97.417|SITOLU ORI:1.403,97.449|TUHEMBERUA:1.441,97.471|SAWO:-1.9,115.3|LOTU:1.422,97.362|LAHEWA TIMUR:1.346,97.319|AFULU:1.276,97.228|LAHEWA:1.391,97.176|SIROMBU:0.953,97.418|LAHOMI:0.983,97.514|ULU MORO O:-1.217,116.84|LOLOFITU MOI:1.097,97.601|MANDREHE UTARA:1.116,97.514|MANDREHE:1.059,97.514|MANDREHE BARAT:1.021,97.427|MORO O:0.761,103.705|SIBOLGA UTARA:1.75,98.784|SIBOLGA KOTA:1.737,98.785|SIBOLGA SELATAN:1.731,98.8|SIBOLGA SAMBAS:1.732,98.785|DATUK BANDAR:2.944,99.779|DATUK BANDAR TIMUR:2.944,99.824|TANJUNG BALAI SELATAN:2.961,99.799|TANJUNG BALAI UTARA:2.971,99.8|SEI TUALANG RASO:2.989,99.785|TELUK NIBUNG:3.008,99.807|SIANTAR MARIHAT:2.943,99.082|SIANTAR MARIMBUN:2.926,99.052|SIANTAR SELATAN:2.947,99.061|SIANTAR BARAT:2.953,99.054|SIANTAR UTARA:2.973,99.065|SIANTAR TIMUR:2.963,99.076|SIANTAR MARTOBA:2.965,99.063|SIANTAR SITALASARI:2.975,99.041|PADANG HULU:3.299,99.132|TEBING TINGGI KOTA:3.381,99.208|RAMBUTAN:-6.305,106.874|BAJENIS:3.331,99.14|PADANG HILIR:3.329,99.176|MEDAN TUNTUNGAN:3.526,98.622|MEDAN JOHOR:3.535,98.666|MEDAN AMPLAS:3.546,98.719|MEDAN DENAI:3.576,98.73|MEDAN AREA:3.578,98.701|MEDAN KOTA:3.595,98.672|MEDAN MAIMUN:3.574,98.683|MEDAN POLONIA:3.564,98.667|MEDAN BARU:3.596,98.732|MEDAN SELAYANG:3.556,98.633|MEDAN SUNGGAL:3.578,98.619|MEDAN HELVETIA:3.606,98.633|MEDAN PETISAH:3.596,98.655|MEDAN BARAT:3.608,98.668|MEDAN TIMUR:3.625,98.688|MEDAN PERJUANGAN:3.608,98.69|MEDAN TEMBUNG:3.596,98.736|MEDAN DELI:3.595,98.672|MEDAN LABUHAN:3.731,98.693|MEDAN MARELAN:3.716,98.655|MEDAN BELAWAN:3.784,98.694|BINJAI SELATAN:3.572,98.473|BINJAI KOTA:3.614,98.503|BINJAI TIMUR:3.592,98.517|BINJAI UTARA:3.647,98.501|BINJAI BARAT:3.608,98.457|PADANGSIDIMPUAN TENGGARA:1.334,99.317|PADANGSIDIMPUAN SELATAN:1.372,99.284|PADANGSIDIMPUAN BATUNADUA:1.41,99.295|PADANGSIDIMPUAN UTARA:1.391,99.262|PADANGSIDIMPUAN HUTAIMBARU:1.43,99.24|PADANGSIDIMPUAN ANGKOLA JULU:1.453,99.267|GUNUNGSITOLI IDANOI:1.154,97.644|GUNUNGSITOLI SELATAN:1.211,97.622|GUNUNGSITOLI BARAT:1.225,97.584|GUNUNG SITOLI:1.335,97.546|GUNUNGSITOLI ALO OA:1.307,97.536|GUNUNGSITOLI UTARA:1.364,97.514|PAGAI SELATAN:-3.008,100.305|SIKAKAP:-2.754,100.148|PAGAI UTARA:-2.696,100.126|SIPORA SELATAN:-2.25,99.701|SIPORA UTARA:-2.125,99.578|SIBERUT SELATAN:-1.616,99.146|SEBERUT BARAT DAYA:-1.674,99.035|SIBERUT TENGAH:-1.368,99.035|SIBERUT UTARA:-1.084,98.88|SIBERUT BARAT:-1.236,98.704|SILAUT:-2.376,101.026|LUNANG:-2.22,101.207|BASA AMPEK BALAI TAPAN:-2.144,101.026|RANAH AMPEK HULU TAPAN:-2.139,101.111|PANCUNG SOAL:-2.047,101.049|AIRPURA:-1.932,101.049|LINGGO SARI BAGANTI:-1.817,101.003|RANAH PESISIR:-1.684,100.935|LENGAYANG:-1.532,100.845|SUTERA:-1.437,100.732|BATANG KAPAS:-1.443,100.601|IV JURAI:-1.248,100.642|BAYANG:-1.258,100.518|IV  NAGARI BAYANG UTARA:-1.135,100.642|KOTO XI TARUSAN:-1.154,100.485|LEMBAH GUMANTI:-1.134,100.777|HILIRAN GUMANTI:-1.171,100.958|PAYUNG SEKAKI:0.525,101.4|TIGO LURAH:-1.077,101.026|LEMBANG JAYA:-0.974,100.721|DANAU KEMBAR:-1.021,100.732|GUNUNG TALANG:-0.976,100.684|BUKIT SUNDI:-0.88,100.721|IX KOTO SUNGAI LASI:-0.796,100.777|KUBUNG:-0.014,111.988|X KOTO DIATAS:-0.61,100.642|X KOTO SINGKARAK:-0.684,100.597|JUNJUNG SIRIH:-0.675,100.496|KAMANG BARU:-0.776,101.298|TANJUNG GADANG:-0.832,101.139|SIJUNJUNG:-0.688,100.998|LUBUK TAROK:-0.795,101.003|IV NAGARI:-0.072,100.042|KUPITAN:-0.712,100.834|KOTO TUJUH:-0.6,100.856|SUMPUR KUDUS:-0.405,100.935|SEPULUH KOTO:-0.424,100.372|BATIPUH:-0.498,100.462|BATIPUH SELATAN:-0.61,100.462|PARIANGAN:-0.452,100.496|RAMBATAN:-0.526,100.563|LIMA KAUM:-0.457,100.569|TANJUNG EMAS:-0.461,100.642|PADANG GANTING:-0.954,100.37|LINTAU BUO:-0.489,100.789|LINTAU BUO UTARA:-0.387,100.732|SUNGAYANG:-0.378,100.608|SUNGAI TARAB:-0.396,100.541|SALIMPAUNG:-0.341,100.563|TANJUNG BARU:-5.406,105.279|BATANG ANAI:-0.76,100.327|LUBUK ALUNG:-0.685,100.327|SINTUK TOBOH GADANG:-0.671,100.254|ULAKAN TAPAKIS:-0.695,100.204|NAN SABARIS:-0.657,100.204|2 X 11 ENAM LINGKUNG:-0.582,100.294|ENAM LINGKUNG:-0.638,100.271|2 X 11 KAYU TANAM:-0.536,100.327|VII KOTO SUNGAI SARIAK:-0.583,100.204|PATAMUAN:-0.508,100.271|PADANG SAGO:-0.527,100.204|V KOTO KP DALAM:-0.471,100.159|V KOTO TIMUR:-0.471,100.226|SUNGAI LIMAU:-0.508,100.07|BATANG GASAN:-0.434,100.025|SUNGAI GERINGGING:-0.425,100.103|IV KOTO AUR MALINTANG:-0.378,100.07|TANJUNG MUTIARA:-0.24,99.835|LUBUK BASUNG:-0.314,100.014|AMPEK NAGARI:-2.144,101.026|TANJUNG RAYA:-2.134,115.355|MATUR:-0.276,100.282|IV KOTO:-0.341,100.316|MALALAK:-0.415,100.271|BANUHAMPU:-0.341,100.383|SUNGAI PUA:-0.373,100.4|AMPEK ANGKEK:-0.283,100.426|CANDUANG:-0.341,100.451|BASO:-0.267,100.496|TILATANG KAMANG:-0.248,100.383|KAMANG MAGEK:-0.202,100.417|PALEMBAYAN:-0.166,100.193|PALUPUH:-0.129,100.282|PAYAKUMBUH:-0.23,100.631|AKABILURU:-0.23,100.518|LUAK:-0.267,100.676|LAREH SAGO HALABAN:-0.313,100.777|SITUJUAH LIMO NAGARI:-0.304,100.631|HARAU:-0.129,100.687|GUGUAK:-0.138,100.518|MUNGKA:-0.055,100.597|SULIKI:-0.116,100.433|BUKIK BARISAN:0.018,100.462|GUNUANG OMEH:-0.055,100.372|KAPUR IX:0.258,100.485|PANGKALAN KOTO BARU:0.11,100.665|BONJOL:0.018,100.238|TIGO NAGARI:0.018,100.058|SIMPANG ALAHAN MATI:-0.009,100.159|LUBUK SIKAPING:0.126,100.171|DUA KOTO:0.406,99.947|PANTI:0.358,100.058|PADANG GELUGUR:0.453,100.047|RAO:2.35,128.158|MAPAT TUNGGUL:0.685,100.148|MAPAT TUNGGUL SELATAN:0.313,100.238|RAO SELATAN:0.527,100.07|RAO UTARA:0.779,99.947|SANGIR:3.53,125.544|SANGIR JUJUAN:-1.434,101.32|SANGIR BALAI JANGGO:-1.453,101.479|SANGIR BATANG HARI:-1.226,101.298|SUNGAI PAGU:-1.473,101.094|PAUAH DUO:-1.55,101.094|KOTO PARIK GADANG DIATEH:-1.303,101.116|SUNGAI RUMBAI:-1.215,101.741|KOTO BESAR:-1.225,101.57|ASAM JUJUHAN:-1.509,101.593|KOTO BARU:-1.131,101.684|KOTO SALAK:-1.13,101.775|TIUMANG:-1.06,101.724|PADANG LAWEH:-1.027,101.787|SITIUNG:-1.012,101.654|TIMPEH:-0.869,101.593|PULAU PUNJUNG:-1.019,101.502|IX KOTO:-1.001,101.298|SUNGAI BEREMAS:0.277,99.345|RANAH BATAHAN:0.425,99.478|KOTO BALINGKA:0.314,99.523|SUNGAI AUR:0.24,99.656|LEMBAH MALINTANG:0.36,99.578|GUNUNG TULEH:0.258,99.768|TALAMAU:0.203,99.924|PASAMAN:0.129,99.79|LUHAK NAN DUO:0.028,99.801|SASAK RANAH PASISIE:0.064,99.645|KINALI:-0.037,99.857|BUNGUS TELUK KABUNG:-1.032,100.428|LUBUK KILANGAN:-0.956,100.496|LUBUK BEGALUNG:-0.962,100.403|PADANG SELATAN:-0.947,100.417|PADANG TIMUR:-0.943,100.378|PADANG BARAT:-8.119,113.162|PADANG UTARA:-0.914,100.355|NANGGALO:-0.896,100.367|KURANJI:-0.9,100.406|PAUH:-2.141,102.82|KOTO TANGAH:-0.797,100.417|LUBUK SIKARAH:-0.792,100.614|TANJUNG HARAPAN:-0.764,100.659|SILUNGKANG:-0.731,100.789|LEMBAH SEGAR:-0.698,100.761|BARANGIN:-0.675,100.721|PADANG PANJANG BARAT:-0.475,100.389|PADANG PANJANG TIMUR:-0.475,100.423|GUGUK PANJANG:-0.306,100.369|MANDIANGIN KOTO SELAYAN:-0.29,100.367|AUR BIRUGO TIGO BALEH:-0.32,100.386|PAYAKUMBUH BARAT:-0.234,100.614|PAYAKUMBUH SELATAN:-0.262,100.625|PAYAKUMBUH TIMUR:-0.225,100.659|PAYAKUMBUH UTARA:-0.207,100.637|LAMPOSI TIGO NAGORI:-0.207,100.603|PARIAMAN SELATAN:-0.593,100.185|PARIAMAN TENGAH:-0.625,100.131|PARIAMAN TIMUR:-0.606,100.142|PARIAMAN UTARA:-0.578,100.12|KUANTAN MUDIK:-0.701,101.479|HULU KUANTAN:-0.571,101.366|GUNUNG TOAR:-0.608,101.502|PUCUK RANTAU:-0.831,101.73|SINGINGI:-0.405,101.298|SINGINGI HILIR:-0.183,101.298|KUANTAN TENGAH:-0.571,101.593|SENTAJO RAYA:-0.386,101.548|BENAI:-0.487,101.65|KUANTAN HILIR:-0.395,101.764|PANGEAN:-0.45,101.673|LOGAS TANAH DARAT:-0.275,101.593|KUANTAN HILIR SEBERANG:-0.524,101.764|CERENTI:-0.496,101.866|INUMAN:-0.487,101.809|PERANAP:-0.774,102.026|BATANG PERANAP:-0.774,101.844|SEBERIDA:-0.731,102.504|BATANG CENAKU:-0.773,102.209|BATANG GANSAL:-0.773,102.484|KELAYANG:-0.459,102.095|RAKIT KULIM:-0.551,102.209|PASIR PENYU:-0.348,102.278|LIRIK:-0.274,102.278|SUNGAI LALA:-0.422,102.232|LUBUK BATU JAYA:-0.348,102.14|RENGAT BARAT:-0.348,102.415|RENGAT:-0.387,102.542|KUALA CENAKU:-0.182,102.668|KERITANG:-0.861,102.659|KEMUNING:-2.955,104.749|RETEH:-0.715,103.243|SUNGAI BATANG:-2.717,105.36|ENOK:-0.494,103.151|TANAH MERAH:-7.069,112.87|KUALA INDRAGIRI:-0.31,103.428|CONCONG:-0.273,103.613|TEMBILAHAN:-0.315,103.157|TEMBILAHAN HULU:-0.42,103.105|TEMPULING:-0.454,103.042|KEMPAS:-0.531,102.782|BATANG TUAKA:-0.237,103.105|GAUNG ANAK SERKA:-0.164,103.151|GAUNG:-0.073,102.898|MANDAH:0.006,103.509|KATEMAN:0.182,103.683|PELANGIRAN:0.182,103.405|TELUK BELENGKONG:0.273,103.336|LANGGAM:0.245,101.724|PANGKALAN KERINCI:0.348,101.866|BANDAR SEIKIJANG:0.422,101.639|PANGKALAN KURAS:0.037,101.935|UKUI:-0.22,101.98|PANGKALAN LESUNG:-0.036,102.118|BUNUT:0.293,102.146|PELALAWAN:0.514,102.163|BANDAR PETALANGAN:0.128,102.186|KUALA KAMPAR:0.622,103.22|KERUMUTAN:-0.036,102.392|TELUK MERANTI:0.513,102.714|MINAS:0.833,101.483|SUNGAI MANDAU:0.999,101.752|KANDIS:-1.2,104|SIAK:0.812,101.798|KERINCI KANAN:0.496,101.775|TUALANG:0.645,101.639|DAYUN:0.673,102.017|LUBUK DALAM:0.607,101.775|KOTO GASIB:0.7,101.752|MEMPURA:0.755,102.049|SUNGAI APIT:0.699,102.392|BUNGA RAYA:0.979,102.049|SABAK AUH:1.138,102.129|PUSAKO:0.913,102.129|KAMPAR KIRI:-0.037,101.116|KAMPAR KIRI HULU:-0.184,100.935|KAMPAR KIRI HILIR:0.11,101.479|GUNUNG SAHILAN:0.018,101.32|KAMPAR KIRI TENGAH:0.165,101.32|XIII KOTO KAMPAR:0.184,100.935|KOTO KAMPAR HULU:0.424,100.552|KUOK:0.35,100.913|SALO:0.285,101.015|TAPUNG:0.553,101.116|TAPUNG HULU:0.777,100.845|TAPUNG HILIR:0.851,101.116|BANGKINANG KOTA:0.341,101.028|BANGKINANG:0.341,101.028|KAMPAR:0.147,101.162|KAMPAR TIMUR:0.358,101.196|RUMBIO JAYA:0.414,101.15|KAMPAR UTARA:0.414,101.082|TAMBANG:0.405,101.298|SIAK HULU:0.33,101.57|PERHENTIAN RAJA:0.321,101.423|ROKAN IV KOTO:0.555,100.305|PENDALIAN IV KOTO:0.498,100.507|TANDUN:0.573,100.597|KABUN:0.479,100.755|UJUNG BATU:0.685,100.552|RAMBAH SAMO:0.834,100.417|RAMBAH:0.835,100.282|RAMBAH HILIR:0.985,100.372|TAMBUSAI:1.079,100.305|TAMBUSAI UTARA:1.306,100.305|KEPENUHAN:1.135,100.642|KEPENUHAN HULU:1.022,100.507|KUNTO DARUSSALAM:0.909,100.687|PAGARAN TAPAH DARUSSALAM:0.759,100.597|BONAI DARUSSALAM:1.153,100.845|MANDAU:1.302,101.207|PINGGIR:1.113,101.434|BUKIT BATU:1.413,101.798|SIAK KECIL:1.148,101.935|RUPAT:1.871,101.616|RUPAT UTARA:2.005,101.593|BENGKALIS:1.489,102.08|BANTAN:-2.917,107.705|TANAH PUTIH:1.531,101.026|PUJUD:1.381,100.575|TANAH PUTIH TANJUNG MELAWAN:1.683,101.116|RANTAU KOPAR:1.398,101.003|TANJUNG MEDAN:1.438,100.507|BAGAN SINEMBAH:1.724,100.53|BAGAN SINEMBAH RAYA:1.724,100.53|BALAI JAYA:1.676,100.563|KUBU:-8.259,115.566|PASIR LIMAU KAPAS:2.206,100.417|KUBU BABUSSALAM:1.973,100.642|BANGKO:-2.074,102.275|SINABOI:2.202,100.958|BATU HAMPAR:1.932,101.003|PEKAITAN:2.011,100.777|RIMBA MELINTANG:1.836,101.026|BANGKO PUSAKO:1.761,100.845|TEBING TINGGI BARAT:0.921,102.576|TEBING TINGGI:3.381,99.208|TEBING TINGGI TIMUR:0.846,102.851|RANGSANG:1.069,102.851|RANGSANG PESISIR:1.069,102.851|RANGSANG BARAT:1.061,102.702|MERBAU:1.109,102.539|PUTRI PUYU:1.203,102.415|TAMPAN:0.469,101.4|BUKIT RAYA:-0.659,112.688|MARPOYAN DAMAI:0.474,101.44|TENAYAN RAYA:0.497,101.548|SAIL:0.518,101.459|PEKANBARU KOTA:0.507,101.448|SUKAJADI:-6.89,107.589|SENAPELAN:0.536,101.437|RUMBAI:0.645,101.411|RUMBAI PESISIR:0.608,101.502|BUKIT KAPUR:1.529,101.388|MEDANG KAMPAI:1.585,101.593|SUNGAI SEMBILAN:1.912,101.207|DUMAI BARAT:1.672,101.377|DUMAI SELATAN:1.633,101.4|DUMAI TIMUR:1.671,101.468|DUMAI KOTA:1.667,101.4|BATANG MERANGIN:-2.139,101.661|KELILING DANAU:-2.238,101.411|DANAU KERINCI:-1.705,101.417|SITINJAU LAUT:-2.054,101.491|AIR HANGAT:-1.89,101.548|AIR HANGAT TIMUR:-2.006,101.457|DEPATI VII:-2.021,101.349|AIR HANGAT BARAT:-1.988,101.372|GUNUNG KERINCI:-1.697,101.264|SIULAK:-1.979,101.286|SIULAK MUKAI:-1.853,101.457|KAYU ARO:-1.787,101.309|GUNUNG TUJUH:-1.739,101.366|KAYU ARO BARAT:-1.778,101.184|JANGKAT:-2.525,101.752|SUNGAI TENANG:-2.523,102.026|MUARA SIAU:-2.29,102.118|LEMBAH MASURAI:-2.388,101.912|TIANG PUMPUNG:-2.308,102.232|PAMENANG:-8.409,116.108|PAMENANG BARAT:-2.076,102.415|RENAH PAMENANG:-2.162,102.381|PAMENANG SELATAN:-2.268,102.369|BANGKO BARAT:-2.192,102.232|NALO TANTAN:-2.001,102.186|BATANG MASUMAI:-2.078,102.186|SUNGAI MANAU:-2.041,101.912|RENAH PEMBARAP:-2.117,102.049|PANGKALAN JAMBU:-2.119,101.821|TABIR:-1.809,102.278|TABIR ULU:-1.924,102.186|TABIR SELATAN:-1.961,102.415|TABIR ILIR:-1.732,102.369|TABIR TIMUR:-1.703,102.472|TABIR LINTAS:-1.933,102.289|MARGO TABIR:-1.885,102.369|TABIR BARAT:-1.908,101.844|BATANG ASAI:-2.521,102.209|LIMUN:-2.596,102.484|PELAWAN:-2.38,102.697|SINGKUT:-2.536,102.691|SAROLANGUN:-2.323,102.714|BATHIN VIII:-2.267,102.553|AIR HITAM:-0.447,117.121|MANDIANGIN:-2.667,103.067|MERSAM:-1.52,102.944|MARO SEBO ULU:-1.729,102.782|BATIN XXIV:-1.9,102.944|MUARA TEMBESI:-1.727,103.105|MUARA BULIAN:-1.66,103.278|BAJUBANG:-2.049,103.313|MARO SEBO ILIR:-1.575,103.197|PEMAYUNG:-1.518,103.313|MESTONG:-1.819,103.497|SUNGAI BAHAR:-1.991,103.474|BAHAR SELATAN:-2.105,103.474|BAHAR UTARA:-1.915,103.382|KUMPEH ULU:-1.609,103.798|SUNGAI GELAM:-1.741,103.775|KUMPEH:-1.551,104.007|MARO SEBO:-1.422,103.613|TAMAN RAJO:-1.421,103.752|JAMBI LUAR KOTA:-1.649,103.474|SEKERNAN:-1.367,103.405|MENDAHARA:-1.216,103.497|MENDAHARA ULU:-1.216,103.497|GERAGAI:-1.234,103.706|DENDANG:-1.703,110.434|MUARA SABAK BARAT:-1.275,103.707|MUARA SABAK TIMUR:-1.065,103.961|KUALA JAMBI:-1.056,103.787|RANTAU RASAU:-1.157,104.077|BERBAK:-1.269,104.123|NIPAH PANJANG:-1.082,104.17|SADU:0.429,121.491|TUNGKAL ULU:-1.162,103.105|MERLUNG:-1.267,103.043|BATANG ASAM:-1.107,102.898|RENAH MENDALUH:-1.294,102.851|MUARA PAPALIK:-1.312,103.151|PENGABUAN:-0.9,103.243|SENYERANG:-0.827,103.059|TUNGKAL ILIR:-0.834,103.486|BRAM ITAM:-0.974,103.289|SEBERANG KOTA:-0.816,103.393|BETARA:-0.993,103.405|KUALA BETARA:-0.936,103.521|TEBO ILIR:-1.54,102.737|MUARA TABIR:-1.75,102.576|TEBO TENGAH:-1.523,102.484|SUMAY:-1.146,102.484|TENGAH ILIR:-1.389,102.691|RIMBO BUJANG:-1.317,102.14|RIMBO ULU:-1.28,102.003|RIMBO ILIR:-1.392,102.278|TEBO ULU:-1.288,102.266|VII KOTO:-1.073,102.026|SERAI SERUMPUN:-1.166,102.278|VII KOTO ILIR:-1.016,102.14|PELEPAT:-1.83,102.026|PELEPAT ILIR:-1.618,102.369|BATHIN II BABEKO:-1.505,102.232|RIMBO TENGAH:-1.553,102.129|BUNGO DANI:-1.497,102.083|PASAR MUARA BUNGO:-1.492,102.135|BATHIN III:-1.698,101.821|RANTAU PANDAN:-1.659,101.958|BATHIN III ULU:-1.698,101.821|TANAH SEPENGGAL:-1.44,101.969|TANAH SEPENGGAL LINTAS:-1.384,101.946|TANAH TUMBUH:-1.507,101.866|LIMBUR LUBUK MENGKUANG:-1.68,101.661|BATHIN II PELAYANG:-1.432,101.821|JUJUHAN:-1.319,101.775|JUJUHAN ILIR:-1.205,101.912|KOTA BARU:-3.003,115.947|JAMBI SELATAN:-1.634,103.642|JELUTUNG:-1.617,103.616|PASAR JAMBI:-1.595,103.615|TELANAIPURA:-1.601,103.578|DANAU TELUK:-1.568,103.596|PELAYANGAN:-1.568,103.619|JAMBI TIMUR:-1.586,103.642|TANAH KAMPUNG:-2.078,101.44|KUMUN DEBAI:-2.161,101.32|SUNGAI PENUH:-2.069,101.417|PONDOK TINGGGI:-2.113,101.377|SUNGAI BUNGKAL:-2.055,101.309|HAMPARAN RAWANG:-2.05,101.417|PESISIR BUKIT:-2.04,101.371|LENGKITI:-4.308,103.961|SOSOH BUAY RAYAP:-4.205,104.123|PENGANDONAN:-4.067,103.867|SEMIDANG AJI:-4.049,103.984|ULU OGAN:-4.213,103.706|MUARA JAYA:-4.131,103.845|PENINJAUAN:-3.814,104.341|LUBUK BATANG:-3.966,104.17|SINAR PENINJAUAN:-3.921,104.449|KEDATON PENINJAUAN RAYA:-3.837,104.463|BATU RAJA TIMUR:-4.154,104.205|LUBUK RAJA:-4.132,104.298|BATU RAJA BARAT:-4.086,104.123|LEMPUING:-3.912,104.962|LEMPUING JAYA:-3.657,104.892|MESUJI:-4.004,105.313|SUNGAI MENANG:-3.88,105.641|MESUJI MAKMUR:-4.131,104.892|MESUJI RAYA:-4.004,105.313|TULUNG SELAPAN:-3.06,105.688|CENGAL:-3.526,105.688|PEDAMARAN:-3.483,104.833|PEDAMARAN TIMUR:-3.574,105.173|TANJUNG LUBUK:-3.562,104.729|TELUK GELAM:-3.61,104.787|KOTA KAYU AGUNG:-3.364,104.869|SIRAH PULAU PADANG:-3.286,104.869|JEJAWI:-3.169,104.869|PAMPANGAN:-3.284,105.009|PANGKALAN LAPAM:-3.126,105.149|AIR SUGIHAN:-2.756,105.313|SEMENDO DARAT LAUT:-4.094,103.659|SEMENDO DARAT ULU:-4.256,103.521|SEMENDO DARAT TENGAH:-4.187,103.463|TANJUNG AGUNG:-2.145,115.376|RAMBANG:-3.591,104.147|LUBAI:-3.749,104.147|LUBAI ULU:-3.749,104.147|LAWANG KIDUL:-3.773,103.845|MUARA ENIM:-3.663,103.778|UJAN MAS:-3.538,103.752|GUNUNG MEGANG:-3.536,103.891|BENAKAT:-3.42,103.752|BELIMBING:-3.15,115.317|RAMBANG DANGKU:-3.573,104.03|GELUMBANG:-3.195,104.426|LEMBAK:-3.34,104.342|SUNGAI ROTAN:-3.138,104.309|MUARA BELIDA:-3.085,104.624|KELEKAR:-3.341,104.461|TANJUNG SAKTI PUMI:-4.143,103.105|TANJUNG SAKTI PUMU:-4.065,103.013|KOTA AGUNG:-5.493,104.624|MULAK ULU:-4.017,103.521|TANJUNG TEBAT:-3.988,103.44|PULAU PINANG:5.414,100.329|PAGAR GUNUNG:-3.936,103.567|GUMAY ULU:-3.94,103.382|JARAI:-3.933,103.186|PAJAR BULAN:-3.981,103.289|MUARA PAYANG:-3.894,103.139|SUKAMERINDU:-3.977,103.226|KIKIM BARAT:-3.586,103.197|KIKIM TIMUR:-3.602,103.405|KIKIM SELATAN:-3.744,103.197|KIKIM TENGAH:-3.664,103.243|LAHAT:-3.786,103.541|GUMAY TALANG:-3.819,103.474|PSEKSU:-3.821,103.336|MERAPI BARAT:-3.767,103.648|MERAPI TIMUR:-3.677,103.683|MERAPI SELATAN:-3.856,103.659|SUKU TENGAH LAKITAN ULU:-3.041,102.737|SELANGIT:-3.218,102.668|SUMBER HARTA:-3.029,102.955|TUGUMULYO:-3.859,104.886|PURWODADI:-7.087,110.913|MUARA BELITI:-3.234,103.013|TIANG PUMPUNG KEPUNGUT:-3.351,103.059|JAYALOKA:-3.233,103.2|SUKA KARYA:-1.63,103.6|MUARA KELINGI:-3.055,103.22|TUAH NEGERI:-3.154,103.105|MUARA LAKITAN:-3.208,103.497|MEGANG SAKTI:-2.96,103.013|SANGA DESA:0.772,109.811|BABAT TOMAN:-2.739,103.59|BATANGHARI LEKO:-2.432,103.405|PLAKAT TINGGI:-2.894,103.59|LAWANG WETAN:-2.796,103.706|SUNGAI KERUH:-3.127,103.683|SEKAYU:-6.982,110.413|LAIS:-3.534,102.044|SUNGAI LILIN:-2.522,104.03|KELUANG:-2.659,103.907|BABAT SUPAT:-2.733,104.147|BAYUNG LENCIR:-2.005,104.007|LALAN:-2.346,104.333|TUNGKAL JAYA:-2.351,103.775|RANTAU BAYUR:-3.019,104.449|BETUNG:-1.874,103.257|SUAK TAPEH:-2.827,104.309|PULAU RIMAU:-2.575,104.426|BANYUASIN III:-2.884,104.426|SEMBAWA:-2.863,104.542|TALANG KELAPA:-2.803,104.705|TANJUNG LAGO:-2.65,104.612|BANYUASIN I:-2.897,104.916|AIR KUMBANG:-2.818,105.009|MUARA PADANG:-2.663,105.103|MUARA SUGIHAN:-2.413,105.173|MAKARTI JAYA:-2.549,104.962|AIR SALEH:-2.629,104.959|BANYUASIN II:-2.15,104.752|MUARA TELANG:-2.628,104.822|SUMBER MARGA TELANG:-2.552,104.775|MEKAKAU ILIR:-4.633,103.775|BANDING AGUNG:-4.771,103.891|WARKUK RANAU SELATAN:-4.847,104.123|BUAY PEMACA:-4.704,104.24|SIMPANG:-1.26,104.1|BUANA PEMACA:-4.564,104.216|MUARADUA:-4.514,104.171|BUAY RAWAN:-4.648,104.03|BUAY SANDANG AJI:-4.54,103.88|TIGA DIHAJI:-4.609,103.938|BUAY RUNJUNG:-4.49,103.891|RUNJUNG AGUNG:-4.42,103.88|KISAM TINGGI:-4.312,103.775|MUARADUA KISAM:-4.412,103.752|KISAM ILIR:-4.462,103.787|PULAU BERINGIN:-4.494,103.659|SINDANG DANAU:-4.416,103.521|SUNGAI ARE:-4.488,103.463|MARTAPURA:-3.412,114.845|BUNGA MAYANG:-4.59,104.869|JAYA PURA:-2.592,140.669|BUAY PEMUKA PELIUNG:-4.24,104.402|BUAY MADANG:-4.238,104.496|BUAY MADANG TIMUR:-4.168,104.554|BUAY PEMUKA BANGSA RAJA:-4.169,104.461|MADANG SUKU II:-4.079,104.496|MADANG SUKU III:-4.082,104.356|MADANG SUKU I:-3.959,104.542|BELITANG MADANG RAYA:-4.067,104.6|BELITANG:0.128,111.242|BELITANG JAYA:-4.195,104.682|BELITANG III:-4.115,104.729|BELITANG II:-4.034,104.822|BELITANG MULYA:-4.03,104.735|SEMENDAWAI SUKU III:-3.957,104.682|SEMENDAWAI TIMUR:-3.915,104.822|CEMPAKA:-3.489,114.88|SEMENDAWAI BARAT:-3.879,104.635|MUARA KUANG:-3.682,104.589|RAMBANG KUANG:-3.566,104.496|LUBUK KELIAT:-3.485,104.635|TANJUNG BATU:-3.367,104.635|PAYARAMAN:-3.447,104.542|RANTAU ALAI:-3.444,104.729|TANJUNG RAJA:-3.337,104.74|RANTAU PANJANG:-3.278,104.764|SUNGAI PINANG:-0.476,117.185|PEMULUTAN:-3.102,104.764|PEMULUTAN SELATAN:-3.219,104.787|PEMULUTAN BARAT:-3.171,104.729|INDRALAYA:-3.25,104.682|INDRALAYA UTARA:-3.173,104.589|INDRALAYA SELATAN:-3.299,104.67|MUARA PINANG:-3.825,103.105|LINTANG KANAN:-3.945,103.013|PENDOPO:-3.798,103.007|PENDOPO BARAT:-3.758,102.932|ULU MUSI:-3.71,102.782|SIKAP DALAM:-3.838,102.886|TALANG PADANG:-3.71,102.927|SALING:-3.519,103.024|TALANG UBI:-3.262,103.845|TANAH ABANG:-6.202,106.812|ABAB:-3.179,104.17|PENUKAL:-3.142,104.03|PENUKAL UTARA:-3.104,103.938|ULU RAWAS:-2.792,102.346|KARANG JAYA:-2.905,102.668|RAWAS ULU:-2.613,102.737|RUPIT:-2.747,102.851|KARANG DAPO:-2.745,103.036|RAWAS ILIR:-2.588,103.22|NIBUNG:-2.437,102.944|ILIR BARAT II:-2.998,104.743|GANDUS:-3.007,104.67|SEBERANG ULU I:-3.01,104.77|KERTAPATI:-3.018,104.752|SEBERANG ULU II:-3,104.793|PLAJU:-3,104.816|ILIR BARAT I:-2.987,104.717|BUKIT KECIL:-2.989,104.749|ILIR TIMUR I:-2.974,104.755|ILIR TIMUR II:-2.961,104.781|KALIDONI:-2.966,104.81|SAKO:-2.928,104.787|SEMATANG BORANG:-2.941,104.84|SUKARAMI:-2.89,104.717|ALANG ALANG LEBAR:-2.948,104.694|RAMBANG KAPAK TENGAH:-3.522,104.181|PRABUMULIH TIMUR:-3.422,104.274|PRABUMULIH SELATAN:-3.486,104.234|PRABUMULIH BARAT:-3.404,104.181|PRABUMULIH UTARA:-3.418,104.222|CAMBAI:-3.382,104.298|DEMPO SELATAN:-4.22,103.289|DEMPO TENGAH:-4.141,103.243|DEMPO UTARA:-4.092,103.209|PAGAR ALAM SELATAN:-4.033,103.162|PAGAR ALAM UTARA:-4.012,103.232|LUBUK LINGGAU BARAT I:-3.305,102.817|LUBUK LINGGAU BARAT II:-3.29,102.846|LUBUK LINGGAU SELATAN I:-3.323,102.932|LUBUK LINGGAU SELATAN II:-3.245,102.932|LUBUK LINGGAU TIMUR I:-3.289,102.903|LUBUK LINGGAU TIMUR II:-3.309,102.88|LUBUK LINGGAU UTARA I:-3.206,102.863|LUBUK LINGGAU UTARA II:-3.26,102.88|MANNA:-4.478,102.903|KOTA MANNA:-4.478,102.903|KEDURANG:-4.373,103.162|BUNGA MAS:-4.496,103.001|PASAR MANNA:-4.47,102.918|KEDURANG ILIR:-4.516,103.047|SEGINIM:-4.436,103.024|AIR NIPIS:-4.344,103.105|PINO:-4.386,102.967|PINORAYA:-4.348,102.874|ULU MANNA:-4.265,103.013|KOTA PADANG:-0.947,100.417|SINDANG BELITI ILIR:-3.472,102.874|PADANG ULAK TANDING:-3.355,102.737|SINDANG KELINGI:-3.435,102.691|BINDU RIANG:-3.424,102.748|SINDANG BELITI ULU:-3.473,102.782|SINDANG DATARAN:-3.523,102.702|CURUP:-3.474,102.521|BERMANI ULU:-3.428,102.45|SELUPU REJANG:-3.436,102.599|CURUP SELATAN:-3.492,102.521|CURUP TENGAH:-3.481,102.547|BERMANI ULU RAYA:-3.358,102.507|CURUP UTARA:-3.442,102.513|CURUP TIMUR:-3.461,102.547|ENGGANO:-5.375,102.232|KERKAP:-3.687,102.229|AIR NAPAL:-3.59,102.152|AIR BESI:-3.511,102.152|ARGA MAKMUR:-3.401,102.232|ARMA JAYA:-3.451,102.22|BATIK NAU:-3.404,102.003|GIRI MULYA:-3.236,102.083|AIR PADANG:-3.433,102.083|PADANG JAYA:-3.284,102.186|KETAHUN:-3.307,101.844|NAPAL PUTIH:-3.069,102.026|ULOK KUPAI:-3.169,101.866|PINANG RAYA:-0.288,104.844|PUTRI HIJAU:-3.171,101.684|NASAL:-4.696,103.613|MAJE:-4.719,103.497|KAUR SELATAN:-4.787,103.341|TETAP:-4.711,103.37|KAUR TENGAH:-4.712,103.301|LUAS:-4.661,103.336|MUARA SAHUNG:-4.459,103.382|KINAL:-4.531,103.301|SEMIDANG GUMAY:-4.658,103.249|TANJUNG KEMUNING:-4.613,103.209|KELAM TENGAH:-4.573,103.209|KAUR UTARA:-4.492,103.209|PADANG GUCI HILIR:-4.504,103.151|LUNGKANG KULE:-4.567,103.249|PADANG GUCI HULU:-4.381,103.289|SEMIDANG ALAS MARAS:-4.309,102.782|SEMIDANG ALAS:-4.147,102.874|TALO:-4.15,102.691|ILIR TALO:-4.201,102.633|TALO KECIL:-4.23,102.737|ULU TALO:-4.009,102.759|SELUMA:-4.05,102.714|SELUMA SELATAN:-4.123,102.541|SELUMA BARAT:-4.043,102.495|SELUMA TIMUR:-4.102,102.61|SELUMA UTARA:-3.951,102.645|SUKARAJA:-6.537,106.828|AIR PERIUKAN:-4.004,102.427|LUBUK SANDI:-3.873,102.553|IPUH:-2.971,101.442|AIR RAMI:-3.044,101.65|MALIN DEMAN:-2.837,101.752|PONDOK SUGUH:-2.741,101.548|TERAMANG JAYA:-2.664,101.457|TERAS TERUNJAM:-2.559,101.241|PENARIK:-2.613,101.301|SELAGAN RAYA:-2.47,101.411|KOTA MUKOMUKO:-2.576,101.117|AIR DIKIT:-2.656,101.241|XIV KOTO:-2.483,101.082|LUBUK PINANG:-2.434,101.139|AIR MANJUNTO:-2.501,101.173|V KOTO:-2.374,101.298|RIMBO PENGADANG:-3.28,102.461|TOPOS:-3.143,102.392|LEBONG SELATAN:-3.282,102.323|BINGIN KUNING:-3.174,102.289|LEBONG TENGAH:-3.204,102.232|LEBONG SAKTI:-3.115,102.289|LEBONG ATAS:-3.146,102.209|PADANG BANO:-3.21,102.158|PELABAI:-3.136,102.152|LEBONG UTARA:-3.111,102.192|AMEN:-3.121,102.215|URAM JAYA:-3.076,102.243|PINANG BELAPIS:-2.892,102.095|MUARA KEMUMU:-3.592,102.737|BERMANI ILIR:-3.702,102.702|SEBERANG MUSI:-3.742,102.633|TEBAT KARAI:-3.663,102.633|KEPAHIANG:-3.613,102.668|KABA WETAN:-3.564,102.61|MERIGI:-3.511,102.513|TALANG EMPAT:-3.826,102.381|KARANG TINGGI:-3.795,102.461|TABA PENANJUNG:-3.705,102.495|MERIGI KELINDANG:-3.606,102.472|PAGAR JATI:-3.607,102.381|MERIGI SAKTI:-3.626,102.427|PONDOK KELAPA:-6.239,106.93|PONDOK KUBANG:-3.707,102.358|PEMATANG TIGA:-3.568,102.312|BANG HAJI:-3.608,102.312|SELEBAR:-3.846,102.335|KAMPUNG MELAYU:-6.23,106.867|GADING CEMPAKA:-3.829,102.303|RATU AGUNG:-3.81,102.281|RATU SAMBAN:-3.799,102.265|SINGARAN PATI:-3.809,102.298|TELUK SEGARA:-3.79,102.258|SUNGAI SERUT:-3.792,102.329|MUARA BANGKA HULU:-3.767,102.289|BALIK BUKIT:-5.05,104.077|SUKAU:-4.93,104.03|LUMBOK SEMINUNG:-4.942,103.949|BELALAU:3.588,116.142|SEKINCAU:-4.995,104.298|SUOH:-5.287,104.356|BATU BRAK:-5.129,104.17|PAGAR DEWA:-4.974,104.344|BATU KETULIS:-4.955,104.251|BANDAR NEGERI SUOH:-5.238,104.324|SUMBER JAYA:-4.991,104.461|WAY TENONG:-5.044,104.356|GEDUNG SURIAN:-5.113,104.461|WONOSOBO:-7.356,109.914|SEMAKA:-5.206,104.356|BANDAR NEGERI SEMUONG:-5.114,104.414|PEMATANG SAWA:-5.781,104.624|KOTA AGUNG TIMUR:-5.495,104.677|KOTA AGUNG BARAT:-5.487,104.575|PULAU PANGGUNG:-5.32,104.682|ULUBELU:-5.234,104.461|AIR NANINGAN:-5.238,104.729|SUMBEREJO:-7.203,112.024|GISTING:-5.431,104.74|GUNUNG ALIP:-5.389,104.764|PUGUNG:-5.439,104.822|BULOK:-5.468,104.88|CUKUH BALAK:-5.63,104.904|KELUMBAYAN:-5.728,105.067|KELUMBAYAN BARAT:-5.648,105.021|NATAR:-5.266,105.243|JATI AGUNG:-5.304,105.337|TANJUNG BINTANG:-5.384,105.383|TANJUNG SARI:3.553,98.63|KATIBUNG:-5.535,105.419|MERBAU MATARAM:-5.465,105.383|WAY SULAN:-5.471,105.559|SIDOMULYO:-5.584,105.477|CANDIPURO:-8.191,113.061|WAY PANJI:-5.592,105.583|KALIANDA:-5.736,105.594|RAJABASA:-5.372,105.237|PALAS:-5.631,105.653|SRAGI:-6.917,109.567|PENENGAHAN:-5.742,105.665|KETAPANG:-1.859,109.972|BAKAUHENI:-5.833,105.7|METRO KIBANG:-5.193,105.325|BATANGHARI:-1.708,103.082|SEKAMPUNG:-5.18,105.43|MARGATIGA:-5.188,105.512|SEKAMPUNG UDIK:-5.298,105.571|JABUNG:-7.942,112.799|PASIR SAKTI:-5.546,105.77|WAWAY KARYA:-5.42,105.571|MARGA SEKAMPUNG:-5.369,105.586|LABUHAN MARINGGAI:-5.343,105.794|MATARAM BARU:-5.288,105.764|BANDAR SRIBAWONO:-5.255,105.665|MELINTING:-5.364,105.747|GUNUNG PELINDUNG:-5.42,105.753|WAY JEPARA:-5.172,105.703|BRAJA SLEBAH:-5.202,105.77|LABUHAN RATU:-5.369,105.258|SUKADANA:-5.067,105.546|BUMI AGUNG:-5.127,105.559|BATANGHARI NUBAN:-5.029,105.419|PEKALONGAN:-6.89,109.675|RAMAN UTARA:-4.948,105.442|PURBOLINGGO:-7.386,109.36|WAY BUNGUR:-4.906,105.536|PADANG RATU:-5.03,104.962|SELAGAI LINGGA:-5.118,104.682|PUBIAN:-5.113,104.869|ANAK TUHA:-5.028,105.056|ANAK RATU AJI:-4.95,104.962|KALIREJO:-5.202,104.974|SENDANG AGUNG:-5.204,104.88|BANGUNREJO:-5.109,105.056|GUNUNG SUGIH:-4.994,105.208|BEKRI:-5.097,105.138|BUMI RATU NUBAN:-5.095,105.208|TRIMURJO:-5.114,105.255|PUNGGUR:-5.033,105.278|KOTA GAJAH:-4.98,105.325|SEPUTIH RAMAN:-4.89,105.372|TERBANGGI BESAR:-4.883,105.217|SEPUTIH AGUNG:-4.945,105.149|WAY PENGUBUAN:-4.866,105.103|TERUSAN NUNYAI:-4.702,105.243|SEPUTIH MATARAM:-4.82,105.337|BANDAR MATARAM:-4.597,105.454|SEPUTIH BANYAK:-4.867,105.489|WAY SEPUTIH:-4.808,105.419|RUMBIA:-5.46,119.87|BUMI NABUNG:-4.685,105.559|PUTRA RUMBIA:-4.825,105.583|SEPUTIH SURABAYA:-4.683,105.653|BANDAR SURABAYA:-4.692,105.712|BUKIT KEMUNING:-4.959,104.542|ABUNG TINGGI:-4.907,104.6|ABUNG BARAT:-4.865,104.694|ABUNG TENGAH:-4.924,104.74|ABUNG  KUNANG:-4.883,104.81|ABUNG PEKURUN:-5.025,104.74|KOTABUMI:-4.825,104.896|KOTABUMI UTARA:-4.752,104.86|KOTABUMI SELATAN:-4.845,104.898|ABUNG SELATAN:-4.9,104.927|ABUNG SEMULI:-4.796,105.091|BLAMBANGAN PAGAR:-4.898,105.021|ABUNG TIMUR:-4.748,104.962|ABUNG SURAKARTA:-4.717,105.044|SUNGKAI SELATAN:-4.722,104.787|MUARA SUNGKAI:-4.618,104.974|SUNGKAI  BARAT:-4.785,104.67|SUNGKAI JAYA:-4.804,104.74|SUNGKAI UTARA:-4.623,104.74|HULUSUNGKAI:-4.664,104.67|SUNGKAI TENGAH:-4.724,104.694|BANJIT:-4.84,104.449|BARADATU:-4.677,104.542|GUNUNG LABUHAN:-4.766,104.6|KASUI:-4.722,104.448|REBANG TANGKAS:-4.671,104.344|BLAMBANGAN UMPU:-4.537,104.519|WAY TUBA:-4.43,104.391|NEGERI AGUNG:-4.555,104.635|BAHUGA:-4.305,104.647|BUAY  BAHUGA:-4.287,104.554|PAKUAN RATU:-4.433,104.729|NEGARA BATIN:-4.29,104.892|NEGERI BESAR:-4.509,104.916|BANJAR AGUNG:-4.293,105.231|BANJAR MARGO:-4.223,105.29|BANJAR BARU:-3.457,114.81|GEDUNG AJI:-4.291,105.348|PENAWAR AJI:-4.268,105.489|MERAKSA AJI:-4.269,105.442|MENGGALA:-4.482,105.249|PENAWAR TAMA:-4.19,105.442|RAWAJITU SELATAN:-4.244,105.7|GEDUNG MENENG:-4.436,105.547|RAWAJITU TIMUR:-4.242,105.794|RAWA PITU:-4.306,105.583|GEDUNG AJI BARU:-4.246,105.63|DENTE TELADAS:-4.49,105.806|MENGGALA TIMUR:-4.422,105.29|PUNDUH PIDADA:-5.781,105.19|PADANG CERMIN:-5.604,105.114|TELUK PANDAN:0.166,117.315|WAY RATAI:-5.6,105.073|KEDONDONG:-5.505,105.021|WAY KHILAU:-5.486,104.974|WAY LIMA:-5.424,105.021|GEDUNG TATAAN:-5.381,105.114|NEGERI KATON:-5.28,105.091|TEGINENENG:-5.178,105.138|PARDASUKA:-5.548,104.927|AMBARAWA:-7.262,110.403|PAGELARAN:-8.197,112.608|PAGELARAN UTARA:-5.286,104.857|PRINGSEWU:-5.333,104.986|GADING REJO:-5.363,105.021|SUKOHARJO:-5.302,104.942|BANYUMAS:-5.291,104.874|ADI LUWIH:-5.261,105.021|WAY SERDANG:-4.107,105.149|SIMPANG PEMATANG:-3.977,105.184|PANCA JAYA:-3.936,105.255|MESUJI TIMUR:-4.061,105.43|RAWAJITU UTARA:-4.136,105.665|TULANG BAWANG UDIK:-4.586,105.056|TUMI JAJAR:-4.665,105.103|TULANG BAWANG TENGAH:-4.544,105.149|LAMBU KIBANG:-4.345,105.149|GUNUNG TERANG:-4.347,105.056|GUNUNG AGUNG:-4.228,105.009|WAY KENANGA:-4.215,105.184|LEMONG:-4.937,103.706|PESISIR UTARA:-5.041,103.816|KARYA PENGGAWA:-5.104,103.926|WAY KRUI:-5.149,103.99|PESISIR TENGAH:-5.184,103.972|KRUI SELATAN:-5.225,103.972|PESISIR SELATAN:-1.722,100.89|NGAMBUR:-5.424,104.158|BENGKUNAT:-5.592,104.365|BENGKUNAT BELIMBING:-5.612,104.402|TELUK BETUNG BARAT:-5.443,105.237|TELUKBETUNG TIMUR:-5.464,105.237|TELUK BETUNG SELATAN:-5.449,105.31|BUMI WARAS:-5.443,105.285|TANJUNG KARANG TIMUR:-5.411,105.307|KEDAMAIAN:-5.414,105.287|TELUK BETUNG UTARA:-5.431,105.246|TANJUNG KARANG PUSAT:-5.415,105.252|ENGGAL:-5.419,105.26|TANJUNG KARANG BARAT:-5.423,105.225|KEMILING:-5.404,105.202|LANGKAPURA:-5.39,105.228|KEDATON:-5.372,105.26|TANJUNG SENANG:-5.359,105.275|SUKARAME:-5.381,105.296|SUKABUMI:-6.928,106.93|WAY HALIM:-5.394,105.275|METRO SELATAN:-5.168,105.307|METRO BARAT:-5.139,105.284|METRO TIMUR:-5.118,105.319|METRO PUSAT:-5.098,105.307|METRO UTARA:-5.077,105.307|MENDO BARAT:-2.196,105.9|MERAWANG:-0.214,104.611|PUDING BESAR:-2.045,105.853|SUNGAI LIAT:-1.879,106.116|PEMALI:0.566,109.117|BAKAM:1.046,104.03|BELINYU:-1.65,105.829|RIAU SILIP:-1.743,105.946|MEMBALONG:-3.129,107.651|TANJUNG PANDAN:-2.736,107.66|BADAU:0.947,111.905|SIJUK:-2.607,107.811|SELAT NASIK:-2.899,107.409|KELAPA:-1.881,105.668|TEMPILANG:-2.114,105.659|MENTOK:-2.065,105.164|SIMPANG TERITIP:-1.955,105.36|JEBUS:-1.761,105.48|PARITTIGA:-1.633,105.571|KOBA:-2.486,106.414|LUBUK BESAR:-2.559,106.661|PANGKALAN BARU:-2.193,106.135|NAMANG:-2.325,106.182|SUNGAI SELAN:-2.403,106.017|SIMPANG KATIS:-2.279,106.076|SIMPANG RIMBA:-2.556,106.017|TOBOALI:-2.999,106.465|TUKAK SADAI:-3.026,106.653|AIR GEGAS:-2.703,106.393|LEPAR PONGOK:-2.946,106.841|SIMPANG PESAK:-3.156,108.024|GANTUNG:-2.974,108.152|SIMPANG RENGGIANG:-2.908,108.001|MANGGAR:-2.87,108.279|DAMAR:-7.151,128.632|KELAPA KAMPIT:-2.698,107.985|RANGKUI:-2.134,106.108|BUKIT INTAN:-2.127,106.146|GIRIMAYA:-2.143,106.12|PANGKAL BALAM:-2.103,106.129|GABEK:-2.094,106.105|TAMAN SARI:-7.81,110.359|GERUNGGANG:-2.108,106.076|MORO:0.761,103.705|DURAI:0.506,103.607|KUNDUR:0.77,103.405|KUNDUR UTARA:0.797,103.44|KUNDUR BARAT:0.751,103.382|UNGAR:0.663,103.503|BELAT:0.82,103.492|KARIMUN:0.77,103.405|BURU:-3.393,126.782|MERAL:1.021,103.37|TEBING:-0.265,104.908|MERAL BARAT:1.058,103.347|TELUK BINTAN:1.034,104.484|BINTAN UTARA:1.082,104.263|TELUK SEBONG:1.118,104.402|SERI KUALA LOBAM:1.017,104.298|BINTAN TIMUR:0.867,104.577|GUNUNG KIJANG:1.034,104.6|MANTANG:-8.614,116.322|BINTAN PESISIR:0.775,104.717|TOAPAYA:1.006,104.542|TAMBELAN:0.973,107.822|MIDAI:2.998,107.775|BUNGURAN BARAT:3.848,108.167|BUNGURAN UTARA:3.986,108.095|PULAU TIGA:-8.856,116.572|BUNGURAN TIMUR:3.912,108.345|BUNGURAN TIMUR LAUT:4.04,108.261|BUNGURAN TENGAH:3.924,108.261|BUNGURAN SELATAN:3.691,108.261|SERASAN:2.517,109.033|SUBI:2.904,108.82|SERASAN TIMUR:2.508,109.087|SINGKEP BARAT:-0.491,104.356|SINGKEP:-0.473,104.426|SINGKEP SELATAN:-1.279,116.814|SINGKEP PESISIR:-0.408,104.531|LINGGA:-0.473,104.426|SELAYAR:-6.287,120.505|LINGGA TIMUR:-0.262,104.834|LINGGA UTARA:-0.09,104.589|SENAYANG:0.154,104.577|JEMAJA:2.924,105.759|JEMAJA TIMUR:2.914,105.77|SIANTAN SELATAN:3.138,106.24|SIANTAN:0.088,109.259|SIANTAN TIMUR:3.132,106.329|SIANTAN TENGAH:-0.015,109.346|PALMATAK:3.312,106.264|BELAKANG PADANG:1.051,103.851|BULANG:1.017,103.887|SEI BEDUK:1.022,104.048|SAGULUNG:1.037,103.949|NONGSA:1.148,104.112|BATAM KOTA:1.046,104.03|SEKUPANG:1.111,103.972|BATU AJI:1.06,103.92|LUBUK BAJA:1.134,104.001|BATU AMPAR:-6.275,106.862|BENGKONG:1.143,104.036|BUKIT BESTARI:0.868,104.507|TANJUNGPINANG TIMUR:0.905,104.507|TANJUNGPINANG KOTA:0.919,104.467|TANJUNGPINANG BARAT:0.916,104.446|KEPULAUAN SERIBU SELATAN:-5.799,106.507|KEPULAUAN SERIBU UTARA:-5.502,106.55|JAGAKARSA:-6.335,106.824|PASAR MINGGU:-6.294,106.824|CILANDAK:-6.285,106.8|PESANGGRAHAN:-6.247,106.762|KEBAYORAN LAMA:-6.244,106.777|KEBAYORAN BARU:-6.244,106.8|MAMPANG PRAPATAN:-6.251,106.821|PANCORAN:-6.252,106.847|TEBET:-6.232,106.847|SETIA BUDI:-6.22,106.833|PASAR REBO:-6.326,106.856|CIRACAS:-6.323,106.871|CIPAYUNG:-6.327,106.9|MAKASAR:-5.148,119.433|KRAMAT JATI:-6.273,106.869|JATINEGARA:-6.231,106.883|DUREN SAWIT:-6.23,106.918|CAKUNG:-6.183,106.948|PULO GADUNG:-6.182,106.897|MATRAMAN:-6.203,106.862|MENTENG:-6.194,106.833|SENEN:-6.193,106.85|JOHAR BARU:-6.183,106.856|CEMPAKA PUTIH:-6.183,106.868|KEMAYORAN:-6.16,106.847|SAWAH BESAR:-6.153,106.833|GAMBIR:-6.171,106.824|KEMBANGAN:-6.191,106.742|KEBON JERUK:-6.196,106.774|PALMERAH:-6.19,106.797|GROGOL PETAMBURAN:-6.162,106.788|TAMBORA:-8.248,117.991|CENGKARENG:-6.149,106.735|KALI DERES:-6.134,106.706|PENJARINGAN:-6.127,106.782|PADEMANGAN:-6.133,106.838|TANJUNG PRIOK:-6.132,106.871|KOJA:-6.118,106.906|KELAPA GADING:-6.16,106.905|CILINCING:-6.121,106.948|NANGGUNG:-6.668,106.547|LEUWILIANG:-6.574,106.633|LEUWISADENG:-6.567,106.592|PAMIJAHAN:-6.695,106.653|CIBUNGBULANG:-6.561,106.665|CIAMPEA:-6.575,106.694|TENJOLAYA:-6.657,106.706|DRAMAGA:-6.584,106.731|CIOMAS:-6.606,106.762|TAMANSARI:-6.901,107.608|CIJERUK:-6.681,106.797|CIGOMBONG:-6.731,106.797|CARINGIN:-6.713,106.838|CIAWI:-7.483,107.817|CISARUA:-6.679,106.94|MEGAMENDUNG:-6.681,106.901|BABAKAN MADANG:-6.594,106.9|SUKAMAKMUR:-6.61,107.019|CARIU:-6.502,107.13|TANJUNGSARI:-6.844,107.793|JONGGOL:-6.468,107.056|CILEUNGSI:-6.402,106.97|KELAPA NUNGGAL:-6.447,106.944|GUNUNG PUTRI:-6.429,106.924|CITEUREUP:-6.493,106.881|CIBINONG:-6.49,106.831|BOJONG GEDE:-6.479,106.8|TAJUR HALANG:-6.465,106.76|KEMANG:-6.497,106.742|RANCA BUNGUR:-6.523,106.718|PARUNG:-6.438,106.717|CISEENG:-6.452,106.68|GUNUNG SINDUR:-6.396,106.688|RUMPIN:-6.443,106.631|CIGUDEG:-6.492,106.558|JASINGA:-6.466,106.454|TENJO:-6.362,106.452|PARUNG PANJANG:-6.368,106.553|CIEMAS:-7.197,106.511|CIRACAP:-7.698,109.024|WALURAN:-7.225,106.594|SURADE:-7.351,106.57|CIBITUNG:-6.234,107.107|JAMPANG KULON:-7.286,106.641|CIMANGGU:-6.956,106.771|KALI BUNDER:-7.261,106.735|TEGAL BULEUD:-7.355,106.747|CIDOLOG:-7.278,106.853|SAGARANTEN:-7.194,106.877|CIDADAP:-6.864,107.607|CURUGKEMBAR:-7.212,106.932|PABUARAN:-6.454,106.85|LENGKONG:-6.933,107.627|PALABUHANRATU:-6.996,106.55|SIMPENAN:-7.08,106.594|WARUNG KIARA:-6.993,106.712|BANTARGADUNG:-6.974,106.665|JAMPANG TENGAH:-7.062,106.794|PURABAYA:-7.1,106.889|CIKEMBAR:-6.968,106.806|NYALINDUNG:-7.005,106.924|GEGER BITUNG:-7.002,107.019|KEBONPEDES:-6.947,106.977|CIREUNGHAS:-6.935,107.024|SUKALARANG:-6.883,107.013|KADUDAMPIT:-6.819,106.948|CISAAT:-6.898,106.895|GUNUNGGURUH:-6.945,106.877|CIBADAK:-6.567,106.95|CICANTAYAN:-6.926,106.83|NAGRAK:-6.385,106.945|CIAMBAR:-6.802,106.83|CICURUG:-6.768,106.788|CIDAHU:-6.77,106.729|PARAKAN SALAK:-6.806,106.712|PARUNG KUDA:-6.841,106.753|BOJONG GENTENG:-6.842,106.718|KALAPA NUNGGAL:-6.808,106.665|CIKIDANG:-6.902,106.653|CISOLOK:-6.867,106.464|CIKAKAK:-6.896,106.523|KABANDUNGAN:-6.779,106.606|AGRABINTA:-7.391,106.889|LELES:-7.334,107.019|SINDANGBARANG:-7.456,107.134|CIDAUN:-7.402,107.397|NARINGGUL:-7.374,107.314|CIKADU:-7.293,107.267|TANGGEUNG:-7.247,107.113|PASIRKUDA:-7.202,107.208|KADUPANDAK:-7.219,107.03|CIJATI:-7.271,107.019|TAKOKAK:-7.096,106.983|SUKANAGARA:-7.093,107.078|CAMPAKA:-7.101,107.582|CAMPAKA MULYA:-7.078,107.208|CIBEBER:-6.936,107.137|WARUNGKONDANG:-6.86,107.083|GEKBRONG:-6.897,107.066|CILAKU:-6.873,107.16|SUKALUYU:-6.803,107.237|BOJONGPICUNG:-6.89,107.255|HAURWANGI:-6.826,107.302|CIRANJANG:-6.813,107.261|MANDE:-6.749,107.16|KARANGTENGAH:-6.82,107.173|CIANJUR:-6.817,107.143|CUGENANG:-6.804,107.078|PACET:-7.12,107.704|CIPANAS:-6.713,107.019|SUKARESMI:-6.325,107.119|CIKALONGKULON:-6.675,107.219|CIWIDEY:-7.085,107.446|RANCABALI:-7.125,107.424|PASIRJAMBU:-7.097,107.483|CIMAUNG:-7.092,107.559|PANGALENGAN:-7.199,107.551|KERTASARI:-7.276,107.693|IBUN:-7.118,107.775|PASEH:-7.075,107.799|CIKANCUNG:-7.033,107.823|CICALENGKA:-6.986,107.84|NAGREG:-7.016,107.876|RANCAEKEK:-6.967,107.765|MAJALAYA:-7.052,107.746|SOLOKAN JERUK:-7.011,107.746|CIPARAY:-7.04,107.713|BALEENDAH:-7.015,107.639|ARJASARI:-7.055,107.645|BANJARAN:-7.056,107.577|CANGKUANG:-7.048,107.544|PAMEUNGPEUK:-7.019,107.589|KATAPANG:-1.859,109.972|SOREANG:-7.025,107.526|KUTAWARINGIN:-6.999,107.509|MARGAASIH:-6.954,107.557|MARGAHAYU:-6.255,107.01|DAYEUHKOLOT:-6.972,107.613|BOJONGSOANG:-7.004,107.648|CILEUNYI:-6.932,107.742|CILENGKRANG:-6.872,107.728|CIMENYAN:-6.874,107.659|CISEWU:-7.365,107.551|TALEGONG:-7.284,107.503|BUNGBULANG:-7.446,107.598|MEKARMUKTI:-6.295,107.163|PAMULIHAN:-6.888,107.847|PAKENJENG:-7.44,107.74|CIKELET:-7.567,107.693|CIBALONG:-7.517,108.167|CISOMPET:-7.563,107.787|PEUNDEUY:-7.547,107.918|SINGAJAYA:-7.484,107.918|CIHURIP:-7.508,107.847|CIKAJANG:-7.386,107.799|BANJARWANGI:-7.393,107.882|CILAWU:-7.299,107.894|BAYONGBONG:-7.28,107.847|CIGEDUG:-7.323,107.823|CISURUPAN:-7.315,107.79|SAMARANG:-7.005,110.438|PASIRWANGI:-7.201,107.752|TAROGONG KIDUL:-7.212,107.876|TAROGONG KALER:-7.184,107.886|GARUT KOTA:-7.228,107.909|KARANGPAWITAN:-7.213,107.949|WANARAJA:-7.196,108.007|SUCINARAJA:-7.217,108.007|PANGATIKAN:-7.182,108.027|SUKAWENING:-7.129,108.012|BANYURESMI:-7.158,107.924|LEUWIGOONG:-7.106,107.935|CIBATU:-6.335,107.154|KERSAMANAH:-7.072,108.03|CIBIUK:-7.064,107.959|KADUNGORA:-7.072,107.894|BLUBUR LIMBANGAN:-7.008,107.941|SELAAWI:-7.005,108.012|MALANGBONG:-7.048,108.085|CIPATUJAH:-7.719,108.024|KARANGNUNGGAL:-7.63,108.167|CIKALONG:-7.45,108.033|PANCATENGAH:-7.697,108.297|CIKATOMAS:-7.615,108.273|PARUNGPONTENG:-7.495,108.155|BANTARKALONG:-7.623,108.084|BOJONGASIH:-7.558,108.131|CULAMEGA:-7.594,108.024|BOJONGGAMBIR:-7.565,107.965|SODONGHILIR:-7.499,108.06|TARAJU:-7.44,107.989|SALAWU:-7.378,107.989|PUSPAHIANG:-7.436,108.084|TANJUNGJAYA:-6.512,105.653|SALOPA:-7.499,108.309|JATIWARAS:-7.471,108.226|CINEAM:-7.403,108.368|KARANGJAYA:-7.164,107.261|MANONJAYA:-7.364,108.321|GUNUNGTANJUNG:-7.427,108.297|SINGAPARNA:-7.35,108.125|MANGUNREJA:-7.379,108.078|CIGALONTANG:-7.35,108.017|LEUWISARI:-7.306,108.09|SARIWANGI:-6.862,107.57|PADAKEMBANG:-7.305,108.125|SUKARATU:-7.274,108.125|CISAYONG:-7.247,108.155|SUKAHENING:-7.203,108.101|RAJAPOLAH:-7.22,108.184|JAMANIS:-7.19,108.161|KADIPATEN:-6.768,108.168|PAGERAGEUNG:-7.102,108.178|SUKARESIK:-7.158,108.184|BANJARSARI:-7.497,108.606|LAKBOK:-8.651,116.325|PURWADADI:-6.444,107.681|PAMARICAN:-7.459,108.511|CIMARAGAS:-7.374,108.445|CIJEUNGJING:-7.328,108.393|CISAGA:-7.315,108.511|TAMBAKSARI:-7.25,112.769|RANCAH:-7.202,108.499|RAJADESA:-7.194,108.439|CIAMIS:-7.33,108.332|BAREGBEG:-7.3,108.368|CIKONENG:-7.278,108.279|SINDANGKASIH:-7.383,107.267|CIHAURBEUTI:-7.223,108.226|SADANANYA:-7.241,108.297|CIPAKU:-7.238,108.368|JATINAGARA:-7.18,108.41|PANAWANGAN:-7.114,108.392|KAWALI:-7.189,108.368|LUMBUNG:-7.152,108.327|PANJALU:-7.139,108.273|SUKAMANTRI:-7.076,108.297|PANUMBANGAN:-7.162,108.226|DARMA:-7.005,108.398|KADUGEDE:-7.003,108.457|NUSAHERANG:-7.014,108.434|CINIRU:-7.052,108.505|HANTARA:-7.07,108.463|SELAJAMBE:-7.105,108.469|SUBANG:-6.562,107.761|CILEBAK:-7.133,108.583|CIWARU:-7.104,108.629|KARANGKANCANA:-7.102,108.677|CIBINGBIN:-7.099,108.748|CIBEUREUM:-6.723,106.951|LURAGUNG:-7.018,108.638|CIMAHI:-6.884,107.541|KALIMANGGIS:-6.955,108.624|CIAWIGEBANG:-6.942,108.582|CIPICUNG:-6.938,108.552|LEBAKWANGI:-7.008,108.588|MALEBER:-7.065,108.582|GARAWANGI:-7.005,108.534|SINDANGAGUNG:-6.969,108.529|KUNINGAN:-6.981,108.493|CIGUGUR:-6.973,108.445|KRAMATMULYA:-6.95,108.505|JALAKSANA:-6.921,108.457|JAPARA:-6.58,110.679|CILIMUS:-7.253,107.83|CIGANDAMEKAR:-6.897,108.552|MANDIRANCAN:-6.849,108.457|PANCALANG:-6.817,108.493|PASAWAHAN:-6.579,107.474|WALED:-6.912,108.683|PASALEMAN:-6.95,108.742|CILEDUG:-6.236,106.706|LOSARI:-5.146,119.411|PABEDILAN:-6.857,108.766|BABAKAN:-6.878,108.72|KARANGSEMBUNG:-6.85,108.646|KARANGWARENG:-6.862,108.644|LEMAHABANG:-6.833,108.612|SUSUKANLEBAK:-6.866,108.623|SEDONG:-6.88,108.582|ASTANAJAPURA:-6.802,108.624|PANGENAN:-6.8,108.671|MUNDU:-6.775,108.585|BEBER:-6.817,108.517|GREGED:-6.814,108.564|TALUN:-8.094,112.274|SUMBER:-7.927,113.119|DUKUPUNTANG:-6.769,108.41|PALIMANAN:-6.705,108.432|PLUMBON:-6.719,108.47|DEPOK:-6.402,106.794|WERU:-7.787,110.748|PLERED:-6.697,108.502|TENGAH TANI:-6.701,108.526|KEDAWUNG:-6.719,108.533|GUNUNGJATI:-6.669,108.54|KAPETAKAN:-6.576,108.511|SURANENGGALA:-6.622,108.517|KLANGENAN:-6.679,108.451|JAMBLANG:-6.654,108.481|ARJAWINANGUN:-6.64,108.402|PANGURAGAN:-6.614,108.457|CIWARINGIN:-6.678,108.386|GEMPOL:-6.705,108.417|SUSUKAN:-6.316,106.868|GEGESIK:-6.574,108.434|KALIWEDI:-6.581,108.392|LEMAHSUGIH:-7.019,108.178|BANTARUJEG:-6.955,108.25|MALAUSMA:-7.037,108.25|CIKIJING:-7.012,108.368|CINGAMBUL:-7.034,108.321|TALAGA:-6.214,106.508|ARGAPURA:-6.889,108.345|MAJA:-6.891,108.297|MAJALENGKA:-6.836,108.227|CIGASONG:-6.826,108.256|SUKAHAJI:-6.804,108.291|SINDANG:-2.329,101.169|RAJAGALUH:-6.822,108.362|SINDANGWANGI:-6.806,108.392|LEUWIMUNDING:-6.746,108.345|PALASAH:-6.748,108.297|JATIWANGI:-6.765,108.168|DAWUAN:-6.566,107.681|KASOKANDEL:-6.771,108.226|PANYINGKIRAN:-6.814,108.178|KERTAJATI:-6.642,108.119|JATITUJUH:-6.628,108.226|LIGUNG:-6.667,108.273|SUMBERJAYA:-6.227,107.075|JATINANGOR:-6.937,107.781|CIMANGGUNG:-6.95,107.847|SUKASARI:-6.618,106.814|RANCAKALONG:-6.827,107.847|SUMEDANG SELATAN:-6.859,107.92|SUMEDANG UTARA:-6.829,107.912|GANEAS:-6.863,107.965|SITURAJA:-6.867,108.007|CISITU:-6.839,108.06|DARMARAJA:-6.921,108.06|CIBUGEL:-6.964,108.012|WADO:-8.692,120.556|JATINUNGGAL:-6.937,108.178|JATIGEDE:-6.877,108.131|TOMO:-6.764,108.133|UJUNG JAYA:-6.695,108.084|CONGGEANG:-6.733,108|CIMALAKA:-6.803,107.941|TANJUNGKERTA:-6.742,107.918|TANJUNGMEDAR:-6.723,107.87|BUAHDUA:-6.679,107.941|SURIAN:-1.252,100.895|HAURGEULIS:-6.455,107.941|GANTAR:-6.567,107.929|KROYA:-7.633,109.247|GABUSWETAN:-6.43,108.06|CIKEDUNG:-6.528,108.178|TERISI:-6.605,108.024|LELEA:-6.465,108.226|BANGODUA:-6.518,108.291|TUKDANA:-6.565,108.273|WIDASARI:-6.463,108.273|KERTASEMAYA:-6.52,108.368|SUKAGUMIWANG:-6.578,108.327|KRANGKENG:-6.516,108.487|KARANGAMPEL:-6.47,108.452|KEDOKAN BUNDER:-6.493,108.41|JUNTINYUAT:-6.437,108.416|SLIYEG:-6.46,108.345|JATIBARANG:-6.475,108.307|BALONGAN:-6.397,108.368|INDRAMAYU:-6.337,108.326|CANTIGI:-6.281,108.226|PASEKAN:-6.279,108.297|LOHBENER:-6.4,108.283|ARAHAN:-6.362,108.25|LOSARANG:-6.399,108.147|KANDANGHAUR:-6.352,108.112|BONGAS:-7.55,108.05|ANJATAN:-6.373,107.941|SUKRA:-6.296,107.947|PATROL:-6.313,107.983|SAGALAHERANG:-6.711,107.633|SERANGPANJANG:-6.63,107.61|JALANCAGAK:-6.668,107.704|CIATER:-6.73,107.681|CISALAK:-6.387,106.862|KASOMALANG:-6.686,107.775|TANJUNGSIANG:-6.745,107.823|CIJAMBE:-6.897,107.694|CIBOGO:-6.331,106.647|KALIJATI:-6.548,107.61|CIPEUNDEUY:-6.73,107.359|PATOKBEUSI:-6.364,107.61|CIKAUM:-6.421,107.728|PAGADEN:-6.495,107.805|PAGADEN BARAT:-6.481,107.775|CIPUNAGARA:-6.498,107.87|COMPRENG:-6.396,107.87|BINONG:-6.398,107.799|TAMBAKDAHAN:-6.337,107.799|CIASEM:-6.331,107.693|PAMANUKAN:-6.286,107.821|PUSAKANAGARA:-6.253,107.87|PUSAKAJAYA:-6.314,107.894|LEGONKULON:-6.236,107.799|BLANAKAN:-6.261,107.657|JATILUHUR:-6.56,107.426|MANIIS:-6.682,107.302|TEGAL WARU:-6.62,107.326|SUKATANI:-6.196,107.16|DARANGDAN:-6.677,107.444|BOJONG:-7.163,109.176|WANAYASA:-6.679,107.545|KIARAPEDES:-6.632,107.562|PONDOK SALAM:-6.614,107.491|PURWAKARTA:-6.541,107.446|BABAKANCIKAO:-6.494,107.42|BUNGURSARI:-6.451,107.468|PANGKALAN:0.327,102.074|TEGALWARU:-6.52,107.214|CIAMPEL:-6.436,107.326|TELUKJAMBE TIMUR:-6.334,107.293|TELUKJAMBE BARAT:-6.356,107.255|KLARI:-6.352,107.373|CIKAMPEK:-6.396,107.438|PURWASARI:-6.366,107.414|TIRTAMULYA:-6.349,107.468|JATISARI:-6.361,107.455|BANYUSARI:-6.306,107.539|KOTABARU:-6.396,107.456|CILAMAYA WETAN:-6.222,107.586|CILAMAYA KULON:-6.209,107.512|TALAGASARI:-6.269,107.42|KARAWANG TIMUR:-6.305,107.32|KARAWANG BARAT:-6.302,107.297|RAWAMERTA:-6.231,107.349|TEMPURAN:-7.529,110.152|KUTAWALUYA:-6.169,107.349|RENGASDENGKLOK:-6.18,107.295|JAYAKERTA:-6.105,107.296|PEDES:-6.042,107.36|CILEBAR:-6.126,107.42|CIBUAYA:-6.007,107.326|TIRTAJAYA:-6.414,106.827|BATUJAYA:-6.053,107.184|PAKISJAYA:-6.014,107.137|SETU:-6.35,106.67|SERANG BARU:-6.401,107.137|CIKARANG PUSAT:-6.364,107.178|CIKARANG SELATAN:-6.319,107.137|CIBARUSAH:-6.443,107.113|BOJONGMANGU:-6.44,107.184|CIKARANG TIMUR:-6.297,107.208|KEDUNGWARINGIN:-6.254,107.255|CIKARANG UTARA:-6.278,107.16|KARANGBAHAGIA:-6.215,107.208|CIKARANG BARAT:-6.3,107.089|TAMBUN SELATAN:-6.261,107.042|TAMBUN UTARA:-6.179,107.066|BABELAN:-6.124,107.036|TARUMAJAYA:-6.12,106.995|TAMBELANG:-6.161,107.131|SUKAWANGI:-6.117,107.089|PEBAYURAN:-6.152,107.255|CABANGBUNGIN:-6.079,107.143|MUARA GEMBONG:-5.996,107.042|RONGGA:-6.962,107.267|GUNUNGHALU:-7.043,107.314|SINDANGKERTA:-6.991,107.4|CILILIN:-6.983,107.453|CIHAMPELAS:-6.948,107.497|CIPONGKOR:-6.943,107.343|BATUJAJAR:-6.915,107.498|SAGULING:-6.891,107.367|CIPATAT:-6.829,107.353|PADALARANG:-6.844,107.478|NGAMPRAH:-6.861,107.515|PARONGPONG:-6.821,107.58|LEMBANG:-6.816,107.623|CIKALONG WETAN:-6.738,107.438|CIMERAK:-7.785,108.404|CIJULANG:-7.723,108.47|LANGKAPLANCAR:-7.536,108.404|PARIGI:-0.819,120.167|SIDAMULIH:-7.601,108.582|PANGANDARAN:-7.615,108.499|KALIPUCANG:-7.636,108.724|PADAHERANG:-6.803,108.402|MANGUNJAYA:-6.238,107.057|BOGOR SELATAN:-6.643,106.824|BOGOR TIMUR:-6.612,106.824|BOGOR UTARA:-6.571,106.824|BOGOR TENGAH:-6.476,106.827|BOGOR BARAT:-6.573,106.765|TANAH SEREAL:-6.551,106.788|BAROS:-6.891,107.537|LEMBURSITU:-6.97,106.906|CITAMIANG:-7.583,107.817|WARUDOYONG:-6.928,106.918|GUNUNG PUYUH:-6.91,106.915|CIKOLE:-6.917,106.942|BANDUNG KULON:-6.917,107.619|BABAKAN CIPARAY:-6.942,107.577|BOJONGLOA KALER:-6.932,107.589|BOJONGLOA KIDUL:-6.952,107.595|ASTANAANYAR:-6.93,107.599|REGOL:-6.941,107.613|BANDUNG KIDUL:-6.956,107.63|BUAHBATU:-6.952,107.651|RANCASARI:-6.954,107.678|GEDEBAGE:-6.951,107.698|CIBIRU:-6.916,107.719|PANYILEUKAN:-6.932,107.707|UJUNG BERUNG:-6.906,107.707|CINAMBO:-6.933,107.69|ARCAMANIK:-6.918,107.678|ANTAPANI:-6.919,107.66|MANDALAJATI:-6.898,107.672|KIARACONDONG:-6.924,107.648|BATUNUNGGAL:-6.919,107.636|SUMUR BANDUNG:-6.915,107.613|ANDIR:-6.911,107.577|CICENDO:-6.901,107.583|BANDUNG WETAN:-6.905,107.619|CIBEUNYING KIDUL:-6.898,107.648|CIBEUNYING KALER:-6.894,107.636|COBLONG:-6.892,107.616|HARJAMUKTI:-6.376,106.897|LEMAHWUNGKUK:-6.729,108.573|PEKALIPAN:-6.724,108.563|KESAMBI:-6.736,108.543|KEJAKSAN:-6.705,108.555|PONDOKGEDE:-6.27,106.93|JATISAMPURNA:-6.362,106.93|PONDOKMELATI:-6.311,106.93|JATIASIH:-6.31,106.954|BANTARGEBANG:-6.34,106.989|MUSTIKAJAYA:-6.303,107.019|BEKASI TIMUR:-6.247,107.148|RAWALUMBU:-6.278,107.001|BEKASI SELATAN:-6.238,106.976|BEKASI BARAT:-6.238,106.965|MEDAN SATRIA:-6.194,106.986|BEKASI UTARA:-6.247,107.148|SAWANGAN:-6.409,106.765|BOJONGSARI:-6.399,106.741|PANCORAN MAS:-6.397,106.8|SUKMA JAYA:-6.41,106.848|CILODONG:-6.437,106.836|CIMANGGIS:-6.364,106.859|TAPOS:-6.41,106.877|BEJI:-6.376,106.824|LIMO:-6.377,106.777|CINERE:-6.336,106.788|CIMAHI SELATAN:-6.905,107.533|CIMAHI TENGAH:-6.875,107.533|CIMAHI UTARA:-6.863,107.556|KAWALU:-7.41,108.202|PURBARATU:-7.33,108.267|TAWANG:-7.334,108.229|CIHIDEUNG:-6.814,107.593|MANGKUBUMI:-7.344,108.184|INDIHIANG:-7.294,108.199|CIPEDES:-6.886,107.593|BANJAR:-3.32,114.999|PURWAHARJA:-7.349,108.552|PATARUMAN:-7.395,108.558|LANGENSARI:-7.367,108.624|DAYEUHLUHUR:-7.228,108.606|WANAREJA:-7.308,108.677|MAJENANG:-7.233,108.736|KARANGPUCUNG:-7.38,108.915|CIPARI:-7.407,108.772|SIDAREJA:-7.485,108.783|KEDUNGREJA:-7.51,108.772|PATIMUAN:-7.602,108.784|GANDRUNGMANGU:-7.507,108.843|BANTARSARI:-7.524,108.915|KAWUNGANTEN:-7.596,108.926|KAMPUNG LAUT:-7.671,108.867|JERUKLEGI:-7.592,109.022|KESUGIHAN:-7.62,109.081|ADIPALA:-7.667,109.15|MAOS:-7.601,109.158|SAMPANG:-7.194,113.247|BINANGUN:-7.673,109.271|NUSAWUNGU:-7.669,109.366|CILACAP SELATAN:-7.75,108.962|CILACAP TENGAH:-7.686,108.986|CILACAP UTARA:-7.669,109.027|LUMBIR:-7.48,108.986|WANGON:-7.518,109.057|JATILAWANG:-7.557,109.105|RAWALO:-7.514,109.152|KEBASEN:-7.557,109.23|KEMRANJEN:-7.589,109.319|SUMPIUH:-7.586,109.366|TAMBAK:-5.742,112.645|SOMAGEDE:-7.526,109.343|KALIBAGOR:-7.487,109.295|BANYUMAS:-7.483,109.14|PATIKRAJA:-7.47,109.2|PURWOJATI:-7.474,109.105|AJIBARANG:-7.417,109.067|GUMELAR:-7.376,108.98|PEKUNCEN:-7.352,109.081|CILONGOK:-7.369,109.152|KARANGLEWAS:-7.434,109.194|KEDUNG BANTENG:-7.347,109.2|BATURRADEN:-7.3,109.217|SUMBANG:-7.364,109.271|KEMBARAN:-7.404,109.295|SOKARAJA:-7.451,109.289|PURWOKERTO SELATAN:-7.443,109.242|PURWOKERTO BARAT:-7.423,109.218|PURWOKERTO TIMUR:-7.424,109.245|PURWOKERTO UTARA:-7.399,109.239|KEMANGKON:-7.463,109.366|BUKATEJA:-7.433,109.456|KEJOBONG:-7.4,109.503|PENGADEGAN:-6.248,106.855|KALIGONDANG:-7.378,109.414|PURBALINGGA:-7.386,109.36|KALIMANAH:-7.417,109.349|PADAMARA:-7.377,109.325|KUTASARI:-7.317,109.289|MREBET:-7.314,109.349|BOBOTSARI:-7.3,109.367|KARANGREJA:-7.239,109.319|KARANGJAMBU:-7.214,109.414|KARANGANYAR:-7.607,110.987|KERTANEGARA:-7.29,109.432|KARANGMONCOL:-7.273,109.462|REMBANG:-6.707,111.337|PURWAREJA KLAMPOK:-7.46,109.44|MANDIRAJA:-7.477,109.509|PURWANEGARA:-7.41,109.233|BAWANG:-7.1,109.917|BANJARNEGARA:-7.447,109.554|PAGEDONGAN:-7.449,109.676|SIGALUH:-7.424,109.771|MADUKARA:-7.364,109.723|BANJARMANGU:-7.325,109.676|WANADADI:-7.368,109.652|RAKIT:-7.418,109.551|PUNGGELAN:-7.33,109.581|KARANGKOBAR:-7.282,109.723|PAGENTAN:-7.896,112.665|PEJAWARAN:-7.259,109.795|BATUR:-7.21,109.848|KALIBENING:-7.224,109.652|PANDANARUM:-7.248,109.581|AYAH:-7.708,109.414|BUAYAN:-7.644,109.462|PURING:-7.744,109.533|PETANAHAN:-7.743,109.55|KLIRONG:-7.76,109.628|BULUSPESANTREN:-7.758,109.676|AMBAL:-7.776,109.723|MIRIT:-7.793,109.795|BONOROWO:-7.756,109.813|PREMBUN:-7.706,109.789|PADURESO:-7.634,109.789|KUTOWINANGUN:-7.697,109.753|ALIAN:-7.633,109.7|PONCOWARNO:-7.656,109.753|KEBUMEN:-7.676,109.664|PEJAGOAN:-7.629,109.646|SRUWENG:-7.642,109.61|ADIMULYO:-7.681,109.557|KUWARASAN:-7.662,109.509|ROWOKELE:-7.588,109.444|SEMPOR:-7.559,109.509|GOMBONG:-7.605,109.515|KARANGGAYAM:-7.554,109.628|SADANG:-7.508,109.723|KARANGSAMBUNG:-7.571,109.7|GRABAG:-7.373,110.325|NGOMBOL:-7.828,109.938|BAGELEN:-7.823,110.033|KALIGESING:-7.737,110.105|PURWOREJO:-7.714,110.008|BANYU URIP:-7.272,112.72|BAYAN:-8.306,116.396|KUTOARJO:-7.721,109.908|BUTUH:-7.728,109.866|PITURUH:-7.648,109.819|KEMIRI:-7.683,109.883|BRUNO:-7.561,109.914|LOANO:-7.672,110.063|BENER:-7.617,110.05|WADASLINTANG:-7.557,109.783|KEPIL:-7.515,110.009|SAPURAN:-7.455,109.985|KALIBAWANG:-7.69,110.224|KALIWIRO:-7.472,109.831|LEKSONO:-7.378,109.866|SUKOHARJO:-7.376,109.765|SELOMERTO:-7.417,109.914|KALIKAJAR:-7.392,110.009|KERTEK:-7.352,109.985|WATUMALANG:-7.318,109.843|MOJOTENGAH:-7.32,109.908|GARUNG:-6.705,106.037|KEJAJAR:-7.232,109.938|SALAMAN:-7.571,110.128|BOROBUDUR:-7.629,110.2|NGLUWAR:-7.662,110.277|SALAM:-7.625,110.295|SRUMBUNG:-7.581,110.343|DUKUN:-7.539,110.367|MUNTILAN:-7.588,110.275|MUNGKID:-7.554,110.254|CANDIMULYO:-7.503,110.271|MERTOYUDAN:-7.524,110.208|KAJORAN:-7.491,110.081|KALIANGKRIK:-7.449,110.105|BANDONGAN:-7.461,110.182|WINDUSARI:-7.405,110.176|SECANG:-7.402,110.247|TEGALREJO:-7.78,110.356|PAKIS:-7.968,112.703|NGABLAK:-7.395,110.39|SELO:-7.515,110.438|AMPEL:-7.45,110.51|CEPOGO:-7.511,110.533|MUSUK:-7.572,110.533|BOYOLALI:-7.521,110.595|MOJOSONGO:-7.542,110.623|TERAS:-7.54,110.659|SAWIT:-7.569,110.694|BANYUDONO:-7.535,110.687|SAMBI:-7.483,110.676|NGEMPLAK:-7.704,110.456|NOGOSARI:-7.459,110.748|SIMO:-7.421,110.7|KARANGGEDE:-7.362,110.653|KLEGO:-7.358,110.724|ANDONG:-7.383,110.767|KEMUSU:-7.277,110.724|WONOSEGORO:-7.28,110.653|JUWANGI:-7.225,110.736|PRAMBANAN:-7.742,110.516|GANTIWARNO:-7.771,110.563|WEDI:-7.774,110.605|BAYAT:-7.771,110.653|CAWAS:-7.747,110.724|TRUCUK:-7.125,111.818|KALIKOTES:-7.722,110.628|KEBONARUM:-7.699,110.563|JOGONALAN:-7.735,110.557|MANISRENGGO:-7.692,110.504|KARANGNONGKO:-7.659,110.539|NGAWEN:-7.025,111.32|CEPER:-7.683,110.671|PEDAN:-7.692,110.706|KARANGDOWO:-7.715,110.737|JUWIRING:-7.659,110.742|WONOSARI:-7.956,110.597|DELANGGU:-7.621,110.694|POLANHARJO:-7.612,110.659|KARANGANOM:-7.644,110.635|TULUNG:-7.595,110.599|JATINOM:-7.637,110.575|KEMALANG:-7.615,110.486|KLATEN SELATAN:-7.74,110.665|KLATEN TENGAH:-7.717,110.611|KLATEN UTARA:-7.689,110.614|BULU:-7.768,110.825|TAWANGSARI:-7.729,110.79|SUKOHARJO:-7.683,110.815|NGUTER:-7.738,110.915|BENDOSARI:-7.698,110.891|POLOKARTO:-7.636,110.891|MOJOLABAN:-7.597,110.867|GROGOL:-6.161,106.793|BAKI:-8.41,115.189|GATAK:-7.587,110.742|KARTASURA:-7.557,110.742|PRACIMANTORO:-8.047,110.813|PARANGGUPITO:-8.172,110.867|GIRITONTRO:-8.061,110.877|GIRIWOYO:-8.045,110.939|BATUWARNO:-7.979,111.01|TIRTOMOYO:-7.955,111.082|NGUNTORONADI:-7.899,110.963|BATURETNO:-7.962,110.939|EROMOKO:-7.968,110.82|WURYANTORO:-7.885,110.843|MANYARAN:-7.845,110.82|SELOGIRI:-7.78,110.891|WONOGIRI:-7.798,110.939|NGADIROJO:-7.835,111.01|SIDOHARJO:-7.45,112.702|JATIROTO:-7.883,111.108|KISMANTORO:-7.905,111.249|PURWANTORO:-7.954,112.645|BULUKERTO:-7.783,111.225|PUHPELEM:-7.76,111.273|SLOGOHIMO:-7.846,111.201|JATISRONO:-7.829,111.129|JATIPURNO:-7.787,111.153|GIRIMARTO:-7.77,111.082|JATIPURO:-7.748,111.016|JATIYOSO:-7.707,111.106|JUMAPOLO:-7.715,110.963|JUMANTONO:-7.672,110.986|MATESIH:-7.644,111.04|TAWANGMANGU:-7.665,111.129|NGARGOYOSO:-7.605,111.106|KARANGPANDAN:-7.612,111.064|TASIKMADU:-7.573,110.939|JATEN:-7.56,110.885|COLOMADU:-7.535,110.766|GONDANGREJO:-7.496,110.843|KEBAKKRAMAT:-7.512,110.915|MOJOGEDANG:-7.55,110.986|KERJO:-7.541,111.064|JENAWI:-7.543,111.129|KALIJAMBE:-7.435,110.82|PLUPUH:-7.432,110.891|MASARAN:-7.47,110.939|SAMBIREJO:-6.983,110.446|GONDANG:-7.442,111.106|SAMBUNG MACAN:-7.381,111.106|NGRAMPAL:-7.388,111.052|KARANGMALANG:-7.439,111.025|SRAGEN:-7.419,111.022|TANON:-7.39,110.915|GEMOLONG:-7.393,110.843|MIRI:-7.349,110.814|SUMBERLAWANG:-7.331,110.867|MONDOKAN:-7.307,110.939|SUKODONO:-7.395,112.674|GESI:-7.324,111.01|TANGEN:-7.281,111.058|JENAR:-7.32,111.106|KEDUNGJATI:-7.189,110.641|KARANGRAYUNG:-7.152,110.772|PENAWANGAN:-7.133,110.5|TOROH:-7.166,110.915|GEYER:-7.227,110.915|PULOKULON:-7.159,111.058|KRADENAN:-8.471,114.226|GABUS:-6.816,111.034|NGARINGAN:-7.043,111.165|WIROSARI:-7.076,111.086|TAWANGHARJO:-7.04,111.01|GROBOGAN:-7.022,110.963|BRATI:-7.025,110.891|KLAMBU:-7.004,110.802|GODONG:-7.052,110.748|GUBUG:-7.07,110.682|TEGOWANU:-7.037,110.629|TANGGUNGHARJO:-7.099,110.605|JATI:-6.83,110.837|RANDUBLATUNG:-7.193,111.404|KEDUNGTUBAN:-7.148,111.499|CEPU:-7.16,111.565|SAMBONG:-7.095,111.559|JIKEN:-7.024,111.547|BOGOREJO:-6.934,111.535|JEPON:-7.06,111.44|KOTA BLORA:-6.969,111.419|BANJAREJO:-7.043,111.368|TUNJUNGAN:-6.942,111.368|JAPAH:-6.915,111.308|KUNDURAN:-7.069,111.249|TODANAN:-6.934,111.177|BULU:-6.853,111.305|GUNEM:-6.856,111.487|SALE:-6.852,111.559|SARANG:-6.769,111.63|SEDAN:-6.769,111.569|PAMOTAN:-6.762,111.487|SULANG:-6.781,111.368|KALIORI:-6.725,111.273|PANCUR:-6.72,111.481|KRAGAN:-6.672,111.591|SLUKE:-6.654,111.511|LASEM:-6.699,111.445|SUKOLILO:-7.288,112.817|KAYEN:-6.899,110.986|TAMBAKROMO:-6.896,111.058|WINONG:-6.873,111.106|PUCAKWANGI:-6.84,111.165|JAKEN:-6.787,111.225|BATANGAN:-6.717,111.217|JUWANA:-6.71,111.153|JAKENAN:-6.77,111.153|PATI:-6.749,111.038|MARGOREJO:-7.316,112.741|GEMBONG:-6.659,110.939|TLOGOWUNGU:-6.676,111.01|WEDARIJAKSA:-6.693,111.082|TRANGKIL:-6.658,111.076|MARGOYOSO:-6.613,111.058|CLUWAK:-6.538,110.939|TAYU:-6.534,111.034|DUKUHSETI:-6.458,111.032|KALIWUNGU:-6.963,110.254|KOTA KUDUS:-6.807,110.841|UNDAAN:-6.907,110.82|MEJOBO:-6.843,110.891|JEKULO:-6.8,110.939|BAE:-6.783,110.867|GEBOG:-6.719,110.837|DAWE:-6.701,110.891|KEDUNG:-6.661,110.676|PECANGAAN:-6.69,110.7|KALINYAMATAN:-6.735,110.694|WELAHAN:-6.765,110.706|MAYONG:-6.707,110.772|NALUMSARI:-6.721,110.802|BATEALIT:-6.626,110.772|TAHUNAN:-6.623,110.679|JEPARA:-6.58,110.679|MLONGGO:-6.528,110.71|PAKIS AJI:-6.585,110.796|BANGSRI:-6.525,110.772|KEMBANG:-6.487,110.804|KELING:-6.479,110.864|DONOROJO:-8.148,110.939|KARIMUNJAWA:-5.834,110.451|MRANGGEN:-7.043,110.51|KARANGAWEN:-7.102,110.533|GUNTUR:-6.208,106.834|SAYUNG:-6.921,110.51|KARANG TENGAH:-6.206,106.706|BONANG:-6.857,110.581|DEMAK:-6.892,110.638|WONOSALAM:-7.721,112.393|DEMPET:-6.951,110.748|KEBONAGUNG:-8.217,111.177|GAJAH:-6.89,110.748|MIJEN:-7.051,110.319|WEDUNG:-6.8,110.607|GETASAN:-7.392,110.438|TENGARAN:-7.404,110.528|SURUH:-8.111,111.606|PABELAN:-7.559,110.764|TUNTANG:-7.268,110.486|BANYUBIRU:-7.332,110.414|JAMBU:-7.295,110.343|SUMOWONO:-7.215,110.295|BANDUNGAN:-7.212,110.367|BAWEN:-7.227,110.436|BRINGIN:-7.398,111.583|BANCAK:-7.262,110.605|PRINGAPUS:-7.165,110.51|BERGAS:-7.179,110.423|UNGARAN BARAT:-7.136,110.395|UNGARAN TIMUR:-7.142,110.417|PARAKAN:-7.286,110.105|KLEDUNG:-7.329,110.057|BANSARI:-7.283,110.051|BULU:-7.321,110.076|TEMANGGUNG:-7.318,110.178|TLOGOMULYO:-7.351,110.122|TEMBARAK:-7.36,110.158|SELOPAMPANG:-7.381,110.134|KRANGGAN:-7.479,112.437|PRINGSURAT:-7.338,110.295|KALORAN:-7.25,110.25|KANDANGAN:-7.756,112.286|KEDU:-7.258,110.134|NGADIREJO:-7.247,110.057|JUMO:-7.219,110.099|GEMAWANG:-7.181,110.152|CANDIROTO:-7.175,110.066|BEJEN:-7.122,110.105|TRETEP:-7.183,110.003|WONOBOYO:-7.229,109.985|PLANTUNGAN:-7.102,109.979|SUKOREJO:-7.148,109.985|PAGERRUYUNG:-7.023,110.033|PATEAN:-7.081,110.105|SINGOROJO:-7.096,110.224|LIMBANGAN:-7.175,110.295|BOJA:-7.114,110.271|KALIWUNGU SELATAN:-7.014,110.247|BRANGSONG:-6.938,110.23|PEGANDON:-7.003,110.146|NGAMPEL:-7.002,110.17|GEMUH:-7.024,110.122|RINGINARUM:-6.994,110.11|WELERI:-6.971,110.076|ROWOSARI:-6.925,110.063|KANGKUNG:-6.918,110.105|CEPIRING:-6.911,110.158|PATEBON:-6.932,110.174|KOTA KENDAL:-6.932,110.203|WONOTUNGGAL:-7,109.733|BLADO:-7.104,109.831|REBAN:-7.07,109.89|TERSONO:-7.067,109.962|GRINGSING:-6.963,110.009|LIMPUNG:-7.023,109.92|BANYUPUTIH:-6.966,109.938|SUBAH:-6.949,109.866|PECALUNGAN:-7.031,109.866|TULIS:-6.946,109.813|KANDEMAN:-6.933,109.771|BATANG:-6.908,109.733|WARUNG ASEM:-6.934,109.687|KANDANGSERANG:-7.208,109.557|PANINGGARAN:-7.155,109.593|LEBAKBARANG:-7.133,109.65|PETUNGKRIONO:-7.159,109.723|DORO:1.313,127.975|KAJEN:-7.036,109.574|KESESI:-7.026,109.509|SIWALAN:-6.885,109.587|WONOPRINGGO:-6.995,109.634|KEDUNGWUNI:-6.963,109.658|KARANGDADAP:-6.982,109.694|BUARAN:-6.342,106.691|TIRTO:-6.913,109.634|WIRADESA:-6.901,109.613|WONOKERTO:-6.863,109.622|MOGA:-7.119,109.247|WARUNGPRING:-7.077,109.271|PULOSARI:-6.342,105.978|BELIK:-7.165,109.355|WATUKUMPUL:-7.15,109.462|BODEH:-7.028,109.462|BANTARBOLANG:-7.041,109.402|RANDUDONGKAL:-7.054,109.319|PEMALANG:-6.92,109.371|TAMAN:-7.366,112.674|PETARUKAN:-6.885,109.462|AMPELGADING:-8.212,112.882|COMAL:-6.887,109.539|ULUJAMI:-6.241,106.763|MARGASARI:-7.098,109.022|BUMIJAWA:-7.185,109.129|BALAPULANG:-7.053,109.1|PAGERBARANG:-7.024,109.057|LEBAKSIU:-7.042,109.129|PANGKAH:-6.974,109.158|SLAWI:-6.985,109.134|DUKUHWARU:-6.967,109.087|ADIWERNA:-6.939,109.126|DUKUHTURI:-6.905,109.111|TALANG:-0.976,100.684|TARUB:-6.922,109.182|KRAMAT:-6.875,109.2|SURADADI:-6.914,109.247|WARUREJA:-6.891,109.319|SALEM:-0.755,132.311|BANTARKAWUNG:-7.236,108.915|BUMIAYU:-7.253,108.986|PAGUYANGAN:-7.291,109.057|SIRAMPOG:-7.229,109.081|TONJONG:-7.17,109.01|LARANGAN:-6.236,106.729|KETANGGUNGAN:-7.011,108.891|BANJARHARJO:-7.014,108.82|TANJUNG:-2.134,115.355|KERSANA:-6.925,108.861|BULAKAMBA:-6.868,108.928|WANASARI:-6.909,109.261|SONGGOM:-7.041,108.984|BREBES:-6.856,109.039|MAGELANG SELATAN:-7.492,110.221|MAGELANG TENGAH:-7.48,110.218|MAGELANG UTARA:-7.457,110.221|LAWEYAN:-7.554,110.79|SERENGAN:-7.581,110.817|PASAR KLIWON:-7.58,110.834|JEBRES:-7.551,110.849|ARGOMULYO:-7.364,110.504|TINGKIR:-7.333,110.516|SIDOMUKTI:-7.213,110.393|SIDOREJO:-7.306,110.495|GUNUNG PATI:-7.069,110.367|BANYUMANIK:-7.072,110.42|GAJAH MUNGKUR:-7.288,112.756|SEMARANG SELATAN:-6.998,110.429|CANDISARI:-7.018,110.429|TEMBALANG:-7.045,110.462|PEDURUNGAN:-6.999,110.468|GENUK:-6.968,110.48|GAYAMSARI:-6.982,110.447|SEMARANG TIMUR:-6.972,110.435|SEMARANG UTARA:-6.961,110.408|SEMARANG TENGAH:-6.981,110.42|SEMARANG BARAT:-6.982,110.385|TUGU:-6.362,106.85|NGALIYAN:-6.99,110.319|PEKALONGAN BARAT:-6.892,109.658|PEKALONGAN TIMUR:-6.9,109.694|PEKALONGAN SELATAN:-6.921,109.682|PEKALONGAN UTARA:-6.87,109.682|TEGAL SELATAN:-6.886,109.12|TEGAL TIMUR:-6.865,109.143|TEGAL BARAT:-6.856,109.114|MARGADANA:-6.874,109.099|TEMON:-7.889,110.07|WATES:-7.886,110.141|PANJATAN:-7.915,110.15|GALUR:-7.951,110.203|LENDAH:-7.912,110.229|SENTOLO:-7.856,110.219|PENGASIH:-7.83,110.156|KOKAP:-7.828,110.093|GIRIMULYO:-7.75,110.161|NANGGULAN:-7.78,110.206|SAMIGALUH:-7.682,110.17|SRANDAKAN:-7.96,110.241|SANDEN:-7.981,110.267|KRETEK:-7.993,110.302|PUNDONG:-7.972,110.346|BAMBANG LIPURO:-7.945,110.309|PANDAK:-7.924,110.287|BANTUL:-7.891,110.336|JETIS:-7.911,110.362|IMOGIRI:-7.936,110.386|DLINGO:-7.919,110.461|PLERET:-7.878,110.422|PIYUNGAN:-7.845,110.454|BANGUNTAPAN:-7.824,110.416|SEWON:-7.856,110.352|KASIHAN:-7.815,110.334|PAJANGAN:-7.872,110.292|SEDAYU:-7.825,110.26|PANGGANG:-8.037,110.447|PURWOSARI:-8.024,110.377|PALIYAN:-8.03,110.526|SAPTO SARI:-8.076,110.505|TEPUS:-8.12,110.657|TANJUNGSARI:-8.095,110.59|RONGKOP:-8.081,110.748|GIRISUBO:-8.16,110.743|SEMANU:-8.037,110.647|PONJONG:-7.97,110.733|KARANGMOJO:-7.933,110.664|PLAYEN:-7.94,110.536|PATUK:-7.863,110.518|GEDANG SARI:-7.842,110.592|NGLIPAR:-7.869,110.627|NGAWEN:-7.836,110.683|SEMIN:-7.858,110.741|MOYUDAN:-7.777,110.247|MINGGIR:-7.732,110.251|SEYEGAN:-7.731,110.298|GODEAN:-7.767,110.296|GAMPING:-7.784,110.332|MLATI:-7.736,110.33|DEPOK:-7.769,110.405|BERBAH:-7.808,110.45|PRAMBANAN:-7.785,110.496|KALASAN:-7.747,110.468|NGAGLIK:-7.714,110.404|SLEMAN:-7.695,110.345|TEMPEL:-7.664,110.322|TURI:-7.624,110.383|PAKEM:-7.622,110.416|CANGKRINGAN:-7.629,110.448|MANTRIJERON:-7.818,110.36|KRATON:-7.809,110.363|MERGANGSAN:-7.815,110.373|UMBULHARJO:-7.814,110.387|KOTAGEDE:-7.818,110.398|GONDOKUSUMAN:-7.787,110.381|DANUREJAN:-7.793,110.372|PAKUALAMAN:-7.801,110.376|GONDOMANAN:-7.802,110.366|NGAMPILAN:-7.802,110.358|WIROBRAJAN:-7.803,110.35|GEDONG TENGEN:-7.792,110.361|JETIS:-7.782,110.365|PUNUNG:-8.122,111.034|PRINGKUKU:-8.184,111.034|PACITAN:-8.18,111.106|ARJOSARI:-7.931,112.657|NAWANGAN:-7.991,111.177|TEGALOMBO:-8.066,111.296|TULAKAN:-8.182,111.261|SUDIMORO:-8.227,111.368|NGRAYUN:-8.089,111.451|SLAHUNG:-8.035,111.414|BUNGKAL:-8.01,111.461|SAMBIT:-7.993,111.511|SAWOO:-7.989,111.583|SOOKO:-7.502,112.411|PUDAK:-7.859,111.726|PULUNG:-7.876,111.612|MLARAK:-7.915,111.529|SIMAN:-7.891,111.511|BALONG:-7.955,111.459|KAUMAN:-7.978,112.627|JAMBON:-7.919,111.368|BADEGAN:-7.901,111.32|SAMPUNG:-7.56,109.286|PONOROGO:-7.867,111.467|BABADAN:-7.467,110.683|JENANGAN:-7.828,111.535|NGEBEL:-7.801,111.654|PANGGUL:-8.212,111.451|MUNJUNGAN:-8.287,111.595|WATULIMO:-8.27,111.702|KAMPAK:-8.211,111.654|DONGKO:-8.207,111.547|PULE:-8.136,111.535|KARANGAN:0.557,109.375|GANDUSARI:-8,112.31|DURENAN:-8.101,111.797|POGALAN:-8.083,111.75|TRENGGALEK:-8.086,111.713|BENDUNGAN:-7.962,111.702|BESUKI:-7.737,113.689|BANDUNG:-6.917,107.619|PAKEL:-8.155,111.827|CAMPUR DARAT:-8.158,111.869|TANGGUNG GUNUNG:-8.239,111.893|KALIDAWIR:-8.195,111.94|PUCANG LABAN:-8.233,111.988|REJOTANGAN:-8.147,112.06|NGUNUT:-8.11,111.988|SUMBERGEMPOL:-8.097,111.958|BOYOLANGU:-8.12,111.894|TULUNGAGUNG:-8.091,111.964|KEDUNGWARU:-8.047,111.922|NGANTRU:-8.015,111.946|KARANGREJO:-8.019,112.254|PAGER WOJO:-7.989,111.785|SENDANG:-7.935,111.821|BAKUNG:-8.259,112.071|WONOTIRTO:-8.254,112.167|PANGGUNGREJO:-8.248,112.262|SUTOJAYAN:-8.172,112.212|KADEMANGAN:-8.2,112.106|KANIGORO:-8.119,112.203|SELOPURO:-8.138,112.316|KESAMBEN:-8.15,112.37|SELOREJO:-8.105,112.441|DOKO:-8.046,112.393|WLINGI:-8.129,112.321|GARUM:-8.034,112.25|NGLEGOK:-7.995,112.226|SANANKULON:-8.066,112.137|PONGGOK:-8.011,112.119|SRENGAT:-8.086,112.06|WONODADI:-8.048,112.012|UDANAWU:-8.011,112.03|MOJO:-7.273,112.766|SEMEN:-7.829,111.893|NGADILUWIH:-7.906,111.988|KRAS:-7.967,111.988|RINGINREJO:-7.979,112.042|KANDAT:-7.924,112.036|NGANCAR:-7.936,112.179|PLOSOKLATEN:-7.875,112.179|GURAH:-7.812,112.113|PUNCU:-7.851,112.25|KEPUNG:-7.788,112.274|PARE:-7.766,112.198|BADAS:-7.731,112.203|KUNJANG:-7.666,112.185|PLEMAHAN:-7.55,112.332|PURWOASRI:-7.633,112.131|PAPAR:-7.695,112.107|PAGU:-7.766,112.084|KAYEN KIDUL:-7.742,112.101|GAMPENGREJO:-7.756,112.03|NGASEM:-7.805,112.054|BANYAKAN:-7.786,111.94|TAROKAN:3.327,117.579|DONOMULYO:-8.322,112.405|KALIPARE:-8.207,112.441|PAGAK:-8.244,112.513|BANTUR:-8.313,112.548|GEDANGAN:-7.393,112.733|SUMBERMANJING:-8.384,112.739|DAMPIT:-8.208,112.756|TIRTO YUDO:-8.246,112.822|PONCOKUSUMO:-8.055,112.813|WAJAK:-8.128,112.751|TUREN:-8.168,112.693|BULULAWANG:-8.113,112.656|GONDANGLEGI:-8.155,112.632|KEPANJEN:-8.129,112.573|SUMBER PUCUNG:-8.164,112.489|KROMENGAN:-8.127,112.495|NGAJUM:-8.059,112.536|WAGIR:-8.015,112.595|PAKISAJI:-8.075,112.608|TAJINAN:-8.05,112.679|TUMPANG:-8.006,112.751|LAWANG:-7.831,112.697|SINGOSARI:-7.885,112.672|KARANGPLOSO:-7.852,112.584|DAU:-7.957,112.536|PUJON:-7.829,112.453|NGANTANG:-7.897,112.364|KASEMBON:-7.805,112.346|TEMPURSARI:-8.288,112.977|PRONOJIWO:-8.206,112.977|PASIRIAN:-8.183,113.073|TEMPEH:-8.178,113.152|LUMAJANG:-8.133,113.225|SUMBERSUKO:-8.153,113.183|TEKUNG:-8.197,113.251|KUNIR:-8.235,113.221|YOSOWILANGUN:-8.236,113.287|ROWOKANGKUNG:-8.195,113.323|RANDUAGUNG:-8.053,113.323|PADANG:-0.947,100.417|PASRUJAMBE:-8.084,112.977|SENDURO:-8.03,113.037|GUCIALIT:-8.024,113.132|KEDUNGJAJANG:-8.039,113.228|KLAKAH:-7.997,113.25|RANUYOSO:-7.955,113.275|KENCONG:-8.306,113.335|GUMUK MAS:-8.334,113.394|PUGER:-8.478,113.37|WULUHAN:-8.365,113.537|AMBULU:-8.381,113.609|TEMPUREJO:-8.401,113.787|SILO:-8.273,113.882|MAYANG:-8.207,113.799|MUMBULSARI:-8.25,113.751|JENGGAWAH:-8.297,113.656|AJUNG:-8.236,113.656|RAMBIPUJI:-8.219,113.609|BALUNG:-8.264,113.537|UMBULSARI:-8.251,113.418|SEMBORO:-8.184,113.436|JOMBANG:-7.574,112.286|SUMBER BARU:-8.099,113.406|TANGGUL:-8.093,113.501|BANGSALSARI:-8.172,113.549|SUKORAMBI:-8.119,113.662|ARJASA:-8.104,113.734|PAKUSARI:-8.168,113.775|KALISAT:-8.126,113.799|LEDOKOMBO:-8.151,113.882|SUMBERJAMBE:-8.076,113.942|SUKOWONO:-8.063,113.823|JELBUK:-8.069,113.728|KALIWATES:-8.189,113.674|SUMBERSARI:-8.171,113.728|PATRANG:-8.137,113.698|PESANGGARAN:-8.51,113.977|SILIRAGUNG:-8.493,114.084|BANGOREJO:-8.509,114.156|PURWOHARJO:-8.543,114.251|TEGALDLIMO:-8.645,114.405|MUNCAR:-8.448,114.31|CLURING:-8.443,114.227|GAMBIRAN:-8.396,114.145|TEGALSARI:-8.402,114.118|GLENMORE:-8.301,114.073|KALIBARU:-8.267,113.977|GENTENG:-8.367,114.146|SRONO:-8.4,114.261|ROGOJAMPI:-8.336,114.322|KABAT:-8.275,114.322|SINGOJURUH:-8.32,114.251|SEMPU:-8.443,112.697|SONGGON:-8.136,114.12|GLAGAH:-7.906,110.072|LICIN:-8.192,114.263|BANYUWANGI:-8.219,114.369|GIRI:-8.188,114.34|KALIPURO:-8.152,114.346|WONGSOREJO:-8.003,114.31|MAESAN:-8.027,113.751|GRUJUGAN:-7.987,113.751|TAMANAN:-8.023,113.823|JAMBESARI DARUS SHOLAH:-7.981,113.847|PUJER:-7.998,113.894|TLOGOSARI:-8.034,113.966|SUKOSARI:-7.942,113.951|SUMBER WRINGIN:-8.01,114.037|TAPEN:-7.483,111.5|TENGGARANG:-7.941,113.847|BONDOWOSO:-7.919,113.821|CURAH DAMI:-7.925,113.775|BINAKAL:-7.911,113.745|WRINGIN:-7.824,113.775|TEGALAMPEL:-7.882,113.823|TAMAN KROCOK:-7.859,113.87|KLABANG:-7.815,113.918|SEMPOL:-8.052,114.168|BOTOLINGGO:-7.909,114.037|PRAJEKAN:-7.792,113.966|CERMEE:-7.827,114.061|SUMBERMALANG:-7.89,113.68|JATIBANTENG:-7.831,113.656|BANYUGLUGUR:-7.752,113.632|SUBOH:-7.761,113.734|MLANDINGAN:-7.787,113.793|BUNGATAN:-7.74,113.823|KENDIT:-7.736,113.894|PANARUKAN:-7.692,113.966|SITUBONDO:-7.705,113.995|MANGARAN:-7.627,114.037|PANJI:-7.708,114.037|KAPONGAN:-7.705,114.084|JANGKAR:-7.801,114.156|ASEMBAGUS:-7.888,114.215|SUKAPURA:-6.97,107.629|KURIPAN:-8.668,116.165|BANTARAN:-7.874,113.186|LECES:-7.851,113.222|TEGALSIWALAN:-7.869,113.269|BANYUANYAR:-7.54,110.806|TIRIS:-7.948,113.394|KRUCIL:-7.931,113.501|GADING:-7.846,113.434|PAKUNIRAN:-7.816,113.561|KOTAANYAR:-7.756,113.561|PAITON:-7.72,113.49|BESUK:-7.785,113.484|KRAKSAAN:-7.762,113.417|KREJENGAN:-7.804,113.418|PAJARAKAN:-7.772,113.376|MARON:-7.829,113.347|GENDING:-7.793,113.307|DRINGU:-7.789,113.257|WONOMERTO:-7.84,113.156|LUMBANG:-7.835,113.073|TONGAS:-7.763,113.085|SUMBERASIH:-7.764,113.15|TUTUR:-7.9,112.822|PUSPO:-7.836,112.87|TOSARI:-7.896,112.894|PASREPAN:-7.794,112.894|KEJAYAN:-7.736,112.846|WONOREJO:-7.306,112.814|PURWOSARI:-7.763,112.727|PRIGEN:-7.697,112.628|PANDAAN:-7.643,112.703|BANGIL:-7.605,112.775|POHJENTREK:-7.679,112.876|GONDANG WETAN:-7.712,112.918|REJOSO:-7.494,111.881|WINONGAN:-7.751,112.942|GRATI:-7.747,113.013|LEKOK:-7.666,113.013|NGULING:-7.704,113.061|TARIK:-7.451,112.513|PRAMBON:-7.467,112.584|KREMBUNG:-7.52,112.638|PORONG:-7.527,112.697|JABON:-7.559,112.751|TANGGULANGIN:-7.515,112.733|CANDI:-7.484,112.733|TULANGAN:-7.479,112.65|WONOAYU:-7.424,112.632|SIDOARJO:-7.45,112.702|BUDURAN:-7.432,112.757|SEDATI:-7.395,112.799|WARU:-7.351,112.769|KRIAN:-7.401,112.59|BALONG BENDO:-7.414,112.53|JATIREJO:-7.618,112.417|TRAWAS:-7.648,112.608|NGORO:-7.558,112.628|PUNGGING:-7.542,112.57|KUTOREJO:-7.572,112.513|MOJOSARI:-7.505,112.542|BANGSAL:-7.507,112.495|MOJOANYAR:-7.477,112.483|DLANGGU:-7.569,112.471|PURI:-7.535,112.441|TROWULAN:-7.553,112.387|GEDEK:-7.441,112.399|KEMLAGI:-7.397,112.37|DAWAR BLANDONG:-7.334,112.417|BANDAR KEDUNG MULYO:-7.567,112.137|PERAK:-7.575,112.173|GUDO:-7.625,112.197|DIWEK:-7.583,112.233|MOJOWARNO:-7.623,112.322|BARENG:-7.667,112.3|MOJOAGUNG:-7.62,112.37|SUMOBITO:-7.521,112.322|JOGO ROTO:-7.569,112.28|PETERONGAN:-7.519,112.28|MEGALUH:-7.503,112.185|TEMBELANG:-7.485,112.25|KUDU:-7.421,112.298|NGUSIKAN:-7.38,112.322|PLOSO:-7.44,112.232|KABUH:-7.386,112.203|PLANDAAN:-7.43,112.131|SAWAHAN:-7.263,112.721|NGETOS:-7.752,111.821|BERBEK:-7.65,111.867|LOCERET:-7.749,111.869|PACE:-7.685,111.916|TANJUNGANOM:-7.641,111.988|NGRONGGOT:-7.678,112.06|KERTOSONO:-7.61,112.089|PATIANROWO:-7.548,112.101|BARON:-7.617,112.033|SUKOMORO:-7.601,111.964|NGANJUK:-7.604,111.899|BAGOR:-6.597,106.806|WILANGAN:-7.564,111.799|NGLUYU:-7.438,111.988|JATIKALEN:-7.491,112.131|KEBONSARI:-7.749,111.487|GEGER:-7.711,111.529|DOLOPO:-7.787,111.535|DAGANGAN:-7.744,111.583|WUNGU:-7.661,111.606|KARE:-7.718,111.678|GEMARANG:-7.633,111.75|SARADAN:-7.501,111.738|PILANGKENCENG:-7.475,111.654|MEJAYAN:-7.571,111.676|WONOASRI:-7.599,111.63|BALEREJO:-7.539,111.606|MADIUN:-7.631,111.53|JIWAN:-7.611,111.493|PONCOL:-7.719,111.273|PARANG:-7.756,111.344|LEMBEYAN:-7.753,111.416|TAKERAN:-7.683,111.481|KAWEDANAN:-7.697,111.41|MAGETAN:-7.649,111.338|NGARIBOYO:-7.69,111.338|PLAOSAN:-7.681,111.225|PANEKAN:-7.618,111.249|BENDO:-7.649,111.44|MAOSPATI:-7.606,111.453|KARAS:-3.471,132.698|BARAT:-7.551,111.457|KARTOHARJO:-7.618,111.541|SINE:-7.561,111.177|NGRAMBE:-7.5,111.2|JOGOROGO:-7.537,111.249|KENDAL:-7.027,110.188|GENENG:-7.487,111.416|GERIH:-7.517,111.4|KWADUNGAN:-7.508,111.505|PANGKUR:-7.502,111.535|KARANGJATI:-7.458,111.583|PADAS:-2.576,112.542|KASREMAN:-7.401,111.511|NGAWI:-7.419,111.457|PARON:-7.48,111.356|KEDUNGGALAR:-7.431,111.32|PITU:-7.348,111.344|WIDODAREN:-7.415,111.225|MANTINGAN:-6.867,111.417|MARGOMULYO:-7.321,111.487|NGRAHO:-7.236,111.559|TAMBAKREJO:-8.412,112.697|NGAMBON:-7.329,111.726|SEKAR:-7.411,111.726|BUBULAN:-7.325,111.821|TEMAYANG:-7.36,111.916|SUGIHWARAS:-3.478,103.169|KEDUNGADEM:-7.314,112.036|KEPOH BARU:-7.19,112.083|BAURENO:-7.129,112.083|KANOR:-7.1,112|BALEN:-8.41,115.189|SUKOSEWU:-7.258,111.94|KAPAS:-7.2,111.893|BOJONEGORO:-7.152,111.887|DANDER:-7.253,111.833|GAYAM:-7.687,110.852|KALITIDU:-7.145,111.773|MALO:-7.117,111.717|PADANGAN:-7.194,111.606|KASIMAN:-7.132,111.63|KEDEWAN:-7.01,111.63|KENDURUAN:-6.939,111.642|BANGILAN:-6.967,111.702|SENORI:-7.056,111.738|SINGGAHAN:-6.983,111.773|MONTONG:-6.968,111.881|PARENGAN:-7.051,111.833|SOKO:-7.096,111.94|RENGEL:-7.074,111.988|GRABAGAN:-7.013,111.988|PLUMPANG:-7.037,112.119|WIDANG:-7.024,112.179|PALANG:-6.945,112.155|SEMANDING:-6.922,112.055|TUBAN:-6.895,112.042|JENU:-6.793,111.964|MERAKURAK:-6.874,111.964|KEREK:-6.89,111.833|TAMBAKBOYO:-6.819,111.845|JATIROGO:-6.859,111.642|BANCAR:-6.814,111.738|SUKORAME:-7.345,112.11|BLULUK:-7.309,112.131|NGIMBANG:-7.281,112.216|SAMBENG:-7.312,112.262|MANTUP:-7.273,112.355|KEMBANGBAHU:-7.175,112.37|SUGIO:-7.18,112.274|KEDUNGPRING:-7.184,112.203|MODO:-7.228,112.131|BABAT:-7.103,112.203|PUCUK:-7.094,112.292|SUKODADI:-7.136,112.346|LAMONGAN:-7.118,112.415|TIKUNG:-7.188,112.411|SARIREJO:-6.981,110.434|DEKET:-7.11,112.465|KARANGBINANGUN:-7.03,112.465|TURI:-7.074,112.393|KALITENGAH:-7.018,112.399|KARANG GENENG:-7.016,112.346|SEKARAN:-7.043,110.396|MADURAN:-7.003,112.292|LAREN:-6.959,112.274|SOLOKURO:-6.934,112.37|PACIRAN:-6.889,112.364|BRONDONG:-6.883,112.271|WRINGINANOM:-7.37,112.513|DRIYOREJO:-7.345,112.608|KEDAMEAN:-7.328,112.536|MENGANTI:-7.285,112.584|CERME:-7.226,112.56|BENJENG:-7.262,112.501|BALONGPANGGANG:-7.273,112.441|DUDUKSAMPEYAN:-7.147,112.536|KEBOMAS:-7.178,112.623|GRESIK:-7.165,112.652|MANYAR:-7.093,112.596|BUNGAH:-7.024,112.584|SIDAYU:-6.986,112.536|PANCENG:-6.929,112.465|UJUNGPANGKAH:-6.935,112.548|SANGKAPURA:-5.843,112.645|KAMAL:-7.137,112.727|LABANG:-7.123,112.793|KWANYAR:-7.15,112.87|MODUNG:-7.165,112.965|BLEGA:-7.121,113.037|KONANG:-7.04,113.061|GALIS:-7.148,113.55|TRAGAH:-7.092,112.822|SOCAH:-7.077,112.727|BANGKALAN:-7.025,112.752|BURNEH:-7.033,112.799|AROSBAYA:-6.97,112.846|KOKOP:-6.979,113.061|TANJUNGBUMI:-6.9,113.061|SEPULU:-7.56,109.286|KLAMPIS:-6.926,112.884|SRESEH:-7.199,113.085|TORJUN:-7.147,113.21|PANGARENGAN:-7.196,113.162|CAMPLONG:-7.185,113.347|OMBEN:-3.655,128.191|KEDUNGDUNG:-7.07,113.251|JRENGIK:-7.136,113.132|TAMBELANGAN:-7.058,113.197|BANYUATES:-6.944,113.168|ROBATAL:-7.007,113.299|KARANG PENANG:-7.023,113.37|SOKOBANAH:-6.941,113.418|TLANAKAN:-7.2,113.442|PADEMAWU:-7.196,113.513|PAMEKASAN:-7.154,113.474|PROPPO:-7.141,113.418|PALENGAAN:-7.08,113.442|PEGANTENAN:-7.038,113.466|KADUR:-7.074,113.537|PAKONG:-7.033,113.561|BATU MARMAR:-6.967,113.501|PASEAN:-6.912,113.585|PRAGAAN:-7.088,113.656|BLUTO:-7.113,113.803|SARONGGI:-7.098,113.847|GILIGENTENG:-7.2,113.9|TALANGO:-7.089,114.013|KALIANGET:-7.051,113.888|KOTA SUMENEP:-7.01,113.858|BATUAN:-8.583,115.275|LENTENG:-8.659,119.817|GANDING:-7.066,113.704|GULUK GULUK:-7.049,113.632|PASONGSONGAN:-6.949,113.656|AMBUNTEN:-6.893,113.743|RUBARU:-6.963,113.751|DASUK:-6.92,113.823|MANDING:0.937,100.664|BATUPUTIH:-6.914,113.942|GAPURA:-6.992,113.966|BATANG BATANG:-6.908,109.733|DUNGKEK:-6.966,114.084|NONGGUNONG:-7.072,114.322|RAAS:-7.151,114.59|SAPEKEN:-7.165,115.793|KANGAYAN:-6.889,115.462|MASALEMBU:-5.558,114.417|MOJOROTO:-7.804,111.988|KOTA KEDIRI:-7.848,112.018|PESANTREN:-7.846,112.054|KEPANJENKIDUL:-8.077,112.176|SANANWETAN:-8.094,112.185|KEDUNGKANDANG:-8.011,112.656|SUKUN:-7.998,112.614|KLOJEN:-7.977,112.626|BLIMBING:-7.955,112.65|LOWOKWARU:-7.937,112.614|KEDOPOK:-7.792,113.198|WONOASIH:-7.798,113.225|MAYANGAN:-7.747,113.225|KANIGARAN:-7.761,113.21|GADINGREJO:-7.637,112.888|BUGULKIDUL:-7.656,112.924|PRAJURIT KULON:-7.473,112.42|MAGERSARI:-7.467,112.45|MANGU HARJO:-7.617,111.514|KARANG PILANG:-7.338,112.688|JAMBANGAN:-7.321,112.718|GAYUNGAN:-7.331,112.724|WONOCOLO:-7.32,112.742|TENGGILIS MEJOYO:-7.324,112.754|GUNUNG ANYAR:-7.339,112.805|RUNGKUT:-7.319,112.805|MULYOREJO:-7.269,112.793|GUBENG:-7.279,112.754|WONOKROMO:-7.303,112.733|DUKUH PAKIS:-7.297,112.7|WIYUNG:-7.315,112.685|LAKARSANTRI:-7.317,112.662|SAMBIKEREP:-7.277,112.65|TANDES:-7.255,112.674|SUKO MANUNGGAL:-7.264,112.697|KENJERAN:-7.22,112.769|BULAK:-7.237,112.79|SIMOKERTO:-7.239,112.754|SEMAMPIR:-7.211,112.745|PABEAN CANTIAN:-7.215,112.73|BUBUTAN:-7.25,112.73|KREMBANGAN:-7.23,112.724|ASEMROWO:-7.235,112.685|BENOWO:-7.226,112.65|PAKAL:-7.228,112.614|BATU:-7.883,112.533|JUNREJO:-7.911,112.542|BUMIAJI:-7.794,112.536|SUMUR:-6.662,105.578|CIBALIUNG:-6.725,105.759|CIKEUSIK:-6.722,105.853|CIGEULIS:-6.604,105.665|PANIMBANG:-6.532,105.653|SOBANG:-6.562,107.761|MUNJUL:-6.35,106.897|ANGSANA:-6.583,105.85|SINDANGRESMI:-6.545,105.911|PICUNG:-6.502,105.958|SAKETI:-6.398,105.982|CISATA:-6.416,105.917|PATIA:-6.484,105.888|LABUAN:-6.367,105.835|CARITA:-6.258,105.864|JIPUT:-6.319,105.888|CIKEDAL:-6.386,105.882|MENES:-6.384,105.929|MANDALAWANGI:-6.313,105.982|CIMANUK:-6.35,106.035|CIPEUCANG:-6.371,106.023|KADUHEJO:-6.319,106.058|MEKARJAYA:-6.963,107.667|PANDEGLANG:-6.327,106.117|MAJASARI:-6.308,106.082|CADASARI:-6.266,106.105|KARANGTANJUNG:-6.283,106.118|KORONCONG:-6.316,106.14|MALINGPING:-6.769,106.005|WANASALAM:-6.772,105.911|PANGGARANGAN:-6.834,106.229|CIHARA:-6.827,106.123|BAYAH:-6.924,106.311|CILOGRANG:-6.922,106.382|CIJAKU:-6.716,106.041|CIGEMBLONG:-6.743,106.17|CILELES:-6.508,106.088|BOJONGMANIK:-6.577,106.17|CIRINTEN:-6.64,106.146|LEUWIDAMAR:-6.545,106.229|MUNCANG:-6.553,106.288|LEBAKGEDONG:-6.631,106.405|SAJIRA:-6.469,106.335|CIMARGA:-6.462,106.229|CIKULUR:-6.393,106.146|WARUNGGUNUNG:-6.331,106.17|RANGKASBITUNG:-6.366,106.246|KALANGANYAR:-7.434,112.822|CURUGBITUNG:-6.426,106.405|CISOKA:-6.261,106.405|SOLEAR:-6.307,106.423|TIGARAKSA:-6.262,106.484|JAMBE:-1.61,103.613|CIKUPA:-6.217,106.523|PANONGAN:-6.258,106.523|CURUG:-6.236,106.57|KELAPA DUA:-6.24,106.611|LEGOK:-6.297,106.57|PAGEDANGAN:-6.296,106.617|CISAUK:-6.341,106.635|PASARKEMIS:-6.155,106.547|SINDANG JAYA:-6.177,106.499|BALARAJA:-6.204,106.446|JAYANTI:-6.205,106.399|SUKAMULYA:-6.158,106.429|KRESEK:-6.144,106.399|GUNUNG KALER:-6.094,106.376|KRONJO:-6.077,106.429|MEKAR BARU:2.988,99.618|MAUK:-6.053,106.523|SUKADIRI:-6.078,106.564|RAJEG:-6.115,106.499|SEPATAN:-6.118,106.576|SEPATAN TIMUR:-6.117,106.611|PAKUHAJI:-6.05,106.617|TELUKNAGA:-6.049,106.665|KOSAMBI:-6.073,106.694|CINANGKA:-6.365,106.762|PADARINCANG:-6.214,105.958|GUNUNG SARI:-5.179,119.46|PETIR:-6.248,106.193|TUNJUNG TEJA:-6.282,106.235|CIKEUSAL:-6.17,106.052|PAMARAYAN:-6.285,106.311|JAWILAN:-6.28,106.352|KOPO:-6.995,107.536|CIKANDE:-6.181,106.358|KIBIN:-6.157,106.317|KRAGILAN:-6.138,106.294|WARINGINKURUNG:-6.087,106.076|MANCAK:-6.111,105.982|ANYAR:-6.092,105.911|BOJONEGARA:-5.965,106.076|PULO AMPEL:-5.916,106.085|KRAMATWATU:-6.045,106.123|CIRUAS:-6.098,106.246|PONTANG:-6.041,106.264|LEBAK WANGI:-6.14,106.603|CARENANG:-6.08,106.311|BINUANG:-3.116,115.07|TIRTAYASA:-5.999,106.311|TANARA:-6.033,106.384|CIPONDOH:-6.186,106.682|PINANG:-0.288,104.844|TANGERANG:-6.202,106.653|KARAWACI:-6.181,106.62|JATI UWUNG:-6.2,106.576|CIBODAS:-6.75,107.017|PERIUK:-6.158,106.6|BATUCEPER:-6.166,106.682|NEGLASARI:-6.147,106.623|BENDA:-6.13,106.665|CIWANDAN:-6.035,105.964|CITANGKIL:-6.013,106.011|PULOMERAK:-5.921,106.023|CILEGON:-6.003,106.011|WALANTAKA:-6.149,106.223|CIPOCOK JAYA:-6.152,106.152|SERANG:-6.11,106.164|TAKTAKAN:-6.128,106.099|KASEMEN:-6.054,106.182|SERPONG:-6.309,106.682|PAMULANG:-6.348,106.741|CIPUTAT:-6.308,106.718|CIPUTAT TIMUR:-6.309,106.757|PONDOK AREN:-6.285,106.697|SERPONG UTARA:-6.258,106.659|MELAYA:-8.23,114.548|NEGARA:-0.789,113.921|JEMBRANA:-8.361,114.629|MENDOYO:-8.317,114.762|PEKUTATAN:-8.41,114.88|SELEMADEG:-8.492,115.046|SELEMADEG TIMUR:-8.484,115.064|SELEMADEG BARAT:-8.453,114.987|KERAMBITAN:-8.522,115.088|TABANAN:-8.538,115.125|KEDIRI:-7.848,112.018|MARGA:-8.446,115.171|BATURITI:-8.34,115.177|PENEBEL:-8.428,115.145|PUPUAN:-8.36,115.023|KUTA SELATAN:-8.795,115.199|KUTA:-8.724,115.175|KUTA UTARA:-8.643,115.161|MENGWI:-8.543,115.172|ABIANSEMAL:-8.543,115.217|PETANG:-8.337,115.224|SUKAWATI:-8.606,115.281|BLAHBATUH:-8.592,115.319|GIANYAR:-8.537,115.331|TAMPAKSIRING:-8.426,115.313|UBUD:-8.498,115.263|TEGALLALANG:-8.392,115.296|PAYANGAN:-8.395,115.248|NUSAPENIDA:-8.728,115.544|BANJARANGKAN:-8.523,115.373|KLUNGKUNG:-8.539,115.402|DAWAN:-8.544,115.438|SUSUT:-8.425,115.346|BANGLI:-8.454,115.355|TEMBUKU:-8.428,115.42|KINTAMANI:-8.257,115.355|RENDANG:-8.362,115.438|SIDEMEN:-8.483,115.438|MANGGIS:-8.492,115.525|KARANGASEM:-8.446,115.613|ABANG:-8.369,115.627|BEBANDEM:-8.439,115.563|SELAT:-8.438,115.466|GEROKGAK:-8.191,114.79|SERIRIT:-8.205,114.928|BUSUNGBIU:-8.326,114.928|SUKASADA:-8.193,115.118|BULELENG:-8.121,115.078|SAWAN:-8.133,115.173|KUBUTAMBAHAN:-8.089,115.232|TEJAKULA:-8.132,115.34|DENPASAR SELATAN:-8.698,115.248|DENPASAR TIMUR:-8.643,115.242|DENPASAR BARAT:-8.667,115.195|DENPASAR UTARA:-8.625,115.207|SEKOTONG:-8.818,115.97|LEMBAR:-8.753,116.068|GERUNG:-8.696,116.124|LABU API:-8.631,116.118|NARMADA:-8.525,116.266|LINGSAR:-8.53,116.195|BATU LAYAR:-8.498,116.077|PRAYA BARAT:-8.841,116.207|PRAYA BARAT DAYA:-8.773,116.171|PUJUT:1.421,100.643|PRAYA TIMUR:-8.777,116.384|JANAPRIA:-8.715,116.408|KOPANG:-10.177,123.607|PRAYA:-8.722,116.289|PRAYA TENGAH:-8.722,116.313|JONGGAT:-8.669,116.219|PRINGGARATA:-8.607,116.242|BATUKLIANG:-8.622,116.313|BATUKLIANG UTARA:-8.469,116.349|KERUAK:-8.755,116.484|JEROWARU:-8.871,116.478|SAKRA:-8.684,116.473|SAKRA BARAT:-8.73,116.478|SAKRA TIMUR:-8.706,116.526|TERARA:-8.655,116.408|MONTONG GADING:-8.56,116.402|SIKUR:-8.539,116.413|MASBAGIK:-8.607,116.449|PRINGGASELA:-8.531,116.455|SUKAMULIA:-8.643,116.496|SURALAGA:-8.62,116.543|SELONG:-6.236,106.803|PRINGGABAYA:-8.537,116.644|SUELA:-8.492,116.585|AIKMEL:-8.528,116.502|WANASABA:-8.52,116.543|SEMBALUN:-8.379,116.49|SAMBELIA:-8.329,116.632|LUNYUK:-8.944,117.221|ORONG TELU:-8.765,117.197|ALAS:-8.512,117.013|ALAS BARAT:-8.536,116.926|BUER:-8.497,117.056|UTAN:-8.412,117.145|RHEE:-8.483,117.244|BATULANTEH:-8.646,117.197|SUMBAWA:-8.738,118.117|LABUHAN BADAS:-8.343,117.526|UNTER IWES:-8.552,117.385|MOYOHILIR:-8.541,117.526|MOYO UTARA:-8.454,117.491|MOYOHULU:-8.631,117.385|ROPANG:-8.878,117.507|LENANGGUAR:-8.794,117.338|LANTUNG:-8.78,117.526|LAPE:-8.639,117.612|LOPOK:-8.647,117.561|PLAMPANG:-8.797,117.808|LABANGKA:-1.468,116.518|MARONGE:-8.729,117.667|EMPANG:-6.617,106.802|TARANO:-8.727,118.182|HU'U:-8.783,118.382|PAJO:-8.635,118.475|DOMPU:-8.497,118.475|WOJA:-8.511,118.416|KILO:-8.354,118.416|KEMPO:-8.49,118.182|MANGGALEWA:-8.479,118.323|PEKAT:-8.238,117.716|MONTA:-8.729,118.65|PARADO:-8.751,118.562|BOLO:-8.503,118.638|MADA PANGGA:-8.579,118.556|WOHA:-8.611,118.65|BELO:-8.614,118.731|PALIBELO:-8.535,118.731|WAWO:-8.596,118.836|LANGGUDU:-8.793,118.836|LAMBITU:-8.571,118.778|SAPE:-8.579,118.978|LAMBU:-8.698,119.023|WERA:-8.345,120.721|AMBALAWI:-8.364,118.79|DONGGO:-8.43,118.568|SOROMANDI:-8.339,118.603|SANGGAR:-8.378,118.292|SEKONGKANG:-8.991,116.867|JEREWEH:-8.904,116.962|MALUK:-8.904,116.767|TALIWANG:-8.752,116.855|BRANG ENE:-8.827,116.915|BRANG REA:-8.7,117.009|SETELUK:-8.64,116.879|POTO TANO:-8.603,116.832|PEMENANG:-8.418,116.077|GANGGA:-8.356,116.254|KAYANGAN:-8.301,116.313|AMPENAN:-8.571,116.086|SEKARBELA:-8.603,116.083|MATARAM:-8.577,116.1|SELAPARANG:-8.574,116.109|CAKRANEGARA:-6.279,106.764|SANDUBAYA:-8.598,116.154|RASANAE BARAT:-8.455,118.723|MPUNDA:-8.471,118.737|RASANAE TIMUR:-8.488,118.825|RABA:-8.451,118.801|ASAKOTA:-8.415,118.755|LAMBOYA:-9.699,119.348|WANOKAKA:-9.719,119.453|LABOYA BARAT:-9.712,119.209|LOLI:-9.661,124.527|KOTA WAIKABUBAK:-9.636,119.413|TANA RIGHU:-9.485,119.406|LEWA:-9.709,119.891|NGGAHA ORIANGU:-9.712,120.043|LEWA TIDAHU:-9.779,119.766|KATALA HAMU LINGU:-9.823,119.928|TABUNDUNG:-10.014,120.093|PINUPAHAR:-10.105,120.09|PABERIWAI:-10.044,120.401|KARERA:-10.166,120.274|MATAWAI LA PAWU:-10.007,120.274|KAHAUNGU ETI:-9.87,120.459|MAHU:-10.103,120.505|NGADU NGALA:-10.196,120.367|PAHUNGA LODU:-10.124,120.689|WULA WAIJELU:-10.222,120.505|RINDI:-10.005,120.689|UMALULU:-9.896,120.597|PANDAWAI:-9.778,120.39|KAMBATA MAPAMBUHANG:-9.853,120.228|KOTA WAINGAPU:-9.739,120.182|KAMBERA:-1.774,120.755|HAHARU:-9.497,120.02|KANATANG:-9.581,120.182|SEMAU:-10.239,123.377|SEMAU SELATAN:-10.262,123.371|KUPANG BARAT:-10.28,123.55|NEKAMESE:-10.3,123.629|KUPANG TENGAH:-10.143,123.729|TAEBENU:-10.212,123.718|AMARASI:-10.213,123.875|AMARASI BARAT:-10.298,123.729|AMARASI SELATAN:-10.277,123.908|AMARASI TIMUR:-10.19,124.075|KUPANG TIMUR:-10.094,123.819|AMABI OEFETO TIMUR:-10.091,124.098|AMABI OEFETO:-10.161,123.908|SULAMU:-9.989,123.729|FATULEU:-10.024,123.93|FATULEU TENGAH:-9.927,123.852|FATULEU BARAT:-9.874,123.729|TAKARI:-9.86,124.02|AMFOANG SELATAN:-9.739,123.908|AMFOANG BARAT DAYA:-9.715,123.774|AMFOANG TENGAH:-9.609,124.042|AMFOANG UTARA:-9.514,123.863|AMFOANG BARAT LAUT:-9.596,123.819|AMFOANG TIMUR:-9.419,124.042|MOLLO UTARA:-9.704,124.22|FATUMNASI:-9.594,124.175|TOBU:-9.609,124.298|NUNBENA:-9.648,124.12|MOLLO SELATAN:-9.856,124.22|POLEN:-9.667,124.375|MOLLO BARAT:-9.867,124.131|MOLLO TENGAH:-9.783,124.275|KOTA SOE:-9.86,124.277|AMANUBAN BARAT:-9.879,124.353|BATU PUTIH:1.373,118.346|KUATNANA:-9.842,124.431|AMANUBAN SELATAN:-10.081,124.264|NOEBEBA:-9.961,124.309|KUAN FATU:-9.984,124.442|KUALIN:-10.104,124.398|AMANUBAN TENGAH:-9.875,124.475|KOLBANO:-9.973,124.531|OENINO:-9.755,124.442|AMANUBAN TIMUR:-9.71,124.586|FAUTMOLO:-9.788,124.564|FATUKOPA:-9.648,124.63|KIE:-9.859,124.531|KOT'OLIN:-9.955,124.608|AMANATUN SELATAN:-9.838,124.63|BOKING:-9.825,124.741|NUNKOLO:-9.89,124.675|NOEBANA:-9.778,124.652|SANTIAN:-9.773,124.697|AMANATUN UTARA:-9.686,124.708|TOIANAS:-9.706,124.785|KOKBAUN:-9.628,124.758|MIOMAFFO BARAT:-9.541,124.309|MIOMAFFO TENGAH:-9.537,124.431|MUSI:1.08,97.929|MUTIS:-9.567,124.233|MIOMAFFO TIMUR:-9.37,124.486|NOEMUTI:-9.569,124.472|BIKOMI SELATAN:-9.541,124.564|BIKOMI TENGAH:-9.442,124.431|BIKOMI NILULAT:-9.431,124.364|BIKOMI UTARA:-9.369,124.409|NAIBENU:-9.294,124.486|NOEMUTI TIMUR:-9.596,124.586|KOTA KEFAMENANU:-9.444,124.478|INSANA:-9.459,124.708|INSANA UTARA:-9.241,124.542|INSANA BARAT:-9.474,124.575|INSANA TENGAH:-9.29,124.608|INSANA FAFINESU:-9.352,124.564|BIBOKI SELATAN:-9.35,124.664|BIBOKI TANPAH:-9.368,124.763|BIBOKI MOENLEU:-9.229,124.652|BIBOKI UTARA:-9.287,124.807|BIBOKI ANLEU:-9.114,124.752|BIBOKI FEOTLEU:-9.222,124.796|RAI MANUK:-9.35,124.918|TASIFETO BARAT:-9.213,124.884|KAKULUK MESAK:-9.03,124.84|NANAET DUBESI:-9.289,124.962|ATAMBUA:-9.105,124.898|ATAMBUA BARAT:-9.101,124.891|ATAMBUA SELATAN:-9.121,124.882|TASIFETO TIMUR:-9.09,124.973|RAIHAT:-9.038,125.105|LASIOLAT:-9.073,125.05|LAMAKNEN:-9.079,125.16|LAMAKNEN SELATAN:-9.151,125.105|PANTAR:-8.259,124.231|PANTAR BARAT:-8.354,124.07|PANTAR TIMUR:-8.334,124.231|PANTAR BARAT LAUT:-8.366,123.997|PANTAR TENGAH:-8.465,124.131|ALOR BARAT DAYA:-8.376,124.464|MATARU:-8.379,124.619|ALOR SELATAN:-8.329,124.752|ALOR TIMUR:-8.249,124.995|ALOR TIMUR LAUT:-8.213,124.796|PUREMAN:-8.348,124.963|TELUK MUTIARA:-8.245,124.564|KABOLA:-8.152,124.564|ALOR BARAT LAUT:-8.2,124.453|ALOR TENGAH UTARA:-8.239,124.63|PULAU PURA:-8.301,124.347|LEMBUR:-8.174,124.719|NAGAWUTUNG:-8.506,123.326|WULANDONI:-8.535,123.416|ATADEI:-8.451,123.506|ILE APE:-8.274,123.508|ILE APE TIMUR:-8.271,123.517|LEBATUKAN:-8.363,123.64|NUBATUKAN:-8.413,123.405|OMESURI:-8.279,123.729|BUYASARI:-8.233,123.819|WULANGGITANG:-8.528,122.696|TITEHENA:-8.397,122.775|ILEBURA:-8.547,122.797|TANJUNG BUNGA:-8.133,122.876|LEWO LEMA:-8.271,122.91|LARANTUKA:-8.329,122.949|ILE MANDIRI:-8.488,123.439|DEMON PAGONG:-8.389,122.865|SOLOR BARAT:-8.545,122.921|SOLOR SELATAN:-8.486,122.994|SOLOR TIMUR:-8.462,123.09|ADONARA BARAT:-8.311,123.09|WOTAN ULU MADO:-8.372,123.045|ADONARA TENGAH:-8.324,123.158|ADONARA TIMUR:-8.359,123.18|ILE BOLENG:-8.346,123.257|WITIHAMA:-8.268,123.32|KELUBAGOLIT:-8.298,123.225|ADONARA:-8.25,123.15|PAGA:-8.769,122.032|MEGO:-8.674,122.05|TANA WAWO:-8.711,121.97|LELA:-8.716,122.169|BOLA:-5.659,122.629|DORENG:-8.706,122.418|MAPITARA:-8.702,122.469|TALIBURA:-8.527,122.512|WAIGETE:-0.169,131.039|WAIBLAMA:-8.575,122.605|KEWAPANTE:-8.64,122.285|HEWOKLOANG:-8.693,122.316|KANGAE:-8.674,122.254|PALUE:-8.324,121.71|KOTING:-8.673,122.21|NELLE:-8.683,122.214|NITA:-8.675,122.162|MAGEPANDA:-8.553,122.016|ALOK:-8.636,122.203|ALOK BARAT:-8.587,122.163|ALOK TIMUR:-8.473,122.367|NANGAPANDA:-8.757,121.468|MAUKARO:-8.633,121.56|ENDE:-8.676,121.72|ENDE SELATAN:-8.854,121.654|ENDE TIMUR:-8.782,121.668|ENDE TENGAH:-8.834,121.66|ENDE UTARA:-8.814,121.634|NDONA:-8.81,121.638|NDONA TIMUR:-8.815,121.777|WOLOWARU:-8.663,121.942|WOLOJITA:-8.828,121.845|LIO TIMUR:-8.762,121.936|KELIMUTU:-8.734,121.822|NDORI:-8.8,121.936|MAUROLE:-8.531,121.833|KOTABARU:-7.787,110.374|DETUKELI:-8.608,121.833|LEPEMBUSU KELISOKE:-8.681,121.879|DETUSOKO:-8.732,121.742|WEWARIA:-8.621,121.697|AIMERE:-8.822,120.946|JEREBUU:-8.887,120.999|INERIE:-8.911,120.953|BAJAWA:-8.792,120.961|GOLEWA:-8.823,121.068|GOLEWA SELATAN:-8.898,121.091|GOLEWA BARAT:-8.808,121.022|BAJAWA UTARA:-8.726,120.965|SOA:-8.707,121.068|RIUNG:-8.434,121.032|RIUNG BARAT:-8.554,120.942|WOLOMEZE:-8.601,121.056|SATAR MESE:-8.732,120.459|SATAR MESE BARAT:-8.783,120.32|LANGKE REMBONG:-8.615,120.459|RUTENG:-8.614,120.466|WAE RII:-8.568,120.447|LELAK:-8.619,120.309|RAHONG UTARA:-8.514,120.401|CIBAL:-8.467,120.493|CIBAL BARAT:-8.491,120.467|REOK:-8.316,120.447|REOK BARAT:-8.316,120.447|ROTE BARAT DAYA:-10.869,122.933|ROTE BARAT LAUT:-10.782,122.921|LOBALAIN:-10.8,123.101|ROTE TENGAH:-10.716,123.146|ROTE SELATAN:-10.789,123.191|PANTAI BARU:-10.661,123.281|ROTE TIMUR:-10.651,123.371|LANDU LEKO:-10.539,123.326|ROTE BARAT:-10.858,122.865|NDAO NUSE:-10.831,122.738|KOMODO:-8.585,119.441|BOLENG:-8.41,123.346|SANO NGGOANG:-8.698,119.951|MBELILING:-8.608,120.09|LEMBOR:-8.689,120.17|WELAK:-8.6,120.182|LEMBOR SELATAN:-8.768,120.043|KUWUS:-8.562,120.286|NDOSO:-8.504,120.32|MACANG PACAR:-8.462,120.205|KATIKUTANA:-9.591,119.546|KATIKUTANA SELATAN:-9.713,119.627|UMBU RATU NGGAY BARAT:-9.554,119.627|UMBU RATU NGGAY:-9.444,119.743|MAMBORO:-9.443,119.534|KODI BANGEDO:-9.598,119.034|KODI BALAGHAR:-9.654,119.081|KODI:-9.528,118.984|KODI UTARA:-9.486,119.069|WEWEWA SELATAN:-9.597,119.162|WEWEWA BARAT:-9.513,119.209|WEWEWA TIMUR:-9.58,119.348|WEWEWA TENGAH:-9.535,119.29|WEWEWA UTARA:-9.509,119.36|LOURA:-9.421,119.348|KOTA TAMBOLAKA:-9.433,119.209|MAUPONGGO:-8.86,121.194|KEO TENGAH:-8.879,121.297|NANGARORO:-8.746,121.425|BOAWAE:-8.761,121.217|AESESA SELATAN:-8.654,121.228|AESESA:-8.598,121.308|WOLOWAE:-8.603,121.468|BORONG:-5.166,119.461|RANA MESE:-8.39,120.367|KOTA KOMBA:-1.233,122.9|ELAR:-8.425,120.873|ELAR SELATAN:-8.622,120.827|SAMBI RAMPAS:-8.398,120.735|POCO RANAKA:-8.638,120.531|POCO RANAKA TIMUR:-8.534,120.608|LAMBA LEDA:-8.354,120.574|RAIJUA:-10.613,121.571|HAWU MEHARA:-10.573,121.754|SABU LIAE:-10.6,121.868|SABU BARAT:-10.51,121.879|SABU TENGAH:-10.474,121.936|SABU TIMUR:-10.508,121.981|WEWIKU:-9.72,124.829|MALAKA BARAT:-9.653,124.918|WELIMAN:-9.622,124.851|RINHAT:-9.597,124.741|IO KUFEU:-9.5,124.763|SASITA MEAN:-9.492,124.829|MALAKA TENGAH:-9.552,124.884|BOTIN LEOBELE:-9.501,124.918|LAEN MANEN:-9.417,124.829|MALAKA TIMUR:-9.445,124.918|KOBALIMA:-9.504,124.973|KOBALIMA TIMUR:-9.394,125.028|ALAK:-10.192,123.562|MAULAFA:-10.203,123.629|OEBOBO:-10.17,123.623|KOTA RAJA:-2.431,115.241|KELAPA LIMA:-10.15,123.634|KOTA LAMA:0.842,100.658|SELAKAU:1.056,108.969|SELAKAU TIMUR:1.055,109.117|PEMANGKAT:1.175,108.97|SEMPARUK:1.164,109.069|SALATIGA:-7.331,110.508|TEBAS:1.224,109.148|TEKARANG:1.282,109.105|SAMBAS:1.349,109.301|SEBAWI:1.272,109.212|SAJAD:1.38,109.402|JAWAI:1.392,109.081|JAWAI SELATAN:1.237,109.022|TELUK KERAMAT:1.454,109.212|GALING:1.6,109.355|TANGARAN:1.529,109.117|SEJANGKUNG:1.47,109.521|SAJINGAN BESAR:1.69,109.521|PALOH:1.82,109.402|CAPKALA:0.658,109.022|SUNGAI RAYA KEPULAUAN:0.767,108.926|SAMALANTAN:0.791,109.196|MONTERADO:0.757,109.134|LEMBAH BAWANG:0.945,109.259|BENGKAYANG:1.069,109.664|TERIAK:0.799,109.593|SUNGAI BETUNG:0.836,109.402|LEDO:1.032,109.604|SUTI SEMARANG:0.906,109.735|LUMAR:0.962,109.426|SANGGAU LEDO:1.16,109.593|TUJUHBELAS:1.05,109.783|SELUAS:1.177,109.807|JAGOI BABANG:1.395,109.712|SIDING:1.175,109.997|SEBANGKI:0.154,109.63|NGABANG:0.317,109.902|JELIMPO:0.37,110.116|SENGAH TEMILA:0.388,109.712|MANDOR:0.323,109.336|MENJALIN:0.443,109.355|MEMPAWAH HULU:0.675,109.331|SOMPAK:0.513,109.497|MENYUKE:0.602,109.712|BANYUKE HULU:0.656,109.545|KUALA BEHE:0.673,109.902|AIR BESAR:0.923,110.045|SEGEDONG:0.177,109.236|SUNGAI PINYUH:0.265,109.117|ANJONGAN:0.372,109.164|MEMPAWAH HILIR:0.444,109.022|MEMPAWAH TIMUR:0.345,109.01|SUNGAI KUNYIT:0.506,108.986|TOHO:0.41,109.225|SADANIANG:0.586,109.164|TOBA:-1.067,121.467|MELIAU:-0.116,110.29|KAPUAS:-1.812,114.334|MUKOK:0.157,110.784|JANGKANG:0.491,110.808|BONTI:0.407,110.54|PARINDU:0.245,110.474|TAYAN HILIR:0.035,110.093|BALAI:0.417,112.017|TAYAN HULU:0.316,110.283|KEMBAYAN:0.562,110.411|BEDUWAI:0.724,110.307|NOYAN:0.687,110.593|SEKAYAM:0.813,110.474|ENTIKONG:0.957,110.283|KENDAWANGAN:-2.545,110.205|MANIS MATA:-2.482,111.046|MARAU:-2.118,110.665|SINGKUP:-2.322,110.593|AIR UPAS:-2.412,110.76|JELAI HULU:-1.968,110.855|TUMBANG TITI:-1.824,110.665|PEMAHAN:-1.698,110.498|SUNGAI MELAYU RAYAK:-1.881,110.45|MATAN HILIR SELATAN:-2.087,110.236|BENUA KAYONG:-1.774,110.259|MATAN HILIR UTARA:-1.464,110.188|DELTA PAWAN:-1.823,109.962|MUARA PAWAN:-1.757,110.093|NANGA TAYAP:-1.496,110.617|SANDAI:-1.243,110.569|HULU SUNGAI:-0.989,110.903|SUNGAI LAUR:-0.741,110.569|SIMPANG HULU:-0.529,110.283|SIMPANG DUA:-0.742,110.283|SERAWAI:-0.346,112.525|AMBALAU:-0.069,112.906|KAYAN HULU:-0.069,112.334|SEPAUK:-0.244,111.141|TEMPUNAK:-0.244,111.332|SUNGAI TEBELIAN:-0.174,111.523|SINTANG:0.063,111.486|DEDAI:-0.035,111.714|KAYAN HILIR:2.079,115.473|KELAM PERMAI:0.174,111.714|BINJAI HULU:0.191,111.499|KETUNGAU HILIR:0.489,111.571|KETUNGAU TENGAH:0.771,111.571|KETUNGAU HULU:0.917,110.998|SILAT HILIR:0.313,111.809|SILAT HULU:0.173,112.191|HULU GURUNG:0.364,112.262|BUNUT HULU:0.346,112.715|MENTEBAH:0.467,112.93|BIKA:0.782,112.834|KALIS:0.623,113.097|PUTUSSIBAU SELATAN:0.817,112.93|EMBALOH HILIR:0.942,112.572|BUNUT HILIR:0.731,112.572|BOYAN TANJUNG:0.433,112.501|PENGKADAN:0.469,112.358|JONGKONG:0.644,112.358|SELIMBAU:0.606,112.125|SUHAID:0.663,112|SEBERUANG:0.382,112.095|SEMITAU:0.556,111.963|EMPANANG:0.823,111.785|PURING KENCANA:0.966,111.69|BATANG LUPAR:0.908,112.334|EMBALOH HULU:1.333,112.525|PUTUSSIBAU UTARA:1.186,113.097|NANGA MAHAP:-0.456,110.76|NANGA TAMAN:-0.315,110.855|SEKADAU HULU:-0.175,110.951|SEKADAU HILIR:0.035,110.951|BELITANG HILIR:0.245,111.046|BELITANG HULU:0.526,111.141|SOKAN:2.158,117.705|TANAH PINOH:-0.825,111.547|TANAH PINOH BARAT:-0.737,111.332|SAYAN:-0.735,111.714|BELIMBING HULU:-0.471,111.547|NANGA PINOH:-0.332,111.733|PINOH SELATAN:-0.523,111.809|PINOH UTARA:-0.261,111.833|ELLA HILIR:-0.522,112.095|MENUKUNG:-0.396,112.172|PULAU MAYA:-1.167,109.583|KEPULAUAN KARIMATA:-1.604,108.926|SIMPANG HILIR:-1.065,110.236|TELUK BATANG:-0.942,109.878|SEPONTI:-0.834,109.926|TERENTANG:-0.388,109.712|TELOK PA'KEDAI:-0.318,109.236|SUNGAI KAKAP:-0.123,109.259|RASAU JAYA:-0.23,109.307|SUNGAI AMBAWANG:-0.035,109.712|KUALA MANDOR-B:0.106,109.426|PONTIANAK SELATAN:-0.057,109.325|PONTIANAK TENGGARA:-0.026,109.343|PONTIANAK TIMUR:-0.031,109.36|PONTIANAK BARAT:-0.013,109.301|PONTIANAK KOTA:-0.026,109.343|PONTIANAK UTARA:0.009,109.343|SINGKAWANG SELATAN:0.829,108.962|SINGKAWANG TIMUR:0.91,109.069|SINGKAWANG UTARA:0.956,109.01|SINGKAWANG BARAT:0.906,108.98|SINGKAWANG TENGAH:0.915,108.99|KOTAWARINGIN LAMA:-2.475,111.428|ARUT SELATAN:-2.546,111.618|KUMAI:-2.746,111.716|PANGKALAN BANTENG:-2.393,111.905|PANGKALAN LADA:-2.524,111.785|ARUT UTARA:-2.027,111.905|TELUK SAMPIT:-3.057,112.93|PULAU HANAUT:-2.869,113.073|MENTAWA BARU/KETAPANG:-2.572,112.96|SERANAU:-2.593,113.049|MENTAYA HILIR UTARA:-2.672,112.763|KOTA BESI:-2.377,112.858|TELAWANG:-3.331,114.583|BAAMANG:-2.544,112.739|CEMPAGA:-2.228,113.049|CEMPAGA HULU:-2.046,113.097|PARENGGEAN:-2.014,112.763|TUALAN HULU:-1.725,112.763|MENTAYA HULU:-2.054,112.525|BUKIT SANTUAI:-1.731,112.286|ANTANG KALANG:-1.511,112.668|TELAGA ANTANG:-1.774,112.602|KAPUAS KUALA:-3.32,114.31|TAMBAN CATUR:-3.207,114.405|KAPUAS TIMUR:-3.095,114.453|BATAGUH:-3.172,114.31|BASARANG:-2.952,114.31|KAPUAS HILIR:-2.994,114.465|PULAU PETAK:-2.92,114.489|KAPUAS MURUNG:-2.763,114.548|DADAHUP:-2.662,114.589|KAPUAS BARAT:-2.785,114.382|MANTANGAI:-2.028,114.239|TIMPAH:-1.56,114.572|KAPUAS TENGAH:-1.209,114.382|PASAK TALAWANG:-1.071,114.192|KAPUAS HULU:0.834,113.001|MANDAU TALAWANG:-0.653,114.001|JENAMAS:-2.43,114.88|DUSUN HILIR:-2.27,114.762|KARAU KUALA:-1.912,114.762|DUSUN SELATAN:-1.698,114.857|DUSUN UTARA:-1.414,114.952|GUNUNG BINTANG AWAI:-1.481,115.236|MONTALLAT:-1.275,114.857|GUNUNG TIMANG:-8.21,111.228|GUNUNG PUREI:-1.197,115.615|TEWEH TIMUR:-0.991,115.426|TEWEH TENGAH:-1.032,114.619|TEWEH  BARU:-0.994,115.047|TEWEH SELATAN:-1.082,114.928|LAHEI:-0.613,115.189|LAHEI BARAT:-0.735,114.928|JELAI:-2.951,110.879|PANTAI LUNCI:-2.927,111.141|SUKAMARA:-2.627,111.237|BALAI RIAM:-2.332,111.141|PERMATA KECUBUNG:-2.184,111.141|BULIK:-2.107,111.428|SEMATU JAYA:-2.233,111.547|MENTHOBI RAYA:-2.012,111.69|BULIK TIMUR:-1.739,111.618|LAMANDAU:-1.853,111.284|BELANTIKAN RAYA:-1.488,111.38|DELANG:-1.601,111.046|BATANGKAWA:-1.671,111.237|SERUYAN HILIR:-3.089,112.334|SERUYAN HILIR TIMUR:-3.089,112.334|DANAU SEMBULUH:-2.795,112.143|SERUYAN RAYA:-3.012,112.429|HANAU:-2.537,112.095|DANAU SELULUK:-2.369,112.262|SERUYAN TENGAH:-1.879,112.095|SERUYAN HULU:-1.053,111.952|SULING TAMBUN:-1.306,111.618|KATINGAN KUALA:-3.101,113.43|MENDAWAI:-2.621,113.478|KAMIPANG:-2.294,113.43|TASIK PAYAWAN:-2.077,113.43|KATINGAN HILIR:-1.86,113.43|TEWANG SANGALANG GARING:-1.736,113.359|PULAU MALAN:-1.647,113.239|KATINGAN TENGAH:-1.436,112.954|SANAMAN MANTIKEI:-1.222,113.049|PETAK MALAI:-0.764,112.906|MARIKIT:-0.942,112.668|KATINGAN HULU:-1.014,112.381|KAHAYAN KUALA:-3.235,114.001|SEBANGAU KUALA:-2.907,113.858|PANDIH BATU:-3.085,114.096|MALIKU:-3.238,130.145|KAHAYAN HILIR:-2.79,114.192|JABIREN RAYA:-2.425,114.192|KAHAYAN TENGAH:-1.996,114.001|BANAMA TINGANG:-1.71,113.906|MANUHING:-1.431,113.43|MANUHING RAYA:-1.431,113.43|RUNGAN:-1.429,113.62|RUNGAN HULU:-1.094,113.549|RUNGAN BARAT:-1.148,113.43|SEPANG:-8.339,114.918|MIHING RAYA:-1.355,113.906|KURUN:-1.143,113.906|TEWAH:-1.083,113.7|KAHAYAN HULU UTARA:-0.936,113.525|DAMANG BATU:-0.762,113.287|MIRI MANASA:-0.586,113.62|BENUA LIMA:-2.246,115.118|DUSUN TIMUR:-2.102,115.165|PAJU EPAT:-2.14,115.023|AWANG:-8.9,116.4|PATANGKEP TUTUI:-1.956,115.355|DUSUN TENGAH:-6.476,106.827|RAREN BATUAH:-1.711,115.165|PAKU:0.582,110.07|KARUSEN JANANG:-1.961,115.07|PEMATANG KARAU:-1.819,115.023|PERMATA INTAN:-0.721,114.287|SUNGAI BABUAT:-0.531,114.358|MURUNG:-0.737,114.548|LAUNG TUHUP:-0.375,114.762|BARITO TUHUP RAYA:-0.374,114.952|TANAH SIANG:-0.307,114.477|TANAH SIANG SELATAN:-0.668,114.453|SUMBER BARITO:-0.342,114.239|SERIBU RIAM:0.068,113.858|UUT MURUNG:0.136,114.334|PAHANDUT:-2.215,113.922|SABANGAU:-2.614,113.858|JEKAN RAYA:-2.197,113.835|RAKUMPIT:-1.749,113.668|PANYIPATAN:-4.035,114.667|TAKISUNG:-3.868,114.643|KURAU:-3.644,114.643|BUMI MAKMUR:-3.562,114.607|BATI - BATI:-3.566,114.786|TAMBANG ULANG:-3.64,114.786|PELAIHARI:-3.8,114.747|BAJUIN:-3.712,114.88|JORONG:-3.932,114.975|KINTAP:-3.857,115.208|PULAU SEMBILAN:4.154,98.26|PULAU LAUT BARAT:-3.858,116.112|PULAU LAUT TANJUNG SELAYAR:-4.015,116.1|PULAU LAUT SELATAN:-3.818,116.207|PULAU LAUT KEPULAUAN:-3.995,116.148|PULAU LAUT TIMUR:-3.561,116.207|PULAU SEBUKU:-5.874,105.518|PULAU LAUT UTARA:-3.296,116.219|PULAU LAUT TENGAH:-3.619,116.089|KELUMPANG SELATAN:-3.089,116.112|KELUMPANG HILIR:-3.2,116.065|KELUMPANG HULU:-2.893,115.994|HAMPANG:-2.9,115.71|SUNGAI DURIAN:-2.533,115.994|KELUMPANG TENGAH:-2.87,116.207|KELUMPANG BARAT:-2.728,116.112|KELUMPANG UTARA:-2.832,116.301|PAMUKAN SELATAN:-2.47,116.443|SAMPANAHAN:-2.633,116.183|PAMUKAN UTARA:-2.384,116.278|PAMUKAN BARAT:-2.39,115.994|ALUH - ALUH:-3.461,114.548|BERUNTUNG BARU:-3.496,114.643|GAMBUT:-3.43,114.679|KERTAK HANYAR:-3.375,114.655|TATAH MAKMUR:-3.395,114.607|SUNGAI TABUK:-3.309,114.738|MARTAPURA TIMUR:-3.365,114.875|MARTAPURA BARAT:-3.306,114.833|ASTAMBUL:-3.304,114.928|KARANG INTAN:-3.487,114.975|ARANIO:-3.5,115.141|PARAMASAN:-3.053,115.426|PENGARON:-3.297,115.165|SAMBUNG MAKMUR:-3.234,115.13|MATARAMAN:-3.333,114.933|TELAGA BAUNTUNG:-3.085,115.224|TABUNGANEN:-3.427,114.453|TAMBAN:-3.367,114.5|MEKAR SARI:-1.247,116.823|ANJIR PASAR:-3.14,114.512|ANJIR MUARA:-3.194,114.536|ALALAK:-3.239,114.596|MANDASTANA:-3.209,114.679|JEJANGKIT:-3.17,114.774|BELAWANG:-2.817,114.65|WANARAYA:-3.018,114.596|BARAMBAI:-2.989,114.655|RANTAU BADAUH:-3.126,114.691|CERBON:-6.732,108.552|BAKUMPAI:-2.868,114.786|MARABAHAN:-2.992,114.759|TABUKAN:-2.834,114.643|HATUNGUN:-3.151,115.165|TAPIN SELATAN:-3.043,115.07|SALAM BABARIS:-3.068,115.177|TAPIN TENGAH:-3.009,114.975|BUNGUR:-6.172,106.849|PIANI:-2.925,115.45|LOKPAIKAT:-2.93,115.213|TAPIN UTARA:-2.923,115.153|BAKARANGAN:-2.869,115.106|CANDI LARAS SELATAN:-2.863,114.975|CANDI LARAS UTARA:-2.792,114.88|PADANG BATUNG:-2.855,115.307|LOKSADO:-2.815,115.497|TELAGA LANGSAT:-2.754,115.367|ANGKINANG:-2.72,115.272|SIMPUR:-2.776,115.201|KALUMPANG:-5.667,119.648|DAHA SELATAN:-2.678,115.118|DAHA BARAT:-2.68,115.023|DAHA UTARA:-2.572,115.023|HARUYAN:-2.699,115.39|BATU BENAWA:-2.626,115.438|HANTAKAN:-2.67,115.497|BATANG ALAI SELATAN:-2.563,115.45|BATANG ALAI TIMUR:-2.613,115.615|BARABAI:-2.586,115.382|LABUAN AMAS SELATAN:-2.665,115.296|LABUAN AMAS UTARA:-2.603,115.26|PANDAWAN:-2.557,115.319|BATANG ALAI UTARA:-2.501,115.414|LIMPASU:-2.49,115.497|DANAU PANGGANG:-2.463,115.07|PAMINGGIR:-2.528,114.863|BABIRIK:-2.55,115.133|SUNGAI PANDAN:-2.505,115.201|SUNGAI TABUKAN:-2.451,115.177|AMUNTAI SELATAN:-2.353,115.165|AMUNTAI TENGAH:-2.495,115.26|BANJANG:-2.457,115.355|AMUNTAI UTARA:-2.417,115.239|HAUR GADING:-2.361,115.224|BANUA LAWAS:-2.28,115.213|PUGAAN:-2.322,115.343|KELUA:-2.274,115.299|MUARA HARUS:-2.264,115.349|TANTA:-2.241,115.402|MURUNG PUDAK:-2.168,115.45|HARUAI:-2.083,115.533|BINTANG ARA:-1.849,115.402|UPAU:-2.058,115.639|MUARA UYA:-1.618,115.521|JARO:-1.845,115.687|KUSAN HILIR:-3.571,115.876|SUNGAI LOBAN:-3.649,115.734|SATUI:-3.64,115.426|KUSAN HULU:-3.413,115.615|BATU LICIN:-3.458,115.97|KARANG BINTANG:-3.387,115.876|MANTEWE:-3.194,115.615|LAMPIHONG:-2.348,115.402|BATU MANDI:-2.419,115.45|AWAYAN:-2.417,115.544|PARINGIN:-2.283,115.509|PARINGIN SELATAN:-2.355,115.509|JUAI:-2.273,115.592|HALONG:-2.253,115.71|BANJARMASIN SELATAN:-3.354,114.601|BANJARMASIN TIMUR:-3.325,114.625|BANJARMASIN BARAT:-3.327,114.566|BANJARMASIN TENGAH:-3.32,114.587|BANJARMASIN UTARA:-3.289,114.59|LANDASAN ULIN:-3.464,114.797|LIANG ANGGANG:-3.447,114.726|BANJAR BARU UTARA:-3.443,114.892|BANJAR BARU SELATAN:-3.443,114.848|BATU SOPANG:-1.824,115.899|MUARA SAMU:-2.107,115.899|BATU ENGAU:-2.138,116.136|PASIR BELENGKONG:-1.962,116.089|TANAH GROGOT:-1.87,116.301|KUARO:-1.751,116.089|LONG IKIS:-1.539,116.183|MUARA KOMAM:-1.474,115.805|LONG KALI:-1.261,116.183|BONGAN:-0.88,116.325|JEMPANG:-0.574,116.089|PENYINGGAHAN:-0.387,116.254|MUARA PAHU:-0.327,116.061|SILUQ NGURAI:-0.78,115.899|MUARA LAWA:-0.525,115.781|BENTIAN BESAR:-0.919,115.71|DAMAI:-0.645,115.521|NYUATAN:-0.339,115.379|BARONG TONGKOK:-0.233,115.686|LINGGANG BIGUNG:-0.084,115.45|MELAK:-0.245,115.822|SEKOLAQ DARAT:-0.278,115.746|MANOR BULATN:0.034,115.899|LONG IRAM:0.101,115.615|TERING:-0.05,115.687|SEMBOJA:-0.977,117.032|MUARA JAWA:-0.823,117.197|SANGA-SANGA:-0.687,117.244|LOA JANAN:-0.705,117.032|LOA KULU:-0.523,117.016|MUARA MUNTAI:-0.64,116.467|MUARA WIS:-0.044,116.038|KOTABANGUN:-0.301,116.655|TENGGARONG:-0.433,116.99|SEBULU:-0.273,116.993|TENGGARONG SEBERANG:-0.283,117.103|ANGGANA:-0.635,117.409|MUARA BADAK:-0.366,117.409|MARANG KAYU:-0.066,117.268|MUARA KAMAN:0.067,116.891|KENOHAN:0.033,116.278|KEMBANG JANGGUT:0.235,116.183|TABANG:0.576,116.018|MUARA ANCALONG:0.47,116.514|BUSANG:1.018,116.325|LONG MESANGAT:0.588,116.726|MUARA WAHAU:1.43,116.514|TELEN:0.912,116.655|KONGBENG:1.251,117.032|MUARA BENGKAL:0.368,116.75|SANGATTA UTARA:0.55,117.573|BENGALON:0.871,117.456|SANGATTA SELATAN:0.434,117.315|RANTAU PULUNG:0.704,117.221|SANGKULIRANG:1.036,118.065|KALIORANG:0.885,117.901|SANDARAN:0.997,118.58|KAUBUN:1.038,117.784|KELAY:1.846,116.702|TALISAYAN:1.512,118.159|TABALAR:1.724,117.784|BIDUK BIDUK:1.182,118.696|PULAU DERAWAN:2.28,117.878|MARATUA:2.202,118.594|SAMBALIUNG:1.938,117.503|TANJUNG REDEB:2.139,117.491|GUNUNG TABUR:2.254,117.456|SEGAH:2.265,116.891|TELUK BAYUR:2.029,117.291|BIATAN:1.446,117.972|BABULU:-1.483,116.443|PENAJAM:-1.188,116.561|SEPAKU:-0.911,116.75|LAHAM:0.364,115.429|LONG HUBUNG:0.236,115.521|LONG BAGUN:0.751,115.189|LONG PAHANGAI:0.962,114.714|LONG APARI:1.035,114.239|BALIKPAPAN SELATAN:-1.244,116.903|BALIKPAPAN KOTA:-1.238,116.853|BALIKPAPAN TIMUR:-1.166,116.962|BALIKPAPAN UTARA:-1.238,116.853|BALIKPAPAN TENGAH:-1.27,116.836|BALIKPAPAN BARAT:-1.099,116.82|PALARAN:-0.619,117.197|SAMARINDA ILIR:-0.499,117.165|SAMARINDA KOTA:-0.495,117.144|SAMBUTAN:-0.518,117.197|SAMARINDA SEBERANG:-0.521,117.129|LOA JANAN ILIR:-0.556,117.109|SUNGAI KUNJANG:-0.51,117.091|SAMARINDA ULU:-0.46,117.115|SAMARINDA UTARA:-0.384,117.197|BONTANG SELATAN:0.05,117.432|BONTANG UTARA:0.178,117.485|BONTANG BARAT:0.145,117.45|SUNGAI BOH:1.444,115.379|KAYAN SELATAN:1.59,114.999|PUJUNGAN:-8.324,115.041|BAHAU HULU:3.153,115.758|SUNGAI TUBU:3.143,116.136|MALINAU SELATAN HULU:2.849,116.325|MALINAU SELATAN:3.168,116.561|MALINAU SELATAN HILIR:3.37,116.49|MENTARANG:3.537,116.372|MENTARANG HULU:3.728,116.136|MALINAU UTARA:3.681,116.467|MALINAU BARAT:3.383,116.655|MALINAU KOTA:3.584,116.648|PESO:2.558,116.514|PESO HILIR:2.798,116.938|TANJUNG PALAS BARAT:2.651,117.126|TANJUNG PALAS:2.843,117.291|TANJUNG SELOR:2.768,117.432|TANJUNG PALAS TIMUR:2.674,117.643|TANJUNG PALAS TENGAH:2.87,117.62|TANJUNG PALAS UTARA:3.006,117.221|SEKATAK:3.262,117.079|BUNYU:3.519,117.819|SESAYAP:3.523,116.844|BETAYAU:3.465,116.962|SESAYAP HILIR:3.514,117.126|TANA LIA:3.717,117.597|KRAYAN SELATAN:3.593,115.758|KRAYAN:4.072,115.805|LUMBIS OGONG:4.158,116.514|LUMBIS:4.312,116.218|SEMBAKUNG:3.802,117.221|TULIN ONSOI:4.254,116.938|SEI MENGGARIS:4.187,117.244|NUNUKAN:4.081,116.608|NUNUKAN SELATAN:4.059,117.714|SEBATIK BARAT:4.121,117.773|SEBATIK:4.062,117.89|SEBATIK TIMUR:4.117,117.89|SEBATIK TENGAH:4.138,117.819|SEBATIK UTARA:-8.672,115.211|TARAKAN TIMUR:3.291,117.632|TARAKAN TENGAH:3.381,117.632|TARAKAN BARAT:3.329,117.561|TARAKAN UTARA:3.41,117.573|DUMOGA BARAT:0.531,123.841|DUMOGA UTARA:0.609,123.953|DUMOGA TIMUR:0.6,124.098|DUMOGA:0.66,124.025|LOLAYAN:0.654,124.287|PASSI BARAT:0.796,124.264|PASSI TIMUR:0.803,124.387|BILALANG:0.835,124.32|POIGAR:0.922,124.309|BOLAANG:-0.961,122.102|BOLAANG TIMUR:0.923,124.175|LOLAK:0.881,124.014|SANGTOMBOLANG:0.784,123.841|LANGOWAN TIMUR:1.133,124.868|LANGOWAN BARAT:1.13,124.807|LANGOWAN SELATAN:1.081,124.896|LANGOWAN UTARA:1.173,124.835|TOMPASO:1.181,124.813|TOMPASO BARAT:1.142,124.769|KAWANGKOAN:1.205,124.783|KAWANGKOAN BARAT:1.178,124.763|KAWANGKOAN UTARA:1.226,124.763|SONDER:1.263,124.774|TOMBARIRI:1.363,124.664|TOMBARIRI TIMUR:1.353,124.741|PINELENG:1.454,124.954|TOMBULU:1.423,124.884|MANDOLANG:1.385,124.763|TONDANO BARAT:1.299,124.89|TONDANO SELATAN:1.272,124.873|REMBOKEN:1.24,124.851|KAKAS:1.179,124.878|KAKAS BARAT:-9.566,119.447|LEMBEAN TIMUR:1.163,125|ERIS:1.221,124.914|KOMBI:1.262,125.017|TONDANO TIMUR:1.287,124.94|TONDANO UTARA:1.302,124.913|MANGANITU SELATAN:3.402,125.62|TATOARENG:3.246,125.462|TAMAKO:3.457,125.513|TABUKAN SELATAN:3.502,125.62|TABUKAN SELATAN TENGAH:3.463,125.648|TABUKAN SELATAN TENGGARA:3.447,125.637|TABUKAN TENGAH:3.555,125.555|MANGANITU:3.523,125.511|TAHUNA:3.611,125.486|TAHUNA TIMUR:3.595,125.506|TAHUNA BARAT:3.644,125.445|TABUKAN UTARA:3.709,125.489|NUSA TABUKAN:3.778,125.59|KEPULAUAN MARORE:4.736,125.485|KENDAHE:3.712,125.423|KABARUAN:3.832,126.771|DAMAU:3.796,126.814|LIRUNG:3.957,126.68|SALIBABU:3.903,126.685|KALONGAN:-7.132,110.444|MORONGE:3.914,126.712|MELONGUANE:4.043,126.717|MELONGUANE TIMUR:4.049,126.771|BEO:4.229,126.798|BEO UTARA:4.309,126.76|BEO SELATAN:4.183,126.771|RAINIS:4.278,126.857|TAMPA NA'MMA:4.338,126.847|PULUTAN:4.148,126.798|ESSANG:4.453,126.75|ESSANG SELATAN:4.404,126.728|GEMEH:4.5,126.816|NANUSA:4.768,127.137|MIANGAS:5.556,126.585|MODOINDING:0.802,124.453|TOMPASO BARU:0.92,124.531|MAESAAN:0.889,124.442|RANOYAPO:0.983,124.531|MOTOLING:1.027,124.474|KUMELEMBUAI:1.087,124.475|MOTOLING BARAT:1.016,124.398|MOTOLING TIMUR:1.046,124.531|SINONSAYANG:1.088,124.364|TENGA:1.166,124.434|AMURANG:1.132,124.608|AMURANG BARAT:1.141,124.531|AMURANG TIMUR:1.171,124.664|TARERAN:1.227,124.697|SULTA:1.274,124.697|TUMPAAN:1.239,124.618|TATAPAAN:1.332,124.575|KEMA:1.348,125.05|KAUDITAN:1.389,125.017|AIRMADIDI:1.427,124.972|KALAWAT:1.462,124.94|DIMEMBE:1.516,125.017|TALAWAAN:1.574,124.94|WORI:1.623,124.896|LIKUPANG BARAT:1.717,125.006|LIKUPANG TIMUR:1.643,125.105|LIKUPANG SELATAN:1.62,125.028|SANGKUB:0.857,123.651|BINTAUNA:0.866,123.49|BOLANG ITANG TIMUR:0.772,123.461|BOLANG ITANG BARAT:0.773,123.326|KAIDIPANG:0.893,123.248|PINOGALUMAN:0.878,123.203|BIARO:2.102,125.369|TAGULANDANG SELATAN:2.349,125.451|TAGULANDANG:2.346,125.412|TAGULANDANG UTARA:2.354,125.423|SIAU BARAT SELATAN:2.662,125.385|SIAU TIMUR SELATAN:2.652,125.418|SIAU BARAT:2.711,125.374|SIAU TENGAH:2.738,125.382|SIAU TIMUR:2.763,125.423|SIAU BARAT UTARA:2.784,125.396|RATATOTOK:0.918,124.708|PUSOMAEN:1.002,124.873|BELANG:0.972,124.785|RATAHAN:1.053,124.802|PASAN:1.067,124.741|RATAHAN TIMUR:1.066,124.851|TOMBATU:0.973,124.675|TOMBATU TIMUR:1.016,124.713|TOMBATU UTARA:1.068,124.697|TOULUAAN:1.069,124.63|TOULUAAN SELATAN:1.022,124.586|SILIAN RAYA:1.08,124.658|POSIGADAN:0.406,123.662|BOLANG UKI:0.405,123.841|HELUMO:0.711,122.633|PINOLOSIAN:0.467,124.109|PINOLOSIAN TENGAH:0.481,124.264|PINOLOSIAN TIMUR:0.528,124.375|NUANGAN:0.598,124.541|TUTUYAN:0.761,124.575|KOTABUNAN:0.855,124.619|MODAYAG:0.7,124.442|MODAYAG BARAT:0.665,124.359|MALALAYANG:1.444,124.813|SARIO:1.469,124.833|WANEA:1.46,124.846|WENANG:1.486,124.843|TIKALA:1.467,124.89|PAAL DUA:1.483,124.879|MAPANGET:1.527,124.896|TUMINTING:1.514,124.849|BUNAKEN KEPULAUAN:1.631,124.702|MADIDIR:1.462,125.154|MATUARI:1.407,125.099|GIRIAN:1.439,125.121|LEMBEH SELATAN:1.413,125.22|LEMBEH UTARA:1.476,125.264|AERTEMBAGA:1.467,125.212|MAESA:1.47,125.176|RANOWULU:1.515,125.105|TOMOHON SELATAN:1.288,124.829|TOMOHON TENGAH:1.316,124.857|TOMOHON TIMUR:1.331,124.868|TOMOHON BARAT:1.321,124.763|TOMOHON UTARA:1.352,124.829|KOTAMOBAGU SELATAN:0.713,124.292|KOTAMOBAGU TIMUR:0.736,124.337|KOTAMOBAGU BARAT:0.736,124.292|KOTAMOBAGU UTARA:0.76,124.325|TOTIKUM:-1.349,123.506|TOTIKUM SELATAN:-1.423,123.45|TINANGKUNG:-1.352,123.326|TINANGKUNG SELATAN:-1.449,123.371|TINANGKUNG UTARA:-1.285,123.461|LIANG:-3.51,128.321|PELING TENGAH:-1.476,123.203|BULAGI:-1.308,123.034|BULAGI SELATAN:-1.439,122.944|BULAGI UTARA:-1.226,123.056|BUKO:-1.359,122.831|BUKO SELATAN:-1.458,122.831|TOILI:-1.336,122.197|TOILI BARAT:-1.518,122.129|MOILONG:-1.391,122.367|BATUI:-1.185,122.492|BATUI SELATAN:-1.269,122.333|BUNTA:-0.828,122.167|NUHON:-1.06,122.038|SIMPANG RAYA:-1.26,104.1|KINTOM:-1.146,122.656|LUWUK:-0.939,122.793|LUWUK TIMUR:-0.84,123.011|LUWUK UTARA:-0.873,122.876|LUWUK SELATAN:-0.971,122.741|NAMBO:-5.184,122.911|PAGIMANA:-0.859,122.673|BUALEMO:-0.663,123.124|LOBU:-0.812,122.515|LAMALA:-0.901,123.236|MASAMA:-0.806,123.191|BALANTAK:-0.868,123.371|BALANTAK SELATAN:-0.933,123.326|BALANTAK UTARA:-0.764,123.382|MENUI KEPULAUAN:-3.222,122.413|BUNGKU SELATAN:-3.153,122.413|BAHODOPI:-2.868,121.947|BUNGKU PESISIR:-2.979,122.243|BUNGKU TENGAH:-2.598,121.856|BUNGKU TIMUR:-2.732,121.947|BUNGKU BARAT:-2.396,121.765|BUMI RAYA:-7.57,110.801|WITA PONDA:-2.333,121.583|PAMONA SELATAN:-2.133,120.689|PAMONA BARAT:-1.933,120.505|PAMONA TENGGARA:-2.029,120.781|LORE SELATAN:-1.954,120.297|LORE BARAT:-1.837,120.182|PAMONA PUSALEMBA:-1.699,120.603|PAMONA TIMUR:-1.877,120.758|PAMONA UTARA:-1.677,120.666|LORE UTARA:-1.28,120.297|LORE TENGAH:-1.683,120.297|LORE TIMUR:-1.462,120.413|LORE PEORE:-1.547,120.39|POSO PESISIR:-1.393,120.551|POSO PESISIR SELATAN:-1.544,120.574|POSO PESISIR UTARA:-1.211,120.482|LAGE:-1.539,120.85|POSO KOTA:-1.395,120.754|POSO KOTA UTARA:-1.369,120.798|POSO KOTA SELATAN:-1.395,120.754|RIO PAKAVA:-1.288,119.65|PINEMBANI:-1.103,119.673|BANAWA:-0.728,119.754|BANAWA SELATAN:-0.887,119.65|BANAWA TENGAH:-0.762,119.731|TANANTOVEA:-0.735,119.951|SINDUE:-0.563,119.847|SINDUE TOMBUSABORA:-0.472,119.858|SINDUE TOBATA:-0.342,119.812|SIRENJA:-0.244,119.858|BALAESANG:-0.049,119.905|BALAESANG TANJUNG:-0.114,119.719|DAMPELAS:1.275,121.094|SOJOL:0.423,120.02|SOJOL UTARA:0.701,120.136|DAMPAL SELATAN:0.733,120.274|DAMPAL UTARA:0.963,120.32|DONDO:-8.495,121.927|OGODEIDE:0.894,120.689|BASIDONDO:0.746,120.758|BAOLAN:1.024,120.873|LAMPASIO:0.85,120.85|TOLITOLI UTARA:1.253,121.056|DAKO PAMEAN:1.222,120.919|LAKEA:1.185,121.194|BIAU:-8.017,114.2|KARAMAT:-6.906,106.923|MOMUNU:1.117,121.377|TILOAN:0.971,121.171|BOKAT:1.05,121.514|BUKAL:0.936,121.4|BUNOBOGU:0.951,121.605|GADUNG:1.015,121.742|PALELEH:0.979,122.016|PALELEH BARAT:1.046,121.833|SAUSU:-1.01,120.481|TORUE:-1.03,120.274|BALINGGI:-1.062,120.367|PARIGI SELATAN:-0.932,120.182|PARIGI BARAT:-0.841,120.101|PARIGI UTARA:-0.71,120.055|PARIGI TENGAH:-0.775,120.078|AMPIBABO:-0.472,119.997|KASIMBAR:-0.147,120.019|TORIBULU:-0.306,120.005|SINIU:-0.578,120.009|TINOMBO:0.406,120.295|TINOMBO SELATAN:0.032,120.02|SIDOAN:0.276,120.203|TOMINI:-1.629,128.327|MEPANGA:0.566,120.689|PALASA:0.552,120.39|MOUTONG:0.547,121.217|BOLANO LAMBUNU:0.613,120.942|TAOPA:0.467,121.056|BOLANO:0.443,120.953|ONGKA MALINO:0.565,120.827|TOJO BARAT:-1.536,121.034|TOJO:-1.333,121.308|ULUBONGKA:-1.197,121.583|AMPANA TETE:-1.129,121.765|AMPANA KOTA:-0.868,121.586|UNA - UNA:-0.175,121.605|BATUDAKA:-0.463,121.833|TOGEAN:-0.39,121.959|WALEA KEPULAUAN:-0.341,122.095|WALEA BESAR:-0.261,122.322|TALATAKO:-0.361,122.104|PIPIKORO:-1.825,119.928|KULAWI SELATAN:-1.67,120.09|KULAWI:-1.521,119.882|LINDU:-1.349,120.113|NOKILALAKI:-1.207,120.101|PALOLO:-1.132,120.136|GUMBASA:-1.267,119.997|DOLO SELATAN:-1.286,119.835|DOLO BARAT:-1.068,119.858|TANAMBULAVA:-1.134,119.951|DOLO:-0.991,119.878|SIGI BIROMARU:-0.954,119.911|MARAWOLA:-0.972,119.853|MARAWOLA BARAT:-0.969,119.719|KINOVARO:-0.994,119.8|BANGKURUNG:-1.855,123.09|LABOBO:-1.752,123.315|BANGGAI UTARA:-1.535,123.539|BANGGAI:-0.956,122.628|BANGGAI TENGAH:-1.65,123.517|BANGGAI SELATAN:-1.698,123.562|BOKAN KEPULAUAN:-1.954,123.808|MORI ATAS:-2.075,121.034|LEMBO:-5.122,119.426|LEMBO RAYA:-5.122,119.426|PETASIA TIMUR:-2.083,121.423|PETASIA:-2.107,121.503|PETASIA BARAT:-2.003,121.217|MORI UTARA:-1.805,121.034|SOYO JAYA:-1.667,121.217|BUNGKU UTARA:-1.628,121.537|MAMOSALATO:-1.489,121.902|PALU BARAT:-0.895,119.855|TATANGA:-0.922,119.853|ULUJADI:-0.868,119.951|PALU SELATAN:-0.922,119.899|PALU TIMUR:-0.891,119.873|MANTIKULORE:-0.868,119.951|PALU UTARA:-0.793,119.893|TAWAELI:-0.711,119.893|PASIMARANNU:-7.315,120.999|PASILAMBENA:-7.368,121.777|PASIMASSUNGGU:-7.076,120.654|TAKABONERATE:-6.929,120.847|PASIMASSUNGGU TIMUR:-7.088,120.746|BONTOSIKUYU:-6.287,120.505|BONTOHARU:-6.138,120.505|BENTENG:-6.123,120.466|BONTOMANAI:-5.237,119.514|BONTOMATENE:-5.915,120.505|GANTARANG:-5.529,120.136|UJUNG BULU:-5.549,120.199|UJUNG LOE:-5.484,120.274|BONTO BAHARI:-5.55,120.413|BONTOTIRO:-5.469,120.378|HERO LANGE-LANGE:-5.406,120.367|KAJANG:-5.329,120.311|BULUKUMPA:-5.433,120.205|RILAU ALE:-5.416,120.182|KINDANG:-5.395,120.055|BISSAPPU:-5.538,119.899|ULUERE:-5.438,119.939|SINOA:-5.494,119.939|BANTAENG:-5.517,120.02|EREMERASA:-5.486,119.991|TOMPOBULU:-5.405,119.87|PA'JUKUKANG:-5.561,120.055|GANTARANGKEKE:-5.524,120.055|BANGKALA:-5.568,119.592|BANGKALA BARAT:-5.485,119.58|TAMALATEA:-5.637,119.685|BONTORAMBA:-5.563,119.685|BINAMU:-5.672,119.731|TURATEA:-5.596,119.754|BATANG:-5.615,119.783|ARUNGKEKE:-5.668,119.8|TAROWANG:-5.59,119.87|KELARA:-5.556,119.824|MANGARA BOMBANG:-5.539,119.453|MAPPAKASUNGGU:-5.492,119.29|SANROBONE:-5.426,119.401|POLOMBANGKENG SELATAN:-5.443,119.499|PATTALLASSANG:-5.199,119.569|POLOMBANGKENG UTARA:-5.34,119.534|GALESONG SELATAN:-5.371,119.377|GALESONG:-5.338,119.383|GALESONG UTARA:-5.25,119.389|BONTONOMPO:-5.354,119.43|BONTONOMPO SELATAN:-5.393,119.406|BAJENG:-5.298,119.453|BAJENG BARAT:-5.305,119.401|PALLANGGA:-5.26,119.476|BAROMBONG:-5.231,119.412|SOMBA OPU:-5.204,119.476|BONTOMARANNU:-5.257,119.522|PARANGLOE:-5.222,119.673|MANUJU:-5.286,119.685|TINGGIMONCONG:-5.249,119.858|TOMBOLO PAO:-5.207,119.951|BUNGAYA:-5.367,119.719|BONTOLEMPANGAN:-5.389,119.824|BIRINGBULU:-5.478,119.719|SINJAI BARAT:-5.25,120.009|SINJAI BORONG:-5.313,120.043|SINJAI SELATAN:-5.195,120.182|TELLU LIMPOE:-5.266,120.228|SINJAI TIMUR:-5.182,120.263|SINJAI TENGAH:-5.2,120.09|SINJAI UTARA:-5.11,120.24|BULUPODDO:-5.088,120.136|MANDAI:-5.075,119.563|MONCONGLOE:-5.145,119.546|MAROS BARU:-4.998,119.546|MARUSU:-5.037,119.499|TURIKALE:-5.02,119.575|LAU:-4.96,119.569|BONTOA:-4.925,119.546|BANTIMURUNG:-4.973,119.685|SIMBANG:-5.046,119.685|TANRALILI:-5.105,119.615|TOMPU BULU:-5.143,119.766|CAMBA:-4.9,119.833|CENRANA:-3.287,118.861|MALLAWA:-4.807,119.905|LIUKANG TANGAYA:-6.859,119.116|LIUKANG TUPABBIRING:-4.701,118.958|LIUKANG TUPABBIRING UTARA:-4.704,119.451|PANGKAJENE:-4.851,119.546|MINASATENE:-4.848,119.615|BALOCCI:-4.898,119.708|TONDONG TALLASA:-4.852,119.719|BUNGORO:-4.773,119.662|LABAKKANG:-4.76,119.546|MA'RANG:-5.379,104.058|SEGERI:-4.665,119.615|MANDALLE:-4.588,119.595|TANETE RIAJA:-4.526,119.673|PUJANANTING:-4.67,119.719|TANETE RILAU:-4.52,119.615|BARRU:-4.436,119.65|SOPPENG RIAJA:-4.265,119.638|BALUSU:-4.345,119.673|MALLUSETASI:-4.164,119.673|BONTOCANI:-5.024,119.951|KAHU:-4.98,120.09|KAJUARA:-5.073,120.24|SALOMEKKO:-5,120.24|TONRA:-4.898,120.274|PATIMPENG:-4.903,120.182|LIBURENG:-4.864,120.293|MARE:0.58,127.399|SIBULUE:-4.666,120.378|CINA:-4.68,120.274|BAREBBO:-4.596,120.332|PONRE:-4.687,120.136|LAPPARIAJA:-4.732,119.951|LAMURU:-4.586,119.951|BENGO:-4.618,120.043|ULAWENG:-4.505,120.136|PALAKKA:-4.528,120.24|AWANGPONE:-4.461,120.32|TELLU SIATTINGE:-4.401,120.24|AMALI:-4.383,120.1|AJANGALE:-4.289,120.136|DUA BOCCOE:-4.321,120.228|TANETE RIATTANG BARAT:-4.529,120.303|TANETE RIATTANG:-4.528,120.338|TANETE RIATTANG TIMUR:-4.559,120.355|MARIO RIWAWO:-4.477,119.951|LALABATA:-4.409,119.858|LILI RIAJA:-4.397,119.939|GANRA:-4.306,119.939|CITTA:-4.411,120.032|LILI RILAU:-4.329,120.043|DONRI DONRI:-4.265,119.858|MARIO RIAWA:-4.158,119.812|SABBANG PARU:-4.223,119.997|TEMPE:-4.139,120.055|PAMMANA:-4.183,120.09|TAKKALALLA:-4.139,120.274|SAJOANGING:-3.969,120.286|PENRANG:-3.789,119.643|MAJAULENG:-4.035,120.182|TANA SITOLO:-4.041,120.043|BELAWA:-4.045,119.954|MANIANG PAJO:-3.896,120.09|GILIRENG:-3.892,120.182|KEERA:-3.818,120.274|PITUMPANUA:-3.707,120.367|PANCA LAUTANG:-4.086,119.812|TELLULIMPO E:-4.043,119.777|WATANG PULU:-3.946,119.719|BARANTI:-3.828,119.777|PANCA RIJANG:-3.838,119.853|KULO:0.624,127.806|MARITENGNGAE:-3.916,119.8|WATANG SIDENRENG:-3.905,119.858|PITU RIAWA:-3.821,119.962|DUAPITUE:-3.89,120.009|PITU RIASE:-3.699,120.113|SUPPA:-3.959,119.615|MATTIROSOMPE:-3.801,119.546|LANRISANG:-3.889,119.569|MATTIRO BULU:-3.869,119.638|WATANG SAWITTO:-3.797,119.638|PALETEANG:-3.76,119.685|TIROANG:-3.813,119.708|PATAMPANUA:-3.705,119.708|CEMPA:-3.737,119.58|DUAMPANUA:-3.648,119.557|BATULAPPA:-3.591,119.673|MAIWA:-3.75,119.862|BUNGIN:-3.544,119.997|ENREKANG:-3.459,119.882|CENDANA:-3.631,119.777|BARAKA:-3.396,119.916|BUNTU BATU:-3.439,119.951|ANGGERAJA:-3.41,119.766|MALUA:-3.381,119.847|ALLA:-3.346,119.824|CURIO:-3.299,119.905|MASALLE:-3.331,119.754|BAROKO:-3.276,119.8|LAROMPONG:-3.511,120.361|LAROMPONG SELATAN:-3.61,120.355|SULI:-3.451,120.355|SULI BARAT:-3.465,120.228|BELOPA:-3.011,120.202|KAMANRE:-3.311,120.355|BELOPA UTARA:-3.362,120.378|BAJO:-3.347,120.309|BAJO BARAT:-3.367,120.24|BASSESANGTEMPE:-3.082,120.09|LATIMOJONG:-3.345,120.113|BASSESANGTEMPE UTARA:-3.082,120.09|BUPON:-3.262,120.217|PONRANG:-3.207,120.286|PONRANG SELATAN:-3.258,120.355|BUA:-3.075,120.227|WALENRANG:-2.88,120.124|WALENRANG TIMUR:-2.877,120.217|LAMASI:-2.808,120.194|WALENRANG UTARA:-2.768,120.09|WALENRANG BARAT:-2.805,119.997|LAMASI TIMUR:-2.911,120.263|BONGGAKARADENG:-3.165,119.673|SIMBUANG:-3.204,119.58|RANO:-3.242,119.754|MAPPAK:-3.242,119.488|MENGKENDEK:-3.227,119.951|GANDANG BATU SILANAN:-3.222,119.847|SANGALLA:-3.092,119.899|SANGALA SELATAN:-3.113,119.939|SANGALLA UTARA:-3.061,119.916|MAKALE:-3.113,119.849|MAKALE SELATAN:-3.153,119.8|MAKALE UTARA:-3.063,119.87|SALUPUTTI:-3.031,119.754|BITTUANG:-3.025,119.673|REMBON:-3.118,119.777|MASANDA:-2.886,119.627|MALIMBONG BALEPE:-3.085,119.708|RANTETAYO:-3.046,119.824|KURRA:-2.978,119.754|SABBANG:-2.593,120.136|BAEBUNTA:-2.624,120.274|MALANGKE:-2.757,120.459|MALANGKE BARAT:-2.831,120.32|SUKAMAJU:-6.419,106.85|BONE-BONE:-5.188,122.488|TANA LILI:-2.615,120.597|MASAMBA:-2.551,120.37|MAPPEDECENG:-2.517,120.413|RAMPI:-2.159,120.297|LIMBONG:-2.581,119.928|SEKO:-0.225,102.217|BURAU:-2.544,120.689|WOTU:-2.597,120.804|TOMONI:-2.409,120.597|TOMONI TIMUR:-2.539,120.873|ANGKONA:-2.603,120.956|MALILI:-2.645,121.104|TOWUTI:-2.605,121.583|NUHA:-2.476,121.308|WASUPONDA:-2.281,120.942|MANGKUTANA:-2.287,120.666|KALAENA:-2.445,120.861|SOPAI:-2.997,119.853|KESU:-2.996,119.899|SANGGALANGI:-3.008,119.939|BUNTAO:-3.042,119.962|RANTEBUA:-3.076,120.009|NANGGALA:-2.98,119.997|TONDON:-2.955,119.939|TALLUNGLIPU:-2.952,119.91|RANTEPAO:-2.97,119.876|SESEAN:-2.925,119.922|SA'DAN:-2.843,119.905|BENGKELEKILA:-2.887,119.893|SESEAN SULOARA:-2.909,119.876|KAPALA PITU:-2.928,119.841|DENDE PIONGAN NAPO:-2.972,119.818|AWAN RANTE KARUA:-2.909,119.731|RINDINGALO:-2.889,119.8|BUNTU PEPASAN:-2.801,119.847|BARUPPU:-2.795,119.743|MARISO:-5.159,119.409|MAMAJANG:-5.164,119.419|TAMALATE:-5.184,119.424|RAPPOCINI:-5.173,119.447|MAKASSAR:-5.148,119.433|UJUNG PANDANG:-5.148,119.433|WAJO:-4.022,120.067|BONTOALA:-5.131,119.421|UJUNG TANAH:-5.048,119.328|TALLO:-5.119,119.435|PANAKKUKANG:-5.146,119.447|MANGGALA:-5.167,119.476|BIRING KANAYA:-5.091,119.522|TAMALANREA:-5.094,119.476|BACUKIKI:-4.029,119.685|BACUKIKI BARAT:-4.044,119.633|UJUNG:-7.209,112.748|WARA SELATAN:-3.03,120.211|SENDANA:-2.233,119.467|WARA:-8.343,118.915|WARA TIMUR:-3.006,120.208|MUNGKAJANG:-3.02,120.101|WARA UTARA:-2.987,120.188|BARA:-3.146,126.232|TELLUWANUA:-2.913,120.194|WARA BARAT:-2.977,120.09|LASALIMU:-5.224,123.127|LASALIMU SELATAN:-5.318,123.146|SIONTAPINA:-5.324,123.118|PASAR WAJO:-5.445,122.831|WOLOWA:-5.394,122.933|WABULA:-5.579,122.842|KAPONTORI:-5.265,122.831|TONGKUNO:-4.913,122.619|TONGKUNO SELATAN:-5.18,122.52|BONE:-4.744,120.067|MAROBO:-5.123,122.345|KABAWO:-4.997,122.515|KABANGKA:-4.966,122.424|KONTUKOWUNA:-4.949,122.498|KONTUNAGA:-4.855,122.662|WATOPUTE:-4.785,122.639|KATOBU:-4.83,122.712|LOHIA:-4.909,122.747|DURUKA:-4.866,122.712|BATALAIWORU:-4.8,122.707|NAPABALANO:-4.659,122.684|LASALEPA:-4.738,122.696|TOWEA:-4.538,122.712|WAKORUMBA SELATAN:-4.906,122.876|PASIR PUTIH:-6.426,106.779|PASI KOLAGA:-5.008,122.797|MALIGANO:-4.693,122.876|BATUKARA:-4.835,122.876|SOROPIA:-3.924,122.616|LALONGGASUMEETO:-3.91,122.526|SAMPARA:-3.985,122.413|BONDOALA:-3.906,122.424|BESULUTU:-3.98,122.333|KAPOIALA:-3.86,122.481|ANGGALOMOARE:-3.972,122.431|MOROSI:-3.902,122.407|LAMBUYA:-4.015,122.027|UEPAI:-3.863,121.981|PURIALA:-4.06,122.106|ONEMBUTE:-4.064,122.016|PONDIDAHA:-3.974,122.254|WONGGEDUKU:-3.953,122.152|AMONGGEDO:-3.899,122.271|WAWOTOBI:-3.857,122.141|MELUHU:-3.811,122.197|KONAWE:-3.938,122.084|UNAAHA:-3.863,122.052|ANGGABERI:-3.78,122.106|ABUKI:-3.629,121.947|LATOMA:-3.721,121.672|TONGAUNA:-3.783,122.016|ASINUA:-3.651,121.833|PADANGGUNI:-3.721,121.882|ROUTA:-3.083,121.674|WATUBANGGA:-4.255,122.308|TANGGETADA:-4.328,121.651|TOARI:-4.557,121.526|POLINGGONA:-4.399,121.651|POMALAA:-4.257,121.651|WUNDULAKO:-4.106,121.663|BAULA:-4.156,121.684|KOLAKA:-3.995,121.583|LATAMBAGA:-3.976,121.605|WOLO:-3.794,121.308|SAMATURU:-3.932,121.4|IWOIMENDAA:-3.824,121.18|TINANGGEA:-4.444,122.197|LALEMBUU:-4.415,122.061|ANDOOLO:-4.338,122.197|BUKE:-4.23,122.243|ANDOOLO BARAT:-4.394,122.323|PALANGGA:-4.329,122.379|PALANGGA SELATAN:-4.426,122.39|BAITO:-4.234,122.345|LAINEA:-4.356,122.56|LAEYA:-4.325,122.469|KOLONO:-4.291,122.679|KOLONO TIMUR:-2.679,121.986|LAONTI:-4.202,122.831|MORAMO:-4.211,122.65|MORAMO UTARA:-4.108,122.605|KONDA:-4.114,122.469|WOLASI:-4.202,122.492|RANOMEETO:-4.109,122.39|RANOMEETO BARAT:-4.04,122.367|LANDONO:-4.091,122.309|MOWILA:-4.116,122.231|SABULAKOA:-4.011,122.263|ANGATA:-4.166,122.106|BENUA:-4.241,122.109|BASALA:-4.301,122.05|KABAENA:-5.275,121.89|KABAENA UTARA:-5.166,121.89|KABAENA SELATAN:-5.365,121.89|KABAENA BARAT:-5.211,121.828|KABAENA TIMUR:-5.285,122.027|KABAENA TENGAH:-5.243,121.97|MATA OLEO:-4.845,122.016|RUMBIA TENGAH:-4.802,122.067|RAROWATU:-4.709,121.879|RAROWATU UTARA:-4.635,121.925|MATA USU:-4.462,121.833|LANTARI JAYA:-4.526,121.97|POLEANG TIMUR:-4.812,121.799|POLEANG UTARA:-4.75,121.788|POLEANG SELATAN:-4.8,121.685|POLEANG TENGGARA:-4.814,121.925|POLEANG:-4.715,121.594|POLEANG BARAT:-4.635,121.583|TONTONUNU:-4.655,121.708|POLEANG TENGAH:-4.744,121.634|BINONGKO:-5.914,124.031|TOGO BINONGKO:-5.973,124.025|TOMIA:-5.665,124.081|TOMIA TIMUR:-5.758,123.964|KALEDUPA:-5.509,123.746|KALEDUPA SELATAN:-5.555,123.785|WANGI-WANGI:-5.283,123.584|WANGI-WANGI SELATAN:-5.354,123.584|RANTEANGIN:-3.601,121.091|LAMBAI:-3.585,121.045|LASUSUA:-3.544,120.965|KATOI:-3.44,120.919|KODEOHA:-3.411,120.999|TIWU:-3.342,120.976|NGAPA:-3.33,121.056|WATUNOHU:-3.304,120.978|PAKUE:-0.9,119.878|PAKUE UTARA:-3.251,121.331|PAKUE TENGAH:-3.188,121.148|POREHU:-3.026,121.188|TOLALA:-2.93,121.094|BONEGUNU:-4.794,122.966|KAMBOWA:-5.046,122.921|WAKORUMBA:-4.514,122.921|KULISUSU:-4.756,123.18|KULISUSU BARAT:-4.651,123.011|KULISUSU UTARA:-4.54,123.101|SAWA:-3.776,122.413|MOTUI:-3.838,122.379|LASOLO:-3.671,122.197|MOLAWE:-3.474,122.096|ASERA:-3.393,121.749|ANDOWIA:-3.572,122.061|OHEO:-3.398,122.061|LANGGIKIMA:-3.323,122.243|WIWIRANO:-2.767,121.783|AERE:-4.278,121.873|LAMBANDIA:-4.351,121.925|POLI-POLIA:-4.213,121.833|DANGIA:-4.193,121.987|LADONGI:-4.142,121.902|LOEA:-4.097,121.868|TIRAWUTA:-3.998,121.925|LALOLAE:-4.039,121.788|MOWEWE:-3.963,121.708|TINONDO:-3.861,121.833|ULUIWOI:-3.514,121.308|UEESI:-3.663,121.514|WAWONII TENGGARA:-4.187,123.146|WAWONII TIMUR:-4.084,123.219|WAWONII TIMUR LAUT:-4.054,123.203|WAWONII UTARA:-4.05,123.101|WAWONII SELATAN:-4.157,123.056|WAWONII TENGAH:-4.099,122.978|WAWONII BARAT:-4.054,123.011|TIWORO KEPULAUAN:-4.778,122.435|MAGINTI:-4.854,122.345|TIWORO TENGAH:-4.79,122.379|TIWORO SELATAN:-4.888,122.39|TIWORO UTARA:-4.67,122.373|LAWA:-4.885,122.605|SAWERIGADI:-4.812,122.481|BARANGKA:-4.826,122.549|WA DAGA:-4.917,122.503|KUSAMBI:-4.737,122.549|NAPANO KUSAMBI:-4.707,122.605|TALAGA RAYA:-6.214,106.508|MAWASANGKA:-5.291,122.299|MAWASANGKA TENGAH:-5.289,122.424|MAWASANGKA TIMUR:-5.361,122.424|LAKUDO:-5.389,122.56|GU:-5.314,122.552|SANGIA WAMBULU:-5.356,122.631|BATU ATAS:-7.883,112.533|LAPANDEWA:-5.636,122.797|SAMPOLAWA:-5.558,122.741|BATAUGA:-5.61,122.616|SIOMPU BARAT:-5.687,122.498|SIOMPU:-5.653,122.526|KADATUA:-5.533,122.498|MANDONGA:-3.942,122.509|BARUGA:-4.034,122.503|PUUWATU:-3.965,122.481|KADIA:-3.983,122.506|WUA-WUA:-3.993,122.489|POASIA:-4.035,122.566|ABELI:-8.41,115.189|KAMBU:-4.028,122.532|KENDARI:-3.998,122.513|KENDARI BARAT:-3.957,122.554|BETOAMBARI:-5.504,122.594|MURHUM:-5.481,122.599|WOLIO:-5.483,122.639|KOKALUKUNA:-5.433,122.656|SORAWOLIO:-5.443,122.707|BUNGI:-5.371,122.707|LEA-LEA:-5.37,122.656|MANANGGU:0.686,122.152|TILAMUTA:0.519,122.333|DULUPI:0.588,122.424|BOTUMOITO:0.589,122.243|PAGUYAMAN:0.619,122.56|PAGUYAMAN PANTAI:0.555,122.56|BATUDAA PANTAI:0.513,122.91|BILUHU:0.514,122.775|BATUDAA:0.56,122.978|BONGOMEME:0.585,122.831|TABONGO:0.576,122.933|DUNGALIYO:0.581,122.882|TIBAWA:0.689,122.842|PULUBALA:0.665,122.763|BOLIYOHUTO:0.618,122.65|MOOTILANGO:0.747,122.65|TOLANGOHULA:0.747,122.56|ASPARAGA:0.862,122.311|BILATO:0.536,122.659|LIMBOTO:0.688,122.978|LIMBOTO BARAT:0.648,122.921|TELAGA:-7.058,113.269|TELAGA BIRU:0.703,123.045|TILANGO:0.558,123.02|TELAGA JAYA:0.582,123.025|POPAYATO:0.651,121.434|POPAYATO BARAT:0.676,121.308|POPAYATO TIMUR:0.756,121.468|LEMITO:0.674,121.583|WANGGARASI:0.69,121.697|MARISA:0.467,121.928|PATILANGGIO:0.559,121.879|BUNTULIA:0.687,121.97|DUHIADAA:0.47,121.913|RANDANGAN:0.527,121.788|TALUDITI:0.786,121.833|PAGUAT:0.502,122.05|DENGILO:0.622,122.106|BULANGO UTARA:0.735,123.113|BULANGO SELATAN:0.587,123.085|BULANGO TIMUR:0.611,123.107|BULANGO ULU:0.662,123.214|KABILA:0.547,123.107|BOTU PINGGE:0.516,123.107|TILONGKABILA:0.591,123.135|SUWAWA:0.575,123.18|SUWAWA SELATAN:0.487,123.191|SUWAWA TIMUR:0.55,123.281|SUWAWA TENGAH:0.547,123.186|PINOGU:0.471,123.393|BONEPANTAI:0.424,123.236|KABILA BONE:0.464,123.135|BONE RAYA:-4.744,120.067|BULAWA:0.361,123.281|ATINGGOLA:0.838,123.146|GENTUMA RAYA:0.864,123.023|KWANDANG:0.808,122.921|ANGGREK:0.842,122.741|MONANO:0.857,122.687|SUMALATA:0.98,122.491|SUMALATA TIMUR:0.942,122.424|TOLINGGULA:0.945,122.152|KOTA BARAT:0.54,123.028|DUNGINGI:0.554,123.042|KOTA SELATAN:0.546,123.059|KOTA TIMUR:0.542,123.07|HULONTHALANGI:0.516,123.051|DUMBO RAYA:0.523,123.074|KOTA UTARA:-7.421,111.362|KOTA TENGAH:0.562,123.054|SIPATANA:0.58,123.062|BANGGAE:-3.536,118.941|BANGGAE TIMUR:-3.504,118.959|PAMBOANG:-3.465,118.918|TAMMERODO:-3.235,118.871|TUBO SENDANA:-3.13,118.825|MALUNDA:-2.976,118.93|ULUMANDA:-3.084,118.883|TINAMBUNG:-3.502,119.017|BALANIPA:-3.478,119.058|LIMBORO:-0.71,119.699|TUBBI TARAMANU:-3.221,119.023|ALU:-3.365,118.976|CAMPALAGIAN:-3.458,119.127|LUYO:-3.37,119.104|WONOMULYO:-3.419,119.244|MAPILLI:-3.35,119.174|TAPANGO:-3.312,119.244|MATAKALI:-3.389,119.27|B U L O:-0.789,113.921|POLEWALI:-3.427,119.351|ANREAPI:-3.351,119.395|MATANGNGA:-3.18,119.209|SUMARORONG:-3.14,119.348|MESSAWA:-3.246,119.348|PANA:-3.067,119.533|NOSU:-3.136,119.488|MAMASA:-2.912,119.325|TANDUK KALUA:-3.062,119.313|BALLA:-8.41,115.189|SESENAPADANG:-2.998,119.395|TAWALIAN:-2.953,119.406|MAMBI:-3.041,119.116|BAMBANG:-8.158,112.807|RANTEBULAHAN TIMUR:-2.994,119.22|MEHALAAN:-3.027,119.184|ARALLE:-2.883,119.093|BUNTU MALANGKA:-2.827,119.209|TABULAHAN:-2.757,119.209|TAPALANG:-2.87,118.93|TAPALANG BARAT:-2.777,118.801|MAMUJU:-2.729,118.93|SIMBORO:-2.689,118.869|BALABALAKANG:-7.5,117.5|KALUKKU:-2.602,119.093|PAPALANG:-2.438,119.144|SAMPAGA:-2.347,119.22|TOMMO:-2.246,119.464|BONEHAU:-2.631,119.325|SARUDU:-1.674,119.337|DAPURANG:-1.762,119.65|DURIPOKU:-1.647,119.395|BARAS:-1.579,119.395|BULU TABA:-1.226,119.827|LARIANG:-1.478,119.348|PASANGKAYU:-1.176,119.36|TIKKE RAYA:-1.376,119.395|PEDONGGA:-1.275,119.395|BAMBALAMOTU:-1.105,119.534|BAMBAIRA:-0.996,119.522|SARJO:-0.913,119.546|PANGALE:-2.261,119.197|BUDONG-BUDONG:-2.164,119.255|TOBADAK:-2.09,119.488|TOPOYO:-2.036,119.65|KAROSSA:-1.9,119.557|TANIMBAR SELATAN:-7.942,131.221|WER TAMRIAN:-7.766,131.401|WER MAKTIAN:-7.648,131.241|SELARU:-8.217,131.032|TANIMBAR UTARA:-7.215,131.621|YARU:-7.055,131.93|WUAR LABOBAR:-7.494,131.401|NIRUNMAS:-7.475,131.561|KORMOMOLIN:-7.611,131.561|MOLU MARU:-6.763,131.531|KEI KECIL:-5.783,132.727|KEI KECIL BARAT:-5.893,132.678|KEI KECIL TIMUR:-5.835,132.776|HOAT SORBAY:-5.792,132.717|MANYEUW:-5.69,132.688|KEI KECIL TIMUR SELATAN:-5.916,132.776|KEI BESAR UTARA TIMUR:-5.46,133.117|KEI BESAR SELATAN:-5.862,132.922|KEI BESAR SELATAN BARAT:-5.873,132.893|BANDA:-4.554,129.93|TEHORU:-3.337,129.404|TELUTIH:-3.273,129.755|AMAHAI:-3.336,128.922|KOTA MASOHI:-3.306,128.962|TELUK ELPAPUTIH:-3.105,128.904|TEON NILA SERUA:-3.204,129.019|SAPARUA:-3.551,128.632|NUSALAUT:-3.664,128.789|SAPARUA TIMUR:-3.555,128.705|P. HARUKU:-3.559,128.464|SALAHUTU:-3.567,128.295|LEIHITU:-3.61,128.084|LEIHITU BARAT:-3.745,128|SERAM UTARA:-2.95,129.569|SERAM UTARA BARAT:-2.945,128.946|SERAM UTARA TIMUR KOBI:-3.035,129.776|SERAM UTARA TIMUR SETI:-3.087,130.022|NAMLEA:-3.233,127.086|WAEAPO:-3.358,126.825|WAPLAU:-3.165,126.739|BATA BUAL:-3.54,127.169|TELUK KAIELY:-3.303,126.566|WAELATA:-3.482,126.997|LILIALY:-3.204,126.976|AIR BUAYA:-3.183,126.306|ARU SELATAN:-6.683,134.172|ARU SELATAN TIMUR:-6.832,134.286|ARU SELATAN UTARA:-6.326,134.21|ARU TENGAH:-6.238,134.437|ARU TENGAH TIMUR:-6.088,134.663|ARU TENGAH SELATAN:-6.638,134.719|PULAU-PULAU ARU:-6.195,134.55|ARU UTARA:-5.468,134.588|ARU UTARA TIMUR BATULEY:-5.773,134.663|SIR-SIR:-5.6,134.513|HUAMUAL BELAKANG:-3.322,128|KEPULAUAN MANIPA:-3.303,127.521|SERAM BARAT:-3.036,128.274|HUAMUAL:-3.322,128|KAIRATU:-3.342,128.353|KAIRATU BARAT:-3.225,128.359|INAMOSOL:-3.203,128.506|AMALATU:-3.359,128.59|ELPAPUTIH:-3.21,128.695|TANIWEL:-2.875,128.448|TANIWEL TIMUR:-2.955,128.695|PULAU GOROM:-4.125,131.351|WAKATE:-4.516,131.671|TEOR:-4.738,131.746|GOROM TIMUR:-3.98,131.411|SERAM TIMUR:-3.625,130.594|TUTUK TOLU:-3.539,130.736|KILMURY:-3.625,130.594|LIAN VITU:7.892,98.403|KIAN DARAT:-3.685,130.787|WERINAMA:-3.423,130.227|BULA:-3.11,130.499|BULA BARAT:-3.139,130.268|TELUK WARU:-3.436,130.594|WETAR:-7.785,126.35|WETAR BARAT:-7.885,125.893|WETAR UTARA:-7.737,126.285|WETAR TIMUR:-7.699,126.674|PP. TERSELATAN:-8.079,127.19|KISAR UTARA:-8.022,127.174|KEPULAUAN ROMANG:-7.555,127.404|LETTI:-8.2,127.683|MOA:-8.217,128.183|LAKOR:-8.217,128.183|DAMER:-7.151,128.632|MDONA HIERA:-8.22,128.915|PP. BABAR:-7.879,129.672|PULAU WETANG:-7.903,129.538|BABAR TIMUR:-7.955,129.776|PULAU MASELA:-8.15,129.863|DAWELOR DAWERA:-7.762,130.058|KEPALA MADAN:-3.388,126.133|LEKSULA:-3.58,126.306|NAMROLE:-3.692,126.739|WAISAMA:-3.614,126.997|NUSANIWE:-3.729,128.158|SIRIMAU:-3.693,128.222|LEITIMUR SELATAN:-3.674,128.285|TELUK AMBON BAGUALA:-3.611,128.243|TELUK AMBON:-3.655,128.191|PP. KUR:-5.323,132.009|KUR SELATAN:-5.357,131.989|TAYANDO TAM:-5.568,132.345|PULAU DULLAH UTARA:-5.566,132.771|PULAU DULLAH SELATAN:-5.628,132.756|JAILOLO:1.312,128.485|JAILOLO SELATAN:0.915,127.575|SAHU:1.153,127.435|SAHU TIMUR:1.19,127.575|IBU:1.498,127.575|IBU SELATAN:1.359,127.596|LOLODA:1.745,127.66|WEDA:0.339,127.869|WEDA SELATAN:0.192,127.872|WEDA UTARA:0.503,128.19|WEDA TENGAH:0.564,127.936|WEDA TIMUR:0.564,127.936|PULAU GEBE:-0.123,129.497|PATANI:0.306,128.754|PATANI UTARA:0.396,128.632|PATANI BARAT:0.396,128.548|PATANI TIMUR:0.396,128.632|SULA BESI BARAT:-2.844,119.232|SULABESI SELATAN:-3.669,119.974|SANANA:-2.201,125.937|SULA BESI TENGAH:-1.43,121.446|SULABESI TIMUR:-2.417,126.035|SANANA UTARA:-2.017,125.926|MANGOLI TIMUR:-1.845,126.111|MANGOLI TENGAH:-1.85,125.893|MANGOLI UTARA TIMUR:-1.841,126.241|MANGOLI UTARA:-1.855,125.675|MANGOLI SELATAN:-1.889,125.588|OBI SELATAN:-1.605,127.681|OBI:-1.511,127.724|OBI BARAT:-1.402,127.372|OBI TIMUR:-1.657,128.105|OBI UTARA:-1.198,127.543|BACAN:-0.567,127.511|MANDIOLI SELATAN:-0.744,127.244|MANDIOLI UTARA:-0.668,127.244|BACAN SELATAN:-0.734,127.489|BATANG LOMANG:-0.636,127.372|BACAN TIMUR:-0.507,127.596|BACAN TIMUR SELATAN:-0.792,127.703|BACAN TIMUR TENGAH:-0.731,127.745|BACAN BARAT:-0.433,127.361|KASIRUTA BARAT:-0.404,127.147|KASIRUTA TIMUR:-0.434,127.233|BACAN BARAT UTARA:-0.432,127.489|KAYOA:0.052,127.436|KAYOA BARAT:-0.22,127.121|KAYOA SELATAN:-0.041,127.42|KAYOA UTARA:0.07,127.441|PULAU MAKIAN:0.313,127.404|MAKIAN BARAT:0.32,127.372|GANE BARAT:-0.459,127.957|GANE BARAT SELATAN:-0.698,128.084|GANE BARAT UTARA:-0.207,127.766|KEPULAUAN JORONGA:-1.018,128.369|GANE TIMUR:-0.088,127.851|GANE TIMUR TENGAH:-0.399,128|GANE TIMUR SELATAN:-0.608,128.127|MALIFUT:1.157,127.745|KAO TELUK:1.066,127.66|KAO:1.216,127.872|KAO BARAT:1.356,127.766|KAO UTARA:1.375,127.968|TOBELO SELATAN:1.615,127.915|TOBELO BARAT:1.522,127.915|TOBELO TIMUR:1.544,128.01|TOBELO:1.726,128.001|TOBELO TENGAH:1.684,127.968|TOBELO UTARA:1.739,127.915|GALELA:1.823,127.78|GALELA SELATAN:1.781,127.798|GALELA BARAT:1.844,127.777|GALELA UTARA:2.02,127.915|LOLODA UTARA:2.022,127.83|LOLODA KEPULAUAN:2.251,127.798|MABA SELATAN:0.56,128.443|KOTA MABA:0.689,128.277|WASILE SELATAN:0.864,128.021|WASILE:1.09,128.011|WASILE TIMUR:1.24,128.253|WASILE TENGAH:1.361,128.338|WASILE UTARA:1.464,128.527|MABA:0.689,128.277|MABA TENGAH:1.04,128.443|MABA UTARA:1.279,128.611|MOROTAI SELATAN:2.145,128.443|MOROTAI TIMUR:2.189,128.548|MOROTAI SELATAN BARAT:2.273,128.359|MOROTAI JAYA:2.519,128.527|MOROTAI UTARA:2.393,128.527|TALIABU BARAT:-1.931,124.464|TALIABU SELATAN:-1.86,124.73|TABONA:0.779,127.359|TALIABU TIMUR SELATAN:-1.854,124.995|TALIABU TIMUR:-1.77,125.149|TALIABU UTARA:-1.731,124.73|LEDE:-1.688,124.442|TALIABU BARAT LAUT:-1.819,124.398|PULAU TERNATE:0.796,127.361|MOTI:0.455,127.415|PULAU BATANG DUA:1.326,126.382|PULAU HIRI:0.897,127.316|TERNATE SELATAN:-8.221,124.371|TERNATE TENGAH:0.792,127.367|TERNATE UTARA:0.822,127.377|TIDORE SELATAN:0.636,127.393|TIDORE UTARA:0.697,127.393|TIDORE:0.674,127.404|TIDORE TIMUR:0.712,127.436|OBA:0.371,127.745|OBA SELATAN:0.074,127.745|OBA UTARA:0.687,127.596|OBA TENGAH:0.566,127.681|FAKFAK TIMUR:-3.029,132.59|FAKFAK:-3.098,133.019|FAKFAK TENGAH:-2.875,132.335|FAKFAK BARAT:-2.869,132.118|KOKAS:-2.721,132.413|TELUK PATIPI:-2.745,132.197|KRAMONGMONGGA:-2.738,132.354|BOMBERAY:-2.907,133.252|BURUWAY:-3.751,133.252|TELUK ARGUNI:-3.106,134.02|TELUK ARGUNI BAWAH:-3.25,133.561|KAIMANA:-3.661,133.775|KAMBRAU:-3.418,133.503|TELUK ETNA:-3.987,134.738|YAMOR:-3.775,134.776|NAIKERE:-3.2,134.475|WONDIBOY:-2.791,134.597|RASIEY:-2.871,134.588|KURI WAMESA:-2.855,134.324|WASIOR:-2.683,134.569|DUAIRI:-2.54,134.531|ROON:-2.383,134.55|WINDESI:-2.601,134.134|NIKIWAR:-2.485,134.134|WAMESA:-2.143,133.982|ROSWAR:-2.01,134.379|RUMBERPON:-1.843,134.182|SOUG JAYA:-1.911,134.058|FAFURWAR:-2.916,133.676|BABO:-2.521,133.436|SUMURI:-2.523,133.213|AROBA:-7.7,139.083|KAITARO:-2.735,133.753|KURI:-2.752,134.02|BINTUNI:-2.117,133.533|MANIMERI:-1.979,133.753|TUHIBA:-1.984,133.599|DATARAN BEIMES:-1.722,133.714|TEMBUNI:-1.908,133.296|ARANDAY:-2.082,133.252|KAMUNDAN:-1.901,132.428|TOMU:-2.06,133.058|WERIAGAR:-2.065,132.903|MOSKONA SELATAN:-1.744,132.942|MEYADO:-1.707,133.213|MOSKONA BARAT:-1.753,132.629|MERDEY:-1.419,133.291|BISCOOP:-1.498,133.561|MASYETA:-1.513,132.942|MOSKONA UTARA:-1.317,132.747|MOSKONA TIMUR:-1.312,132.981|WARMARE:-0.97,133.925|PRAFI:-0.86,133.848|MANOKWARI BARAT:-0.851,134.048|MANOKWARI TIMUR:-0.867,134.101|MANOKWARI UTARA:-0.79,133.906|MANOKWARI SELATAN:-1.572,133.982|TANAH RUBU:-1.19,134.115|MASNI:-0.849,133.676|SIDEY:-0.851,133.522|INANWATAN:-2.088,132.197|METEMANI:-1.97,132.197|KOKODA:-2.142,132.354|KAIS:-1.766,132.157|KOKODA UTARA:-1.978,132.413|MOSWAREN:-1.515,132.256|TEMINABUAN:-1.433,132.058|SEREMUK:-1.428,131.969|WAYER:-1.518,132.138|SAIFI:-1.525,131.86|SAWIAT:-1.275,131.959|FOKOUR:-1.144,132.019|SALKMA:-7.631,110.848|MORAID:-0.659,131.979|KLASO:-0.759,131.959|MAKBON:-0.821,131.561|KLAYILI:-0.951,131.541|BERAUR:-1.282,131.641|KLAMONO:-1.13,131.475|KLABOT:-1.381,131.781|KLAWAK:-1.206,131.82|SALAWATI:-1.157,131.301|MAYAMUK:-1.07,131.301|SALAWATI TIMUR:-1.29,131.241|SEGET:-1.407,130.977|SEGUN:0.619,107.032|SALAWATI SELATAN:-1.237,130.918|AIMAS:-0.981,131.421|MARIAT:-1.011,131.341|SORONG:-0.882,131.295|SAYOSA:-0.96,131.84|MAUDUS:-0.929,132.039|MISOOL SELATAN:-1.96,130.319|MISOOL BARAT:-1.973,130.104|MISOOL:-1.857,129.94|KOFIAU:-1.183,129.833|MISOOL TIMUR:-1.787,130.268|KEPULAUAN SEMBILAN:-5.088,120.416|SALAWATI UTARA:-1.003,130.918|SALAWATI TENGAH:-1.119,130.999|SALAWATI BARAT:-0.991,130.736|BATANTA SELATAN:-8.685,115.199|BATANTA UTARA:-8.685,115.199|WAIGEO SELATAN:-0.384,130.736|TELUK MAYALIBIT:-0.269,130.938|MEOS MANSAR:-0.45,130.584|KOTA WAISAI:-0.383,130.858|TIPLOL MAYALIBIT:-0.199,130.594|WAIGEO BARAT:-0.157,130.452|WAIGEO BARAT KEPULAUAN:-0.233,130.517|WAIGEO UTARA:-0.141,130.918|WARWARBOMI:-0.198,131.08|SUPNIN:-0.071,130.777|KEPULAUAN AYAU:1.067,131.266|AYAU:-1.132,133.885|WAIGEO TIMUR:-0.254,131.241|FEF:-0.809,132.512|SYUJAK:-0.683,132.413|MIYAH:-0.75,132.668|ABUN:-0.47,132.747|KWOOR:-0.472,132.354|SAUSAPOR:-0.53,132.197|YEMBUN:-0.756,132.197|KEBAR:-1.051,133.252|SENOPI:-1.059,132.786|AMBERBAKEN:-0.634,133.058|MUBARNI / ARFU:-0.798,133.291|AITINYO BARAT/ATHABU:-1.392,132.266|AYAMARU SELATAN JAYA:-1.401,132.177|AITINYO:-1.441,132.354|AITINYO TENGAH:-6.231,106.7|AIFAT SELATAN:-1.553,132.512|AIFAT:-1.28,132.453|AITINYO UTARA:-1.311,132.335|AITINYO RAYA:-1.441,132.354|AYAMARU TIMUR:-1.276,132.266|AYAMARU TIMUR SELATAN:-1.323,132.261|AYAMARU:-1.266,132.048|AYAMARU SELATAN:-1.344,132.138|AYAMARU JAYA:-1.143,132.098|AYAMARU TENGAH:-1.277,132.226|AYAMARU BARAT:-1.287,132.098|AYAMARU UTARA:-1.198,132.217|AYAMARU UTARA TIMUR:-1.232,132.325|MARE SELATAN:0.578,127.407|AIFAT UTARA:-1.151,132.433|AIFAT TIMUR:-1.204,132.668|TAHOTA:-1.859,133.906|DATARAN ISIM:-1.521,133.753|NENEI:-1.502,133.963|MOMI WAREN:-1.57,134.058|RANSIKI:-1.516,134.18|ORANSBARI:-1.351,134.282|DIDOHU:-1.297,133.676|SURUREY:-1.355,133.896|ANGGI GIDA:-1.368,133.953|MEMBEY:-1.331,134.039|ANGGI:-1.306,133.925|TAIGE:-1.307,133.848|HINGK:-1.221,133.963|MENYAMBOUW:-1.068,133.906|CATUBOUW:-1.043,133.714|TESTEGA:-1.131,133.522|SORONG BARAT:-0.817,131.291|SORONG KEPULAUAN:-0.889,131.203|SORONG TIMUR:-0.895,131.381|SORONG UTARA:-0.838,131.341|SORONG MANOI:-0.893,131.306|SORONG KOTA:-0.882,131.295|KIMAAM:-7.961,138.8|WAAN:-8.157,138.16|TABONJI:-7.631,138.319|OKABA:-8.072,139.628|TUBANG:-7.762,139.447|NGGUTI:-7.504,139.61|KAPTEL:-7.679,139.937|KURIK:-8.175,140.307|MALIND:-8.146,140.06|ANIMHA:-7.873,140.431|MERAUKE:-8.499,140.405|SEMANGGA:-8.396,140.389|TANAH MIRING:-8.314,140.596|JAGEBOB:-7.91,140.762|SOTA:-8.313,140.887|NAUKENJERAI:-8.801,140.804|MUTING:-7.306,140.558|ELIGOBEL:-7.63,140.762|ULILIN:-7.073,140.762|WAMENA:-4.099,138.925|ASOLOKOBAL:-4.159,138.93|WALELAGAMA:-4.133,139.142|TRIKORA:-4.295,138.699|NAPUA:-4.139,138.87|WALAIK:-4.208,138.82|WOUMA:-4.11,138.943|WALESI:-4.204,138.89|ASOTIPO:-4.105,138.699|MAIMA:-4.063,139.173|HUBIKOSI:-4.075,138.85|PELEBAGA:-4.048,138.734|IBELE:-4.051,138.794|TAILAREK:-4.102,138.659|HUBIKIAK:-4.058,138.905|ASOLOGAIMA:-4.006,138.769|MUSATFAK:-3.981,138.87|SILO KARNO DOGA:-4.123,138.87|PYRAMID:-4.085,137.187|MULIAMA:-4.015,138.779|WAME:-4.069,139.011|KURULU:-3.993,138.94|USILIMO:-3.928,138.867|WITA WAYA:-4.027,138.915|WADANGKU:-3.928,138.966|PISUGI:-4.035,138.971|BOLAKME:-3.847,138.729|WOLLO:-3.839,138.87|YALENGGA:-3.886,138.805|TAGIME:-3.815,138.729|MOLAGALOME:-3.842,138.692|TAGINERI:-4.295,138.699|BUGI:-3.884,138.83|BPIRI:-4.11,138.779|KORAGI:-8.367,124.1|SIEPKOSI:-4.072,139.006|POPUGOBA:-4.167,139.051|KAUREH:-3.238,139.855|AIRU:-3.575,140.266|YAPSI:-2.811,140.101|KEMTUK:-2.683,140.41|KEMTUK GRESI:-2.726,140.307|GRESI SELATAN:-2.698,140.194|NIMBORAN:-2.641,140.122|NIMBORAN TIMUR / NAMBLONG:-2.602,140.209|NIMBOKRANG:-2.519,140.163|UNURUM GUAY:-2.674,139.773|DEMTA:-2.357,140.147|YOKARI:-2.46,140.245|DEPAPRE:-2.465,140.365|RAVENIRARA:-2.47,140.534|SENTANI BARAT:-2.525,140.328|WAIBU:-2.59,140.41|SENTANI:-2.57,140.503|EBUNGFAU:-2.657,140.534|SENTANI TIMUR:-2.565,140.576|UWAPA:-3.429,135.657|MENOU:-3.537,135.714|DIPA:-3.717,135.714|YAUR:-3.41,134.925|TELUK UMAR:-3.039,134.738|WANGGAR:-3.39,135.327|NABIRE BARAT:-3.425,135.459|NABIRE:-3.372,135.502|TELUK KIMI:-3.279,135.62|NAPAN:0.75,99.933|MAKIMI:-3.216,135.828|WAPOGA:-2.92,136.401|KEPULAUAN MOORA:-2.94,135.72|SIRIWO:-3.38,136.094|YARO:-3.656,135.224|YAPEN TIMUR:-1.833,136.651|TELUK AMPIMOI:-1.829,136.536|RAIMBAWI:-1.748,136.69|PULAU KURUDU:-1.847,137.015|ANGKAISERA:-1.825,136.382|YAPEN SELATAN:-1.828,136.238|KOSIWO:-1.802,136.094|ANATAUREI:-1.865,136.245|YAPEN BARAT:-1.723,135.847|WONAWA:-1.651,135.535|PULAU YERUI:-1.501,135.196|POOM:-1.655,135.686|NUMFOR BARAT:-1.038,134.832|ORKERI:-1.112,134.897|NUMFOR TIMUR:-0.955,134.869|BRUYADORI:-1.07,134.953|POIRU:-0.988,134.916|PADAIDO:-1.223,136.329|BIAK TIMUR:-1.14,136.19|ORIDEK:-1.085,136.267|BIAK KOTA:-1.161,136.047|SAMOFA:-1.138,136.114|YENDIDORI:-1.079,135.961|BIAK UTARA:-1.068,136.094|ANDEY:-0.899,135.942|WARSA:-0.801,135.885|YAWOSI:-0.837,135.99|BONDIFUAR:-0.739,135.837|BIAK BARAT:-1.064,135.866|SWANDIWE:-0.855,135.809|PANIAI TIMUR:-3.952,136.555|YATAMO:-3.984,136.343|KEBO:-3.802,136.343|BIBIDA:-3.951,136.767|DUMADAMA:-4.006,136.903|ARADIDE:-3.755,136.574|EKADIDE:-3.835,136.632|PANIAI BARAT:-3.811,136.247|BOGOBAIDA:-3.578,136.401|FAWI:-3.316,137.685|DAGAI:-3.361,137.961|KIYAGE:-3.191,137.942|MULIA:-3.731,137.961|YAMBI:-1.61,103.613|PAGALEME:-3.708,137.989|ILU:-3.76,138.18|TORERE:-3.6,138.1|YAMONERI:-3.782,138.17|WAEGI:-6.943,107.683|NUME:-7.723,110.628|NIOGA:-3.712,138.234|GUBUME:-3.658,138.234|TINGGINAMBUT:-3.722,138.061|KALOME:-3.72,138.095|MEWOLUK:-3.603,137.882|LUMO:-3.636,137.793|YAMO:-3.531,137.981|DOKOME:-3.642,137.956|MIMIKA BARAT:-4.455,136.286|MIMIKA BARAT JAUH:-4.255,135.224|MIMIKA BARAT TENGAH:-4.299,135.828|AMAR:-4.618,136.155|MIMIKA TIMUR:-4.71,136.787|MIMIKA TENGAH:-4.698,136.632|MIMIKA TIMUR JAUH:-4.763,137.058|MIMIKA BARU:-4.574,136.845|KUALA KENCANA:-4.365,136.748|TEMBAGAPURA:-4.333,137|WANIA:-3.355,138.589|IWAKA:-4.45,136.632|AGIMUGA:-4.638,137.488|JILA:-4.295,137.528|JITA:-4.925,137.528|ALAMA:-4.042,103.228|HOYA:-4.381,137.41|JAIR:-6.507,140.596|SUBUR:-6.924,140.307|KIA:-6.635,140.142|MINDIPTANA:-5.732,140.326|INIYANDIT:-5.782,140.659|KOMBUT:-5.811,140.804|SESNUK:-6.211,140.721|MANDOBO:-6.069,140.266|FOFI:-6.348,139.978|ARIMOP:-5.814,140.431|KOUH:-5.897,140.224|BOMAKIA:-5.796,139.814|FIRIWAGE:-5.521,140.115|MANGGELUM:-5.309,140.389|YANIRUMA:-5.331,139.814|KAWAGIT:-5.629,140.224|KOMBAY:-5.212,139.978|WAROPKO:-5.623,140.714|AMBATKWI:-5.395,140.638|NINATI:-5.701,140.908|NAMBIOMAN BAPAI:-6.771,139.122|MINYAMUR:-6.575,138.84|EDERA:-7.23,139.61|VENAHA:-6.717,139.937|SYAHCAME:-6.927,139.65|BAMGI:-6.97,139.406|YAKOMI:-7.097,139.978|OBAA:-6.534,139.447|PASSUE:-6.385,139.65|HAJU:-6.256,139.001|ASSUE:-5.939,139.163|CITAKMITAK:-5.82,139.325|KAIBAR:-5.649,139.65|PASSUE BAWAH:-5.997,139.447|TI-ZAIN:-5.369,139.671|PANTAI KASUARI:-6.218,138.599|KOPAY:-6.34,138.659|DER KOUMUR:-6.175,138.84|SAFAN:-6.203,138.439|FAYIT:-6.079,138.519|ATSY:-5.779,138.479|SIRETS:-5.531,138.639|AYIP:-5.903,138.759|SUATOR:-5.191,139.284|KOLF BRAZA:-5.202,139.001|AKAT:-5.271,138.639|JETSY:-5.475,138.359|AGATS:-5.536,138.121|SAWA ERMA:-5.138,138.2|SURU-SURU:-4.704,139.062|UNIR SIRAU:-5.099,138.519|JOERAT:-5.383,138.041|KURIMA:-4.229,139.031|MUSAIK:-4.678,138.92|DEKAI:-4.919,139.569|OBIO:-4.63,139.163|PASEMA:-4.385,139.102|AMUMA:-4.567,138.94|WUSAMA:-4.475,138.89|SILIMO:-4.491,139.001|NINIA:-4.305,139.345|HOLUWON:-4.428,139.264|LOLAT:-4.474,139.467|LANGDA:4.476,97.964|BOMELA:-4.716,139.937|SUNTAMON:-4.829,140.142|SOBAHAM:-4.323,139.254|KORUPUN:-4.579,139.589|SELA:-4.545,139.814|KWELAMDUA:-4.714,139.671|ANGGRUK:-4.185,139.467|PANGGEMA:-4.148,139.386|WALMA:-4.252,139.396|KOSAREK:-4.224,139.589|UBAHAK:-4.266,139.487|NALCA:-4.416,139.814|PULDAMA:-4.342,139.916|NIPSAN:-4.133,139.671|SAMENAGE:-4.404,138.9|TANGMA:-4.25,138.981|SOBA:-6.578,139.305|MUGI:-4.348,139.021|YOGOSEM:-4.228,139.142|KAYO:-4.49,139.223|SUMO:-4.771,139.325|HOGIO:-4.422,139.051|UKHA:-4.308,138.9|WERIMA:-4.289,139.102|SOLOIKMA:-4.375,139.426|SERADALA:-5.014,139.978|KABIANGGAMA:-4.407,139.315|KWIKMA:-4.533,139.386|HILIPUK:-4.572,139.375|YAHULIAMBUT:-4.074,139.62|HEREAPINI:-3.946,139.752|UBALIHI:-4.044,139.793|TALAMBO:-3.813,139.937|PRONGGOLI:-4.204,139.264|ENDOMEN:-4.212,139.916|KONA:-4.02,139.916|DURAM:-4.511,139.548|DIRWEMNA:-4.217,139.732|IWUR:-5.013,140.887|KAWOR:-5.122,140.555|TARUP:-5.213,140.887|AWINBON:-5.038,140.307|OKSIBIL:-5.08,140.636|PEPERA:-4.887,140.742|ALEMSOM:-4.724,140.286|SERAMBAKON:-4.846,140.389|KOLOMDOL:-4.967,140.586|OKSOP:-4.732,140.41|OK BAPE:-4.708,140.534|OK AON:-4.812,140.617|BORME:-4.323,140.389|BIME:-4.507,140.224|EPUMEK:-4.417,140.08|WEIME:-4.398,140.286|PAMEK:-4.379,139.998|NONGME:-4.237,140.06|BATANI:-4.049,140.142|OKBI:-4.604,140.451|ABOY:-4.238,140.596|OKBAB:-4.529,140.555|TEIRAPLU:-3.831,140.266|YEFTA:-4.058,140.576|KIWIROK:-4.659,140.783|KIWIROK TIMUR:-4.73,140.866|OKHIKA:-4.659,140.669|OKLIP:-4.77,140.788|OKBEMTA:-4.474,140.721|BATOM:1.046,104.03|MURKIM:-4.003,140.742|MOFINOP:-4.092,140.887|KANGGIME:-3.669,138.369|WONIKI:-3.697,138.309|NABUNAGE:-3.625,138.409|GILUBANDU:-3.635,138.309|WAKUO:-3.684,138.424|AWEKU:-3.619,138.374|BOGONUK:-3.667,138.264|KARUBAGA:-3.676,138.489|GOYAGE:-3.736,138.449|WUNIN:-3.595,138.579|KONDAGA:-3.596,138.449|NELAWI:-3.643,138.449|KUARI:-3.709,138.444|BIUK:-3.68,138.451|BOKONDINI:-3.583,138.533|BOKONERI:-3.654,138.649|BEWANI:-3.399,138.679|KEMBU:-3.545,138.369|WINA:-3.576,138.219|UMAGI:-3.445,138.1|PANAGA:-3.558,138.459|POGANERI:-3.425,138.299|KAMBONERI:-3.361,138.259|AIR GARAM:-3.289,138.061|DOW:-3.405,138.499|WARI / TAIYEVE:-3.238,138.259|EGIAM:-3.298,138.219|NUNGGAWI:-3.747,138.369|ANAWI:-3.714,138.501|WUGI:-3.722,138.511|GEYA:-3.68,138.549|WENAM:-3.953,138.474|NUMBA:-3.6,138.529|KAI:-3.648,138.604|DUNDU:-3.48,138.309|GUNDAGI:-3.498,138.499|TIMORI:-3.61,138.494|YUNERI:-3.493,138.419|DANIME:-3.399,138.165|YUKO:-3.576,138.551|TELENGGEME:-3.605,138.394|GIKA:-3.514,138.294|PANTAI TIMUR BAGIAN BARAT:-2.13,139.082|PANTAI TIMUR:-2.713,139.203|SUNGAI BIRI:-0.322,103.152|BONGGO:-2.326,139.487|BONGGO TIMUR:-2.381,139.752|BONGGO BARAT:-1.059,119.871|TOR ATAS:-2.271,138.8|SARMI:-2.468,139.203|SARMI TIMUR:-2.105,138.779|SARMI SELATAN:-2.057,138.679|PANTAI BARAT:-1.81,138.359|APAWER HULU:-2.047,138.359|WEB:-3.639,140.887|TOWE:0.233,127.767|SENGGI:-8.485,116.047|WARIS:-3.192,140.887|ARSO:-3.083,140.596|ARSO TIMUR:-3.001,140.887|SKANTO:-2.861,140.555|WAROPEN BAWAH:-2.251,136.391|INGGERUS:-2.746,136.478|UREI FAISEI:-2.218,136.445|MASIREI:-2.533,137.019|RISEI SAYATI:-2.585,136.864|DEMBA:-2.3,136.729|WALANI:-2.929,137.214|KIRIHI:-3.026,136.748|SUPIORI SELATAN:-0.797,135.582|KEPULAUAN ARURI:-0.713,135.431|SUPIORI UTARA:-0.716,135.62|SUPIORI BARAT:-0.687,135.506|SUPIORI TIMUR:-0.771,135.695|WAROPEN ATAS:-2.844,136.671|BENUKI:-2.17,137.606|SAWAI:-1.767,137.25|MAMBERAMO ILIR:-1.888,138.001|MAMBERAMO TENGAH:-3.632,138.961|MAMBERAMO TENGAH TIMUR:-2.723,138.001|ROFAER:-2.991,137.882|MAMBERAMO ULU:-3.118,138.639|WOSAK:-4.351,138.579|KENYAM:-4.574,138.359|GESELMA:-4.454,138.001|MAPENDUMA:-4.485,138.219|YIGI:-4.242,138.379|MBUWA:-4.227,138.509|GEAREK:-4.643,138.659|MAKKI:-3.974,138.619|GUPURA:-6.992,113.966|PIRIME:-4.015,138.519|MILIMBO:-3.905,138.464|TIOM:-3.914,138.289|MOKONI:-3.933,138.404|BALINGGA:-4.131,138.359|KUYAWAGE:-4.043,137.961|WANO BARAT:-9.459,119.424|MALAGAINERI:-3.923,138.041|MELAGAI:-6.245,106.802|TIOMNERI:-3.817,138.359|WEREKA:-6.323,106.87|DIMBA:-3.865,138.509|KELULOME:-3.902,138.534|GAMELIA:-3.879,138.619|KARU:-8.519,115.129|YILUK:-3.63,138.456|GUNA:-3.745,138.264|POGA:-3.781,138.539|KOBAKMA:-3.67,139.082|ILUGWA:-3.838,138.981|KELILA:-3.583,138.75|ERAGAYAM:-3.657,138.84|MEGAMBILIS:-3.482,139.082|WELAREK:-3.951,139.569|APALAPSILI:-3.92,139.304|ABENAHO:-3.864,139.163|ELELIM:-3.815,139.406|BENAWA:-3.668,139.61|AGADUGUME:-3.913,137.882|GOME:-3.543,137.371|ILAGA:-4.046,137.528|SINAK:-3.798,137.783|POGOMA:-3.717,137.724|WANGBE:-3.889,137.488|BEOGA:-3.817,137.332|DOUFO:-3.291,137.214|SUKIKAI SELATAN:-4.112,135.337|PIYAIYE:-3.942,135.487|MAPIA BARAT:-4.103,135.743|MAPIA TENGAH:-4.1,135.809|MAPIA:-3.99,135.905|DOGIYAI:-4.045,135.676|KAMU SELATAN:-4.16,136.018|KAMU:-4.018,136.047|KAMU TIMUR:-3.974,136.19|KAMU UTARA:-3.922,136.094|HOMEYO:-3.784,136.787|SUGAPA:-3.798,137.019|HITADIPA:-3.605,136.864|AGISIGA:-3.664,137.078|BIANDOGA:-3.378,136.593|WANDAI:-3.703,136.68|KAPIRAYA:-4.187,136.19|TIGI BARAT:-4.098,136.228|TIGI:-3.959,136.347|TIGI TIMUR:-4.069,136.478|BOWOBADO:-4.187,136.401|MUARA TAMI:-2.686,140.887|ABEPURA:-2.663,140.7|HERAM:-2.591,140.648|JAYAPURA SELATAN:-2.56,140.669|JAYAPURA UTARA:-2.514,140.69";
+
+let _casKecMapCache = null;
+function getCasKecamatanMap() {
+  if (_casKecMapCache) return _casKecMapCache;
+  _casKecMapCache = new Map();
+  const parts = CAS_KECAMATAN_RAW.split("|");
+  for (let i = 0; i < parts.length; i++) {
+    const colon = parts[i].indexOf(":");
+    if (colon > 0) {
+      const k = parts[i].slice(0, colon);
+      const comma = parts[i].indexOf(",", colon + 1);
+      if (comma > 0) {
+        const lat = parseFloat(parts[i].slice(colon + 1, comma));
+        const lng = parseFloat(parts[i].slice(comma + 1));
+        if (!isNaN(lat) && !isNaN(lng)) {
+          let arr = _casKecMapCache.get(k);
+          if (!arr) { arr = []; _casKecMapCache.set(k, arr); }
+          arr.push([lat, lng]);
+        }
+      }
+    }
+  }
+  return _casKecMapCache;
+}
+
+function latLngToCasSvg(lat, lng) {
+  const px = +(((lng - 94.5) / 47.0) * 1140 + 30).toFixed(1);
+  const py = +(((6.5 - lat) / 18.0) * 430 + 25).toFixed(1);
+  return { px, py };
+}
+
+function resolveCasPolresCoords(rawName, poldaReg, idx, total) {
+  const baseLat = poldaReg ? poldaReg.lat : -2.5;
+  const baseLng = poldaReg ? poldaReg.lng : 118.0;
+  let s = String(rawName || "")
+    .toUpperCase()
+    .replace(/^(POLRESTABES|POLRESTA|POLRES\s+METRO|POLRES|RESTABES|RESTA|RES\s+METRO|RES)\s+/i, "")
+    .replace(/^(KABUPATEN|KAB\.?|KOTA\s+ADM\.?|KOTA)\s+/i, "")
+    .replace(/^KAWASAN\s+PELABUHAN\s+/i, "")
+    .replace(/^PELABUHAN\s+/i, "")
+    .replace(/^K\.P\.\s+/i, "")
+    .trim();
+
+  // Check if it is a Polda HQ Directorate (Ditreskrimum / Ditreskrimsus / Ditresnarkoba / Ditressiber)
+  if (/^(DIT|KRIMUM|KRIMSUS|NARKOBA|SIBER|PPA|SAT|BIRO|BAG|SUBDIT|SPKT|PROPAM|BRIMOB|POLAIR)/.test(s)) {
+    const angle = idx * 1.65;
+    const lat = +(baseLat + Math.sin(angle) * 0.08).toFixed(4);
+    const lng = +(baseLng + Math.cos(angle) * 0.08).toFixed(4);
+    return { lat, lng, ...latLngToCasSvg(lat, lng), matched: true };
+  }
+
+  let found = CAS_KABKOTA_COORDS[s];
+  if (!found) {
+    // Try stripping KOTA / UTARA / SELATAN / TIMUR / BARAT / PUSAT or partial match
+    const keys = Object.keys(CAS_KABKOTA_COORDS);
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      if (s === k || s.endsWith(" " + k) || k.endsWith(" " + s) || (s.length >= 4 && k.includes(s)) || (k.length >= 4 && s.includes(k))) {
+        const cand = CAS_KABKOTA_COORDS[k];
+        if (Math.abs(cand[0] - baseLat) < 6.5 && Math.abs(cand[1] - baseLng) < 8.5) {
+          found = cand;
+          break;
+        }
+      }
+    }
+  }
+
+  if (found && Math.abs(found[0] - baseLat) < 7.5 && Math.abs(found[1] - baseLng) < 10.0) {
+    // Add tiny deterministic jitter if multiple units share the same city (e.g. Polrestabes & Polres Pelabuhan)
+    const jAngle = idx * 2.1;
+    const lat = +(found[0] + Math.sin(jAngle) * 0.015).toFixed(4);
+    const lng = +(found[1] + Math.cos(jAngle) * 0.015).toFixed(4);
+    return { lat, lng, ...latLngToCasSvg(lat, lng), matched: true };
+  }
+
+  // Fallback within Polda bounding box
+  const N = Math.max(1, total);
+  const angle = idx * 2.399963 + 0.35;
+  const dist = N === 1 ? 0 : Math.sqrt((idx + 0.45) / N);
+  const lat = +(baseLat + Math.sin(angle) * 0.65 * dist).toFixed(4);
+  const lng = +(baseLng + Math.cos(angle) * 0.85 * dist).toFixed(4);
+  return { lat, lng, ...latLngToCasSvg(lat, lng), matched: false };
+}
+
+function resolveCasPolsekCoords(rawName, polresNode, idx, total, zoom) {
+  const baseLat = polresNode ? polresNode.lat : -6.2;
+  const baseLng = polresNode ? polresNode.lng : 106.8;
+  let s = String(rawName || "")
+    .toUpperCase()
+    .replace(/^(POLSEKTA|POLSEK|SEKTA|SEK|SEKTOR)\s+/i, "")
+    .replace(/^(KAWASAN\s+PELABUHAN|KAWASAN\s+BANDARA|KAWASAN|KECAMATAN|KEC\.?)\s+/i, "")
+    .trim();
+
+  const kecMap = getCasKecamatanMap();
+  let best = null;
+  let bestDist = 999;
+
+  const checkCandidates = (cands) => {
+    if (!cands) return;
+    for (let i = 0; i < cands.length; i++) {
+      const d = Math.hypot(cands[i][0] - baseLat, cands[i][1] - baseLng);
+      if (d < bestDist && d < 1.6) {
+        bestDist = d;
+        best = cands[i];
+      }
+    }
+  };
+
+  checkCandidates(kecMap.get(s));
+  if (!best && s.length >= 4) {
+    for (const [k, cands] of kecMap.entries()) {
+      if (k === s || k.includes(s) || s.includes(k)) {
+        checkCandidates(cands);
+      }
+    }
+  }
+
+  const N = Math.max(1, total);
+  const ringIdx = idx < 8 ? 0 : 1;
+  const countInRing = ringIdx === 0 ? Math.min(8, N) : Math.max(1, N - 8);
+  const posInRing = ringIdx === 0 ? idx : idx - 8;
+  const angle = (posInRing / countInRing) * Math.PI * 2 - Math.PI / 2 + (ringIdx * 0.35);
+  const spreadR = Math.max(8, Math.min(18, 24 / Math.sqrt(Math.max(2, (zoom || 5) / 2.2))));
+  const rDist = spreadR * (ringIdx === 0 ? 0.68 : 1.15);
+
+  if (best) {
+    const lat = +best[0].toFixed(4);
+    const lng = +best[1].toFixed(4);
+    const realSvg = latLngToCasSvg(lat, lng);
+    const dPx = realSvg.px - polresNode.px;
+    const dPy = realSvg.py - polresNode.py;
+    const distPx = Math.hypot(dPx, dPy);
+    // Keep SVG pin readable around the Polres hub while preserving exact real-world direction & Google Maps lat/lng
+    const clampedPx = distPx > 2.5 && distPx < 24
+      ? realSvg.px
+      : +(polresNode.px + Math.cos(angle) * rDist).toFixed(1);
+    const clampedPy = distPx > 2.5 && distPx < 24
+      ? realSvg.py
+      : +(polresNode.py + Math.sin(angle) * rDist * 0.85).toFixed(1);
+    return { lat, lng, px: clampedPx, py: clampedPy, matched: true };
+  }
+
+  const lat = +(baseLat + Math.sin(angle) * 0.085 * (ringIdx === 0 ? 0.7 : 1.2)).toFixed(4);
+  const lng = +(baseLng + Math.cos(angle) * 0.095 * (ringIdx === 0 ? 0.7 : 1.2)).toFixed(4);
+  const px = +(polresNode.px + Math.cos(angle) * rDist).toFixed(1);
+  const py = +(polresNode.py + Math.sin(angle) * rDist * 0.85).toFixed(1);
+  return { lat, lng, px, py, matched: false };
+}
+
+const CAS_PULAU_VIEWS = {
+  "Semua": { scale: 1, tx: 0, ty: 0, lat: -2.5, lng: 118.0, zoom: 5 },
+  "Sumatera": { scale: 2.3, tx: -5, ty: -35, lat: -0.5, lng: 101.5, zoom: 6 },
+  "Jawa": { scale: 3.2, tx: -760, ty: -880, lat: -7.0, lng: 109.5, zoom: 7 },
+  "Kalimantan": { scale: 2.4, tx: -720, ty: -230, lat: -0.5, lng: 114.5, zoom: 6 },
+  "Sulawesi": { scale: 2.5, tx: -1120, ty: -320, lat: -1.8, lng: 121.0, zoom: 6 },
+  "Bali & Nusra": { scale: 2.8, tx: -1240, ty: -820, lat: -8.8, lng: 118.5, zoom: 7 },
+  "Maluku & Papua": { scale: 2.1, tx: -1450, ty: -260, lat: -3.2, lng: 134.5, zoom: 6 }
+};
+
+function normCasPoldaKey(raw) {
+  if (!raw) return "";
+  let s = abbrSatkerName(raw, true)
+    .toUpperCase()
+    .replace(/^POLDA\s+/i, "")
+    .replace(/^PROPINSI\s+/i, "")
+    .replace(/^PROVINSI\s+/i, "")
+    .trim();
+  if (s === "KEP. RIAU" || s === "KEPULAUAN RIAU" || s.includes("KEPRI")) return "KEPRI";
+  if (s === "KEP. BANGKA BELITUNG" || s === "KEP. BABEL" || s.includes("BANGKA BELITUNG") || s === "BABEL") return "BABEL";
+  if (s === "METRO JAYA" || s === "DKI JAKARTA" || s === "JAKARTA" || s === "PMJ") return "METRO JAYA";
+  if (s === "D.I. YOGYAKARTA" || s === "DI YOGYAKARTA" || s === "YOGYAKARTA" || s === "DIY") return "DIY";
+  if (s === "NANGGROE ACEH DARUSSALAM" || s === "DI. ACEH" || s === "NAD" || s === "ACEH") return "ACEH";
+  if (s === "PAPUA BARAT DAYA" || s === "PABD" || s === "PABARDAYA") return "PABARDAYA";
+  if (s === "PAPUA BARAT" || s === "PABAR" || s === "IRIAN JAYA BARAT") return "PABAR";
+  if (s === "PAPUA TENGAH" || s === "PATENG" || s === "PAPTENG" || s === "IRIAN JAYA TENGAH") return "PAPTENG";
+  // Papua Pegunungan & Papua Selatan masih di bawah wilayah hukum Polda Papua
+  if (s === "PAPUA PEGUNUNGAN" || s === "PAPEG" || s === "PAPUA SELATAN" || s === "PASEL" || s === "IRIAN JAYA TIMUR" || s === "IRIAN JAYA" || s === "PAPUA") return "PAPUA";
+  return s;
+}
+function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 0.95rem",minHeight:"auto"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:"10.5rem",flex:"1 1 11rem"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.76rem",fontWeight:800,lineHeight:1.25},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.8,lineHeight:1.2},children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.2rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.42rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.1rem 0.45rem",borderRadius:999,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"1.25rem",fontWeight:800,color:"inherit",marginTop:"0.2rem"},children:a})]})}function E({rows:e,loading:a,total:r}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 5px",borderRadius:4,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:a,color:r,suffix:n,empty:l}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"4px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:999,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} 
+function CasPetaKejahatanView({
+  dashboard: l,
+  summary: i,
+  kinerja: kRows,
+  loading: J,
+  from: ee,
+  to: et,
+  periodLabel,
+  router: e,
+  apiAuth,
+  onSwitchToRingkasan
+}) {
+  const [vizMode, setVizMode] = (0, a.useState)("ct");
+  // mapEngine: "vector" (Peta Wilayah SVG) | "gmaps_street" (Peta Jalan & Kecamatan) | "gmaps_sat" (Peta Satelit)
+  const [mapEngine, setMapEngine] = (0, a.useState)("vector");
+  const [pulauFilter, setPulauFilter] = (0, a.useState)("Semua");
+  const [searchQ, setSearchQ] = (0, a.useState)("");
+  const [sortBy, setSortBy] = (0, a.useState)("ct");
+  const [showThermal, setShowThermal] = (0, a.useState)(true);
+  const [showLabels, setShowLabels] = (0, a.useState)(true);
+  const [isFullPage, setIsFullPage] = (0, a.useState)(false);
+
+  // Reactive Light vs Dark Theme synchronization (eliminates belang-belang contrast mismatch)
+  const [isDark, setIsDark] = (0, a.useState)(() => {
+    if (typeof document === "undefined") return false;
+    return (
+      document.documentElement.getAttribute("data-theme") === "dark" ||
+      document.documentElement.classList.contains("dark") ||
+      (document.body && document.body.classList.contains("cms-dark"))
+    );
+  });
+
+  (0, a.useEffect)(() => {
+    if (typeof document === "undefined") return;
+    const syncTheme = () => {
+      const dark =
+        document.documentElement.getAttribute("data-theme") === "dark" ||
+        document.documentElement.classList.contains("dark") ||
+        Boolean(document.body && document.body.classList.contains("cms-dark"));
+      setIsDark(dark);
+    };
+    syncTheme();
+    const obs = new MutationObserver(syncTheme);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class"] });
+    if (document.body) obs.observe(document.body, { attributes: true, attributeFilter: ["data-theme", "class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  // Unified Theme Palette matching Ringkasan Dashboard 100%
+  const T = (0, a.useMemo)(() => {
+    if (isDark) {
+      return {
+        pageBg: "#0b1220",
+        cardBg: "#111a2e",
+        cardBorder: "#1f2b45",
+        cardShadow: "none",
+        subCardBg: "#0f172a",
+        subCardBorder: "#1f2b45",
+        rowCardBg: "#162038",
+        rowCardBorder: "#263554",
+        divider: "#1f2b45",
+        trackBg: "#1e293b",
+        textPrimary: "#f1f5f9",
+        textSecondary: "#cbd5e1",
+        textMuted: "#94a3b8",
+        textSubtle: "#64748b",
+        btnBg: "#162038",
+        btnBorder: "#293856",
+        btnText: "#cbd5e1",
+        inputBg: "#0f1a2e",
+        inputBorder: "#334155",
+        mapOcean: "radial-gradient(ellipse at 50% 50%, #0c1e38 0%, #071324 70%, #040b17 100%)",
+        mapBorder: "#1f2b45",
+        mapGridLine: "#38bdf8",
+        mapGridText: "#64748b",
+        mapZeroFill: "#1e293b",
+        mapZeroStroke: "#334155",
+        mapSelStroke: "#38bdf8",
+        labelPillBg: "rgba(15, 23, 42, 0.90)",
+        labelPillText: "#f8fafc",
+        tooltipBg: "rgba(15, 23, 42, 0.95)",
+        tooltipBorder: "#334155",
+        ctText: "#f87171",
+        ctBg: "rgba(239, 68, 68, 0.18)",
+        ctBorder: "rgba(239, 68, 68, 0.45)",
+        ccText: "#34d399",
+        ccBg: "rgba(16, 185, 129, 0.18)",
+        ccBorder: "rgba(16, 185, 129, 0.45)",
+        crText: "#60a5fa",
+        crBg: "rgba(37, 99, 235, 0.20)",
+        crBorder: "rgba(59, 130, 246, 0.45)",
+        warnText: "#fbbf24",
+        warnBg: "rgba(245, 158, 11, 0.18)",
+        warnBorder: "rgba(245, 158, 11, 0.45)",
+        accentText: "#38bdf8",
+        accentBg: "rgba(2, 132, 199, 0.22)",
+        accentBorder: "rgba(56, 189, 248, 0.45)"
+      };
+    }
+    return {
+      pageBg: "#f1f5f9",
+      cardBg: "#ffffff",
+      cardBorder: "#e2e8f0",
+      cardShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+      subCardBg: "#f8fafc",
+      subCardBorder: "#e2e8f0",
+      rowCardBg: "#ffffff",
+      rowCardBorder: "#e2e8f0",
+      divider: "#eef2f7",
+      trackBg: "#e2e8f0",
+      textPrimary: "#0f172a",
+      textSecondary: "#334155",
+      textMuted: "#64748b",
+      textSubtle: "#94a3b8",
+      btnBg: "#f8fafc",
+      btnBorder: "#dbe3ee",
+      btnText: "#334155",
+      inputBg: "#ffffff",
+      inputBorder: "#cbd5e1",
+      mapOcean: "linear-gradient(180deg, #f0f7ff 0%, #e0f2fe 58%, #dbeafe 100%)",
+      mapBorder: "#cbd5e1",
+      mapGridLine: "#64748b",
+      mapGridText: "#64748b",
+      mapZeroFill: "#cbd5e1",
+      mapZeroStroke: "#ffffff",
+      mapSelStroke: "#1d4ed8",
+      labelPillBg: "rgba(255, 255, 255, 0.94)",
+      labelPillText: "#0f172a",
+      tooltipBg: "rgba(255, 255, 255, 0.96)",
+      tooltipBorder: "#cbd5e1",
+      ctText: "#dc2626",
+      ctBg: "#fef2f2",
+      ctBorder: "#fca5a5",
+      ccText: "#15803d",
+      ccBg: "#f0fdf4",
+      ccBorder: "#86efac",
+      crText: "#1d4ed8",
+      crBg: "#eff6ff",
+      crBorder: "#93c5fd",
+      warnText: "#b45309",
+      warnBg: "#fffbeb",
+      warnBorder: "#fcd34d",
+      accentText: "#1d4ed8",
+      accentBg: "#eff6ff",
+      accentBorder: "#93c5fd"
+    };
+  }, [isDark]);
+
+  function renderThemeBadge(text, variant) {
+    if (!text) return null;
+    const mapLight = {
+      "danger-bold": { bg: "#fef2f2", border: "#fca5a5", color: "#b91c1c", fw: 800 },
+      danger: { bg: "#fef2f2", border: "#fecaca", color: "#dc2626", fw: 700 },
+      warning: { bg: "#fffbeb", border: "#fde68a", color: "#b45309", fw: 700 },
+      success: { bg: "#f0fdf4", border: "#bbf7d0", color: "#15803d", fw: 700 },
+      blue: { bg: "#eff6ff", border: "#bfdbfe", color: "#1d4ed8", fw: 700 },
+      neutral: { bg: "#f1f5f9", border: "#cbd5e1", color: "#475569", fw: 700 }
+    };
+    const mapDark = {
+      "danger-bold": { bg: "rgba(220,38,38,0.22)", border: "rgba(239,68,68,0.5)", color: "#fca5a5", fw: 800 },
+      danger: { bg: "rgba(239,68,68,0.16)", border: "rgba(239,68,68,0.35)", color: "#f87171", fw: 700 },
+      warning: { bg: "rgba(245,158,11,0.16)", border: "rgba(245,158,11,0.35)", color: "#fbbf24", fw: 700 },
+      success: { bg: "rgba(16,185,129,0.16)", border: "rgba(16,185,129,0.35)", color: "#34d399", fw: 700 },
+      blue: { bg: "rgba(37,99,235,0.18)", border: "rgba(59,130,246,0.4)", color: "#60a5fa", fw: 700 },
+      neutral: { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.28)", color: "#94a3b8", fw: 700 }
+    };
+    const palette = isDark ? mapDark : mapLight;
+    const s = palette[variant] || palette.neutral;
+    return (0, t.jsx)("span", {
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: s.bg,
+        border: "1px solid " + s.border,
+        color: s.color,
+        borderRadius: 6,
+        fontSize: "0.66rem",
+        fontWeight: s.fw,
+        padding: "0.1rem 0.45rem",
+        lineHeight: 1.3,
+        whiteSpace: "nowrap"
+      },
+      children: text
+    });
+  }
+
+  // Camera & 3-Level Drilldown State (0 = Nasional/Polda, 1 = Polda/Polres, 2 = Polres/Polsek)
+  const [drillLevel, setDrillLevel] = (0, a.useState)(0);
+  const [zoom, setZoom] = (0, a.useState)(1);
+  const [pan, setPan] = (0, a.useState)({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = (0, a.useState)(false);
+  const dragStartRef = (0, a.useRef)({ x: 0, y: 0, panX: 0, panY: 0, moved: false });
+
+  const [selectedId, setSelectedId] = (0, a.useState)(null);
+  const [selectedPolres, setSelectedPolres] = (0, a.useState)(null);
+  const [selectedPolsek, setSelectedPolsek] = (0, a.useState)(null);
+  const [hoveredItem, setHoveredItem] = (0, a.useState)(null);
+
+  const [poldaKodeMap, setPoldaKodeMap] = (0, a.useState)({});
+  const [subSatkers, setSubSatkers] = (0, a.useState)([]);
+  const [subLoading, setSubLoading] = (0, a.useState)(false);
+  const [polsekSatkers, setPolsekSatkers] = (0, a.useState)([]);
+  const [polsekLoading, setPolsekLoading] = (0, a.useState)(false);
+
+  const leafletContainerRef = (0, a.useRef)(null);
+  const leafletMapRef = (0, a.useRef)(null);
+  const leafletTileLayerRef = (0, a.useRef)(null);
+  const leafletLayerGroupRef = (0, a.useRef)(null);
+
+  const isGoogleTileMode = mapEngine === "gmaps_street" || mapEngine === "gmaps_sat";
+
+  // Helper to center any SVG coordinate (targetX, targetY) in the 1200x470 viewport at scale s
+  const focusCameraOn = (0, a.useCallback)((targetX, targetY, targetScale) => {
+    const s = Math.max(1, Math.min(14, Number(targetScale || 1)));
+    if (s <= 1.02) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+    } else {
+      setZoom(+s.toFixed(2));
+      setPan({
+        x: Math.round(600 - targetX * s),
+        y: Math.round(235 - targetY * s)
+      });
+    }
+  }, []);
+
+  // Ensure Polda kode mapping is available for 3-level drilldown even if sessionStorage cache was older
+  (0, a.useEffect)(() => {
+    if (!apiAuth) return;
+    let hasKodes = Array.isArray(kRows) && kRows.some(r => r && r.kode);
+    if (hasKodes) {
+      const m = {};
+      for (const r of kRows) {
+        if (r && r.kode && r.nama) m[normCasPoldaKey(r.nama)] = r.kode;
+      }
+      setPoldaKodeMap(prev => ({ ...prev, ...m }));
+      return;
+    }
+    let cancelled = false;
+    apiAuth.get("/bdb/kinerja-perkara/rekap", {
+      params: { from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+    }).then(res => {
+      const rootNode = (res?.data?.data?.nodes || [])[0];
+      if (!rootNode?.kode || cancelled) return;
+      return apiAuth.get("/bdb/kinerja-perkara/rekap", {
+        params: { parent: rootNode.kode, from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+      });
+    }).then(res2 => {
+      if (cancelled || !res2) return;
+      const nodes = res2?.data?.data?.nodes || [];
+      const m = {};
+      for (const n of nodes) {
+        if (n && n.kode && n.nama) m[normCasPoldaKey(n.nama)] = n.kode;
+      }
+      setPoldaKodeMap(prev => ({ ...prev, ...m }));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [kRows, ee, et, apiAuth]);
+
+  // Handle Fullpage Escape key & browser fullscreen sync
+  (0, a.useEffect)(() => {
+    if (typeof window === "undefined") return;
+    const onKey = ev => {
+      if (ev.key === "Escape" && isFullPage) {
+        setIsFullPage(false);
+        try { if (document.fullscreenElement) document.exitFullscreen?.(); } catch (_e) {}
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFullPage]);
+
+  const toggleFullPage = () => {
+    const next = !isFullPage;
+    setIsFullPage(next);
+    try {
+      if (next) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    } catch (_e) {}
+    if (leafletMapRef.current) {
+      setTimeout(() => { try { leafletMapRef.current.invalidateSize(); } catch (_e) {} }, 220);
+    }
+  };
+
+  // Merge API data into 36 Polda regions (Papua Pegunungan & Papua Selatan unified into Polda Papua)
+  const mergedRegions = (0, a.useMemo)(() => {
+    const mapByKey = new Map();
+    for (const g of CAS_INDONESIA_GEO_DATA) {
+      mapByKey.set(g.id, {
+        ...g,
+        kode: poldaKodeMap[g.id] || null,
+        has_children: true,
+        ct: 0,
+        cc: 0,
+        cc_aktual: 0,
+        cc_tunggakan: 0,
+        cp_berjalan: 0,
+        cp_tunggakan: 0,
+        cr: 0,
+        crime_rate: null,
+        crime_clock_detik: null,
+        hasData: false
+      });
+    }
+
+    const poldaList = Array.isArray(l?.polda) ? l.polda : [];
+    for (const p of poldaList) {
+      const k = normCasPoldaKey(p.nama);
+      const target = mapByKey.get(k);
+      if (target) {
+        const ctVal = Number(p.ct || 0);
+        const ccAkt = Number(p.cc_aktual || 0);
+        const ccTgk = Number(p.cc_tunggakan || 0);
+        const ccTot = (ccAkt + ccTgk) || Number(p.cc || 0);
+        target.ct += ctVal;
+        target.cc += ccTot;
+        target.cc_aktual += (ccAkt || ccTot);
+        target.cc_tunggakan += ccTgk;
+        if (ctVal > 0 || ccTot > 0) target.hasData = true;
+      }
+    }
+
+    const kinList = Array.isArray(kRows) ? kRows : [];
+    const kinSeenForKey = new Set();
+    for (const kn of kinList) {
+      const k = normCasPoldaKey(kn.nama);
+      const target = mapByKey.get(k);
+      if (target) {
+        if (kn.kode && !target.kode) target.kode = kn.kode;
+        if (kn.has_children) target.has_children = true;
+        const ctVal = Number(kn.ct || 0);
+        const ccAkt = Number(kn.cc_aktual || 0);
+        const ccTgk = Number(kn.cc_tunggakan || 0);
+        const ccTot = ccAkt + ccTgk;
+        const cpBer = Number(kn.cp_berjalan || 0);
+        const cpTgk = Number(kn.cp_tunggakan || 0);
+        if (!kinSeenForKey.has(k)) {
+          kinSeenForKey.add(k);
+          if (ctVal > 0 || target.ct === 0) target.ct = ctVal;
+          if (ccTot > 0 || target.cc === 0) {
+            target.cc = ccTot;
+            target.cc_aktual = ccAkt;
+            target.cc_tunggakan = ccTgk;
+          }
+          target.cp_berjalan = cpBer;
+          target.cp_tunggakan = cpTgk;
+        } else {
+          target.ct += ctVal;
+          target.cc += ccTot;
+          target.cc_aktual += ccAkt;
+          target.cc_tunggakan += ccTgk;
+          target.cp_berjalan += cpBer;
+          target.cp_tunggakan += cpTgk;
+        }
+        target.cr = Number(kn.cr ?? (target.ct > 0 ? (target.cc / (target.ct + target.cc_tunggakan)) * 100 : 0));
+        if (kn.crime_rate != null) target.crime_rate = Number(kn.crime_rate);
+        if (kn.crime_clock_detik != null) target.crime_clock_detik = Number(kn.crime_clock_detik);
+        if (ctVal > 0 || ccTot > 0 || cpBer > 0 || cpTgk > 0) target.hasData = true;
+      }
+    }
+
+    if (l?.scoped && l?.scope_satker) {
+      const sk = normCasPoldaKey(l.scope_satker);
+      const target = mapByKey.get(sk);
+      if (target && target.ct === 0 && (Number(i?.ct || l?.ct || 0) > 0)) {
+        target.ct = Number(i?.ct || l?.ct || 0);
+        target.cc_aktual = Number(i?.cc_aktual || 0);
+        target.cc_tunggakan = Number(i?.cc_tunggakan || 0);
+        target.cc = (target.cc_aktual + target.cc_tunggakan) || Number(l?.cc || 0);
+        target.cp_berjalan = Number(i?.cp_berjalan || 0);
+        target.cp_tunggakan = Number(i?.cp_tunggakan || 0);
+        target.cr = Number(i?.cr || 0);
+        target.hasData = true;
+      }
+    }
+
+    const arr = Array.from(mapByKey.values());
+    for (const item of arr) {
+      if (item.ct > 0 && item.cc > 0 && !item.cr) {
+        item.cr = Math.min(100, (item.cc / (item.ct + (item.cc_tunggakan || 0))) * 100);
+      }
+    }
+
+    const maxCT = Math.max(1, ...arr.map(x => x.ct));
+    const maxCC = Math.max(1, ...arr.map(x => x.cc));
+    const maxCPTgk = Math.max(1, ...arr.map(x => x.cp_tunggakan));
+    const sumCT = arr.reduce((acc, x) => acc + x.ct, 0);
+
+    const sortedByCT = [...arr].sort((a, b) => b.ct - a.ct || b.cc - a.cc);
+    const rankMap = new Map();
+    sortedByCT.forEach((it, idx) => rankMap.set(it.id, idx + 1));
+
+    return arr.map(it => {
+      const rawRatioCT = it.ct > 0 ? it.ct / maxCT : 0;
+      const ratioCT = it.ct > 0 ? Math.pow(rawRatioCT, 0.55) : 0;
+      const ratioCC = it.cc > 0 ? Math.pow(it.cc / maxCC, 0.55) : 0;
+      const ratioCPTgk = it.cp_tunggakan > 0 ? Math.pow(it.cp_tunggakan / maxCPTgk, 0.55) : 0;
+      let level = "zero";
+      let levelLabel = "Nihil";
+      if (it.ct > 0) {
+        if (ratioCT >= 0.72) { level = "hotspot"; levelLabel = "Tertinggi"; }
+        else if (ratioCT >= 0.45) { level = "high"; levelLabel = "Tinggi"; }
+        else if (ratioCT >= 0.22) { level = "medium"; levelLabel = "Sedang"; }
+        else { level = "low"; levelLabel = "Rendah"; }
+      }
+      return {
+        ...it,
+        rank: rankMap.get(it.id) || 36,
+        rawRatioCT,
+        ratioCT,
+        ratioCC,
+        ratioCPTgk,
+        sharePct: sumCT > 0 ? (it.ct / sumCT) * 100 : 0,
+        level,
+        levelLabel
+      };
+    });
+  }, [l, i, kRows, poldaKodeMap]);
+
+  const stats = (0, a.useMemo)(() => {
+    const sumRegionCT = mergedRegions.reduce((s, r) => s + r.ct, 0);
+    const sumRegionCC = mergedRegions.reduce((s, r) => s + r.cc, 0);
+    const totalCT = Number(i?.ct || l?.ct || sumRegionCT || 0);
+    const totalCC = Number(((i?.cc_aktual || 0) + (i?.cc_tunggakan || 0)) || l?.cc || sumRegionCC || 0);
+    const avgCR = Number(i?.cr ?? (totalCT > 0 ? (totalCC / totalCT) * 100 : 0));
+    const sortedCT = [...mergedRegions].sort((a, b) => b.ct - a.ct);
+    const topHotspot = sortedCT[0] || mergedRegions[0];
+    const activeCount = mergedRegions.filter(r => r.ct > 0 || r.cc > 0).length;
+    return {
+      totalCT,
+      totalCC,
+      avgCR,
+      topHotspot,
+      activeCount,
+      totalRegions: mergedRegions.length
+    };
+  }, [mergedRegions, i, l]);
+
+  // Select default Polda (#1 hotspot or scoped Polda) without zooming out of Nasional on initial load
+  (0, a.useEffect)(() => {
+    if (!selectedId && mergedRegions.length > 0) {
+      if (l?.scoped && l?.scope_satker) {
+        const sk = normCasPoldaKey(l.scope_satker);
+        const found = mergedRegions.find(r => r.id === sk);
+        if (found) {
+          setSelectedId(found.id);
+          return;
+        }
+      }
+      if (stats.topHotspot) {
+        setSelectedId(stats.topHotspot.id);
+      }
+    }
+  }, [selectedId, mergedRegions, stats.topHotspot, l]);
+
+  const selectedRegion = (0, a.useMemo)(() => {
+    return mergedRegions.find(r => r.id === selectedId) || stats.topHotspot || mergedRegions[0];
+  }, [mergedRegions, selectedId, stats.topHotspot]);
+
+  // Fetch Level 1 children: Polres / Polrestabes / Direktorat under selectedRegion
+  (0, a.useEffect)(() => {
+    const kode = selectedRegion?.kode || poldaKodeMap[selectedRegion?.id];
+    if (!kode || !apiAuth) {
+      setSubSatkers([]);
+      return;
+    }
+    let cancelled = false;
+    setSubLoading(true);
+    apiAuth.get("/bdb/kinerja-perkara/rekap", {
+      params: {
+        parent: kode,
+        from: ee,
+        to: et,
+        visibility: "national",
+        functionDomain: "INTERNAL_RESERSE",
+        organizationDomain: "INTERNAL_POLRI"
+      }
+    }).then(res => {
+      if (cancelled) return;
+      const nodes = Array.isArray(res?.data?.data?.nodes) ? res.data.data.nodes : [];
+      const sorted = [...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
+      setSubSatkers(sorted);
+    }).catch(() => {
+      if (!cancelled) setSubSatkers([]);
+    }).finally(() => {
+      if (!cancelled) setSubLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedRegion?.id, selectedRegion?.kode, poldaKodeMap, ee, et, apiAuth]);
+
+  // Resolve real Kabupaten/Kota geospatial coordinates for Polres inside the selected Polda
+  const polresMapNodes = (0, a.useMemo)(() => {
+    if (!selectedRegion || !subSatkers.length) return [];
+    const maxCT = Math.max(1, ...subSatkers.map(s => Number(s.ct || 0)));
+    const N = subSatkers.length;
+
+    return subSatkers.map((s, idx) => {
+      const geo = resolveCasPolresCoords(s.nama, selectedRegion, idx, N);
+      const ctVal = Number(s.ct || 0);
+      const ccVal = Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0);
+      const cpTgk = Number(s.cp_tunggakan || 0);
+      const crVal = Number(s.cr ?? (ctVal > 0 ? (ccVal / (ctVal + Number(s.cc_tunggakan || 0))) * 100 : 0));
+      const ratio = ctVal > 0 ? Math.pow(ctVal / maxCT, 0.55) : 0;
+      const color = ctVal === 0 ? "#64748b" : ratio >= 0.72 ? "#ef4444" : ratio >= 0.42 ? "#f97316" : ratio >= 0.2 ? "#eab308" : "#10b981";
+      return {
+        ...s,
+        ct: ctVal,
+        cc: ccVal,
+        cp_tunggakan: cpTgk,
+        cr: crVal,
+        shortName: abbrSatkerName(s.nama, false),
+        px: geo.px,
+        py: geo.py,
+        lat: geo.lat,
+        lng: geo.lng,
+        ratio,
+        color,
+        rank: idx + 1
+      };
+    });
+  }, [selectedRegion, subSatkers]);
+
+  // Fetch Level 2 children: Polsek / Unit under selectedPolres
+  (0, a.useEffect)(() => {
+    if (!selectedPolres?.kode || !apiAuth) {
+      setPolsekSatkers([]);
+      return;
+    }
+    let cancelled = false;
+    setPolsekLoading(true);
+    apiAuth.get("/bdb/kinerja-perkara/rekap", {
+      params: {
+        parent: selectedPolres.kode,
+        from: ee,
+        to: et,
+        visibility: "national",
+        functionDomain: "INTERNAL_RESERSE",
+        organizationDomain: "INTERNAL_POLRI"
+      }
+    }).then(res => {
+      if (cancelled) return;
+      const nodes = Array.isArray(res?.data?.data?.nodes) ? res.data.data.nodes : [];
+      const sorted = [...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
+      setPolsekSatkers(sorted);
+    }).catch(() => {
+      if (!cancelled) setPolsekSatkers([]);
+    }).finally(() => {
+      if (!cancelled) setPolsekLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedPolres?.kode, ee, et, apiAuth]);
+
+  // Resolve real Kecamatan geospatial coordinates for Polsek under the selected Polres
+  const polsekMapNodes = (0, a.useMemo)(() => {
+    if (!selectedPolres || !polsekSatkers.length) return [];
+    const maxCT = Math.max(1, ...polsekSatkers.map(s => Number(s.ct || 0)));
+    const N = polsekSatkers.length;
+
+    return polsekSatkers.map((s, idx) => {
+      const geo = resolveCasPolsekCoords(s.nama, selectedPolres, idx, N, zoom);
+      const ctVal = Number(s.ct || 0);
+      const ccVal = Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0);
+      const cpTgk = Number(s.cp_tunggakan || 0);
+      const crVal = Number(s.cr ?? (ctVal > 0 ? (ccVal / (ctVal + Number(s.cc_tunggakan || 0))) * 100 : 0));
+      const ratio = ctVal > 0 ? Math.pow(ctVal / maxCT, 0.55) : 0;
+      const color = ctVal === 0 ? "#64748b" : ratio >= 0.72 ? "#ef4444" : ratio >= 0.42 ? "#f97316" : ratio >= 0.2 ? "#eab308" : "#10b981";
+      return {
+        ...s,
+        ct: ctVal,
+        cc: ccVal,
+        cp_tunggakan: cpTgk,
+        cr: crVal,
+        shortName: abbrSatkerName(s.nama, false),
+        px: geo.px,
+        py: geo.py,
+        lat: geo.lat,
+        lng: geo.lng,
+        ratio,
+        color,
+        rank: idx + 1
+      };
+    });
+  }, [selectedPolres, polsekSatkers, zoom]);
+
+  // 3-Level Drilldown Navigation Handlers
+  const handleResetNasional = () => {
+    setDrillLevel(0);
+    setSelectedPolres(null);
+    setSelectedPolsek(null);
+    setPulauFilter("Semua");
+    focusCameraOn(600, 235, 1);
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try { leafletMapRef.current.flyTo([-2.5, 118.0], 5, { duration: 0.5 }); } catch (_e) {}
+    }
+  };
+
+  const handleSelectPoldaAndZoom = (reg) => {
+    if (!reg) return;
+    setSelectedId(reg.id);
+    setSelectedPolres(null);
+    setSelectedPolsek(null);
+    setDrillLevel(1);
+    const targetX = reg.bx || reg.cx;
+    const targetY = reg.by || reg.cy;
+    const pScale = Math.min(5.8, Math.max(2.6, Math.min(620 / Math.max(reg.bw || 50, 36), 255 / Math.max(reg.bh || 40, 26))));
+    focusCameraOn(targetX, targetY, pScale);
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try { leafletMapRef.current.flyTo([reg.lat, reg.lng], 8, { duration: 0.6 }); } catch (_e) {}
+    }
+  };
+
+  const handleSelectPolresAndZoom = (polresNode) => {
+    if (!polresNode) return;
+    setSelectedPolres(polresNode);
+    setSelectedPolsek(null);
+    setDrillLevel(2);
+    const nextScale = Math.min(10.5, Math.max(5.2, zoom * 1.75));
+    focusCameraOn(polresNode.px, polresNode.py, nextScale);
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try { leafletMapRef.current.flyTo([polresNode.lat, polresNode.lng], 12, { duration: 0.6 }); } catch (_e) {}
+    }
+  };
+
+  const handleSelectPolsekAndZoom = (polsekNode) => {
+    if (!polsekNode) return;
+    setSelectedPolsek(polsekNode);
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try { leafletMapRef.current.flyTo([polsekNode.lat, polsekNode.lng], 14, { duration: 0.5 }); } catch (_e) {}
+    }
+  };
+
+  const handleStepBack = () => {
+    if (drillLevel === 2) {
+      setSelectedPolres(null);
+      setSelectedPolsek(null);
+      setDrillLevel(1);
+      if (selectedRegion) {
+        const pScale = Math.min(5.8, Math.max(2.6, Math.min(620 / Math.max(selectedRegion.bw || 50, 36), 255 / Math.max(selectedRegion.bh || 40, 26))));
+        focusCameraOn(selectedRegion.bx || selectedRegion.cx, selectedRegion.by || selectedRegion.cy, pScale);
+        if (leafletMapRef.current && isGoogleTileMode) {
+          try { leafletMapRef.current.flyTo([selectedRegion.lat, selectedRegion.lng], 8, { duration: 0.5 }); } catch (_e) {}
+        }
+      }
+    } else {
+      handleResetNasional();
+    }
+  };
+
+  const handleSelectPulau = (pulau) => {
+    setPulauFilter(pulau);
+    setDrillLevel(0);
+    setSelectedPolres(null);
+    setSelectedPolsek(null);
+    const v = CAS_PULAU_VIEWS[pulau] || CAS_PULAU_VIEWS["Semua"];
+    setZoom(v.scale);
+    setPan({ x: v.tx, y: v.ty });
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try { leafletMapRef.current.flyTo([v.lat, v.lng], v.zoom, { duration: 0.5 }); } catch (_e) {}
+    }
+  };
+
+  function getRegionStyle(reg) {
+    const borderStroke = isDark ? "rgba(15, 23, 42, 0.85)" : "#ffffff";
+    if (vizMode === "cr") {
+      if (reg.ct === 0 && reg.cc === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0%" };
+      if (reg.cr >= 75) return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: reg.cr.toFixed(1) + "%" };
+      if (reg.cr >= 50) return { fill: "#0ea5e9", stroke: borderStroke, badgeColor: "#0284c7", text: reg.cr.toFixed(1) + "%" };
+      if (reg.cr >= 30) return { fill: "#f59e0b", stroke: borderStroke, badgeColor: "#d97706", text: reg.cr.toFixed(1) + "%" };
+      return { fill: "#ef4444", stroke: borderStroke, badgeColor: "#dc2626", text: reg.cr.toFixed(1) + "%" };
+    }
+    if (vizMode === "cc") {
+      if (reg.cc === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
+      if (reg.ratioCC >= 0.70) return { fill: "#059669", stroke: borderStroke, badgeColor: "#059669", text: z(reg.cc) };
+      if (reg.ratioCC >= 0.42) return { fill: "#10b981", stroke: borderStroke, badgeColor: "#10b981", text: z(reg.cc) };
+      if (reg.ratioCC >= 0.20) return { fill: "#0ea5e9", stroke: borderStroke, badgeColor: "#0284c7", text: z(reg.cc) };
+      return { fill: "#3b82f6", stroke: borderStroke, badgeColor: "#2563eb", text: z(reg.cc) };
+    }
+    if (vizMode === "cp_tunggakan") {
+      if (reg.cp_tunggakan === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
+      if (reg.ratioCPTgk >= 0.70) return { fill: "#dc2626", stroke: borderStroke, badgeColor: "#dc2626", text: z(reg.cp_tunggakan) };
+      if (reg.ratioCPTgk >= 0.40) return { fill: "#f97316", stroke: borderStroke, badgeColor: "#ea580c", text: z(reg.cp_tunggakan) };
+      if (reg.ratioCPTgk >= 0.18) return { fill: "#eab308", stroke: borderStroke, badgeColor: "#ca8a04", text: z(reg.cp_tunggakan) };
+      return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: z(reg.cp_tunggakan) };
+    }
+    if (reg.ct === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
+    if (reg.level === "hotspot") return { fill: "#ef4444", stroke: borderStroke, badgeColor: "#dc2626", text: z(reg.ct) };
+    if (reg.level === "high") return { fill: "#f97316", stroke: borderStroke, badgeColor: "#ea580c", text: z(reg.ct) };
+    if (reg.level === "medium") return { fill: "#eab308", stroke: borderStroke, badgeColor: "#ca8a04", text: z(reg.ct) };
+    return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: z(reg.ct) };
+  }
+
+  // Google Maps Street & Satellite Tile Engine (Kecamatan, Kelurahan, & Jalan — Zero Watermark)
+  (0, a.useEffect)(() => {
+    if (!isGoogleTileMode || typeof window === "undefined" || !leafletContainerRef.current) return;
+    let cancelled = false;
+
+    const tileUrl = mapEngine === "gmaps_sat"
+      ? "https://{s}.google.com/vt/lyrs=y&hl=id&x={x}&y={y}&z={z}"
+      : "https://{s}.google.com/vt/lyrs=m&hl=id&x={x}&y={y}&z={z}";
+
+    function renderLeafletLayers(L, map) {
+      if (leafletLayerGroupRef.current) {
+        leafletLayerGroupRef.current.clearLayers();
+      } else {
+        leafletLayerGroupRef.current = L.layerGroup().addTo(map);
+      }
+
+      if (drillLevel === 2 && polsekMapNodes.length > 0) {
+        // Also render central Polres Hub marker
+        if (selectedPolres) {
+          const hub = L.circleMarker([selectedPolres.lat, selectedPolres.lng], {
+            radius: 10,
+            fillColor: "#1d4ed8",
+            color: "#ffffff",
+            weight: 2.5,
+            opacity: 1,
+            fillOpacity: 0.9
+          });
+          hub.bindTooltip(
+            "<div style='font-family:sans-serif;font-size:12px'><strong>🏢 INDK: " + selectedPolres.nama + "</strong><br/>🔥 Total CT: <b>" + z(selectedPolres.ct) + " LP</b></div>",
+            { direction: "top", offset: [0, -6] }
+          );
+          hub.addTo(leafletLayerGroupRef.current);
+        }
+
+        polsekMapNodes.forEach(psk => {
+          const c = L.circleMarker([psk.lat, psk.lng], {
+            radius: Math.max(8, 7 + psk.ratio * 12),
+            fillColor: psk.color,
+            color: selectedPolsek?.kode === psk.kode ? "#1d4ed8" : "#ffffff",
+            weight: selectedPolsek?.kode === psk.kode ? 3 : 1.8,
+            opacity: 0.98,
+            fillOpacity: 0.85
+          });
+          c.bindTooltip(
+            "<div style='font-family:sans-serif;font-size:12px'><strong>📍 " + psk.nama + "</strong><br/>🔥 CT: <b>" + z(psk.ct) + " LP</b> • ✅ CC: <b>" + z(psk.cc) + "</b> • CR: <b>" + psk.cr.toFixed(1) + "%</b></div>",
+            { direction: "top", offset: [0, -5] }
+          );
+          c.on("click", () => handleSelectPolsekAndZoom(psk));
+          c.addTo(leafletLayerGroupRef.current);
+        });
+        return;
+      }
+
+      if (drillLevel === 1 && polresMapNodes.length > 0) {
+        polresMapNodes.forEach(prs => {
+          const c = L.circleMarker([prs.lat, prs.lng], {
+            radius: Math.max(9, 8 + prs.ratio * 15),
+            fillColor: prs.color,
+            color: "#ffffff",
+            weight: 2,
+            opacity: 0.98,
+            fillOpacity: 0.84
+          });
+          c.bindTooltip(
+            "<div style='font-family:sans-serif;font-size:12px'><strong>🛡️ " + prs.nama + "</strong><br/>🔥 CT: <b>" + z(prs.ct) + " LP</b> • ✅ CC: <b>" + z(prs.cc) + "</b><br/><em>Klik untuk zoom ke Kecamatan / Polsek jajaran</em></div>",
+            { direction: "top", offset: [0, -5] }
+          );
+          c.on("click", () => handleSelectPolresAndZoom(prs));
+          c.addTo(leafletLayerGroupRef.current);
+        });
+        return;
+      }
+
+      mergedRegions.forEach(reg => {
+        if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return;
+        const st = getRegionStyle(reg);
+        const radius = Math.max(9, Math.min(30, 8 + reg.ratioCT * 22));
+        const circle = L.circleMarker([reg.lat, reg.lng], {
+          radius,
+          fillColor: st.badgeColor,
+          color: reg.id === selectedRegion?.id ? "#1d4ed8" : "#ffffff",
+          weight: reg.id === selectedRegion?.id ? 3 : 1.8,
+          opacity: 0.96,
+          fillOpacity: reg.ct > 0 ? 0.80 : 0.35
+        });
+        circle.bindTooltip(
+          "<div style='font-family:sans-serif;font-size:12px;line-height:1.4'>" +
+          "<strong>" + reg.polda + "</strong> (#" + reg.rank + ")<br/>" +
+          "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%)<br/>" +
+          "✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
+          "<em>Klik untuk zoom ke Kabupaten/Kota (Polres)</em></div>",
+          { direction: "top", offset: [0, -6] }
+        );
+        circle.on("click", () => handleSelectPoldaAndZoom(reg));
+        circle.addTo(leafletLayerGroupRef.current);
+      });
+    }
+
+    function initLeaflet() {
+      if (cancelled || !leafletContainerRef.current || !window.L) return;
+      const L = window.L;
+      if (!leafletMapRef.current) {
+        let initCenter = [-2.5, 118.0];
+        let initZoom = 5;
+        if (drillLevel === 2 && selectedPolres) {
+          initCenter = [selectedPolres.lat, selectedPolres.lng];
+          initZoom = 12;
+        } else if (drillLevel === 1 && selectedRegion) {
+          initCenter = [selectedRegion.lat, selectedRegion.lng];
+          initZoom = 8;
+        } else {
+          const v = CAS_PULAU_VIEWS[pulauFilter] || CAS_PULAU_VIEWS["Semua"];
+          initCenter = [v.lat, v.lng];
+          initZoom = v.zoom;
+        }
+        const map = L.map(leafletContainerRef.current, {
+          center: initCenter,
+          zoom: initZoom,
+          zoomControl: true,
+          attributionControl: false
+        });
+        leafletTileLayerRef.current = L.tileLayer(tileUrl, {
+          subdomains: ["mt0", "mt1", "mt2", "mt3"],
+          maxZoom: 20
+        }).addTo(map);
+        leafletMapRef.current = map;
+      } else if (leafletTileLayerRef.current) {
+        leafletTileLayerRef.current.setUrl(tileUrl);
+      }
+      renderLeafletLayers(L, leafletMapRef.current);
+    }
+
+    if (window.L) {
+      initLeaflet();
+    } else {
+      if (!document.getElementById("cas-leaflet-css")) {
+        const link = document.createElement("link");
+        link.id = "cas-leaflet-css";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+      const existingScript = document.getElementById("cas-leaflet-js");
+      if (existingScript) {
+        existingScript.addEventListener("load", initLeaflet);
+      } else {
+        const sc = document.createElement("script");
+        sc.id = "cas-leaflet-js";
+        sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        sc.async = true;
+        sc.onload = initLeaflet;
+        sc.onerror = () => { if (!cancelled) setMapEngine("vector"); };
+        document.head.appendChild(sc);
+      }
+    }
+
+    return () => { cancelled = true; };
+  }, [mapEngine, isGoogleTileMode, mergedRegions, vizMode, pulauFilter, selectedRegion?.id, drillLevel, polresMapNodes, polsekMapNodes, selectedPolsek?.kode, isDark]);
+
+  (0, a.useEffect)(() => {
+    if (!isGoogleTileMode && leafletMapRef.current) {
+      try { leafletMapRef.current.remove(); } catch (_e) {}
+      leafletMapRef.current = null;
+      leafletTileLayerRef.current = null;
+      leafletLayerGroupRef.current = null;
+    }
+  }, [isGoogleTileMode]);
+
+  const filteredTableRows = (0, a.useMemo)(() => {
+    return mergedRegions
+      .filter(r => {
+        if (pulauFilter !== "Semua" && r.pulau !== pulauFilter) return false;
+        if (searchQ.trim()) {
+          const q = searchQ.trim().toLowerCase();
+          return (
+            r.polda.toLowerCase().includes(q) ||
+            r.abbr.toLowerCase().includes(q) ||
+            r.pulau.toLowerCase().includes(q)
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "cc") return b.cc - a.cc || b.ct - a.ct;
+        if (sortBy === "cr") return b.cr - a.cr || b.ct - a.ct;
+        if (sortBy === "cp_tunggakan") return b.cp_tunggakan - a.cp_tunggakan || b.ct - a.ct;
+        if (sortBy === "name") return a.polda.localeCompare(b.polda);
+        return b.ct - a.ct || b.cc - a.cc;
+      });
+  }, [mergedRegions, pulauFilter, searchQ, sortBy]);
+
+  const invScale = 1 / Math.pow(Math.max(1, zoom), 0.76);
+  const activeTip = hoveredItem || (drillLevel === 2 ? (selectedPolsek || selectedPolres) : selectedRegion);
+
+  return (0, t.jsxs)("div", {
+    className: "cas-peta-kejahatan-root" + (isFullPage ? " cas-peta-fullpage" : ""),
+    style: isFullPage ? {
+      position: "fixed",
+      inset: 0,
+      zIndex: 9995,
+      background: T.pageBg,
+      overflowY: "auto",
+      padding: "0.85rem 1.1rem 1.5rem",
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.85rem",
+      boxSizing: "border-box"
+    } : {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.85rem",
+      marginTop: "0.65rem"
+    },
+    children: [
+      (0, t.jsx)("style", {
+        children: [
+          "@keyframes casHotspotPulse { 0% { r: 5px; opacity: 0.9; } 70% { r: 18px; opacity: 0; } 100% { r: 18px; opacity: 0; } }",
+          ".cas-map-prov-path { transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease, filter 160ms ease; cursor: pointer; }",
+          ".cas-map-prov-path:hover { filter: brightness(1.08); stroke: #2563eb !important; }",
+          ".cas-peta-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }",
+          ".cas-peta-grid { display: grid; grid-template-columns: minmax(0, 1.88fr) minmax(320px, 1fr); gap: 0.85rem; align-items: stretch; }",
+          ".cas-peta-scroll-bar { display: flex; align-items: center; gap: 0.38rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }",
+          ".cas-peta-scroll-bar::-webkit-scrollbar { display: none; }",
+          "@media (max-width: 1120px) {",
+          "  .cas-peta-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }",
+          "  .cas-peta-grid { grid-template-columns: 1fr !important; }",
+          "}",
+          "@media (max-width: 640px) {",
+          "  .cas-peta-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.45rem !important; }",
+          "  .cas-peta-kpi-grid .dash-hero-card { padding: 0.55rem 0.65rem !important; }",
+          "  .cas-peta-kpi-grid .dash-hero-value { font-size: 1.15rem !important; }",
+          "  .cas-peta-map-box { min-height: 280px !important; }",
+          "}",
+          "/* Flip Phones (Galaxy Z Flip / Fold Cover) & Short Viewports */",
+          "@media (max-width: 380px), (max-height: 520px) {",
+          "  .cas-peta-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.35rem !important; }",
+          "  .cas-peta-kpi-grid .dash-icon-badge { display: none !important; }",
+          "  .cas-peta-kpi-grid .dash-hero-value { font-size: 1.02rem !important; }",
+          "  .cas-peta-map-box { min-height: 225px !important; }",
+          "}"
+        ].join("\n")
+      }),
+
+      // Fullpage Header Bar (shown when in Fullpage mode)
+      isFullPage && (0, t.jsxs)("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+          padding: "0.6rem 0.95rem",
+          borderRadius: 10,
+          background: T.cardBg,
+          border: "1px solid " + T.cardBorder,
+          boxShadow: T.cardShadow
+        },
+        children: [
+          (0, t.jsxs)("div", {
+            style: { display: "flex", alignItems: "center", gap: "0.55rem" },
+            children: [
+              (0, t.jsx)("span", { style: { fontSize: "1.1rem" }, children: "🗺️" }),
+              (0, t.jsx)("strong", { style: { fontSize: "0.95rem", color: T.textPrimary }, children: "Peta Kejahatan — Mode Layar Penuh" }),
+              (0, t.jsx)("span", { style: { fontSize: "0.72rem", color: T.accentText, fontWeight: 700 }, children: "(" + (periodLabel || "Periode Aktif") + ")" })
+            ]
+          }),
+          (0, t.jsx)("button", {
+            type: "button",
+            onClick: toggleFullPage,
+            style: {
+              padding: "0.38rem 0.85rem",
+              borderRadius: 8,
+              border: "1px solid " + T.ctBorder,
+              background: T.ctBg,
+              color: T.ctText,
+              fontSize: "0.76rem",
+              fontWeight: 800,
+              cursor: "pointer"
+            },
+            children: "✕ Tutup Layar Penuh (Esc)"
+          })
+        ]
+      }),
+
+      // 1. 4 Concise KPI Summary Cards (Matching Ringkasan Hero Cards 100%)
+      (0, t.jsxs)("div", {
+        className: "cas-peta-kpi-grid",
+        children: [
+          (0, t.jsx)("div", {
+            title: "Crime Total (CT): Total Laporan Polisi yang tercatat pada periode terpilih.",
+            children: (0, t.jsx)(D, {
+              label: "Total LP (CT)",
+              value: J ? "…" : z(stats.totalCT),
+              color: "#ef4444",
+              bg: isDark ? "rgba(239,68,68,0.16)" : "#fef2f2",
+              icon: "pi-file",
+              note: periodLabel || "Periode Aktif",
+              rightBadge: l?.ct_today ? "+" + z(l.ct_today) + " Hari Ini" : "Nasional"
+            })
+          }),
+          (0, t.jsx)("div", {
+            title: "Polda dengan jumlah Laporan Polisi (CT) tertinggi secara nasional.",
+            children: (0, t.jsx)(D, {
+              label: "Wilayah Tertinggi",
+              value: J ? "…" : (stats.topHotspot ? stats.topHotspot.abbr : "-"),
+              color: "#f97316",
+              bg: isDark ? "rgba(249,115,22,0.16)" : "#fff7ed",
+              icon: "pi-bolt",
+              note: stats.topHotspot ? (stats.topHotspot.polda + " (" + stats.topHotspot.sharePct.toFixed(1) + "%)") : "-",
+              rightBadge: stats.topHotspot ? (z(stats.topHotspot.ct) + " LP") : "0 LP"
+            })
+          }),
+          (0, t.jsx)("div", {
+            title: "Crime Clearance (CC): Total perkara selesai beserta persentase penyelesaian (CR%).",
+            children: (0, t.jsx)(D, {
+              label: "Perkara Selesai (CC)",
+              value: J ? "…" : z(stats.totalCC),
+              color: "#16a34a",
+              bg: isDark ? "rgba(22,163,74,0.16)" : "#f0fdf4",
+              icon: "pi-check-circle",
+              note: "Aktual + Tunggakan",
+              rightBadge: "CR " + stats.avgCR.toFixed(1) + "%"
+            })
+          }),
+          (0, t.jsx)("div", {
+            title: "Jumlah Polda aktif dari seluruh 36 Polda jajaran Polri (Papua Pegunungan & Papua Selatan tergabung di Polda Papua).",
+            children: (0, t.jsx)(D, {
+              label: "Cakupan Wilayah",
+              value: J ? "…" : (stats.activeCount + " / " + stats.totalRegions),
+              color: "#2563eb",
+              bg: isDark ? "rgba(37,99,235,0.16)" : "#eff6ff",
+              icon: "pi-map",
+              note: "36 Polda Jajaran",
+              rightBadge: drillLevel === 0 ? "36 Polda" : drillLevel === 1 ? "Level Polres" : "Level Polsek"
+            })
+          })
+        ]
+      }),
+
+      // 2. Clean Theme-Harmonized Control & Filter Bar
+      (0, t.jsxs)("div", {
+        className: "cms-card",
+        style: {
+          padding: "0.7rem 0.9rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.55rem",
+          background: T.cardBg,
+          border: "1px solid " + T.cardBorder,
+          borderRadius: 12,
+          boxShadow: T.cardShadow
+        },
+        children: [
+          // Row 1: Indicator Mode Pills + Map View & Fullpage Buttons
+          (0, t.jsxs)("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.5rem"
+            },
+            children: [
+              (0, t.jsxs)("div", {
+                className: "cas-peta-scroll-bar",
+                children: [
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.7rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.03em", marginRight: "0.15rem", flexShrink: 0 },
+                    children: "Indikator:"
+                  }),
+                  [
+                    { id: "ct", label: "🔥 Sebaran LP (CT)", tip: "Tampilkan intensitas berdasarkan jumlah Laporan Polisi (Crime Total)", bg: T.ctBg, border: T.ctBorder, color: T.ctText },
+                    { id: "cr", label: "🛡️ Rasio Selesai (CR%)", tip: "Tampilkan capaian persentase penyelesaian perkara (Clearance Rate)", bg: T.crBg, border: T.crBorder, color: T.crText },
+                    { id: "cc", label: "✅ Perkara Selesai (CC)", tip: "Tampilkan jumlah perkara yang telah diselesaikan (Crime Clearance)", bg: T.ccBg, border: T.ccBorder, color: T.ccText },
+                    { id: "cp_tunggakan", label: "⚠️ Tunggakan (CP)", tip: "Tampilkan jumlah perkara tunggakan yang melewati batas waktu", bg: T.warnBg, border: T.warnBorder, color: T.warnText }
+                  ].map(m => {
+                    const active = vizMode === m.id;
+                    return (0, t.jsx)("button", {
+                      key: m.id,
+                      type: "button",
+                      title: m.tip,
+                      onClick: () => setVizMode(m.id),
+                      style: {
+                        padding: "0.34rem 0.68rem",
+                        borderRadius: 8,
+                        border: "1px solid " + (active ? m.border : T.btnBorder),
+                        background: active ? m.bg : T.btnBg,
+                        color: active ? m.color : T.btnText,
+                        fontSize: "0.74rem",
+                        fontWeight: active ? 800 : 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        transition: "all 120ms ease"
+                      },
+                      children: m.label
+                    });
+                  })
+                ]
+              }),
+
+              (0, t.jsxs)("div", {
+                className: "cas-peta-scroll-bar",
+                children: [
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: () => setMapEngine("vector"),
+                    title: "Mode Peta Wilayah: Klik Polda untuk zoom ke Polres, klik Polres untuk zoom ke Polsek",
+                    style: {
+                      padding: "0.34rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + (mapEngine === "vector" ? T.accentBorder : T.btnBorder),
+                      background: mapEngine === "vector" ? T.accentBg : T.btnBg,
+                      color: mapEngine === "vector" ? T.accentText : T.btnText,
+                      fontSize: "0.73rem",
+                      fontWeight: mapEngine === "vector" ? 800 : 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: "🗺️ Peta Wilayah"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: () => setMapEngine("gmaps_street"),
+                    title: "Mode Peta Detail Jalan, Kabupaten/Kota, Kecamatan & Kelurahan",
+                    style: {
+                      padding: "0.34rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + (mapEngine === "gmaps_street" ? T.accentBorder : T.btnBorder),
+                      background: mapEngine === "gmaps_street" ? T.accentBg : T.btnBg,
+                      color: mapEngine === "gmaps_street" ? T.accentText : T.btnText,
+                      fontSize: "0.73rem",
+                      fontWeight: mapEngine === "gmaps_street" ? 800 : 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: "🌐 Peta Jalan & Kecamatan"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: () => setMapEngine("gmaps_sat"),
+                    title: "Mode Peta Satelit Resolusi Tinggi beserta Label Kecamatan & Kelurahan",
+                    style: {
+                      padding: "0.34rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + (mapEngine === "gmaps_sat" ? T.accentBorder : T.btnBorder),
+                      background: mapEngine === "gmaps_sat" ? T.accentBg : T.btnBg,
+                      color: mapEngine === "gmaps_sat" ? T.accentText : T.btnText,
+                      fontSize: "0.73rem",
+                      fontWeight: mapEngine === "gmaps_sat" ? 800 : 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: "🛰️ Peta Satelit"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: toggleFullPage,
+                    title: isFullPage ? "Keluar dari tampilan layar penuh (Esc)" : "Perbesar Peta Kejahatan ke tampilan layar penuh (Fullpage)",
+                    style: {
+                      padding: "0.34rem 0.7rem",
+                      borderRadius: 8,
+                      border: "1px solid " + (isFullPage ? T.ctBorder : T.btnBorder),
+                      background: isFullPage ? T.ctBg : T.btnBg,
+                      color: isFullPage ? T.ctText : T.btnText,
+                      fontSize: "0.73rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: isFullPage ? "✕ Tutup Layar Penuh" : "⛶ Layar Penuh"
+                  })
+                ]
+              })
+            ]
+          }),
+
+          // Row 2: Kepulauan Filter + Visual Toggles & Zoom Controls
+          (0, t.jsxs)("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.45rem",
+              paddingTop: "0.45rem",
+              borderTop: "1px solid " + T.divider
+            },
+            children: [
+              (0, t.jsxs)("div", {
+                className: "cas-peta-scroll-bar",
+                children: [
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.7rem", fontWeight: 700, color: T.textMuted, marginRight: "0.1rem", flexShrink: 0 },
+                    children: "Kepulauan:"
+                  }),
+                  Object.keys(CAS_PULAU_VIEWS).map(pName => {
+                    const active = pulauFilter === pName && drillLevel === 0;
+                    return (0, t.jsx)("button", {
+                      key: pName,
+                      type: "button",
+                      onClick: () => handleSelectPulau(pName),
+                      style: {
+                        padding: "0.24rem 0.58rem",
+                        borderRadius: 999,
+                        border: "1px solid " + (active ? T.accentBorder : T.btnBorder),
+                        background: active ? T.accentBg : T.cardBg,
+                        color: active ? T.accentText : T.textSecondary,
+                        fontSize: "0.7rem",
+                        fontWeight: active ? 800 : 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0
+                      },
+                      children: pName
+                    });
+                  })
+                ]
+              }),
+
+              (0, t.jsxs)("div", {
+                className: "cas-peta-scroll-bar",
+                children: [
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Tampilkan atau sembunyikan pendaran radius termal (Heatmap)",
+                    onClick: () => setShowThermal(v => !v),
+                    style: {
+                      padding: "0.24rem 0.55rem",
+                      borderRadius: 6,
+                      border: "1px solid " + (showThermal ? T.ctBorder : T.btnBorder),
+                      background: showThermal ? T.ctBg : T.btnBg,
+                      color: showThermal ? T.ctText : T.textMuted,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: showThermal ? "🔥 Heatmap: Aktif" : "🔥 Heatmap: Nonaktif"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Tampilkan atau sembunyikan label nama & jumlah LP pada peta",
+                    onClick: () => setShowLabels(v => !v),
+                    style: {
+                      padding: "0.24rem 0.55rem",
+                      borderRadius: 6,
+                      border: "1px solid " + (showLabels ? T.accentBorder : T.btnBorder),
+                      background: showLabels ? T.accentBg : T.btnBg,
+                      color: showLabels ? T.accentText : T.textMuted,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: showLabels ? "🏷️ Label: Aktif" : "🏷️ Label: Nonaktif"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: () => {
+                      if (isGoogleTileMode && leafletMapRef.current) {
+                        try { leafletMapRef.current.zoomIn(); } catch (_e) {}
+                        return;
+                      }
+                      const cx = (600 - pan.x) / zoom;
+                      const cy = (235 - pan.y) / zoom;
+                      focusCameraOn(cx, cy, zoom * 1.35);
+                    },
+                    title: "Perbesar Peta (Zoom In)",
+                    style: { padding: "0.22rem 0.52rem", borderRadius: 6, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" },
+                    children: "＋"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: () => {
+                      if (isGoogleTileMode && leafletMapRef.current) {
+                        try { leafletMapRef.current.zoomOut(); } catch (_e) {}
+                        return;
+                      }
+                      const nextZ = zoom / 1.35;
+                      if (nextZ <= 1.05) handleResetNasional();
+                      else {
+                        const cx = (600 - pan.x) / zoom;
+                        const cy = (235 - pan.y) / zoom;
+                        focusCameraOn(cx, cy, nextZ);
+                      }
+                    },
+                    title: "Perkecil Peta (Zoom Out)",
+                    style: { padding: "0.22rem 0.52rem", borderRadius: 6, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" },
+                    children: "－"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: handleResetNasional,
+                    title: "Kembalikan tampilan peta ke seluruh wilayah Indonesia (Nasional)",
+                    style: { padding: "0.22rem 0.58rem", borderRadius: 6, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textSecondary, fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
+                    children: "⟲ Reset"
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      }),
+
+      // 3. Interactive Map Canvas + Right Side Drilldown Panel
+      (0, t.jsxs)("div", {
+        className: "cas-peta-grid",
+        children: [
+          // Left Column: Map Canvas Card
+          (0, t.jsxs)("div", {
+            className: "cms-card",
+            style: {
+              padding: "0.85rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              background: T.cardBg,
+              border: "1px solid " + T.cardBorder,
+              borderRadius: 14,
+              boxShadow: T.cardShadow,
+              overflow: "hidden",
+              position: "relative",
+              minHeight: isFullPage ? "62vh" : "28.5rem"
+            },
+            children: [
+              // Interactive 3-Level Map Breadcrumb & Back Bar
+              (0, t.jsxs)("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.45rem",
+                  marginBottom: "0.55rem",
+                  zIndex: 2
+                },
+                children: [
+                  // Breadcrumb Pills: Nasional -> Polda -> Polres
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.32rem", flexWrap: "wrap" },
+                    children: [
+                      (drillLevel > 0 || zoom > 1.05) && (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: handleStepBack,
+                        title: drillLevel === 2 ? "Kembali ke peta tingkat Polda (Daftar Polres)" : "Kembali ke peta tingkat Nasional",
+                        style: {
+                          padding: "0.24rem 0.58rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.accentBorder,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.25rem"
+                        },
+                        children: "← Kembali"
+                      }),
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: handleResetNasional,
+                        style: {
+                          padding: "0.24rem 0.56rem",
+                          borderRadius: 6,
+                          border: "1px solid " + (drillLevel === 0 ? T.accentBorder : T.btnBorder),
+                          background: drillLevel === 0 ? T.accentBg : T.subCardBg,
+                          color: drillLevel === 0 ? T.accentText : T.textSecondary,
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer"
+                        },
+                        children: "🇮🇩 Nasional (36 Polda)"
+                      }),
+                      drillLevel >= 1 && selectedRegion && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => handleSelectPoldaAndZoom(selectedRegion),
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid " + (drillLevel === 1 ? T.warnBorder : T.btnBorder),
+                              background: drillLevel === 1 ? T.warnBg : T.subCardBg,
+                              color: drillLevel === 1 ? T.warnText : T.textSecondary,
+                              fontSize: "0.72rem",
+                              fontWeight: 800,
+                              cursor: "pointer"
+                            },
+                            children: "🛡️ " + selectedRegion.polda + " (Polres)"
+                          })
+                        ]
+                      }),
+                      drillLevel === 2 && selectedPolres && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid " + T.ctBorder,
+                              background: T.ctBg,
+                              color: T.ctText,
+                              fontSize: "0.72rem",
+                              fontWeight: 800
+                            },
+                            children: "📍 " + selectedPolres.shortName + " (Polsek / Kecamatan)"
+                          })
+                        ]
+                      })
+                    ]
+                  }),
+
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.69rem", color: T.textMuted, fontWeight: 600 },
+                    children: drillLevel === 0
+                      ? "💡 Klik wilayah Polda untuk zoom ke Polres jajaran"
+                      : drillLevel === 1
+                      ? "💡 Klik titik Polres untuk zoom ke Polsek (Kecamatan)"
+                      : "💡 Klik titik Polsek untuk zoom ke lokasi Kecamatan"
+                  })
+                ]
+              }),
+
+              // Main Map Viewport
+              isGoogleTileMode ? (
+                (0, t.jsx)("div", {
+                  ref: leafletContainerRef,
+                  className: "cas-peta-map-box",
+                  style: {
+                    width: "100%",
+                    height: isFullPage ? "58vh" : "395px",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    border: "1px solid " + T.mapBorder,
+                    background: isDark ? "#0b1220" : "#e0f2fe"
+                  }
+                })
+              ) : (
+                (0, t.jsxs)("div", {
+                  className: "cas-peta-map-box",
+                  onMouseDown: ev => {
+                    if (zoom <= 1) return;
+                    setIsDragging(true);
+                    dragStartRef.current = { x: ev.clientX, y: ev.clientY, panX: pan.x, panY: pan.y, moved: false };
+                  },
+                  onMouseMove: ev => {
+                    if (!isDragging) return;
+                    const dx = ev.clientX - dragStartRef.current.x;
+                    const dy = ev.clientY - dragStartRef.current.y;
+                    if (Math.hypot(dx, dy) > 4) dragStartRef.current.moved = true;
+                    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+                  },
+                  onMouseUp: () => setIsDragging(false),
+                  onMouseLeave: () => { setIsDragging(false); setHoveredItem(null); },
+                  style: {
+                    position: "relative",
+                    width: "100%",
+                    flex: "1 1 auto",
+                    minHeight: isFullPage ? "56vh" : "375px",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    background: T.mapOcean,
+                    border: "1px solid " + T.mapBorder,
+                    cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
+                    userSelect: "none"
+                  },
+                  children: [
+                    (0, t.jsxs)("svg", {
+                      viewBox: "0 0 1200 470",
+                      preserveAspectRatio: "xMidYMid meet",
+                      style: { width: "100%", height: "100%", display: "block" },
+                      children: [
+                        (0, t.jsxs)("defs", {
+                          children: [
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-hotspot",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#ef4444", stopOpacity: isDark ? "0.75" : "0.42" }),
+                                (0, t.jsx)("stop", { offset: "50%", stopColor: "#f97316", stopOpacity: isDark ? "0.35" : "0.18" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#ef4444", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-high",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#f97316", stopOpacity: isDark ? "0.65" : "0.36" }),
+                                (0, t.jsx)("stop", { offset: "55%", stopColor: "#eab308", stopOpacity: isDark ? "0.28" : "0.14" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#f97316", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-med",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#eab308", stopOpacity: isDark ? "0.55" : "0.28" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#eab308", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-low",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#10b981", stopOpacity: isDark ? "0.45" : "0.22" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#10b981", stopOpacity: "0" })
+                              ]
+                            })
+                          ]
+                        }),
+
+                        // Graticule Grid Lines
+                        (0, t.jsxs)("g", {
+                          opacity: isDark ? "0.2" : "0.28",
+                          children: [
+                            [100, 105, 110, 115, 120, 125, 130, 135, 140].map(lng => {
+                              const x = Math.round(((lng - 94.5) / 47.0) * 1140 + 30);
+                              return (0, t.jsxs)("g", {
+                                key: "lng_" + lng,
+                                children: [
+                                  (0, t.jsx)("line", { x1: x, y1: 0, x2: x, y2: 470, stroke: T.mapGridLine, strokeWidth: "0.6", strokeDasharray: "3,4" }),
+                                  (0, t.jsx)("text", { x: x + 3, y: 12, fill: T.mapGridText, fontSize: "8", fontWeight: "700", children: lng + "°BT" })
+                                ]
+                              });
+                            }),
+                            [5, 0, -5, -10].map(lat => {
+                              const y = Math.round(((6.5 - lat) / 18.0) * 430 + 25);
+                              const isEq = lat === 0;
+                              return (0, t.jsxs)("g", {
+                                key: "lat_" + lat,
+                                children: [
+                                  (0, t.jsx)("line", {
+                                    x1: 0, y1: y, x2: 1200, y2: y,
+                                    stroke: isEq ? "#f59e0b" : T.mapGridLine,
+                                    strokeWidth: isEq ? "0.9" : "0.6",
+                                    strokeDasharray: isEq ? "6,4" : "3,4"
+                                  }),
+                                  (0, t.jsx)("text", {
+                                    x: 8, y: y - 3,
+                                    fill: isEq ? "#d97706" : T.mapGridText,
+                                    fontSize: "8",
+                                    fontWeight: "700",
+                                    children: isEq ? "0° KHATULISTIWA" : (lat > 0 ? lat + "°LU" : Math.abs(lat) + "°LS")
+                                  })
+                                ]
+                              });
+                            })
+                          ]
+                        }),
+
+                        // Camera Transform Group (transformOrigin: 0 0 ensures exact pixel math!)
+                        (0, t.jsxs)("g", {
+                          transform: "translate(" + pan.x + "," + pan.y + ") scale(" + zoom + ")",
+                          style: { transformOrigin: "0 0", transition: isDragging ? "none" : "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)" },
+                          children: [
+                            // Layer 1: 36 Polda Polygons
+                            (0, t.jsx)("g", {
+                              children: mergedRegions.map(reg => {
+                                const st = getRegionStyle(reg);
+                                const isSel = selectedRegion?.id === reg.id;
+                                const isDimmed = (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) || (drillLevel >= 1 && !isSel);
+                                return (0, t.jsx)("path", {
+                                  d: reg.d,
+                                  fill: st.fill,
+                                  fillOpacity: isDimmed ? (isDark ? 0.22 : 0.35) : (isSel ? 0.95 : 0.86),
+                                  stroke: isSel ? T.mapSelStroke : st.stroke,
+                                  strokeWidth: isSel ? (2.0 * invScale) : (1.0 * invScale),
+                                  className: "cas-map-prov-path",
+                                  onClick: ev => {
+                                    ev.stopPropagation();
+                                    if (dragStartRef.current.moved) return;
+                                    handleSelectPoldaAndZoom(reg);
+                                  },
+                                  onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg })
+                                }, reg.id);
+                              })
+                            }),
+
+                            // Layer 2: Thermal Heatmap Glow Blobs
+                            showThermal && (0, t.jsx)("g", {
+                              style: { pointerEvents: "none" },
+                              children: mergedRegions.map(reg => {
+                                if (reg.ct <= 0 && reg.cc <= 0) return null;
+                                if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
+                                if (drillLevel >= 1 && selectedRegion?.id !== reg.id) return null;
+                                const gradId = reg.level === "hotspot"
+                                  ? "url(#cas-therm-hotspot)"
+                                  : reg.level === "high"
+                                  ? "url(#cas-therm-high)"
+                                  : reg.level === "medium"
+                                  ? "url(#cas-therm-med)"
+                                  : "url(#cas-therm-low)";
+                                const rad = Math.round(20 + reg.ratioCT * 44);
+                                return (0, t.jsx)("circle", {
+                                  cx: reg.cx,
+                                  cy: reg.cy,
+                                  r: rad,
+                                  fill: gradId
+                                }, "therm_" + reg.id);
+                              })
+                            }),
+
+                            // Layer 3A: Level 0 (Nasional) Polda Markers & Labels
+                            drillLevel === 0 && (0, t.jsx)("g", {
+                              children: mergedRegions.map(reg => {
+                                if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
+                                const st = getRegionStyle(reg);
+                                const isSel = selectedRegion?.id === reg.id;
+                                const isTop5 = reg.ct > 0 && reg.rank <= 5;
+                                const dotR = (isSel ? 5.8 : Math.max(3.2, 3.0 + reg.ratioCT * 3.8)) * invScale;
+                                return (0, t.jsxs)("g", {
+                                  key: "polda_node_" + reg.id,
+                                  style: { cursor: "pointer" },
+                                  onClick: ev => {
+                                    ev.stopPropagation();
+                                    if (dragStartRef.current.moved) return;
+                                    handleSelectPoldaAndZoom(reg);
+                                  },
+                                  onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg }),
+                                  children: [
+                                    (isTop5 || isSel) && (0, t.jsx)("circle", {
+                                      cx: reg.cx,
+                                      cy: reg.cy,
+                                      r: 13 * invScale,
+                                      fill: "none",
+                                      stroke: isSel ? T.mapSelStroke : st.badgeColor,
+                                      strokeWidth: 1.5 * invScale,
+                                      style: { animation: "casHotspotPulse 2s infinite" }
+                                    }),
+                                    (0, t.jsx)("circle", {
+                                      cx: reg.cx,
+                                      cy: reg.cy,
+                                      r: dotR,
+                                      fill: isSel ? "#2563eb" : st.badgeColor,
+                                      stroke: "#ffffff",
+                                      strokeWidth: 1.3 * invScale
+                                    }),
+                                    showLabels && (reg.ct > 0 || isSel || zoom >= 1.5) && (0, t.jsxs)("g", {
+                                      transform: "translate(" + reg.cx + "," + (reg.cy - dotR - 3 * invScale) + ") scale(" + invScale + ")",
+                                      children: [
+                                        (0, t.jsx)("rect", {
+                                          x: -29,
+                                          y: -12,
+                                          width: 58,
+                                          height: 12,
+                                          rx: 3.5,
+                                          fill: isSel ? "#1d4ed8" : T.labelPillBg,
+                                          stroke: isSel ? "#ffffff" : st.badgeColor,
+                                          strokeWidth: 0.8
+                                        }),
+                                        (0, t.jsx)("text", {
+                                          x: 0,
+                                          y: -3.5,
+                                          textAnchor: "middle",
+                                          fill: isSel ? "#ffffff" : T.labelPillText,
+                                          fontSize: "6.4",
+                                          fontWeight: "800",
+                                          children: reg.abbr.slice(0, 8) + (reg.ct > 0 ? " • " + st.text : "")
+                                        })
+                                      ]
+                                    })
+                                  ]
+                                });
+                              })
+                            }),
+
+                            // Layer 3B: Level 1 (Polda Zoomed) -> Interactive Polres Pins at Real Kab/Kota Coords
+                            drillLevel === 1 && selectedRegion && (0, t.jsxs)("g", {
+                              children: [
+                                // Connector spokes from Polda center to Polres
+                                polresMapNodes.map((prs, idx) => (0, t.jsx)("line", {
+                                  key: "line_prs_" + idx,
+                                  x1: selectedRegion.bx || selectedRegion.cx,
+                                  y1: selectedRegion.by || selectedRegion.cy,
+                                  x2: prs.px,
+                                  y2: prs.py,
+                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
+                                  strokeWidth: 0.9 * invScale,
+                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
+                                })),
+                                // Polres Hotspot Pins
+                                polresMapNodes.map((prs, idx) => {
+                                  const rPin = Math.max(3.5, 3.5 + prs.ratio * 4.5) * invScale;
+                                  return (0, t.jsxs)("g", {
+                                    key: "prs_pin_" + (prs.kode || idx),
+                                    style: { cursor: "pointer" },
+                                    onClick: ev => {
+                                      ev.stopPropagation();
+                                      if (dragStartRef.current.moved) return;
+                                      handleSelectPolresAndZoom(prs);
+                                    },
+                                    onMouseEnter: () => setHoveredItem({ kind: "polres", polda: selectedRegion.polda, ...prs }),
+                                    children: [
+                                      idx < 3 && prs.ct > 0 && (0, t.jsx)("circle", {
+                                        cx: prs.px,
+                                        cy: prs.py,
+                                        r: rPin * 2.1,
+                                        fill: prs.color,
+                                        fillOpacity: 0.25
+                                      }),
+                                      (0, t.jsx)("circle", {
+                                        cx: prs.px,
+                                        cy: prs.py,
+                                        r: rPin,
+                                        fill: prs.color,
+                                        stroke: "#ffffff",
+                                        strokeWidth: 1.3 * invScale
+                                      }),
+                                      showLabels && (0, t.jsxs)("g", {
+                                        transform: "translate(" + prs.px + "," + (prs.py - rPin - 2.5 * invScale) + ") scale(" + invScale + ")",
+                                        children: [
+                                          (0, t.jsx)("rect", {
+                                            x: -38,
+                                            y: -12,
+                                            width: 76,
+                                            height: 12,
+                                            rx: 3.5,
+                                            fill: T.labelPillBg,
+                                            stroke: prs.color,
+                                            strokeWidth: 0.85
+                                          }),
+                                          (0, t.jsx)("text", {
+                                            x: 0,
+                                            y: -3.5,
+                                            textAnchor: "middle",
+                                            fill: T.labelPillText,
+                                            fontSize: "6.3",
+                                            fontWeight: "800",
+                                            children: prs.shortName.slice(0, 12) + " (" + z(prs.ct) + ")"
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  });
+                                })
+                              ]
+                            }),
+
+                            // Layer 3C: Level 2 (Polres Zoomed) -> Interactive Polsek Nodes at Real Kecamatan Coords
+                            drillLevel === 2 && selectedPolres && (0, t.jsxs)("g", {
+                              children: [
+                                // Radar ring around Polres Hub
+                                (0, t.jsx)("circle", {
+                                  cx: selectedPolres.px,
+                                  cy: selectedPolres.py,
+                                  r: 18 * invScale,
+                                  fill: isDark ? "rgba(2,132,199,0.12)" : "rgba(37,99,235,0.08)",
+                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
+                                  strokeWidth: 0.8 * invScale,
+                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
+                                }),
+                                // Connector lines from Polres Hub to each Polsek
+                                polsekMapNodes.map((psk, idx) => (0, t.jsx)("line", {
+                                  key: "line_psk_" + idx,
+                                  x1: selectedPolres.px,
+                                  y1: selectedPolres.py,
+                                  x2: psk.px,
+                                  y2: psk.py,
+                                  stroke: "rgba(234,88,12,0.5)",
+                                  strokeWidth: 0.9 * invScale,
+                                  strokeDasharray: (1.5 * invScale) + "," + (1.5 * invScale)
+                                })),
+                                // Central Polres Hub Node
+                                (0, t.jsxs)("g", {
+                                  children: [
+                                    (0, t.jsx)("circle", {
+                                      cx: selectedPolres.px,
+                                      cy: selectedPolres.py,
+                                      r: 6.5 * invScale,
+                                      fill: "#1d4ed8",
+                                      stroke: "#ffffff",
+                                      strokeWidth: 1.6 * invScale
+                                    }),
+                                    (0, t.jsxs)("g", {
+                                      transform: "translate(" + selectedPolres.px + "," + (selectedPolres.py + 12 * invScale) + ") scale(" + invScale + ")",
+                                      children: [
+                                        (0, t.jsx)("rect", { x: -44, y: -10, width: 88, height: 12, rx: 3.5, fill: "#1d4ed8", stroke: "#ffffff", strokeWidth: 0.8 }),
+                                        (0, t.jsx)("text", { x: 0, y: -1.8, textAnchor: "middle", fill: "#ffffff", fontSize: "6.4", fontWeight: "800", children: "HUB: " + selectedPolres.shortName.slice(0, 13) })
+                                      ]
+                                    })
+                                  ]
+                                }),
+                                // Polsek Nodes
+                                polsekMapNodes.map((psk, idx) => {
+                                  const isSelPsk = selectedPolsek?.kode === psk.kode;
+                                  const rPsk = (isSelPsk ? 5.5 : Math.max(3.4, 3.2 + psk.ratio * 3.8)) * invScale;
+                                  return (0, t.jsxs)("g", {
+                                    key: "psk_pin_" + (psk.kode || idx),
+                                    style: { cursor: "pointer" },
+                                    onClick: ev => {
+                                      ev.stopPropagation();
+                                      if (dragStartRef.current.moved) return;
+                                      handleSelectPolsekAndZoom(psk);
+                                    },
+                                    onMouseEnter: () => setHoveredItem({ kind: "polsek", polres: selectedPolres.shortName, ...psk }),
+                                    children: [
+                                      (0, t.jsx)("circle", {
+                                        cx: psk.px,
+                                        cy: psk.py,
+                                        r: rPsk,
+                                        fill: isSelPsk ? "#1d4ed8" : psk.color,
+                                        stroke: "#ffffff",
+                                        strokeWidth: 1.3 * invScale
+                                      }),
+                                      showLabels && (0, t.jsxs)("g", {
+                                        transform: "translate(" + psk.px + "," + (psk.py - rPsk - 2.2 * invScale) + ") scale(" + invScale + ")",
+                                        children: [
+                                          (0, t.jsx)("rect", {
+                                            x: -36,
+                                            y: -11.5,
+                                            width: 72,
+                                            height: 11.5,
+                                            rx: 3.5,
+                                            fill: isSelPsk ? "#1d4ed8" : T.labelPillBg,
+                                            stroke: isSelPsk ? "#ffffff" : psk.color,
+                                            strokeWidth: 0.8
+                                          }),
+                                          (0, t.jsx)("text", {
+                                            x: 0,
+                                            y: -3.2,
+                                            textAnchor: "middle",
+                                            fill: isSelPsk ? "#ffffff" : T.labelPillText,
+                                            fontSize: "6.2",
+                                            fontWeight: "800",
+                                            children: psk.shortName.slice(0, 12) + " (" + z(psk.ct) + ")"
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  });
+                                })
+                              ]
+                            })
+                          ]
+                        })
+                      ]
+                    }),
+
+                    // Floating Hover / Active Tooltip inside Map Bottom-Left
+                    activeTip && (0, t.jsxs)("div", {
+                      style: {
+                        position: "absolute",
+                        left: 10,
+                        bottom: 10,
+                        background: T.tooltipBg,
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid " + T.tooltipBorder,
+                        borderRadius: 10,
+                        padding: "0.48rem 0.68rem",
+                        color: T.textPrimary,
+                        fontSize: "0.72rem",
+                        boxShadow: isDark ? "0 10px 25px rgba(0,0,0,0.45)" : "0 10px 24px rgba(15,23,42,0.12)",
+                        pointerEvents: "none",
+                        maxWidth: "295px"
+                      },
+                      children: [
+                        (0, t.jsxs)("div", {
+                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.45rem", marginBottom: "0.18rem" },
+                          children: [
+                            (0, t.jsx)("strong", {
+                              style: { color: T.accentText, fontSize: "0.78rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                              children: activeTip.nama || activeTip.polda
+                            }),
+                            activeTip.rank && (0, t.jsx)("span", {
+                              className: "tabular-nums",
+                              style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.06rem 0.38rem", borderRadius: 999, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder, flexShrink: 0 },
+                              children: "#" + activeTip.rank
+                            })
+                          ]
+                        }),
+                        (0, t.jsxs)("div", {
+                          className: "tabular-nums",
+                          style: { display: "flex", gap: "0.55rem", flexWrap: "wrap", color: T.textSecondary, fontSize: "0.7rem" },
+                          children: [
+                            (0, t.jsxs)("span", { children: ["🔥 CT: ", (0, t.jsx)("strong", { style: { color: T.ctText }, children: z(activeTip.ct) }), " LP"] }),
+                            (0, t.jsxs)("span", { children: ["✅ CC: ", (0, t.jsx)("strong", { style: { color: T.ccText }, children: z(activeTip.cc) })] }),
+                            (0, t.jsxs)("span", { children: ["🛡️ CR: ", (0, t.jsx)("strong", { style: { color: T.crText }, children: Number(activeTip.cr || 0).toFixed(1) + "%" })] })
+                          ]
+                        })
+                      ]
+                    })
+                  ]
+                })
+              ),
+
+              // Clean Map Footer: Only Color Scale Legend
+              (0, t.jsxs)("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                  marginTop: "0.55rem",
+                  paddingTop: "0.45rem",
+                  borderTop: "1px solid " + T.divider,
+                  fontSize: "0.69rem",
+                  color: T.textMuted
+                },
+                children: [
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" },
+                    children: [
+                      (0, t.jsx)("span", { style: { fontWeight: 800, color: T.textSecondary }, children: "Skala Warna:" }),
+                      [
+                        { c: "#ef4444", l: "Tertinggi" },
+                        { c: "#f97316", l: "Tinggi" },
+                        { c: "#eab308", l: "Sedang" },
+                        { c: "#10b981", l: "Rendah" },
+                        { c: T.mapZeroFill, l: "Nihil" }
+                      ].map(lg => (0, t.jsxs)("span", {
+                        key: lg.l,
+                        style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                        children: [
+                          (0, t.jsx)("span", { style: { width: 9, height: 9, borderRadius: 2, background: lg.c, border: "1px solid rgba(15,23,42,0.18)", display: "inline-block" } }),
+                          (0, t.jsx)("span", { children: lg.l })
+                        ]
+                      }))
+                    ]
+                  }),
+                  (0, t.jsx)("span", {
+                    style: { color: T.textMuted, fontSize: "0.68rem" },
+                    children: zoom > 1 ? ("Perbesaran: " + zoom.toFixed(1) + "x (Geser peta untuk navigasi)") : "36 Wilayah Hukum Polda • 514 Kab/Kota • Kecamatan"
+                  })
+                ]
+              })
+            ]
+          }),
+
+          // Right Column: 3-Level Drilldown Side Panel (Polda -> Polres -> Polsek)
+          (0, t.jsxs)("div", {
+            className: "cms-card",
+            style: {
+              padding: "0.9rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "0.65rem",
+              background: T.cardBg,
+              border: "1px solid " + T.cardBorder,
+              borderRadius: 14,
+              boxShadow: T.cardShadow
+            },
+            children: [
+              selectedRegion ? (0, t.jsxs)("div", {
+                style: { display: "flex", flexDirection: "column", gap: "0.65rem" },
+                children: [
+                  // Top Header of Drilldown Panel (adapts to Level 0/1 Polda vs Level 2 Polres/Polsek)
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "0.45rem",
+                      paddingBottom: "0.55rem",
+                      borderBottom: "1px solid " + T.divider
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { minWidth: 0, flex: 1 },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                            children: [
+                              (0, t.jsx)("span", {
+                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 999, background: T.accentBg, color: T.accentText, border: "1px solid " + T.accentBorder },
+                                children: drillLevel === 2 ? "Tingkat Polres / Polsek (Kecamatan)" : ("Wilayah " + selectedRegion.pulau)
+                              }),
+                              (0, t.jsx)("span", {
+                                className: "tabular-nums",
+                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 999, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
+                                children: drillLevel === 2 && selectedPolres ? ("Rank #" + selectedPolres.rank + " di " + selectedRegion.abbr) : ("Peringkat #" + selectedRegion.rank + " Nasional")
+                              })
+                            ]
+                          }),
+                          (0, t.jsx)("h2", {
+                            style: { margin: "0.3rem 0 0.08rem", fontSize: "1.05rem", fontWeight: 850, color: T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                            title: drillLevel === 2 && selectedPolres ? selectedPolres.nama : selectedRegion.polda,
+                            children: drillLevel === 2 && selectedPolres ? selectedPolres.nama : selectedRegion.polda
+                          }),
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.7rem", color: T.textMuted },
+                            children: drillLevel === 2 && selectedPolres
+                              ? ("Induk: " + selectedRegion.polda + (selectedPolsek ? (" • Kecamatan/Polsek: " + selectedPolsek.shortName) : ""))
+                              : ("Intensitas: " + selectedRegion.levelLabel + " (" + selectedRegion.sharePct.toFixed(1) + "% LP Nasional)")
+                          })
+                        ]
+                      }),
+                      drillLevel === 0 && (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: () => handleSelectPoldaAndZoom(selectedRegion),
+                        title: "Perbesar peta ke wilayah Polda ini untuk melihat titik Polres jajaran",
+                        style: {
+                          padding: "0.3rem 0.58rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.accentBorder,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        },
+                        children: "🔍 Zoom Polres"
+                      })
+                    ]
+                  }),
+
+                  // 4 Concise KPI Mini-Cards (Matches .dash-minicard aesthetic in Ringkasan — Zero Muddy Gray!)
+                  (() => {
+                    const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
+                    const cpBer = Number(activeObj.cp_berjalan || 0);
+                    const cpTgk = Number(activeObj.cp_tunggakan || 0);
+                    return (0, t.jsxs)("div", {
+                      className: "tabular-nums",
+                      style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
+                      children: [
+                        { label: "Total LP (CT)", val: z(activeObj.ct) + " LP", sub: "Laporan Polisi Masuk", color: T.ctText, tip: "Jumlah Laporan Polisi pada satuan kerja ini" },
+                        { label: "Selesai (CC)", val: z(activeObj.cc) + " LP", sub: "Perkara Diselesaikan", color: T.ccText, tip: "Jumlah perkara yang telah selesai (CC Aktual + Tunggakan)" },
+                        { label: "Rasio Selesai (CR)", val: Number(activeObj.cr || 0).toFixed(1) + "%", sub: "Clearance Rate", color: T.crText, tip: "Persentase penyelesaian perkara terhadap total LP" },
+                        { label: "Tunggakan (CP)", val: z(cpTgk) + " LP", sub: "Proses Aktif: " + z(cpBer), color: T.warnText, tip: "Perkara masih diproses yang melewati jatuh tempo" }
+                      ].map((k, idx) => (0, t.jsxs)("div", {
+                        key: idx,
+                        className: "dash-minicard",
+                        title: k.tip,
+                        style: {
+                          padding: "0.52rem 0.68rem",
+                          borderRadius: 10,
+                          background: T.subCardBg,
+                          border: "1px solid " + T.subCardBorder,
+                          cursor: "help"
+                        },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.66rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.02em" },
+                            children: [(0, t.jsx)("span", { children: k.label }), renderKpInfoIcon(11)]
+                          }),
+                          (0, t.jsx)("div", { style: { fontSize: "1.06rem", fontWeight: 850, color: k.color, marginTop: "0.14rem" }, children: k.val }),
+                          (0, t.jsx)("div", { style: { fontSize: "0.64rem", color: T.textMuted, marginTop: "0.08rem" }, children: k.sub })
+                        ]
+                      }))
+                    });
+                  })(),
+
+                  // Interactive List: Either Polres List (Level 0/1) OR Polsek List (Level 2)
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.42rem",
+                      padding: "0.65rem 0.72rem",
+                      borderRadius: 10,
+                      background: T.subCardBg,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
+                        children: [
+                          (0, t.jsx)("span", {
+                            children: drillLevel === 2 && selectedPolres
+                              ? ("📍 Daftar Polsek / Kecamatan (" + selectedPolres.shortName + ")")
+                              : ("🏢 Sebaran Polres / Satker (" + selectedRegion.abbr + ")")
+                          }),
+                          drillLevel === 2 ? (
+                            (0, t.jsx)("button", {
+                              type: "button",
+                              onClick: handleStepBack,
+                              style: { background: "transparent", border: "none", color: T.accentText, fontSize: "0.68rem", fontWeight: 800, cursor: "pointer", padding: 0 },
+                              children: "← Daftar Polres"
+                            })
+                          ) : (
+                            (0, t.jsx)("span", { style: { fontSize: "0.65rem", color: T.accentText, fontWeight: 700 }, children: polresMapNodes.length > 0 ? (polresMapNodes.length + " Satker (Klik → Polsek)") : "" })
+                          )
+                        ]
+                      }),
+
+                      // Render Polsek List when drillLevel === 2, otherwise Polres List
+                      drillLevel === 2 ? (
+                        polsekLoading ? (
+                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Polsek jajaran…" })
+                        ) : polsekMapNodes.length === 0 ? (
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
+                            children: "Satker ini tidak memiliki rincian sub-unit Polsek atau seluruh LP ditangani langsung di tingkat " + (selectedPolres?.shortName || "Polres") + "."
+                          })
+                        ) : (
+                          (0, t.jsx)("div", {
+                            className: "tabular-nums",
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "178px", overflowY: "auto", paddingRight: "0.2rem" },
+                            children: polsekMapNodes.map((psk, idx) => {
+                              const maxPskCT = Math.max(1, Number(polsekMapNodes[0]?.ct || 1));
+                              const pct = Math.max(5, Math.round((psk.ct / maxPskCT) * 100));
+                              const isSelPsk = selectedPolsek?.kode === psk.kode;
+                              return (0, t.jsxs)("div", {
+                                key: psk.kode || idx,
+                                onClick: () => handleSelectPolsekAndZoom(psk),
+                                title: "Klik untuk fokus ke " + psk.nama,
+                                style: {
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.18rem",
+                                  padding: "0.34rem 0.48rem",
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  background: isSelPsk ? T.accentBg : T.rowCardBg,
+                                  border: "1px solid " + (isSelPsk ? T.accentBorder : T.rowCardBorder)
+                                },
+                                children: [
+                                  (0, t.jsxs)("div", {
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.7rem", gap: "0.35rem" },
+                                    children: [
+                                      (0, t.jsx)("span", {
+                                        style: { color: isSelPsk ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                        children: (idx + 1) + ". " + psk.shortName
+                                      }),
+                                      (0, t.jsxs)("span", {
+                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
+                                        children: [z(psk.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(" + psk.cr.toFixed(0) + "%)" })]
+                                      })
+                                    ]
+                                  }),
+                                  (0, t.jsx)("div", {
+                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (psk.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: psk.color }
+                                    })
+                                  })
+                                ]
+                              });
+                            })
+                          })
+                        )
+                      ) : (
+                        subLoading ? (
+                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Polres/Satker jajaran…" })
+                        ) : polresMapNodes.length === 0 ? (
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
+                            children: selectedRegion.ct > 0
+                              ? ("Tercatat " + z(selectedRegion.ct) + " LP dan " + z(selectedRegion.cc) + " perkara selesai pada " + selectedRegion.polda + ".")
+                              : ("Belum ada LP tercatat pada " + selectedRegion.polda + " untuk periode ini.")
+                          })
+                        ) : (
+                          (0, t.jsx)("div", {
+                            className: "tabular-nums",
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "178px", overflowY: "auto", paddingRight: "0.2rem" },
+                            children: polresMapNodes.map((prs, idx) => {
+                              const maxSubCT = Math.max(1, Number(polresMapNodes[0]?.ct || 1));
+                              const pct = Math.max(5, Math.round((prs.ct / maxSubCT) * 100));
+                              return (0, t.jsxs)("div", {
+                                key: prs.kode || idx,
+                                onClick: () => handleSelectPolresAndZoom(prs),
+                                title: "Klik untuk zoom ke " + prs.nama + " dan menampilkan Polsek (Kecamatan) jajaran",
+                                style: {
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.18rem",
+                                  padding: "0.34rem 0.48rem",
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  background: T.rowCardBg,
+                                  border: "1px solid " + T.rowCardBorder
+                                },
+                                children: [
+                                  (0, t.jsxs)("div", {
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.7rem", gap: "0.35rem" },
+                                    children: [
+                                      (0, t.jsx)("span", {
+                                        style: { color: T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                        children: (idx + 1) + ". " + prs.shortName + " ➔"
+                                      }),
+                                      (0, t.jsxs)("span", {
+                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
+                                        children: [z(prs.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(CC: " + z(prs.cc) + ")" })]
+                                      })
+                                    ]
+                                  }),
+                                  (0, t.jsx)("div", {
+                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (prs.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: prs.color }
+                                    })
+                                  })
+                                ]
+                              });
+                            })
+                          })
+                        )
+                      )
+                    ]
+                  })
+                ]
+              }) : null,
+
+              // Action Buttons at bottom of Drilldown Panel
+              (0, t.jsxs)("div", {
+                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "auto" },
+                children: [
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Buka halaman Daftar Laporan Polisi",
+                    onClick: () => e.push("/cms/laporan-polisi"),
+                    style: {
+                      padding: "0.5rem 0.65rem",
+                      borderRadius: 9,
+                      border: "1px solid " + T.ctBorder,
+                      background: T.ctBg,
+                      color: T.ctText,
+                      fontSize: "0.73rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "📋 Lihat Daftar LP"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Buka halaman matriks lengkap Kinerja Perkara",
+                    onClick: () => e.push("/cms/report/kinerja-perkara"),
+                    style: {
+                      padding: "0.5rem 0.65rem",
+                      borderRadius: 9,
+                      border: "1px solid " + T.accentBorder,
+                      background: T.accentBg,
+                      color: T.accentText,
+                      fontSize: "0.73rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "📊 Kinerja Perkara"
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      }),
+
+      // 4. Rincian Status LP Nasional Strip
+      (l?.per_status && l.per_status.length > 0) && (0, t.jsxs)("div", {
+        className: "cms-card",
+        style: {
+          padding: "0.8rem 1rem",
+          borderRadius: 12,
+          background: T.cardBg,
+          border: "1px solid " + T.cardBorder,
+          boxShadow: T.cardShadow
+        },
+        children: [
+          (0, t.jsxs)("div", {
+            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.55rem", flexWrap: "wrap", gap: "0.4rem" },
+            children: [
+              (0, t.jsx)("span", { style: { fontWeight: 800, fontSize: "0.84rem", color: T.textPrimary }, children: "📌 Rincian Status LP" }),
+              (0, t.jsx)("span", { style: { fontSize: "0.71rem", color: T.textMuted }, children: "Tahapan penanganan Laporan Polisi pada periode terpilih" })
+            ]
+          }),
+          (0, t.jsx)("div", {
+            className: "lp-status-cards tabular-nums",
+            style: { margin: 0, gridTemplateColumns: "repeat(auto-fit, minmax(7.4rem, 1fr))" },
+            children: (l.per_status || []).map(stItem => {
+              const shortLbl = stItem.code === "PERMA" ? "PERMA" : (_[stItem.code] || String(stItem.code || "").replace(/_/g, " "));
+              return (0, t.jsxs)("div", {
+                key: stItem.code,
+                title: (stItem.nama || shortLbl) + ": " + z(stItem.jumlah) + " LP",
+                className: "lp-stat " + (stItem.kategori === "CC" ? "cc" : "ct"),
+                style: {
+                  padding: "0.48rem 0.65rem",
+                  cursor: "help",
+                  background: T.subCardBg,
+                  borderColor: T.subCardBorder
+                },
+                children: [
+                  (0, t.jsx)("div", { className: "lp-stat-head", children: (0, t.jsx)("span", { className: "l", style: { color: T.textMuted }, children: shortLbl }) }),
+                  (0, t.jsx)("div", { className: "n", style: { color: stItem.kategori === "CC" ? T.ccText : T.textPrimary }, children: z(stItem.jumlah) })
+                ]
+              });
+            })
+          })
+        ]
+      }),
+
+      // 5. Ranked Table of All 36 Polda
+      (0, t.jsxs)("div", {
+        className: "cms-card",
+        style: {
+          padding: "0.9rem 1.05rem",
+          borderRadius: 14,
+          background: T.cardBg,
+          border: "1px solid " + T.cardBorder,
+          boxShadow: T.cardShadow
+        },
+        children: [
+          (0, t.jsxs)("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.55rem",
+              marginBottom: "0.75rem"
+            },
+            children: [
+              (0, t.jsxs)("div", {
+                children: [
+                  (0, t.jsx)("div", {
+                    style: { fontWeight: 850, fontSize: "0.9rem", color: T.textPrimary },
+                    children: "📊 Peringkat Sebaran LP per Polda (" + filteredTableRows.length + " Polda)"
+                  }),
+                  (0, t.jsx)("div", {
+                    style: { fontSize: "0.72rem", color: T.textMuted, marginTop: "0.1rem" },
+                    children: "Klik baris Polda untuk zoom otomatis ke wilayah Polda & melihat Polres jajaran"
+                  })
+                ]
+              }),
+              (0, t.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" },
+                children: [
+                  (0, t.jsx)("input", {
+                    type: "text",
+                    value: searchQ,
+                    onChange: ev => setSearchQ(ev.target.value),
+                    placeholder: "🔍 Cari Polda / Pulau…",
+                    style: {
+                      padding: "0.4rem 0.72rem",
+                      borderRadius: 8,
+                      border: "1px solid " + T.inputBorder,
+                      background: T.inputBg,
+                      color: T.textPrimary,
+                      fontSize: "0.75rem",
+                      minWidth: "180px"
+                    }
+                  }),
+                  (0, t.jsxs)("select", {
+                    value: sortBy,
+                    onChange: ev => setSortBy(ev.target.value),
+                    style: {
+                      padding: "0.4rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + T.inputBorder,
+                      background: T.inputBg,
+                      color: T.textPrimary,
+                      fontSize: "0.74rem",
+                      fontWeight: 700
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "ct", children: "Urut: Total LP (CT) Tertinggi" }),
+                      (0, t.jsx)("option", { value: "cc", children: "Urut: Selesai (CC) Tertinggi" }),
+                      (0, t.jsx)("option", { value: "cr", children: "Urut: Rasio Selesai (CR%) Tertinggi" }),
+                      (0, t.jsx)("option", { value: "cp_tunggakan", children: "Urut: Tunggakan (CP) Tertinggi" }),
+                      (0, t.jsx)("option", { value: "name", children: "Urut: Nama Polda (A-Z)" })
+                    ]
+                  })
+                ]
+              })
+            ]
+          }),
+
+          (0, t.jsx)("div", {
+            style: { overflowX: "auto", WebkitOverflowScrolling: "touch" },
+            children: (0, t.jsxs)("table", {
+              className: "tabular-nums",
+              style: { width: "100%", borderCollapse: "collapse", fontSize: "0.77rem" },
+              children: [
+                (0, t.jsx)("thead", {
+                  children: (0, t.jsxs)("tr", {
+                    style: {
+                      background: T.subCardBg,
+                      borderBottom: "1px solid " + T.cardBorder,
+                      textAlign: "left",
+                      color: T.textMuted,
+                      fontSize: "0.69rem",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em"
+                    },
+                    children: [
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.5rem", width: "38px" }, children: "#" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: "Polda" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: "Kepulauan" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, title: "Kategori tingkat kepadatan Laporan Polisi", children: "Intensitas" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Total: Jumlah Laporan Polisi", children: "Total LP (CT)" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", width: "140px" }, title: "Porsi persentase LP terhadap total nasional", children: "Porsi Nasional" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Clearance: Jumlah perkara selesai", children: "Selesai (CC)" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processing Aktual: Perkara sedang diproses", children: "Proses" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processing Tunggakan: Perkara lewat jatuh tempo", children: "Tunggakan" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Clearance Rate: Rasio penyelesaian perkara (%)", children: "Rasio (CR%)" })
+                    ]
+                  })
+                }),
+                (0, t.jsx)("tbody", {
+                  children: filteredTableRows.map((row, idx) => {
+                    const st = getRegionStyle(row);
+                    const isSel = selectedRegion?.id === row.id;
+                    const barPct = Math.max(4, Math.round(row.rawRatioCT * 100));
+                    return (0, t.jsxs)("tr", {
+                      key: row.id,
+                      onClick: () => handleSelectPoldaAndZoom(row),
+                      title: "Klik untuk zoom ke " + row.polda + " dan melihat daftar Polres",
+                      style: {
+                        cursor: "pointer",
+                        borderBottom: "1px solid " + T.divider,
+                        background: isSel ? T.accentBg : (idx % 2 === 1 ? T.subCardBg : "transparent"),
+                        transition: "background 120ms ease"
+                      },
+                      children: [
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.5rem", fontWeight: 800, color: T.textMuted }, children: row.rank }),
+                        (0, t.jsx)("td", {
+                          style: { padding: "0.52rem 0.6rem", fontWeight: 800, color: isSel ? T.accentText : T.textPrimary, whiteSpace: "nowrap" },
+                          children: row.polda
+                        }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", color: T.textSecondary, whiteSpace: "nowrap" }, children: row.pulau }),
+                        (0, t.jsx)("td", {
+                          style: { padding: "0.52rem 0.6rem", whiteSpace: "nowrap" },
+                          children: renderThemeBadge(
+                            row.levelLabel,
+                            row.level === "hotspot" ? "danger-bold" : row.level === "high" ? "danger" : row.level === "medium" ? "warning" : row.level === "low" ? "success" : "neutral"
+                          )
+                        }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 850, color: T.ctText }, children: z(row.ct) }),
+                        (0, t.jsx)("td", {
+                          style: { padding: "0.52rem 0.6rem" },
+                          children: (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.4rem" },
+                            children: [
+                              (0, t.jsx)("div", {
+                                style: { flex: 1, height: 6, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                children: (0, t.jsx)("div", {
+                                  style: { width: (row.ct > 0 ? barPct : 0) + "%", height: "100%", borderRadius: 999, background: st.badgeColor }
+                                })
+                              }),
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", color: T.textMuted, width: "38px", textAlign: "right", fontWeight: 700 }, children: row.sharePct.toFixed(1) + "%" })
+                            ]
+                          })
+                        }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 700, color: T.ccText }, children: z(row.cc) }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 600 }, children: z(row.cp_berjalan) }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: row.cp_tunggakan > 0 ? T.warnText : T.textSubtle, fontWeight: row.cp_tunggakan > 0 ? 700 : 400 }, children: z(row.cp_tunggakan) }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 800, color: row.cr >= 50 ? T.ccText : T.textPrimary }, children: row.cr.toFixed(1) + "%" })
+                      ]
+                    });
+                  })
+                })
+              ]
+            })
+          })
+        ]
+      })
+    ]
+  });
+}
+e.s(["default",0,function(){let e=(0,v.useRouter)(),[r,n]=(0,a.useState)(null),[l,s]=(0,a.useState)(null),[i,o]=(0,a.useState)(null),[u,x]=(0,a.useState)([]),[k,W]=(0,a.useState)([]),[B,H]=(0,a.useState)([]),[dpoRows,setDpoRows]=(0,a.useState)([]),[casFeed,setCasFeed]=(0,a.useState)([]),[casFeedLoading,setCasFeedLoading]=(0,a.useState)(!0),[pihakJenis,setPihakJenis]=(0,a.useState)("ALL"),[pihakLoading,setPihakLoading]=(0,a.useState)(!1),[$,U]=(0,a.useState)([]),[F,K]=(0,a.useState)("ct_cc"),[J,V]=(0,a.useState)(!0),[Y,X]=(0,a.useState)("custom"),[q,G]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),0,1))}),[Z,Q]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),11,31))}),[appliedCustomFrom,setAppliedCustomFrom]=(0,a.useState)(q),[appliedCustomTo,setAppliedCustomTo]=(0,a.useState)(Z),[kejTab,setKejTab]=(0,a.useState)("semua"),[dashWelcomeOpen,setDashWelcomeOpen]=(0,a.useState)(!1),[dashKinerjaCompact,setDashKinerjaCompact]=(0,a.useState)(!1),[dashShowAllStatNums,setDashShowAllStatNums]=(0,a.useState)(!0),[dashStatTip,setDashStatTip]=(0,a.useState)(null),{from:ee,to:et}=(0,a.useMemo)(()=>(function(e,t,a){let r=new Date,n=N(r),l=r.getFullYear();if("semua"===e)return{from:"2000-01-01",to:n};if("custom"===e)return{from:t||n,to:a||n};if("hari"===e)return{from:n,to:n};if("minggu"===e){let e=r.getDay()||7,t=new Date(l,r.getMonth(),r.getDate()-(e-1)),a=new Date(l,r.getMonth(),r.getDate()-(e-1)+6);return{from:N(t),to:N(a)}}if("bulan"===e){let e=new Date(l,r.getMonth(),1),t=new Date(l,r.getMonth()+1,0);return{from:N(e),to:N(t)}}if("triwulan"===e){let e=3*Math.floor(r.getMonth()/3),t=new Date(l,e,1),a=new Date(l,e+3,0);return{from:N(t),to:N(a)}}if("semester"===e){let e=6>r.getMonth()?0:6,t=new Date(l,e,1),a=new Date(l,e+6,0);return{from:N(t),to:N(a)}}return{from:`${l}-01-01`,to:`${l}-12-31`}})(Y,appliedCustomFrom,appliedCustomTo),[Y,appliedCustomFrom,appliedCustomTo]),[dashPeriodOpen,setDashPeriodOpen]=(0,a.useState)(!1),
 [dashPeriodMode,setDashPeriodMode]=(0,a.useState)("year"),
 [dashPeriodMonth,setDashPeriodMonth]=(0,a.useState)(()=>{
   let e=new Date,
@@ -425,7 +3059,7 @@ function dashCacheKey(){
     );
 
     return[
-      "bdb-dashboard-v13",
+      "bdb-dashboard-v14",
       encodeURIComponent(
         String(user.email).toLowerCase()
       ),
@@ -571,7 +3205,7 @@ function dashCacheApply(cached){
   }
 }
 
-let el=(0,a.useCallback)(async(e,t)=>{try{let a=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}}),r=(a.data?.data?.nodes||[])[0];if(!r?.has_children)return[];let n=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{parent:r.kode,from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}});return(n.data?.data?.nodes||[]).map(e=>({nama:e.nama,ct:e.ct,cp_berjalan:e.cp_berjalan,cp_tunggakan:e.cp_tunggakan,cc_aktual:e.cc_aktual,cc_tunggakan:e.cc_tunggakan,cr:e.cr,crime_rate:e.crime_rate??null,crime_clock_detik:e.crime_clock_detik??null}))}catch{return[]}},[]),es=(0,a.useRef)(0),
+let el=(0,a.useCallback)(async(e,t)=>{try{let a=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}}),r=(a.data?.data?.nodes||[])[0];if(!r?.has_children)return[];let n=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{parent:r.kode,from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}});return(n.data?.data?.nodes||[]).map(e=>({kode:e.kode,has_children:e.has_children,nama:e.nama,ct:e.ct,cp_berjalan:e.cp_berjalan,cp_tunggakan:e.cp_tunggakan,cc_aktual:e.cc_aktual,cc_tunggakan:e.cc_tunggakan,cr:e.cr,crime_rate:e.crime_rate??null,crime_clock_detik:e.crime_clock_detik??null}))}catch{return[]}},[]),es=(0,a.useRef)(0),
 pihakRankReqRef=(0,a.useRef)(0),
 dashCacheForceRef=(0,a.useRef)(!1),
 dashPeriodRef=(0,a.useRef)(null),
@@ -760,7 +3394,43 @@ function dashForceRefresh(){
   }
 
   eu()
-},[eu,ee,et]);let ed=(0,h.deriveRoles)(r),em=(0,a.useMemo)(()=>{if("ct_cc"===F){let list=(l?.scoped&&Array.isArray(l?.top_satker_ct)&&l.top_satker_ct.length>0)?l.top_satker_ct.filter(x=>x.ct>0):(l?.polda||[]);return{labels:list.map(e=>abbrSatkerName(e.nama,!0)),fullNames:list.map(e=>e.nama||""),datasets:[{label:"CT",data:list.map(e=>e.ct),backgroundColor:"#ef4444",borderRadius:4},{label:"CC",data:list.map(e=>((e.cc_aktual||0)+(e.cc_tunggakan||0))||e.cc||0),backgroundColor:"#16a34a",borderRadius:4}]}};let e=[...$];if("cp"===F)return e.sort((e,t)=>t.cp_tunggakan-e.cp_tunggakan),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CP Aktual",data:e.map(e=>e.cp_berjalan),backgroundColor:"#0891b2",borderRadius:4},{label:"CP Tunggakan",data:e.map(e=>e.cp_tunggakan),backgroundColor:"#dc2626",borderRadius:4}]};if("cc_split"===F)return e.sort((e,t)=>t.cc_aktual+t.cc_tunggakan-(e.cc_aktual+e.cc_tunggakan)),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CC Aktual",data:e.map(e=>e.cc_aktual),backgroundColor:"#16a34a",borderRadius:4},{label:"CC Tunggakan",data:e.map(e=>e.cc_tunggakan),backgroundColor:"#b45309",borderRadius:4}]};if("cr"===F)return e.sort((e,t)=>t.cr-e.cr),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CR (Rms Baru) (%)",data:e.map(e=>e.cr),backgroundColor:"#2563eb",borderRadius:4}]};if("crime_rate"===F){let t=e.filter(e=>null!=e.crime_rate).sort((e,t)=>(t.crime_rate||0)-(e.crime_rate||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Rate (per 100rb Penduduk)",data:t.map(e=>e.crime_rate||0),backgroundColor:"#7c3aed",borderRadius:4}]}}let t=e.filter(e=>null!=e.crime_clock_detik).sort((e,t)=>(e.crime_clock_detik||0)-(t.crime_clock_detik||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Clock (menit antar kejahatan)",data:t.map(e=>Math.round((e.crime_clock_detik||0)/60*10)/10),backgroundColor:"#0891b2",borderRadius:4}]}},[l,$,F]),ep=(0,a.useMemo)(()=>{let e="cr"===F?"%":"crime_clock"===F?" menit":"";return{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{title:items=>em.fullNames?.[items?.[0]?.dataIndex]||items?.[0]?.label||"",label:t=>`${t.dataset.label}: ${t.parsed.y}${e}`}}},scales:{x:{ticks:{font:{size:10,weight:"600"},maxRotation:45,minRotation:0,autoSkip:!1},grid:{display:!1}},y:{beginAtZero:!0,ticks:"cr"!==F&&"crime_clock"!==F?{precision:0}:{}}}}},[F,em]),eh=!J&&l&&l.scoped&&!l.scope_satker,ef=!J&&l&&l.scoped&&!!l.scope_satker&&!l.scope_ada_data,welcomeSatker=(String(r?.id)==='1'||r?.username==='omeko42'||r?.callsign==='omeko42'||String(r?.role_bdb||r?.role||'').toLowerCase().includes('super'))?"Robinopsnal Bareskrim Polri":((l?.scoped&&l?.scope_satker)?toTitleCase(l.scope_satker):"Robinopsnal Bareskrim Polri"),welcomeText=`Selamat datang, ${r?.name||r?.email||"Pengguna"} — ${welcomeSatker}.`;return(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{className:"dash-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.45rem",flexWrap:"nowrap",marginBottom:"0.35rem"},children:[(0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:[(0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.05rem",fontWeight:800,whiteSpace:"nowrap"},children:"Ringkasan"}),l?.scoped&&(0,t.jsxs)("span",{className:"dash-scope-badge",style:{fontSize:"0.66rem",padding:"0.1rem 0.45rem",whiteSpace:"nowrap",flexShrink:0},children:[(0,t.jsx)("i",{className:"pi pi-sitemap",style:{fontSize:"0.65rem",marginRight:"0.25rem"}}),abbrSatkerName(l.scope_satker||"Belum ditetapkan",!1)]})]}),(0,t.jsx)("div",{style:{flexShrink:0},children:(0,t.jsx)(g.default,{refreshing:eo,updatedAt:ec,onRefresh:dashForceRefresh})})]}),(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"0.4rem",padding:"0.5rem 0.65rem",display:"flex",flexWrap:"nowrap",alignItems:"center",gap:"0.38rem"},children:[(0,t.jsxs)("div",{style:{position:"relative",flex:"1 1 auto",minWidth:0},children:[(0,t.jsx)(S.Search,{size:14,style:{position:"absolute",left:"0.58rem",top:"50%",transform:"translateY(-50%)",color:"#94a3b8",pointerEvents:"none"}}),(0,t.jsx)(m.InputText,{id:"dash-global-search",name:"search_global",value:ea,onChange:e=>er(e.target.value),onKeyDown:e=>"Enter"===e.key&&en(),placeholder:"Cari No. LP, nama, atau NIK…",style:{width:"100%",height:"34px",fontSize:"0.75rem",paddingLeft:"1.8rem",paddingRight:"0.5rem"}})]}),(0,t.jsxs)("button",{type:"button",className:"att-btn",onClick:en,disabled:ea.trim().length<5,title:ea.trim().length<5?"Ketik minimal 5 karakter":"Cari",style:{height:"34px",padding:"0 0.6rem",fontSize:"0.74rem",display:"inline-flex",alignItems:"center",gap:"0.28rem",flexShrink:0,whiteSpace:"nowrap"},children:[(0,t.jsx)(S.Search,{size:13}),"Cari"]}),
+},[eu,ee,et]);let ed=(0,h.deriveRoles)(r),em=(0,a.useMemo)(()=>{if("ct_cc"===F){let list=(l?.scoped&&Array.isArray(l?.top_satker_ct)&&l.top_satker_ct.length>0)?l.top_satker_ct.filter(x=>x.ct>0):(l?.polda||[]);return{labels:list.map(e=>abbrSatkerName(e.nama,!0)),fullNames:list.map(e=>e.nama||""),datasets:[{label:"CT",data:list.map(e=>e.ct),backgroundColor:"#ef4444",borderRadius:4},{label:"CC",data:list.map(e=>((e.cc_aktual||0)+(e.cc_tunggakan||0))||e.cc||0),backgroundColor:"#16a34a",borderRadius:4}]}};let e=[...$];if("cp"===F)return e.sort((e,t)=>t.cp_tunggakan-e.cp_tunggakan),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CP Aktual",data:e.map(e=>e.cp_berjalan),backgroundColor:"#0891b2",borderRadius:4},{label:"CP Tunggakan",data:e.map(e=>e.cp_tunggakan),backgroundColor:"#dc2626",borderRadius:4}]};if("cc_split"===F)return e.sort((e,t)=>t.cc_aktual+t.cc_tunggakan-(e.cc_aktual+e.cc_tunggakan)),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CC Aktual",data:e.map(e=>e.cc_aktual),backgroundColor:"#16a34a",borderRadius:4},{label:"CC Tunggakan",data:e.map(e=>e.cc_tunggakan),backgroundColor:"#b45309",borderRadius:4}]};if("cr"===F)return e.sort((e,t)=>t.cr-e.cr),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CR (Rms Baru) (%)",data:e.map(e=>e.cr),backgroundColor:"#2563eb",borderRadius:4}]};if("crime_rate"===F){let t=e.filter(e=>null!=e.crime_rate).sort((e,t)=>(t.crime_rate||0)-(e.crime_rate||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Rate (per 100rb Penduduk)",data:t.map(e=>e.crime_rate||0),backgroundColor:"#7c3aed",borderRadius:4}]}}let t=e.filter(e=>null!=e.crime_clock_detik).sort((e,t)=>(e.crime_clock_detik||0)-(t.crime_clock_detik||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Clock (menit antar kejahatan)",data:t.map(e=>Math.round((e.crime_clock_detik||0)/60*10)/10),backgroundColor:"#0891b2",borderRadius:4}]}},[l,$,F]),ep=(0,a.useMemo)(()=>{let e="cr"===F?"%":"crime_clock"===F?" menit":"";return{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{title:items=>em.fullNames?.[items?.[0]?.dataIndex]||items?.[0]?.label||"",label:t=>`${t.dataset.label}: ${t.parsed.y}${e}`}}},scales:{x:{ticks:{font:{size:10,weight:"600"},maxRotation:45,minRotation:0,autoSkip:!1},grid:{display:!1}},y:{beginAtZero:!0,ticks:"cr"!==F&&"crime_clock"!==F?{precision:0}:{}}}}},[F,em]),eh=!J&&l&&l.scoped&&!l.scope_satker,ef=!J&&l&&l.scoped&&!!l.scope_satker&&!l.scope_ada_data,welcomeSatker=(String(r?.id)==='1'||r?.username==='omeko42'||r?.callsign==='omeko42'||String(r?.role_bdb||r?.role||'').toLowerCase().includes('super'))?"Robinopsnal Bareskrim Polri":((l?.scoped&&l?.scope_satker)?toTitleCase(l.scope_satker):"Robinopsnal Bareskrim Polri"),welcomeText=`Selamat datang, ${r?.name||r?.email||"Pengguna"} — ${welcomeSatker}.`;
+let [dashView, setDashView] = (0, a.useState)(() => {
+  if (typeof window === "undefined") return "ringkasan";
+  let sp = new URLSearchParams(window.location.search || "");
+  return (sp.get("view") === "peta-kejahatan" || window.location.pathname.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
+});
+(0, a.useEffect)(() => {
+  if (typeof window === "undefined") return;
+  let syncView = () => {
+    let sp = new URLSearchParams(window.location.search || "");
+    let next = (sp.get("view") === "peta-kejahatan" || window.location.pathname.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
+    setDashView( next );
+  };
+  let delayedSync = () => setTimeout(syncView, 20);
+  syncView();
+  window.addEventListener("cas-url-change", syncView);
+  window.addEventListener("cas:dashboard-view-change", syncView);
+  window.addEventListener("popstate", syncView);
+  document.addEventListener("click", delayedSync, true);
+  return () => {
+    window.removeEventListener("cas-url-change", syncView);
+    window.removeEventListener("cas:dashboard-view-change", syncView);
+    window.removeEventListener("popstate", syncView);
+    document.removeEventListener("click", delayedSync, true);
+  };
+}, []);
+function switchDashView(targetView) {
+  setDashView(targetView);
+  let nextUrl = targetView === "peta-kejahatan" ? "/cms/dashboard/main?view=peta-kejahatan" : "/cms/dashboard/main";
+  try {
+    e.push(nextUrl);
+    setTimeout(() => {
+      try { window.dispatchEvent(new Event("cas-url-change")); } catch(_e) {}
+    }, 25);
+  } catch(_e) {}
+}
+return(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{className:"dash-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.45rem",flexWrap:"nowrap",marginBottom:"0.35rem"},children:[(0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:[(0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.05rem",fontWeight:800,whiteSpace:"nowrap"},children:dashView==="peta-kejahatan"?"Peta Kejahatan":"Ringkasan"}),(0,t.jsx)("button",{type:"button",onClick:()=>switchDashView(dashView==="peta-kejahatan"?"ringkasan":"peta-kejahatan"),style:{marginLeft:"0.35rem",padding:"0.22rem 0.62rem",borderRadius:999,border:dashView==="peta-kejahatan"?"1px solid #93c5fd":"1px solid #fca5a5",background:dashView==="peta-kejahatan"?"#eff6ff":"#fef2f2",color:dashView==="peta-kejahatan"?"#1d4ed8":"#dc2626",fontSize:"0.7rem",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0},children:dashView==="peta-kejahatan"?"📊 Ringkasan":"🗺️ Peta Kejahatan"}),l?.scoped&&(0,t.jsxs)("span",{className:"dash-scope-badge",style:{fontSize:"0.66rem",padding:"0.1rem 0.45rem",whiteSpace:"nowrap",flexShrink:0},children:[(0,t.jsx)("i",{className:"pi pi-sitemap",style:{fontSize:"0.65rem",marginRight:"0.25rem"}}),abbrSatkerName(l.scope_satker||"Belum ditetapkan",!1)]})]}),(0,t.jsx)("div",{style:{flexShrink:0},children:(0,t.jsx)(g.default,{refreshing:eo,updatedAt:ec,onRefresh:dashForceRefresh})})]}),(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"0.4rem",padding:"0.5rem 0.65rem",display:"flex",flexWrap:"nowrap",alignItems:"center",gap:"0.38rem"},children:[(0,t.jsxs)("div",{style:{position:"relative",flex:"1 1 auto",minWidth:0},children:[(0,t.jsx)(S.Search,{size:14,style:{position:"absolute",left:"0.58rem",top:"50%",transform:"translateY(-50%)",color:"#94a3b8",pointerEvents:"none"}}),(0,t.jsx)(m.InputText,{id:"dash-global-search",name:"search_global",value:ea,onChange:e=>er(e.target.value),onKeyDown:e=>"Enter"===e.key&&en(),placeholder:"Cari No. LP, nama, atau NIK…",style:{width:"100%",height:"34px",fontSize:"0.75rem",paddingLeft:"1.8rem",paddingRight:"0.5rem"}})]}),(0,t.jsxs)("button",{type:"button",className:"att-btn",onClick:en,disabled:ea.trim().length<5,title:ea.trim().length<5?"Ketik minimal 5 karakter":"Cari",style:{height:"34px",padding:"0 0.6rem",fontSize:"0.74rem",display:"inline-flex",alignItems:"center",gap:"0.28rem",flexShrink:0,whiteSpace:"nowrap"},children:[(0,t.jsx)(S.Search,{size:13}),"Cari"]}),
 (0,t.jsxs)("div",{
 style:{
   position:"relative",
@@ -975,7 +3645,7 @@ children:[
     ]
   })
 ]
-})]}),(0,t.jsxs)("div",{
+})]}),dashView==="peta-kejahatan"?(0,t.jsx)(CasPetaKejahatanView,{dashboard:l,summary:i,kinerja:$,loading:J,from:ee,to:et,periodLabel:dashPeriodLabel,router:e,apiAuth:p.apiAuth,onSwitchToRingkasan:()=>switchDashView("ringkasan")}):(0,t.jsxs)(t.Fragment,{children:[(0,t.jsxs)("div",{
   className:"cms-card",
   style:{
     marginTop:"1rem",
@@ -1061,14 +3731,16 @@ children:[
             let c = String(item.author_callsign || '').trim().replace(/^@/, '');
             let invalid = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
             let u = String(item.author_username || '').trim().replace(/^@/, '');
-            if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_') && !/^\d{6,10}$/.test(u)) return '@' + u;
             if (c && !invalid.includes(c.toLowerCase()) && !c.startsWith('user_') && !/^\d{6,10}$/.test(c)) return '@' + c;
+            if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_') && !/^\d{6,10}$/.test(u)) return '@' + u;
             let h = String(item.author_handle || '').trim().replace(/^@/, '');
             if (h && !invalid.includes(h.toLowerCase()) && !h.startsWith('user_') && !/^\d{6,10}$/.test(h)) return '@' + h;
             let nm = String(item.author_name || '').trim();
             if (nm && !invalid.includes(nm.toLowerCase())) {
-              let cleanNm = nm.split(',')[0].trim().toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
-              if (cleanNm.length >= 3) return '@' + cleanNm;
+              let ranks = ['jenderal','komjen','irjen','brigjen','kombes','akbp','kompol','akp','iptu','ipda','aiptu','aipda','bripka','brigpol','brigadir','briptu','bripda','pol','pns','pembina','penata','pengatur','dr','drs','dra','ir','h','hj'];
+              let words = nm.split(',')[0].trim().toLowerCase().replace(/[^a-z0-9\s]+/g, ' ').split(/\s+/).filter(w => w && !ranks.includes(w));
+              let cleanNm = words.slice(0, 2).join('.');
+              if (cleanNm.length >= 2) return '@' + cleanNm;
             }
             if (u && !invalid.includes(u.toLowerCase()) && !u.startsWith('user_')) return '@' + u;
             if (c && !invalid.includes(c.toLowerCase()) && !c.startsWith('user_')) return '@' + c;
@@ -1408,4 +4080,4 @@ let a=("OPERASI"===e.jenis?0:1)-("OPERASI"===t.jenis?0:1);
 if(a)return a;
 
 return Number(t.id||0)-Number(e.id||0)
-}).slice(0,5).map(e=>({id:e.id,_pinned:Boolean(e.is_pinned),judul:e.nama,tag:"SATGAS"===e.jenis?"Satgas":"Operasi",tagVariant:"SATGAS"===e.jenis?"indigo":"blue",hideStatus:!0,status:"SELESAI"===e.status_tampil?"Selesai":"NONAKTIF"===e.status_tampil?"Nonaktif":"Aktif",statusSeverity:"SELESAI"===e.status_tampil?"secondary":"NONAKTIF"===e.status_tampil?"warning":"success",tanggal:I(e.tanggal_mulai||e.tanggal_dibentuk||e.created_at),lpInfo:`${e.jumlah_lp||0} LP`})).slice(0,5),onOpenItem:t=>e.push(`/cms/master/operasi-satgas?open=${t}`),onTogglePin:(0,h.deriveRoles)((0,h.getUser)()).isSuperadmin?(async item=>{try{let nextPin=!item._pinned,nowIso=nextPin?new Date().toISOString():null;await p.apiAuth.post(`/bdb/operasi-satgas/${item.id}/pin`,{is_pinned:nextPin});H(prev=>prev.map(x=>String(x.id)===String(item.id)?{...x,is_pinned:nextPin,pinned_at:nowIso}:x));}catch(err){console.error(err)}}):void 0}),(0,t.jsx)(M,{title:(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/rekap-pihak-terlibat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#dc2626";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Rekap Pihak Terlibat",children:"Pihak Paling Sering Terlibat"}),icon:(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"1.65rem",height:"1.65rem",borderRadius:"6px",background:"rgba(239, 68, 68, 0.12)",color:"#ef4444",flexShrink:0},children:(0,t.jsx)("i",{className:"pi pi-users",style:{fontSize:"0.82rem"}})}),headerExtra:(0,t.jsx)(d.Dropdown,{id:"dash-filter-pihak-jenis",inputId:"dash-filter-pihak-jenis-select",name:"pihak_jenis",value:pihakJenis,options:[{label:"Semua",value:"ALL"},{label:"DPO",value:"DPO"},{label:"Tersangka",value:"TERSANGKA"},{label:"Terlapor",value:"TERLAPOR"},{label:"Pelapor",value:"PELAPOR"},{label:"Saksi",value:"SAKSI"},{label:"Korban",value:"KORBAN"}],onChange:e=>{setPihakJenis(e.value);setDpoRows([]);loadPihakRanking(!0,e.value)},style:{height:"1.65rem",width:"5.4rem",fontSize:"0.72rem",borderRadius:"6px",background:"var(--cas-bg-subtle, #f8fafc)",borderColor:"var(--cas-border-strong, #cbd5e1)",display:"inline-flex",alignItems:"center",flexShrink:0},pt:{root:{style:{height:"1.65rem",width:"5.4rem",padding:0}},input:{style:{padding:"0 0.35rem",fontSize:"0.72rem",color:"var(--cas-text-primary, #0f172a)"}},trigger:{style:{width:"1.3rem"}}}}),emptyText:(J||pihakLoading)?"Memuat…":"Belum ada pihak terlibat.",onLihatSemua:()=>e.push("/cms/laporan/rekap-pihak-terlibat"),items:(()=>{let s=new Set();let kRank=x=>{if(x.kasta_rank!=null&&Number.isFinite(Number(x.kasta_rank)))return Number(x.kasta_rank);let ks=String(x.kasta||x.keterlibatan||"").toUpperCase();if(ks==="DPO"||Number(x.count_dpo||0)>0)return 1;if(ks==="TERSANGKA"||Number(x.count_tersangka||0)>0)return 2;if(ks==="TERLAPOR"||Number(x.count_terlapor||0)>0)return 3;if(ks==="PELAPOR"||Number(x.count_pelapor||0)>0)return 4;if(ks==="SAKSI"||Number(x.count_saksi||0)>0)return 5;if(ks==="KORBAN"||Number(x.count_korban||0)>0)return 6;return 7};return[...(dpoRows||[])].filter(e=>{let k=String((e.raw_nik&&e.raw_nik!=="KORPORASI"?e.raw_nik:"")||(e.nik&&e.nik!=="KORPORASI"?e.nik:"")||e.nama||"").trim().toUpperCase();if(!k||s.has(k))return!1;s.add(k);return!0}).sort((e,t)=>{let krE=kRank(e);let krT=kRank(t);if(pihakJenis==="ALL"&&krE!==krT)return krE-krT;let cE=(pihakJenis!=="ALL"&&e.count_role)?Number(e.count_role):Number(e.total_lp||e.jumlah_lp||1);let cT=(pihakJenis!=="ALL"&&t.count_role)?Number(t.count_role):Number(t.total_lp||t.jumlah_lp||1);if(cT!==cE)return cT-cE;let stE=Number(e.satker_tier||99);let stT=Number(t.satker_tier||99);if(stE!==stT)return stE-stT;if(krE!==krT)return krE-krT;return String(t.last_seen||"").localeCompare(String(e.last_seen||""))}).slice(0,5).map(e=>{let t=getPihakTag(e,pihakJenis);let c=(pihakJenis!=="ALL"&&e.count_role)?e.count_role:Number(e.total_lp||e.jumlah_lp||1);let isCorp=e.tipe_subjek==="KORPORASI"||(e.nik&&(String(e.nik).startsWith("KORP:")||e.nik==="KORPORASI"))||e.tipe_identitas==="BADAN HUKUM";let idLabel=isCorp?"KORPORASI":(e.nik||"NIK tidak tersedia");let searchVal=isCorp?(e.nama||e.nik||""):(e.nik||e.nama||"");return{id:searchVal,judul:e.nama||"Tanpa Nama",tag:t,tagVariant:getPihakVariant(t),metaText:`${idLabel} • ${c} LP${e.is_lintas_wilayah?" • Lintas Wilayah":""}${e.satker_nama?` • ${abbrSatkerName(e.satker_nama,!1)}`:""}`}})})(),onOpenItem:t=>{let o=function(v){let s=JSON.stringify({s:String(v),n:1});let k="cas_pt_enc_2026_bareskrim";let r="";for(let i=0;i<s.length;i++){r+=String.fromCharCode(s.charCodeAt(i)^k.charCodeAt(i%k.length))}return btoa(r).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}(t);try{sessionStorage.setItem("cas_pt_jump",JSON.stringify({search:String(t),scope:"national"}))}catch(err){}e.push(`/cms/laporan/rekap-pihak-terlibat/${o}`)}})]})]}),l?.integrasi&&(0,t.jsxs)("div",{className:"dash-section cms-card",children:[(0,t.jsx)("div",{className:"dash-panel-head",children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#eff6ff"},children:(0,t.jsx)("i",{className:"pi pi-sync",style:{color:"#2563eb"}})}),(0,t.jsx)("div",{className:"dash-panel-title",children:"Integrasi Data DORS"})]})}),(0,t.jsxs)("div",{className:"dash-integrasi-grid",children:[(0,t.jsx)(A,{id:"fld-dashboard-perma-31-22",name:"field_dashboard_perma_31_22",label:"Data Ditarik",value:z(l.integrasi.total_ditarik)}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-23",name:"field_dashboard_perma_31_23",label:"Termapping ke Satker",value:z(l.integrasi.total_termapping)}),l.integrasi.per_model.map(e=>(0,t.jsx)(A,{id:"fld-dashboard-perma-31-24",name:"field_dashboard_perma_31_24",label:e.label,value:z(e.jumlah)},e.model_lp)),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-25",name:"field_dashboard_perma_31_25",label:"Terakhir Sinkron",value:function(e){if(!e)return"—";let t=new Date(e);return isNaN(t.getTime())?"—":t.toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}(l.integrasi.terakhir_sync),small:!0})]})]})]})]})}],87278)},17393,e=>{e.v(t=>Promise.all(["static/chunks/1z_64d81ad-xe.js"].map(t=>e.l(t))).then(()=>t(1508)))}]);
+}).slice(0,5).map(e=>({id:e.id,_pinned:Boolean(e.is_pinned),judul:e.nama,tag:"SATGAS"===e.jenis?"Satgas":"Operasi",tagVariant:"SATGAS"===e.jenis?"indigo":"blue",hideStatus:!0,status:"SELESAI"===e.status_tampil?"Selesai":"NONAKTIF"===e.status_tampil?"Nonaktif":"Aktif",statusSeverity:"SELESAI"===e.status_tampil?"secondary":"NONAKTIF"===e.status_tampil?"warning":"success",tanggal:I(e.tanggal_mulai||e.tanggal_dibentuk||e.created_at),lpInfo:`${e.jumlah_lp||0} LP`})).slice(0,5),onOpenItem:t=>e.push(`/cms/master/operasi-satgas?open=${t}`),onTogglePin:(0,h.deriveRoles)((0,h.getUser)()).isSuperadmin?(async item=>{try{let nextPin=!item._pinned,nowIso=nextPin?new Date().toISOString():null;await p.apiAuth.post(`/bdb/operasi-satgas/${item.id}/pin`,{is_pinned:nextPin});H(prev=>prev.map(x=>String(x.id)===String(item.id)?{...x,is_pinned:nextPin,pinned_at:nowIso}:x));}catch(err){console.error(err)}}):void 0}),(0,t.jsx)(M,{title:(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/rekap-pihak-terlibat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#dc2626";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Rekap Pihak Terlibat",children:"Pihak Paling Sering Terlibat"}),icon:(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"1.65rem",height:"1.65rem",borderRadius:"6px",background:"rgba(239, 68, 68, 0.12)",color:"#ef4444",flexShrink:0},children:(0,t.jsx)("i",{className:"pi pi-users",style:{fontSize:"0.82rem"}})}),headerExtra:(0,t.jsx)(d.Dropdown,{id:"dash-filter-pihak-jenis",inputId:"dash-filter-pihak-jenis-select",name:"pihak_jenis",value:pihakJenis,options:[{label:"Semua",value:"ALL"},{label:"DPO",value:"DPO"},{label:"Tersangka",value:"TERSANGKA"},{label:"Terlapor",value:"TERLAPOR"},{label:"Pelapor",value:"PELAPOR"},{label:"Saksi",value:"SAKSI"},{label:"Korban",value:"KORBAN"}],onChange:e=>{setPihakJenis(e.value);setDpoRows([]);loadPihakRanking(!0,e.value)},style:{height:"1.65rem",width:"5.4rem",fontSize:"0.72rem",borderRadius:"6px",background:"var(--cas-bg-subtle, #f8fafc)",borderColor:"var(--cas-border-strong, #cbd5e1)",display:"inline-flex",alignItems:"center",flexShrink:0},pt:{root:{style:{height:"1.65rem",width:"5.4rem",padding:0}},input:{style:{padding:"0 0.35rem",fontSize:"0.72rem",color:"var(--cas-text-primary, #0f172a)"}},trigger:{style:{width:"1.3rem"}}}}),emptyText:(J||pihakLoading)?"Memuat…":"Belum ada pihak terlibat.",onLihatSemua:()=>e.push("/cms/laporan/rekap-pihak-terlibat"),items:(()=>{let s=new Set();let kRank=x=>{if(x.kasta_rank!=null&&Number.isFinite(Number(x.kasta_rank)))return Number(x.kasta_rank);let ks=String(x.kasta||x.keterlibatan||"").toUpperCase();if(ks==="DPO"||Number(x.count_dpo||0)>0)return 1;if(ks==="TERSANGKA"||Number(x.count_tersangka||0)>0)return 2;if(ks==="TERLAPOR"||Number(x.count_terlapor||0)>0)return 3;if(ks==="PELAPOR"||Number(x.count_pelapor||0)>0)return 4;if(ks==="SAKSI"||Number(x.count_saksi||0)>0)return 5;if(ks==="KORBAN"||Number(x.count_korban||0)>0)return 6;return 7};return[...(dpoRows||[])].filter(e=>{let k=String((e.raw_nik&&e.raw_nik!=="KORPORASI"?e.raw_nik:"")||(e.nik&&e.nik!=="KORPORASI"?e.nik:"")||e.nama||"").trim().toUpperCase();if(!k||s.has(k))return!1;s.add(k);return!0}).sort((e,t)=>{let krE=kRank(e);let krT=kRank(t);if(pihakJenis==="ALL"&&krE!==krT)return krE-krT;let cE=(pihakJenis!=="ALL"&&e.count_role)?Number(e.count_role):Number(e.total_lp||e.jumlah_lp||1);let cT=(pihakJenis!=="ALL"&&t.count_role)?Number(t.count_role):Number(t.total_lp||t.jumlah_lp||1);if(cT!==cE)return cT-cE;let stE=Number(e.satker_tier||99);let stT=Number(t.satker_tier||99);if(stE!==stT)return stE-stT;if(krE!==krT)return krE-krT;return String(t.last_seen||"").localeCompare(String(e.last_seen||""))}).slice(0,5).map(e=>{let t=getPihakTag(e,pihakJenis);let c=(pihakJenis!=="ALL"&&e.count_role)?e.count_role:Number(e.total_lp||e.jumlah_lp||1);let isCorp=e.tipe_subjek==="KORPORASI"||(e.nik&&(String(e.nik).startsWith("KORP:")||e.nik==="KORPORASI"))||e.tipe_identitas==="BADAN HUKUM";let idLabel=isCorp?"KORPORASI":(e.nik||"NIK tidak tersedia");let searchVal=isCorp?(e.nama||e.nik||""):(e.nik||e.nama||"");return{id:searchVal,judul:e.nama||"Tanpa Nama",tag:t,tagVariant:getPihakVariant(t),metaText:`${idLabel} • ${c} LP${e.is_lintas_wilayah?" • Lintas Wilayah":""}${e.satker_nama?` • ${abbrSatkerName(e.satker_nama,!1)}`:""}`}})})(),onOpenItem:t=>{let o=function(v){let s=JSON.stringify({s:String(v),n:1});let k="cas_pt_enc_2026_bareskrim";let r="";for(let i=0;i<s.length;i++){r+=String.fromCharCode(s.charCodeAt(i)^k.charCodeAt(i%k.length))}return btoa(r).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}(t);try{sessionStorage.setItem("cas_pt_jump",JSON.stringify({search:String(t),scope:"national"}))}catch(err){}e.push(`/cms/laporan/rekap-pihak-terlibat/${o}`)}})]})]}),l?.integrasi&&(0,t.jsxs)("div",{className:"dash-section cms-card",children:[(0,t.jsx)("div",{className:"dash-panel-head",children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#eff6ff"},children:(0,t.jsx)("i",{className:"pi pi-sync",style:{color:"#2563eb"}})}),(0,t.jsx)("div",{className:"dash-panel-title",children:"Integrasi Data DORS"})]})}),(0,t.jsxs)("div",{className:"dash-integrasi-grid",children:[(0,t.jsx)(A,{id:"fld-dashboard-perma-31-22",name:"field_dashboard_perma_31_22",label:"Data Ditarik",value:z(l.integrasi.total_ditarik)}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-23",name:"field_dashboard_perma_31_23",label:"Termapping ke Satker",value:z(l.integrasi.total_termapping)}),l.integrasi.per_model.map(e=>(0,t.jsx)(A,{id:"fld-dashboard-perma-31-24",name:"field_dashboard_perma_31_24",label:e.label,value:z(e.jumlah)},e.model_lp)),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-25",name:"field_dashboard_perma_31_25",label:"Terakhir Sinkron",value:function(e){if(!e)return"—";let t=new Date(e);return isNaN(t.getTime())?"—":t.toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}(l.integrasi.terakhir_sync),small:!0})]})]})]})]})]})}],87278)},17393,e=>{e.v(t=>Promise.all(["static/chunks/1z_64d81ad-xe.js"].map(t=>e.l(t))).then(()=>t(1508)))}]);

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Patch, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { MailService } from '@app_core/helper/service/mail.service';
@@ -15,23 +15,34 @@ export class SystemSettingController {
         private readonly audit: AuditService
     ) {}
 
+    private assertAdmin(user: any) {
+        const role = String(user?.role_bdb || user?.role_name || '').toLowerCase();
+        if (role !== 'superadmin' && role !== 'admin_binops') {
+            throw new ForbiddenException('Hanya Superadmin atau Admin Binops yang memiliki akses ke pengaturan sistem.');
+        }
+    }
+
     @Get('login-otp')
-    async getLoginOtp(@Res() res) {
+    async getLoginOtp(@Req() req: any, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.getLoginOtpSetting());
     }
 
     @Patch('login-otp')
     async setLoginOtp(@Req() req: any, @Body() body: { enabled?: boolean }, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.setLoginOtpSetting(req.user, Boolean(body?.enabled)));
     }
 
     @Get('maintenance')
-    async getMaintenance(@Res() res) {
+    async getMaintenance(@Req() req: any, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.getPublicMaintenanceStatus());
     }
 
     @Patch('maintenance')
     async setMaintenance(@Req() req: any, @Body() body: { enabled?: boolean; message?: string }, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.setMaintenanceStatus(req.user, Boolean(body?.enabled), body?.message));
     }
 
@@ -42,17 +53,20 @@ export class SystemSettingController {
 
     @Patch('pusat-bantuan')
     async setPusatBantuan(@Req() req: any, @Body() body: { telp1?: string; telp2?: string; email?: string }, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.setPusatBantuan(req.user, body || {}));
     }
 
     /** Konfigurasi SMTP -- dipakai halaman Pengaturan Sistem > Email. Password tidak pernah dikirim balik. */
     @Get('smtp')
-    async getSmtp(@Res() res) {
+    async getSmtp(@Req() req: any, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.getSmtpConfig());
     }
 
     @Patch('smtp')
     async setSmtp(@Req() req: any, @Body() body: { enabled?: boolean; host?: string; port?: string; ssl?: string; user?: string; from?: string; password?: string }, @Res() res) {
+        this.assertAdmin(req.user);
         return res.sendSuccess(await this.service.setSmtpConfig(req.user, body || {}));
     }
 

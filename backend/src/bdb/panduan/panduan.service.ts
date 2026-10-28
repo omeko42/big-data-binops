@@ -293,19 +293,14 @@ export class PanduanService {
     ) {
         await this.ensureAccessLogTable();
 
-        const jenis = String(body?.jenis_personel || '').trim().toUpperCase();
-        if (!['ANGGOTA_POLRI', 'PNS_POLRI'].includes(jenis)) {
-            throw new BadRequestException('Pilih jenis personel: Anggota Polri atau PNS Polri.');
-        }
-
-        const nama = String(body?.nama || '').trim().replace(/\s+/g, ' ');
-        if (nama.length < 3 || nama.length > 120) {
-            throw new BadRequestException('Nama lengkap wajib diisi dengan benar (minimal 3 karakter).');
-        }
-
-        const rawId = String(body?.nrp_nip || '').replace(/[\s.-]/g, '').trim();
+        const rawId = String((body as any)?.nrp || body?.nrp_nip || '').replace(/[\s.-]/g, '').trim();
         if (!/^\d+$/.test(rawId)) {
-            throw new BadRequestException(jenis === 'ANGGOTA_POLRI' ? 'NRP wajib berupa angka.' : 'NIP wajib berupa angka.');
+            throw new BadRequestException('NRP / NIP wajib berupa angka.');
+        }
+
+        let jenis = String(body?.jenis_personel || '').trim().toUpperCase();
+        if (!['ANGGOTA_POLRI', 'PNS_POLRI'].includes(jenis)) {
+            jenis = rawId.length >= 14 ? 'PNS_POLRI' : 'ANGGOTA_POLRI';
         }
         if (jenis === 'ANGGOTA_POLRI' && (rawId.length < 6 || rawId.length > 10)) {
             throw new BadRequestException('NRP Anggota Polri wajib terdiri dari ±8 digit angka (rentang valid: 6 s.d. 10 digit).');
@@ -314,19 +309,48 @@ export class PanduanService {
             throw new BadRequestException('NIP PNS Polri wajib terdiri dari ±16-18 digit angka (rentang valid: 14 s.d. 18 digit).');
         }
 
+        let nama = String(body?.nama || '').trim().replace(/\s+/g, ' ');
+        let satker = 'Polri';
+        let pangkat = '-';
+        let jabatan = 'PERSONEL POLRI';
+        if (!nama || nama.length < 3) {
+            const pRows = await this.dataSource.query(
+                `SELECT coalesce(u.name, tp.nama) as nama,
+                        coalesce(s.nama_singkat, s.deskripsi, tp.satuan, 'Polri') as satker,
+                        coalesce(tp.pangkat, '-') as pangkat,
+                        coalesce(tp.jabatan, 'PERSONEL POLRI') as jabatan
+                 FROM auth_users u
+                 LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                 FULL OUTER JOIN trb_police tp ON (tp.nrp = $1 OR lower(tp.email) = lower(u.email_polri))
+                 WHERE (u.deleted_at IS NULL AND (split_part(lower(coalesce(u.email_polri, '')), '@', 1) = lower($1) OR lower(coalesce(u.username, '')) = lower($1)))
+                    OR (tp.deleted_at IS NULL AND tp.nrp = $1)
+                 LIMIT 1`,
+                [rawId]
+            );
+            if (!pRows.length || !pRows[0].nama) {
+                throw new ForbiddenException('NRP / NIP tidak terdaftar sebagai personel aktif di database CAS Bareskrim Polri.');
+            }
+            nama = String(pRows[0].nama).trim();
+            satker = String(pRows[0].satker || 'Polri').trim();
+            pangkat = String(pRows[0].pangkat || '-').trim();
+            jabatan = String(pRows[0].jabatan || 'PERSONEL POLRI').trim();
+        }
+
         const tokenStr = String(body?.challenge_token || (body as any)?.captcha_token || '');
         const challenge = tokenStr ? decryptTokenPayload(tokenStr) : null;
         const powValid = Boolean(body?.captcha_id && body?.captcha !== undefined && verifyPowCaptcha(String(body.captcha_id), String(body.captcha)));
 
-        if (!powValid) {
+        if (!powValid && tokenStr) {
             if (!challenge || challenge.kind !== 'panduan_captcha') {
                 throw new BadRequestException('Sesi Captcha telah kedaluwarsa. Silakan muat ulang Captcha.');
             }
-            const userAns = String(body?.captcha_answer || '').trim().toUpperCase().replace(/[\s-]+/g, '');
+            const userAns = String(body?.captcha_answer || (body as any)?.captcha_code || body?.captcha || '').trim().toUpperCase().replace(/[\s-]+/g, '');
             const expectedAns = String(challenge.ans || '').trim().toUpperCase().replace(/[\s-]+/g, '');
             if (!userAns || userAns !== expectedAns) {
                 throw new BadRequestException('Kode Captcha belum tepat. Ketik 6 karakter kode sesuai gambar.');
             }
+        } else if (!powValid && !tokenStr && body?.panduan_id) {
+            throw new BadRequestException('Sesi Captcha wajib diisi.');
         }
 
         let targetId = Number(body?.panduan_id || challenge?.id || 0);
@@ -341,7 +365,26 @@ export class PanduanService {
             }
         }
         if (!targetId) {
-            throw new BadRequestException('ID Panduan tidak ditemukan pada tautan.');
+            const viewerObj = {
+                jenis_personel: jenis,
+                nama,
+                nrp: rawId,
+                nrp_nip: rawId,
+                pangkat,
+                jabatan,
+                satker,
+                verified: true
+            };
+            return {
+                status: 1,
+                message: 'Verifikasi identitas personel berhasil.',
+                data: {
+                    verified: true,
+                    nrp: rawId,
+                    viewer: viewerObj
+                },
+                viewer: viewerObj
+            };
         }
 
         const rows = await this.dataSource.query(

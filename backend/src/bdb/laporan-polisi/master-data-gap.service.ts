@@ -34,6 +34,9 @@ const DIMENSION_LABEL: Record<Dimension, string> = {
  */
 @Injectable()
 export class MasterDataGapService {
+    private statsCache: { exp: number; data: any } | null = null;
+    private static readonly STATS_CACHE_TTL_MS = 10 * 60 * 1000;
+
     constructor(private readonly dataSource: DataSource) {}
 
     // dimensi skalar level bdb_laporan_polisi (bukan array tindak_pidana)
@@ -83,11 +86,22 @@ export class MasterDataGapService {
         },
     };
 
+    private recentLpsCte(): string {
+        return `
+            select id, no_laporan, payload_json,
+                   jenis_kejahatan_id, kategori_lokasi_id, motif_kejahatan_id, modus_operandi_id,
+                   tkp_provinsi_code, tkp_kabupaten_code, tkp_kecamatan_code, tkp_desa_code
+            from bdb_laporan_polisi
+            order by id desc
+            limit 5000
+        `;
+    }
+
     private scalarCte(dim: Exclude<Dimension, 'undang_undang'>): string {
         const { rawIdExpr, namaExpr, fkCol } = MasterDataGapService.SCALAR_DIMENSIONS[dim];
         return `
             select '${dim}' as dimensi, ${rawIdExpr} as raw_id, ${namaExpr} as nama, no_laporan
-            from bdb_laporan_polisi
+            from recent_lps
             where ${fkCol} is null and ${rawIdExpr} ~ '^[0-9]+$'
         `;
     }
@@ -98,7 +112,7 @@ export class MasterDataGapService {
                    nullif(elem->>'id_uu','') as raw_id,
                    elem->>'nama_uu' as nama,
                    lp.no_laporan
-            from bdb_laporan_polisi lp
+            from recent_lps lp
             cross join lateral jsonb_array_elements(coalesce(lp.payload_json->'tindak_pidana', '[]'::jsonb)) elem
             where nullif(elem->>'id_uu','') ~ '^[0-9]+$'
               and not exists (select 1 from cm_undang_undang u where u.id = (elem->>'id_uu')::bigint)
@@ -111,15 +125,22 @@ export class MasterDataGapService {
     }
 
     async stats() {
+        const now = Date.now();
+        if (this.statsCache && this.statsCache.exp > now) {
+            return this.statsCache.data;
+        }
         const rows = await this.dataSource.query(`
-            with base as (${this.allDimensionsUnion()})
+            with recent_lps as materialized (${this.recentLpsCte()}),
+            base as (${this.allDimensionsUnion()})
             select dimensi, count(distinct raw_id)::int as id_unik, count(*)::int as lp_terdampak
             from base group by dimensi order by dimensi
         `);
-        return {
+        const res = {
             status: 1,
             data: rows.map((r: any) => ({ dimensi: r.dimensi, label: DIMENSION_LABEL[r.dimensi as Dimension], id_unik: r.id_unik, lp_terdampak: r.lp_terdampak })),
         };
+        this.statsCache = { exp: now + MasterDataGapService.STATS_CACHE_TTL_MS, data: res };
+        return res;
     }
 
     async list(opts: { dimensi?: Dimension; search?: string; page?: number; row?: number }) {
@@ -142,7 +163,8 @@ export class MasterDataGapService {
 
         const rows = await this.dataSource.query(
             `
-            with base as (${union}),
+            with recent_lps as materialized (${this.recentLpsCte()}),
+            base as (${union}),
             grouped as (
                 select dimensi, raw_id, max(nama) as nama, count(*)::int as lp_terdampak,
                        (array_agg(no_laporan order by no_laporan))[1:3] as contoh_no_laporan
@@ -158,7 +180,8 @@ export class MasterDataGapService {
         );
         const countRes = await this.dataSource.query(
             `
-            with base as (${union}),
+            with recent_lps as materialized (${this.recentLpsCte()}),
+            base as (${union}),
             grouped as (select dimensi, raw_id, max(nama) as nama from base group by dimensi, raw_id)
             select count(*)::int as c from grouped ${searchClause}
             `,

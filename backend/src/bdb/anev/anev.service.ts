@@ -116,7 +116,7 @@ export class AnevService {
     }
 
     async meta() {
-        const years = await this.ds.query(`select distinct extract(year from ${DATE_EXPR})::int as year from bdb_laporan_polisi lp where lp.tgl_laporan is not null and extract(year from ${DATE_EXPR})::int >= 2000 and extract(year from ${DATE_EXPR})::int <= extract(year from now())::int order by 1 desc`);
+        const years = await this.ds.query(`select distinct extract(year from tanggal)::int as year from bdb_anev_rekap_snapshot where tanggal is not null and extract(year from tanggal)::int >= 2000 and extract(year from tanggal)::int <= extract(year from now())::int order by 1 desc`);
         const statuses = await this.allStatuses();
         return { status: 1, data: { years: years.map((y: any) => y.year).filter((y: any) => y), statuses } };
     }
@@ -165,19 +165,19 @@ export class AnevService {
                 const sWhere: string[] = ['1=1'];
                 if (f.date_from) {
                     sParams.push(f.date_from);
-                    sWhere.push(`tanggal >= ${sParams.length}::date`);
+                    sWhere.push(`tanggal >= $${sParams.length}::date`);
                 }
                 if (f.date_to) {
                     sParams.push(f.date_to);
-                    sWhere.push(`tanggal <= ${sParams.length}::date`);
+                    sWhere.push(`tanggal <= $${sParams.length}::date`);
                 }
                 if (f.year) {
                     sParams.push(Number(f.year));
-                    sWhere.push(`extract(year from tanggal) = ${sParams.length}`);
+                    sWhere.push(`extract(year from tanggal) = $${sParams.length}`);
                 }
                 if (f.month) {
                     sParams.push(Number(f.month));
-                    sWhere.push(`extract(month from tanggal) = ${sParams.length}`);
+                    sWhere.push(`extract(month from tanggal) = $${sParams.length}`);
                 }
                 counts = await this.ds.query(
                     `select satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
@@ -1841,7 +1841,7 @@ export class AnevService {
         let userNama = 'OPERATOR';
         let userNrp = '-';
         if (body.userId) {
-            const u = await this.ds.query('SELECT name, username FROM auth_users WHERE id = $1', [body.userId]);
+            const u = await this.ds.query("SELECT name, COALESCE(NULLIF(callsign, ''), NULLIF(username, '')) AS username FROM auth_users WHERE id = $1", [body.userId]);
             if (u.length) {
                 userNama = u[0].name || 'OPERATOR';
                 userNrp = u[0].username || '-';

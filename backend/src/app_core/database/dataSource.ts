@@ -16,11 +16,11 @@ const AppDataSource = new DataSource({
     // Lihat catatan lengkap di database.module.ts (dipakai runtime NestJS -- DataSource ini cuma
     // dipakai CLI/migration, tapi disamakan supaya tak membingungkan kalau dibaca terpisah).
     extra: {
-        max: 25,
+        max: 8,
         connectionTimeoutMillis: 5000,
         idleTimeoutMillis: 30000
     },
-    poolSize: 25,
+    poolSize: 8,
     entities: ['dist/**/*.entity{.ts,.js}'],
     migrations: ['src/app_core/migrations/**/*.ts'],
     subscribers: ['dist/subscriber/**/*.ts'],

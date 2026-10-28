@@ -174,15 +174,17 @@ export class DpoService {
         if (files?.foto) {
             try {
                 fotoUrl = await this.minio.upload(files.foto, 'dpo/foto');
-            } catch {
-                /* abaikan upload bila gagal */
+            } catch (err: any) {
+                if (err instanceof BadRequestException || err?.status === 400) throw err;
+                /* abaikan upload bila gagal karena storage */
             }
         }
         if (files?.dokumen) {
             try {
                 scanUrl = await this.minio.upload(files.dokumen, 'dpo/dokumen');
-            } catch {
-                /* abaikan upload bila gagal */
+            } catch (err: any) {
+                if (err instanceof BadRequestException || err?.status === 400) throw err;
+                /* abaikan upload bila gagal karena storage */
             }
         }
 
@@ -252,8 +254,9 @@ export class DpoService {
         if (file) {
             try {
                 scanCabutUrl = await this.minio.upload(file, 'dpo/pencabutan');
-            } catch {
-                /* abaikan upload bila gagal */
+            } catch (err: any) {
+                if (err instanceof BadRequestException || err?.status === 400) throw err;
+                /* abaikan upload bila gagal karena storage */
             }
         }
 
