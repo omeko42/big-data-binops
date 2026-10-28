@@ -22,7 +22,25 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     private readonly summaryCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly rankingCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly recentGlobalCache = new Map<string, { expiresAt: number; data: any }>();
+    private readonly lpByNikCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly rankingCacheTtlMs = 2 * 60 * 1000;
+
+    private extractCorpTrigramWords(corpTerm: string): string[] {
+        const core = String(corpTerm || '')
+            .replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM|FIRMA|PD)[.]?\s+/i, '')
+            .replace(/\b(TBK|PERSERO)\b/gi, ' ')
+            .trim();
+        const words = core
+            .split(/[^A-Za-z0-9]+/)
+            .map(w => w.trim().toUpperCase())
+            .filter(w => w.length >= 3);
+        if (words.length > 0) return words.slice(0, 3);
+        return String(corpTerm || '')
+            .split(/[^A-Za-z0-9]+/)
+            .map(w => w.trim().toUpperCase())
+            .filter(w => w.length >= 3)
+            .slice(0, 2);
+    }
 
     async onApplicationBootstrap() {
         if (!isPrimaryClusterInstance()) return;
@@ -1688,9 +1706,20 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
         const fromStr = String(query?.from || query?.date_from || '').trim();
         const toStr = String(query?.to || query?.date_to || '').trim();
+        const cacheKey = `${nik}|${fromStr}|${toStr}`;
+        const cached = this.lpByNikCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
+
         const isCorp = nik.startsWith('KORP:');
         const corpTerm = isCorp ? nik.replace(/^KORP:/, '').replace(/_/g, ' ').trim() : '';
-        const cleanTerm = corpTerm.replace(/[^A-Za-z0-9]/g, '');
+        const cleanTerm = corpTerm.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const trigramWords = isCorp ? this.extractCorpTrigramWords(corpTerm) : [];
+        const trigramParams = trigramWords.map(w => `%${w}%`);
+        const trigramClauseT = trigramWords.length > 0
+            ? trigramWords.map((_, idx) => `t.nama ILIKE $${idx + 3}`).join(' AND ')
+            : `t.nama ILIKE ('%' || $2 || '%')`;
 
         const sql = isCorp ? `
             WITH ${this.documentPartiesCte()},
@@ -1722,10 +1751,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
                 LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                 LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
-                WHERE (
-                    regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') = $1
-                    OR upper(trim(t.nama)) ILIKE ('%' || $2 || '%')
-                )
+                WHERE (${trigramClauseT})
+                  AND (
+                      regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') LIKE ('%' || $1 || '%')
+                      OR upper(trim(t.nama)) ILIKE ('%' || $2 || '%')
+                  )
 
                 UNION ALL
 
@@ -1759,15 +1789,6 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 WHERE (
                     regexp_replace(upper(trim(x.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(x.nama)) ILIKE ('%' || $2 || '%')
-                    OR EXISTS (
-                        SELECT 1 FROM bdb_dors_lp_terlibat tc
-                        WHERE tc.lp_id = d.id
-                          AND upper(coalesce(tc.keterlibatan, '')) = 'TERLAPOR'
-                          AND (
-                              regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') = $1
-                              OR upper(trim(tc.nama)) ILIKE ('%' || $2 || '%')
-                          )
-                    )
                 )
 
                 UNION ALL
@@ -1924,7 +1945,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             ORDER BY kasta_rank ASC, tgl_date DESC;
         `;
 
-        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm, ...trigramParams] : [nik]);
         if (isCorp && rows.length === 0) {
             const coreCorp = corpTerm.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
             if (coreCorp.length >= 4) {
@@ -2113,7 +2134,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         });
 
         const periodList = deduped.filter((x: any) => x.in_period);
-        return { 
+        const resultPayload = { 
             status: 1, 
             data: deduped, 
             meta: { 
@@ -2123,6 +2144,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 pihak_korporasi: pihakKorporasi
             } 
         };
+        if (this.lpByNikCache.size > 500) {
+            this.lpByNikCache.clear();
+        }
+        this.lpByNikCache.set(cacheKey, {
+            expiresAt: Date.now() + 5 * 60 * 1000,
+            data: resultPayload
+        });
+        return resultPayload;
     }
 
     private async enrichCorporationsWithParties(rows: any[]): Promise<void> {
@@ -2139,16 +2168,25 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const coreCorp = rawName.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
                 if (!cleanTerm) return;
 
+                const trigramWords = this.extractCorpTrigramWords(rawName);
+                const trigramParams = trigramWords.map(w => `%${w}%`);
+                const trigramClause = trigramWords.length > 0
+                    ? trigramWords.map((_, idx) => `tc.nama ILIKE $${idx + 3}`).join(' AND ')
+                    : `tc.nama ILIKE ('%' || $1 || '%')`;
+
                 let lpRowIds = await this.dataSource.query(`
                     SELECT DISTINCT d.id as dors_id, lp.id as lp_id
                     FROM bdb_dors_lp_terlibat tc
                     JOIN bdb_dors_lp d ON d.id = tc.lp_id
                     LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
-                    WHERE upper(trim(tc.nama)) = $1
-                       OR regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') = $2
-                       OR upper(trim(tc.nama)) ILIKE ('%' || $1 || '%')
+                    WHERE (${trigramClause})
+                      AND (
+                          upper(trim(tc.nama)) = $1
+                          OR regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') LIKE ('%' || $2 || '%')
+                          OR upper(trim(tc.nama)) ILIKE ('%' || $1 || '%')
+                      )
                     LIMIT 60
-                `, [rawName.toUpperCase(), cleanTerm]);
+                `, [rawName.toUpperCase(), cleanTerm, ...trigramParams]);
 
                 if ((!lpRowIds || lpRowIds.length === 0) && coreCorp.length >= 4) {
                     lpRowIds = await this.dataSource.query(`

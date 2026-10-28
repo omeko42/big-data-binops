@@ -700,12 +700,58 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
     var uId = String(a?.id || '');
     var uName = String(a?.username || a?.callsign || '').toLowerCase().replace(/^@/, '');
     var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
+    var dbBanner = (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme :
+                   ((typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : null);
     var cachedBanner = ((isOko || (!isReadOnlyMode && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1')) && uId && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + uId) : null;
-    var rawB = (typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : 
-               (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme : 
-               cachedBanner;
+    if (dbBanner && dbBanner.startsWith('data:image') && cachedBanner && cachedBanner.length === 54147 && dbBanner.length !== 54147) {
+      try { localStorage.setItem('cas_banner_' + uId, dbBanner); } catch(e) {}
+      cachedBanner = dbBanner;
+    }
+    var rawB = dbBanner || cachedBanner;
     var targetBanner = resolveUserBanner(rawB, a);
     setBannerTheme(targetBanner);
+
+    if (typeof window !== 'undefined' && targetBanner && targetBanner.startsWith('data:image')) {
+      let probeImg = new Image();
+      probeImg.onload = function() {
+        try {
+          let w = probeImg.naturalWidth || probeImg.width;
+          let h = probeImg.naturalHeight || probeImg.height;
+          if (w > h * 3 && w >= 600) {
+            let cv = document.createElement('canvas');
+            cv.width = w;
+            cv.height = h;
+            let cx = cv.getContext('2d');
+            cx.drawImage(probeImg, 0, 0);
+            let midY = Math.floor(h / 2);
+            let row = cx.getImageData(0, midY, w, 1).data;
+            let isNavyBar = (idx) => {
+              let r = row[idx], g = row[idx + 1], b = row[idx + 2];
+              return Math.abs(r - 9) <= 6 && Math.abs(g - 13) <= 6 && Math.abs(b - 22) <= 7;
+            };
+            let leftBar = 0;
+            while (leftBar < w * 0.4 && isNavyBar(leftBar * 4)) leftBar++;
+            let rightBar = 0;
+            while (rightBar < w * 0.4 && isNavyBar((w - 1 - rightBar) * 4)) rightBar++;
+            if (leftBar > w * 0.05 && rightBar > w * 0.05) {
+              let innerL = leftBar + 1;
+              let innerR = w - 1 - rightBar - 1;
+              let sampleL = innerL * 4;
+              let bgR = row[sampleL], bgG = row[sampleL + 1], bgB = row[sampleL + 2];
+              cx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+              cx.fillRect(0, 0, leftBar + 2, h);
+              cx.fillRect(innerR, 0, rightBar + 2, h);
+              let healed = cv.toDataURL('image/jpeg', 0.9);
+              setBannerTheme(healed);
+              if (uId) {
+                try { localStorage.setItem('cas_banner_' + uId, healed); } catch(e) {}
+              }
+            }
+          }
+        } catch(eHeal) {}
+      };
+      probeImg.src = targetBanner;
+    }
   }
 }, [a, isReadOnlyMode]);
 
@@ -1061,13 +1107,13 @@ let handleSaveBanner = async () => {
         let imgRect = imgEl.getBoundingClientRect();
 
         let cvWidth = 1600;
-        let cvHeight = Math.max(120, Math.round(cvWidth * (boxRect.height / boxRect.width)));
+        let cvHeight = Math.max(160, Math.round(cvWidth * (boxRect.height / boxRect.width)));
         let cv = document.createElement("canvas");
         cv.width = cvWidth;
         cv.height = cvHeight;
         let cx = cv.getContext("2d");
 
-        cx.fillStyle = "#090d16";
+        cx.fillStyle = "#050508";
         cx.fillRect(0, 0, cvWidth, cvHeight);
 
         let scaleToCv = cvWidth / boxRect.width;
@@ -1079,8 +1125,20 @@ let handleSaveBanner = async () => {
         let img = new Image();
         img.onload = function() {
           try {
+            let iw = img.naturalWidth || img.width || cvWidth;
+            let ih = img.naturalHeight || img.height || cvHeight;
+            let coverScale = Math.max(cvWidth / iw, cvHeight / ih) * 1.08;
+            let bw = iw * coverScale;
+            let bh = ih * coverScale;
+            let bx = (cvWidth - bw) / 2;
+            let by = (cvHeight - bh) / 2;
+            cx.save();
+            cx.filter = "blur(24px) brightness(0.45)";
+            cx.drawImage(img, bx, by, bw, bh);
+            cx.restore();
+
             cx.drawImage(img, dx, dy, dw, dh);
-            res(cv.toDataURL("image/jpeg", 0.88));
+            res(cv.toDataURL("image/jpeg", 0.90));
           } catch(eDraw) {
             res(eBannerTheme);
           }
@@ -1089,8 +1147,16 @@ let handleSaveBanner = async () => {
         img.src = eRawBanner;
       });
       setBannerTheme(finalBanner);
+      try {
+        let uid = a?.id || mySelf?.id || 'me';
+        localStorage.setItem('cas_banner_raw_' + uid, eRawBanner);
+        localStorage.setItem('cas_banner_crop_' + uid, JSON.stringify({ zoom: eBannerZoom, panX: eBannerPanX, panY: eBannerPanY }));
+      } catch(eStorage) {}
     }
-    let ok = await persistSocialMedia({ banner_theme: finalBanner });
+    let ok = await persistSocialMedia({
+      banner_theme: finalBanner,
+      banner_crop: { zoom: eBannerZoom, panX: eBannerPanX, panY: eBannerPanY }
+    });
     if (ok) {
       e.current?.show({ severity: 'success', summary: 'Sampul Diterapkan', detail: 'Tema foto sampul berhasil diperbarui.' });
       setBannerModal(!1);
@@ -1904,7 +1970,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           r.onload = function(e2){
             let img = new Image();
             img.onload = function(){
-              let maxDim = 1400;
+              let maxDim = 1800;
               let w = img.width, h = img.height;
               let scale = Math.min(1, maxDim / Math.max(w, h));
               let cv = document.createElement("canvas");
@@ -1912,7 +1978,11 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               cv.height = Math.round(h * scale);
               let cx = cv.getContext("2d");
               cx.drawImage(img, 0, 0, cv.width, cv.height);
-              let compressed = cv.toDataURL("image/jpeg", 0.85);
+              let compressed = cv.toDataURL("image/jpeg", 0.90);
+              try {
+                let uid = a?.id || mySelf?.id || 'me';
+                localStorage.setItem('cas_banner_raw_' + uid, compressed);
+              } catch(eRaw) {}
               setRawBanner(compressed);
               setBannerTheme(compressed);
               setBannerZoom(1);
@@ -1944,24 +2014,78 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         ]
       }),
       ((eRawBanner || (eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http') || eBannerTheme.startsWith('/')))) && (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.55rem",width:"100%",boxSizing:"border-box"},children:[
-        (0,t.jsxs)("div",{id:"cas-banner-crop-box",style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",maxWidth:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,border:"1.5px solid #0284c7",background:"#090d16",display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box"},children:[
-          (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{position:"absolute",left:"50%",top:"50%",maxWidth:"100%",maxHeight:"100%",objectFit:"contain",transform:`translate(-50%, -50%) translate(${eBannerPanX}px, ${eBannerPanY}px) scale(${eBannerZoom})`,transformOrigin:"center center",pointerEvents:"none"}}),
-          (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.75)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.68rem",fontWeight:700},children:"Pratinjau Sampul (100% Sesuai Hasil)"})
-        ]}),
+        (0,t.jsxs)("div",{
+          id:"cas-banner-crop-box",
+          title:"Seret gambar untuk menggeser posisi sampul",
+          onMouseDown:function(ev){
+            ev.preventDefault();
+            let startX = ev.clientX, startY = ev.clientY;
+            let origX = eBannerPanX, origY = eBannerPanY;
+            let onMove = function(mEv){
+              let dx = Math.max(-450, Math.min(450, Math.round(origX + (mEv.clientX - startX))));
+              let dy = Math.max(-450, Math.min(450, Math.round(origY + (mEv.clientY - startY))));
+              setBannerPanX(dx);
+              setBannerPanY(dy);
+            };
+            let onUp = function(){
+              window.removeEventListener('mousemove', onMove);
+              window.removeEventListener('mouseup', onUp);
+            };
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+          },
+          onTouchStart:function(ev){
+            let touch0 = ev.touches?.[0];
+            if (!touch0) return;
+            let startX = touch0.clientX, startY = touch0.clientY;
+            let origX = eBannerPanX, origY = eBannerPanY;
+            let onMove = function(tEv){
+              let t = tEv.touches?.[0];
+              if (!t) return;
+              let dx = Math.max(-450, Math.min(450, Math.round(origX + (t.clientX - startX))));
+              let dy = Math.max(-450, Math.min(450, Math.round(origY + (t.clientY - startY))));
+              setBannerPanX(dx);
+              setBannerPanY(dy);
+            };
+            let onUp = function(){
+              window.removeEventListener('touchmove', onMove);
+              window.removeEventListener('touchend', onUp);
+            };
+            window.addEventListener('touchmove', onMove, { passive: !0 });
+            window.addEventListener('touchend', onUp);
+          },
+          style:{position:"relative",borderRadius:"8px",overflow:"hidden",width:"100%",maxWidth:"100%",aspectRatio:`${(typeof document !== 'undefined' && document.getElementById("cas-profile-hero-banner") && document.getElementById("cas-profile-hero-banner").offsetHeight) ? (document.getElementById("cas-profile-hero-banner").offsetWidth / document.getElementById("cas-profile-hero-banner").offsetHeight).toFixed(3) : 6.2} / 1`,border:"1.5px solid #0284c7",background:"#050508",display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box",cursor:"grab",userSelect:"none"},
+          children:[
+            (0,t.jsx)("img",{src:eRawBanner || eBannerTheme,alt:"",ariaHidden:!0,style:{position:"absolute",inset:"-12px",width:"calc(100% + 24px)",height:"calc(100% + 24px)",objectFit:"cover",filter:"blur(18px) brightness(0.45)",pointerEvents:"none",userSelect:"none"}}),
+            (0,t.jsx)("img",{id:"cas-banner-crop-img",src:eRawBanner || eBannerTheme,alt:"Pratinjau Sampul",style:{position:"absolute",left:"50%",top:"50%",width:"100%",height:"auto",transform:`translate(-50%, -50%) translate(${eBannerPanX}px, ${eBannerPanY}px) scale(${eBannerZoom})`,transformOrigin:"center center",pointerEvents:"none",userSelect:"none"}}),
+            (0,t.jsx)("div",{style:{position:"absolute",bottom:"4px",right:"6px",background:"rgba(0,0,0,0.78)",color:"#38bdf8",padding:"2px 8px",borderRadius:"4px",fontSize:"0.66rem",fontWeight:700,pointerEvents:"none"},children:"Seret langsung / atur slider • Pratinjau 100% Sesuai"})
+          ]
+        }),
         (0,t.jsxs)("div",{style:{display:"flex",gap:"0.4rem",justifyContent:"center",width:"100%",boxSizing:"border-box"},children:[
-          (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #cbd5e1",background:"#f1f5f9",color:"#1e293b",cursor:"pointer"},children:"Muat Semua (Fit)"}),
           (0,t.jsx)("button",{type:"button",onClick:()=>{
             let box = document.getElementById("cas-banner-crop-box");
             let img = document.getElementById("cas-banner-crop-img");
             if (box && img && img.offsetWidth > 0 && img.offsetHeight > 0) {
-              let fz = Math.min(3, Math.max(1, Math.max(box.offsetWidth / img.offsetWidth, box.offsetHeight / img.offsetHeight)));
+              let fz = Math.max(1, box.offsetHeight / img.offsetHeight);
               setBannerZoom(parseFloat(fz.toFixed(2)));
             } else {
-              setBannerZoom(1.5);
+              setBannerZoom(1);
             }
             setBannerPanX(0);
             setBannerPanY(0);
-          },style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #38bdf8",background:"#e0f2fe",color:"#0284c7",cursor:"pointer"},children:"Isi Penuh (Fill)"}),
+          },style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:700,borderRadius:"6px",border:"1px solid #38bdf8",background:"#e0f2fe",color:"#0284c7",cursor:"pointer"},children:"Isi Penuh Sampul (Cover)"}),
+          (0,t.jsx)("button",{type:"button",onClick:()=>{
+            let box = document.getElementById("cas-banner-crop-box");
+            let img = document.getElementById("cas-banner-crop-img");
+            if (box && img && img.offsetWidth > 0 && img.offsetHeight > 0) {
+              let fitZ = Math.max(0.15, Math.min(1, box.offsetHeight / img.offsetHeight));
+              setBannerZoom(parseFloat(fitZ.toFixed(2)));
+            } else {
+              setBannerZoom(0.35);
+            }
+            setBannerPanX(0);
+            setBannerPanY(0);
+          },style:{flex:1,padding:"0.4rem 0.6rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #cbd5e1",background:"#f1f5f9",color:"#1e293b",cursor:"pointer"},children:"Muat Utuh (Fit)"}),
           (0,t.jsx)("button",{type:"button",onClick:()=>{setBannerZoom(1);setBannerPanX(0);setBannerPanY(0);},style:{padding:"0.4rem 0.8rem",fontSize:"0.75rem",fontWeight:600,borderRadius:"6px",border:"1px solid #cbd5e1",background:"#f8fafc",color:"#64748b",cursor:"pointer"},children:"Reset (100%)"})
         ]}),
         (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.45rem",background:"#f8fafc",border:"1px solid #e2e8f0",padding:"0.7rem 0.85rem",borderRadius:"8px",fontSize:"0.75rem",width:"100%",boxSizing:"border-box"},children:[
@@ -1969,17 +2093,17 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Ukuran Gambar (Zoom)"}),
             (0,t.jsx)("span",{style:{fontWeight:700,color:"#0284c7"},children:`${Math.round(eBannerZoom*100)}%`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"0.3",max:"3",step:"0.05",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
+          (0,t.jsx)("input",{type:"range",min:"0.15",max:"3.5",step:"0.02",value:eBannerZoom,onChange:e=>setBannerZoom(parseFloat(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
-            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Kiri / Kanan"}),
-            (0,t.jsx)("span",{style:{fontWeight:600,color:"#64748b"},children:`${eBannerPanX}px`})
-          ]}),
-          (0,t.jsx)("input",{type:"range",min:"-200",max:"200",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
-          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
-            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Atas / Bawah"}),
+            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Atas / Bawah (Vertikal)"}),
             (0,t.jsx)("span",{style:{fontWeight:600,color:"#64748b"},children:`${eBannerPanY}px`})
           ]}),
-          (0,t.jsx)("input",{type:"range",min:"-160",max:"160",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}})
+          (0,t.jsx)("input",{type:"range",min:"-450",max:"450",step:"1",value:eBannerPanY,onChange:e=>setBannerPanY(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}}),
+          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.2rem"},children:[
+            (0,t.jsx)("span",{style:{color:"#334155",fontWeight:600},children:"Geser Kiri / Kanan (Horizontal)"}),
+            (0,t.jsx)("span",{style:{fontWeight:600,color:"#64748b"},children:`${eBannerPanX}px`})
+          ]}),
+          (0,t.jsx)("input",{type:"range",min:"-450",max:"450",step:"1",value:eBannerPanX,onChange:e=>setBannerPanX(parseInt(e.target.value)),style:{width:"100%",accentColor:"#0284c7",cursor:"pointer",margin:0}})
         ]})
       ]}))
     ]})
@@ -2616,12 +2740,25 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       title:"Edit tema foto sampul",
       onClick:()=>{
         if(!isReadOnlyMode){
-          if(!eRawBanner && eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http') || eBannerTheme.startsWith('/'))){
+          let uid = a?.id || mySelf?.id || 'me';
+          let savedRaw = null;
+          let savedCrop = null;
+          try {
+            savedRaw = localStorage.getItem('cas_banner_raw_' + uid);
+            let rawCropStr = localStorage.getItem('cas_banner_crop_' + uid);
+            if (rawCropStr) savedCrop = JSON.parse(rawCropStr);
+          } catch(eLoad) {}
+          if (!savedCrop && a?.social_media?.banner_crop) {
+            savedCrop = a.social_media.banner_crop;
+          }
+          if (savedRaw) {
+            setRawBanner(savedRaw);
+          } else if(!eRawBanner && eBannerTheme && (eBannerTheme.startsWith('data:') || eBannerTheme.startsWith('http') || eBannerTheme.startsWith('/'))){
             setRawBanner(eBannerTheme);
           }
-          setBannerZoom(1);
-          setBannerPanX(0);
-          setBannerPanY(0);
+          setBannerZoom(savedRaw && savedCrop?.zoom ? Number(savedCrop.zoom) : 1);
+          setBannerPanX(savedRaw && savedCrop?.panX !== undefined ? Number(savedCrop.panX) : 0);
+          setBannerPanY(savedRaw && savedCrop?.panY !== undefined ? Number(savedCrop.panY) : 0);
           setBannerModal(!0);
         }
       },
