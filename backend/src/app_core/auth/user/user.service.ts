@@ -726,17 +726,34 @@ export class UserService {
             );
             policeProfile = policeRows?.[0] || null;
         } catch {}
+        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
+        let satkerNama: string | null = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
+        let satkerSatuan: string | null = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
+        if (!satkerNama && user.scope_satker_id) {
+            try {
+                const sRows = await this.dataSource.query('select deskripsi, nama_singkat from bdb_satker where id=$1', [user.scope_satker_id]);
+                if (sRows && sRows[0]) {
+                    satkerNama = sRows[0].deskripsi;
+                    satkerSatuan = sRows[0].deskripsi;
+                }
+            } catch {}
+        }
         return {
             id: user.id,
             name: user.name,
             email: user.email,
             email_polri: user.email_polri,
             username: user.username,
+            callsign: (user.callsign && !/^\d{6,18}$/.test(String(user.callsign).trim())) ? user.callsign : ((user.username && !/^\d{6,18}$/.test(String(user.username).trim())) ? user.username : null),
             foto: user.photo_url || policeProfile?.foto || null,
             photo_url: user.photo_url || policeProfile?.foto || null,
             nrp: policeProfile?.nrp || null,
             no_hp: policeProfile?.no_hp || null,
-            satuan: policeProfile?.satuan || null,
+            satuan: satkerSatuan || policeProfile?.satuan || (isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null),
+            satker: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            satker_singkat: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            satker_nama: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
+            scope_satker_name: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             pangkat: policeProfile?.pangkat || null,
             jabatan: policeProfile?.jabatan || null,
             role_bdb: user.role_bdb,

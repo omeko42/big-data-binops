@@ -658,12 +658,33 @@ export class DorsService implements OnModuleInit {
             const slice = valid.slice(i, i + CHUNK);
             // baris yang benar-benar baru (belum ada di raw untuk model ini)
             const ids = slice.map((r) => r.id);
-            const existRows = await this.dataSource.query(`select dors_lp_id from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`, [model, ids]);
-            const existing = new Set(existRows.map((r: any) => String(r.dors_lp_id)));
-            const fresh = slice.filter((r) => !existing.has(String(r.id)));
+            const existRows = await this.dataSource.query(
+                `select id, dors_lp_id,
+                        coalesce(payload_json->>'pelimpahan','') as pelimpahan,
+                        coalesce(payload_json#>>'{unit,unit}','') as unit_nama,
+                        coalesce(payload_json#>>'{unit,level}','') as unit_level,
+                        coalesce(payload_json#>>'{polda,kode_pusiknas}','') as polda_kp,
+                        coalesce(payload_json#>>'{polres,kode_pusiknas}','') as polres_kp,
+                        coalesce(payload_json#>>'{polsek,kode_pusiknas}','') as polsek_kp
+                 from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`,
+                [model, ids]
+            );
+            const existMap = new Map<string, any>(existRows.map((r: any) => [String(r.dors_lp_id), r]));
+            const fresh = slice.filter((r) => {
+                const ex = existMap.get(String(r.id));
+                if (!ex) return true;
+                return (
+                    String(r.pelimpahan ?? '') !== ex.pelimpahan ||
+                    String(r.unit?.unit ?? '') !== ex.unit_nama ||
+                    String(r.unit?.level ?? '') !== ex.unit_level ||
+                    String(r.polda?.kode_pusiknas ?? '') !== ex.polda_kp ||
+                    String(r.polres?.kode_pusiknas ?? '') !== ex.polres_kp ||
+                    String(r.polsek?.kode_pusiknas ?? '') !== ex.polsek_kp
+                );
+            });
             if (!fresh.length) continue;
 
-            // insert raw (payload utuh) untuk yang baru
+            // insert raw (payload utuh) untuk yang baru atau berubah unit/pelimpahan
             const params: any[] = [];
             const scopeIdx = fresh.length * 4 + 1;
             const batchIdx = fresh.length * 4 + 2;
@@ -678,7 +699,11 @@ export class DorsService implements OnModuleInit {
             const ret = await this.dataSource.query(
                 `insert into bdb_dors_raw_lp (dors_lp_id, model_lp, no_laporan, payload_json, source, data_scope, import_batch, synced_at, created_at, updated_at)
                  values ${valuesSql}
-                 on conflict (dors_lp_id, model_lp) do nothing
+                 on conflict (dors_lp_id, model_lp) do update
+                    set payload_json = excluded.payload_json,
+                        no_laporan = coalesce(excluded.no_laporan, bdb_dors_raw_lp.no_laporan),
+                        synced_at = now(),
+                        updated_at = now()
                  returning id, dors_lp_id`,
                 params
             );
@@ -981,6 +1006,8 @@ export class DorsService implements OnModuleInit {
                 if (unmapped > 0) {
                     const mapRes = await this.laporanPolisi.mapFromDors();
                     mappedBaru = mapRes?.data?.mapped_baru || 0;
+                } else {
+                    await this.laporanPolisi.syncPelimpahanOwnershipFromDors();
                 }
             } catch (e: any) {
                 this.logger.warn('auto-map ke Laporan Polisi gagal: ' + (e?.message || e));

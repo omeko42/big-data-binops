@@ -103,9 +103,9 @@ ePostFileInputRef=(0,n.useRef)(null),
     try {
       var lu = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       /* dynamic handle */
-      if (lu.callsign && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
+      if (lu.callsign && !/^\d{6,18}$/.test(String(lu.callsign).replace(/^@/, '')) && !String(lu.callsign).startsWith('user_')) return '@' + String(lu.callsign).replace(/^@/, '');
+      if (lu.username && !/^\d{6,18}$/.test(String(lu.username).replace(/^@/, '')) && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
       if (lu.name && String(lu.name).trim()) return lu.name;
-      if (lu.username && !String(lu.username).startsWith('user_')) return '@' + String(lu.username).replace(/^@/, '');
     } catch(e) {}
     return '@personil';
   }
@@ -347,17 +347,31 @@ async function eT() {
     if (apiData && !Array.isArray(apiData) && (apiData.id || apiData.username)) {
       myUser = Object.assign({}, apiData);
     }
-    try {
-      var authRes = await c.apiAuth.get("/Authentication/user");
-      var authData = authRes.data?.data || authRes.data;
-      if (authData && !Array.isArray(authData) && (authData.id || authData.username)) {
-        myUser = Object.assign({}, authData, myUser || {}, {
-          pin_required: Boolean(authData.pin_required || myUser?.pin_required),
-          local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
-        });
-      }
-    } catch(eAuth) {}
   } catch(e) {}
+  try {
+    var authRes = await c.apiAuth.get("/Authentication/user");
+    var authData = authRes.data?.data || authRes.data;
+    if (authData && !Array.isArray(authData) && (authData.id || authData.username)) {
+      myUser = Object.assign({}, authData, myUser || {}, {
+        pin_required: Boolean(authData.pin_required || myUser?.pin_required),
+        local_password_enabled: Boolean(authData.local_password_enabled || myUser?.local_password_enabled || true)
+      });
+    }
+  } catch(eAuth) {}
+  if (myUser && myUser.id) {
+    try {
+      var prevLu = JSON.parse(localStorage.getItem('user') || '{}');
+      if (String(prevLu.id) === String(myUser.id)) {
+        var healedU = Object.assign({}, prevLu, {
+          callsign: myUser.callsign || prevLu.callsign,
+          satker_nama: myUser.satker_nama || myUser.scope_satker_name || prevLu.satker_nama,
+          scope_satker_name: myUser.scope_satker_name || myUser.satker_nama || prevLu.scope_satker_name,
+          satker: (myUser.satker_nama || myUser.scope_satker_name || (myUser.satker && myUser.satker !== 'BDB Superadmin' ? myUser.satker : null) || prevLu.satker)
+        });
+        localStorage.setItem('user', JSON.stringify(healedU));
+      }
+    } catch(eHeal) {}
+  }
 
   if (!myUser || !myUser.id) {
     try {
@@ -1724,8 +1738,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"var(--cas-text-primary, #0f172a)",marginTop:"0.2rem",fontWeight:600},children:(function(){
         var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
         if (isSuper) return "Badan Reserse Kriminal Polri (Bareskrim)";
-        var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan || a?.scope_access_display;
-        if (!s || s === 'BDB Superadmin' || s === '-') return "Badan Reserse Kriminal Polri (Bareskrim)";
+        var s = [a?.scope_satker_name, a?.satker_nama, a?.satker, a?.satuan, a?.scope_access_display].find(function(x){ return x && !['bdb superadmin', 'superadmin', '-', 'null', 'undefined'].includes(String(x).trim().toLowerCase()); });
+        if (!s) return "Badan Reserse Kriminal Polri (Bareskrim)";
         var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
         sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
         sClean = sClean.replace(/\bRES\s+/gi, 'Polres ');
@@ -2797,10 +2811,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{
           style:{fontSize:"1.65rem",fontWeight:800,color:"var(--cas-text-primary, #ffffff)",lineHeight:1.2},
           children:(function(){
-            var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
             var c = a?.callsign ? String(a.callsign).trim().replace(/^@/, '') : '';
-            if (u && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
-            if (c && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
+            var u = a?.username ? String(a.username).trim().replace(/^@/, '') : '';
+            if (c && !/^\d{6,18}$/.test(c) && !c.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(c.toLowerCase())) return '@' + c;
+            if (u && !/^\d{6,18}$/.test(u) && !u.startsWith('user_') && !['personil', 'null', 'undefined', '-'].includes(u.toLowerCase())) return '@' + u;
             if (a?.name && String(a.name).trim()) return a.name;
             /* dynamic handle */
             return formatCallsign(a?.callsign, a?.id, a?.username);
@@ -2824,8 +2838,8 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         (0,t.jsx)("span",{children:(function(){
           var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || a?.callsign === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
           if (isSuper) return "Robinopsnal Bareskrim Polri";
-          var s = a?.scope_satker_name || a?.satker || a?.satker_nama || a?.satuan;
-          if (!s || s === 'BDB Superadmin' || s === '-') s = "Bareskrim Polri";
+          var s = [a?.scope_satker_name, a?.satker_nama, a?.satker, a?.satuan].find(function(x){ return x && !['bdb superadmin', 'superadmin', '-', 'null', 'undefined'].includes(String(x).trim().toLowerCase()); });
+          if (!s) s = "Polri";
           var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
           sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
           sClean = sClean.toLowerCase().replace(/(?:^|\s|-|\/)[a-z]/g, function(c){return c.toUpperCase();});
