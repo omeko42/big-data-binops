@@ -14,10 +14,17 @@ export class AnevController {
     }
 
     /** Ringkasan dashboard CT/CC (di-scope per role: superadmin/admin=semua, operator=subtree satkernya). */
-    @Get(['dashboard', 'peta-kejahatan'])
+    @Get('dashboard')
     dashboard(@Query() q: Record<string, any>, @Req() req: any) {
         const uid = req?.user?.id ? Number(req.user.id) : undefined;
         return this.service.dashboard(q || {}, uid);
+    }
+
+    /** Endpoint terpisah khusus modul Peta Kejahatan (Nasional, Mabes/Bareskrim, 36 Wilkum Polda, & Drilldown Polres/Polsek). */
+    @Get('peta-kejahatan')
+    petaKejahatan(@Query() q: Record<string, any>, @Req() req: any) {
+        const uid = req?.user?.id ? Number(req.user.id) : undefined;
+        return this.service.petaKejahatan(q || {}, uid);
     }
 
     @Get('rekap')

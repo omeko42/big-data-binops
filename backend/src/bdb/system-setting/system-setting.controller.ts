@@ -17,7 +17,7 @@ export class SystemSettingController {
 
     private assertAdmin(user: any) {
         const role = String(user?.role_bdb || user?.role_name || '').toLowerCase();
-        if (role !== 'superadmin' && role !== 'admin_binops') {
+        if (!['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(role)) {
             throw new ForbiddenException('Hanya Superadmin atau Admin Binops yang memiliki akses ke pengaturan sistem.');
         }
     }

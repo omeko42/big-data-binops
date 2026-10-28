@@ -11,9 +11,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnevController = void 0;
 const common_1 = require("@nestjs/common");
+const express_1 = require("express");
 const auth_guard_1 = require("../../app_core/auth/auth.guard");
 const anev_service_1 = require("./anev.service");
 let AnevController = class AnevController {
@@ -27,6 +29,10 @@ let AnevController = class AnevController {
     dashboard(q, req) {
         const uid = req?.user?.id ? Number(req.user.id) : undefined;
         return this.service.dashboard(q || {}, uid);
+    }
+    petaKejahatan(q, req) {
+        const uid = req?.user?.id ? Number(req.user.id) : undefined;
+        return this.service.petaKejahatan(q || {}, uid);
     }
     rekap(q) {
         return this.service.rekap(q || {}, q?.parent);
@@ -48,10 +54,9 @@ let AnevController = class AnevController {
         const stamp = new Date().toISOString().slice(0, 10);
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="anev-ct-cc-${stamp}.csv"`);
-        return res.send('﻿' + lines.join('\n'));
+        return res.send('\uFEFF' + lines.join('\n'));
     }
-
-        async generateLampiran(body, req) {
+    async generateLampiran(body, req) {
         const uid = req?.user?.id ? Number(req.user.id) : undefined;
         return this.service.generateLampiranData(body || {}, uid);
     }
@@ -72,7 +77,6 @@ let AnevController = class AnevController {
     async getLampiranArchiveDetail(id) {
         return this.service.getLampiranArchiveDetail(parseInt(id, 10));
     }
-
 };
 exports.AnevController = AnevController;
 __decorate([
@@ -90,6 +94,14 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AnevController.prototype, "dashboard", null);
 __decorate([
+    (0, common_1.Get)('peta-kejahatan'),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], AnevController.prototype, "petaKejahatan", null);
+__decorate([
     (0, common_1.Get)('rekap'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -101,10 +113,9 @@ __decorate([
     __param(0, (0, common_1.Query)()),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, typeof (_a = typeof express_1.Response !== "undefined" && express_1.Response) === "function" ? _a : Object]),
     __metadata("design:returntype", Promise)
 ], AnevController.prototype, "export", null);
-
 __decorate([
     (0, common_1.Post)('lampiran/generate'),
     __param(0, (0, common_1.Body)()),
@@ -121,8 +132,6 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AnevController.prototype, "logPrintLampiran", null);
-
-
 __decorate([
     (0, common_1.Get)('lampiran/archives'),
     __param(0, (0, common_1.Query)('limit')),
@@ -137,10 +146,8 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AnevController.prototype, "getLampiranArchiveDetail", null);
-
 exports.AnevController = AnevController = __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.Controller)('bdb/anev'),
     __metadata("design:paramtypes", [anev_service_1.AnevService])
 ], AnevController);
-//# sourceMappingURL=anev.controller.js.map

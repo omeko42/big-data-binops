@@ -66,9 +66,9 @@ export class CreateUserDto {
     @IsString()
     password_confirmation: string;
 
-    @ApiProperty({ required: false, enum: ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'] })
+    @ApiProperty({ required: false, enum: ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra', 'vendor', 'mitra'] })
     @IsOptional()
-    @IsIn(['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'])
+    @IsIn(['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra', 'vendor', 'mitra'])
     role_bdb: string;
 
     @ApiProperty({ required: false })

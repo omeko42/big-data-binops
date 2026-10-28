@@ -52,7 +52,8 @@ export class AuthService {
 
     private normalizeBdbRole(role?: string): string {
         const value = String(role || '').trim().toLowerCase();
-        return ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'].includes(value) ? value : 'viewer';
+        if (value === 'vendor' || value === 'mitra' || value === 'vendor_mitra') return 'vendor_mitra';
+        return ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'].includes(value) ? value : 'viewer';
     }
 
     private cleanOptionalText(value: any): string | null {
@@ -750,16 +751,19 @@ export class AuthService {
         }
         const policeProfile = policeRows[0];
         const roleBdb = this.normalizeBdbRole(user.role_bdb);
-        if (scopeRow?.nama_satker_canonical && roleBdb !== 'superadmin') {
+        const isNationalRole = roleBdb === 'superadmin' || roleBdb === 'vendor_mitra';
+        if (scopeRow?.nama_satker_canonical && !isNationalRole) {
             satker = scopeRow.nama_satker_canonical;
-        } else if (roleBdb !== 'superadmin' && satker && String(satker).toLowerCase().includes('superadmin')) {
+        } else if (!isNationalRole && satker && String(satker).toLowerCase().includes('superadmin')) {
             satker = policeProfile?.satuan || 'Polri';
         }
         const scopeAccessDisplay = roleBdb === 'superadmin'
             ? 'Nasional'
-            : scopeRow?.nama_satker_canonical
-                ? `${scopeRow.nama_satker_canonical} dan bawahannya`
-                : satker || 'Belum pilih';
+            : roleBdb === 'vendor_mitra'
+                ? 'Nasional (Read-Only)'
+                : scopeRow?.nama_satker_canonical
+                    ? `${scopeRow.nama_satker_canonical} dan bawahannya`
+                    : satker || 'Belum pilih';
 
         // Step 7: Transform Result
         console.time('Step 7: Transform Final Object');
@@ -783,9 +787,9 @@ export class AuthService {
             status: user.status,
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
-            scope_satker_name: roleBdb === 'superadmin' ? '-' : scopeRow?.nama_satker_canonical || null,
-            satker_nama: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : scopeRow?.nama_satker_canonical || satker || null,
-            scope_satker_level: roleBdb === 'superadmin' ? null : scopeRow?.level || null,
+            scope_satker_name: isNationalRole ? '-' : scopeRow?.nama_satker_canonical || null,
+            satker_nama: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : roleBdb === 'vendor_mitra' ? 'Vendor / Mitra Bareskrim Polri' : scopeRow?.nama_satker_canonical || satker || null,
+            scope_satker_level: isNationalRole ? null : scopeRow?.level || null,
             scope_access_display: scopeAccessDisplay,
             nrp: policeProfile?.nrp || null,
             no_hp: policeProfile?.no_hp || null,

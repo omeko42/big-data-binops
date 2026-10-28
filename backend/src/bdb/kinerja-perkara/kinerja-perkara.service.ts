@@ -1019,7 +1019,21 @@ export class KinerjaPerkaraService implements OnModuleInit {
         try {
             await this.ensureTable();
             if (!isPrimaryClusterInstance()) return;
-            await this.refreshSnapshot();
+            setTimeout(async () => {
+                try {
+                    const rows = await this.ds.query(
+                        `select extract(epoch from (now() - max(refreshed_at))) as age_sec from bdb_kinerja_perkara_snapshot`
+                    );
+                    const ageSec = rows?.[0]?.age_sec != null ? Number(rows[0].age_sec) : null;
+                    if (ageSec != null && Number.isFinite(ageSec) && ageSec < 1500) {
+                        this.logger.log(`[KinerjaPerkara] Snapshot masih segar (${Math.round(ageSec)}s lalu), lewati full rebuild saat boot.`);
+                        return;
+                    }
+                    await this.refreshSnapshot();
+                } catch (err: any) {
+                    this.logger.warn('refresh snapshot awal gagal: ' + (err?.message || err));
+                }
+            }, 15000);
         } catch (e: any) {
             this.logger.warn('refresh snapshot awal gagal: ' + (e?.message || e));
         }

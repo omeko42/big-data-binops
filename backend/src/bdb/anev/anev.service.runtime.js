@@ -16,6 +16,7 @@ const DATE_EXPR = "coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::dat
 let AnevService = class AnevService {
     ds;
     dashCache = new Map();
+    petaCache = new Map();
     async refreshRekapSnapshot() {
         await this.ds.query(`
             INSERT INTO bdb_anev_rekap_snapshot (satker_id, status_code, kategori, tanggal, total_lp, refreshed_at)
@@ -139,25 +140,28 @@ let AnevService = class AnevService {
             scoped = (scoped ? scoped + ' and ' : 'where ') + `lp.satker_id <> all($${params.length})`;
         }
         let counts;
-        if (!f.functionDomain && !f.organizationDomain && !f.status && !allowed && !excludeIds) {
+        const canUseSnapshot = (!f.functionDomain || f.functionDomain === 'INTERNAL_RESERSE') &&
+            (!f.organizationDomain || f.organizationDomain === 'INTERNAL_POLRI') &&
+            !f.status && !allowed && !excludeIds;
+        if (canUseSnapshot) {
             try {
                 const sParams = [];
                 const sWhere = ['1=1'];
                 if (f.date_from) {
                     sParams.push(f.date_from);
-                    sWhere.push(`tanggal >= ${sParams.length}::date`);
+                    sWhere.push(`tanggal >= $${sParams.length}::date`);
                 }
                 if (f.date_to) {
                     sParams.push(f.date_to);
-                    sWhere.push(`tanggal <= ${sParams.length}::date`);
+                    sWhere.push(`tanggal <= $${sParams.length}::date`);
                 }
                 if (f.year) {
                     sParams.push(Number(f.year));
-                    sWhere.push(`extract(year from tanggal) = ${sParams.length}`);
+                    sWhere.push(`extract(year from tanggal) = $${sParams.length}`);
                 }
                 if (f.month) {
                     sParams.push(Number(f.month));
-                    sWhere.push(`extract(month from tanggal) = ${sParams.length}`);
+                    sWhere.push(`extract(month from tanggal) = $${sParams.length}`);
                 }
                 counts = await this.ds.query(`select satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
                      from bdb_anev_rekap_snapshot
@@ -404,6 +408,9 @@ let AnevService = class AnevService {
         const u = rows[0];
         const roleBdb = String(u?.role_bdb || '').toLowerCase();
         const roleName = String(u?.role_name || '').toLowerCase();
+        const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(roleBdb) || ['vendor_mitra', 'vendor', 'mitra'].includes(roleName);
+        if (isVendorMitra)
+            return { all: true, isSuper: true, isVendorMitra: true, satkerId: null };
         const isSuper = roleBdb === 'superadmin' || roleName.includes('super');
         const isAdmin = roleBdb === 'admin_binops';
         if (isSuper || isAdmin)
@@ -970,6 +977,178 @@ let AnevService = class AnevService {
             }
         }
         return finalResult;
+    }
+    async petaKejahatan(f, userId) {
+        const dateFrom = String(f.date_from || f.from || `${new Date().getFullYear()}-01-01`).trim();
+        const dateTo = String(f.date_to || f.to || `${new Date().getFullYear()}-12-31`).trim();
+        const parentKode = f.parent ? String(f.parent).trim() : '';
+        const force = String(f.force || f.refresh || '') === '1';
+        const scope = await this.resolveScope(userId);
+        const cacheKey = [
+            'PETA_V2',
+            scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
+            dateFrom,
+            dateTo,
+            parentKode || 'ROOT'
+        ].join(':');
+        if (!force) {
+            const hit = this.petaCache.get(cacheKey);
+            if (hit && Date.now() - hit.at < 600000) {
+                return hit.res;
+            }
+        }
+        const treeFilter = {
+            date_from: dateFrom,
+            date_to: dateTo
+        };
+        const { roots, statuses, totals, byKode } = await this.buildTree(treeFilter);
+        const mapNode = (n) => {
+            const ctVal = Number(n.total || 0);
+            const ccVal = Number(n.cc || 0);
+            const cpBerjalan = Math.max(0, ctVal - ccVal);
+            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0;
+            return {
+                id: n.id,
+                kode: n.kode,
+                nama: n.nama,
+                has_children: Boolean(n.children && n.children.length > 0),
+                ct: ctVal,
+                cc: ccVal,
+                cc_aktual: ccVal,
+                cc_tunggakan: 0,
+                cp_berjalan: cpBerjalan,
+                cp_tunggakan: 0,
+                cr: crVal,
+                status: n.status || {}
+            };
+        };
+        if (parentKode) {
+            let targetNode = byKode.get(parentKode);
+            if (!targetNode) {
+                const up = parentKode.toUpperCase();
+                for (const n of byKode.values()) {
+                    if (String(n.kode || '').toUpperCase() === up || String(n.nama || '').toUpperCase() === up) {
+                        targetNode = n;
+                        break;
+                    }
+                }
+            }
+            const children = (targetNode?.children || []).map(mapNode).sort((a, b) => b.ct - a.ct);
+            const outChild = {
+                status: 1,
+                data: {
+                    parent: parentKode,
+                    nodes: children
+                }
+            };
+            this.petaCache.set(cacheKey, { at: Date.now(), res: outChild });
+            return outChild;
+        }
+        const allNodes = [...byKode.values()];
+        const poldaNodes = allNodes
+            .filter((n) => n.depth === 1 && /^POLDA\b/i.test(String(n.nama || '')))
+            .map(mapNode)
+            .sort((a, b) => b.ct - a.ct);
+        const mabesDirektoratCoords = [
+            { match: /TIPIDUM/i, label: 'Dittipidum Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2389, lng: 106.8010 },
+            { match: /TIPIDEKSUS/i, label: 'Dittipideksus Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2392, lng: 106.8013 },
+            { match: /TIPIDKOR/i, label: 'Dittipidkor Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2396, lng: 106.8009 },
+            { match: /TIPIDNARKOBA/i, label: 'Dittipidnarkoba Bareskrim Polri', alamat: 'Jl. MT Haryono No. 11, Cawang, Kramat Jati, Jakarta Timur', lat: -6.2458, lng: 106.8665 },
+            { match: /TIPIDSIBER/i, label: 'Dittipidsiber Bareskrim Polri', alamat: 'Gedung Bareskrim Polri Lt. 15, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2388, lng: 106.8005 },
+            { match: /TIPIDTER/i, label: 'Dittipidter Bareskrim Polri', alamat: 'Gedung Bareskrim Polri Lt. 8, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2394, lng: 106.8012 },
+            { match: /PPA|PPO/i, label: 'Dit PPA & PPO Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2390, lng: 106.8002 }
+        ];
+        const direktoratList = [];
+        let mabesCT = 0;
+        let mabesCC = 0;
+        for (const spec of mabesDirektoratCoords) {
+            const found = allNodes.find((n) => spec.match.test(String(n.nama || '')) && /BARESKRIM/i.test(String(n.nama || '')));
+            const ctVal = Number(found?.total || 0);
+            const ccVal = Number(found?.cc || 0);
+            mabesCT += ctVal;
+            mabesCC += ccVal;
+            direktoratList.push({
+                id: found?.id || null,
+                kode: found?.kode || spec.label,
+                nama: found?.nama || spec.label,
+                label: spec.label,
+                alamat: spec.alamat,
+                lat: spec.lat,
+                lng: spec.lng,
+                ct: ctVal,
+                cc: ccVal,
+                cp_berjalan: Math.max(0, ctVal - ccVal),
+                cp_tunggakan: 0,
+                cr: ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0
+            });
+        }
+        const bareskrimRoot = allNodes.find((n) => /^BARESKRIM POLRI$/i.test(String(n.nama || '').trim()));
+        if (bareskrimRoot && Number(bareskrimRoot.total || 0) > mabesCT) {
+            mabesCT = Number(bareskrimRoot.total || 0);
+            mabesCC = Number(bareskrimRoot.cc || 0);
+        }
+        const statusTotals = {};
+        for (const r of roots) {
+            for (const [k, v] of Object.entries(r.status || {})) {
+                statusTotals[k] = (statusTotals[k] || 0) + Number(v || 0);
+            }
+        }
+        const per_status = statuses.map((s) => ({
+            code: s.code,
+            nama: s.nama,
+            kategori: s.kategori || 'CT',
+            urutan: s.urutan,
+            jumlah: Number(statusTotals[s.code] || 0)
+        }));
+        const totalCT = Number(totals.total || 0);
+        const totalCC = Number(totals.cc || 0);
+        const totalCR = totalCT > 0 ? Math.round((totalCC / totalCT) * 10000) / 100 : 0;
+        let scopeSatker = null;
+        if (!scope.all && scope.satkerId) {
+            const sr = await this.ds.query('select deskripsi from bdb_satker where id=$1', [scope.satkerId]);
+            scopeSatker = sr[0]?.deskripsi || null;
+        }
+        const result = {
+            status: 1,
+            data: {
+                from: dateFrom,
+                to: dateTo,
+                ct: totalCT,
+                cc: totalCC,
+                cr: totalCR,
+                pct: totalCR,
+                summary: {
+                    ct: totalCT,
+                    cc: totalCC,
+                    cc_aktual: totalCC,
+                    cc_tunggakan: 0,
+                    cp_berjalan: Math.max(0, totalCT - totalCC),
+                    cp_tunggakan: 0,
+                    cr: totalCR
+                },
+                mabes: {
+                    id: bareskrimRoot?.id || 13,
+                    kode: bareskrimRoot?.kode || 'BARESKRIM',
+                    nama: 'BARESKRIM POLRI / MABES POLRI',
+                    alamat: 'Jl. Trunojoyo No. 3, Selong, Kec. Kebayoran Baru, Jakarta Selatan 12110',
+                    lat: -6.2393,
+                    lng: 106.8006,
+                    ct: mabesCT,
+                    cc: mabesCC,
+                    cp_berjalan: Math.max(0, mabesCT - mabesCC),
+                    cp_tunggakan: 0,
+                    cr: mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0,
+                    direktorat: direktoratList
+                },
+                polda: poldaNodes,
+                kinerja: poldaNodes,
+                per_status,
+                scoped: !scope.all,
+                scope_satker: scopeSatker
+            }
+        };
+        this.petaCache.set(cacheKey, { at: Date.now(), res: result });
+        return result;
     }
     async refreshDashboardSnapshots(onlyActivePeriod = false) {
         const now = new Date();
