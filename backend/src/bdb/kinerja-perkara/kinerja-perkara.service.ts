@@ -630,7 +630,7 @@ export const buildKinerjaRegionalScopePlan = (
     else root = nearestPolsek || nearestPolres || nearestPolda || scopeNode;
 
     const accountRootId = Number(root.id);
-    const functionGroup = (Number(root.id) === 13 || Number(scopeNode.id) === 13 || nearestPolsek != null) ? null : kinerjaScopeFunctionGroup(scopeNode.deskripsi);
+    const functionGroup = (Number(scopeNode.id) === 1 || Number(scopeNode.id) === 13 || nearestPolsek != null) ? null : kinerjaScopeFunctionGroup(scopeNode.deskripsi);
     const isDescendantOf = (satker: SatkerRow, ancestorId: number): boolean => {
         let current: SatkerRow | undefined = satker;
         const guard = new Set<number>();
@@ -2206,7 +2206,10 @@ export class KinerjaPerkaraService implements OnModuleInit {
 
         if (isStandardRekap) {
             const scope = await resolveScope(this.ds, userId);
-            const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
+            const hasAccountFunctionGroup = !scope.all && scope.satkerId
+                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                : false;
+            const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun: number | null = null;
             let targetBulan: number | null = null;
             if (from && to) {
@@ -2422,7 +2425,10 @@ export class KinerjaPerkaraService implements OnModuleInit {
 
         if (isStandardSummary) {
             const scope = await resolveScope(this.ds, userId);
-            const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
+            const hasAccountFunctionGroup = !scope.all && scope.satkerId
+                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                : false;
+            const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun: number | null = null;
             let targetBulan: number | null = null;
             if (from && to) {
@@ -2890,6 +2896,17 @@ export class KinerjaPerkaraService implements OnModuleInit {
             if (allowed) {
                 const allowedSet = new Set(allowed);
                 filteredSubtree = filteredSubtree.filter((id) => allowedSet.has(id));
+            } else if (accountPlan?.functionGroup) {
+                const satkerById = new Map(satkers.map((s) => [Number(s.id), s]));
+                filteredSubtree = filteredSubtree.filter((id) => {
+                    const node = satkerById.get(Number(id));
+                    if (!node) return false;
+                    if (normalizedSatkerWords(node.tipe_satker) === 'FUNGSI') {
+                        const fg = kinerjaScopeFunctionGroup(node.deskripsi);
+                        return !fg || fg === accountPlan.functionGroup;
+                    }
+                    return true;
+                });
             }
             if (!filteredSubtree.length) return emptyResult();
             targetSubtreeIds = filteredSubtree;
@@ -3135,6 +3152,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
             const tglLp = r.tgl_laporan ? String(r.tgl_laporan).slice(0, 10) : (r.tanggal_mulai_penanganan ? String(r.tanggal_mulai_penanganan).slice(0, 10) : '-');
             const satkerNama = r.satker_nama || '-';
             const statusNama = r.status_nama || r.status_code || 'Belum Update';
+            const canEdit = Boolean(scope.all || (scope.satkerId && Number(r.satker_id) === Number(scope.satkerId)));
             return {
                 id: Number(r.lp_id),
                 pid: encodeId(Number(r.lp_id)),
@@ -3155,7 +3173,9 @@ export class KinerjaPerkaraService implements OnModuleInit {
                 status: statusNama,
                 tingkat_kesulitan: r.tingkat_kesulitan || 'Belum dipilih',
                 uraian_singkat: r.uraian_singkat || '',
-                is_rj: Boolean(r.is_rj)
+                is_rj: Boolean(r.is_rj),
+                can_edit: canEdit,
+                is_read_only: !canEdit
             };
         });
 
@@ -3163,6 +3183,9 @@ export class KinerjaPerkaraService implements OnModuleInit {
             status: 1,
             data: {
                 items,
+                can_edit_scope_satker_id: scope.all ? null : (scope.satkerId ? Number(scope.satkerId) : null),
+                is_read_only: !scope.all && items.length > 0 && items.every((it: any) => !it.can_edit),
+                has_readonly_items: !scope.all && items.some((it: any) => !it.can_edit),
                 pagination: {
                     page,
                     limit,

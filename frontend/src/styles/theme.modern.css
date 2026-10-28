@@ -6388,7 +6388,7 @@ div[style*="margin-top:-1.6rem"] > span {
     padding: 0.14rem 0.42rem !important;
   }
 
-  /* Slide 1: 1-Row Horizontal Expandable KPI Pill Strip on Mobile */
+  /* Slide 1: 1-Row Horizontal Expandable KPI Pill Strip on Mobile (JML DOANG) */
   #kp-summary-strip,
   #kp-summary-strip.kp-summary-grid-default,
   #kp-summary-strip.kp-summary-grid-detail {
@@ -6397,7 +6397,7 @@ div[style*="margin-top:-1.6rem"] > span {
     overflow-x: auto !important;
     overflow-y: hidden !important;
     gap: 0.35rem !important;
-    align-items: stretch !important;
+    align-items: center !important;
     padding-bottom: 0.2rem !important;
     scrollbar-width: none !important;
     -webkit-overflow-scrolling: touch !important;
@@ -6407,36 +6407,51 @@ div[style*="margin-top:-1.6rem"] > span {
     display: none !important;
   }
 
+  #kp-summary-strip .kp-kpi-card-v2.kp-pill-collapsed,
   #kp-summary-strip .kp-kpi-card.is-pill-collapsed {
     flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
     padding: 0.3rem 0.58rem !important;
     border-radius: 999px !important;
     display: inline-flex !important;
+    flex-direction: row !important;
     align-items: center !important;
     justify-content: center !important;
     white-space: nowrap !important;
     min-height: 2rem !important;
   }
 
+  #kp-summary-strip .kp-kpi-card-v2.kp-pill-collapsed .kp-kpi-body,
   #kp-summary-strip .kp-kpi-card.is-pill-collapsed .kp-kpi-body {
     display: none !important;
   }
 
+  #kp-summary-strip .kp-kpi-card-v2.kp-pill-expanded,
   #kp-summary-strip .kp-kpi-card.is-pill-expanded {
     flex: 0 0 auto !important;
-    min-width: 8.6rem !important;
-    max-width: 12.5rem !important;
-    padding: 0.36rem 0.58rem !important;
-    border-radius: 10px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.1rem !important;
+    width: auto !important;
+    min-width: max-content !important;
+    max-width: none !important;
+    padding: 0.3rem 0.65rem !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    white-space: nowrap !important;
+    min-height: 2rem !important;
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.14) !important;
   }
 
+  #kp-summary-strip .kp-kpi-card-v2.kp-pill-expanded .kp-kpi-body,
   #kp-summary-strip .kp-kpi-card.is-pill-expanded .kp-kpi-body {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.08rem !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.28rem !important;
+    margin: 0 !important;
   }
 
   #kp-summary-strip .kp-kpi-label {
@@ -6447,48 +6462,16 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   #kp-summary-strip .kp-kpi-val {
-    font-size: 0.92rem !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
     line-height: 1.15 !important;
-    margin-top: 0.05rem !important;
+    margin-top: 0 !important;
   }
 
-  #kp-summary-strip .kp-kpi-mobile-sub {
-    display: block !important;
-    font-size: 0.6rem !important;
-    color: #64748b !important;
-    line-height: 1.2 !important;
-    white-space: normal !important;
-  }
-
-  #kp-summary-strip .kp-kpi-mobile-drill-btn {
-    display: inline-flex !important;
-    align-self: flex-start !important;
-    margin-top: 0.12rem !important;
-    padding: 0.1rem 0.38rem !important;
-    font-size: 0.6rem !important;
-    font-weight: 700 !important;
-    border-radius: 4px !important;
-    background: rgba(37, 99, 235, 0.12) !important;
-    color: #2563eb !important;
-    border: 1px solid rgba(37, 99, 235, 0.25) !important;
-    cursor: pointer !important;
-  }
-
+  #kp-summary-strip .kp-kpi-mobile-sub,
+  #kp-summary-strip .kp-kpi-mobile-drill-btn,
   #kp-summary-strip .kp-pill-toggle-all-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 0 0 auto !important;
-    padding: 0.28rem 0.62rem !important;
-    border-radius: 999px !important;
-    font-size: 0.66rem !important;
-    font-weight: 700 !important;
-    background: rgba(37, 99, 235, 0.12) !important;
-    color: #3b82f6 !important;
-    border: 1px solid rgba(59, 130, 246, 0.35) !important;
-    white-space: nowrap !important;
-    cursor: pointer !important;
-    min-height: 2rem !important;
+    display: none !important;
   }
 
   /* LP Drill-Down Modal switches to Compact Mobile Card List on Mobile */
@@ -6602,24 +6585,31 @@ div[style*="margin-top:-1.6rem"] > span {
     border-radius: 999px !important;
   }
 
-  .lp-status-cards .lp-stat:has(.n) {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    border-radius: 8px !important;
-    padding: 0.38rem 0.55rem !important;
+  .lp-status-cards .lp-stat:not(.active) .n {
+    display: none !important;
   }
 
-  .lp-status-cards .lp-stat .n {
-    font-size: 0.98rem !important;
+  .lp-status-cards .lp-stat.active {
+    flex-direction: row !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 0.32rem 0.68rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .lp-status-cards .lp-stat.active .n {
+    display: inline-block !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
     line-height: 1.15 !important;
+    margin: 0 !important;
   }
 
   .lp-status-cards .lp-stat .l {
-    font-size: 0.62rem !important;
-    margin-top: 0.08rem !important;
+    font-size: 0.66rem !important;
+    margin-top: 0 !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    overflow: visible !important;
   }
 
   .dash-hero-grid {
@@ -6932,11 +6922,18 @@ div[style*="margin-top:-1.6rem"] > span {
     justify-content: center !important;
   }
 
-  /* Rincian Status LP (.lp-status-cards) on PC: Proportional 1-Row Grid */
+  /* Rincian Status LP (.lp-status-cards) on PC: Proportional Grid with Numbers Always Visible */
+  .lp-status-cards:has(> :nth-child(14):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.42rem !important;
+    overflow: visible !important;
+  }
+
   .lp-status-cards:has(> :nth-child(13):last-child) {
     display: grid !important;
-    grid-template-columns: auto repeat(12, minmax(0, 1fr)) !important;
-    gap: 0.4rem !important;
+    grid-template-columns: repeat(13, minmax(0, 1fr)) !important;
+    gap: 0.38rem !important;
     overflow: visible !important;
   }
 
@@ -6956,7 +6953,7 @@ div[style*="margin-top:-1.6rem"] > span {
 
   .lp-status-cards:has(> :nth-child(9):last-child) {
     display: grid !important;
-    grid-template-columns: auto repeat(8, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
     gap: 0.45rem !important;
     overflow: visible !important;
   }
@@ -6968,17 +6965,152 @@ div[style*="margin-top:-1.6rem"] > span {
     overflow: visible !important;
   }
 
-  .lp-status-cards .lp-stat:not(:has(.n)) {
+  .lp-status-cards .lp-stat {
     width: 100% !important;
     min-width: 0 !important;
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
     justify-content: space-between !important;
-    gap: 0.2rem 0.28rem !important;
+    gap: 0.18rem !important;
     padding: 0.45rem 0.55rem !important;
     border-radius: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .lp-status-cards .lp-stat .l {
+    font-size: 0.66rem !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+  }
+
+  .lp-status-cards .lp-stat .n {
+    display: block !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    margin-top: 0.08rem !important;
+  }
+}
+
+/* 2B. TRUE EXCEL FREEZE PANES Z-INDEX HIERARCHY (PC & MOBILE) */
+@media (max-width: 960px) {
+  .kp-data-per-badge {
+    display: none !important;
+  }
+}
+
+.p-datatable .p-datatable-thead,
+.p-datatable-scrollable .p-datatable-thead,
+.p-treetable .p-treetable-thead,
+.p-treetable-scrollable .p-treetable-thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+}
+
+.p-datatable .p-datatable-thead > tr > th,
+.p-treetable .p-treetable-thead > tr > th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+}
+
+.p-datatable .p-datatable-thead > tr > th.cas-freeze-col-1,
+.p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,
+.p-datatable .p-datatable-thead > tr > th.cas-sticky-col-1,
+.p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2,
+.p-treetable .p-treetable-thead > tr > th.cas-freeze-col-1,
+.p-treetable .p-treetable-thead > tr > th.cas-freeze-col-2,
+.p-treetable .p-treetable-thead > tr > th.cas-sticky-col-1,
+.p-treetable .p-treetable-thead > tr > th.cas-sticky-col-2,
+.kp-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(1),
+.kp-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(2),
+.anev-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(1),
+.anev-tt.p-treetable .p-treetable-thead > tr:first-child > th:nth-child(2) {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  background-color: #16324f !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-1,
+:root[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,
+:root[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-1,
+:root[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2,
+[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-1,
+[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,
+[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-1,
+[data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2 {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-1,
+.p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2,
+.p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-1,
+.p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-2,
+.p-treetable .p-treetable-tbody > tr > td.cas-freeze-col-1,
+.p-treetable .p-treetable-tbody > tr > td.cas-freeze-col-2,
+.p-treetable .p-treetable-tbody > tr > td.cas-sticky-col-1,
+.p-treetable .p-treetable-tbody > tr > td.cas-sticky-col-2,
+.kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(1),
+.kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(2),
+.anev-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(1),
+.anev-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(2) {
+  position: sticky !important;
+  z-index: 5 !important;
+  background-color: #ffffff !important;
+}
+
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-1,
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-2,
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-sticky-col-1,
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-sticky-col-2 {
+  background-color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-1,
+:root[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2,
+:root[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-1,
+:root[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-2,
+[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-1,
+[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2,
+[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-1,
+[data-theme="dark"] .p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-2,
+:root[data-theme="dark"] .kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(1),
+:root[data-theme="dark"] .kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(2),
+[data-theme="dark"] .kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(1),
+[data-theme="dark"] .kp-tt.p-treetable .p-treetable-tbody > tr > td:nth-child(2) {
+  background-color: #111a2e !important;
+}
+
+:root[data-theme="dark"] .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-1,
+:root[data-theme="dark"] .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-2,
+[data-theme="dark"] .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-1,
+[data-theme="dark"] .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd > td.cas-freeze-col-2 {
+  background-color: #162038 !important;
+}
+
+@media (max-width: 768px) {
+  .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-1,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-1 {
+    width: 2.1rem !important;
+    min-width: 2.1rem !important;
+    max-width: 2.1rem !important;
+    left: 0 !important;
+    padding: 0.3rem 0.2rem !important;
+  }
+  .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2 {
+    left: 2.1rem !important;
+    min-width: 8.2rem !important;
+    max-width: 10.2rem !important;
+    padding: 0.32rem 0.42rem !important;
   }
 }
 

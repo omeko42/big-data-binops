@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { AnevService } from './anev.service';
