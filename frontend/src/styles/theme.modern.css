@@ -4,7 +4,7 @@
 
 .cms-sticky-top{position:sticky;top:var(--cms-header-h,6.9rem);z-index:15;background:#f1f5f9;padding-top:0.25rem;padding-bottom:0.25rem}
 :root[data-theme=dark] .cms-sticky-top{background:#0b1220}
-.p-datatable-scrollable>.p-datatable-wrapper>.p-datatable-table>.p-datatable-thead{position:sticky;top:0;z-index:2}
+.p-datatable-scrollable>.p-datatable-wrapper>.p-datatable-table>.p-datatable-thead{position:sticky;top:0;z-index:20!important}
 :root[data-theme=dark] .p-datatable-scrollable>.p-datatable-wrapper>.p-datatable-table>.p-datatable-thead>tr>th{background:#1e293b;color:#f1f5f9}
 
 /* TreeTable scroll container */
@@ -7048,6 +7048,12 @@ div[style*="margin-top:-1.6rem"] > span {
 [data-theme="dark"] .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2 {
   background-color: #0f172a !important;
   color: #f8fafc !important;
+}
+
+.p-datatable .p-datatable-tbody,
+.p-treetable .p-treetable-tbody {
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-1,
