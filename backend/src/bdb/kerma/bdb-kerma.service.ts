@@ -144,8 +144,22 @@ export class BdbKermaService {
 
     private toDate(value: any): string | null {
         if (value === undefined || value === null || value === '') return null;
+        if (value instanceof Date && !isNaN(value.getTime())) {
+            const jkt = new Date(value.getTime() + 7 * 3600 * 1000);
+            return jkt.toISOString().slice(0, 10);
+        }
         const text = String(value).trim();
         if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+        const dmy = text.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+            const parsed = new Date(text);
+            if (!isNaN(parsed.getTime())) {
+                const jkt = new Date(parsed.getTime() + 7 * 3600 * 1000);
+                return jkt.toISOString().slice(0, 10);
+            }
+            return text.slice(0, 10);
+        }
         return null;
     }
 
@@ -215,8 +229,8 @@ export class BdbKermaService {
                 nomor_dokumen_polri,
                 jenis_naskah,
                 tentang,
-                tanggal_mulai,
-                tanggal_akhir,
+                to_char(tanggal_mulai, 'YYYY-MM-DD') as tanggal_mulai,
+                to_char(tanggal_akhir, 'YYYY-MM-DD') as tanggal_akhir,
                 case
                     when tanggal_akhir is null then null
                     else tanggal_akhir - current_date

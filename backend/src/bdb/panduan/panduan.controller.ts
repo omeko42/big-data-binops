@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
@@ -10,6 +10,23 @@ const UPLOAD_LIMITS = { limits: { fileSize: 300 * 1024 * 1024 } }; // 300MB, cuk
 @Controller('bdb/panduan')
 export class PanduanController {
     constructor(private readonly service: PanduanService) {}
+
+    @Get('share-challenge')
+    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string) {
+        return this.service.getShareChallenge(token, id ? parseInt(id, 10) : undefined);
+    }
+
+    @Post('verify-viewer')
+    verifyViewer(@Req() req: any, @Body() body: any) {
+        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
+        const userAgent = String(req.headers?.['user-agent'] || '');
+        return this.service.verifyViewer(body || {}, { ip, userAgent });
+    }
+
+    @Get('stream/:token')
+    streamMedia(@Param('token') token: string, @Req() req: any, @Res() res: any) {
+        return this.service.streamMedia(token, req, res);
+    }
 
     @Get()
     @UseInterceptors(CurrentUserInterceptor)

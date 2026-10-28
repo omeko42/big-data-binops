@@ -16,8 +16,17 @@ export class AuthGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const reqObj = context.switchToHttp().getRequest();
-        if (reqObj.url && ((reqObj.url.includes('/dpo/') || reqObj.url.includes('/pihak-terlibat/')) && (reqObj.url.includes('/arsip') || reqObj.url.includes('/foto')) || reqObj.url.includes('/bdb/jukrah/stream/') || reqObj.url.includes('/bdb/system/orchestrator/queue-status'))) {
-            // Allow internal DPO archive/photo viewing, self-authenticating tokenized media stream, and read-only queue status
+        if (
+            reqObj.url &&
+            (((reqObj.url.includes('/dpo/') || reqObj.url.includes('/pihak-terlibat/')) &&
+                (reqObj.url.includes('/arsip') || reqObj.url.includes('/foto'))) ||
+                reqObj.url.includes('/bdb/jukrah/stream/') ||
+                reqObj.url.includes('/bdb/panduan/stream/') ||
+                reqObj.url.includes('/bdb/panduan/share-challenge') ||
+                reqObj.url.includes('/bdb/panduan/verify-viewer') ||
+                reqObj.url.includes('/bdb/system/orchestrator/queue-status'))
+        ) {
+            // Allow internal DPO archive/photo viewing, self-authenticating tokenized media stream, panduan verification gate, and read-only queue status
             return true;
         }
         const request = context.switchToHttp().getRequest();

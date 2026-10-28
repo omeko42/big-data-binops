@@ -74,8 +74,23 @@ export class BdbKasusAtensiService {
     }
     private toDate(v: any): string | null {
         if (!v) return null;
+        if (v instanceof Date && !isNaN(v.getTime())) {
+            const jkt = new Date(v.getTime() + 7 * 3600 * 1000);
+            return jkt.toISOString().slice(0, 10);
+        }
         const t = String(v).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+        const dmy = t.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(t)) {
+            const parsed = new Date(t);
+            if (!isNaN(parsed.getTime())) {
+                const jkt = new Date(parsed.getTime() + 7 * 3600 * 1000);
+                return jkt.toISOString().slice(0, 10);
+            }
+            return t.slice(0, 10);
+        }
+        return null;
     }
     private toSumber(v: any): string | null {
         const s = String(v ?? '').trim().toLowerCase();
