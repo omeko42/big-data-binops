@@ -28,12 +28,14 @@ export class MinioService implements OnModuleInit {
         try {
             const accessKey = process.env.MINIO_ACCESS_KEY || 'bdbadmin';
             const secretKey = process.env.MINIO_SECRET_KEY || '';
+            const region = process.env.MINIO_REGION || 'us-east-1';
             this.client = new Client({
                 endPoint: process.env.MINIO_ENDPOINT || '127.0.0.1',
                 port: parseInt(process.env.MINIO_PORT || '9100', 10),
                 useSSL: String(process.env.MINIO_USE_SSL || 'false') === 'true',
                 accessKey,
-                secretKey
+                secretKey,
+                region
             });
             this.publicClient = process.env.MINIO_PUBLIC_ENDPOINT
                 ? new Client({
@@ -41,7 +43,8 @@ export class MinioService implements OnModuleInit {
                       port: parseInt(process.env.MINIO_PUBLIC_PORT || '443', 10),
                       useSSL: String(process.env.MINIO_PUBLIC_USE_SSL ?? 'true') === 'true',
                       accessKey,
-                      secretKey
+                      secretKey,
+                      region
                   })
                 : this.client;
             const exists = await this.client.bucketExists(this.bucket).catch(() => false);
@@ -71,7 +74,8 @@ export class MinioService implements OnModuleInit {
 
     async presignedUrl(objectKey: string, expirySeconds = 3600): Promise<string> {
         this.assert();
-        return this.publicClient.presignedGetObject(this.bucket, objectKey, expirySeconds);
+        const signed = await this.publicClient.presignedGetObject(this.bucket, objectKey, expirySeconds);
+        return signed.replace(/^https?:\/\/[^/]+\/bdb-attachments\//i, '/bdb-attachments/');
     }
 
     async getObjectStream(objectKey: string): Promise<any> {

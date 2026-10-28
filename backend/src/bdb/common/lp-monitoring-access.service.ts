@@ -451,25 +451,25 @@ export class LpMonitoringAccessService {
         };
     }
 
-    async canAccessLp(userId: number | undefined, lp: { satker_id?: number | null; unit_satker_id?: number | null; jenis_kejahatan_id?: number | null; deleted_at?: any; dilimpahkan_eksternal?: boolean }): Promise<{ allowed: boolean; monitoring: boolean; plan: MonitoringPlan | null }> {
+    async canAccessLp(userId: number | undefined, lp: { satker_id?: number | null; unit_satker_id?: number | null; jenis_kejahatan_id?: number | null; deleted_at?: any; dilimpahkan_eksternal?: boolean }): Promise<{ allowed: boolean; monitoring: boolean; canEdit: boolean; plan: MonitoringPlan | null }> {
         const scope = await resolveScope(this.ds, userId);
-        if (scope.all) return { allowed: true, monitoring: false, plan: null };
+        if (scope.all) return { allowed: true, monitoring: false, canEdit: true, plan: null };
         const ownerId = Number(lp.unit_satker_id ?? lp.satker_id ?? 0);
-        if (!scope.satkerId || !ownerId || lp.deleted_at || lp.dilimpahkan_eksternal) return { allowed: false, monitoring: false, plan: null };
-        if (ownerId === scope.satkerId) return { allowed: true, monitoring: false, plan: null };
+        if (!scope.satkerId || !ownerId || lp.deleted_at || lp.dilimpahkan_eksternal) return { allowed: false, monitoring: false, canEdit: false, plan: null };
+        if (ownerId === Number(scope.satkerId)) return { allowed: true, monitoring: false, canEdit: true, plan: null };
         const owner = await this.satker(ownerId);
-        if (!owner) return { allowed: false, monitoring: false, plan: null };
+        if (!owner) return { allowed: false, monitoring: false, canEdit: false, plan: null };
         const ancestors: SatkerRow[] = await this.ds.query(
             `with recursive p as (select id,deskripsi,parent_id,tipe_satker,depth from bdb_satker where id=$1 union all select s.id,s.deskripsi,s.parent_id,s.tipe_satker,s.depth from bdb_satker s join p on p.parent_id=s.id)
              select id::int,deskripsi,parent_id::int,tipe_satker,depth::int from p order by depth desc nulls last`, [ownerId]);
         const target = ancestors.find((x) => this.isTerritorial(x));
-        if (!target) return { allowed: false, monitoring: false, plan: null };
+        if (!target) return { allowed: true, monitoring: true, canEdit: false, plan: null };
         try {
             const plan = await this.plan(userId, target.id);
             const allowed = plan.ownerIds.includes(ownerId) && !!lp.jenis_kejahatan_id && plan.crimeIds.includes(Number(lp.jenis_kejahatan_id));
-            return { allowed, monitoring: allowed, plan };
+            return { allowed: true, monitoring: true, canEdit: false, plan: allowed ? plan : null };
         } catch {
-            return { allowed: false, monitoring: false, plan: null };
+            return { allowed: true, monitoring: true, canEdit: false, plan: null };
         }
     }
 
@@ -486,7 +486,15 @@ export class LpMonitoringAccessService {
 
     async assertCanMutateLp(userId: number | undefined, lpId: number, authUser?: any) {
         await this.assertNotViewer(userId, authUser);
-        return this.assertCanAccessLp(userId, lpId);
+        const access = await this.assertCanAccessLp(userId, lpId);
+        const scope = await resolveScope(this.ds, userId);
+        if (!scope.all) {
+            const ownerId = Number(access.lp?.unit_satker_id ?? access.lp?.satker_id ?? 0);
+            if (!scope.satkerId || ownerId !== Number(scope.satkerId)) {
+                throw new ForbiddenException('Mode Baca Saja: Akun operator hanya dapat memperbarui LP milik satkernya sendiri.');
+            }
+        }
+        return access;
     }
 
     async assertCanAccessLp(userId: number | undefined, lpId: number) {

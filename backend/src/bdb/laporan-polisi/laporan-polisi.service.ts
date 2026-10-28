@@ -2188,6 +2188,8 @@ export class LaporanPolisiService {
             delete r.__total;
             r.pid = encodeId(r.id);
             r.monitoring_mode = !plan.all && !plan.own;
+            r.can_edit = Boolean(plan.all || plan.own);
+            r.is_read_only = !r.can_edit;
             r.can_transfer = plan.all || plan.own;
             if (r.dilimpahkan_eksternal && r.satker_eksternal_nama) {
                 r.satker_asal_id = r.unit_satker_id ?? r.satker_id;
@@ -2315,9 +2317,12 @@ export class LaporanPolisiService {
             return { status: 0, data: null, message: 'LP tidak ditemukan.' };
         }
         if (row) {
+            const isOwnScope = Boolean(scope.all || (scope.satkerId && ownerSatkerId === Number(scope.satkerId)));
             row.pid = encodeId(row.id);
-            row.monitoring_mode = access.monitoring;
-            row.can_transfer = scope.all || !access.monitoring;
+            row.can_edit = isOwnScope;
+            row.is_read_only = !isOwnScope;
+            row.monitoring_mode = !isOwnScope;
+            row.can_transfer = isOwnScope;
             if (!scope.isSuper) { row.dors_lp_id = null; row.raw_lp_id = null; } // ID DORS hanya untuk superadmin
             if (row.operasi_satgas_id) {
                 const os = await this.dataSource.query('select id, jenis, nama from bdb_operasi_satgas where id=$1 and deleted_at is null', [row.operasi_satgas_id]);

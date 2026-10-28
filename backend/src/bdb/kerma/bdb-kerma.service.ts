@@ -238,6 +238,7 @@ export class BdbKermaService {
                     else upper(coalesce(status, 'AKTIF'))
                 end as status_tampil,
                 file_dokumen_url,
+                (select count(*)::int from bdb_attachment a where a.owner_type = 'kerma' and a.owner_id = bdb_kerma_master.id) as attachment_count,
                 is_tampil,
                 created_by,
                 updated_by,
