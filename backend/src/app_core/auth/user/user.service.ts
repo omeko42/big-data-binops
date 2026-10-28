@@ -752,10 +752,19 @@ export class UserService {
                 }
             } catch {}
         }
-        const mergedSocial = {
-            ...(policeProfile?.social_media && typeof policeProfile.social_media === 'object' ? policeProfile.social_media : {}),
-            ...(user.social_media && typeof user.social_media === 'object' ? user.social_media : {})
+        const isCustomPhoto = (val: any) => typeof val === 'string' && val.trim().length > 5 && val !== 'null' && val !== 'undefined' && !val.includes('default-avatar');
+        const isCustomBanner = (val: any) => typeof val === 'string' && val.trim().length > 5 && !val.includes('default-banner');
+        const resolvedCustomPhoto = isCustomPhoto(user.photo_url) ? user.photo_url.trim() : (isCustomPhoto(policeProfile?.foto) ? policeProfile.foto.trim() : null);
+        const uSoc = (user.social_media && typeof user.social_media === 'object') ? user.social_media : {};
+        const pSoc = (policeProfile?.social_media && typeof policeProfile.social_media === 'object') ? policeProfile.social_media : {};
+        const mergedSocial: any = {
+            ...pSoc,
+            ...uSoc
         };
+        if (isCustomBanner(uSoc.banner_theme)) mergedSocial.banner_theme = uSoc.banner_theme.trim();
+        else if (isCustomBanner(pSoc.banner_theme)) mergedSocial.banner_theme = pSoc.banner_theme.trim();
+        if (resolvedCustomPhoto) mergedSocial.avatar_v2 = true;
+        if (isCustomBanner(mergedSocial.banner_theme)) mergedSocial.banner_v2 = true;
         const isFemale = this.isFemalePersonnel(user.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
         const resolvedGender = isFemale ? 'P' : 'L';
         mergedSocial.jenis_kelamin = resolvedGender;
@@ -767,8 +776,8 @@ export class UserService {
             email_polri: user.email_polri,
             username: user.username,
             callsign: user.username || user.callsign || null,
-            foto: user.photo_url || policeProfile?.foto || null,
-            photo_url: user.photo_url || policeProfile?.foto || null,
+            foto: resolvedCustomPhoto || user.photo_url || policeProfile?.foto || null,
+            photo_url: resolvedCustomPhoto || user.photo_url || policeProfile?.foto || null,
             nrp: policeProfile?.nrp || null,
             no_hp: policeProfile?.no_hp || null,
             jenis_kelamin: resolvedGender,
@@ -793,6 +802,17 @@ export class UserService {
      * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
      */
     async updateOwnProfile(authUser: User, dto: { name?: string; email?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string; is_pns?: boolean; jenis_kelamin?: string; gender?: string; social_media?: any; photo_url?: string; foto?: string }) {
+        const dbUser = await this.userRepository.findOne({ where: { id: Number(authUser.id) } });
+        let existingPoliceSoc: any = {};
+        try {
+            const pRows = await this.dataSource.query(
+                `select social_media from trb_police where lower(email) = any($1::text[]) order by id desc limit 1`,
+                [[this.normalizeEmail(dbUser?.email || authUser.email), this.normalizeEmail(dbUser?.email_polri || authUser.email_polri)].filter(Boolean)]
+            );
+            if (pRows?.[0]?.social_media && typeof pRows[0].social_media === 'object') {
+                existingPoliceSoc = pRows[0].social_media;
+            }
+        } catch {}
         const name = (dto.name || '').trim();
         const authUpdate: Partial<User> = {};
         if (name && name !== authUser.name) authUpdate.name = name;
@@ -802,8 +822,16 @@ export class UserService {
         if (['P', 'PEREMPUAN', 'WANITA', 'FEMALE', 'F', 'POLWAN'].includes(rawJkInput)) normJk = 'P';
         else if (['L', 'LAKI-LAKI', 'LAKI', 'PRIA', 'MALE', 'M', 'POLKI'].includes(rawJkInput)) normJk = 'L';
         if (dto.social_media !== undefined || normJk) {
-            const baseSoc = (authUser.social_media && typeof authUser.social_media === 'object') ? authUser.social_media : {};
-            const nextSoc = { ...baseSoc, ...(dto.social_media && typeof dto.social_media === 'object' ? dto.social_media : {}) };
+            const dbSoc = (dbUser?.social_media && typeof dbUser.social_media === 'object') ? dbUser.social_media : ((authUser.social_media && typeof authUser.social_media === 'object') ? authUser.social_media : {});
+            const baseSoc: any = { ...existingPoliceSoc, ...dbSoc };
+            const incomingSoc = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
+            const nextSoc: any = { ...baseSoc, ...incomingSoc };
+            const isCustomBanner = (val: any) => typeof val === 'string' && val.trim().length > 5 && !val.includes('default-banner');
+            if (!isCustomBanner(incomingSoc.banner_theme) && (isCustomBanner(dbSoc.banner_theme) || isCustomBanner(existingPoliceSoc.banner_theme))) {
+                if (incomingSoc.banner_theme === undefined) {
+                    nextSoc.banner_theme = isCustomBanner(dbSoc.banner_theme) ? dbSoc.banner_theme : existingPoliceSoc.banner_theme;
+                }
+            }
             if (normJk) {
                 nextSoc.jenis_kelamin = normJk;
                 nextSoc.gender = normJk;
@@ -885,7 +913,7 @@ export class UserService {
             no_hp: dto.no_hp,
             is_pns: dto.is_pns,
             social_media: dto.social_media,
-            foto: dto.photo_url || dto.foto
+            ...(dto.photo_url !== undefined || dto.foto !== undefined ? { foto: dto.photo_url || dto.foto || '' } : {})
         }, this.dataSource, authUser.email_polri);
         return {
             status: 1,
@@ -1288,7 +1316,7 @@ export class UserService {
                     jabatan = coalesce($7, jabatan),
                     email = $8,
                     is_pns = coalesce($9, is_pns),
-                    social_media = coalesce($10::jsonb, social_media),
+                    social_media = CASE WHEN $10::jsonb IS NOT NULL THEN coalesce(social_media, '{}'::jsonb) || $10::jsonb ELSE social_media END,
                     foto = CASE WHEN $11::boolean THEN $12 ELSE foto END,
                     photo_hash = CASE WHEN $11::boolean THEN $13 ELSE photo_hash END,
                     photo_updated_at = CASE WHEN $11::boolean THEN now() ELSE photo_updated_at END,

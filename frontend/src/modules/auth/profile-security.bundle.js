@@ -287,34 +287,26 @@ function getDefaultAvatarUrl(u) {
   return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';
 }
 function resolveUserAvatar(photoUrl, userObj) {
-  if (photoUrl && typeof photoUrl === 'string' && photoUrl.trim().length > 5 && photoUrl !== 'null' && photoUrl !== 'undefined') {
-    var uId = String(userObj?.id || userObj?.user_id || userObj?.author_id || '');
-    var uName = String(userObj?.username || userObj?.callsign || userObj?.author_username || userObj?.author_callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
-    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
-    if (isOko) return photoUrl;
-    var hasExplicitV2 = Boolean(userObj?.social_media?.avatar_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_avatar_v2_' + uId) === '1'));
-    if (!hasExplicitV2) {
-      return getDefaultAvatarUrl(userObj);
-    }
-    return photoUrl;
-  }
+  var isCustom = function(v) {
+    if (!v || typeof v !== 'string') return false;
+    var s = v.trim();
+    return s.length > 5 && s !== 'null' && s !== 'undefined' && !s.includes('default-avatar') && (s.startsWith('data:image') || s.startsWith('http') || s.startsWith('/'));
+  };
+  if (isCustom(photoUrl)) return photoUrl.trim();
+  var fallback = userObj?.photo_url || userObj?.foto || userObj?.photo || userObj?.author_photo || userObj?.author_photo_url;
+  if (isCustom(fallback)) return fallback.trim();
   return getDefaultAvatarUrl(userObj);
 }
 var DEFAULT_POLRI_BANNER = '/images/default-banner-polri.jpg';
 function resolveUserBanner(rawBanner, userObj) {
-  if (rawBanner && typeof rawBanner === 'string') {
-    var b = rawBanner.trim();
-    var uId = String(userObj?.id || userObj?.user_id || '');
-    var uName = String(userObj?.username || userObj?.callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
-    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
-    if (isOko) {
-      if (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient')) return b;
-    }
-    var hasExplicitBannerV2 = Boolean(userObj?.social_media?.banner_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1'));
-    if (hasExplicitBannerV2 && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient'))) {
-      return b;
-    }
-  }
+  var isCustomB = function(v) {
+    if (!v || typeof v !== 'string') return false;
+    var b = v.trim();
+    return b.length > 5 && b !== 'null' && b !== 'undefined' && !b.includes('default-banner') && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient') || b.startsWith('radial-gradient'));
+  };
+  if (isCustomB(rawBanner)) return rawBanner.trim();
+  if (isCustomB(userObj?.social_media?.banner_theme)) return userObj.social_media.banner_theme.trim();
+  if (isCustomB(userObj?.banner_theme)) return userObj.banner_theme.trim();
   return DEFAULT_POLRI_BANNER;
 }
 
@@ -534,7 +526,7 @@ async function handleModalToggleConnect(targetUser) {
   }
 }
 
-async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let jkVal=Z.jenis_kelamin==="P"?"P":"L";let nextSoc={...(a?.social_media||{}),urls:eSocUrls.map(u=>u.trim()).filter(Boolean),jenis_kelamin:jkVal,gender:jkVal};let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),jenis_kelamin:jkVal,gender:jkVal,photo_url:Z.photo_url||"",foto:Z.photo_url||"",social_media:nextSoc};let patchRes=await c.apiAuth.patch("/user/me/profile",payload);(0,c.assertOk)(patchRes);y(prev=>({...prev,jenis_kelamin:jkVal,gender:jkVal,social_media:nextSoc}));try{let lu=JSON.parse(localStorage.getItem('user')||'{}');let newU={...lu,...(patchRes.data?.data||payload),username:Z.username,callsign:Z.username,name:Z.name,jenis_kelamin:jkVal,gender:jkVal,social_media:nextSoc};localStorage.setItem('user',JSON.stringify(newU));window.dispatchEvent(new CustomEvent('user-updated',{detail:newU}));}catch(e){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
+async function eD(){ek(!0),eS("");try{let e=(0,c.assertOk)(await c.apiAuth.get("/bdb/satker/me/profile"));ex(e)}catch(e){eS(e.response?.data?.message||"Gagal memuat data wilayah satker.")}finally{ek(!1)}}async function e_(){if(eN.jumlah_penduduk.trim()&&!/^\d+$/.test(eN.jumlah_penduduk.trim()))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Jumlah penduduk harus berupa angka bulat."});if(eN.longitude.trim()){let t=Number(eN.longitude);if(!Number.isFinite(t)||t<-180||t>180)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Longitude harus angka antara -180 s/d 180."})}if(eN.latitude.trim()){let t=Number(eN.latitude);if(!Number.isFinite(t)||t<-90||t>90)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Latitude harus angka antara -90 s/d 90."})}if(await (0,d.confirmAction)("Simpan perubahan data wilayah satker?")){eI(!0);try{(0,c.assertOk)(await c.apiAuth.patch("/bdb/satker/me/profile",eN)),e.current?.show({severity:"success",summary:"Tersimpan",detail:"Data wilayah satker diperbarui."}),eP(!1),await eD()}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal menyimpan data wilayah satker.",life:8e3})}finally{eI(!1)}}}async function eA(){let polriMail=(Z.email_polri||"").trim().toLowerCase(),secMail=(Z.email||"").trim().toLowerCase();let uName=(Z.username||"").trim().toLowerCase();if(uName&&polriMail&&uName===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Username dan Email Dinas Polri tidak boleh sama. Silakan ubah salah satunya."});if(!Z.name.trim())return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Nama wajib diisi."});if(!polriMail)return void e.current?.show({severity:"warn",summary:"Lengkapi",detail:"Email dinas Polri (Utama) wajib diisi."});if(!polriMail.endsWith("@polri.go.id"))return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri wajib menggunakan domain @polri.go.id."});if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email sekunder tidak boleh sama dengan Email dinas Polri."});if(X.hasBlockingIssue)return void e.current?.show({severity:"warn",summary:"Periksa lagi",detail:"Email dinas Polri atau username sudah dipakai akun lain. Perbaiki dulu sebelum menyimpan."});if(await (0,d.confirmAction)("Simpan perubahan profil?")){Y(!0);try{let jkVal=Z.jenis_kelamin==="P"?"P":"L";let nextSoc={...(a?.social_media||{}),urls:eSocUrls.map(u=>u.trim()).filter(Boolean),jenis_kelamin:jkVal,gender:jkVal};let existingPhoto=Z.photo_url||a?.photo_url||a?.foto||"";let payload={...Z,email:secMail||polriMail,email_polri:polriMail,is_pns:Boolean(Z.is_pns),jenis_kelamin:jkVal,gender:jkVal,social_media:nextSoc};if(existingPhoto&&!String(existingPhoto).includes("default-avatar")){payload.photo_url=existingPhoto;payload.foto=existingPhoto;}else{delete payload.photo_url;delete payload.foto;}let patchRes=await c.apiAuth.patch("/user/me/profile",payload);(0,c.assertOk)(patchRes);y(prev=>({...prev,jenis_kelamin:jkVal,gender:jkVal,social_media:nextSoc}));try{let lu=JSON.parse(localStorage.getItem('user')||'{}');let newU={...lu,...(patchRes.data?.data||payload),username:Z.username,callsign:Z.username,name:Z.name,jenis_kelamin:jkVal,gender:jkVal,social_media:nextSoc};localStorage.setItem('user',JSON.stringify(newU));window.dispatchEvent(new CustomEvent('user-updated',{detail:newU}));}catch(e){}e.current?.show({severity:"success",summary:"Tersimpan",detail:"Profil berhasil diperbarui."}),q(!1),await eT()}catch(a){let t=a.response?.data?.errors,n=t?Object.values(t).flat().join(", "):a.response?.data?.message||"Gagal menyimpan profil.";e.current?.show({severity:"error",summary:"Gagal",detail:n,life:8e3})}finally{Y(!1)}}}function startTotpSetup(){
 setTotpData(null);setTotpInputCode("");setTotpError("");setExistingPassword("");setTotpStep(1);setTotpModal(!0);
 }
 async function fetchTotpSetup(){
@@ -729,16 +721,16 @@ if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");t
     setBio(targetBio);
 
     var uId = String(a?.id || '');
-    var uName = String(a?.username || a?.callsign || '').toLowerCase().replace(/^@/, '');
-    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
-    var dbBanner = (typeof soc?.banner_theme === 'string' && soc.banner_theme) ? soc.banner_theme :
-                   ((typeof a?.banner_theme === 'string' && a.banner_theme) ? a.banner_theme : null);
-    var cachedBanner = ((isOko || (!isReadOnlyMode && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1')) && uId && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + uId) : null;
+    var isCustomB = (v) => typeof v === 'string' && v.trim().length > 5 && !v.includes('default-banner');
+    var dbBanner = isCustomB(soc?.banner_theme) ? soc.banner_theme.trim() :
+                   (isCustomB(a?.banner_theme) ? a.banner_theme.trim() : null);
+    var cachedBanner = (!isReadOnlyMode && uId && typeof localStorage !== 'undefined') ? localStorage.getItem('cas_banner_' + uId) : null;
+    if (cachedBanner && !isCustomB(cachedBanner)) cachedBanner = null;
     if (dbBanner && dbBanner.startsWith('data:image') && cachedBanner && cachedBanner.length === 54147 && dbBanner.length !== 54147) {
       try { localStorage.setItem('cas_banner_' + uId, dbBanner); } catch(e) {}
       cachedBanner = dbBanner;
     }
-    var rawB = dbBanner || cachedBanner;
+    var rawB = dbBanner || cachedBanner || soc?.banner_theme || a?.banner_theme;
     var targetBanner = resolveUserBanner(rawB, a);
     setBannerTheme(targetBanner);
 

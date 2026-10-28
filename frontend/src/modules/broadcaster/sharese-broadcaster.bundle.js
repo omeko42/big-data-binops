@@ -161,34 +161,26 @@ function getDefaultAvatarUrl(u) {
   return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';
 }
 function resolveUserAvatar(photoUrl, userObj) {
-  if (photoUrl && typeof photoUrl === 'string' && photoUrl.trim().length > 5 && photoUrl !== 'null' && photoUrl !== 'undefined') {
-    var uId = String(userObj?.id || userObj?.user_id || userObj?.author_id || '');
-    var uName = String(userObj?.username || userObj?.callsign || userObj?.author_username || userObj?.author_callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
-    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
-    if (isOko) return photoUrl;
-    var hasExplicitV2 = Boolean(userObj?.social_media?.avatar_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_avatar_v2_' + uId) === '1'));
-    if (!hasExplicitV2) {
-      return getDefaultAvatarUrl(userObj);
-    }
-    return photoUrl;
-  }
+  var isCustom = function(v) {
+    if (!v || typeof v !== 'string') return false;
+    var s = v.trim();
+    return s.length > 5 && s !== 'null' && s !== 'undefined' && !s.includes('default-avatar') && (s.startsWith('data:image') || s.startsWith('http') || s.startsWith('/'));
+  };
+  if (isCustom(photoUrl)) return photoUrl.trim();
+  var fallback = userObj?.photo_url || userObj?.foto || userObj?.photo || userObj?.author_photo || userObj?.author_photo_url;
+  if (isCustom(fallback)) return fallback.trim();
   return getDefaultAvatarUrl(userObj);
 }
 var DEFAULT_POLRI_BANNER = '/images/default-banner-polri.jpg';
 function resolveUserBanner(rawBanner, userObj) {
-  if (rawBanner && typeof rawBanner === 'string') {
-    var b = rawBanner.trim();
-    var uId = String(userObj?.id || userObj?.user_id || '');
-    var uName = String(userObj?.username || userObj?.callsign || userObj?.handle || '').toLowerCase().replace(/^@/, '');
-    var isOko = uId === '1' || uName === 'omeko42' || uName === 'om.eko_42';
-    if (isOko) {
-      if (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient')) return b;
-    }
-    var hasExplicitBannerV2 = Boolean(userObj?.social_media?.banner_v2 || (uId && typeof localStorage !== 'undefined' && localStorage.getItem('cas_banner_v2_' + uId) === '1'));
-    if (hasExplicitBannerV2 && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient'))) {
-      return b;
-    }
-  }
+  var isCustomB = function(v) {
+    if (!v || typeof v !== 'string') return false;
+    var b = v.trim();
+    return b.length > 5 && b !== 'null' && b !== 'undefined' && !b.includes('default-banner') && (b.startsWith('data:image') || b.startsWith('http') || b.startsWith('/') || b.startsWith('linear-gradient') || b.startsWith('radial-gradient'));
+  };
+  if (isCustomB(rawBanner)) return rawBanner.trim();
+  if (isCustomB(userObj?.social_media?.banner_theme)) return userObj.social_media.banner_theme.trim();
+  if (isCustomB(userObj?.banner_theme)) return userObj.banner_theme.trim();
   return DEFAULT_POLRI_BANNER;
 }
 
