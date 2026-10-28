@@ -89,13 +89,20 @@ let JukrahService = class JukrahService {
         this.ready = true;
     }
     isFemalePersonnel(name, jenisKelamin, socialMedia) {
-        const jk = String(jenisKelamin || socialMedia?.gender || socialMedia?.jenis_kelamin || '').trim().toLowerCase();
+        const explicitJk = String(socialMedia?.jenis_kelamin || socialMedia?.gender || '').trim().toLowerCase();
+        if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(explicitJk))
+            return true;
+        if (['l', 'laki-laki', 'laki', 'pria', 'male', 'm', 'polki'].includes(explicitJk))
+            return false;
+        const jk = String(jenisKelamin || '').trim().toLowerCase();
         if (['p', 'perempuan', 'wanita', 'female', 'f', 'polwan'].includes(jk))
             return true;
         const n = String(name || '').trim();
         if (!n)
             return false;
-        return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
+        if (/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(n))
+            return false;
+        return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
     }
     resolveDefaultAvatar(photoUrl, name, jenisKelamin, socialMedia) {
         const clean = String(photoUrl || '').trim();
@@ -276,6 +283,7 @@ let JukrahService = class JukrahService {
                 u.email_polri as author_email_polri,
                 u.role_bdb as author_role,
                 u.photo_url as author_photo,
+                u.social_media as author_social_media,
                 u.scope_satker_id as author_satker_id,
                 s.deskripsi as author_satker_nama,
                 s.nama_singkat as author_satker_singkat,
@@ -308,7 +316,7 @@ let JukrahService = class JukrahService {
             const authorSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
             const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
             const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
-            const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, null);
+            const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
             const media = (r.media_urls || []).map((m) => ({
                 ...m,
                 stream_url: m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid)}` : null
@@ -553,7 +561,7 @@ let JukrahService = class JukrahService {
     }
     async getPostReactions(user, postId) {
         const rows = await this.dataSource.query(`SELECT r.id, r.reaction_type, r.created_at,
-                    u.id as user_id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb,
+                    u.id as user_id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     p.pangkat, p.nrp, p.jenis_kelamin, p.foto
              FROM bdb_social_reactions r
@@ -566,7 +574,7 @@ let JukrahService = class JukrahService {
             const isUserOne = this.isSuperUserOne(r.user_id, r.username, r.callsign);
             const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri');
             const isVerified = isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese');
-            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.foto, r.name, r.jenis_kelamin, null);
+            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.foto, r.name, r.jenis_kelamin, r.social_media);
             return {
                 id: Number(r.id),
                 reaction_type: r.reaction_type,
@@ -706,7 +714,7 @@ let JukrahService = class JukrahService {
         const countWindowSelect = hasValidCachedCount ? '' : ', COUNT(*) OVER()::int as total_count';
         const dataSql = `
             WITH paged_users AS MATERIALIZED (
-                SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.last_login_at, u.scope_satker_id, u.scope_satker_key${countWindowSelect}
+                SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id, u.scope_satker_key${countWindowSelect}
                 FROM auth_users u
                 WHERE ${whereSql}
                 ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
@@ -745,8 +753,8 @@ let JukrahService = class JukrahService {
             const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
             const nrpFallback = r.email && r.email.match(/^(\d{7,10})@/) ? r.email.match(/^(\d{7,10})@/)[1] : (r.email_polri && r.email_polri.match(/^(\d{7,10})@/) ? r.email_polri.match(/^(\d{7,10})@/)[1] : null);
             const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
-            const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, null);
-            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, null);
+            const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, r.social_media);
+            const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
             return {
                 id: Number(r.id),
                 name: isUserOne ? (r.name || 'EKO') : r.name,
@@ -861,7 +869,7 @@ let JukrahService = class JukrahService {
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
         const rows = await this.dataSource.query(`SELECT c.id, c.parent_id, c.content, c.created_at, c.is_edited, c.updated_at,
                     p.author_id as post_author_id,
-                    u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url,
+                    u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     (SELECT COUNT(*)::int FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id) as likes_count,
                     EXISTS(SELECT 1 FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id AND cr.user_id = $2) as is_liked
@@ -891,7 +899,7 @@ let JukrahService = class JukrahService {
                 author_name: isUserOne ? (r.raw_name || 'EKO') : (canSeeReal ? (r.raw_name || handle) : handle),
                 author_role: isUserOne ? 'superadmin' : (r.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri'),
-                author_photo: this.resolveDefaultAvatar(r.photo_url, r.raw_name, null, null),
+                author_photo: this.resolveDefaultAvatar(r.photo_url, r.raw_name, null, r.social_media),
                 is_verified: isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese'),
                 likes_count: Number(r.likes_count || 0),
                 is_liked: Boolean(r.is_liked),
@@ -945,7 +953,7 @@ let JukrahService = class JukrahService {
                 message: `Seseorang mengomentari postingan Anda.`
             });
         }
-        const uRows = await this.dataSource.query(`SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url,
+        const uRows = await this.dataSource.query(`SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama
              FROM auth_users u
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
@@ -971,7 +979,7 @@ let JukrahService = class JukrahService {
                 author_name: isUserOne ? (uInfo.name || 'EKO') : (uInfo.name || handle),
                 author_role: isUserOne ? 'superadmin' : (uInfo.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (uInfo.satker || uInfo.satker_nama || 'Polri'),
-                author_photo: this.resolveDefaultAvatar(uInfo.photo_url, uInfo.name, null, null),
+                author_photo: this.resolveDefaultAvatar(uInfo.photo_url, uInfo.name, null, uInfo.social_media),
                 is_verified: isUserOne ? true : Boolean(uInfo.role_bdb && uInfo.role_bdb !== 'sharese'),
                 likes_count: 0,
                 is_liked: false,
