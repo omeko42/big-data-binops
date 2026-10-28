@@ -1235,9 +1235,10 @@ a {
 /* Individual Metric Card Base */
 .lp-stat {
   display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  justify-content: center !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   text-align: left !important;
   cursor: pointer !important;
   background: #ffffff !important;
@@ -1246,12 +1247,19 @@ a {
   border-top-style: solid !important;
   border-top-color: #94a3b8 !important; /* Neutral border default for party cards & general roles */
   border-radius: 12px !important;
-  padding: 0.75rem 0.85rem !important;
+  padding: 0.65rem 0.75rem !important;
+  gap: 0.25rem 0.35rem !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
   min-width: 0 !important;
   overflow: hidden !important;
   user-select: none !important;
+}
+
+.lp-stat:has(.n) {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
 }
 
 .lp-stat:hover {
@@ -6015,34 +6023,35 @@ div[style*="margin-top:-1.6rem"] > span {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: auto;
+  height: auto;
+  padding: 1px;
   border-radius: 999px;
-  font-size: 0.58rem;
-  font-weight: 800;
-  font-style: italic;
-  font-family: Georgia, "Times New Roman", serif;
+  background: transparent !important;
+  border: none !important;
   line-height: 1;
-  text-transform: lowercase !important;
-  letter-spacing: 0 !important;
   cursor: pointer;
   user-select: none;
   flex-shrink: 0;
-  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.kp-info-badge svg,
+.cas-info-svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 /* KPI Card (i) Badge — Harmonized with Polri Navy & Card Surface */
 .kp-info-badge.is-kpi {
-  background: rgba(22, 50, 79, 0.1);
-  color: #16324f;
-  border: 1px solid rgba(22, 50, 79, 0.28);
+  color: #2563eb;
+  opacity: 0.85;
 }
 
 :root[data-theme="dark"] .kp-info-badge.is-kpi,
 [data-theme="dark"] .kp-info-badge.is-kpi {
-  background: rgba(125, 211, 252, 0.18);
-  color: #bae6fd;
-  border-color: rgba(125, 211, 252, 0.42);
+  color: #38bdf8;
+  opacity: 0.9;
 }
 
 /* Table Header Row 1 & Row 2 (i) Badges — Unified on Navy Header (#16324f & #1e3f63) */
@@ -6052,31 +6061,15 @@ div[style*="margin-top:-1.6rem"] > span {
 :root[data-theme="dark"] .kp-info-badge.is-hdr2,
 [data-theme="dark"] .kp-info-badge.is-hdr1,
 [data-theme="dark"] .kp-info-badge.is-hdr2 {
-  width: 13px;
-  height: 13px;
-  font-size: 0.56rem;
-  font-weight: 800;
-  background: rgba(125, 211, 252, 0.22) !important;
-  color: #e0f2fe !important;
-  border: 1px solid rgba(186, 230, 253, 0.55) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.kp-info-badge.is-hdr2,
-:root[data-theme="dark"] .kp-info-badge.is-hdr2,
-[data-theme="dark"] .kp-info-badge.is-hdr2 {
-  width: 12px;
-  height: 12px;
-  font-size: 0.52rem;
+  color: #7dd3fc !important;
+  opacity: 0.92;
 }
 
 .kp-info-badge:hover,
 .kp-info-badge:focus-visible {
   transform: scale(1.15);
-  background: #16324f !important;
-  color: #ffffff !important;
-  border-color: #0f2438 !important;
-  box-shadow: 0 2px 6px rgba(22, 50, 79, 0.35);
+  color: #1d4ed8 !important;
+  opacity: 1;
   outline: none;
 }
 
@@ -6085,10 +6078,8 @@ div[style*="margin-top:-1.6rem"] > span {
 :root[data-theme="dark"] .kp-info-badge:hover,
 [data-theme="dark"] .kp-info-badge:hover {
   transform: scale(1.16);
-  background: #38bdf8 !important;
-  color: #0f172a !important;
-  border-color: #e0f2fe !important;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5) !important;
+  color: #38bdf8 !important;
+  opacity: 1;
 }
 
 .kp-floating-tip-backdrop {
@@ -6580,33 +6571,42 @@ div[style*="margin-top:-1.6rem"] > span {
     min-width: 7.2rem !important;
   }
 
-  /* System-Wide KPI Grids (.lp-status-cards, .dash-hero-grid, .dash-today-grid, .dash-integrasi-grid) */
+  /* System-Wide KPI Grids (.lp-status-cards, .dash-hero-grid, .dash-today-grid, .dash-integrasi-grid) on Mobile */
   .lp-status-cards {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 0.34rem !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
     margin-bottom: 0.5rem !important;
-    padding-bottom: 0 !important;
-    overflow-x: visible !important;
+    padding: 0.2rem 0.1rem !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  .lp-status-cards:has(> .lp-stat:nth-child(4):last-child) {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .lp-status-cards > .lp-stat:last-child:nth-child(3n + 1) {
-    grid-column: 1 / -1 !important;
-  }
-
-  .lp-status-cards > .lp-stat:last-child:nth-child(3n + 2) {
-    grid-column: span 2 !important;
+  .lp-status-cards::-webkit-scrollbar {
+    display: none !important;
   }
 
   .lp-status-cards .lp-stat {
-    min-width: 0 !important;
-    flex: initial !important;
-    padding: 0.38rem 0.5rem !important;
+    min-width: max-content !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.32rem !important;
+    padding: 0.32rem 0.65rem !important;
+    border-radius: 999px !important;
+  }
+
+  .lp-status-cards .lp-stat:has(.n) {
+    flex-direction: column !important;
+    align-items: flex-start !important;
     border-radius: 8px !important;
+    padding: 0.38rem 0.55rem !important;
   }
 
   .lp-status-cards .lp-stat .n {
@@ -6624,9 +6624,13 @@ div[style*="margin-top:-1.6rem"] > span {
 
   .dash-hero-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.38rem !important;
     margin-bottom: 0.5rem !important;
+  }
+
+  .dash-hero-grid > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
   }
 
   .dash-hero-card {
@@ -6646,6 +6650,10 @@ div[style*="margin-top:-1.6rem"] > span {
     margin-bottom: 0.5rem !important;
   }
 
+  .dash-today-grid > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+  }
+
   .dash-today-card {
     padding: 0.5rem 0.6rem !important;
     border-radius: 10px !important;
@@ -6659,16 +6667,14 @@ div[style*="margin-top:-1.6rem"] > span {
 
   .dash-integrasi-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 0.35rem !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.38rem !important;
   }
 
-  .dash-integrasi-grid > .dash-integrasi-card:last-child:nth-child(3n + 1) {
+  .dash-integrasi-grid > .dash-minicard:last-child:nth-child(odd),
+  .dash-integrasi-grid > .dash-integrasi-card:last-child:nth-child(odd),
+  .dash-integrasi-grid > *:last-child:nth-child(odd) {
     grid-column: 1 / -1 !important;
-  }
-
-  .dash-integrasi-grid > .dash-integrasi-card:last-child:nth-child(3n + 2) {
-    grid-column: span 2 !important;
   }
 
   .dash-integrasi-card {
@@ -6808,7 +6814,7 @@ div[style*="margin-top:-1.6rem"] > span {
    11-SLIDE USER PDF UI/UX REVISION (DESKTOP & MOBILE SYSTEM-WIDE)
    ============================================================================ */
 
-/* 1. Global 1-Line Page Title + Info Tooltip Button (.cms-title-info-btn) */
+/* 1. Global 1-Line Page Title + Lucide Info SVG Tooltip Button (.cms-title-info-btn) */
 .cms-page-sub.cms-page-sub-hidden,
 .cms-page-title + .cms-page-sub {
   display: none !important;
@@ -6825,23 +6831,26 @@ div[style*="margin-top:-1.6rem"] > span {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 1.12rem !important;
-  height: 1.12rem !important;
-  min-width: 1.12rem !important;
-  border-radius: 999px !important;
-  background: rgba(37, 99, 235, 0.14) !important;
-  border: 1px solid rgba(59, 130, 246, 0.42) !important;
+  width: 1.45rem !important;
+  height: 1.45rem !important;
+  min-width: 1.45rem !important;
+  border-radius: 6px !important;
+  background: rgba(37, 99, 235, 0.1) !important;
+  border: 1px solid rgba(59, 130, 246, 0.32) !important;
   color: #2563eb !important;
-  font-size: 0.68rem !important;
-  font-weight: 800 !important;
-  font-style: italic !important;
-  font-family: Georgia, "Times New Roman", serif !important;
   line-height: 1 !important;
   padding: 0 !important;
-  margin-left: 0.15rem !important;
+  margin-left: 0.18rem !important;
   cursor: pointer !important;
   flex-shrink: 0 !important;
   transition: all 0.15s ease !important;
+}
+
+.cms-title-info-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+  flex-shrink: 0 !important;
 }
 
 .cms-title-info-btn:hover {
@@ -6852,8 +6861,8 @@ div[style*="margin-top:-1.6rem"] > span {
 
 :root[data-theme="dark"] .cms-title-info-btn,
 [data-theme="dark"] .cms-title-info-btn {
-  background: rgba(56, 189, 248, 0.16) !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
   color: #38bdf8 !important;
 }
 
@@ -6872,7 +6881,7 @@ div[style*="margin-top:-1.6rem"] > span {
   pointer-events: auto !important;
 }
 
-/* 2. Kinerja Perkara Desktop vs Mobile Helpers */
+/* 2. PC Desktop Grid Layouts (@media min-width: 769px) — Zero Empty Space on PC! */
 @media (min-width: 769px) {
   .kp-satker-name-short,
   .kp-kpi-mobile-sub,
@@ -6882,6 +6891,94 @@ div[style*="margin-top:-1.6rem"] > span {
   }
   .kp-satker-name-full {
     display: inline !important;
+  }
+
+  /* Dashboard & Detail LP Grids on PC: Proportional 1-Row Full Width (No Orphan Row, No Empty Space) */
+  .dash-integrasi-grid:has(> :nth-child(9):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    gap: 0.55rem !important;
+  }
+
+  .dash-integrasi-grid:has(> :nth-child(5):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .dash-integrasi-grid:has(> :nth-child(4):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .dash-integrasi-grid:has(> :nth-child(3):last-child),
+  .lp-fact-row:has(> :nth-child(3):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+  }
+
+  .dash-integrasi-grid > .dash-minicard,
+  .dash-integrasi-grid > div,
+  .lp-fact-row > .lp-fact-card,
+  .lp-fact-row > div {
+    grid-column: auto !important;
+  }
+
+  .dash-integrasi-grid > .dash-minicard {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+  }
+
+  /* Rincian Status LP (.lp-status-cards) on PC: Proportional 1-Row Grid */
+  .lp-status-cards:has(> :nth-child(13):last-child) {
+    display: grid !important;
+    grid-template-columns: auto repeat(12, minmax(0, 1fr)) !important;
+    gap: 0.4rem !important;
+    overflow: visible !important;
+  }
+
+  .lp-status-cards:has(> :nth-child(12):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 0.42rem !important;
+    overflow: visible !important;
+  }
+
+  .lp-status-cards:has(> :nth-child(11):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(11, minmax(0, 1fr)) !important;
+    gap: 0.42rem !important;
+    overflow: visible !important;
+  }
+
+  .lp-status-cards:has(> :nth-child(9):last-child) {
+    display: grid !important;
+    grid-template-columns: auto repeat(8, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    overflow: visible !important;
+  }
+
+  .lp-status-cards:has(> :nth-child(8):last-child) {
+    display: grid !important;
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    gap: 0.45rem !important;
+    overflow: visible !important;
+  }
+
+  .lp-status-cards .lp-stat:not(:has(.n)) {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.2rem 0.28rem !important;
+    padding: 0.45rem 0.55rem !important;
+    border-radius: 10px !important;
   }
 }
 

@@ -969,7 +969,7 @@ e.s(["default",0,function() {
           style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"nowrap",minWidth:0},
           children:[
             (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0},children:[
-              (0,t.jsx)("h1",{
+              (0,t.jsxs)("h1",{
                 className:"cms-page-title",
                 style:{
                   fontSize:"1.15rem",
@@ -983,10 +983,20 @@ e.s(["default",0,function() {
                   gap:"0.38rem",
                   whiteSpace:"nowrap"
                 },
-                children:"SHARESE"
+                children:[
+                  "SHARESE",
+                  (0,t.jsx)("button",{
+                    type:"button",
+                    className:"cms-title-info-btn",
+                    "aria-label":"Informasi Halaman Sharese",
+                    "data-tip":"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal.",
+                    title:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal.",
+                    children:(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-info-svg",children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})
+                  })
+                ]
               }),
               (0,t.jsx)("p",{
-                className:"cms-page-sub",
+                className:"cms-page-sub cms-page-sub-hidden",
                 style:{display:"none",margin:0},
                 children:"Forum koordinasi taktis, berbagi pengalaman lapangan, dan penguatan penyidikan Reserse Kriminal."
               })
