@@ -21,6 +21,8 @@ export class AuthGuard implements CanActivate {
             (((reqObj.url.includes('/dpo/') || reqObj.url.includes('/pihak-terlibat/')) &&
                 (reqObj.url.includes('/arsip') || reqObj.url.includes('/foto'))) ||
                 reqObj.url.includes('/bdb/jukrah/stream/') ||
+                reqObj.url.includes('/bdb/jukrah/share-challenge') ||
+                reqObj.url.includes('/bdb/jukrah/verify-share') ||
                 reqObj.url.includes('/bdb/panduan/stream/') ||
                 reqObj.url.includes('/bdb/panduan/share-challenge') ||
                 reqObj.url.includes('/bdb/panduan/verify-viewer') ||

@@ -76,6 +76,33 @@ export class JukrahService {
                 created_at timestamptz default now(),
                 primary key (comment_id, user_id)
             )`);
+        await this.dataSource.query(`
+            CREATE TABLE IF NOT EXISTS bdb_social_messages (
+                id BIGSERIAL PRIMARY KEY,
+                sender_id INTEGER NOT NULL,
+                receiver_id INTEGER NOT NULL,
+                channel_type VARCHAR(32) NOT NULL DEFAULT 'direct',
+                content TEXT NOT NULL,
+                attachment_url TEXT,
+                attachment_name TEXT,
+                is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )`);
+        await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_pair ON bdb_social_messages(sender_id, receiver_id, created_at DESC)');
+        await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_recv ON bdb_social_messages(receiver_id, is_read)');
+        await this.dataSource.query('ALTER TABLE bdb_social_notifications ADD COLUMN IF NOT EXISTS link TEXT');
+        await this.dataSource.query(`
+            CREATE TABLE IF NOT EXISTS bdb_social_share_access_log (
+                id BIGSERIAL PRIMARY KEY,
+                post_id BIGINT NOT NULL,
+                jenis_personel VARCHAR(32) NOT NULL DEFAULT 'INTERNAL',
+                nama VARCHAR(160) NOT NULL,
+                nrp_nip VARCHAR(80) NOT NULL,
+                satker VARCHAR(160),
+                ip_address VARCHAR(80),
+                user_agent TEXT,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )`);
         try {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_req_status ON user_connections (requester_id, status)');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_addr_status ON user_connections (addressee_id, status)');
@@ -121,16 +148,321 @@ export class JukrahService {
         return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
     }
 
+    private resolveAuthorSatker(satkerSingkat: any, satkerNama: any, roleBdb: any, isUserOne: boolean): string {
+        if (isUserOne) return 'Robinopsnal Bareskrim Polri';
+        const raw = String(satkerSingkat || satkerNama || '').trim();
+        const role = String(roleBdb || '').toLowerCase();
+        const isGlobal = role === 'superadmin' || role === 'admin_binops';
+        const low = raw.toLowerCase();
+        if (!raw || low === 'polri' || low === 'mabes polri' || low === 'bareskrim' || low === 'bareskrim polri' || low === 'robinopsnal' || low === 'robinopsnal bareskrim polri') {
+            return isGlobal ? 'Robinopsnal Bareskrim Polri' : (raw || 'Bareskrim Polri');
+        }
+        return raw;
+    }
+
+    createPostShareHash(postId: number): string {
+        const pid = Number(postId || 0);
+        const secret = this.streamSecret || 'cas-sharese-secret-2026';
+        const sig = crypto.createHmac('sha256', secret).update(`sharese_post:${pid}`).digest('hex').slice(0, 16);
+        return Buffer.from(`sp.${pid}.${sig}`, 'utf8').toString('base64url');
+    }
+
+    verifyPostShareHash(hash?: string): number | null {
+        try {
+            const clean = String(hash || '').trim();
+            if (!clean) return null;
+            if (/^\d+$/.test(clean)) return Number(clean);
+            const decoded = Buffer.from(clean, 'base64url').toString('utf8');
+            const parts = decoded.split('.');
+            if (parts.length === 3 && parts[0] === 'sp') {
+                const pid = parseInt(parts[1], 10);
+                const secret = this.streamSecret || 'cas-sharese-secret-2026';
+                const expectedSig = crypto.createHmac('sha256', secret).update(`sharese_post:${pid}`).digest('hex').slice(0, 16);
+                if (!isNaN(pid) && pid > 0 && parts[2] === expectedSig) {
+                    return pid;
+                }
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    async getShareChallenge(shareToken?: string, postId?: number) {
+        await this.ensureTable();
+        let targetId = Number(postId || 0);
+        if (shareToken) {
+            const resolved = this.verifyPostShareHash(shareToken);
+            if (!resolved) {
+                throw new BadRequestException('Tautan berhash Sharese tidak valid atau sudah kedaluwarsa.');
+            }
+            targetId = resolved;
+        }
+        if (!targetId || isNaN(targetId)) {
+            throw new BadRequestException('ID postingan Sharese tidak ditemukan.');
+        }
+
+        const rows = await this.dataSource.query(
+            `SELECT p.id, p.author_id, p.audience_type, p.content, p.media_urls, p.is_official_jukrah, p.is_pinned, p.created_at,
+                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.role_bdb as author_role,
+                    s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat
+             FROM bdb_social_posts p
+             JOIN auth_users u ON u.id = p.author_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE p.id = $1 AND p.status = 'active'
+             LIMIT 1`,
+            [targetId]
+        );
+        if (!rows.length) {
+            throw new NotFoundException('Postingan Sharese tidak ditemukan atau telah ditarik.');
+        }
+        const r = rows[0];
+        const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
+        const authorHandle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
+        const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
+        const rawText = String(r.content || '').trim();
+        const firstLine = (rawText.split('\n')[0] || 'Siaran Sharese CAS Bareskrim Polri').replace(/\*\*/g, '').slice(0, 120);
+
+        // 6-character alphanumeric SVG Captcha (gaya Login)
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        const palette = ['#f8fafc', '#38bdf8', '#a7f3d0', '#fde047', '#f472b6', '#c4b5fd'];
+        let noiseLines = '';
+        for (let i = 0; i < 5; i++) {
+            const x1 = 8 + Math.floor(Math.random() * 28);
+            const y1 = 8 + Math.floor(Math.random() * 44);
+            const cx = 70 + Math.floor(Math.random() * 60);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const x2 = 164 + Math.floor(Math.random() * 28);
+            const y2 = 8 + Math.floor(Math.random() * 44);
+            const stroke = palette[i % palette.length];
+            noiseLines += `<path d="M${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${stroke}" stroke-opacity="0.28" stroke-width="1.5" fill="none"/>`;
+        }
+        let noiseDots = '';
+        for (let i = 0; i < 24; i++) {
+            const cx = 6 + Math.floor(Math.random() * 188);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const rad = (Math.random() * 1.4 + 0.6).toFixed(1);
+            const fill = palette[i % palette.length];
+            noiseDots += `<circle cx="${cx}" cy="${cy}" r="${rad}" fill="${fill}" fill-opacity="0.28"/>`;
+        }
+        let charNodes = '';
+        for (let i = 0; i < code.length; i++) {
+            const ch = code[i];
+            const x = 24 + i * 28 + Math.floor(Math.random() * 5) - 2;
+            const y = 38 + Math.floor(Math.random() * 7) - 3;
+            const rot = Math.floor(Math.random() * 29) - 14;
+            const color = palette[i % palette.length];
+            charNodes += `<text x="${x}" y="${y}" fill="${color}" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" transform="rotate(${rot} ${x} ${y})">${ch}</text>`;
+        }
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60"><rect width="200" height="60" rx="8" fill="#0f172a"/>${noiseLines}${noiseDots}${charNodes}</svg>`;
+        const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
+
+        const exp = Date.now() + 10 * 60 * 1000;
+        const secret = this.streamSecret || 'cas-sharese-secret-2026';
+        const challengePayload = `${targetId}|${code.toUpperCase()}|${exp}`;
+        const sig = crypto.createHmac('sha256', secret).update(challengePayload).digest('hex');
+        const challengeToken = Buffer.from(`${challengePayload}|${sig}`, 'utf8').toString('base64url');
+        const shareHash = this.createPostShareHash(targetId);
+
+        return {
+            status: 1,
+            data: {
+                challenge_token: challengeToken,
+                captcha_svg: svgDataUrl,
+                captcha_question: 'Ketik 6 karakter kode di samping',
+                post_preview: {
+                    id: Number(r.id),
+                    title: firstLine,
+                    author_handle: authorHandle,
+                    author_satker: authorSatker,
+                    is_official_jukrah: Boolean(r.is_official_jukrah),
+                    media_count: Array.isArray(r.media_urls) ? r.media_urls.length : 0,
+                    created_at: r.created_at,
+                    share_hash: shareHash,
+                    share_url: `/cms/broadcaster?share=${shareHash}`
+                }
+            }
+        };
+    }
+
+    private async buildSharedPostPayload(postId: number, uid: number) {
+        const rows = await this.dataSource.query(
+            `SELECT p.id, p.author_id, p.audience_type, p.target_satker_ids, p.content, p.media_urls, p.case_lp_ids,
+                    p.reaction_counts, p.repost_count, p.view_count, p.is_official_jukrah, p.is_pinned, p.is_edited, p.parent_post_id,
+                    p.created_at, p.updated_at,
+                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.email_polri as author_email_polri,
+                    u.role_bdb as author_role, u.photo_url as author_photo, u.social_media as author_social_media, u.scope_satker_id as author_satker_id,
+                    s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat,
+                    (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_read_receipts rrc WHERE rrc.post_id = p.id) as acknowledged_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_reactions rx_all WHERE rx_all.post_id = p.id) as total_reactions
+             FROM bdb_social_posts p
+             JOIN auth_users u ON u.id = p.author_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE p.id = $1 AND p.status = 'active'
+             LIMIT 1`,
+            [postId]
+        );
+        if (!rows.length) {
+            throw new NotFoundException('Postingan Sharese tidak ditemukan atau telah dihapus.');
+        }
+        const r = rows[0];
+        const isUserOne = this.isSuperUserOne(r.author_id, r.author_username, r.author_callsign);
+        const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
+        const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
+        const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
+        const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
+        const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
+        const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
+        const shareHash = this.createPostShareHash(Number(r.id));
+
+        const media = (r.media_urls || []).map((m: any) => ({
+            ...m,
+            stream_url: m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid || 0)}` : null
+        }));
+
+        await this.dataSource.query('UPDATE bdb_social_posts SET view_count = coalesce(view_count, 0) + 1 WHERE id = $1', [postId]);
+
+        return {
+            id: Number(r.id),
+            author_id: Number(r.author_id),
+            author_name: isUserOne ? (r.raw_author_name || 'EKO') : (uid > 0 ? (r.raw_author_name || handle) : handle),
+            author_handle: handle,
+            author_callsign: cleanHandle,
+            author_username: cleanHandle,
+            author_role: authorRole,
+            author_photo: resolvedPhoto,
+            author_photo_url: resolvedPhoto,
+            author_satker: authorSatker,
+            satker_name: authorSatker,
+            satker: authorSatker,
+            is_verified: isVerified,
+            audience_type: r.audience_type,
+            target_satker_ids: r.target_satker_ids || [],
+            content: r.content,
+            media,
+            case_lp_ids: r.case_lp_ids || [],
+            reaction_counts: r.reaction_counts || { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 },
+            total_reactions: Number(r.total_reactions || 0),
+            repost_count: Number(r.repost_count || 0),
+            view_count: Number(r.view_count || 0) + 1,
+            is_official_jukrah: Boolean(r.is_official_jukrah),
+            is_pinned: Boolean(r.is_pinned),
+            is_edited: Boolean(r.is_edited),
+            acknowledged_count: Number(r.acknowledged_count || 0),
+            comments_count: Number(r.comments_count || 0),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            share_hash: shareHash,
+            share_token: shareHash,
+            share_url: `/cms/broadcaster?share=${shareHash}`
+        };
+    }
+
+    async verifyShareViewer(body: any, meta?: { ip?: string; userAgent?: string }) {
+        await this.ensureTable();
+        const challengeToken = String(body?.challenge_token || '').trim();
+        const captchaAnswer = String(body?.captcha_answer || '').trim().toUpperCase();
+        const jenisPersonel = String(body?.jenis_personel || 'POLRI').trim().toUpperCase();
+        const nama = String(body?.nama || '').trim();
+        const nrpNip = String(body?.nrp_nip || body?.nrp || '').trim();
+        const satker = String(body?.satker || '').trim();
+
+        if (!nama || nama.length < 3) {
+            throw new BadRequestException('Nama lengkap wajib diisi (minimal 3 karakter).');
+        }
+        if (!nrpNip || nrpNip.length < 4) {
+            throw new BadRequestException('NRP / NIP wajib diisi dengan benar.');
+        }
+        if (!challengeToken || !captchaAnswer) {
+            throw new BadRequestException('Kode keamanan Captcha wajib diisi.');
+        }
+
+        let targetPostId = Number(body?.post_id || 0);
+        try {
+            const raw = Buffer.from(challengeToken, 'base64url').toString('utf8');
+            const parts = raw.split('|');
+            if (parts.length !== 4) {
+                throw new Error('Token invalid');
+            }
+            const [pidStr, ans, expStr, sig] = parts;
+            const exp = parseInt(expStr, 10);
+            if (isNaN(exp) || Date.now() > exp) {
+                throw new BadRequestException('Sesi Captcha telah kedaluwarsa. Silakan muat ulang kode Captcha.');
+            }
+            const secret = this.streamSecret || 'cas-sharese-secret-2026';
+            const expectedSig = crypto.createHmac('sha256', secret).update(`${pidStr}|${ans}|${expStr}`).digest('hex');
+            if (sig !== expectedSig) {
+                throw new BadRequestException('Token keamanan Captcha tidak sah.');
+            }
+            if (captchaAnswer !== ans.toUpperCase()) {
+                throw new BadRequestException('Kode Captcha (6 karakter) tidak sesuai. Silakan periksa kembali.');
+            }
+            targetPostId = parseInt(pidStr, 10) || targetPostId;
+        } catch (e: any) {
+            if (e instanceof BadRequestException) throw e;
+            throw new BadRequestException('Verifikasi Captcha gagal. Silakan muat ulang Captcha.');
+        }
+
+        if (!targetPostId && body?.share_token) {
+            targetPostId = this.verifyPostShareHash(body.share_token) || 0;
+        }
+        if (!targetPostId) {
+            throw new BadRequestException('Target postingan Sharese tidak valid.');
+        }
+
+        const postData = await this.buildSharedPostPayload(targetPostId, 0);
+
+        await this.dataSource.query(
+            `INSERT INTO bdb_social_share_access_log (post_id, jenis_personel, nama, nrp_nip, satker, ip_address, user_agent)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [targetPostId, jenisPersonel, nama, nrpNip, satker || '-', meta?.ip || '', meta?.userAgent || '']
+        );
+
+        return {
+            status: 1,
+            message: 'Verifikasi berhasil. Menampilkan siaran Sharese.',
+            data: {
+                post: postData,
+                viewer: {
+                    jenis_personel: jenisPersonel,
+                    nama,
+                    nrp_nip: nrpNip,
+                    satker: satker || 'Polri',
+                    verified_at: new Date().toISOString()
+                }
+            }
+        };
+    }
+
+    async getSharedPost(user: any, shareToken: string) {
+        await this.ensureTable();
+        const postId = this.verifyPostShareHash(shareToken);
+        if (!postId) {
+            throw new BadRequestException('Tautan berhash Sharese tidak valid.');
+        }
+        const uid = Number(user?.id || user?.user?.id || 0);
+        const postData = await this.buildSharedPostPayload(postId, uid);
+        return {
+            status: 1,
+            data: postData
+        };
+    }
+
     formatCallsign(rawCallsign: any, authorId: any, username?: any): string {
         const idStr = String(authorId || '');
         let c = String(rawCallsign || '').trim().replace(/^@/, '');
-        if (c.startsWith('pers_') || (c.startsWith('user_') && !/^[a-zA-Z0-9_]{15,}$/.test(c))) c = '';
+        if (c.startsWith('pers_') || (c.startsWith('user_') && !/^user_\d+[0-9a-f]{4}$/i.test(c))) c = '';
         const invalidPlaceholders = ['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse'];
         let u = String(username || '').trim().replace(/^@/, '');
-        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && !u.startsWith('user_')) {
+        if (u && /^[a-zA-Z0-9_.]{3,30}$/.test(u) && !invalidPlaceholders.includes(u.toLowerCase()) && (!u.startsWith('user_') || /^user_\d+[0-9a-f]{4}$/i.test(u))) {
             return '@' + u.toLowerCase();
         }
-        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && !c.startsWith('user_')) {
+        if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase()) && (!c.startsWith('user_') || /^user_\d+[0-9a-f]{4}$/i.test(c))) {
             return '@' + c.toLowerCase();
         }
         if (c && /^[a-zA-Z0-9_.]{3,30}$/.test(c) && !invalidPlaceholders.includes(c.toLowerCase())) {
@@ -323,10 +655,11 @@ export class JukrahService {
             const handle = this.formatCallsign(r.author_callsign, r.author_id, r.author_username);
             const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
             const displayName = isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? (r.raw_author_name || handle) : handle);
-            const authorSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.author_satker_singkat || r.author_satker_nama || 'Polri');
+            const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
             const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
             const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
             const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
+            const shareHash = this.createPostShareHash(Number(r.id));
 
             const media = (r.media_urls || []).map((m: any) => ({
                 ...m,
@@ -373,7 +706,10 @@ export class JukrahService {
                 updated_at: r.updated_at,
                 can_edit: isSelf || isGlobalAdmin,
                 can_delete: isSelf || isGlobalAdmin,
-                can_modify_visibility: isSelf
+                can_modify_visibility: isSelf,
+                share_hash: shareHash,
+                share_token: shareHash,
+                share_url: `/cms/broadcaster?share=${shareHash}`
             };
         });
 
@@ -431,11 +767,19 @@ export class JukrahService {
             throw new BadRequestException('Panjang teks postingan maksimal 3.000 karakter.');
         }
 
-        const userRole = String(user?.role_bdb || 'sharese').toLowerCase();
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
+        let userRole = String(user?.role_bdb || user?.user?.role_bdb || '').toLowerCase();
+        if (!userRole || userRole === 'sharese') {
+            try {
+                const uRow = await this.dataSource.query('SELECT role_bdb FROM auth_users WHERE id = $1 LIMIT 1', [uid]);
+                if (uRow.length && uRow[0].role_bdb) {
+                    userRole = String(uRow[0].role_bdb).toLowerCase();
+                }
+            } catch {}
+        }
+        const canPublishOfficial = ['superadmin', 'admin_binops', 'admin_satker', 'operator', 'pimpinan', 'analis'].includes(userRole) || uid === 1;
 
-        const isOfficial = (dto.is_official_jukrah === true || dto.is_official_jukrah === 'true') && isGlobalAdmin;
-        const isPinned = (dto.is_pinned === true || dto.is_pinned === 'true') && isGlobalAdmin;
+        const isOfficial = (dto.is_official_jukrah === true || dto.is_official_jukrah === 'true' || dto.is_official_jukrah === '1') && canPublishOfficial;
+        const isPinned = (dto.is_pinned === true || dto.is_pinned === 'true' || dto.is_pinned === '1') && canPublishOfficial;
 
         const audienceType = ['public', 'regional', 'friends', 'private'].includes(dto.audience_type || '')
             ? dto.audience_type
@@ -457,14 +801,14 @@ export class JukrahService {
         const mediaUrls: any[] = [];
         for (const file of files || []) {
             const mime = file.mimetype || 'application/octet-stream';
-            if (mime === 'application/pdf' && file.size > 1024 * 1024) {
-                throw new BadRequestException(`Dokumen PDF "${file.originalname}" melebihi batas 1 MB.`);
+            if (mime === 'application/pdf' && file.size > 20 * 1024 * 1024) {
+                throw new BadRequestException(`Dokumen PDF "${file.originalname}" melebihi batas 20 MB.`);
             }
-            if (mime.startsWith('video/') && file.size > 15 * 1024 * 1024) {
-                throw new BadRequestException(`Video "${file.originalname}" melebihi batas 15 MB.`);
+            if (mime.startsWith('video/') && file.size > 20 * 1024 * 1024) {
+                throw new BadRequestException(`Video "${file.originalname}" melebihi batas 20 MB.`);
             }
-            if (mime.startsWith('image/') && file.size > 5 * 1024 * 1024) {
-                throw new BadRequestException(`Gambar "${file.originalname}" melebihi batas 5 MB.`);
+            if (mime.startsWith('image/') && file.size > 15 * 1024 * 1024) {
+                throw new BadRequestException(`Gambar "${file.originalname}" melebihi batas 15 MB.`);
             }
 
             const key = await this.minio.upload(file, 'social');
@@ -548,7 +892,19 @@ export class JukrahService {
             meta: { audienceType, isOfficial, mediaCount: mediaUrls.length }
         });
 
-        return { status: 1, message: 'Postingan berhasil diterbitkan.', data: { id: newPostId } };
+        const shareHash = this.createPostShareHash(newPostId);
+        return {
+            status: 1,
+            message: isOfficial ? 'Jukrah Resmi Kedinasan berhasil diterbitkan dan disinkronkan ke Moderasi.' : 'Postingan berhasil diterbitkan.',
+            data: {
+                id: newPostId,
+                is_official_jukrah: isOfficial,
+                is_pinned: isPinned,
+                share_hash: shareHash,
+                share_token: shareHash,
+                share_url: `/cms/broadcaster?share=${shareHash}`
+            }
+        };
     }
 
     /** Berikan reaksi emoticon tahan (Long-press reaction). */
@@ -784,6 +1140,15 @@ export class JukrahService {
             );
         }
 
+        const isSuggestedFilter = opts.filter === 'suggested';
+        if (isSuggestedFilter && uid) {
+            params.push(uid);
+            const uIdx = params.length;
+            whereClauses.push(
+                `u.id <> $${uIdx} AND u.id NOT IN (SELECT addressee_id FROM user_connections WHERE requester_id = $${uIdx} AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $${uIdx} AND status = 'ACCEPTED')`
+            );
+        }
+
         const whereSql = whereClauses.join(' AND ');
         const filterParams = [...params];
 
@@ -791,9 +1156,11 @@ export class JukrahService {
         const limitIdx = params.length;
         params.push(offset);
         const offsetIdx = params.length;
+        params.push(uid);
+        const uidIdx = params.length;
 
         const cachedCount = this.networkCountCache.get(filterKey);
-        const hasValidCachedCount = Boolean(cachedCount && cachedCount.exp > now);
+        const hasValidCachedCount = Boolean(cachedCount && cachedCount.exp > now && !isSuggestedFilter);
         const countWindowSelect = hasValidCachedCount ? '' : ', COUNT(*) OVER()::int as total_count';
 
         const dataSql = `
@@ -804,11 +1171,13 @@ export class JukrahService {
                 ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
                 LIMIT $${limitIdx} OFFSET $${offsetIdx}
             )
-            SELECT pu.*, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.nrp, tp.satuan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto
+            SELECT pu.*, s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.jabatan, tp.nrp, tp.satuan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto,
+                   EXISTS(SELECT 1 FROM user_connections uc WHERE ((uc.requester_id = $${uidIdx} AND uc.addressee_id = pu.id) OR (uc.requester_id = pu.id AND uc.addressee_id = $${uidIdx})) AND uc.status = 'ACCEPTED') as is_peer_connected,
+                   (SELECT COUNT(*)::int FROM user_connections uc WHERE (uc.requester_id = pu.id OR uc.addressee_id = pu.id) AND uc.status = 'ACCEPTED') as followers_count
             FROM paged_users pu
             LEFT JOIN bdb_satker s ON s.id = pu.scope_satker_id
             LEFT JOIN LATERAL (
-                SELECT pangkat, nrp, satuan, no_hp, jenis_kelamin, foto
+                SELECT pangkat, jabatan, nrp, satuan, no_hp, jenis_kelamin, foto
                 FROM trb_police tp
                 WHERE lower(tp.email) = lower(pu.email)
                    OR (pu.email_polri IS NOT NULL AND lower(tp.email) = lower(pu.email_polri))
@@ -823,12 +1192,16 @@ export class JukrahService {
             total = cachedCount!.total;
         } else if (rows.length > 0 && rows[0].total_count !== undefined) {
             total = Number(rows[0].total_count || 0);
-            this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
+            if (!isSuggestedFilter) {
+                this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
+            }
         } else if (offset > 0) {
             const cRes = await this.dataSource.query(`SELECT count(*)::int as total FROM auth_users u WHERE ${whereSql}`, filterParams);
             total = Number(cRes[0]?.total || 0);
-            this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
-        } else {
+            if (!isSuggestedFilter) {
+                this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total });
+            }
+        } else if (!isSuggestedFilter) {
             this.networkCountCache.set(filterKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total: 0 });
         }
 
@@ -838,11 +1211,14 @@ export class JukrahService {
             const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
             const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, r.social_media);
             const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
+            const resolvedHandle = this.formatCallsign(r.username || r.callsign, r.id, r.username).replace(/^@/, '');
+            const peerConn = Boolean(r.is_peer_connected || connectedTo);
+            const fCount = Number(r.followers_count || 0);
             return {
                 id: Number(r.id),
                 name: isUserOne ? (r.name || 'EKO') : r.name,
-                callsign: r.callsign || r.username || (r.email_polri ? r.email_polri.split('@')[0] : (r.email ? r.email.split('@')[0] : 'personil_' + r.id)),
-                username: r.username,
+                callsign: resolvedHandle,
+                username: resolvedHandle,
                 email: r.email,
                 email_polri: r.email_polri || (r.email && r.email.endsWith('@polri.go.id') ? r.email : null),
                 role_bdb: isUserOne ? 'superadmin' : r.role_bdb,
@@ -851,27 +1227,35 @@ export class JukrahService {
                 satker_singkat: satkerSpecific,
                 scope_satker_name: satkerSpecific,
                 pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(r.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
+                jabatan: r.jabatan || (isUserOne ? 'Kasubdit' : (r.role_bdb || 'Personil Polri')),
                 nrp: r.nrp || nrpFallback,
                 no_hp: r.no_hp || null,
                 photo_url: resolvedPhoto,
                 gender: isFemale ? 'P' : 'L',
                 jenis_kelamin: isFemale ? 'P' : 'L',
-                is_connected: Boolean(connectedTo) || isSuperadmin || Number(r.id) === uid,
+                is_following: peerConn,
+                is_connected: peerConn || isSuperadmin || Number(r.id) === uid,
+                followers_count: fCount,
+                connections_count: fCount,
                 last_login_at: r.last_login_at
             };
         });
         const result = { status: 1, data, total, total_pages: Math.ceil(total / limit) || 1, page, limit, is_superadmin: isSuperadmin };
-        if (this.networkUsersCache.size > 200) {
-            for (const [k, v] of this.networkUsersCache.entries()) {
-                if (v.exp <= now) this.networkUsersCache.delete(k);
+        if (!isSuggestedFilter) {
+            if (this.networkUsersCache.size > 200) {
+                for (const [k, v] of this.networkUsersCache.entries()) {
+                    if (v.exp <= now) this.networkUsersCache.delete(k);
+                }
             }
+            this.networkUsersCache.set(pageCacheKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, value: result });
         }
-        this.networkUsersCache.set(pageCacheKey, { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, value: result });
         return result;
     }
 
     /** Ambil profil detail personil CAS (real data tanpa dummy). */
     async getNetworkProfile(user: any, targetId: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
         const cleanTarget = String(targetId || '').replace(/^@/, '').trim();
         let targetUid: number | null = null;
         if (/^\d+$/.test(cleanTarget)) {
@@ -890,12 +1274,25 @@ export class JukrahService {
             sql += 'WHERE lower(u.username) = $1 OR lower(u.callsign) = $1 LIMIT 1';
             params = [cleanTarget.toLowerCase()];
         }
-        const uRes = await this.dataSource.query(sql, params);
+        let uRes = await this.dataSource.query(sql, params);
+        if ((!uRes || !uRes.length) && /^user_(\d+)[0-9a-f]{4}$/i.test(cleanTarget)) {
+            const mHex = cleanTarget.match(/^user_(\d+)[0-9a-f]{4}$/i);
+            if (mHex && Number(mHex[1]) > 0) {
+                uRes = await this.dataSource.query(
+                    'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE u.id = $1 LIMIT 1',
+                    [Number(mHex[1])]
+                );
+            }
+        }
         if (!uRes || !uRes.length) throw new NotFoundException('Personil tidak ditemukan');
         const target = uRes[0];
+        const tId = Number(target.id);
         const isUserOne = this.isSuperUserOne(target.id, target.username, target.callsign);
         let policeProfile: any = null;
         let connectionsCount = 0;
+        let isFollowing = false;
+        let postsCount = 0;
+        let recentPosts: any[] = [];
         try {
             const emailsLower = [target.email, target.email_polri].filter(Boolean).map((e: string) => String(e).toLowerCase());
             if (emailsLower.length) {
@@ -909,9 +1306,46 @@ export class JukrahService {
         try {
             const cRes = await this.dataSource.query(
                 "SELECT count(*)::int as c FROM (SELECT addressee_id FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') conn",
-                [Number(target.id)]
+                [tId]
             );
             connectionsCount = Number(cRes[0]?.c || 0);
+            if (uid && uid !== tId) {
+                const fRes = await this.dataSource.query(
+                    "SELECT 1 FROM user_connections WHERE ((requester_id = $1 AND addressee_id = $2) OR (requester_id = $2 AND addressee_id = $1)) AND status = 'ACCEPTED' LIMIT 1",
+                    [uid, tId]
+                );
+                isFollowing = fRes.length > 0;
+            }
+        } catch {}
+        try {
+            const pCountRes = await this.dataSource.query(
+                "SELECT count(*)::int as c FROM bdb_social_posts WHERE author_id = $1 AND status = 'active'",
+                [tId]
+            );
+            postsCount = Number(pCountRes[0]?.c || 0);
+            const pRows = await this.dataSource.query(
+                `SELECT p.id, p.content, p.audience_type, p.reaction_counts, p.repost_count, p.view_count, p.is_official_jukrah, p.is_pinned, p.created_at,
+                        (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count,
+                        (SELECT COUNT(*)::int FROM bdb_social_reactions rx WHERE rx.post_id = p.id) as total_reactions
+                 FROM bdb_social_posts p
+                 WHERE p.author_id = $1 AND p.status = 'active' AND (p.audience_type <> 'private' OR p.author_id = $2)
+                 ORDER BY p.is_pinned DESC, p.created_at DESC
+                 LIMIT 20`,
+                [tId, uid]
+            );
+            recentPosts = pRows.map((pr: any) => ({
+                id: Number(pr.id),
+                content: pr.content,
+                audience_type: pr.audience_type,
+                reaction_counts: pr.reaction_counts || {},
+                total_reactions: Number(pr.total_reactions || 0),
+                comments_count: Number(pr.comments_count || 0),
+                repost_count: Number(pr.repost_count || 0),
+                view_count: Number(pr.view_count || 0),
+                is_official_jukrah: Boolean(pr.is_official_jukrah),
+                is_pinned: Boolean(pr.is_pinned),
+                created_at: pr.created_at
+            }));
         } catch {}
         const satkerSpecific = isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri');
         const pSoc = (policeProfile?.social_media && typeof policeProfile.social_media === 'object') ? policeProfile.social_media : {};
@@ -931,13 +1365,14 @@ export class JukrahService {
         };
         const isFemale = this.isFemalePersonnel(target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
         const resolvedPhoto = this.resolveDefaultAvatar(customPhotoCandidate, target.name || policeProfile?.nama, policeProfile?.jenis_kelamin, mergedSocial);
+        const resolvedHandle = this.formatCallsign(target.username || target.callsign, target.id, target.username).replace(/^@/, '');
         return {
             status: 1,
             data: {
-                id: Number(target.id),
+                id: tId,
                 name: isUserOne ? (target.name || 'EKO') : target.name,
-                username: target.username,
-                callsign: target.callsign || target.username || (target.email_polri ? target.email_polri.split('@')[0] : (target.email ? target.email.split('@')[0] : 'personil')),
+                username: resolvedHandle,
+                callsign: resolvedHandle,
                 nrp: policeProfile?.nrp || (target.email && target.email.match(/^(\d{7,10})@/) ? target.email.match(/^(\d{7,10})@/)[1] : (target.email_polri && target.email_polri.match(/^(\d{7,10})@/) ? target.email_polri.match(/^(\d{7,10})@/)[1] : null)),
                 pangkat: policeProfile?.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(String(target.role_bdb || '').toLowerCase()) ? 'Superadmin' : 'Personil Polri')),
                 jabatan: policeProfile?.jabatan || (isUserOne ? 'Kasubdit' : target.role_bdb),
@@ -950,14 +1385,110 @@ export class JukrahService {
                 no_hp: policeProfile?.no_hp || null,
                 photo_url: resolvedPhoto,
                 banner_theme: resolvedBanner,
+                bio: rawSocial?.bio || '',
                 gender: isFemale ? 'P' : 'L',
                 jenis_kelamin: isFemale ? 'P' : 'L',
                 role_bdb: isUserOne ? 'superadmin' : target.role_bdb,
+                is_verified: isUserOne ? true : Boolean(target.role_bdb && target.role_bdb !== 'sharese'),
+                is_following: isFollowing,
+                is_connected: isFollowing,
+                connection_status: isFollowing ? 'ACCEPTED' : 'NONE',
                 connections_count: connectionsCount,
+                followers_count: connectionsCount,
+                following_count: connectionsCount,
+                posts_count: postsCount,
+                posts: recentPosts,
                 social_media: mergedSocial,
                 last_login_at: target.last_login_at
             }
         };
+    }
+
+    /** Hubungkan / ikuti personil di jaringan CAS. */
+    async connectNetworkUser(user: any, targetId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id);
+        const tid = Number(targetId);
+        if (!uid || !tid || uid === tid) {
+            throw new BadRequestException('Target koneksi tidak valid.');
+        }
+        await this.dataSource.query(
+            `INSERT INTO user_connections (requester_id, addressee_id, status, created_at, updated_at)
+             VALUES ($1, $2, 'ACCEPTED', NOW(), NOW())
+             ON CONFLICT (requester_id, addressee_id) DO UPDATE SET status = 'ACCEPTED', updated_at = NOW()`,
+            [uid, tid]
+        );
+        await this.dataSource.query(
+            `UPDATE user_connections SET status = 'ACCEPTED', updated_at = NOW()
+             WHERE requester_id = $2 AND addressee_id = $1`,
+            [uid, tid]
+        );
+        this.clearNetworkUsersCache();
+        const cRes = await this.dataSource.query(
+            "SELECT count(*)::int as c FROM (SELECT addressee_id FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') conn",
+            [tid]
+        );
+        const connectionsCount = Number(cRes[0]?.c || 0);
+        const senderHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username);
+        await this.createNotification({
+            recipientId: tid,
+            senderId: uid,
+            category: 'social',
+            type: 'connection',
+            title: 'Koneksi Baru di Sharese CAS',
+            message: `${senderHandle} telah terhubung dengan jaringan kedinasan Anda.`,
+            link: `/cms/broadcaster?view=koneksi&profileId=${uid}`
+        });
+        return {
+            status: 1,
+            message: 'Berhasil terhubung dengan personil.',
+            connections_count: connectionsCount,
+            data: { is_connected: true, is_following: true, connection_status: 'ACCEPTED', connections_count: connectionsCount }
+        };
+    }
+
+    /** Putuskan koneksi dengan personil di jaringan CAS. */
+    async disconnectNetworkUser(user: any, targetId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id);
+        const tid = Number(targetId);
+        if (!uid || !tid) {
+            throw new BadRequestException('Target koneksi tidak valid.');
+        }
+        await this.dataSource.query(
+            'DELETE FROM user_connections WHERE (requester_id = $1 AND addressee_id = $2) OR (requester_id = $2 AND addressee_id = $1)',
+            [uid, tid]
+        );
+        this.clearNetworkUsersCache();
+        const cRes = await this.dataSource.query(
+            "SELECT count(*)::int as c FROM (SELECT addressee_id FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') conn",
+            [tid]
+        );
+        const connectionsCount = Number(cRes[0]?.c || 0);
+        return {
+            status: 1,
+            message: 'Koneksi telah dilepaskan.',
+            connections_count: connectionsCount,
+            data: { is_connected: false, is_following: false, connection_status: 'NONE', connections_count: connectionsCount }
+        };
+    }
+
+    /** Toggle follow/connect personil. */
+    async toggleFollowUser(user: any, targetId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id);
+        const tid = Number(targetId);
+        if (!uid || !tid || uid === tid) {
+            throw new BadRequestException('Target koneksi tidak valid.');
+        }
+        const ex = await this.dataSource.query(
+            "SELECT 1 FROM user_connections WHERE ((requester_id = $1 AND addressee_id = $2) OR (requester_id = $2 AND addressee_id = $1)) AND status = 'ACCEPTED' LIMIT 1",
+            [uid, tid]
+        );
+        if (ex.length > 0) {
+            return this.disconnectNetworkUser(user, tid);
+        }
+        return this.connectNetworkUser(user, tid);
     }
 
     /** Ambil komentar sebuah postingan. */
@@ -1283,7 +1814,7 @@ export class JukrahService {
 
     /** Panic Takedown darurat (khusus Superadmin / Admin Binops). */
     async panicTakedown(user: any, postId: number) {
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
+        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase()) || Number(user?.id) === 1;
         if (!isGlobalAdmin) throw new ForbiddenException('Akses ditolak.');
 
         await this.dataSource.query("UPDATE bdb_social_posts SET status = 'quarantined', updated_at = NOW() WHERE id = $1", [postId]);
@@ -1291,16 +1822,79 @@ export class JukrahService {
         return { status: 1, message: 'Postingan berhasil ditarik dan dikarantina dari linimasa.' };
     }
 
+    /** Toggle status Jukrah Resmi Kedinasan pada postingan (Sinkronisasi Sharese <-> Moderasi). */
+    async toggleOfficialJukrah(user: any, postId: number, forceValue?: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || user?.user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+
+        const rows = await this.dataSource.query('SELECT id, author_id, content, is_official_jukrah FROM bdb_social_posts WHERE id = $1', [postId]);
+        if (!rows.length) throw new NotFoundException('Postingan tidak ditemukan.');
+
+        const current = Boolean(rows[0].is_official_jukrah);
+        const nextVal = forceValue !== undefined ? (forceValue === true || forceValue === 'true' || forceValue === 1) : !current;
+
+        await this.dataSource.query(
+            'UPDATE bdb_social_posts SET is_official_jukrah = $2, updated_at = NOW() WHERE id = $1',
+            [postId, nextVal]
+        );
+
+        if (nextVal && !current) {
+            await this.broadcastDinasNotification(postId, { id: uid }, rows[0].content || '');
+        }
+
+        await this.audit.log({
+            user,
+            action: 'UPDATE',
+            entity: 'social_post',
+            entityId: postId,
+            meta: { toggle: 'is_official_jukrah', value: nextVal }
+        });
+
+        return {
+            status: 1,
+            message: nextVal
+                ? 'Postingan ditetapkan sebagai 📢 Jukrah Resmi Kedinasan dan disinkronkan ke Moderasi.'
+                : 'Status Jukrah Resmi pada postingan telah dicabut.',
+            data: { id: postId, is_official_jukrah: nextVal }
+        };
+    }
+
+    /** Toggle status Sematkan (Pin) pada postingan Sharese / Jukrah Resmi. */
+    async togglePinPost(user: any, postId: number, forceValue?: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || user?.user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+
+        const rows = await this.dataSource.query('SELECT id, author_id, is_pinned FROM bdb_social_posts WHERE id = $1', [postId]);
+        if (!rows.length) throw new NotFoundException('Postingan tidak ditemukan.');
+
+        const current = Boolean(rows[0].is_pinned);
+        const nextVal = forceValue !== undefined ? (forceValue === true || forceValue === 'true' || forceValue === 1) : !current;
+
+        await this.dataSource.query(
+            'UPDATE bdb_social_posts SET is_pinned = $2, updated_at = NOW() WHERE id = $1',
+            [postId, nextVal]
+        );
+
+        return {
+            status: 1,
+            message: nextVal ? 'Postingan berhasil disematkan (Pin) di puncak Feed.' : 'Sematan postingan dilepas (Unpin).',
+            data: { id: postId, is_pinned: nextVal }
+        };
+    }
+
     // =========================================================================
     // NOTIFIKASI DWI-FUNGSI: TAB DINAS & TAB SOSIAL
     // =========================================================================
 
-    private async createNotification(data: { recipientId: number; senderId: number; category: string; type: string; postId?: number; title: string; message: string }) {
+    private async createNotification(data: { recipientId: number; senderId: number; category: string; type: string; postId?: number; title: string; message: string; link?: string }) {
         try {
+            await this.ensureTable();
             await this.dataSource.query(
-                `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [data.recipientId, data.senderId, data.category, data.type, data.postId || null, data.title, data.message]
+                `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message, link)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [data.recipientId, data.senderId, data.category, data.type, data.postId || null, data.title, data.message, data.link || null]
             );
         } catch (e: any) {
             this.logger.error(`Gagal membuat notifikasi: ${e.message}`);
@@ -1309,18 +1903,20 @@ export class JukrahService {
 
     private async broadcastDinasNotification(postId: number, authorUser: any, content: string) {
         const snippet = content.length > 70 ? content.slice(0, 70) + '...' : content;
+        const shareHash = this.createPostShareHash(postId);
         await this.dataSource.query(
-            `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message)
-             SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Jukrah Resmi Kedinasan Baru', $3
+            `INSERT INTO bdb_social_notifications (recipient_id, sender_id, category, type, post_id, title, message, link)
+             SELECT id, $1, 'dinas', 'official_broadcast', $2, '📢 Jukrah Resmi Kedinasan Baru', $3, $4
              FROM auth_users
-             WHERE id <> $1 AND status = 'active'
+             WHERE id <> $1 AND (UPPER(status) = 'AKTIF' OR LOWER(status) = 'active')
              LIMIT 5000`,
-            [authorUser.id, postId, snippet]
+            [authorUser.id, postId, snippet, `/cms/broadcaster?share=${shareHash}`]
         );
     }
 
     /** Ambil daftar notifikasi per kategori ('dinas' atau 'social'). */
     async getNotifications(user: any, category?: string) {
+        await this.ensureTable();
         const uid = Number(user?.id);
         const satkerId = Number(user?.scope_satker_id || 0);
         const role = String(user?.role_bdb || '').toLowerCase();
@@ -1331,13 +1927,13 @@ export class JukrahService {
 
         if (!cat || cat === 'social') {
             const rows = await this.dataSource.query(
-                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
-                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                `SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
                  WHERE n.recipient_id = $1 AND n.category = 'social'
                  ORDER BY n.created_at DESC
-                 LIMIT 25`,
+                 LIMIT 40`,
                 [uid]
             );
             items.push(...rows.map((r: any) => ({
@@ -1349,9 +1945,10 @@ export class JukrahService {
                 message: r.message,
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
-                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_id: r.sender_id ? Number(r.sender_id) : null,
+                sender_handle: this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username),
                 sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
-                link: '/cms/broadcaster'
+                link: r.link || (r.type === 'message' ? `/cms/broadcaster?view=obrolan&partner=${r.sender_id}` : r.type === 'connection' ? `/cms/broadcaster?view=koneksi&profileId=${r.sender_id}` : '/cms/broadcaster')
             })));
 
             const connRows = await this.dataSource.query(
@@ -1375,22 +1972,23 @@ export class JukrahService {
                     message: r.status === 'PENDING' ? `Mengajukan koneksi dengan Anda (@${handle})` : `Anda sekarang terkoneksi dengan @${handle}`,
                     is_read: true,
                     created_at: r.created_at,
+                    sender_id: Number(r.other_id),
                     sender_handle: '@' + handle,
                     sender_photo: this.resolveDefaultAvatar(r.other_photo, r.other_name, null, null),
-                    link: '/cms/profile'
+                    link: `/cms/broadcaster?view=koneksi&profileId=${r.other_id}`
                 };
             }));
         }
 
         if (!cat || cat === 'dinas') {
             const dinasRows = await this.dataSource.query(
-                `SELECT n.id, n.category, n.type, n.post_id, n.title, n.message, n.is_read, n.created_at,
-                        u.name as sender_name, u.callsign as sender_callsign, u.photo_url as sender_photo
+                `SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
+                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
                  WHERE n.recipient_id = $1 AND n.category = 'dinas'
                  ORDER BY n.created_at DESC
-                 LIMIT 15`,
+                 LIMIT 30`,
                 [uid]
             );
             items.push(...dinasRows.map((r: any) => ({
@@ -1402,9 +2000,10 @@ export class JukrahService {
                 message: r.message,
                 is_read: Boolean(r.is_read),
                 created_at: r.created_at,
-                sender_handle: r.sender_callsign ? ('@' + r.sender_callsign) : null,
+                sender_id: r.sender_id ? Number(r.sender_id) : null,
+                sender_handle: this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username),
                 sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null),
-                link: '/cms/broadcaster'
+                link: r.link || (r.type === 'message' ? `/cms/broadcaster?view=obrolan&partner=${r.sender_id}` : '/cms/broadcaster')
             })));
 
             const satgasRows = await this.dataSource.query(
@@ -1425,7 +2024,7 @@ export class JukrahService {
                 created_at: r.created_at,
                 sender_handle: '@bareskrim',
                 sender_photo: null,
-                link: '/cms/master/operasi-satgas'
+                link: '/cms/laporan/kasus-menonjol/lihat'
             })));
 
             const kermaRows = await this.dataSource.query(
@@ -1446,7 +2045,7 @@ export class JukrahService {
                 created_at: r.created_at,
                 sender_handle: '@kerma_polri',
                 sender_photo: null,
-                link: '/cms/master/kerma'
+                link: '/cms/kerma/lihat'
             })));
 
             const lpSql = isAdmin
@@ -1465,7 +2064,7 @@ export class JukrahService {
                 created_at: r.created_at,
                 sender_handle: '@robinops',
                 sender_photo: null,
-                link: '/cms/laporan-polisi'
+                link: '/cms/laporan-polisi/arsip-pelimpahan'
             })));
         }
 
@@ -1488,7 +2087,7 @@ export class JukrahService {
 
         return {
             status: 1,
-            data: items.slice(0, 30),
+            data: items.slice(0, 60),
             unread_dinas: unreadDinas,
             unread_social: unreadSocial
         };
@@ -1496,6 +2095,7 @@ export class JukrahService {
 
     /** Tandai satu notifikasi sudah dibaca. */
     async markNotificationRead(user: any, notifId: number) {
+        await this.ensureTable();
         const uid = Number(user?.id);
         await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2', [notifId, uid]);
         return { status: 1 };
@@ -1503,9 +2103,566 @@ export class JukrahService {
 
     /** Tandai semua notifikasi dalam kategori sudah dibaca. */
     async markAllNotificationsRead(user: any, category: string) {
+        await this.ensureTable();
         const uid = Number(user?.id);
-        await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1 AND category = $2', [uid, category]);
+        if (!category || category === 'all') {
+            await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1', [uid]);
+        } else {
+            await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1 AND category = $2', [uid, category]);
+        }
         return { status: 1 };
+    }
+
+    // =========================================================================
+    // OBROLAN TAKTIS CAS (DIRECT MESSAGE, HELPDESK ADMIN & AI AGEN TAKTIS)
+    // =========================================================================
+
+    async getMessageConversations(user: any, opts: any = {}) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const satkerId = Number(user?.scope_satker_id || 0);
+        const userRole = String(user?.role_bdb || '').toLowerCase();
+
+        // 1. Ambil ringkasan percakapan dengan AI Agen (-1)
+        const aiMsgRows = await this.dataSource.query(
+            `SELECT content, created_at, sender_id, is_read
+             FROM bdb_social_messages
+             WHERE (sender_id = $1 AND receiver_id = -1) OR (sender_id = -1 AND receiver_id = $1)
+             ORDER BY created_at DESC LIMIT 1`,
+            [uid]
+        );
+        const aiUnreadRes = await this.dataSource.query(
+            `SELECT count(*)::int as c FROM bdb_social_messages WHERE sender_id = -1 AND receiver_id = $1 AND is_read = false`,
+            [uid]
+        );
+        const aiContact = {
+            id: -1,
+            name: 'AI Agen Taktis CAS (Asisten Penyidik & Analis)',
+            username: '@ai_agen_cas',
+            callsign: 'ai_agen_cas',
+            pangkat: 'AI AGENT',
+            jabatan: 'Asisten Taktis Penyidik & Analis',
+            satker_nama: 'Kecerdasan Buatan Bareskrim Polri',
+            satker: 'Kecerdasan Buatan Bareskrim Polri',
+            role_bdb: 'ai_agent',
+            photo_url: '/images/default-avatar-polki.png',
+            is_online: true,
+            is_pinned: true,
+            channel_type: 'ai_agent',
+            last_message: aiMsgRows[0]?.content || 'Siap Komandan! Tanyakan analisis LP, CT/CC/CR, DORS, Anev, atau panduan operasional CAS.',
+            last_time: aiMsgRows[0]?.created_at || new Date().toISOString(),
+            unread_count: Number(aiUnreadRes[0]?.c || 0)
+        };
+
+        // 2. Ambil daftar rekan yang pernah berkirim pesan ATAU sudah terkoneksi di user_connections
+        const peerRows = await this.dataSource.query(
+            `WITH peer_ids AS (
+                SELECT DISTINCT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END AS peer_id
+                FROM bdb_social_messages
+                WHERE (sender_id = $1 OR receiver_id = $1) AND sender_id > 0 AND receiver_id > 0
+                UNION
+                SELECT CASE WHEN requester_id = $1 THEN addressee_id ELSE requester_id END AS peer_id
+                FROM user_connections
+                WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED'
+                UNION
+                SELECT id AS peer_id FROM auth_users WHERE id = 1 AND $1 <> 1
+            )
+            SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at,
+                   s.deskripsi as satker_nama, s.nama_singkat as satker_singkat,
+                   tp.pangkat, tp.jabatan, tp.jenis_kelamin, tp.foto as police_foto,
+                   lm.content as last_message, lm.created_at as last_time, lm.channel_type as last_channel,
+                   COALESCE(ur.unread_count, 0)::int as unread_count,
+                   EXISTS(SELECT 1 FROM user_connections uc WHERE ((uc.requester_id = $1 AND uc.addressee_id = u.id) OR (uc.requester_id = u.id AND uc.addressee_id = $1)) AND uc.status = 'ACCEPTED') as is_connected
+            FROM peer_ids pid
+            JOIN auth_users u ON u.id = pid.peer_id
+            LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+            LEFT JOIN LATERAL (
+                SELECT pangkat, jabatan, jenis_kelamin, foto
+                FROM trb_police tp
+                WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
+                LIMIT 1
+            ) tp ON true
+            LEFT JOIN LATERAL (
+                SELECT content, created_at, channel_type
+                FROM bdb_social_messages m
+                WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
+                ORDER BY m.created_at DESC LIMIT 1
+            ) lm ON true
+            LEFT JOIN LATERAL (
+                SELECT count(*)::int as unread_count
+                FROM bdb_social_messages m2
+                WHERE m2.sender_id = u.id AND m2.receiver_id = $1 AND m2.is_read = false
+            ) ur ON true
+            WHERE u.id <> $1
+            ORDER BY lm.created_at DESC NULLS LAST, (u.id = 1) DESC, u.last_login_at DESC NULLS LAST
+            LIMIT 80`,
+            [uid]
+        );
+
+        const formatPeer = (r: any, defaultChannel = 'direct') => {
+            const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
+            const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri');
+            const handle = this.formatCallsign(r.username || r.callsign, r.id, r.username);
+            const photo = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
+            const roleBdb = isUserOne ? 'superadmin' : (r.role_bdb || 'operator');
+            const isOnline = isUserOne || (r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime() < 24 * 3600 * 1000));
+            return {
+                id: Number(r.id),
+                name: isUserOne ? (r.name || 'EKO') : r.name,
+                username: handle,
+                callsign: handle.replace(/^@/, ''),
+                pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (['superadmin', 'admin_binops'].includes(roleBdb) ? 'Superadmin' : 'Personil Polri')),
+                jabatan: r.jabatan || (isUserOne ? 'Kasubdit' : roleBdb),
+                satker_nama: satkerName,
+                satker: satkerName,
+                role_bdb: roleBdb,
+                photo_url: photo,
+                is_online: Boolean(isOnline),
+                is_connected: Boolean(r.is_connected),
+                is_pinned: Boolean(isUserOne),
+                last_message: r.last_message || null,
+                last_time: r.last_time || r.last_login_at || null,
+                unread_count: Number(r.unread_count || 0),
+                channel_type: r.last_channel || defaultChannel
+            };
+        };
+
+        const conversations = [aiContact, ...peerRows.map((r: any) => formatPeer(r, 'direct'))];
+
+        // 3. Ambil kontak Helpdesk Admin sesuai cakupan RBAC (Admin Satker/Polda + Admin Binops + Superadmin Pusat)
+        const adminRows = await this.dataSource.query(
+            `SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
+                    s.deskripsi as satker_nama, s.nama_singkat as satker_singkat,
+                    tp.pangkat, tp.jabatan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto,
+                    lm.content as last_message, lm.created_at as last_time,
+                    COALESCE(ur.unread_count, 0)::int as unread_count
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             LEFT JOIN LATERAL (
+                 SELECT pangkat, jabatan, no_hp, jenis_kelamin, foto
+                 FROM trb_police tp
+                 WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
+                 LIMIT 1
+             ) tp ON true
+             LEFT JOIN LATERAL (
+                 SELECT content, created_at
+                 FROM bdb_social_messages m
+                 WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
+                 ORDER BY m.created_at DESC LIMIT 1
+             ) lm ON true
+             LEFT JOIN LATERAL (
+                 SELECT count(*)::int as unread_count
+                 FROM bdb_social_messages m2
+                 WHERE m2.sender_id = u.id AND m2.receiver_id = $1 AND m2.is_read = false
+             ) ur ON true
+             WHERE (u.status = 'AKTIF' OR u.status = 'active')
+               AND (
+                   u.role_bdb IN ('superadmin', 'admin_binops')
+                   OR (u.scope_satker_id = $2 AND $2 > 0)
+                   OR u.id = 1
+               )
+             ORDER BY (u.id = 1) DESC, (u.role_bdb = 'superadmin') DESC, (u.role_bdb = 'admin_binops') DESC, u.last_login_at DESC NULLS LAST
+             LIMIT 25`,
+            [uid, satkerId]
+        );
+
+        const helpdeskContacts = [
+            aiContact,
+            ...adminRows.map((r: any) => ({
+                ...formatPeer(r, 'helpdesk'),
+                channel_type: 'helpdesk'
+            }))
+        ];
+
+        const totalUnreadRes = await this.dataSource.query(
+            `SELECT count(*)::int as c FROM bdb_social_messages WHERE receiver_id = $1 AND is_read = false`,
+            [uid]
+        );
+
+        return {
+            status: 1,
+            data: {
+                conversations,
+                helpdesk_contacts: helpdeskContacts,
+                total_unread: Number(totalUnreadRes[0]?.c || 0)
+            }
+        };
+    }
+
+    async getMessageThread(user: any, targetId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const tid = Number(targetId);
+        if (!uid || isNaN(tid)) {
+            throw new BadRequestException('Target percakapan tidak valid.');
+        }
+
+        // Tandai pesan masuk dari targetId sebagai telah dibaca
+        await this.dataSource.query(
+            `UPDATE bdb_social_messages SET is_read = true WHERE sender_id = $1 AND receiver_id = $2 AND is_read = false`,
+            [tid, uid]
+        );
+
+        let rows = await this.dataSource.query(
+            `SELECT id, sender_id, receiver_id, channel_type, content, attachment_url, attachment_name, is_read, created_at
+             FROM bdb_social_messages
+             WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+             ORDER BY created_at ASC
+             LIMIT 200`,
+            [uid, tid]
+        );
+
+        if (tid === -1 && rows.length === 0) {
+            const welcomeText = '⚡ Salam Presisi! Saya AI Agen Taktis CAS Bareskrim Polri. Silakan tanyakan bantuan terkait Laporan Polisi (LP), analisis Kinerja Perkara (CT/CC/CR), rekonsiliasi DORS, Lampiran Anev Periodik, Susopsgas, atau kendala teknis aplikasi.';
+            const ins = await this.dataSource.query(
+                `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
+                 VALUES (-1, $1, 'ai_agent', $2, true, NOW())
+                 RETURNING id, sender_id, receiver_id, channel_type, content, attachment_url, attachment_name, is_read, created_at`,
+                [uid, welcomeText]
+            );
+            rows = ins;
+        }
+
+        let partner: any = null;
+        if (tid === -1) {
+            partner = {
+                id: -1,
+                name: 'AI Agen Taktis CAS (Asisten Penyidik & Analis)',
+                username: '@ai_agen_cas',
+                callsign: 'ai_agen_cas',
+                pangkat: 'AI AGENT',
+                jabatan: 'Asisten Taktis Penyidik & Analis',
+                satker_nama: 'Kecerdasan Buatan Bareskrim Polri',
+                role_bdb: 'ai_agent',
+                photo_url: '/images/default-avatar-polki.png',
+                is_online: true
+            };
+        } else {
+            try {
+                const prof = await this.getNetworkProfile(user, tid);
+                partner = prof?.data || null;
+            } catch {}
+        }
+
+        return {
+            status: 1,
+            data: {
+                partner,
+                messages: rows.map((m: any) => ({
+                    id: Number(m.id),
+                    sender_id: Number(m.sender_id),
+                    receiver_id: Number(m.receiver_id),
+                    is_me: Number(m.sender_id) === uid,
+                    channel_type: m.channel_type || 'direct',
+                    content: m.content,
+                    attachment_url: m.attachment_url || null,
+                    attachment_name: m.attachment_name || null,
+                    is_read: Boolean(m.is_read),
+                    created_at: m.created_at
+                }))
+            }
+        };
+    }
+
+    private buildAiTacticalReply(content: string, user: any): string {
+        const q = (content || '').toLowerCase();
+        const callsign = this.formatCallsign(user?.callsign || user?.username, user?.id, user?.username);
+        if (q.includes('ct') || q.includes('cc') || q.includes('cr') || q.includes('kinerja')) {
+            return `Siap ${callsign}! Terkait **Kinerja Perkara (CT/CC/CR)**:\n• **CT (Crime Total)**: Jumlah seluruh Laporan Polisi yang masuk pada periode berjalan.\n• **CC (Crime Cleared)**: Jumlah perkara yang selesai (P-21, SP3, RJ/Diversi, atau Limpah).\n• **CR (Clearance Rate)**: Persentase penyelesaian perkara \`(CC / CT) × 100%\`.\nAnda dapat membuka menu **Laporan > Kinerja Perkara** untuk melihat rekapitulasi per Satker dan mengunduh Excel/PDF.`;
+        }
+        if (q.includes('dors') || q.includes('sync') || q.includes('integrasi') || q.includes('mapping')) {
+            return `Siap ${callsign}! Untuk pemantauan **DORS & Portal Integrasi**:\n1. Buka **Portal Integrasi > Masuk > DORS (Monitor & Sync)** untuk memantau antrean sinkronisasi otomatis.\n2. Jika terdapat LP yang belum memiliki Satker atau Master Data belum termapping, gunakan sub-menu **LP Belum Termapping** atau **Master Data Tidak Termapping** untuk rekonsiliasi pohon Satker.`;
+        }
+        if (q.includes('anev') || q.includes('lampiran') || q.includes('periodik')) {
+            return `Siap ${callsign}! Menu **Laporan > Lamp. Anev Periodik** menyediakan kanvas naskah dinas & tabel analitik otomatis (Bareskrim & Kewilayahan) yang siap dicetak ke dokumen Word/PDF sesuai format standar Robinopsnal Bareskrim Polri.`;
+        }
+        if (q.includes('susopsgas') || q.includes('susjol') || q.includes('atensi') || q.includes('menonjol') || q.includes('satgas')) {
+            return `Siap ${callsign}! Menu **Susopsgas** menggabungkan pemantauan **Susjol (Kasus Menonjol)**, **Susatensi (Kasus Atensi Pimpinan)**, serta **Operasi & Satgas Kepolisian** dalam satu komando. Gunakan sub-menu **Rekap** untuk pantauan eksekutif dan **Kelola** untuk pembaruan data perkara.`;
+        }
+        if (q.includes('otp') || q.includes('2fa') || q.includes('pin') || q.includes('passkey') || q.includes('password') || q.includes('keamanan')) {
+            return `Siap ${callsign}! Untuk pengaturan autentikasi dan keamanan akun:\n• Buka **Sharese > Keamanan** (\`/cms/profile?view=keamanan\`).\n• Anda dapat mengaktifkan maksimal 2 metode **2FA** (OTP Email Polri, PIN Keamanan 6-8 digit, atau Google Authenticator TOTP) serta mendaftarkan **Passkey Biometrik FIDO2**.`;
+        }
+        if (q.includes('lp') || q.includes('laporan polisi') || q.includes('limpah')) {
+            return `Siap ${callsign}! Untuk pengelolaan **Laporan Polisi (LP)**:\n• Gunakan **Laporan > Laporan Polisi > Daftar LP** untuk pencarian, filter satker/kejahatan, dan rincian perkembangan penyidikan.\n• Untuk perkara yang dilimpahkan antar-satker/wilayah, buka **Arsip Limpah** (\`/cms/laporan-polisi/arsip-pelimpahan\`).`;
+        }
+        return `Siap ${callsign}! Pesan taktis Anda: *"${content.slice(0, 90)}"* telah dicatat oleh **AI Agen Taktis CAS Bareskrim Polri**. Saya siap membantu analisis data LP, Kinerja Perkara (CT/CC/CR), Lampiran Anev Periodik, pemantauan Susopsgas, maupun asistensi teknis. Apabila memerlukan tindak lanjut administrator manusia, silakan pilih tab **Pusat Bantuan (Admin)** atau buka menu **Sistem > Pusat Bantuan**.`;
+    }
+
+    async sendSocialMessage(user: any, body: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const receiverId = Number(body?.receiver_id);
+        const content = String(body?.content || '').trim();
+        const channelType = String(body?.channel_type || (receiverId === -1 ? 'ai_agent' : 'direct')).trim();
+        const attachmentUrl = body?.attachment_url ? String(body.attachment_url).trim() : null;
+        const attachmentName = body?.attachment_name ? String(body.attachment_name).trim() : null;
+
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (isNaN(receiverId) || receiverId === 0) throw new BadRequestException('Penerima pesan wajib dipilih.');
+        if (!content && !attachmentUrl) throw new BadRequestException('Isi pesan tidak boleh kosong.');
+        if (content.length > 4000) throw new BadRequestException('Pesan maksimal 4.000 karakter.');
+
+        const ins = await this.dataSource.query(
+            `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, attachment_url, attachment_name, is_read, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
+             RETURNING id, sender_id, receiver_id, channel_type, content, attachment_url, attachment_name, is_read, created_at`,
+            [uid, receiverId, channelType, content, attachmentUrl, attachmentName]
+        );
+        const sentMsg = {
+            ...ins[0],
+            id: Number(ins[0].id),
+            sender_id: Number(ins[0].sender_id),
+            receiver_id: Number(ins[0].receiver_id),
+            is_me: true
+        };
+
+        let aiReplyMsg: any = null;
+        if (receiverId === -1) {
+            const replyText = this.buildAiTacticalReply(content, user);
+            const aiIns = await this.dataSource.query(
+                `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
+                 VALUES (-1, $1, 'ai_agent', $2, true, NOW() + interval '1 millisecond')
+                 RETURNING id, sender_id, receiver_id, channel_type, content, attachment_url, attachment_name, is_read, created_at`,
+                [uid, replyText]
+            );
+            aiReplyMsg = {
+                ...aiIns[0],
+                id: Number(aiIns[0].id),
+                sender_id: -1,
+                receiver_id: uid,
+                is_me: false
+            };
+        } else if (receiverId > 0 && receiverId !== uid) {
+            const senderHandle = this.formatCallsign(user?.callsign || user?.username, uid, user?.username);
+            await this.createNotification({
+                recipientId: receiverId,
+                senderId: uid,
+                category: channelType === 'helpdesk' ? 'dinas' : 'social',
+                type: 'message',
+                title: (channelType === 'helpdesk' ? '🎧 Pesan Bantuan dari ' : '💬 Pesan Baru dari ') + senderHandle,
+                message: content.slice(0, 120),
+                link: `/cms/broadcaster?view=obrolan&partner=${uid}`
+            });
+        }
+
+        return {
+            status: 1,
+            message: 'Pesan terkirim.',
+            data: {
+                sent_message: sentMsg,
+                ai_reply: aiReplyMsg
+            }
+        };
+    }
+
+    // =========================================================================
+    // INSIGHT & ANALITIK AKUN SHARESE (/bdb/jukrah/insight)
+    // =========================================================================
+
+    async getAccountInsight(user: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+
+        const statsRes = await this.dataSource.query(
+            `SELECT
+                (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') AS total_posts,
+                (SELECT COUNT(*)::int FROM bdb_social_reactions rx JOIN bdb_social_posts p ON p.id = rx.post_id WHERE p.author_id = $1 AND p.status = 'active') AS total_likes_received,
+                (SELECT COUNT(*)::int FROM bdb_social_comments c JOIN bdb_social_posts p ON p.id = c.post_id WHERE p.author_id = $1 AND p.status = 'active') AS total_comments_received,
+                (SELECT COALESCE(SUM(repost_count), 0)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') AS total_reposts_received,
+                (SELECT COALESCE(SUM(view_count), 0)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') AS raw_views,
+                (SELECT COUNT(*)::int FROM (SELECT addressee_id FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED' UNION SELECT requester_id FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') conn) AS connections_count,
+                (SELECT COUNT(*)::int FROM user_connections WHERE addressee_id = $1 AND status = 'ACCEPTED') AS followers_raw,
+                (SELECT COUNT(*)::int FROM user_connections WHERE requester_id = $1 AND status = 'ACCEPTED') AS following_raw`,
+            [uid]
+        );
+
+        const s = statsRes[0] || {};
+        const totalPosts = Number(s.total_posts || 0);
+        const totalLikes = Number(s.total_likes_received || 0);
+        const totalComments = Number(s.total_comments_received || 0);
+        const totalReposts = Number(s.total_reposts_received || 0);
+        const rawViews = Number(s.raw_views || 0);
+        const totalViewsEstimated = totalPosts * 42 + totalLikes * 9 + totalComments * 14 + rawViews;
+        const connectionsCount = Number(s.connections_count || 0);
+        const followersCount = Math.max(connectionsCount, Number(s.followers_raw || 0));
+        const followingCount = Math.max(connectionsCount, Number(s.following_raw || 0));
+        const totalInteractions = totalLikes + totalComments + totalReposts;
+        const engagementRate = totalViewsEstimated > 0
+            ? Number(((totalInteractions / totalViewsEstimated) * 100).toFixed(2))
+            : (connectionsCount > 0 ? 4.8 : 0);
+
+        const topPostsRows = await this.dataSource.query(
+            `SELECT p.id, p.content, p.audience_type, p.is_official_jukrah, p.repost_count, p.view_count, p.created_at,
+                    (SELECT COUNT(*)::int FROM bdb_social_reactions rx WHERE rx.post_id = p.id) AS likes,
+                    (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) AS comments
+             FROM bdb_social_posts p
+             WHERE p.author_id = $1 AND p.status = 'active'
+             ORDER BY ((SELECT COUNT(*)::int FROM bdb_social_reactions rx WHERE rx.post_id = p.id) * 2 + (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) * 3 + COALESCE(p.repost_count, 0) * 4) DESC, p.created_at DESC
+             LIMIT 5`,
+            [uid]
+        );
+
+        const topPosts = topPostsRows.map((r: any) => {
+            const likes = Number(r.likes || 0);
+            const comments = Number(r.comments || 0);
+            const reposts = Number(r.repost_count || 0);
+            const views = 42 + likes * 9 + comments * 14 + Number(r.view_count || 0);
+            return {
+                id: Number(r.id),
+                content: r.content,
+                audience_type: r.audience_type,
+                is_official_jukrah: Boolean(r.is_official_jukrah),
+                likes,
+                comments,
+                reposts,
+                views,
+                created_at: r.created_at
+            };
+        });
+
+        const dayRows = await this.dataSource.query(
+            `SELECT d::date AS day_date,
+                    to_char(d::date, 'DD Mon') AS label,
+                    (SELECT COUNT(*)::int FROM bdb_social_posts p WHERE p.author_id = $1 AND p.status = 'active' AND p.created_at::date = d::date) AS posts_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_reactions rx JOIN bdb_social_posts p ON p.id = rx.post_id WHERE (p.author_id = $1 OR rx.user_id = $1) AND rx.created_at::date = d::date) AS reactions_count,
+                    (SELECT COUNT(*)::int FROM bdb_social_comments c JOIN bdb_social_posts p ON p.id = c.post_id WHERE (p.author_id = $1 OR c.user_id = $1) AND c.created_at::date = d::date) AS comments_count
+             FROM generate_series(current_date - interval '6 days', current_date, interval '1 day') AS d
+             ORDER BY d::date ASC`,
+            [uid]
+        );
+
+        const activityByDay = dayRows.map((r: any) => {
+            const p = Number(r.posts_count || 0);
+            const rx = Number(r.reactions_count || 0);
+            const cm = Number(r.comments_count || 0);
+            return {
+                date: r.day_date,
+                label: r.label,
+                posts_count: p,
+                reactions_count: rx,
+                comments_count: cm,
+                total_activity: p + rx + cm
+            };
+        });
+
+        return {
+            status: 1,
+            data: {
+                total_posts: totalPosts,
+                total_likes_received: totalLikes,
+                total_comments_received: totalComments,
+                total_reposts_received: totalReposts,
+                total_views_estimated: totalViewsEstimated,
+                followers_count: followersCount,
+                following_count: followingCount,
+                mutual_connections_count: connectionsCount,
+                engagement_rate: engagementRate,
+                top_posts: topPosts,
+                activity_by_day: activityByDay
+            }
+        };
+    }
+
+    // =========================================================================
+    // DIREKTORI KARTU PUSAT BANTUAN & KOORDINASI TEKNIS (/bdb/jukrah/pusat-bantuan-cards)
+    // =========================================================================
+
+    async getPusatBantuanCards(user: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const userSatkerId = Number(user?.scope_satker_id || 0);
+
+        const settingRows = await this.dataSource.query(
+            `SELECT key, value FROM bdb_system_settings WHERE key IN ('pusat_bantuan_telp1', 'pusat_bantuan_telp2', 'pusat_bantuan_email')`
+        );
+        const sMap = new Map<string, string>(settingRows.map((r: any) => [String(r.key), String(r.value || '')]));
+        const telp1 = sMap.get('pusat_bantuan_telp1') || '0811-9696-2026';
+        const telp2 = sMap.get('pusat_bantuan_telp2') || '021-7218-999';
+        const emailHelp = sMap.get('pusat_bantuan_email') || 'cas.bareskrim@polri.go.id';
+
+        const adminRows = await this.dataSource.query(
+            `SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
+                    s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, s.kode as satker_kode,
+                    tp.pangkat, tp.jabatan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             LEFT JOIN LATERAL (
+                 SELECT pangkat, jabatan, no_hp, jenis_kelamin, foto
+                 FROM trb_police tp
+                 WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
+                 LIMIT 1
+             ) tp ON true
+             WHERE (u.status = 'AKTIF' OR u.status = 'active')
+               AND (
+                   u.role_bdb IN ('superadmin', 'admin_binops')
+                   OR (u.role_bdb = 'operator' AND ($1 = 0 OR u.scope_satker_id = $1 OR u.last_login_at IS NOT NULL))
+                   OR u.id = 1
+               )
+             ORDER BY (u.id = 1) DESC, (u.role_bdb = 'superadmin') DESC, (u.role_bdb = 'admin_binops') DESC, (u.scope_satker_id = $1) DESC, u.last_login_at DESC NULLS LAST
+             LIMIT 40`,
+            [userSatkerId]
+        );
+
+        const pusatAdmins: any[] = [];
+        const regionalAdmins: any[] = [];
+
+        for (const r of adminRows) {
+            const isUserOne = this.isSuperUserOne(r.id, r.username, r.callsign);
+            const roleBdb = isUserOne ? 'superadmin' : String(r.role_bdb || '').toLowerCase();
+            const isPusat = isUserOne || ['superadmin', 'admin_binops'].includes(roleBdb);
+            const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_nama || r.satker_singkat || 'Bareskrim Polri');
+            const handle = this.formatCallsign(r.username || r.callsign, r.id, r.username);
+            const photo = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
+            const rawPhone = r.no_hp || (isPusat ? telp1 : '');
+            const cleanWa = String(rawPhone || '').replace(/[^0-9]/g, '').replace(/^0/, '62');
+            const isOnline = isUserOne || (r.last_login_at && (Date.now() - new Date(r.last_login_at).getTime() < 72 * 3600 * 1000));
+
+            const card = {
+                id: Number(r.id),
+                name: isUserOne ? (r.name || 'EKO') : r.name,
+                username: handle,
+                callsign: handle.replace(/^@/, ''),
+                pangkat: r.pangkat || (isUserOne ? 'KOMPOL' : (isPusat ? 'Superadmin Pusat' : 'Admin Kewilayahan')),
+                jabatan: r.jabatan || (isUserOne ? 'Kasubdit / Koordinator Utama CAS' : (roleBdb === 'admin_binops' ? 'Admin Binopsnal Bareskrim' : 'Admin Teknis Satker')),
+                satker_nama: satkerName,
+                satker_singkat: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || satkerName),
+                role_bdb: roleBdb,
+                photo_url: photo,
+                phone: rawPhone || telp1,
+                whatsapp: cleanWa || '6281196962026',
+                email: r.email_polri || r.email || emailHelp,
+                is_online: Boolean(isOnline),
+                is_same_satker: Boolean(userSatkerId && Number(r.scope_satker_id) === userSatkerId),
+                last_login_at: r.last_login_at
+            };
+
+            if (isPusat) {
+                if (pusatAdmins.length < 12) pusatAdmins.push(card);
+            } else {
+                if (regionalAdmins.length < 16) regionalAdmins.push(card);
+            }
+        }
+
+        return {
+            status: 1,
+            data: {
+                settings: {
+                    title: 'Pusat Bantuan & Koordinasi Teknis CAS Bareskrim Polri',
+                    description: 'Layanan pendampingan teknis, kendala autentikasi (2FA/OTP/Passkey), rekonsiliasi data DORS, serta asistensi operasional penyidik dan admin jajaran.',
+                    operational_hours: 'Siaga Operasional 24/7 (Posko Robinopsnal Bareskrim Polri)',
+                    telp1,
+                    telp2,
+                    email: emailHelp
+                },
+                admins: {
+                    pusat: pusatAdmins,
+                    regional: regionalAdmins
+                },
+                pusat_admins: pusatAdmins,
+                regional_admins: regionalAdmins
+            }
+        };
     }
 
     // =========================================================================
@@ -1517,28 +2674,40 @@ export class JukrahService {
         const uid = Number(user?.id || 0);
 
         const jukrahRows = await this.dataSource.query(
-            `SELECT p.id, p.content, p.created_at, s.nama_singkat as satker,
-                    CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged
+            `SELECT p.id, p.author_id, p.content, p.created_at,
+                    u.username as author_username, u.callsign as author_callsign, u.role_bdb as author_role,
+                    s.nama_singkat as satker, s.deskripsi as satker_nama,
+                    CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged,
+                    (SELECT COUNT(*)::int FROM bdb_social_read_receipts rrc WHERE rrc.post_id = p.id) as acknowledged_count
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
              LEFT JOIN bdb_social_read_receipts rr ON rr.post_id = p.id AND rr.user_id = $1
              WHERE p.is_official_jukrah = true AND p.status = 'active'
-             ORDER BY p.created_at DESC
+             ORDER BY p.is_pinned DESC, p.created_at DESC
              LIMIT 1`,
             [uid]
         );
         const latestJukrah = jukrahRows.length ? {
             id: Number(jukrahRows[0].id),
             title: jukrahRows[0].content.slice(0, 90),
-            satker: jukrahRows[0].satker || 'Robinopsnal Bareskrim Polri',
+            author_handle: this.formatCallsign(jukrahRows[0].author_callsign, jukrahRows[0].author_id, jukrahRows[0].author_username),
+            satker: this.resolveAuthorSatker(
+                jukrahRows[0].satker,
+                jukrahRows[0].satker_nama,
+                jukrahRows[0].author_role,
+                this.isSuperUserOne(jukrahRows[0].author_id, jukrahRows[0].author_username, jukrahRows[0].author_callsign)
+            ),
             created_at: jukrahRows[0].created_at,
-            acknowledged: Boolean(jukrahRows[0].acknowledged)
+            acknowledged: Boolean(jukrahRows[0].acknowledged),
+            acknowledged_count: Number(jukrahRows[0].acknowledged_count || 0),
+            share_hash: this.createPostShareHash(Number(jukrahRows[0].id))
         } : null;
 
         const trendingRows = await this.dataSource.query(
             `SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.id as author_id, u.username as author_username, u.callsign, s.nama_singkat as satker,
+                    u.id as author_id, u.username as author_username, u.callsign, u.role_bdb as author_role,
+                    s.nama_singkat as satker, s.deskripsi as satker_nama,
                     (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
              FROM bdb_social_posts p
              JOIN auth_users u ON u.id = p.author_id
@@ -1551,11 +2720,15 @@ export class JukrahService {
             id: Number(trendingRows[0].id),
             snippet: trendingRows[0].content.slice(0, 85),
             author_handle: this.formatCallsign(trendingRows[0].callsign, trendingRows[0].author_id, trendingRows[0].author_username),
-            satker: this.isSuperUserOne(trendingRows[0].author_id, trendingRows[0].author_username, trendingRows[0].callsign)
-                ? 'Robinopsnal Bareskrim Polri'
-                : (trendingRows[0].satker || 'Polri'),
+            satker: this.resolveAuthorSatker(
+                trendingRows[0].satker,
+                trendingRows[0].satker_nama,
+                trendingRows[0].author_role,
+                this.isSuperUserOne(trendingRows[0].author_id, trendingRows[0].author_username, trendingRows[0].callsign)
+            ),
             comments_count: Number(trendingRows[0].comments_count || 0),
-            reaction_counts: trendingRows[0].reaction_counts || {}
+            reaction_counts: trendingRows[0].reaction_counts || {},
+            share_hash: this.createPostShareHash(Number(trendingRows[0].id))
         } : null;
 
         const userStats = await this.dataSource.query(
@@ -1582,25 +2755,49 @@ export class JukrahService {
         };
     }
 
-    /** Rekap keterbacaan Satker untuk Kelola Jukrahcaster (Admin). */
+    /** Rekap keterbacaan Satker & daftar personil untuk Moderasi Sharese & Jukrah Resmi. */
     async getJukrahReadReport(user: any, postId: number) {
         const rows = await this.dataSource.query(
             `SELECT 
-                s.id as satker_id,
-                s.deskripsi as satker_nama,
-                s.nama_singkat as satker_singkat,
+                COALESCE(s.id, 0)::int as satker_id,
+                COALESCE(s.deskripsi, 'Robinopsnal Bareskrim Polri (Pusat)') as satker_nama,
+                COALESCE(s.nama_singkat, 'Robinopsnal Bareskrim Polri') as satker_singkat,
                 COUNT(DISTINCT u.id)::int as total_personil,
                 COUNT(DISTINCT rr.user_id)::int as total_sudah_baca
              FROM auth_users u
-             JOIN bdb_satker s ON s.id = u.scope_satker_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
              LEFT JOIN bdb_social_read_receipts rr ON rr.post_id = $1 AND rr.user_id = u.id
-             WHERE u.status = 'active'
-             GROUP BY s.id, s.deskripsi, s.nama_singkat
+             WHERE (UPPER(u.status) = 'AKTIF' OR LOWER(u.status) = 'active')
+             GROUP BY COALESCE(s.id, 0), COALESCE(s.deskripsi, 'Robinopsnal Bareskrim Polri (Pusat)'), COALESCE(s.nama_singkat, 'Robinopsnal Bareskrim Polri')
              ORDER BY total_sudah_baca DESC, total_personil DESC`,
             [postId]
         );
 
-        return { status: 1, data: rows };
+        const readersRows = await this.dataSource.query(
+            `SELECT rr.user_id, rr.acknowledged_at,
+                    u.name, u.username, u.callsign, u.role_bdb,
+                    s.nama_singkat as satker_singkat, s.deskripsi as satker_nama
+             FROM bdb_social_read_receipts rr
+             JOIN auth_users u ON u.id = rr.user_id
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE rr.post_id = $1
+             ORDER BY rr.acknowledged_at DESC`,
+            [postId]
+        );
+
+        const readers = readersRows.map((r: any) => {
+            const isUserOne = this.isSuperUserOne(r.user_id, r.username, r.callsign);
+            return {
+                user_id: Number(r.user_id),
+                name: isUserOne ? (r.name || 'EKO') : (r.name || r.username),
+                handle: this.formatCallsign(r.callsign, r.user_id, r.username),
+                satker: this.resolveAuthorSatker(r.satker_singkat, r.satker_nama, r.role_bdb, isUserOne),
+                role_bdb: isUserOne ? 'superadmin' : (r.role_bdb || 'operator'),
+                acknowledged_at: r.acknowledged_at
+            };
+        });
+
+        return { status: 1, data: rows, readers };
     }
 
     // =========================================================================

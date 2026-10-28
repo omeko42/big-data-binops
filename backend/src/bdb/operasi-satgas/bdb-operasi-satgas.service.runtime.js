@@ -19,11 +19,13 @@ const lp_scope_util_1 = require("../common/lp-scope.util");
 const id_cipher_util_1 = require("../laporan-polisi/id-cipher.util");
 const laporan_polisi_service_1 = require("../laporan-polisi/laporan-polisi.service");
 let BdbOperasiSatgasService = class BdbOperasiSatgasService {
+    dataSource;
+    minio;
+    laporanPolisiService;
     constructor(dataSource, minio, laporanPolisiService) {
         this.dataSource = dataSource;
         this.minio = minio;
         this.laporanPolisiService = laporanPolisiService;
-        this.tableEnsured = false;
     }
     async actor(userId) {
         const id = Number(userId || 0);
@@ -59,53 +61,184 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
                 created_at timestamptz not null default now()
             );
             create index if not exists idx_operasi_satgas_attachments_parent on bdb_operasi_satgas_attachments (operasi_satgas_id);
+            alter table bdb_operasi_satgas_attachments
+                add column if not exists kategori_lampiran text not null default 'DOKUMENTASI',
+                add column if not exists revisi_ke int,
+                add column if not exists nomor_sprin text,
+                add column if not exists tanggal_sprin date,
+                add column if not exists catatan_perubahan text,
+                add column if not exists judul_dokumentasi text,
+                add column if not exists uploaded_by bigint;
         `);
     }
-    async addAttachments(id, files) {
+    async syncLampiranJsonb(id) {
+        try {
+            const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at,
+                        coalesce(kategori_lampiran, 'DOKUMENTASI') as kategori_lampiran,
+                        revisi_ke, nomor_sprin, tanggal_sprin::text as tanggal_sprin,
+                        catatan_perubahan, judul_dokumentasi, uploaded_by
+                 from bdb_operasi_satgas_attachments
+                 where operasi_satgas_id = $1
+                 order by id asc`, [id]);
+            const jsonArr = rows.map((r) => ({
+                id: Number(r.id),
+                file_name: r.file_name,
+                filename: r.file_name,
+                object_key: r.object_key,
+                content_type: r.content_type,
+                size: r.size ? Number(r.size) : null,
+                kategori_lampiran: r.kategori_lampiran || 'DOKUMENTASI',
+                revisi_ke: r.revisi_ke ? Number(r.revisi_ke) : null,
+                nomor_sprin: r.nomor_sprin || null,
+                tanggal_sprin: r.tanggal_sprin || null,
+                catatan_perubahan: r.catatan_perubahan || null,
+                judul_dokumentasi: r.judul_dokumentasi || null,
+                uploaded_by: r.uploaded_by ? Number(r.uploaded_by) : null,
+                uploaded_at: r.created_at
+            }));
+            await this.dataSource.query(`update bdb_operasi_satgas set lampiran = $2::jsonb where id = $1`, [id, JSON.stringify(jsonArr)]);
+        }
+        catch {
+            /* ignore sync error */
+        }
+    }
+    async addAttachments(id, files, meta = {}, userId) {
+        await this.ensureTable();
         await this.ensureAttachmentTable();
-        if (!files?.length)
-            return this.listAttachments(id);
-        for (const f of files) {
-            if (f.mimetype && f.mimetype !== 'application/pdf') {
-                throw new common_1.BadRequestException(`Lampiran "${f.originalname}" harus berupa file PDF.`);
+        const kategoriLampiran = String(meta?.kategori_lampiran || meta?.kategori || 'DOKUMENTASI').trim().toUpperCase() === 'SPRIN' ? 'SPRIN' : 'DOKUMENTASI';
+        const nomorSprin = this.toText(meta?.nomor_sprin);
+        const tanggalSprin = this.toDate(meta?.tanggal_sprin);
+        const catatanPerubahan = this.toText(meta?.catatan_perubahan || meta?.catatan);
+        const judulDokumentasi = this.toText(meta?.judul_dokumentasi || meta?.keterangan || meta?.judul);
+        let nextRev = null;
+        if (kategoriLampiran === 'SPRIN') {
+            if (meta?.revisi_ke && Number(meta.revisi_ke) > 0) {
+                nextRev = Number(meta.revisi_ke);
+            }
+            else {
+                const revRow = await this.dataSource.query(`select coalesce(max(revisi_ke), count(*))::int as max_rev
+                     from bdb_operasi_satgas_attachments
+                     where operasi_satgas_id = $1 and coalesce(kategori_lampiran, 'DOKUMENTASI') = 'SPRIN'`, [id]);
+                nextRev = Number(revRow?.[0]?.max_rev || 0) + 1;
             }
         }
+        if (!files?.length) {
+            if (kategoriLampiran === 'SPRIN' && (nomorSprin || catatanPerubahan)) {
+                await this.dataSource.query(`insert into bdb_operasi_satgas_attachments
+                        (operasi_satgas_id, file_name, object_key, content_type, size, kategori_lampiran, revisi_ke, nomor_sprin, tanggal_sprin, catatan_perubahan, judul_dokumentasi, uploaded_by)
+                     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, [
+                    id,
+                    nomorSprin ? `Sprin_${nomorSprin.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf` : `Sprin_Revisi_${nextRev || 1}.pdf`,
+                    '',
+                    'application/pdf',
+                    null,
+                    'SPRIN',
+                    nextRev,
+                    nomorSprin,
+                    tanggalSprin,
+                    catatanPerubahan,
+                    judulDokumentasi,
+                    userId ?? null
+                ]);
+                if (nomorSprin) {
+                    await this.dataSource.query(`update bdb_operasi_satgas set nomor_dasar = coalesce(nullif(nomor_dasar, ''), $2), tanggal_dibentuk = coalesce(tanggal_dibentuk, $3::date), updated_at = now() where id = $1`, [id, nomorSprin, tanggalSprin]);
+                }
+                await this.syncLampiranJsonb(id);
+            }
+            return this.listAttachments(id);
+        }
+        let idx = 0;
         for (const f of files) {
             const key = await this.minio.upload(f, 'operasi-satgas');
-            await this.dataSource.query(`insert into bdb_operasi_satgas_attachments (operasi_satgas_id, file_name, object_key, content_type, size) values ($1,$2,$3,$4,$5)`, [id, f.originalname, key, f.mimetype || null, f.size || null]);
+            const revVal = kategoriLampiran === 'SPRIN' ? (nextRev !== null ? nextRev + idx : idx + 1) : null;
+            await this.dataSource.query(`insert into bdb_operasi_satgas_attachments
+                    (operasi_satgas_id, file_name, object_key, content_type, size, kategori_lampiran, revisi_ke, nomor_sprin, tanggal_sprin, catatan_perubahan, judul_dokumentasi, uploaded_by)
+                 values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, [
+                id,
+                f.originalname,
+                key,
+                f.mimetype || null,
+                f.size || null,
+                kategoriLampiran,
+                revVal,
+                nomorSprin,
+                tanggalSprin,
+                catatanPerubahan,
+                judulDokumentasi,
+                userId ?? null
+            ]);
+            idx++;
         }
+        if (kategoriLampiran === 'SPRIN' && nomorSprin) {
+            await this.dataSource.query(`update bdb_operasi_satgas set nomor_dasar = $2, tanggal_dibentuk = coalesce($3::date, tanggal_dibentuk), updated_at = now() where id = $1`, [id, nomorSprin, tanggalSprin]);
+        }
+        await this.syncLampiranJsonb(id);
         return this.listAttachments(id);
     }
     async listAttachments(id) {
         await this.ensureAttachmentTable();
-        const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at from bdb_operasi_satgas_attachments where operasi_satgas_id = $1 order by id desc`, [id]);
+        const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at,
+                    coalesce(kategori_lampiran, 'DOKUMENTASI') as kategori_lampiran,
+                    revisi_ke, nomor_sprin, tanggal_sprin::text as tanggal_sprin,
+                    catatan_perubahan, judul_dokumentasi, uploaded_by
+             from bdb_operasi_satgas_attachments
+             where operasi_satgas_id = $1
+             order by case when coalesce(kategori_lampiran,'DOKUMENTASI')='SPRIN' then coalesce(revisi_ke,0) else 0 end desc, id desc`, [id]);
         const data = [];
         for (const r of rows) {
             let url = null;
-            try {
-                url = await this.minio.presignedUrl(r.object_key, 3600);
+            if (r.object_key) {
+                try {
+                    url = await this.minio.presignedUrl(r.object_key, 3600);
+                }
+                catch {
+                    url = null;
+                }
             }
-            catch {
-                url = null;
-            }
-            data.push({ id: r.id, file_name: r.file_name, content_type: r.content_type, size: r.size, created_at: r.created_at, url });
+            data.push({
+                id: r.id,
+                file_name: r.file_name,
+                filename: r.file_name,
+                content_type: r.content_type,
+                size: r.size,
+                created_at: r.created_at,
+                uploaded_at: r.created_at,
+                kategori_lampiran: r.kategori_lampiran || 'DOKUMENTASI',
+                revisi_ke: r.revisi_ke ? Number(r.revisi_ke) : null,
+                nomor_sprin: r.nomor_sprin || null,
+                tanggal_sprin: r.tanggal_sprin || null,
+                catatan_perubahan: r.catatan_perubahan || null,
+                judul_dokumentasi: r.judul_dokumentasi || null,
+                uploaded_by: r.uploaded_by ? Number(r.uploaded_by) : null,
+                url
+            });
         }
-        return { status: 1, data };
+        return {
+            status: 1,
+            data,
+            sprin: data.filter((x) => x.kategori_lampiran === 'SPRIN'),
+            dokumentasi: data.filter((x) => x.kategori_lampiran !== 'SPRIN')
+        };
     }
     async removeAttachment(attId) {
         await this.ensureAttachmentTable();
-        const rows = await this.dataSource.query(`select object_key from bdb_operasi_satgas_attachments where id = $1`, [attId]);
+        const rows = await this.dataSource.query(`select operasi_satgas_id, object_key from bdb_operasi_satgas_attachments where id = $1`, [attId]);
         if (!rows.length)
             throw new common_1.NotFoundException('Lampiran tidak ditemukan');
-        try {
-            await this.minio.remove(rows[0].object_key);
-        }
-        catch {
-            /* biarkan hapus metadata walau objek gagal dihapus */
+        const opsId = Number(rows[0].operasi_satgas_id);
+        if (rows[0].object_key) {
+            try {
+                await this.minio.remove(rows[0].object_key);
+            }
+            catch {
+                /* biarkan hapus metadata walau objek gagal dihapus */
+            }
         }
         await this.dataSource.query(`delete from bdb_operasi_satgas_attachments where id = $1`, [attId]);
+        await this.syncLampiranJsonb(opsId);
         return { status: 1, message: 'Lampiran dihapus' };
     }
+    tableEnsured = false;
     async ensureTable() {
         if (this.tableEnsured)
             return;
@@ -130,12 +263,12 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
                 deleted_at timestamptz
             );
         `);
-        // jenis_kategori = sub-klasifikasi opsional (mis. "Operasi Tangkap", "Satgas Anti Narkoba"),
-        // beda dari kolom `jenis` (yg cuma diskriminator OPERASI/SATGAS) -- lihat ensureJenisMasterTable().
         await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists jenis_kategori text;`);
         await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists is_pinned boolean not null default false, add column if not exists pinned_at timestamptz;`);
+        await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists lampiran jsonb default '[]'::jsonb;`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_deleted on bdb_operasi_satgas(deleted_at);`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_jenis on bdb_operasi_satgas(jenis);`);
+        await this.ensureAttachmentTable();
     }
     /** Master ringan "Jenis Operasi"/"Jenis Satgas" (dropdown opsional, dapat ditambah bebas dari form). */
     async ensureJenisMasterTable() {
@@ -155,7 +288,6 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const rows = await this.dataSource.query(`select id, nama from bdb_operasi_satgas_jenis where kelompok = $1 order by nama`, [k]);
         return { status: 1, data: rows };
     }
-    /** Idempotent -- dipanggil dari create/update kalau user mengetik kategori baru yg belum ada di master. */
     async ensureJenisMasterValue(kelompok, nama) {
         if (!nama)
             return;
@@ -171,8 +303,19 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
     toDate(v) {
         if (!v)
             return null;
+        if (v instanceof Date && !isNaN(v.getTime())) {
+            const jkt = new Date(v.getTime() + 7 * 3600 * 1000);
+            return jkt.toISOString().slice(0, 10);
+        }
         const t = String(v).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t))
+            return t;
+        const dmy = t.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (dmy)
+            return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(t))
+            return t.slice(0, 10);
+        return null;
     }
     toBoolean(v, fallback = true) {
         if (v === undefined || v === null || v === '')
@@ -221,11 +364,14 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
     buildBaseSelect() {
         return `
             select
-                id, jenis, nama, jenis_kategori, nomor_dasar, tanggal_dibentuk, tanggal_mulai, tanggal_selesai,
-                satker_penyelenggara, pimpinan, deskripsi,
+                id, jenis, nama, nama as judul, jenis as kategori,
+                jenis_kategori, nomor_dasar, tanggal_dibentuk::text as tanggal_dibentuk,
+                tanggal_mulai::text as tanggal_mulai, tanggal_selesai::text as tanggal_selesai,
+                satker_penyelenggara, satker_penyelenggara as satker_nama, pimpinan, deskripsi, deskripsi as keterangan,
                 coalesce(is_pinned, false) as is_pinned,
                 pinned_at,
-                coalesce(tanggal_mulai, tanggal_dibentuk, (created_at at time zone 'Asia/Jakarta')::date) as effective_date,
+                coalesce(lampiran, '[]'::jsonb) as lampiran,
+                coalesce(tanggal_mulai, tanggal_dibentuk, (created_at at time zone 'Asia/Jakarta')::date)::text as effective_date,
                 is_aktif as is_aktif_manual,
                 case
                     when tanggal_selesai is not null
@@ -242,6 +388,22 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
                     else 'AKTIF'
                 end as status_tampil,
                 (select count(*)::int from bdb_laporan_polisi lp where lp.operasi_satgas_id = bdb_operasi_satgas.id and lp.deleted_at is null) as jumlah_lp,
+                (select count(distinct lp.satker_nama)::int from bdb_laporan_polisi lp where lp.operasi_satgas_id = bdb_operasi_satgas.id and lp.deleted_at is null) as jumlah_satker,
+                (select string_agg(distinct lp.satker_nama, ', ') from bdb_laporan_polisi lp where lp.operasi_satgas_id = bdb_operasi_satgas.id and lp.deleted_at is null) as satker_terkait,
+                (select lp0.no_laporan from bdb_laporan_polisi lp0 where lp0.operasi_satgas_id = bdb_operasi_satgas.id and lp0.deleted_at is null order by lp0.id limit 1) as first_no_laporan,
+                (select lp0.tgl_laporan from bdb_laporan_polisi lp0 where lp0.operasi_satgas_id = bdb_operasi_satgas.id and lp0.deleted_at is null order by lp0.id limit 1) as first_tgl_laporan,
+                (select count(*)::int from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id) as jumlah_lampiran,
+                (select count(*)::int from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as jumlah_lampiran_sprin,
+                (select count(*)::int from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') <> 'SPRIN') as jumlah_lampiran_dokumentasi,
+                coalesce(
+                    (select a.nomor_sprin from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1),
+                    bdb_operasi_satgas.nomor_dasar
+                ) as latest_nomor_sprin,
+                coalesce(
+                    (select a.tanggal_sprin::text from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1),
+                    bdb_operasi_satgas.tanggal_dibentuk::text
+                ) as latest_tanggal_sprin,
+                (select max(coalesce(a.revisi_ke,1))::int from bdb_operasi_satgas_attachments a where a.operasi_satgas_id = bdb_operasi_satgas.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as latest_revisi_sprin,
                 (
                     select min(
                         case
@@ -280,14 +442,41 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         await this.ensureTable();
         const actor = await this.actor(userId);
         const page = Math.max(1, Number(query.page || 1));
-        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 100));
+        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
         const offset = (page - 1) * limit;
         const params = [];
         const innerWhere = ['deleted_at is null'];
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
-            innerWhere.push(`(lower(coalesce(nama,'')) like $${params.length} or lower(coalesce(nomor_dasar,'')) like $${params.length} or lower(coalesce(satker_penyelenggara,'')) like $${params.length})`);
+            const p = params.length;
+            innerWhere.push(`(
+                lower(coalesce(nama,'')) like $${p}
+                or lower(coalesce(nomor_dasar,'')) like $${p}
+                or lower(coalesce(satker_penyelenggara,'')) like $${p}
+                or lower(coalesce(pimpinan,'')) like $${p}
+                or lower(coalesce(deskripsi,'')) like $${p}
+                or exists (select 1 from bdb_laporan_polisi lp_s where lp_s.operasi_satgas_id = bdb_operasi_satgas.id and lp_s.deleted_at is null and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p}))
+            )`);
+        }
+        const satker = this.toText(query.satker || query.satker_nama);
+        if (satker && !['all', 'semua'].includes(satker.toLowerCase())) {
+            params.push(`%${satker.toLowerCase()}%`);
+            const p = params.length;
+            innerWhere.push(`(
+                lower(coalesce(satker_penyelenggara,'')) like $${p}
+                or exists (select 1 from bdb_laporan_polisi lp_f where lp_f.operasi_satgas_id = bdb_operasi_satgas.id and lp_f.deleted_at is null and lower(coalesce(lp_f.satker_nama,'')) like $${p})
+            )`);
+        }
+        const fromDate = this.toDate(query.from || query.tgl_mulai || query.start_date);
+        if (fromDate) {
+            params.push(fromDate);
+            innerWhere.push(`coalesce(tanggal_mulai, tanggal_dibentuk, (created_at at time zone 'Asia/Jakarta')::date) >= $${params.length}::date`);
+        }
+        const toDate = this.toDate(query.to || query.tgl_selesai || query.end_date);
+        if (toDate) {
+            params.push(toDate);
+            innerWhere.push(`coalesce(tanggal_mulai, tanggal_dibentuk, (created_at at time zone 'Asia/Jakarta')::date) <= $${params.length}::date`);
         }
         const jenis = this.toText(query.jenis);
         if (jenis && jenis.toUpperCase() !== 'ALL') {
@@ -311,18 +500,18 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         }
         const countRows = await this.dataSource.query(`select count(*)::int as total ${baseSql} where ${outerWhere.join(' and ')}`, params);
         const total = Number(countRows?.[0]?.total || 0);
-        const rows = await this.dataSource.query(`select * ${baseSql} where ${outerWhere.join(' and ')} order by coalesce(is_pinned, false) desc, pinned_at desc nulls last, coalesce(tanggal_mulai, tanggal_dibentuk, created_at::date) desc nulls last, jumlah_lp desc, coalesce(satker_depth, 99) asc, (case when jenis = 'OPERASI' then 0 else 1 end) asc, created_at desc, id desc limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset]);
+        const rows = await this.dataSource.query(`select * ${baseSql} where ${outerWhere.join(' and ')} order by coalesce(is_pinned, false) desc, pinned_at desc nulls last, coalesce(tanggal_mulai::date, tanggal_dibentuk::date, created_at::date) desc nulls last, jumlah_lp desc, coalesce(satker_depth, 99) asc, (case when jenis = 'OPERASI' then 0 else 1 end) asc, created_at desc, id desc limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset]);
         for (const row of rows) {
             row.can_delete = actor.isSuper || (row.created_by !== null && Number(row.created_by) === actor.id);
         }
         return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
     }
-    /** Register LP yang sudah ditautkan ke operasi/satgas (diisi dari input di detail LP). */
+    /** Register LP yang sudah ditautkan ke operasi/satgas. */
     async rekapLp(userId, query = {}) {
         await this.ensureTable();
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
         const page = Math.max(1, Number(query.page || 1));
-        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 100));
+        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
         const offset = (page - 1) * limit;
         const params = [];
         const where = ['lp.deleted_at is null', 'os.deleted_at is null'];
@@ -338,21 +527,27 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
-            where.push(`(lower(coalesce(os.nama,'')) like $${params.length} or lower(coalesce(lp.no_laporan,'')) like $${params.length})`);
+            where.push(`(lower(coalesce(os.nama,'')) like $${params.length} or lower(coalesce(lp.no_laporan,'')) like $${params.length} or lower(coalesce(lp.satker_nama,'')) like $${params.length})`);
         }
         const jenis = this.toText(query.jenis);
         if (jenis && jenis.toUpperCase() !== 'ALL') {
             params.push(jenis.toUpperCase());
             where.push(`os.jenis = $${params.length}`);
         }
+        const satker = this.toText(query.satker || query.satker_nama);
+        if (satker && !['all', 'semua'].includes(satker.toLowerCase())) {
+            params.push(`%${satker.toLowerCase()}%`);
+            where.push(`(lower(coalesce(lp.satker_nama,'')) like $${params.length} or lower(coalesce(os.satker_penyelenggara,'')) like $${params.length})`);
+        }
         const whereSql = where.join(' and ');
         const totalRow = await this.dataSource.query(`select count(*)::int as total from bdb_laporan_polisi lp join bdb_operasi_satgas os on os.id = lp.operasi_satgas_id where ${whereSql}`, params);
         const total = Number(totalRow?.[0]?.total || 0);
         const rows = await this.dataSource.query(`select
                 lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan,
-                os.id as ops_id, os.jenis as ops_jenis, os.nama as ops_nama,
+                os.id as ops_id, os.jenis as ops_jenis, os.nama as ops_nama, os.nomor_dasar as ops_nomor_dasar,
                 coalesce(os.is_pinned, false) as ops_is_pinned, os.pinned_at as ops_pinned_at,
                 coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama,
+                coalesce(sm.kategori,'CT') as status_kategori,
                 (select string_agg(x.txt, '; ') from (
                     select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''),'(tanpa kategori)') as txt
                     from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
@@ -392,29 +587,96 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
             throw new common_1.NotFoundException('Data operasi/satgas tidak ditemukan');
         return rows[0];
     }
-    /** LP yang saat ini tertaut ke operasi/satgas ini -- dipakai isi awal LpPickerDialog di halaman ini. */
+    async enrichLpRowsWithDocs(rows) {
+        if (!rows.length)
+            return rows;
+        const lpIds = rows.map((r) => Number(r.lp_id || r.id)).filter((n) => Number.isFinite(n) && n > 0);
+        for (const r of rows) {
+            const lid = Number(r.lp_id || r.id);
+            r.id = lid;
+            r.lp_id = lid;
+            r.pid = (0, id_cipher_util_1.encodeId)(lid);
+            r.dokumen_list = [];
+        }
+        if (!lpIds.length)
+            return rows;
+        try {
+            const docRows = await this.dataSource.query(`select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen::text as tanggal_dokumen, d.lampiran,
+                        t.code as type_code, t.nama as type_nama, t.urutan_tahap
+                 from bdb_dokumen d
+                 join bdb_document_type_master t on t.id = d.document_type_id
+                 where d.lp_id = any($1)
+                 order by t.urutan_tahap asc nulls last, d.tanggal_dokumen asc nulls last, d.id asc`, [lpIds]);
+            const docMap = new Map();
+            for (const d of docRows) {
+                const lid = Number(d.lp_id);
+                const rawLampiran = Array.isArray(d.lampiran) ? d.lampiran : [];
+                const lampiran = [];
+                for (const att of rawLampiran) {
+                    let url = att?.url || null;
+                    if (!url && att?.key) {
+                        try {
+                            url = await this.minio.presignedUrl(att.key, 3600);
+                        }
+                        catch {
+                            url = null;
+                        }
+                    }
+                    lampiran.push({
+                        name: att?.name || att?.file_name || 'Dokumen.pdf',
+                        key: att?.key || null,
+                        size: att?.size || null,
+                        mime: att?.mime || att?.content_type || 'application/pdf',
+                        url
+                    });
+                }
+                if (!docMap.has(lid))
+                    docMap.set(lid, []);
+                docMap.get(lid).push({
+                    id: Number(d.id),
+                    type_code: d.type_code,
+                    type_nama: d.type_nama,
+                    nomor_dokumen: d.nomor_dokumen || null,
+                    tanggal_dokumen: d.tanggal_dokumen || null,
+                    lampiran
+                });
+            }
+            for (const r of rows) {
+                r.dokumen_list = docMap.get(Number(r.lp_id)) || [];
+            }
+        }
+        catch {
+            /* ignore doc enrichment error */
+        }
+        return rows;
+    }
+    /** LP yang saat ini tertaut ke operasi/satgas ini -- dipakai isi awal LpPickerDialog & Drilldown. */
     async listLinkedLp(id) {
         await this.ensureTable();
-        const rows = await this.dataSource.query(`select lp.id, lp.no_laporan, lp.satker_nama, lp.unit_nama, coalesce(sm.nama, 'Laporan Polisi') as status_nama
+        const rows = await this.dataSource.query(`select lp.id, lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan, lp.tingkat_kesulitan,
+                    coalesce(sm.code, 'LP') as status_code, coalesce(sm.nama, 'Laporan Polisi') as status_nama,
+                    coalesce(sm.kategori, 'CT') as status_kategori,
+                    coalesce(
+                        nullif((select string_agg(distinct coalesce(nullif(tp_m.nomor_pasal,'') || coalesce(' (' || nullif(tp_m.nama_kategori,'') || ')', ''), tp_m.nama_kategori), '; ') from bdb_lp_tindak_pidana tp_m where tp_m.lp_id = lp.id), ''),
+                        (select string_agg(x.txt, '; ') from (
+                            select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'pasal',''), '(tanpa kategori)') as txt
+                            from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                        ) x)
+                    ) as kejahatan
              from bdb_laporan_polisi lp
              left join bdb_status_master sm on sm.id = lp.status_id
              where lp.operasi_satgas_id = $1 and lp.deleted_at is null
              order by lp.no_laporan`, [id]);
-        return { status: 1, data: rows };
+        const enriched = await this.enrichLpRowsWithDocs(rows);
+        return { status: 1, data: enriched };
     }
-    /**
-     * Samakan LP yang tertaut ke operasi/satgas ini dgn daftar lp_ids yg dipilih di LpPickerDialog
-     * (model sama spt halaman Kasus Menonjol/Susjol) -- LP baru ditautkan, LP yg dihapus dari
-     * pilihan dilepas. Pakai LaporanPolisiService.setOperasiSatgas() per LP (sudah ada validasi
-     * scope satker & status aktif operasi/satgas), bukan query massal langsung.
-     */
     async setLinkedLp(id, lpIds, userId) {
         const actor = await this.actor(userId);
         this.assertNotViewer(actor);
         await this.findOne(id);
         const currentRows = await this.dataSource.query(`select id from bdb_laporan_polisi where operasi_satgas_id = $1 and deleted_at is null`, [id]);
         const current = new Set(currentRows.map((r) => Number(r.id)));
-        const target = new Set((lpIds || []).map(Number));
+        const target = new Set((lpIds || []).map(Number).filter((n) => Number.isFinite(n) && n > 0));
         const toAdd = [...target].filter((x) => !current.has(x));
         const toRemove = [...current].filter((x) => !target.has(x));
         let added = 0;
@@ -455,7 +717,11 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const values = keys.map((_, i) => `$${i + 1}`).join(', ');
         const params = keys.map((k) => payload[k]);
         const rows = await this.dataSource.query(`insert into bdb_operasi_satgas (${columns}) values (${values}) returning id`, params);
-        return this.findOne(Number(rows[0].id));
+        const newId = Number(rows[0].id);
+        if (Array.isArray(dto?.lp_ids) && dto.lp_ids.length) {
+            await this.setLinkedLp(newId, dto.lp_ids, userId);
+        }
+        return this.findOne(newId);
     }
     async update(id, dto, userId) {
         await this.ensureTable();
@@ -468,16 +734,18 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
             await this.ensureJenisMasterValue(payload.jenis ?? existing.jenis, payload.jenis_kategori);
         }
         const keys = Object.keys(payload);
-        if (!keys.length)
-            return this.findOne(id);
-        const sets = keys.map((k, i) => `${k} = $${i + 1}`);
-        sets.push('updated_at = now()');
-        const params = keys.map((k) => payload[k]);
-        params.push(id);
-        await this.dataSource.query(`update bdb_operasi_satgas set ${sets.join(', ')} where id = $${params.length} and deleted_at is null`, params);
+        if (keys.length) {
+            const sets = keys.map((k, i) => `${k} = $${i + 1}`);
+            sets.push('updated_at = now()');
+            const params = keys.map((k) => payload[k]);
+            params.push(id);
+            await this.dataSource.query(`update bdb_operasi_satgas set ${sets.join(', ')} where id = $${params.length} and deleted_at is null`, params);
+        }
+        if (Array.isArray(dto?.lp_ids)) {
+            await this.setLinkedLp(id, dto.lp_ids, userId);
+        }
         return this.findOne(id);
     }
-    /** Toggle "Off"/"On" -- override manual, lepas dari status periode tanggal. */
     async setAktif(id, aktif, userId) {
         await this.ensureTable();
         const actor = await this.actor(userId);
@@ -486,7 +754,6 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         await this.dataSource.query('update bdb_operasi_satgas set is_aktif = $2, updated_by = $3, updated_at = now() where id = $1', [id, aktif, actor.id]);
         return this.findOne(id);
     }
-    /** Toggle "Sematkan" (Pin) -- otomatis menjadi Rank #1 di daftar & dashboard. */
     async setPin(id, pinned, userId) {
         await this.ensureTable();
         const actor = await this.actor(userId);

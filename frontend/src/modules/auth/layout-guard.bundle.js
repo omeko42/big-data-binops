@@ -37,7 +37,13 @@ function bdbIsIdle(e=Date.now()){
   return!!t&&e-t>bdbIdleMs
 }
 
-function tS(reasonUrl){if(bdbLogoutStarted)return;bdbLogoutStarted=!0;try{let _tok=bdbCurrentAccess();if(_tok&&typeof fetch==="function"){fetch(tE+"/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}let targetUrl=typeof reasonUrl==="string"&&reasonUrl?reasonUrl:"/login?expired=1";if(!window.location.pathname.startsWith("/login")){"function"==typeof window.location.replace?window.location.replace(targetUrl):window.location.href=targetUrl}}
+function bdbIsPublicPanduanShare(){
+  try{
+    return typeof window!=="undefined"&&window.location.pathname.startsWith("/cms/panduan")&&new URLSearchParams(window.location.search).has("share")
+  }catch{return!1}
+}
+
+function tS(reasonUrl){if(bdbIsPublicPanduanShare()&&!bdbCurrentAccess())return;if(bdbLogoutStarted)return;bdbLogoutStarted=!0;try{let _tok=bdbCurrentAccess();if(_tok&&typeof fetch==="function"){fetch(tE+"/api/Authentication/logout",{method:"GET",headers:{Authorization:"Bearer "+_tok},keepalive:!0}).catch(()=>{})}}catch(_e){}try{if(window.caches)caches.keys().then(k=>Promise.all(k.map(n=>caches.delete(n))))}catch(_e){}try{sessionStorage.clear()}catch(_e){}try{["auth.access_token","auth","user","auth.expires_at","auth.refresh","impersonator_stash","bdb.auth.last_activity"].forEach(k=>localStorage.removeItem(k));localStorage.setItem("bdb.auth.logout_broadcast",String(Date.now()));localStorage.clear()}catch(_e){}try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.postMessage({type:"LOGOUT",ts:Date.now()});bc.close()}}catch(_e){}try{if(window.indexedDB){indexedDB.deleteDatabase("bdb_offline_db");indexedDB.deleteDatabase("keyval-store")}}catch(_e){}if(bdbIsPublicPanduanShare()){bdbLogoutStarted=!1;return}let targetUrl=typeof reasonUrl==="string"&&reasonUrl?reasonUrl:"/login?expired=1";if(!window.location.pathname.startsWith("/login")){"function"==typeof window.location.replace?window.location.replace(targetUrl):window.location.href=targetUrl}}
 
 function bdbMarkActivity(){
   if(!bdbCurrentAccess()||bdbLogoutStarted)return;
@@ -132,14 +138,14 @@ async function bdbRecoverRequest(e){
 
 if("undefined"!=typeof window&&!window.__bdbIdleRefreshBound){
   window.__bdbIdleRefreshBound=!0;
-  let e=()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess())return void tS("/login");bdbMarkActivity()};
+  let e=()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())return void tS("/login");bdbMarkActivity()};
   ["pointerdown","mousemove","keydown","scroll","touchstart"].forEach(t=>window.addEventListener(t,e,{passive:!0}));
   document.addEventListener("visibilitychange",()=>{"visible"===document.visibilityState&&e()});
   window.addEventListener("focus",e);
-  window.addEventListener("storage",ev=>{if(ev.key===null||ev.key==="bdb.auth.logout_broadcast"||((ev.key==="auth.access_token"||ev.key==="auth"||ev.key==="user")&&!ev.newValue)){if(!bdbCurrentAccess())tS("/login")}});
-  try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.onmessage=ev=>{if(ev?.data?.type==="LOGOUT")tS("/login")}}}catch(_e){}
+  window.addEventListener("storage",ev=>{if(ev.key===null||ev.key==="bdb.auth.logout_broadcast"||((ev.key==="auth.access_token"||ev.key==="auth"||ev.key==="user")&&!ev.newValue)){if(!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())tS("/login")}});
+  try{if(typeof BroadcastChannel!=="undefined"){let bc=new BroadcastChannel("bdb_auth_channel");bc.onmessage=ev=>{if(ev?.data?.type==="LOGOUT"&&!bdbIsPublicPanduanShare())tS("/login")}}}catch(_e){}
   bdbMarkActivity();
-  window.setInterval(()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess())return void tS("/login");bdbIsIdle()&&tS("/login?expired=1")},4e3)
+  window.setInterval(()=>{if(window.location.pathname.startsWith("/cms")&&!bdbCurrentAccess()&&!bdbIsPublicPanduanShare())return void tS("/login");if(!bdbIsPublicPanduanShare()&&bdbIsIdle())tS("/login?expired=1")},4e3)
 }
 
 tv.interceptors.request.use(async e => {
@@ -673,7 +679,8 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     if (e.key === "auth" && e.newValue) setTimeout(() => bdbPreload13Periods(true), 1500);
     if (e.key === null || e.key === "bdb.auth.logout_broadcast" || ((e.key === "auth" || e.key === "user" || e.key === "auth.access_token") && !e.newValue)) {
       bdbClearAllCache();
-      if (!bdbCurrentAccess() && !window.location.pathname.startsWith("/login")) {
+      const isPubShare = typeof window !== "undefined" && window.location.pathname.startsWith("/cms/panduan") && new URLSearchParams(window.location.search).has("share");
+      if (!bdbCurrentAccess() && !window.location.pathname.startsWith("/login") && !isPubShare) {
         window.location.replace("/login");
       }
     }

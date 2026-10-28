@@ -138,8 +138,8 @@ export class UserController {
     /** Edit profil sendiri (siapa pun) -- hanya data personil non-sensitif, bukan role/scope/status. */
     @Patch('me/profile')
     @Route({ name: 'master.manajemen pengguna (akun user).edit profil sendiri', parent: 'master.manajemen pengguna (akun user)' })
-    async updateOwnProfile(@CurrentUser() authUser, @Body() dto: { name?: string; nrp?: string; pangkat?: string; jabatan?: string; satuan?: string; no_hp?: string; email_polri?: string; username?: string }, @Res() res) {
-        const result = await this.userService.updateOwnProfile(authUser, dto);
+    async updateOwnProfile(@CurrentUser() authUser, @Body() dto: any, @UploadedFile() file: any, @Res() res) {
+        const result = await this.userService.updateOwnProfile(authUser, dto, file);
         return res.sendSuccess(result);
     }
 

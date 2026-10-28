@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { DataSource } from 'typeorm';
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'crypto';
 import { jwtConstants } from '@app_core/auth/constants';
+import { generatePowCaptcha, verifyPowCaptcha } from '@app_core/auth/pow-captcha.util';
 import { MinioService, UploadedFileLike } from '../kerma/minio.service';
 import { AuditService } from '../audit/audit.service';
 
@@ -99,9 +100,9 @@ export class PanduanService {
 
     private assertSuperadmin(authUser: any, action: string) {
         const role = String(authUser?.role_bdb || '').toLowerCase();
-        if (role !== 'superadmin') {
-            void this.audit.log({ user: authUser, action, entity: 'panduan_pengguna', meta: { outcome: 'ERROR', message: 'Bukan superadmin' } });
-            throw new ForbiddenException('Hanya superadmin yang dapat mengelola Panduan Pengguna.');
+        if (!['superadmin', 'admin_binops'].includes(role)) {
+            void this.audit.log({ user: authUser, action, entity: 'panduan_pengguna', meta: { outcome: 'ERROR', message: 'Bukan superadmin/admin' } });
+            throw new ForbiddenException('Hanya superadmin/admin yang dapat mengelola Panduan Pengguna.');
         }
     }
 
@@ -110,16 +111,30 @@ export class PanduanService {
      * lihat yang AKTIF. Superadmin di halaman Kelola minta includeInactive=true utk lihat semua.
      */
     async list(authUser: any, includeInactive: boolean) {
-        const isSuper = String(authUser?.role_bdb || '').toLowerCase() === 'superadmin';
+        const isSuper = ['superadmin', 'admin_binops'].includes(String(authUser?.role_bdb || '').toLowerCase());
         const where = includeInactive && isSuper ? '' : "where status = 'AKTIF'";
         const rows = await this.dataSource.query(
             `select id, judul, deskripsi, kategori, tipe, file_name, content_type, size, urutan, status, created_at
              from bdb_panduan_pengguna ${where} order by urutan asc, created_at desc`
         );
-        const enriched = rows.map((r: any) => ({
-            ...r,
-            share_token: this.createShareToken(Number(r.id))
-        }));
+        const viewerInfo = {
+            jenis_personel: 'INTERNAL',
+            userId: authUser?.id || authUser?.user?.id,
+            nama: authUser?.name || authUser?.user?.name || authUser?.username || 'Internal User',
+            nrp_nip: authUser?.nrp || authUser?.nip || authUser?.username || authUser?.email_polri || '-'
+        };
+        const enriched = rows.map((r: any) => {
+            const streamToken = this.createStreamToken(Number(r.id), viewerInfo);
+            const streamUrl = `/api/bdb/panduan/stream/${streamToken}`;
+            return {
+                ...r,
+                share_token: this.createShareToken(Number(r.id)),
+                stream_token: streamToken,
+                direct_stream_token: streamToken,
+                stream_url: streamUrl,
+                url: streamUrl
+            };
+        });
         return { status: 1, data: enriched };
     }
 
@@ -131,24 +146,19 @@ export class PanduanService {
         );
         if (!rows.length) throw new NotFoundException('Panduan tidak ditemukan.');
         const row = rows[0];
-        const isSuper = String(authUser?.role_bdb || '').toLowerCase() === 'superadmin';
+        const isSuper = ['superadmin', 'admin_binops'].includes(String(authUser?.role_bdb || '').toLowerCase());
         if (row.status !== 'AKTIF' && !isSuper) {
             throw new NotFoundException('Panduan tidak ditemukan.');
         }
         const streamToken = this.createStreamToken(Number(row.id), {
+            jenis_personel: 'INTERNAL',
             userId: authUser?.id || authUser?.user?.id,
-            nama: authUser?.name || authUser?.user?.name || 'Internal User'
+            nama: authUser?.name || authUser?.user?.name || authUser?.username || 'Internal User',
+            nrp_nip: authUser?.nrp || authUser?.nip || authUser?.username || authUser?.email_polri || '-'
         });
         const streamUrl = `/api/bdb/panduan/stream/${streamToken}`;
         const shareToken = this.createShareToken(Number(row.id));
-        let url: string | null = streamUrl;
-        if (row.tipe === 'PDF') {
-            try {
-                url = (await this.minio.presignedUrl(row.object_key, 3600)) || streamUrl;
-            } catch {
-                url = streamUrl;
-            }
-        }
+        const url = streamUrl;
         delete row.object_key;
         return {
             status: 1,
@@ -156,54 +166,83 @@ export class PanduanService {
                 ...row,
                 url,
                 stream_url: streamUrl,
+                stream_token: streamToken,
+                direct_stream_token: streamToken,
                 share_token: shareToken
             }
         };
     }
 
     /**
-     * Menghasilkan tantangan Captcha & info dasar panduan saat link terenkripsi dibuka.
+     * Menghasilkan tantangan Captcha (6-char Alphanumeric SVG + PoW Login-style) & info dasar panduan saat link terenkripsi dibuka di luar sistem.
      */
     async getShareChallenge(shareToken?: string, panduanId?: number) {
         let targetId = Number(panduanId || 0);
         if (shareToken) {
             const decoded = decryptTokenPayload(shareToken);
-            if (!decoded || (decoded.kind !== 'panduan_share' && decoded.kind !== 'panduan_stream')) {
+            if (decoded && (decoded.kind === 'panduan_share' || decoded.kind === 'panduan_stream')) {
+                targetId = Number(decoded.id || 0);
+            } else if (/^\d+$/.test(String(shareToken).trim())) {
+                targetId = Number(String(shareToken).trim());
+            } else {
                 throw new BadRequestException('Tautan terenkripsi tidak valid atau sudah kedaluwarsa.');
             }
-            targetId = Number(decoded.id || 0);
         }
         let panduanInfo: any = null;
         if (targetId > 0) {
             const rows = await this.dataSource.query(
-                `select id, judul, deskripsi, kategori, tipe, file_name, size from bdb_panduan_pengguna where id = $1 and status = 'AKTIF' limit 1`,
+                `select id, judul, deskripsi, kategori, tipe, file_name, size, created_at from bdb_panduan_pengguna where id = $1 and status = 'AKTIF' limit 1`,
                 [targetId]
             );
             if (!rows.length) throw new NotFoundException('Materi panduan tidak ditemukan atau tidak aktif.');
-            panduanInfo = rows[0];
+            panduanInfo = {
+                ...rows[0],
+                share_token: this.createShareToken(Number(rows[0].id))
+            };
         }
 
-        // Buat kode captcha kombinasi angka + huruf + operasi hitung mudah agar ramah pengguna tapi tahan bot
-        const a = Math.floor(Math.random() * 8) + 2; // 2..9
-        const b = Math.floor(Math.random() * 8) + 1; // 1..8
+        // 6-character alphanumeric SVG Captcha (tanpa operasi hitung, gaya Login)
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let code = '';
-        for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-        const answer = `${code}-${a + b}`;
-        const questionText = `Ketik kode "${code}" diikuti tanda strip dan hasil ${a} + ${b} (contoh: ${code}-${a + b})`;
+        for (let i = 0; i < 6; i++) {
+            code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        const answer = code;
+        const questionText = 'Ketik 6 karakter kode di samping';
+        const palette = ['#f8fafc', '#38bdf8', '#a7f3d0', '#fde047', '#f472b6', '#c4b5fd'];
 
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="54" viewBox="0 0 240 54">
-            <defs>
-                <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#0f172a"/>
-                    <stop offset="100%" stop-color="#1e3a8a"/>
-                </linearGradient>
-            </defs>
-            <rect width="240" height="54" rx="8" fill="url(#bg)"/>
-            <path d="M12 40 Q 70 10, 130 38 T 228 18" stroke="rgba(56,189,248,0.28)" stroke-width="2" fill="none"/>
-            <path d="M18 16 Q 95 44, 160 18 T 225 42" stroke="rgba(251,191,36,0.25)" stroke-width="1.5" fill="none"/>
-            <text x="120" y="34" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="21" font-weight="bold" letter-spacing="3">${code} - (${a}+${b})</text>
-        </svg>`;
+        let noiseLines = '';
+        for (let i = 0; i < 5; i++) {
+            const x1 = 8 + Math.floor(Math.random() * 28);
+            const y1 = 8 + Math.floor(Math.random() * 44);
+            const cx = 70 + Math.floor(Math.random() * 60);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const x2 = 164 + Math.floor(Math.random() * 28);
+            const y2 = 8 + Math.floor(Math.random() * 44);
+            const stroke = palette[i % palette.length];
+            noiseLines += `<path d="M${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${stroke}" stroke-opacity="0.28" stroke-width="1.5" fill="none"/>`;
+        }
+
+        let noiseDots = '';
+        for (let i = 0; i < 24; i++) {
+            const cx = 6 + Math.floor(Math.random() * 188);
+            const cy = 6 + Math.floor(Math.random() * 48);
+            const r = (Math.random() * 1.4 + 0.6).toFixed(1);
+            const fill = palette[i % palette.length];
+            noiseDots += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" fill-opacity="0.28"/>`;
+        }
+
+        let charNodes = '';
+        for (let i = 0; i < code.length; i++) {
+            const ch = code[i];
+            const x = 24 + i * 28 + Math.floor(Math.random() * 5) - 2;
+            const y = 38 + Math.floor(Math.random() * 7) - 3;
+            const rot = Math.floor(Math.random() * 29) - 14;
+            const color = palette[i % palette.length];
+            charNodes += `<text x="${x}" y="${y}" fill="${color}" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" transform="rotate(${rot} ${x} ${y})">${ch}</text>`;
+        }
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60"><rect width="200" height="60" rx="8" fill="#0f172a"/>${noiseLines}${noiseDots}${charNodes}</svg>`;
         const svgDataUrl = `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`;
 
         const challengeToken = encryptTokenPayload({
@@ -213,24 +252,29 @@ export class PanduanService {
             exp: Date.now() + 10 * 60 * 1000 // 10 menit
         });
 
+        const pow = generatePowCaptcha();
+
         return {
             status: 1,
             data: {
                 challenge_token: challengeToken,
+                captcha_token: challengeToken,
                 question: questionText,
-                code_hint: `${code} + hasil (${a}+${b})`,
+                code_hint: '6 karakter kode di samping',
                 svg_data_url: svgDataUrl,
+                captcha_svg: svgDataUrl,
+                pow,
                 panduan: panduanInfo
             }
         };
     }
 
     /**
-     * Verifikasi identitas penonton ("Siapa Kamu?"):
+     * Verifikasi identitas penonton ("Siapa Kamu?" — khusus akses eksternal di luar sistem):
      * - jenis_personel: 'ANGGOTA_POLRI' | 'PNS_POLRI'
      * - nama: Nama Lengkap
      * - nrp_nip: NRP (~8 digit, validasi 6-10 digit) atau NIP (~16-18 digit, validasi 14-18 digit)
-     * - captcha_answer & challenge_token
+     * - captcha_answer & challenge_token / captcha_token (atau PoW captcha_id + captcha)
      */
     async verifyViewer(
         body: {
@@ -241,6 +285,9 @@ export class PanduanService {
             nrp_nip?: string;
             captcha_answer?: string;
             challenge_token?: string;
+            captcha_token?: string;
+            captcha_id?: string;
+            captcha?: string | number;
         },
         reqMeta?: { ip?: string; userAgent?: string }
     ) {
@@ -267,25 +314,31 @@ export class PanduanService {
             throw new BadRequestException('NIP PNS Polri wajib terdiri dari ±16-18 digit angka (rentang valid: 14 s.d. 18 digit).');
         }
 
-        const challenge = decryptTokenPayload(String(body?.challenge_token || ''));
-        if (!challenge || challenge.kind !== 'panduan_captcha') {
-            throw new BadRequestException('Sesi Captcha telah kedaluwarsa. Silakan muat ulang Captcha.');
+        const tokenStr = String(body?.challenge_token || (body as any)?.captcha_token || '');
+        const challenge = tokenStr ? decryptTokenPayload(tokenStr) : null;
+        const powValid = Boolean(body?.captcha_id && body?.captcha !== undefined && verifyPowCaptcha(String(body.captcha_id), String(body.captcha)));
+
+        if (!powValid) {
+            if (!challenge || challenge.kind !== 'panduan_captcha') {
+                throw new BadRequestException('Sesi Captcha telah kedaluwarsa. Silakan muat ulang Captcha.');
+            }
+            const userAns = String(body?.captcha_answer || '').trim().toUpperCase().replace(/[\s-]+/g, '');
+            const expectedAns = String(challenge.ans || '').trim().toUpperCase().replace(/[\s-]+/g, '');
+            if (!userAns || userAns !== expectedAns) {
+                throw new BadRequestException('Kode Captcha belum tepat. Ketik 6 karakter kode sesuai gambar.');
+            }
         }
 
-        const userAns = String(body?.captcha_answer || '').trim().toUpperCase().replace(/\s+/g, '');
-        const expectedAns = String(challenge.ans || '').trim().toUpperCase();
-        // Izinkan juga jika user langsung mengetik kode saja atau format KODE-HASIL
-        if (!userAns || userAns !== expectedAns) {
-            throw new BadRequestException('Jawaban Captcha belum tepat. Perhatikan huruf/angka dan hasil penjumlahan pada gambar.');
-        }
-
-        let targetId = Number(body?.panduan_id || challenge.id || 0);
+        let targetId = Number(body?.panduan_id || challenge?.id || 0);
         if (body?.share_token) {
             const shared = decryptTokenPayload(body.share_token);
-            if (!shared || (shared.kind !== 'panduan_share' && shared.kind !== 'panduan_stream')) {
+            if (shared && (shared.kind === 'panduan_share' || shared.kind === 'panduan_stream')) {
+                targetId = Number(shared.id || targetId);
+            } else if (/^\d+$/.test(String(body.share_token).trim())) {
+                targetId = Number(String(body.share_token).trim());
+            } else if (!targetId) {
                 throw new BadRequestException('Tautan panduan terenkripsi tidak valid.');
             }
-            targetId = Number(shared.id || targetId);
         }
         if (!targetId) {
             throw new BadRequestException('ID Panduan tidak ditemukan pada tautan.');
@@ -313,6 +366,7 @@ export class PanduanService {
             nrp_nip: rawId
         });
         const streamUrl = `/api/bdb/panduan/stream/${streamToken}`;
+        const shareToken = this.createShareToken(Number(row.id));
         delete row.object_key;
 
         return {
@@ -322,6 +376,7 @@ export class PanduanService {
                 ...row,
                 url: streamUrl,
                 stream_url: streamUrl,
+                share_token: shareToken,
                 viewer: {
                     jenis_personel: jenis,
                     nama,

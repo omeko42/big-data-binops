@@ -15,12 +15,15 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
 const scope_util_1 = require("../common/scope.util");
 const minio_service_1 = require("../kerma/minio.service");
+const id_cipher_util_1 = require("../laporan-polisi/id-cipher.util");
 const SKALA_OPTS = ['nasional', 'regional', 'tidak viral'];
 let BdbKasusMenonjolService = class BdbKasusMenonjolService {
+    dataSource;
+    minio;
+    ensureTablesPromise = null;
     constructor(dataSource, minio) {
         this.dataSource = dataSource;
         this.minio = minio;
-        this.ensureTablesPromise = null;
     }
     async ensureTables() {
         if (!this.ensureTablesPromise) {
@@ -57,7 +60,17 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             );
             alter table bdb_kasus_menonjol
                 add column if not exists is_pinned boolean not null default false,
-                add column if not exists pinned_at timestamptz;
+                add column if not exists pinned_at timestamptz,
+                add column if not exists kategori text default 'MENONJOL',
+                add column if not exists lampiran jsonb default '[]'::jsonb;
+            alter table bdb_kasus_menonjol_attachments
+                add column if not exists kategori_lampiran text not null default 'DOKUMENTASI',
+                add column if not exists revisi_ke int,
+                add column if not exists nomor_sprin text,
+                add column if not exists tanggal_sprin date,
+                add column if not exists catatan_perubahan text,
+                add column if not exists judul_dokumentasi text,
+                add column if not exists uploaded_by bigint;
         `)
                 .then(() => undefined)
                 .catch((error) => {
@@ -76,8 +89,25 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     toDate(v) {
         if (!v)
             return null;
+        if (v instanceof Date && !isNaN(v.getTime())) {
+            const jkt = new Date(v.getTime() + 7 * 3600 * 1000);
+            return jkt.toISOString().slice(0, 10);
+        }
         const t = String(v).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t))
+            return t;
+        const dmy = t.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (dmy)
+            return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(t)) {
+            const parsed = new Date(t);
+            if (!isNaN(parsed.getTime())) {
+                const jkt = new Date(parsed.getTime() + 7 * 3600 * 1000);
+                return jkt.toISOString().slice(0, 10);
+            }
+            return t.slice(0, 10);
+        }
+        return null;
     }
     toBoolean(v) {
         if (typeof v === 'boolean')
@@ -166,9 +196,11 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     buildBaseSelect() {
         return `
             select
-                k.id, k.judul, k.skala_viral, k.tanggal_rilis::text as tanggal_rilis, k.rilis, k.keterangan, k.satker_id,
+                k.id, k.judul, coalesce(k.kategori, 'MENONJOL') as kategori,
+                k.skala_viral, k.tanggal_rilis::text as tanggal_rilis, k.rilis, k.keterangan, k.satker_id,
                 coalesce(k.is_pinned, false) as is_pinned,
                 k.pinned_at,
+                coalesce(k.lampiran, '[]'::jsonb) as lampiran,
                 (${this.effectiveDateExpr()})::text as effective_date,
                 ${this.satkerDepthExpr()} as satker_depth,
                 coalesce(
@@ -177,7 +209,14 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
                 ) as satker_nama,
                 k.created_by, k.updated_by, k.created_at, k.updated_at,
                 (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) as jumlah_lp,
+                (select count(distinct s.satker_nama)::int from bdb_kasus_menonjol_lp l
+                    join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_menonjol_id = k.id) as jumlah_satker,
                 (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id) as jumlah_lampiran,
+                (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as jumlah_lampiran_sprin,
+                (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') <> 'SPRIN') as jumlah_lampiran_dokumentasi,
+                (select a.nomor_sprin from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1) as latest_nomor_sprin,
+                (select a.tanggal_sprin::text from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1) as latest_tanggal_sprin,
+                (select max(coalesce(a.revisi_ke,1))::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as latest_revisi_sprin,
                 (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_menonjol_lp l
                     join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_menonjol_id = k.id) as satker_terkait,
                 (select lp0.no_laporan from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
@@ -189,6 +228,10 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     }
     async list(userId, query = {}) {
         await this.ensureTables();
+        const kat = String(query?.kategori || '').trim().toUpperCase();
+        if (kat === 'ATENSI') {
+            return this.listAtensiViaKategori(userId, query);
+        }
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
         const page = Math.max(1, Number(query.page || 1));
         const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
@@ -225,6 +268,25 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
                       and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p})
                 )
             )`);
+        }
+        const satker = this.toText(query.satker || query.satker_nama);
+        if (satker && !['all', 'semua'].includes(satker.toLowerCase())) {
+            params.push(`%${satker.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(
+                exists (select 1 from bdb_satker s_f where s_f.id = k.satker_id and (lower(coalesce(s_f.nama_singkat,'')) like $${p} or lower(coalesce(s_f.deskripsi,'')) like $${p}))
+                or exists (select 1 from bdb_kasus_menonjol_lp l_f join bdb_laporan_polisi lp_f on lp_f.id = l_f.lp_id where l_f.kasus_menonjol_id = k.id and lower(coalesce(lp_f.satker_nama,'')) like $${p})
+            )`);
+        }
+        const fromDate = this.toDate(query.from || query.tgl_mulai || query.start_date);
+        if (fromDate) {
+            params.push(fromDate);
+            where.push(`(${this.effectiveDateExpr()}) >= $${params.length}::date`);
+        }
+        const toDate = this.toDate(query.to || query.tgl_selesai || query.end_date);
+        if (toDate) {
+            params.push(toDate);
+            where.push(`(${this.effectiveDateExpr()}) <= $${params.length}::date`);
         }
         const summaryWhereSql = where.join(' and ');
         const summaryParams = [...params];
@@ -292,24 +354,142 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         };
         return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
     }
+    /** Fallback ketika /bdb/kasus-menonjol?kategori=ATENSI dipanggil langsung. */
+    async listAtensiViaKategori(userId, query = {}) {
+        const page = Math.max(1, Number(query.page || 1));
+        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
+        const offset = (page - 1) * limit;
+        const params = [];
+        const where = ['k.deleted_at is null'];
+        const search = this.toText(query.search);
+        if (search) {
+            params.push(`%${search.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(lower(coalesce(k.judul,'')) like $${p} or lower(coalesce(k.keterangan,'')) like $${p})`);
+        }
+        const whereSql = where.join(' and ');
+        const [totalRow, rows] = await Promise.all([
+            this.dataSource.query(`select count(*)::int as total from bdb_kasus_atensi k where ${whereSql}`, params),
+            this.dataSource.query(`select
+                    k.id, k.judul, 'ATENSI'::text as kategori,
+                    k.sumber_atensi, k.level_atensi, k.tanggal_atensi::text as tanggal_atensi, k.status_atensi, k.keterangan, k.satker_id,
+                    coalesce(k.is_pinned, false) as is_pinned, k.pinned_at,
+                    coalesce(k.lampiran, '[]'::jsonb) as lampiran,
+                    coalesce(k.tanggal_atensi, (k.created_at at time zone 'Asia/Jakarta')::date)::text as effective_date,
+                    coalesce(
+                        (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
+                        (select lp0.satker_nama from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1)
+                    ) as satker_nama,
+                    k.created_by, k.updated_by, k.created_at, k.updated_at,
+                    (select count(*)::int from bdb_kasus_atensi_lp l where l.kasus_atensi_id = k.id) as jumlah_lp,
+                    (select count(distinct s.satker_nama)::int from bdb_kasus_atensi_lp l join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_atensi_id = k.id) as jumlah_satker,
+                    (select count(*)::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id) as jumlah_lampiran,
+                    (select count(*)::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as jumlah_lampiran_sprin,
+                    (select count(*)::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') <> 'SPRIN') as jumlah_lampiran_dokumentasi,
+                    (select a.nomor_sprin from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1) as latest_nomor_sprin,
+                    (select a.tanggal_sprin::text from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN' order by coalesce(a.revisi_ke,0) desc, a.id desc limit 1) as latest_tanggal_sprin,
+                    (select max(coalesce(a.revisi_ke,1))::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id and coalesce(a.kategori_lampiran,'DOKUMENTASI') = 'SPRIN') as latest_revisi_sprin,
+                    (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_atensi_lp l join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_atensi_id = k.id) as satker_terkait,
+                    (select lp0.no_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_no_laporan,
+                    (select lp0.tgl_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_tgl_laporan
+                 from bdb_kasus_atensi k
+                 where ${whereSql}
+                 order by coalesce(k.is_pinned, false) desc, k.pinned_at desc nulls last, k.created_at desc, k.id desc
+                 limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset])
+        ]);
+        const total = Number(totalRow?.[0]?.total || 0);
+        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
+    }
     async findOne(id, userId) {
         await this.ensureTables();
-        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        await (0, scope_util_1.resolveScope)(this.dataSource, userId);
         const rows = await this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1 and k.deleted_at is null`, [id]);
         const row = rows[0];
         if (!row)
             throw new common_1.NotFoundException('Kasus menonjol tidak ditemukan.');
         return row;
     }
+    async enrichLpRowsWithDocs(rows) {
+        if (!rows.length)
+            return rows;
+        const lpIds = rows.map((r) => Number(r.lp_id || r.id)).filter((n) => Number.isFinite(n) && n > 0);
+        for (const r of rows) {
+            const lid = Number(r.lp_id || r.id);
+            r.id = lid;
+            r.lp_id = lid;
+            r.pid = (0, id_cipher_util_1.encodeId)(lid);
+            r.dokumen_list = [];
+        }
+        if (!lpIds.length)
+            return rows;
+        try {
+            const docRows = await this.dataSource.query(`select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen::text as tanggal_dokumen, d.lampiran,
+                        t.code as type_code, t.nama as type_nama, t.urutan_tahap
+                 from bdb_dokumen d
+                 join bdb_document_type_master t on t.id = d.document_type_id
+                 where d.lp_id = any($1)
+                 order by t.urutan_tahap asc nulls last, d.tanggal_dokumen asc nulls last, d.id asc`, [lpIds]);
+            const docMap = new Map();
+            for (const d of docRows) {
+                const lid = Number(d.lp_id);
+                const rawLampiran = Array.isArray(d.lampiran) ? d.lampiran : [];
+                const lampiran = [];
+                for (const att of rawLampiran) {
+                    let url = att?.url || null;
+                    if (!url && att?.key) {
+                        try {
+                            url = await this.minio.presignedUrl(att.key, 3600);
+                        }
+                        catch {
+                            url = null;
+                        }
+                    }
+                    lampiran.push({
+                        name: att?.name || att?.file_name || 'Dokumen.pdf',
+                        key: att?.key || null,
+                        size: att?.size || null,
+                        mime: att?.mime || att?.content_type || 'application/pdf',
+                        url
+                    });
+                }
+                if (!docMap.has(lid))
+                    docMap.set(lid, []);
+                docMap.get(lid).push({
+                    id: Number(d.id),
+                    type_code: d.type_code,
+                    type_nama: d.type_nama,
+                    nomor_dokumen: d.nomor_dokumen || null,
+                    tanggal_dokumen: d.tanggal_dokumen || null,
+                    lampiran
+                });
+            }
+            for (const r of rows) {
+                r.dokumen_list = docMap.get(Number(r.lp_id)) || [];
+            }
+        }
+        catch {
+            /* ignore doc enrichment error */
+        }
+        return rows;
+    }
     async listLp(kasusId, userId) {
         await this.findOne(kasusId, userId); // scope-check
-        return this.dataSource.query(`select lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan,
-                    coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama
+        const rows = await this.dataSource.query(`select lp.id, lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan, lp.tingkat_kesulitan,
+                    coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama,
+                    coalesce(sm.kategori,'CT') as status_kategori,
+                    coalesce(
+                        nullif((select string_agg(distinct coalesce(nullif(tp_m.nomor_pasal,'') || coalesce(' (' || nullif(tp_m.nama_kategori,'') || ')', ''), tp_m.nama_kategori), '; ') from bdb_lp_tindak_pidana tp_m where tp_m.lp_id = lp.id), ''),
+                        (select string_agg(x.txt, '; ') from (
+                            select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'pasal',''), '(tanpa kategori)') as txt
+                            from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                        ) x)
+                    ) as kejahatan
              from bdb_kasus_menonjol_lp l
              join bdb_laporan_polisi lp on lp.id = l.lp_id
              left join bdb_status_master sm on sm.id = lp.status_id
              where l.kasus_menonjol_id = $1
              order by l.id`, [kasusId]);
+        return this.enrichLpRowsWithDocs(rows);
     }
     async replaceLpLinks(kasusId, lpIds) {
         await this.dataSource.query(`delete from bdb_kasus_menonjol_lp where kasus_menonjol_id = $1`, [kasusId]);
@@ -338,6 +518,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const isPinned = this.toBoolean(dto.is_pinned);
         const payload = {
             judul,
+            kategori: String(dto.kategori || 'MENONJOL').trim().toUpperCase() === 'ATENSI' ? 'ATENSI' : 'MENONJOL',
             skala_viral: this.toSkala(dto.skala_viral),
             tanggal_rilis: tanggalRilis,
             rilis,
@@ -431,45 +612,165 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         await this.dataSource.query('update bdb_kasus_menonjol set deleted_at = now() where id = $1', [id]);
         return { status: 1, message: 'Kasus menonjol dihapus.' };
     }
-    // ===== Lampiran (MinIO) =====
-    async addAttachments(kasusId, userId, files) {
+    // ===== Lampiran (MinIO) — mendukung pemisahan SPRIN (multi-revisi) vs DOKUMENTASI =====
+    async syncLampiranJsonb(kasusId) {
+        try {
+            const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at,
+                        coalesce(kategori_lampiran, 'DOKUMENTASI') as kategori_lampiran,
+                        revisi_ke, nomor_sprin, tanggal_sprin::text as tanggal_sprin,
+                        catatan_perubahan, judul_dokumentasi, uploaded_by
+                 from bdb_kasus_menonjol_attachments
+                 where kasus_menonjol_id = $1
+                 order by id asc`, [kasusId]);
+            const jsonArr = rows.map((r) => ({
+                id: Number(r.id),
+                file_name: r.file_name,
+                filename: r.file_name,
+                object_key: r.object_key,
+                content_type: r.content_type,
+                size: r.size ? Number(r.size) : null,
+                kategori_lampiran: r.kategori_lampiran || 'DOKUMENTASI',
+                revisi_ke: r.revisi_ke ? Number(r.revisi_ke) : null,
+                nomor_sprin: r.nomor_sprin || null,
+                tanggal_sprin: r.tanggal_sprin || null,
+                catatan_perubahan: r.catatan_perubahan || null,
+                judul_dokumentasi: r.judul_dokumentasi || null,
+                uploaded_by: r.uploaded_by ? Number(r.uploaded_by) : null,
+                uploaded_at: r.created_at
+            }));
+            await this.dataSource.query(`update bdb_kasus_menonjol set lampiran = $2::jsonb where id = $1`, [kasusId, JSON.stringify(jsonArr)]);
+        }
+        catch {
+            /* ignore sync error */
+        }
+    }
+    async addAttachments(kasusId, userId, files, meta = {}) {
         await this.findOne(kasusId, userId); // scope-check
-        if (!files?.length)
+        const kategoriLampiran = String(meta?.kategori_lampiran || meta?.kategori || 'DOKUMENTASI').trim().toUpperCase() === 'SPRIN' ? 'SPRIN' : 'DOKUMENTASI';
+        const nomorSprin = this.toText(meta?.nomor_sprin);
+        const tanggalSprin = this.toDate(meta?.tanggal_sprin);
+        const catatanPerubahan = this.toText(meta?.catatan_perubahan || meta?.catatan);
+        const judulDokumentasi = this.toText(meta?.judul_dokumentasi || meta?.keterangan || meta?.judul);
+        let nextRev = null;
+        if (kategoriLampiran === 'SPRIN') {
+            if (meta?.revisi_ke && Number(meta.revisi_ke) > 0) {
+                nextRev = Number(meta.revisi_ke);
+            }
+            else {
+                const revRow = await this.dataSource.query(`select coalesce(max(revisi_ke), count(*))::int as max_rev
+                     from bdb_kasus_menonjol_attachments
+                     where kasus_menonjol_id = $1 and coalesce(kategori_lampiran, 'DOKUMENTASI') = 'SPRIN'`, [kasusId]);
+                nextRev = Number(revRow?.[0]?.max_rev || 0) + 1;
+            }
+        }
+        if (!files?.length) {
+            if (kategoriLampiran === 'SPRIN' && (nomorSprin || catatanPerubahan)) {
+                await this.dataSource.query(`insert into bdb_kasus_menonjol_attachments
+                        (kasus_menonjol_id, file_name, object_key, content_type, size, kategori_lampiran, revisi_ke, nomor_sprin, tanggal_sprin, catatan_perubahan, judul_dokumentasi, uploaded_by)
+                     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, [
+                    kasusId,
+                    nomorSprin ? `Sprin_${nomorSprin.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf` : `Sprin_Revisi_${nextRev || 1}.pdf`,
+                    '',
+                    'application/pdf',
+                    null,
+                    'SPRIN',
+                    nextRev,
+                    nomorSprin,
+                    tanggalSprin,
+                    catatanPerubahan,
+                    judulDokumentasi,
+                    userId ?? null
+                ]);
+                await this.syncLampiranJsonb(kasusId);
+            }
             return this.listAttachments(kasusId, userId);
+        }
+        let idx = 0;
         for (const f of files) {
             const key = await this.minio.upload(f, 'kasus-menonjol');
-            await this.dataSource.query(`insert into bdb_kasus_menonjol_attachments (kasus_menonjol_id, file_name, object_key, content_type, size) values ($1,$2,$3,$4,$5)`, [kasusId, f.originalname, key, f.mimetype || null, f.size || null]);
+            const revVal = kategoriLampiran === 'SPRIN' ? (nextRev !== null ? nextRev + idx : idx + 1) : null;
+            await this.dataSource.query(`insert into bdb_kasus_menonjol_attachments
+                    (kasus_menonjol_id, file_name, object_key, content_type, size, kategori_lampiran, revisi_ke, nomor_sprin, tanggal_sprin, catatan_perubahan, judul_dokumentasi, uploaded_by)
+                 values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`, [
+                kasusId,
+                f.originalname,
+                key,
+                f.mimetype || null,
+                f.size || null,
+                kategoriLampiran,
+                revVal,
+                nomorSprin,
+                tanggalSprin,
+                catatanPerubahan,
+                judulDokumentasi,
+                userId ?? null
+            ]);
+            idx++;
         }
+        await this.syncLampiranJsonb(kasusId);
         return this.listAttachments(kasusId, userId);
     }
     async listAttachments(kasusId, userId) {
         await this.findOne(kasusId, userId); // scope-check
-        const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at from bdb_kasus_menonjol_attachments where kasus_menonjol_id = $1 order by id desc`, [kasusId]);
+        const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at,
+                    coalesce(kategori_lampiran, 'DOKUMENTASI') as kategori_lampiran,
+                    revisi_ke, nomor_sprin, tanggal_sprin::text as tanggal_sprin,
+                    catatan_perubahan, judul_dokumentasi, uploaded_by
+             from bdb_kasus_menonjol_attachments
+             where kasus_menonjol_id = $1
+             order by case when coalesce(kategori_lampiran,'DOKUMENTASI')='SPRIN' then coalesce(revisi_ke,0) else 0 end desc, id desc`, [kasusId]);
         const data = [];
         for (const r of rows) {
             let url = null;
-            try {
-                url = await this.minio.presignedUrl(r.object_key, 3600);
+            if (r.object_key) {
+                try {
+                    url = await this.minio.presignedUrl(r.object_key, 3600);
+                }
+                catch {
+                    url = null;
+                }
             }
-            catch {
-                url = null;
-            }
-            data.push({ id: r.id, file_name: r.file_name, content_type: r.content_type, size: r.size, created_at: r.created_at, url });
+            data.push({
+                id: r.id,
+                file_name: r.file_name,
+                filename: r.file_name,
+                content_type: r.content_type,
+                size: r.size,
+                created_at: r.created_at,
+                uploaded_at: r.created_at,
+                kategori_lampiran: r.kategori_lampiran || 'DOKUMENTASI',
+                revisi_ke: r.revisi_ke ? Number(r.revisi_ke) : null,
+                nomor_sprin: r.nomor_sprin || null,
+                tanggal_sprin: r.tanggal_sprin || null,
+                catatan_perubahan: r.catatan_perubahan || null,
+                judul_dokumentasi: r.judul_dokumentasi || null,
+                uploaded_by: r.uploaded_by ? Number(r.uploaded_by) : null,
+                url
+            });
         }
-        return { status: 1, data };
+        return {
+            status: 1,
+            data,
+            sprin: data.filter((x) => x.kategori_lampiran === 'SPRIN'),
+            dokumentasi: data.filter((x) => x.kategori_lampiran !== 'SPRIN')
+        };
     }
     async removeAttachment(attId, userId) {
         const rows = await this.dataSource.query(`select kasus_menonjol_id, object_key from bdb_kasus_menonjol_attachments where id = $1`, [attId]);
         if (!rows.length)
             throw new common_1.NotFoundException('Lampiran tidak ditemukan.');
-        await this.findOne(Number(rows[0].kasus_menonjol_id), userId); // scope-check
-        try {
-            await this.minio.remove(rows[0].object_key);
-        }
-        catch {
-            /* biarkan hapus metadata walau objek gagal dihapus */
+        const kasusId = Number(rows[0].kasus_menonjol_id);
+        await this.findOne(kasusId, userId); // scope-check
+        if (rows[0].object_key) {
+            try {
+                await this.minio.remove(rows[0].object_key);
+            }
+            catch {
+                /* biarkan hapus metadata walau objek gagal dihapus */
+            }
         }
         await this.dataSource.query(`delete from bdb_kasus_menonjol_attachments where id = $1`, [attId]);
+        await this.syncLampiranJsonb(kasusId);
         return { status: 1, message: 'Lampiran dihapus.' };
     }
 };
