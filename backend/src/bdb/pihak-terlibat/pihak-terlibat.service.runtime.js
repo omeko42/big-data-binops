@@ -29,7 +29,25 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
     summaryCache = new Map();
     rankingCache = new Map();
     recentGlobalCache = new Map();
+    lpByNikCache = new Map();
     rankingCacheTtlMs = 2 * 60 * 1000;
+    extractCorpTrigramWords(corpTerm) {
+        const core = String(corpTerm || '')
+            .replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM|FIRMA|PD)[.]?\s+/i, '')
+            .replace(/\b(TBK|PERSERO)\b/gi, ' ')
+            .trim();
+        const words = core
+            .split(/[^A-Za-z0-9]+/)
+            .map(w => w.trim().toUpperCase())
+            .filter(w => w.length >= 3);
+        if (words.length > 0)
+            return words.slice(0, 3);
+        return String(corpTerm || '')
+            .split(/[^A-Za-z0-9]+/)
+            .map(w => w.trim().toUpperCase())
+            .filter(w => w.length >= 3)
+            .slice(0, 2);
+    }
     async onApplicationBootstrap() {
         if (!(0, cluster_instance_util_1.isPrimaryClusterInstance)())
             return;
@@ -231,9 +249,6 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         if (isDpoQuery && (source === 'DORS' || source === 'MANUAL')) {
             return { params, where: ['1=0'], skip: true };
         }
-        if (includeFacetFilters && keterlibatan === 'TERSANGKA' && source === 'DORS') {
-            return { params, where: ['1=0'], skip: true };
-        }
         const search = this.toText(query.search);
         if (search) {
             let cleanSearch = search.trim();
@@ -252,21 +267,21 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 const pExact = params.length;
                 params.push(`%${cleanSearch.toLowerCase()}%`);
                 const pLike = params.length;
-                where.push(`(${partyAlias}.nik = $${pExact} or ${partyAlias}.nik ilike $${pLike})`);
+                where.push(`(${partyAlias}.nik = $${pExact} or lower(coalesce(${partyAlias}.nik,'')) like $${pLike})`);
             }
             else if (isLpNo) {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
                 params.push(wildcardPattern);
                 const p = params.length;
-                where.push(`lp.no_laporan ilike $${p}`);
+                where.push(`lower(coalesce(lp.no_laporan,'')) like $${p}`);
             }
             else {
                 const words = cleanSearch.split(/\s+/).filter(Boolean);
                 const wildcardPattern = '%' + words.join('%').toLowerCase() + '%';
                 params.push(wildcardPattern);
                 const p = params.length;
-                where.push(`${partyAlias}.nama ilike $${p}`);
+                where.push(`lower(coalesce(${partyAlias}.nama,'')) like $${p}`);
             }
         }
         const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -450,219 +465,17 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         return target;
     }
     async refreshAllTimeSnapshot() {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
-            this.logger.log('Refreshing All-Time Ranking Snapshot with full roles and kasta ordering...');
-            const categories = ['ALL', 'TERSANGKA', 'TERLAPOR', 'PELAPOR', 'SAKSI', 'KORBAN', 'DPO'];
-            for (const cat of categories) {
-                await this.dataSource.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 0 AND kategori_filter = '${cat}';`);
-                let roleFilter = '';
-                if (cat === 'TERLAPOR')
-                    roleFilter = "AND keterlibatan = 'TERLAPOR'";
-                else if (cat === 'PELAPOR')
-                    roleFilter = "AND keterlibatan = 'PELAPOR'";
-                else if (cat === 'SAKSI')
-                    roleFilter = "AND keterlibatan = 'SAKSI'";
-                else if (cat === 'KORBAN')
-                    roleFilter = "AND keterlibatan = 'KORBAN'";
-                else if (cat === 'DPO')
-                    roleFilter = "AND keterlibatan = 'DPO'";
-                else if (cat === 'TERSANGKA')
-                    roleFilter = "AND keterlibatan = 'TERSANGKA'";
-                const lim = (cat === 'ALL') ? 100 : 50;
-                await this.dataSource.query(`
-                    INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
-                        tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
-                        satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
-                        count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                        jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                        tipe_subjek, tipe_identitas
-                    )
-                    WITH raw_dors AS (
-                        SELECT 
-                            lp.id as lp_id,
-                            coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
-                            case 
-                                when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
-                                when d.id_polda is not null then d.id_polda
-                                else '060.01.00'
-                            end as wilayah_kode,
-                            upper(trim(t.nama)) as nama,
-                            trim(t.nik) as nik,
-                            upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
-                            d.synced_at as seen_at,
-                            CASE 
-                                WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
-                                WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
-                                WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
-                                ELSE 4
-                            END as satker_tier,
-                            coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
-                            (upper(coalesce(t.status_korban,'')) = 'MD' OR upper(coalesce(t.keterlibatan,'')) LIKE '%MD%' OR upper(coalesce(t.keterlibatan,'')) LIKE '%MENINGGAL%') as is_md,
-                            case 
-                                when t.tgl_lahir ~ '^[0-9]{2}-[0-9]{2}-[12][0-9]{3}$' then 2026 - substring(t.tgl_lahir from 7 for 4)::int
-                                when t.nik ~ '^[1-9][0-9]{15}$' and substring(t.nik from 11 for 2)::int <= 26 then 2026 - (2000 + substring(t.nik from 11 for 2)::int)
-                                when t.nik ~ '^[1-9][0-9]{15}$' and substring(t.nik from 11 for 2)::int > 26 then 2026 - (1900 + substring(t.nik from 11 for 2)::int)
-                                else null
-                            end as umur
-                        FROM bdb_laporan_polisi lp
-                        JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
-                        JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
-                        LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
-                        WHERE lp.deleted_at IS NULL
-                          AND t.nik IS NOT NULL AND trim(t.nik) ~ '^[1-9][0-9]{15}$'
-                          AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
-                          AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
-                          AND NOT (
-                              upper(coalesce(t.keterlibatan, '')) IN ('PELAPOR', 'SAKSI')
-                              AND (
-                                  lp.model_lp = 'lp_model_a' 
-                                  OR d.model_lp = 'lp_model_a' 
-                                  OR t.model_lp = 'lp_model_a'
-                                  OR upper(coalesce(t.pekerjaan, '')) LIKE '%POLRI%'
-                                  OR upper(coalesce(t.pekerjaan, '')) LIKE '%POLISI%'
-                                  OR upper(coalesce(t.pekerjaan, '')) LIKE '%KEPOLISIAN%'
-                              )
-                          )
-                    ),
-                    raw_tsk AS (
-                        SELECT 
-                            d.lp_id,
-                            coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
-                            case 
-                                when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
-                                else '060.01.00'
-                            end as wilayah_kode,
-                            upper(trim(item->>'nama')) as nama,
-                            trim(item->>'nik') as nik,
-                            'TERSANGKA'::text as keterlibatan,
-                            d.created_at as seen_at,
-                            CASE 
-                                WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
-                                WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
-                                WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
-                                ELSE 4
-                            END as satker_tier,
-                            coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
-                            false as is_md,
-                            case 
-                                when item->>'tgl_lahir' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then 2026 - substring(item->>'tgl_lahir' from 1 for 4)::int
-                                when item->>'tgl_lahir' ~ '^[0-9]{2}-[0-9]{2}-[12][0-9]{3}$' then 2026 - substring(item->>'tgl_lahir' from 7 for 4)::int
-                                when trim(item->>'nik') ~ '^[1-9][0-9]{15}$' and substring(trim(item->>'nik') from 11 for 2)::int <= 26 then 2026 - (2000 + substring(trim(item->>'nik') from 11 for 2)::int)
-                                when trim(item->>'nik') ~ '^[1-9][0-9]{15}$' and substring(trim(item->>'nik') from 11 for 2)::int > 26 then 2026 - (1900 + substring(trim(item->>'nik') from 11 for 2)::int)
-                                else null
-                            end as umur
-                        FROM bdb_dokumen d
-                        JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
-                        LEFT JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id
-                        LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
-                        CROSS JOIN LATERAL jsonb_array_elements(
-                            CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
-                        ) party(item)
-                        WHERE item->>'nama' IS NOT NULL 
-                          AND length(trim(item->>'nama')) > 2
-                          AND trim(item->>'nik') ~ '^[1-9][0-9]{15}$'
-                          AND upper(trim(item->>'nama')) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
-                    ),
-                    unioned AS (
-                        SELECT * FROM raw_dors
-                        UNION ALL
-                        SELECT * FROM raw_tsk
-                    ),
-                    filtered AS (
-                        SELECT * FROM unioned
-                        WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
-                    ),
-                    person_agg AS (
-                        SELECT 
-                            nik,
-                            max(nama) as nama,
-                            count(distinct lp_id)::int as total_lp,
-                            count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)::int as count_tersangka,
-                            count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
-                            count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
-                            count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
-                            count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
-                            count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
-                            count(distinct satker_id)::int as jumlah_satker_unik,
-                            count(distinct wilayah_kode)::int as jumlah_polda_unik,
-                            min(satker_tier)::int as satker_tier,
-                            (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
-                            (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
-                            string_agg(distinct satker_nama, ', ') as daftar_satker,
-                            max(seen_at) as last_seen,
-                            (
-                                (case 
-                                    when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
-                                        then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
-                                    when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
-                                        then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
-                                    when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
-                                        then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
-                                    when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
-                                        then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
-                                    when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
-                                        then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
-                                    when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
-                                        then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
-                                    else 0 
-                                end)
-                                + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
-                                + (count(distinct satker_id) * 300)
-                                + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
-                                + (count(distinct lp_id) * 50)
-                            )::int as nasional_score
-                        FROM filtered
-                        WHERE 1=1 ${roleFilter}
-                        GROUP BY nik
-                        HAVING count(distinct lp_id) > 1
-                    )
-                    SELECT 
-                        0 as tahun,
-                        NULL::int as bulan,
-                        NULL::bigint as satker_id,
-                        '${cat}' as keterlibatan,
-                        '${cat}' as kategori_filter,
-                        nama, nik, total_lp,
-                        satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
-                        count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                        jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                        'PERORANGAN' as tipe_subjek,
-                        'NIK' as tipe_identitas
-                    FROM person_agg
-                    ORDER BY 
-                        (CASE 
-                            WHEN '${cat}' = 'ALL' THEN (
-                                CASE 
-                                    WHEN count_dpo > 0 THEN 1
-                                    WHEN count_tersangka > 0 THEN 2
-                                    WHEN count_terlapor > 0 THEN 3
-                                    WHEN count_saksi > 0 THEN 4
-                                    WHEN count_korban > 0 THEN 5
-                                    WHEN count_pelapor > 0 THEN 6
-                                    ELSE 7
-                                END
-                            )
-                            ELSE 1
-                        END) ASC,
-                        (CASE 
-                            WHEN '${cat}' = 'TERSANGKA' THEN count_tersangka
-                            WHEN '${cat}' = 'TERLAPOR' THEN count_terlapor
-                            WHEN '${cat}' = 'PELAPOR' THEN count_pelapor
-                            WHEN '${cat}' = 'SAKSI' THEN count_saksi
-                            WHEN '${cat}' = 'KORBAN' THEN count_korban
-                            WHEN '${cat}' = 'DPO' THEN count_dpo
-                            ELSE 0
-                        END) DESC,
-                        satker_tier ASC,
-                        jumlah_satker_unik DESC,
-                        total_lp DESC,
-                        last_seen DESC
-                    LIMIT ${lim};
-                `);
-            }
-            await this.dataSource.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 0 AND tipe_subjek = 'KORPORASI';`);
-            await this.dataSource.query(`
-                WITH raw_corp AS (
+            this.logger.log('Refreshing Full All-Time Ranking Snapshot (tahun = 0) across all years and sources...');
+            const curYear = new Date().getFullYear();
+            const limAll = 5000;
+            const limRole = 2000;
+            await queryRunner.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 0;`);
+            await queryRunner.query(`
+                WITH raw_dors AS (
                     SELECT 
                         lp.id as lp_id,
                         coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
@@ -671,33 +484,161 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             when d.id_polda is not null then d.id_polda
                             else '060.01.00'
                         end as wilayah_kode,
-                        regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1 '), '\\s+', ' ', 'g') as norm_nama,
-                        'KORP:' || rtrim(regexp_replace(regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1_'), '[^A-Z0-9]+', '_', 'g'), '_+', '_', 'g'), '_') as synth_nik,
+                        upper(trim(t.nama)) as nama,
+                        trim(t.nik) as nik,
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
-                        d.synced_at as seen_at,
+                        GREATEST(
+                            coalesce(d.synced_at, lp.synced_at),
+                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                        ) as seen_at,
                         CASE 
                             WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
                             WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
                             WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
                             ELSE 4
                         END as satker_tier,
-                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                        (upper(coalesce(t.status_korban,'')) = 'MD' OR upper(coalesce(t.keterlibatan,'')) LIKE '%MD%' OR upper(coalesce(t.keterlibatan,'')) LIKE '%MENINGGAL%') as is_md,
+                        case 
+                            when t.tgl_lahir ~ '^[0-9]{2}-[0-9]{2}-[12][0-9]{3}$' then ${curYear} - substring(t.tgl_lahir from 7 for 4)::int
+                            when t.tgl_lahir ~ '^[12][0-9]{3}-[0-9]{2}-[0-9]{2}$' then ${curYear} - substring(t.tgl_lahir from 1 for 4)::int
+                            when trim(t.nik) ~ '^[1-9][0-9]{15}$' and substring(trim(t.nik) from 11 for 2)::int <= 26 then ${curYear} - (2000 + substring(trim(t.nik) from 11 for 2)::int)
+                            when trim(t.nik) ~ '^[1-9][0-9]{15}$' and substring(trim(t.nik) from 11 for 2)::int > 26 then ${curYear} - (1900 + substring(trim(t.nik) from 11 for 2)::int)
+                            else null
+                        end as umur
                     FROM bdb_laporan_polisi lp
                     JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
-                      AND (
-                        upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
-                        OR upper(coalesce(t.jenis_identitas,'')) = 'BADAN HUKUM'
-                      )
-                      AND length(trim(t.nama)) > 2
+                      AND t.nik IS NOT NULL AND trim(t.nik) ~ '^[1-9][0-9]{15}$'
+                      AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
                       AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
+                      AND NOT (
+                          upper(coalesce(t.keterlibatan, '')) IN ('PELAPOR', 'SAKSI')
+                          AND (
+                              lp.model_lp = 'lp_model_a' 
+                              OR d.model_lp = 'lp_model_a' 
+                              OR t.model_lp = 'lp_model_a'
+                              OR upper(coalesce(lp.no_laporan, '')) LIKE '%/A/%'
+                              OR upper(coalesce(t.pekerjaan, '')) LIKE '%POLRI%'
+                              OR upper(coalesce(t.pekerjaan, '')) LIKE '%POLISI%'
+                              OR upper(coalesce(t.pekerjaan, '')) LIKE '%KEPOLISIAN%'
+                              OR upper(coalesce(t.jenis_identitas, '')) LIKE '%NRP%'
+                          )
+                      )
                 ),
-                corp_agg AS (
+                raw_tsk AS (
                     SELECT 
-                        synth_nik as nik,
-                        max(norm_nama) as nama,
+                        d.lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(item->>'nama')) as nama,
+                        trim(item->>'nik') as nik,
+                        'TERSANGKA'::text as keterlibatan,
+                        d.created_at as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                        false as is_md,
+                        case 
+                            when item->>'tgl_lahir' ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then ${curYear} - substring(item->>'tgl_lahir' from 1 for 4)::int
+                            when item->>'tgl_lahir' ~ '^[0-9]{2}-[0-9]{2}-[12][0-9]{3}$' then ${curYear} - substring(item->>'tgl_lahir' from 7 for 4)::int
+                            when trim(item->>'nik') ~ '^[1-9][0-9]{15}$' and substring(trim(item->>'nik') from 11 for 2)::int <= 26 then ${curYear} - (2000 + substring(trim(item->>'nik') from 11 for 2)::int)
+                            when trim(item->>'nik') ~ '^[1-9][0-9]{15}$' and substring(trim(item->>'nik') from 11 for 2)::int > 26 then ${curYear} - (1900 + substring(trim(item->>'nik') from 11 for 2)::int)
+                            else null
+                        end as umur
+                    FROM bdb_dokumen d
+                    JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
+                    LEFT JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    CROSS JOIN LATERAL jsonb_array_elements(
+                        CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                    ) party(item)
+                    WHERE item->>'nama' IS NOT NULL 
+                      AND length(trim(item->>'nama')) > 2
+                      AND trim(item->>'nik') ~ '^[1-9][0-9]{15}$'
+                      AND upper(trim(item->>'nama')) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
+                ),
+                raw_manual AS (
+                    SELECT 
+                        m.lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(m.nama)) as nama,
+                        trim(m.nik) as nik,
+                        upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as keterlibatan,
+                        coalesce(m.updated_at, m.created_at) as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
+                        false as is_md,
+                        null::int as umur
+                    FROM bdb_lp_pihak_manual m
+                    JOIN bdb_laporan_polisi lp ON lp.id = m.lp_id AND lp.deleted_at IS NULL
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    WHERE m.deleted_at IS NULL
+                      AND m.nik IS NOT NULL AND trim(m.nik) ~ '^[1-9][0-9]{15}$'
+                      AND m.nama IS NOT NULL AND length(trim(m.nama)) > 2
+                ),
+                raw_dpo AS (
+                    SELECT 
+                        coalesce(dp.lp_id, -dp.id) as lp_id,
+                        dp.satker_id as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(dp.nama_dpo)) as nama,
+                        trim(dp.nomor_identitas) as nik,
+                        'DPO'::text as keterlibatan,
+                        coalesce(dp.updated_at, dp.created_at) as seen_at,
+                        CASE 
+                            WHEN dp.satker_id = 13 OR upper(coalesce(dp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%POLRESTA%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(dp.satker_nama),''), 'POLRI') as satker_nama,
+                        false as is_md,
+                        null::int as umur
+                    FROM bdb_dpo dp
+                    LEFT JOIN bdb_satker s ON s.id = dp.satker_id
+                    WHERE dp.status_dpo = 'AKTIF'
+                      AND dp.nomor_identitas IS NOT NULL AND trim(dp.nomor_identitas) ~ '^[1-9][0-9]{15}$'
+                      AND dp.nama_dpo IS NOT NULL AND length(trim(dp.nama_dpo)) > 2
+                ),
+                unioned AS (
+                    SELECT * FROM raw_dors
+                    UNION ALL
+                    SELECT * FROM raw_tsk
+                    UNION ALL
+                    SELECT * FROM raw_manual
+                    UNION ALL
+                    SELECT * FROM raw_dpo
+                ),
+                filtered AS (
+                    SELECT * FROM unioned
+                    WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
+                ),
+                person_agg AS (
+                    SELECT 
+                        nik,
+                        max(nama) as nama,
                         count(distinct lp_id)::int as total_lp,
                         count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)::int as count_tersangka,
                         count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
@@ -720,12 +661,203 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                     then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
                                 when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
                                     then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
-                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
-                                    then 500 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 10)
-                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
-                                    then 200 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
                                 when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
-                                    then 100 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 5)
+                                    then 500 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 10)
+                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                    then 200 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 5)
+                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                    then 100 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
+                                else 0 
+                            end)
+                            + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
+                            + (count(distinct satker_id) * 300)
+                            + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
+                            + (count(distinct lp_id) * 50)
+                        )::int as nasional_score
+                    FROM filtered
+                    GROUP BY nik
+                    HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
+                ),
+                multi_cat AS (
+                    SELECT p.*, 'ALL' as kategori_filter, 'ALL' as keterlibatan, ${limAll} as max_lim FROM person_agg p
+                    UNION ALL
+                    SELECT p.*, 'TERSANGKA' as kategori_filter, 'TERSANGKA' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_tersangka > 0
+                    UNION ALL
+                    SELECT p.*, 'TERLAPOR' as kategori_filter, 'TERLAPOR' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_terlapor > 0
+                    UNION ALL
+                    SELECT p.*, 'PELAPOR' as kategori_filter, 'PELAPOR' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_pelapor > 0
+                    UNION ALL
+                    SELECT p.*, 'SAKSI' as kategori_filter, 'SAKSI' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_saksi > 0
+                    UNION ALL
+                    SELECT p.*, 'KORBAN' as kategori_filter, 'KORBAN' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_korban > 0
+                    UNION ALL
+                    SELECT p.*, 'DPO' as kategori_filter, 'DPO' as keterlibatan, ${limRole} as max_lim FROM person_agg p WHERE count_dpo > 0
+                ),
+                ranked AS (
+                    SELECT *,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY kategori_filter
+                            ORDER BY 
+                                (CASE 
+                                    WHEN kategori_filter = 'ALL' THEN (
+                                        CASE 
+                                            WHEN count_dpo > 0 THEN 1
+                                            WHEN count_tersangka > 0 THEN 2
+                                            WHEN count_terlapor > 0 THEN 3
+                                            WHEN count_pelapor > 0 THEN 4
+                                            WHEN count_saksi > 0 THEN 5
+                                            WHEN count_korban > 0 THEN 6
+                                            ELSE 7
+                                        END
+                                    )
+                                    ELSE 1
+                                END) ASC,
+                                (CASE 
+                                    WHEN kategori_filter = 'TERSANGKA' THEN count_tersangka
+                                    WHEN kategori_filter = 'TERLAPOR' THEN count_terlapor
+                                    WHEN kategori_filter = 'PELAPOR' THEN count_pelapor
+                                    WHEN kategori_filter = 'SAKSI' THEN count_saksi
+                                    WHEN kategori_filter = 'KORBAN' THEN count_korban
+                                    WHEN kategori_filter = 'DPO' THEN count_dpo
+                                    ELSE 0
+                                END) DESC,
+                                total_lp DESC,
+                                satker_tier ASC,
+                                jumlah_satker_unik DESC,
+                                last_seen DESC
+                        ) as rn
+                    FROM multi_cat
+                )
+                INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                    tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                    satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    tipe_subjek, tipe_identitas
+                )
+                SELECT 
+                    0 as tahun,
+                    NULL::int as bulan,
+                    NULL::bigint as satker_id,
+                    keterlibatan,
+                    kategori_filter,
+                    nama, nik, total_lp,
+                    satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
+                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    'PERORANGAN' as tipe_subjek,
+                    'NIK' as tipe_identitas
+                FROM ranked
+                WHERE 1=1
+                ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
+            `);
+            await queryRunner.query(`
+                WITH lp_has_tsk AS (
+                    SELECT DISTINCT d.lp_id
+                    FROM bdb_dokumen d
+                    JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
+                    WHERE d.lp_id IS NOT NULL
+                    UNION
+                    SELECT DISTINCT m.lp_id
+                    FROM bdb_lp_pihak_manual m
+                    WHERE m.deleted_at IS NULL AND upper(m.keterlibatan) = 'TERSANGKA' AND m.lp_id IS NOT NULL
+                ),
+                raw_corp_base AS (
+                    SELECT 
+                        lp.id as lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            when d.id_polda is not null then d.id_polda
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        CASE
+                            WHEN upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
+                                THEN regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1 '), '\\s+', ' ', 'g')
+                            ELSE coalesce(
+                                nullif(trim(regexp_replace(
+                                    substring(
+                                        regexp_replace(upper(trim(t.nama)), '[(),/]', ' ', 'g')
+                                        from '((?:PT|CV|UD|KOPERASI|KSP|YAYASAN|BPR|PERUM)[. ]+[A-Z0-9 .&-]{3,})'
+                                    ),
+                                    '^(PT|CV|UD)[.]?\\s*', '\\1 '
+                                )), ''),
+                                regexp_replace(upper(trim(t.nama)), '\\s+', ' ', 'g')
+                            )
+                        END as norm_nama,
+                        upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
+                        (lht.lp_id IS NOT NULL) as has_tsk_doc,
+                        GREATEST(
+                            coalesce(d.synced_at, lp.synced_at),
+                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                        ) as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama
+                    FROM bdb_laporan_polisi lp
+                    JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
+                    JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    LEFT JOIN lp_has_tsk lht ON lht.lp_id = lp.id
+                    WHERE lp.deleted_at IS NULL
+                      AND (
+                        upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
+                        OR upper(coalesce(t.jenis_identitas,'')) = 'BADAN HUKUM'
+                        OR (
+                            upper(t.nama) ~ '(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)'
+                            AND upper(t.nama) ~ '(\\mPT[ .]|\\mCV[ .]|\\mUD[ .]|KOPERASI|KSP|YAYASAN|BPR|PERUM)'
+                        )
+                      )
+                      AND length(trim(t.nama)) > 2
+                      AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
+                ),
+                raw_corp AS (
+                    SELECT 
+                        lp_id, satker_id, wilayah_kode, norm_nama,
+                        'KORP:' || rtrim(regexp_replace(regexp_replace(regexp_replace(upper(trim(norm_nama)), '^(PT|CV|UD)[.]?\\s*', '\\1_'), '[^A-Z0-9]+', '_', 'g'), '_+', '_', 'g'), '_') as synth_nik,
+                        keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
+                    FROM raw_corp_base
+                ),
+                corp_agg AS (
+                    SELECT 
+                        synth_nik as nik,
+                        max(norm_nama) as nama,
+                        count(distinct lp_id)::int as total_lp,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
+                        END)::int as count_tersangka,
+                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
+                        count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
+                        count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
+                        count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
+                        count(distinct satker_id)::int as jumlah_satker_unik,
+                        count(distinct wilayah_kode)::int as jumlah_polda_unik,
+                        min(satker_tier)::int as satker_tier,
+                        (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
+                        (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
+                        string_agg(distinct satker_nama, ', ') as daftar_satker,
+                        max(seen_at) as last_seen,
+                        (
+                            (case 
+                                when count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0 
+                                    then 100000 + (count(distinct case when keterlibatan = 'DPO' then lp_id end) * 10000)
+                                when count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) > 0 
+                                    then 50000 + (count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end) * 5000)
+                                when count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) > 0 
+                                    then 20000 + (count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) * 2000)
+                                when count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) > 0 
+                                    then 500 + (count(distinct case when keterlibatan = 'PELAPOR' then lp_id end) * 10)
+                                when count(distinct case when keterlibatan = 'SAKSI' then lp_id end) > 0 
+                                    then 200 + (count(distinct case when keterlibatan = 'SAKSI' then lp_id end) * 5)
+                                when count(distinct case when keterlibatan = 'KORBAN' then lp_id end) > 0 
+                                    then 100 + (count(distinct case when keterlibatan = 'KORBAN' then lp_id end) * 5)
                                 else 0 
                             end)
                             + (case when count(distinct wilayah_kode) > 1 then 25000 + (count(distinct wilayah_kode) * 5000) else 0 end)
@@ -773,11 +905,267 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     'BADAN HUKUM' as tipe_identitas
                 FROM multi_corp
                 ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
+
+                UPDATE bdb_pihak_terlibat_ranking_snapshot
+                SET
+                    total_lp = GREATEST(total_lp, count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor),
+                    kasta = CASE
+                        WHEN kategori_filter != 'ALL' THEN kategori_filter
+                        WHEN count_dpo > 0 THEN 'DPO'
+                        WHEN count_tersangka > 0 THEN 'TERSANGKA'
+                        WHEN (coalesce(tipe_subjek, '') = 'KORPORASI' AND count_korban > count_terlapor * 2)
+                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
+                        WHEN count_terlapor > 0 THEN 'TERLAPOR'
+                        WHEN count_pelapor > 0 THEN 'PELAPOR'
+                        WHEN count_saksi > 0 THEN 'SAKSI'
+                        WHEN count_korban > 0 THEN 'KORBAN'
+                        ELSE 'PIHAK'
+                    END
+                WHERE tahun = 0;
+
+                WITH dir_from_dors AS (
+                    SELECT DISTINCT t.nik
+                    FROM bdb_dors_lp_terlibat t
+                    WHERE t.nik ~ '^[1-9][0-9]{15}$'
+                      AND (
+                          upper(coalesce(t.pekerjaan,'')) ~ '(DIREKTUR|DIRUT|KOMISARIS)'
+                          OR upper(coalesce(t.nama,'')) ~ '(DIREKTUR|DIRUT|KOMISARIS|\\mPT[ .]|\\mCV[ .])'
+                      )
+                ),
+                dir_from_tsk_uraian AS (
+                    SELECT DISTINCT r.nik
+                    FROM bdb_pihak_terlibat_ranking_snapshot r
+                    WHERE r.tahun = 0 AND r.kategori_filter = 'TERSANGKA' AND r.tipe_subjek = 'PERORANGAN'
+                      AND EXISTS (
+                          SELECT 1 FROM bdb_dors_lp_terlibat t
+                          JOIN bdb_dors_lp dlp ON dlp.id = t.lp_id
+                          WHERE t.nik = r.nik
+                            AND upper(coalesce(dlp.uraian_kejadian,'')) ~ '(DIREKTUR|DIRUT|KOMISARIS)'
+                            AND upper(coalesce(dlp.uraian_kejadian,'')) ~ '(\\mPT[ .]|\\mCV[ .]|BPR|KOPERASI)'
+                      )
+                ),
+                all_dir_niks AS (
+                    SELECT nik FROM dir_from_dors
+                    UNION
+                    SELECT nik FROM dir_from_tsk_uraian
+                )
+                UPDATE bdb_pihak_terlibat_ranking_snapshot r
+                SET tipe_identitas = 'DIREKTUR KORPORASI'
+                FROM all_dir_niks d
+                WHERE r.nik = d.nik AND r.tipe_subjek = 'PERORANGAN';
             `);
-            this.logger.log('All-Time Ranking Snapshot refreshed successfully.');
+            await queryRunner.commitTransaction();
+            this.rankingCache.clear();
+            this.logger.log('All-Time Ranking Snapshot (tahun = 0) refreshed successfully.');
         }
         catch (e) {
+            await queryRunner.rollbackTransaction();
             this.logger.error('Error refreshing all-time ranking snapshot: ' + e?.message);
+        }
+        finally {
+            await queryRunner.release();
+        }
+    }
+    async refreshSingleNikSnapshot(rawNik) {
+        const nik = String(rawNik || '').trim();
+        if (!/^[1-9][0-9]{15}$/.test(nik)) {
+            this.rankingCache.clear();
+            return;
+        }
+        try {
+            await this.dataSource.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 0 AND nik = $1`, [nik]);
+            await this.dataSource.query(`
+                WITH raw_dors AS (
+                    SELECT 
+                        lp.id as lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            when d.id_polda is not null then d.id_polda
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(t.nama)) as nama,
+                        trim(t.nik) as nik,
+                        upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
+                        GREATEST(
+                            coalesce(d.synced_at, lp.synced_at),
+                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                        ) as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama
+                    FROM bdb_dors_lp_terlibat t
+                    JOIN bdb_dors_lp d ON d.id = t.lp_id
+                    JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    WHERE trim(t.nik) = $1
+                ),
+                raw_tsk AS (
+                    SELECT 
+                        d.lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(item->>'nama')) as nama,
+                        trim(item->>'nik') as nik,
+                        'TERSANGKA'::text as keterlibatan,
+                        d.created_at as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama
+                    FROM bdb_dokumen d
+                    JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
+                    LEFT JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    CROSS JOIN LATERAL jsonb_array_elements(
+                        CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
+                    ) party(item)
+                    WHERE trim(item->>'nik') = $1
+                ),
+                raw_manual AS (
+                    SELECT 
+                        m.lp_id,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(m.nama)) as nama,
+                        trim(m.nik) as nik,
+                        upper(trim(coalesce(m.keterlibatan, 'PIHAK'))) as keterlibatan,
+                        coalesce(m.updated_at, m.created_at) as seen_at,
+                        CASE 
+                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama
+                    FROM bdb_lp_pihak_manual m
+                    JOIN bdb_laporan_polisi lp ON lp.id = m.lp_id AND lp.deleted_at IS NULL
+                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    WHERE m.deleted_at IS NULL AND trim(m.nik) = $1
+                ),
+                raw_dpo AS (
+                    SELECT 
+                        coalesce(dp.lp_id, -dp.id) as lp_id,
+                        dp.satker_id as satker_id,
+                        case 
+                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
+                            else '060.01.00'
+                        end as wilayah_kode,
+                        upper(trim(dp.nama_dpo)) as nama,
+                        trim(dp.nomor_identitas) as nik,
+                        'DPO'::text as keterlibatan,
+                        coalesce(dp.updated_at, dp.created_at) as seen_at,
+                        CASE 
+                            WHEN dp.satker_id = 13 OR upper(coalesce(dp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%MABES%' THEN 1
+                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLDA%' THEN 2
+                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%POLRESTA%' THEN 3
+                            ELSE 4
+                        END as satker_tier,
+                        coalesce(nullif(trim(dp.satker_nama),''), 'POLRI') as satker_nama
+                    FROM bdb_dpo dp
+                    LEFT JOIN bdb_satker s ON s.id = dp.satker_id
+                    WHERE dp.status_dpo = 'AKTIF' AND trim(dp.nomor_identitas) = $1
+                ),
+                unioned AS (
+                    SELECT * FROM raw_dors
+                    UNION ALL SELECT * FROM raw_tsk
+                    UNION ALL SELECT * FROM raw_manual
+                    UNION ALL SELECT * FROM raw_dpo
+                ),
+                person_agg AS (
+                    SELECT 
+                        nik,
+                        max(nama) as nama,
+                        count(distinct lp_id)::int as total_lp,
+                        count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)::int as count_tersangka,
+                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
+                        count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
+                        count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
+                        count(distinct case when keterlibatan = 'DPO' then lp_id end)::int as count_dpo,
+                        count(distinct satker_id)::int as jumlah_satker_unik,
+                        count(distinct wilayah_kode)::int as jumlah_polda_unik,
+                        min(satker_tier)::int as satker_tier,
+                        (count(distinct wilayah_kode) > 1) as is_lintas_wilayah,
+                        (array_agg(satker_nama order by satker_tier asc))[1] as satker_nama_tertinggi,
+                        string_agg(distinct satker_nama, ', ') as daftar_satker,
+                        max(seen_at) as last_seen,
+                        (count(distinct lp_id) * 50)::int as nasional_score
+                    FROM unioned
+                    GROUP BY nik
+                    HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
+                ),
+                multi_cat AS (
+                    SELECT p.*, 'ALL' as kategori_filter, 'ALL' as keterlibatan FROM person_agg p
+                    UNION ALL SELECT p.*, 'TERSANGKA', 'TERSANGKA' FROM person_agg p WHERE count_tersangka > 0
+                    UNION ALL SELECT p.*, 'TERLAPOR', 'TERLAPOR' FROM person_agg p WHERE count_terlapor > 0
+                    UNION ALL SELECT p.*, 'PELAPOR', 'PELAPOR' FROM person_agg p WHERE count_pelapor > 0
+                    UNION ALL SELECT p.*, 'SAKSI', 'SAKSI' FROM person_agg p WHERE count_saksi > 0
+                    UNION ALL SELECT p.*, 'KORBAN', 'KORBAN' FROM person_agg p WHERE count_korban > 0
+                    UNION ALL SELECT p.*, 'DPO', 'DPO' FROM person_agg p WHERE count_dpo > 0
+                )
+                INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                    tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                    satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    tipe_subjek, tipe_identitas, kasta
+                )
+                SELECT 
+                    0 as tahun, NULL::int as bulan, NULL::bigint as satker_id,
+                    keterlibatan, kategori_filter, nama, nik, total_lp,
+                    satker_tier, satker_nama_tertinggi, last_seen, NOW() as refreshed_at,
+                    count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                    jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                    'PERORANGAN', 'NIK',
+                    CASE
+                        WHEN kategori_filter != 'ALL' THEN kategori_filter
+                        WHEN count_dpo > 0 THEN 'DPO'
+                        WHEN count_tersangka > 0 THEN 'TERSANGKA'
+                        WHEN count_terlapor > 0 THEN 'TERLAPOR'
+                        WHEN count_pelapor > 0 THEN 'PELAPOR'
+                        WHEN count_saksi > 0 THEN 'SAKSI'
+                        WHEN count_korban > 0 THEN 'KORBAN'
+                        ELSE 'PIHAK'
+                    END
+                FROM multi_cat
+                ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO UPDATE SET
+                    nama = EXCLUDED.nama,
+                    total_lp = EXCLUDED.total_lp,
+                    satker_tier = EXCLUDED.satker_tier,
+                    satker_nama_tertinggi = EXCLUDED.satker_nama_tertinggi,
+                    last_seen = EXCLUDED.last_seen,
+                    refreshed_at = NOW(),
+                    count_dpo = EXCLUDED.count_dpo,
+                    count_tersangka = EXCLUDED.count_tersangka,
+                    count_terlapor = EXCLUDED.count_terlapor,
+                    count_saksi = EXCLUDED.count_saksi,
+                    count_korban = EXCLUDED.count_korban,
+                    count_pelapor = EXCLUDED.count_pelapor,
+                    jumlah_satker_unik = EXCLUDED.jumlah_satker_unik,
+                    jumlah_polda_unik = EXCLUDED.jumlah_polda_unik,
+                    is_lintas_wilayah = EXCLUDED.is_lintas_wilayah,
+                    daftar_satker = EXCLUDED.daftar_satker,
+                    kasta = EXCLUDED.kasta;
+            `, [nik]);
+            this.rankingCache.clear();
+        }
+        catch (err) {
+            this.logger.warn('refreshSingleNikSnapshot warning: ' + err?.message);
+            this.rankingCache.clear();
         }
     }
     async refreshSummarySnapshot() {
@@ -1099,13 +1487,6 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const isDefaultGlobal = (scope.all || query.scope === 'national') && !this.hasCommonFilter(query) && (!query.keterlibatan || String(query.keterlibatan).toUpperCase() === 'ALL') && (!query.status || String(query.status).toUpperCase() === 'ALL');
         if (isDefaultGlobal)
             return this.recentGlobal(page, limit);
-        if (!this.listCache)
-            this.listCache = new Map();
-        const listCacheKey = JSON.stringify({ scope: scope.all ? 'ALL' : Number(scope.satkerId || 0), query, page, limit });
-        const cachedList = this.listCache.get(listCacheKey);
-        if (cachedList && cachedList.expiresAt > Date.now()) {
-            return cachedList.data;
-        }
         const fetch = page * limit + 1;
         const rows = [];
         const branchTasks = [];
@@ -1115,10 +1496,12 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             const hasDate = Boolean(this.toText(query.from) || this.toText(query.to));
             const hasSatker = Number(query.satker_id || 0) > 0 || (!scope.all && Boolean(scope.satkerId));
             const dorsOrder = hasSearch
-                ? '(t.id + 0) desc'
-                : (hasDate || hasSatker)
-                    ? 'lp.id desc'
-                    : 't.id desc';
+                ? 't.id desc'
+                : hasDate
+                    ? 'parse_tgl_laporan(lp.tgl_laporan) desc nulls last, lp.id desc'
+                    : hasSatker
+                        ? 'lp.id desc'
+                        : 't.id desc';
             branchTasks.push(this.readOnlyQuery(`select 'DORS' as sumber,t.id::text as row_id,lp.id as lp_id,t.nama,t.nik,
                         upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
                         null::text as nomor_dokumen,null::date as tanggal_dokumen,null::date as bap_tanggal,
@@ -1147,39 +1530,15 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         const documentWhere = this.buildDirectSummaryWhere(scope, query, 'x', 'DOKUMEN', true);
         if (!documentWhere.skip) {
-            const rawDocSearch = this.toText(query.search)?.replace(/^KORP:/, '')?.replace(/_/g, ' ')?.trim();
-            const docPreFilter = rawDocSearch ? `and d.data::text ilike '%${rawDocSearch.replace(/'/g, "''")}%'` : '';
-            const docScanLimit = rawDocSearch ? 2000 : Math.max(fetch * 12, 400);
-            branchTasks.push(this.readOnlyQuery(`with recent_docs as (
-                     select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen, d.data, d.created_at, dt.code
-                     from bdb_dokumen d
-                     join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
-                     where 1=1 ${docPreFilter}
-                     order by d.id desc
-                     limit ${docScanLimit}
-                 ),
-                 document_parties as (
-                     select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
-                            nullif(trim(item->>'nama'),'') as nama,
-                            nullif(trim(item->>'nik'),'') as nik,
-                            case when d.code = 'PENETAPAN_DPO' then 'DPO' else 'TERSANGKA' end::text as keterlibatan,
-                            coalesce(nullif(trim(d.nomor_dokumen),''), nullif(trim(d.data->>'nomor_dokumen'),'')) as nomor_dokumen,
-                            coalesce(d.tanggal_dokumen, nullif(trim(d.data->>'tanggal_dokumen'),'')::date) as tanggal_dokumen,
-                            d.created_at
-                     from recent_docs d
-                     cross join lateral jsonb_array_elements(
-                         case when jsonb_typeof(d.data->'tersangka')='array' then d.data->'tersangka' else '[]'::jsonb end
-                     ) with ordinality as party(item, ordinality)
-                     where nullif(trim(item->>'nama'),'') is not null
-                 )
+            branchTasks.push(this.readOnlyQuery(`with ${this.documentPartiesCte()}
                  select 'DOKUMEN' as sumber,
                         (x.dokumen_id::text || ':' || x.urutan::text) as row_id,
                         lp.id as lp_id,x.nama,x.nik,x.keterlibatan,x.nomor_dokumen,x.tanggal_dokumen,
                         null::date as bap_tanggal,case when x.keterlibatan='DPO' then 'Penetapan DPO aktif' else 'Surat Ketetapan Penetapan Tersangka' end::text as keterangan,
                         false as has_lampiran,x.created_at,
                         lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,lp.unit_satker_nama,jk.keterangan as kejahatan
-                 from document_parties x
-                 join bdb_laporan_polisi lp on lp.id=x.lp_id
+                 from bdb_laporan_polisi lp
+                 join document_parties x on x.lp_id=lp.id
                  left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
                  left join bdb_status_master sm on sm.id=lp.status_id
                  where ${documentWhere.where.join(' and ')}
@@ -1275,16 +1634,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const offset = (page - 1) * limit;
         const pageRows = rows.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
-        const listResult = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
-        if (this.listCache.size > 300) {
-            const now = Date.now();
-            for (const [k, v] of this.listCache.entries()) {
-                if (v.expiresAt <= now)
-                    this.listCache.delete(k);
-            }
-        }
-        this.listCache.set(listCacheKey, { expiresAt: Date.now() + 30000, data: listResult });
-        return listResult;
+        return { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
     }
     async getLaporanByNik(authUser, rawNik, query = {}) {
         const nik = String(rawNik || '').trim();
@@ -1292,9 +1642,19 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             return { status: 1, data: [], meta: { total_all: 0, total_period: 0 } };
         const fromStr = String(query?.from || query?.date_from || '').trim();
         const toStr = String(query?.to || query?.date_to || '').trim();
+        const cacheKey = `${nik}|${fromStr}|${toStr}`;
+        const cached = this.lpByNikCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.data;
+        }
         const isCorp = nik.startsWith('KORP:');
         const corpTerm = isCorp ? nik.replace(/^KORP:/, '').replace(/_/g, ' ').trim() : '';
-        const cleanTerm = corpTerm.replace(/[^A-Za-z0-9]/g, '');
+        const cleanTerm = corpTerm.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const trigramWords = isCorp ? this.extractCorpTrigramWords(corpTerm) : [];
+        const trigramParams = trigramWords.map(w => `%${w}%`);
+        const trigramClauseT = trigramWords.length > 0
+            ? trigramWords.map((_, idx) => `t.nama ILIKE $${idx + 3}`).join(' AND ')
+            : `t.nama ILIKE ('%' || $2 || '%')`;
         const sql = isCorp ? `
             WITH ${this.documentPartiesCte()},
             all_parties AS (
@@ -1325,10 +1685,11 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id
                 LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                 LEFT JOIN bdb_satker p ON p.kode = (split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3))
-                WHERE (
-                    regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') = $1
-                    OR upper(trim(t.nama)) ILIKE ('%' || $2 || '%')
-                )
+                WHERE (${trigramClauseT})
+                  AND (
+                      regexp_replace(upper(trim(t.nama)), '[^A-Z0-9]+', '', 'g') LIKE ('%' || $1 || '%')
+                      OR upper(trim(t.nama)) ILIKE ('%' || $2 || '%')
+                  )
 
                 UNION ALL
 
@@ -1362,15 +1723,6 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 WHERE (
                     regexp_replace(upper(trim(x.nama)), '[^A-Z0-9]+', '', 'g') = $1
                     OR upper(trim(x.nama)) ILIKE ('%' || $2 || '%')
-                    OR EXISTS (
-                        SELECT 1 FROM bdb_dors_lp_terlibat tc
-                        WHERE tc.lp_id = d.id
-                          AND upper(coalesce(tc.keterlibatan, '')) = 'TERLAPOR'
-                          AND (
-                              regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') = $1
-                              OR upper(trim(tc.nama)) ILIKE ('%' || $2 || '%')
-                          )
-                    )
                 )
 
                 UNION ALL
@@ -1526,7 +1878,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             FROM all_parties
             ORDER BY kasta_rank ASC, tgl_date DESC;
         `;
-        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm] : [nik]);
+        let rows = await this.dataSource.query(sql, isCorp ? [cleanTerm, corpTerm, ...trigramParams] : [nik]);
         if (isCorp && rows.length === 0) {
             const coreCorp = corpTerm.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
             if (coreCorp.length >= 4) {
@@ -1714,7 +2066,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             return db - da;
         });
         const periodList = deduped.filter((x) => x.in_period);
-        return {
+        const resultPayload = {
             status: 1,
             data: deduped,
             meta: {
@@ -1724,6 +2076,14 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 pihak_korporasi: pihakKorporasi
             }
         };
+        if (this.lpByNikCache.size > 500) {
+            this.lpByNikCache.clear();
+        }
+        this.lpByNikCache.set(cacheKey, {
+            expiresAt: Date.now() + 5 * 60 * 1000,
+            data: resultPayload
+        });
+        return resultPayload;
     }
     async enrichCorporationsWithParties(rows) {
         if (!Array.isArray(rows) || rows.length === 0)
@@ -1739,15 +2099,24 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 const coreCorp = rawName.replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM)[.]?\s+/i, '').trim();
                 if (!cleanTerm)
                     return;
+                const trigramWords = this.extractCorpTrigramWords(rawName);
+                const trigramParams = trigramWords.map(w => `%${w}%`);
+                const trigramClause = trigramWords.length > 0
+                    ? trigramWords.map((_, idx) => `tc.nama ILIKE $${idx + 3}`).join(' AND ')
+                    : `tc.nama ILIKE ('%' || $1 || '%')`;
                 let lpRowIds = await this.dataSource.query(`
                     SELECT DISTINCT d.id as dors_id, lp.id as lp_id
                     FROM bdb_dors_lp_terlibat tc
                     JOIN bdb_dors_lp d ON d.id = tc.lp_id
                     LEFT JOIN bdb_laporan_polisi lp ON lp.dors_lp_id = d.dors_lp_id AND lp.model_lp = d.model_lp AND lp.deleted_at IS NULL
-                    WHERE upper(trim(tc.nama)) = $1
-                       OR tc.nama ILIKE ('%' || $2 || '%')
+                    WHERE (${trigramClause})
+                      AND (
+                          upper(trim(tc.nama)) = $1
+                          OR regexp_replace(upper(trim(tc.nama)), '[^A-Z0-9]+', '', 'g') LIKE ('%' || $2 || '%')
+                          OR upper(trim(tc.nama)) ILIKE ('%' || $1 || '%')
+                      )
                     LIMIT 60
-                `, [rawName.toUpperCase(), coreCorp.length >= 4 ? coreCorp : rawName]);
+                `, [rawName.toUpperCase(), cleanTerm, ...trigramParams]);
                 if ((!lpRowIds || lpRowIds.length === 0) && coreCorp.length >= 4) {
                     lpRowIds = await this.dataSource.query(`
                         SELECT DISTINCT d.id as dors_id, lp.id as lp_id
@@ -2432,6 +2801,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             entityId: rows[0].id,
             meta: { lp_id: lpId, no_laporan: lp.no_laporan, nama, keterlibatan }
         });
+        this.refreshSingleNikSnapshot(this.toText(dto?.nik)).catch(() => { });
         return this.detail(rows[0].id);
     }
     async detail(id) {
@@ -2539,6 +2909,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             entityId: rowId,
             meta: { lp_id: row.lp_id, no_laporan: row.no_laporan, nama }
         });
+        this.refreshSingleNikSnapshot(this.toText(dto?.nik)).catch(() => { });
         return { status: 1, message: 'Data pihak terlibat (DORS) diperbarui.' };
     }
     async updateManual(authUser, rowId, dto, file) {
@@ -2612,6 +2983,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             entityId: rowId,
             meta: { lp_id: existing.lp_id, no_laporan: lp.no_laporan, nama, keterlibatan }
         });
+        this.refreshSingleNikSnapshot(this.toText(dto?.nik) || existing.nik).catch(() => { });
         return this.detail(rowId);
     }
     async removeManual(authUser, id) {
@@ -2619,7 +2991,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         if (!['superadmin', 'admin_binops'].includes(roleBdb)) {
             throw new common_1.ForbiddenException('Hanya superadmin/admin binops yang dapat menghapus entri pihak terlibat manual.');
         }
-        const rows = await this.dataSource.query('select id, lp_id, nama, lampiran_object_key from bdb_lp_pihak_manual where id=$1 and deleted_at is null', [id]);
+        const rows = await this.dataSource.query('select id, lp_id, nama, nik, lampiran_object_key from bdb_lp_pihak_manual where id=$1 and deleted_at is null', [id]);
         if (!rows.length)
             throw new common_1.NotFoundException('Data tidak ditemukan.');
         await this.dataSource.query('update bdb_lp_pihak_manual set deleted_at = now() where id=$1', [id]);
@@ -2630,6 +3002,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             entityId: id,
             meta: { lp_id: rows[0].lp_id, nama: rows[0].nama }
         });
+        this.refreshSingleNikSnapshot(rows[0].nik).catch(() => { });
         return { status: 1, message: 'Pihak terlibat manual dihapus.' };
     }
     async cronRefreshRankingSnapshot() {
@@ -2638,6 +3011,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const now = new Date();
         const curMonth = now.getMonth() + 1;
         await this.refreshRankingSnapshot(curMonth);
+        if (now.getHours() === 2 && now.getMinutes() === 0) {
+            await this.refreshAllTimeSnapshot();
+        }
         if (now.getHours() % 2 === 0 && now.getMinutes() === 0) {
             await this.refreshRankingSnapshot(null);
         }
@@ -2829,9 +3205,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                             WHEN count_dpo > 0 THEN 1
                                             WHEN count_tersangka > 0 THEN 2
                                             WHEN count_terlapor > 0 THEN 3
-                                            WHEN count_saksi > 0 THEN 4
-                                            WHEN count_korban > 0 THEN 5
-                                            WHEN count_pelapor > 0 THEN 6
+                                            WHEN count_pelapor > 0 THEN 4
+                                            WHEN count_saksi > 0 THEN 5
+                                            WHEN count_korban > 0 THEN 6
                                             ELSE 7
                                         END
                                     )
@@ -2846,9 +3222,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                     WHEN kategori_filter = 'DPO' THEN count_dpo
                                     ELSE 0
                                 END) DESC,
+                                total_lp DESC,
                                 satker_tier ASC,
                                 jumlah_satker_unik DESC,
-                                total_lp DESC,
                                 last_seen DESC
                         ) as rn
                     FROM multi_cat
@@ -2877,7 +3253,17 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
             `);
             await queryRunner.query(`
-                WITH raw_corp AS (
+                WITH lp_has_tsk AS (
+                    SELECT DISTINCT d.lp_id
+                    FROM bdb_dokumen d
+                    JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
+                    WHERE d.lp_id IS NOT NULL
+                    UNION
+                    SELECT DISTINCT m.lp_id
+                    FROM bdb_lp_pihak_manual m
+                    WHERE m.deleted_at IS NULL AND upper(m.keterlibatan) = 'TERSANGKA' AND m.lp_id IS NOT NULL
+                ),
+                raw_corp_base AS (
                     SELECT 
                         lp.id as lp_id,
                         coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
@@ -2886,9 +3272,22 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             when d.id_polda is not null then d.id_polda
                             else '060.01.00'
                         end as wilayah_kode,
-                        regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1 '), '\\s+', ' ', 'g') as norm_nama,
-                        'KORP:' || rtrim(regexp_replace(regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1_'), '[^A-Z0-9]+', '_', 'g'), '_+', '_', 'g'), '_') as synth_nik,
+                        CASE
+                            WHEN upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
+                                THEN regexp_replace(regexp_replace(upper(trim(t.nama)), '^(PT|CV|UD)[.]?\\s*', '\\1 '), '\\s+', ' ', 'g')
+                            ELSE coalesce(
+                                nullif(trim(regexp_replace(
+                                    substring(
+                                        regexp_replace(upper(trim(t.nama)), '[(),/]', ' ', 'g')
+                                        from '((?:PT|CV|UD|KOPERASI|KSP|YAYASAN|BPR|PERUM)[. ]+[A-Z0-9 .&-]{3,})'
+                                    ),
+                                    '^(PT|CV|UD)[.]?\\s*', '\\1 '
+                                )), ''),
+                                regexp_replace(upper(trim(t.nama)), '\\s+', ' ', 'g')
+                            )
+                        END as norm_nama,
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
+                        (lht.lp_id IS NOT NULL) as has_tsk_doc,
                         d.synced_at as seen_at,
                         CASE 
                             WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
@@ -2901,22 +3300,38 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     JOIN bdb_dors_lp d ON d.dors_lp_id = lp.dors_lp_id AND d.model_lp = lp.model_lp
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
+                    LEFT JOIN lp_has_tsk lht ON lht.lp_id = lp.id
                     WHERE lp.deleted_at IS NULL
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) >= '${startDay}'::date
                       AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) <= '${lastDay}'::date
                       AND (
                         upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
                         OR upper(coalesce(t.jenis_identitas,'')) = 'BADAN HUKUM'
+                        OR (
+                            upper(t.nama) ~ '(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)'
+                            AND upper(t.nama) ~ '(\\mPT[ .]|\\mCV[ .]|\\mUD[ .]|KOPERASI|KSP|YAYASAN|BPR|PERUM)'
+                        )
                       )
                       AND length(trim(t.nama)) > 2
                       AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
+                ),
+                raw_corp AS (
+                    SELECT 
+                        lp_id, satker_id, wilayah_kode, norm_nama,
+                        'KORP:' || rtrim(regexp_replace(regexp_replace(regexp_replace(upper(trim(norm_nama)), '^(PT|CV|UD)[.]?\\s*', '\\1_'), '[^A-Z0-9]+', '_', 'g'), '_+', '_', 'g'), '_') as synth_nik,
+                        keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
+                    FROM raw_corp_base
                 ),
                 corp_agg AS (
                     SELECT 
                         synth_nik as nik,
                         max(norm_nama) as nama,
                         count(distinct lp_id)::int as total_lp,
-                        count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)::int as count_tersangka,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
+                        END)::int as count_tersangka,
                         count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
                         count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
                         count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
@@ -2989,8 +3404,26 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     'KORPORASI' as tipe_subjek,
                     'BADAN HUKUM' as tipe_identitas
                 FROM multi_corp ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
+
+                UPDATE bdb_pihak_terlibat_ranking_snapshot
+                SET
+                    total_lp = GREATEST(total_lp, count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor),
+                    kasta = CASE
+                        WHEN kategori_filter != 'ALL' THEN kategori_filter
+                        WHEN count_dpo > 0 THEN 'DPO'
+                        WHEN count_tersangka > 0 THEN 'TERSANGKA'
+                        WHEN (coalesce(tipe_subjek, '') = 'KORPORASI' AND count_korban > count_terlapor * 2)
+                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 'KORBAN'
+                        WHEN count_terlapor > 0 THEN 'TERLAPOR'
+                        WHEN count_pelapor > 0 THEN 'PELAPOR'
+                        WHEN count_saksi > 0 THEN 'SAKSI'
+                        WHEN count_korban > 0 THEN 'KORBAN'
+                        ELSE 'PIHAK'
+                    END
+                WHERE tahun = 2026 AND ${monthDeleteClause};
             `);
             await queryRunner.commitTransaction();
+            this.rankingCache.clear();
             this.logger.log(`Ranking Snapshot Refresh for ${isYear ? 'Year 2026' : 'Month ' + curMonth} completed.`);
         }
         catch (e) {
