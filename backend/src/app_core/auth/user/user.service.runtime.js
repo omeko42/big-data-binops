@@ -887,6 +887,11 @@ let UserService = class UserService {
         if (dto && typeof dto.is_pns === 'string') {
             dto.is_pns = dto.is_pns === 'true' || dto.is_pns === '1';
         }
+        if (dto && typeof dto.banner_theme === 'string' && dto.banner_theme.trim().length > 5) {
+            dto.social_media = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
+            dto.social_media.banner_theme = dto.banner_theme.trim();
+            dto.social_media.banner_v2 = true;
+        }
         if (file && file.buffer) {
             const mime = (file.mimetype && String(file.mimetype).startsWith('image/')) ? file.mimetype : 'image/jpeg';
             const serverDataUrl = `data:${mime};base64,${file.buffer.toString('base64')}`;
@@ -894,6 +899,7 @@ let UserService = class UserService {
                 dto.social_media = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
                 dto.social_media.banner_theme = serverDataUrl;
                 dto.social_media.banner_v2 = true;
+                dto.banner_theme = serverDataUrl;
             } else {
                 dto.photo_url = serverDataUrl;
                 dto.foto = serverDataUrl;
@@ -936,10 +942,11 @@ let UserService = class UserService {
             const incomingSoc = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
             const nextSoc = { ...baseSoc, ...incomingSoc };
             const isCustomBanner = (val) => typeof val === 'string' && val.trim().length > 5 && !val.includes('default-banner');
-            if (!isCustomBanner(incomingSoc.banner_theme) && (isCustomBanner(dbSoc.banner_theme) || isCustomBanner(existingPoliceSoc.banner_theme))) {
-                if (incomingSoc.banner_theme === undefined) {
-                    nextSoc.banner_theme = isCustomBanner(dbSoc.banner_theme) ? dbSoc.banner_theme : existingPoliceSoc.banner_theme;
-                }
+            if (typeof incomingSoc.banner_theme === 'string' && incomingSoc.banner_theme.trim().length > 5) {
+                nextSoc.banner_theme = incomingSoc.banner_theme.trim();
+                nextSoc.banner_v2 = true;
+            } else if (incomingSoc.banner_theme === undefined && (isCustomBanner(dbSoc.banner_theme) || isCustomBanner(existingPoliceSoc.banner_theme))) {
+                nextSoc.banner_theme = isCustomBanner(dbSoc.banner_theme) ? dbSoc.banner_theme : existingPoliceSoc.banner_theme;
             }
             if (normJk) {
                 nextSoc.jenis_kelamin = normJk;
@@ -964,6 +971,12 @@ let UserService = class UserService {
                 authUpdate.photo_hash = null;
                 authUpdate.photo_updated_at = new Date();
             }
+            try {
+                await this.dataSource.query(
+                    'UPDATE auth_users SET photo_url = $1, photo_hash = $2, photo_updated_at = NOW() WHERE id = $3',
+                    [authUpdate.photo_url, authUpdate.photo_hash, Number(authUser.id)]
+                );
+            } catch (ePh) {}
         }
         if (dto.email_polri !== undefined) {
             const emailPolri = this.normalizeEmail(dto.email_polri);
