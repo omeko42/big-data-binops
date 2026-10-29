@@ -425,7 +425,7 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     const uid = user ? (user.id || user.user_id) : "anon";
     let pStr = "";
     if (params && typeof params === "object") {
-      const ignored = new Set(["refresh", "_t", "t", "timestamp", "_", "cache_bust"]);
+      const ignored = new Set(["refresh", "_t", "_ts", "t", "timestamp", "_", "cache_bust"]);
       const keys = Object.keys(params).filter(k => !ignored.has(k) && params[k] !== undefined && params[k] !== "").sort();
       if (keys.length > 0) {
         pStr = "?" + keys.map(k => k + "=" + encodeURIComponent(String(params[k]))).join("&");
@@ -436,7 +436,7 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
   }
   async function bdbSaveApiCache(url, params, data) {
     try {
-      if (!data || data.status === 0) return;
+      if (!data || data.status === 0 || (typeof Blob !== "undefined" && data instanceof Blob)) return;
       const user = bdbGetActiveUser();
       const uid = user ? (user.id || user.user_id) : "anon";
       const db = await bdbOpenDB();
@@ -465,6 +465,12 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
 
   function bdbCheckUserSession() {
     try {
+      if (localStorage.getItem("bdb_cache_v3_cleaned") !== "1") {
+        localStorage.setItem("bdb_cache_v3_cleaned", "1");
+        bdbOpenDB().then(db => {
+          try { db.transaction("api_cache", "readwrite").objectStore("api_cache").clear(); } catch(_e) {}
+        }).catch(() => {});
+      }
       const user = bdbGetActiveUser();
       const curUid = user ? String(user.id || user.user_id || "") : "";
       const prevUid = localStorage.getItem("bdb_current_user_id");
@@ -737,21 +743,23 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
             if (!target.id) target.id = "bdb-field-" + (++_fSeq);
             lbl.setAttribute("for", target.id);
           } else if (document.body) {
-            if (!holder) {
-              holder = document.getElementById("bdb-a11y-targets");
+            let sharedOut = document.getElementById("bdb-lbl-shared-out");
+            if (!sharedOut) {
               if (!holder) {
-                holder = _origCE.call(document, "div");
-                holder.id = "bdb-a11y-targets";
-                holder.style.display = "none";
-                holder.setAttribute("aria-hidden", "true");
-                document.body.appendChild(holder);
+                holder = document.getElementById("bdb-a11y-targets");
+                if (!holder) {
+                  holder = _origCE.call(document, "div");
+                  holder.id = "bdb-a11y-targets";
+                  holder.style.display = "none";
+                  holder.setAttribute("aria-hidden", "true");
+                  document.body.appendChild(holder);
+                }
               }
+              sharedOut = _origCE.call(document, "output");
+              sharedOut.id = "bdb-lbl-shared-out";
+              holder.appendChild(sharedOut);
             }
-            const outId = "bdb-lbl-out-" + (++_fSeq);
-            const outEl = _origCE.call(document, "output");
-            outEl.id = outId;
-            holder.appendChild(outEl);
-            lbl.setAttribute("for", outId);
+            lbl.setAttribute("for", "bdb-lbl-shared-out");
           }
         }
       } catch (_e) {}
@@ -759,10 +767,15 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     const startA11yObserver = () => {
       bdbFixA11yForms();
       if (typeof MutationObserver !== "undefined" && document.body) {
+        let a11yTimer = 0;
         const obs = new MutationObserver(() => {
-          if (document.querySelector("label:not([for]), input:not([id]), input:not([name]), select:not([id]), select:not([name]), textarea:not([id]), textarea:not([name])")) {
-            bdbFixA11yForms();
-          }
+          if (a11yTimer) return;
+          a11yTimer = window.setTimeout(() => {
+            a11yTimer = 0;
+            if (document.querySelector("label:not([for]), input:not([id]), input:not([name]), select:not([id]), select:not([name]), textarea:not([id]), textarea:not([name])")) {
+              bdbFixA11yForms();
+            }
+          }, 280);
         });
         obs.observe(document.body, { childList: true, subtree: true });
       }
