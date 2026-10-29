@@ -67,6 +67,9 @@ function bdbTokenNearExpiry(e){
   Number.isFinite(r)&&t.push(r);
   return!!t.length&&Math.min(...t)-Date.now()<12e4
 }
+globalThis.bdbTokenNearExpiry=bdbTokenNearExpiry;
+globalThis.bdbIsPublicPanduanShare=bdbIsPublicPanduanShare;
+globalThis.__bdbApiAuth=tR;
 
 function bdbDelay(e){return new Promise(t=>setTimeout(t,e))}
 
@@ -333,6 +336,30 @@ tR.interceptors.response.use(
   });let t_=0,tT=new Set;function tC(){tT.forEach(e=>e(t_))}function tx(){t_=Math.max(0,t_-1),tC()}[tv,tR].forEach(e=>{e.interceptors.request.use(e=>(t_+=1,tC(),e),e=>(tx(),Promise.reject(e))),e.interceptors.response.use(e=>(tx(),e),e=>(tx(),Promise.reject(e)))}),e.s(["BACKEND_URL",0,tE,"api",0,tv,"apiAuth",0,tR,"assertOk",0,function(e){if(e.data?.status===0){let t=Error(e.data.message||"Terjadi kesalahan.");throw t.response={data:e.data},t}return e.data.data},"onLoading",0,function(e){return tT.add(e),e(t_),()=>{tT.delete(e)}}],54858)}]);
 
 /* === BDB OFFLINE & AUTO-SYNC ENGINE LOGIC === */
+function bdbTokenNearExpiry(e) {
+  if (!e || typeof e !== "string") return true;
+  let t = [];
+  try {
+    let r = e.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    r += "=".repeat((4 - (r.length % 4)) % 4);
+    let n = Number(JSON.parse(atob(r)).exp);
+    Number.isFinite(n) && t.push(1e3 * n);
+  } catch {}
+  try {
+    let r = Date.parse(localStorage.getItem("auth.expires_at") || "");
+    Number.isFinite(r) && t.push(r);
+  } catch {}
+  return !!t.length && Math.min(...t) - Date.now() < 12e4;
+}
+function bdbIsPublicPanduanShare() {
+  try {
+    return typeof window !== "undefined" && (new URLSearchParams(window.location.search).has("share") || window.location.pathname.startsWith("/sharese-publik"));
+  } catch {
+    return false;
+  }
+}
+globalThis.bdbTokenNearExpiry = bdbTokenNearExpiry;
+globalThis.bdbIsPublicPanduanShare = bdbIsPublicPanduanShare;
 if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
   window.__bdbOfflineEngineReady = true;
   window.addEventListener("error", function(ev) {
@@ -622,7 +649,9 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
           if (item.userId !== uid) continue;
           try {
             const token = bdbCurrentAccess();
-            await tR({ url: item.url, method: item.method, data: item.data, params: item.params, headers: { Authorization: "Bearer " + token, "X-Offline-Synced": "1" }, __bdbSkipOfflineQueue: true });
+            const _apiClient = typeof tR === "function" ? tR : globalThis.__bdbApiAuth;
+            if (typeof _apiClient !== "function") break;
+            await _apiClient({ url: item.url, method: item.method, data: item.data, params: item.params, headers: { Authorization: "Bearer " + token, "X-Offline-Synced": "1" }, __bdbSkipOfflineQueue: true });
             const delTx = db.transaction("outbox", "readwrite");
             delTx.objectStore("outbox").delete(item.id);
           } catch (err) { break; }

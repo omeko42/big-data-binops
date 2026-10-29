@@ -1717,11 +1717,17 @@ function CasPetaKejahatanView({
       direktorat: Array.isArray(mbsApi?.direktorat) ? mbsApi.direktorat : []
     };
 
+    const isScopedDash = Boolean(activeDash?.scoped);
+    const isScopedBares = Boolean(activeDash?.is_bareskrim || activeDash?.is_nasional);
+    const scopedPoldaKey = (isScopedDash && !isScopedBares)
+      ? String(activeDash?.scope_polda_key || (activeDash?.scope_satker ? normCasPoldaKey(activeDash.scope_satker) : "")).trim()
+      : "";
+
     const poldaList = Array.isArray(activeDash?.polda) ? activeDash.polda : [];
     for (const p of poldaList) {
       const rawUp = String(p.nama || "").toUpperCase();
       if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
-        if (!mbsApi) {
+        if (!mbsApi && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
           const ctVal = Number(p.ct || 0);
           const ccAkt = Number(p.cc_aktual || 0);
           const ccTgk = Number(p.cc_tunggakan || 0);
@@ -1732,6 +1738,7 @@ function CasPetaKejahatanView({
         continue;
       }
       const k = normCasPoldaKey(p.nama);
+      if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
       const target = mapByKey.get(k);
       if (target) {
         if (p.kode && !target.kode) target.kode = p.kode;
@@ -1753,7 +1760,7 @@ function CasPetaKejahatanView({
       const rawUp = String(kn.nama || "").toUpperCase();
       if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
         if (kn.kode && !mabesAcc.kode) mabesAcc.kode = kn.kode;
-        if (!mbsApi) {
+        if (!mbsApi && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
           mabesAcc.ct = Math.max(mabesAcc.ct, Number(kn.ct || 0));
           mabesAcc.cc = Math.max(mabesAcc.cc, Number(kn.cc_aktual || 0) + Number(kn.cc_tunggakan || 0));
           mabesAcc.cp_berjalan = Math.max(mabesAcc.cp_berjalan, Number(kn.cp_berjalan || 0));
@@ -1762,6 +1769,7 @@ function CasPetaKejahatanView({
         continue;
       }
       const k = normCasPoldaKey(kn.nama);
+      if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
       const target = mapByKey.get(k);
       if (target) {
         if (kn.kode && !target.kode) target.kode = kn.kode;
@@ -1797,17 +1805,17 @@ function CasPetaKejahatanView({
       }
     }
 
-    if (activeDash?.scoped && activeDash?.scope_satker) {
-      const sk = normCasPoldaKey(activeDash.scope_satker);
+    if (isScopedDash && (activeDash?.scope_polda_key || activeDash?.scope_satker)) {
+      const sk = activeDash.scope_polda_key || normCasPoldaKey(activeDash.scope_satker);
       const target = mapByKey.get(sk);
-      if (target && target.ct === 0 && (Number(activeSum?.ct || activeDash?.ct || 0) > 0)) {
-        target.ct = Number(activeSum?.ct || activeDash?.ct || 0);
-        target.cc_aktual = Number(activeSum?.cc_aktual || 0);
-        target.cc_tunggakan = Number(activeSum?.cc_tunggakan || 0);
-        target.cc = (target.cc_aktual + target.cc_tunggakan) || Number(activeDash?.cc || 0);
-        target.cp_berjalan = Number(activeSum?.cp_berjalan || 0);
-        target.cp_tunggakan = Number(activeSum?.cp_tunggakan || 0);
-        target.cr = Number(activeSum?.cr || 0);
+      if (target && (Number(activeSum?.ct || activeDash?.ct || 0) > 0)) {
+        target.ct = Number(activeSum?.ct || activeDash?.ct || target.ct || 0);
+        target.cc_aktual = Number(activeSum?.cc_aktual || target.cc_aktual || 0);
+        target.cc_tunggakan = Number(activeSum?.cc_tunggakan || target.cc_tunggakan || 0);
+        target.cc = (target.cc_aktual + target.cc_tunggakan) || Number(activeDash?.cc || target.cc || 0);
+        target.cp_berjalan = Number(activeSum?.cp_berjalan || target.cp_berjalan || 0);
+        target.cp_tunggakan = Number(activeSum?.cp_tunggakan || target.cp_tunggakan || 0);
+        target.cr = Number(activeSum?.cr || activeDash?.cr || target.cr || 0);
         target.hasData = true;
       }
     }
@@ -1944,29 +1952,47 @@ function CasPetaKejahatanView({
     };
   }, [mergedRegions, petaData, i, l]);
 
+  const isScopedUser = Boolean(petaData ? petaData.scoped : l?.scoped);
+  const isScopedBareskrim = Boolean(petaData?.is_bareskrim || l?.is_nasional);
+  const scopeSatkerRaw = String(petaData?.scope_satker || l?.scope_satker || "").trim();
+  const scopeSatkerShort = String(
+    petaData?.scope_satker_nama ||
+    (scopeSatkerRaw ? abbrSatkerName(scopeSatkerRaw, false) : "Satker Anda")
+  ).trim();
+  const scopePoldaKey = String(
+    petaData?.scope_polda_key ||
+    (scopeSatkerRaw ? normCasPoldaKey(scopeSatkerRaw) : "")
+  ).trim();
+  const scopePoldaNama = String(
+    petaData?.scope_polda_nama ||
+    (scopePoldaKey ? (mergedRegions.find(r => r.id === scopePoldaKey)?.polda || "") : "") ||
+    "Wilkum Anda"
+  ).trim();
+  const scopedAutoFocusedRef = (0, a.useRef)("");
+
   // Select default Polda (#1 hotspot or scoped Polda) without zooming out of Nasional on initial load
   (0, a.useEffect)(() => {
-    if (!selectedId && mergedRegions.length > 0 && stats.totalCT > 0) {
-      if (l?.scoped && l?.scope_satker) {
-        const sk = normCasPoldaKey(l.scope_satker);
-        const found = mergedRegions.find(r => r.id === sk);
-        if (found) {
-          setSelectedId(found.id);
-          return;
-        }
+    if (isScopedUser && !isScopedBareskrim && scopePoldaKey && scopePoldaKey !== "MABES" && mergedRegions.length > 0) {
+      const found = mergedRegions.find(r => r.id === scopePoldaKey);
+      if (found && selectedId !== found.id) {
+        setSelectedId(found.id);
       }
+      return;
+    }
+    if (!selectedId && mergedRegions.length > 0 && stats.totalCT > 0) {
       if (stats.topHotspot) {
         setSelectedId(stats.topHotspot.id);
       }
     }
-  }, [selectedId, mergedRegions, stats.topHotspot, stats.totalCT, l]);
+  }, [selectedId, mergedRegions, stats.topHotspot, stats.totalCT, isScopedUser, isScopedBareskrim, scopePoldaKey]);
 
   // When crimeFilter changes in National view (drillLevel === 0) and pulauFilter === "Semua", auto-focus the #1 Polda for that crime
   (0, a.useEffect)(() => {
+    if (isScopedUser && !isScopedBareskrim && scopePoldaKey && scopePoldaKey !== "MABES") return;
     if (drillLevel === 0 && pulauFilter === "Semua" && stats.topHotspot && stats.totalCT > 0) {
       setSelectedId(stats.topHotspot.id);
     }
-  }, [crimeFilter, stats.topHotspot?.id, stats.totalCT]);
+  }, [crimeFilter, stats.topHotspot?.id, stats.totalCT, isScopedUser, isScopedBareskrim, scopePoldaKey]);
 
   const selectedRegion = (0, a.useMemo)(() => {
     return mergedRegions.find(r => r.id === selectedId) || stats.topHotspot || mergedRegions[0];
@@ -2179,6 +2205,13 @@ function CasPetaKejahatanView({
 
   // 4-Mode Drilldown Navigation Handlers (Nasional / Polda / Polres+Polsek / Mabes Polri)
   const handleResetNasional = () => {
+    if (isScopedUser && !isScopedBareskrim && scopePoldaKey && scopePoldaKey !== "MABES") {
+      const found = mergedRegions.find(r => r.id === scopePoldaKey);
+      if (found) {
+        handleSelectPoldaAndZoom(found);
+        return;
+      }
+    }
     setDrillLevel(0);
     setSelectedPolres(null);
     setSelectedPolsek(null);
@@ -2235,6 +2268,17 @@ function CasPetaKejahatanView({
       try { leafletMapRef.current.flyTo([reg.lat, reg.lng], reg.id === "METRO JAYA" ? 10 : 8, { duration: 0.6 }); } catch (_e) {}
     }
   };
+
+  // Auto-focus & zoom onto user's scoped Polda Wilkum on initial load
+  (0, a.useEffect)(() => {
+    if (isScopedUser && !isScopedBareskrim && scopePoldaKey && scopePoldaKey !== "MABES" && mergedRegions.length > 0) {
+      const found = mergedRegions.find(r => r.id === scopePoldaKey);
+      if (found && scopedAutoFocusedRef.current !== scopePoldaKey) {
+        scopedAutoFocusedRef.current = scopePoldaKey;
+        handleSelectPoldaAndZoom(found);
+      }
+    }
+  }, [isScopedUser, isScopedBareskrim, scopePoldaKey, mergedRegions]);
 
   const handleSelectPolresAndZoom = (polresNode) => {
     if (!polresNode) return;
@@ -2973,19 +3017,27 @@ function CasPetaKejahatanView({
               bg: isDark ? "rgba(239,68,68,0.16)" : "#fef2f2",
               icon: "pi-file",
               note: periodLabel || "Periode Aktif",
-              rightBadge: (petaData?.ct_today || l?.ct_today) ? "+" + z(petaData?.ct_today || l?.ct_today) + " Hari Ini" : "Nasional"
+              rightBadge: isScopedUser
+                ? ("🏛️ " + scopeSatkerShort)
+                : ((petaData?.ct_today || l?.ct_today) ? "+" + z(petaData?.ct_today || l?.ct_today) + " Hari Ini" : "Nasional")
             })
           }),
           (0, t.jsx)("div", {
-            title: "Wilayah Hukum (Wilkum) Polda dengan jumlah Laporan Polisi (CT) tertinggi secara nasional.",
+            title: isScopedUser
+              ? ("Cakupan Wilayah Hukum (Wilkum) Satker Anda: " + scopeSatkerShort + " (" + scopePoldaNama + ")")
+              : "Wilayah Hukum (Wilkum) Polda dengan jumlah Laporan Polisi (CT) tertinggi secara nasional.",
             children: (0, t.jsx)(D, {
-              label: "Wilkum Tertinggi",
-              value: isBusy ? "…" : (stats.topHotspot ? (z(stats.topHotspot.ct) + " LP") : "0 LP"),
+              label: isScopedUser ? "Cakupan Wilkum" : "Wilkum Tertinggi",
+              value: isBusy ? "…" : (isScopedUser ? scopeSatkerShort : (stats.topHotspot ? (z(stats.topHotspot.ct) + " LP") : "0 LP")),
               color: "#f97316",
               bg: isDark ? "rgba(249,115,22,0.16)" : "#fff7ed",
-              icon: "pi-bolt",
-              note: stats.topHotspot ? String(stats.topHotspot.polda || "-").replace(/^Poldas+Poldas+/i, "Polda ") : "-",
-              rightBadge: stats.topHotspot ? (stats.topHotspot.sharePct.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "% Nasional") : "0% Nasional"
+              icon: isScopedUser ? "pi-shield" : "pi-bolt",
+              note: isScopedUser
+                ? (scopePoldaNama + " • " + z(stats.totalCT) + " LP")
+                : (stats.topHotspot ? String(stats.topHotspot.polda || "-").replace(/^Poldas+Poldas+/i, "Polda ") : "-"),
+              rightBadge: isScopedUser
+                ? "🔒 Sesuai Satker"
+                : (stats.topHotspot ? (stats.topHotspot.sharePct.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "% Nasional") : "0% Nasional")
             })
           }),
           (0, t.jsx)("div", {
@@ -3001,15 +3053,25 @@ function CasPetaKejahatanView({
             })
           }),
           (0, t.jsx)("div", {
-            title: "Cakupan Wilayah Hukum (Wilkum) Polri: 36 Wilkum Polda (termasuk Wilkum Lintas Provinsi seperti Polda Metro Jaya & Polda Papua) + Mabes Polri.",
+            title: isScopedUser
+              ? ("Clearance Rate (CR) & Perkara Belum Selesai pada Cakupan Satker " + scopeSatkerShort)
+              : "Cakupan Wilayah Hukum (Wilkum) Polri: 36 Wilkum Polda (termasuk Wilkum Lintas Provinsi seperti Polda Metro Jaya & Polda Papua) + Mabes Polri.",
             children: (0, t.jsx)(D, {
-              label: "Cakupan Wilkum",
-              value: isBusy ? "…" : (stats.activeCount + " / " + stats.totalRegions),
+              label: isScopedUser ? "Clearance Rate (CR)" : "Cakupan Wilkum",
+              value: isBusy
+                ? "…"
+                : (isScopedUser
+                  ? (stats.avgCR.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "%")
+                  : (stats.activeCount + " / " + stats.totalRegions)),
               color: "#2563eb",
               bg: isDark ? "rgba(37,99,235,0.16)" : "#eff6ff",
-              icon: "pi-map",
-              note: "36 Wilkum Polda + Mabes",
-              rightBadge: drillLevel === 3 ? "Mabes Polri" : drillLevel === 0 ? "Level Nasional" : drillLevel === 1 ? "Level Polres" : "Level Polsek"
+              icon: isScopedUser ? "pi-chart-line" : "pi-map",
+              note: isScopedUser
+                ? ("Belum Selesai: " + z(Math.max(0, stats.totalCT - stats.totalCC)) + " LP")
+                : "36 Wilkum Polda + Mabes",
+              rightBadge: isScopedUser
+                ? ("🏛️ " + scopeSatkerShort)
+                : (drillLevel === 3 ? "Mabes Polri" : drillLevel === 0 ? "Level Nasional" : drillLevel === 1 ? "Level Polres" : "Level Polsek")
             })
           })
         ]
@@ -3158,8 +3220,10 @@ function CasPetaKejahatanView({
                               (0, t.jsx)("span", { children: "🏛️" }),
                               (0, t.jsx)("span", { style: { color: T.textMuted }, children: "Satker:" }),
                               (0, t.jsx)("strong", {
-                                style: { color: drillLevel > 0 ? T.accentText : T.textPrimary, fontWeight: 800 },
-                                children: drillLevel === 3 ? "Bareskrim Polri" : (drillLevel >= 1 && selectedRegion ? selectedRegion.polda : "Mabes Polri")
+                                style: { color: (isScopedUser || drillLevel > 0) ? T.accentText : T.textPrimary, fontWeight: 800 },
+                                children: isScopedUser
+                                  ? (scopeSatkerShort + " 🔒")
+                                  : (drillLevel === 3 ? "Bareskrim Polri" : (drillLevel >= 1 && selectedRegion ? selectedRegion.polda : "Mabes Polri"))
                               })
                             ]
                           }),
@@ -3674,9 +3738,14 @@ function CasPetaKejahatanView({
                               (0, t.jsxs)("div", {
                                 style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
                                 children: [
-                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "PILIH SATKER / POLDA" }),
+                                  (0, t.jsx)("label", {
+                                    style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted },
+                                    children: (isScopedUser && !isScopedBareskrim) ? "CAKUPAN RBAC SATKER / WILKUM 🔒" : "PILIH SATKER / POLDA"
+                                  }),
                                   (0, t.jsxs)("select", {
-                                    value: drillLevel === 3 ? "MABES" : (drillLevel >= 1 && selectedRegion ? selectedRegion.id : "SEMUA"),
+                                    value: (isScopedUser && !isScopedBareskrim && scopePoldaKey)
+                                      ? scopePoldaKey
+                                      : (drillLevel === 3 ? "MABES" : (drillLevel >= 1 && selectedRegion ? selectedRegion.id : "SEMUA")),
                                     onChange: ev => {
                                       const val = ev.target.value;
                                       if (val === "SEMUA") handleResetNasional();
@@ -3687,15 +3756,22 @@ function CasPetaKejahatanView({
                                       }
                                     },
                                     style: { padding: "0.45rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 700 },
-                                    children: [
-                                      (0, t.jsx)("option", { value: "SEMUA", children: "🏛️ Mabes Polri (Nasional - 36 Polda)" }),
-                                      (0, t.jsx)("option", { value: "MABES", children: "⭐ Kantor Bareskrim / Mabes Polri" }),
-                                      mergedRegions.map(r => (0, t.jsx)("option", {
-                                        key: r.id,
-                                        value: r.id,
-                                        children: r.polda + " (" + z(r.ct) + " LP)"
-                                      }))
-                                    ]
+                                    children: (isScopedUser && !isScopedBareskrim && scopePoldaKey)
+                                      ? [
+                                          (0, t.jsx)("option", {
+                                            value: scopePoldaKey,
+                                            children: "🔒 " + scopeSatkerShort + " — " + scopePoldaNama + " (" + z(stats.totalCT) + " LP)"
+                                          })
+                                        ]
+                                      : [
+                                          (0, t.jsx)("option", { value: "SEMUA", children: "🏛️ Mabes Polri (Nasional - 36 Polda)" }),
+                                          (0, t.jsx)("option", { value: "MABES", children: "⭐ Kantor Bareskrim / Mabes Polri" }),
+                                          mergedRegions.map(r => (0, t.jsx)("option", {
+                                            key: r.id,
+                                            value: r.id,
+                                            children: r.polda + " (" + z(r.ct) + " LP)"
+                                          }))
+                                        ]
                                   })
                                 ]
                               }),
@@ -4321,14 +4397,16 @@ function CasPetaKejahatanView({
                         style: {
                           padding: "0.24rem 0.56rem",
                           borderRadius: 6,
-                          border: "1px solid " + (drillLevel === 0 ? T.accentBorder : T.btnBorder),
-                          background: drillLevel === 0 ? T.accentBg : T.subCardBg,
-                          color: drillLevel === 0 ? T.accentText : T.textSecondary,
+                          border: "1px solid " + ((drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBorder : T.btnBorder),
+                          background: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBg : T.subCardBg,
+                          color: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentText : T.textSecondary,
                           fontSize: "0.72rem",
                           fontWeight: 800,
                           cursor: "pointer"
                         },
-                        children: "🇮🇩 Nasional (36 Wilkum Polda)"
+                        children: (isScopedUser && !isScopedBareskrim)
+                          ? ("🏛️ Cakupan: " + scopeSatkerShort)
+                          : "🇮🇩 Nasional (36 Wilkum Polda)"
                       }),
                       drillLevel === 3 && (0, t.jsxs)(t.Fragment, {
                         children: [

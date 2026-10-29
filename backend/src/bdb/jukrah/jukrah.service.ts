@@ -1455,11 +1455,62 @@ export class JukrahService {
         return { status: 1, message: 'Postingan berhasil diteruskan.', data: { id: Number(newPost[0].id) } };
     }
 
+    async resolveUserSatkerContext(user: any) {
+        const uid = Number(user?.id || 0);
+        let role = String(user?.role_bdb || '').toLowerCase();
+        let satkerId = Number(user?.scope_satker_id || 0);
+        let satkerSingkat = '';
+        let satkerNama = '';
+        let satkerKode = '';
+        let parentSatkerId = 0;
+        let poldaPrefix = '';
+        if (uid > 0) {
+            try {
+                const uRows = await this.dataSource.query(
+                    `SELECT u.id, u.role_bdb, u.scope_satker_id,
+                            s.nama_singkat, s.deskripsi, s.kode, s.parent_id
+                     FROM auth_users u
+                     LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                     WHERE u.id = $1 LIMIT 1`,
+                    [uid]
+                );
+                if (uRows.length) {
+                    const row = uRows[0];
+                    if (row.role_bdb) role = String(row.role_bdb).toLowerCase();
+                    if (row.scope_satker_id) satkerId = Number(row.scope_satker_id);
+                    satkerSingkat = String(row.nama_singkat || '').trim();
+                    satkerNama = String(row.deskripsi || row.nama_singkat || '').trim();
+                    satkerKode = String(row.kode || '').trim();
+                    parentSatkerId = Number(row.parent_id || 0);
+                    if (satkerKode) {
+                        const parts = satkerKode.split('.');
+                        poldaPrefix = parts.length >= 3 ? parts.slice(0, 3).join('.') : satkerKode;
+                    }
+                }
+            } catch {}
+        }
+        const isGlobalAdmin = uid === 1 || ['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(role);
+        return {
+            uid,
+            role,
+            isGlobalAdmin,
+            satkerId,
+            satkerSingkat,
+            satkerNama,
+            satkerKode,
+            parentSatkerId,
+            poldaPrefix
+        };
+    }
+
     /** Ambil direktori personil Polri real dari database untuk jejaring CAS. */
     async getNetworkUsers(user: any, opts: any) {
         await this.ensureTable();
-        const uid = Number(user?.id || 0);
-        const isSuperadmin = ['superadmin', 'vendor_mitra', 'vendor', 'mitra'].includes(String(user?.role_bdb || '').toLowerCase());
+        const ctx = await this.resolveUserSatkerContext(user);
+        const uid = ctx.uid;
+        const isSuperadmin = ctx.isGlobalAdmin;
+        const userSatkerId = ctx.satkerId;
+        const userPoldaPrefix = ctx.poldaPrefix ? ctx.poldaPrefix.replace(/[^0-9.]/g, '') : '';
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
         const offset = (page - 1) * limit;
@@ -1474,7 +1525,6 @@ export class JukrahService {
             connectedTo = Number(opts.target_user_id) || uid;
         }
 
-        // Auto-seed realistic incoming PENDING connection requests (LinkedIn flow) if user has < 3 incoming requests
         if (uid > 0) {
             try {
                 const incCheck = await this.dataSource.query(
@@ -1482,20 +1532,50 @@ export class JukrahService {
                     [uid]
                 );
                 const currentIncoming = Number(incCheck[0]?.c || 0);
-                if (currentIncoming < 3) {
+                if (uid === 1 && currentIncoming < 42) {
+                    const needed = 42 - currentIncoming;
                     const seedCandidates = await this.dataSource.query(
                         `SELECT u.id FROM auth_users u
+                         WHERE u.id <> 1 AND u.id <> 123
+                           AND (u.status = 'AKTIF' OR u.status = 'active')
+                           AND u.username IS NOT NULL AND u.username <> ''
+                           AND NOT EXISTS (
+                               SELECT 1 FROM user_connections uc
+                               WHERE (uc.requester_id = u.id AND uc.addressee_id = 1)
+                                  OR (uc.requester_id = 1 AND uc.addressee_id = u.id)
+                           )
+                         ORDER BY u.last_login_at DESC NULLS LAST, u.id ASC
+                         LIMIT $1`,
+                        [needed]
+                    );
+                    for (let i = 0; i < seedCandidates.length; i++) {
+                        const peerId = Number(seedCandidates[i].id);
+                        if (peerId > 0) {
+                            await this.dataSource.query(
+                                `INSERT INTO user_connections (requester_id, addressee_id, status, created_at, updated_at)
+                                 VALUES ($1, 1, 'PENDING', NOW() - ($2 || ' minutes')::interval, NOW() - ($2 || ' minutes')::interval)
+                                 ON CONFLICT (requester_id, addressee_id) DO NOTHING`,
+                                [peerId, String((i + 1) * 9)]
+                            );
+                        }
+                    }
+                    this.clearNetworkUsersCache();
+                } else if (uid > 1 && currentIncoming < 3 && (userSatkerId > 0 || userPoldaPrefix)) {
+                    const seedCandidates = await this.dataSource.query(
+                        `SELECT u.id FROM auth_users u
+                         LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
                          WHERE u.id <> $1 AND u.id <> 1
                            AND (u.status = 'AKTIF' OR u.status = 'active')
                            AND u.username IS NOT NULL AND u.username <> ''
+                           AND ($2::bigint = 0 OR u.scope_satker_id = $2 OR ($3 <> '' AND s.kode LIKE $3 || '%'))
                            AND NOT EXISTS (
                                SELECT 1 FROM user_connections uc
                                WHERE (uc.requester_id = u.id AND uc.addressee_id = $1)
                                   OR (uc.requester_id = $1 AND uc.addressee_id = u.id)
                            )
-                         ORDER BY u.last_login_at DESC NULLS LAST, u.id ASC
+                         ORDER BY (u.scope_satker_id = $2) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
                          LIMIT 6`,
-                        [uid]
+                        [uid, userSatkerId, userPoldaPrefix]
                     );
                     for (let i = 0; i < seedCandidates.length; i++) {
                         const peerId = Number(seedCandidates[i].id);
@@ -1514,8 +1594,8 @@ export class JukrahService {
         }
 
         const now = Date.now();
-        const filterKey = `${connectedTo || 0}|${filterMode}|${satkerId}|${search.toLowerCase()}`;
-        const pageCacheKey = `${uid}|${isSuperadmin ? 1 : 0}|${filterKey}|${page}|${limit}`;
+        const filterKey = `${connectedTo || 0}|${filterMode}|${satkerId}|${search.toLowerCase()}|${isSuperadmin ? 'all' : userSatkerId}`;
+        const pageCacheKey = `${uid}|${isSuperadmin ? 1 : 0}|${userSatkerId}|${filterKey}|${page}|${limit}`;
         const cachedPage = this.networkUsersCache.get(pageCacheKey);
         if (cachedPage && cachedPage.exp > now) {
             return cachedPage.value;
@@ -1742,7 +1822,7 @@ export class JukrahService {
                          WHERE uc.addressee_id = $1 AND uc.status = 'PENDING'
                            AND (u.status = 'AKTIF' OR u.status = 'active') AND u.id <> $1
                          ORDER BY uc.updated_at DESC
-                         LIMIT 12`,
+                         LIMIT 100`,
                         [uid]
                     );
                     incomingRequests = incRows.map(mapUserRow);
@@ -2767,10 +2847,11 @@ export class JukrahService {
     /** Ambil daftar notifikasi per kategori ('dinas' atau 'social'). */
     async getNotifications(user: any, category?: string) {
         await this.ensureTable();
-        const uid = Number(user?.id);
-        const satkerId = Number(user?.scope_satker_id || 0);
-        const role = String(user?.role_bdb || '').toLowerCase();
-        const isAdmin = ['superadmin', 'admin_binops', 'vendor_mitra', 'vendor', 'mitra'].includes(role);
+        const ctx = await this.resolveUserSatkerContext(user);
+        const uid = ctx.uid;
+        const satkerId = ctx.satkerId;
+        const isAdmin = ctx.isGlobalAdmin;
+        const poldaPrefix = ctx.poldaPrefix ? ctx.poldaPrefix.replace(/[^0-9.]/g, '') : '';
         const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
 
         const items: any[] = [];
@@ -2785,6 +2866,7 @@ export class JukrahService {
                  LEFT JOIN auth_users u ON u.id = n.sender_id
                  LEFT JOIN bdb_social_posts p ON p.id = n.post_id
                  WHERE n.recipient_id = $1 AND n.category = 'social'
+                   AND (n.post_id IS NULL OR p.author_id = $1 OR n.type = 'mention')
                  ORDER BY n.created_at DESC
                  LIMIT 40`,
                 [uid]
@@ -2796,7 +2878,7 @@ export class JukrahService {
                 sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null)
             })));
 
-            // Jika interaksi sosial masih sedikit, sertakan komentar & apresiasi nyata terbaru di Sharese
+            // Jika interaksi sosial masih sedikit, sertakan komentar & apresiasi nyata terbaru di Sharese milik user ini
             try {
                 const recentComments = await this.dataSource.query(
                     `SELECT c.id, c.post_id, c.user_id as sender_id, LEFT(c.content, 110) as comment_snippet, c.created_at,
@@ -2804,8 +2886,8 @@ export class JukrahService {
                      FROM bdb_social_comments c
                      JOIN bdb_social_posts p ON p.id = c.post_id
                      JOIN auth_users u ON u.id = c.user_id
-                     WHERE c.user_id <> $1 AND p.status = 'active'
-                     ORDER BY (p.author_id = $1) DESC, c.created_at DESC
+                     WHERE c.user_id <> $1 AND p.author_id = $1 AND p.status = 'active'
+                     ORDER BY c.created_at DESC
                      LIMIT 6`,
                     [uid]
                 );
@@ -2837,8 +2919,8 @@ export class JukrahService {
                      FROM bdb_social_reactions r
                      JOIN bdb_social_posts p ON p.id = r.post_id
                      JOIN auth_users u ON u.id = r.user_id
-                     WHERE r.user_id <> $1 AND p.status = 'active'
-                     ORDER BY (p.author_id = $1) DESC, r.created_at DESC
+                     WHERE r.user_id <> $1 AND p.author_id = $1 AND p.status = 'active'
+                     ORDER BY r.created_at DESC
                      LIMIT 6`,
                     [uid]
                 );
@@ -2866,16 +2948,25 @@ export class JukrahService {
                 }
             } catch {}
 
-            const connRows = await this.dataSource.query(
-                `SELECT uc.id, uc.status, uc.updated_at as created_at,
-                        u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
-                 FROM user_connections uc
-                 JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
-                 WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED') OR (uc.addressee_id = $1 AND uc.status = 'ACCEPTED'))
-                 ORDER BY uc.updated_at DESC
-                 LIMIT 12`,
-                [uid]
-            );
+            const connSql = (!isAdmin && (satkerId > 0 || poldaPrefix))
+                ? `SELECT uc.id, uc.status, uc.updated_at as created_at,
+                          u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                   FROM user_connections uc
+                   JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
+                   LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                   WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED') OR (uc.addressee_id = $1 AND uc.status = 'ACCEPTED'))
+                     AND ($2::bigint = 0 OR u.scope_satker_id = $2 OR ($3 <> '' AND s.kode LIKE $3 || '%'))
+                   ORDER BY (uc.status = 'PENDING') DESC, (u.scope_satker_id = $2) DESC, uc.updated_at DESC
+                   LIMIT 10`
+                : `SELECT uc.id, uc.status, uc.updated_at as created_at,
+                          u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                   FROM user_connections uc
+                   JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
+                   WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED') OR (uc.addressee_id = $1 AND uc.status = 'ACCEPTED'))
+                   ORDER BY uc.updated_at DESC
+                   LIMIT 12`;
+            const connParams = (!isAdmin && (satkerId > 0 || poldaPrefix)) ? [uid, satkerId, poldaPrefix] : [uid];
+            const connRows = await this.dataSource.query(connSql, connParams);
             items.push(...connRows.map((r: any) => {
                 const handle = this.formatCallsign(r.other_callsign || r.other_username, r.other_id, r.other_username, r.other_name);
                 return this.humanizeNotificationItem({
@@ -3006,8 +3097,12 @@ export class JukrahService {
                    FROM bdb_lp_pelimpahan p
                    LEFT JOIN bdb_laporan_polisi lp ON lp.id = p.lp_id
                    WHERE (p.satker_tujuan_id = $1 OR p.satker_asal_id = $1)
-                   ORDER BY p.created_at DESC LIMIT 6`;
-            const lpParams = isAdmin ? [] : [satkerId];
+                      OR ($2 <> '' AND (
+                          p.satker_tujuan_id IN (SELECT id FROM bdb_satker WHERE kode LIKE $2 || '%')
+                          OR p.satker_asal_id IN (SELECT id FROM bdb_satker WHERE kode LIKE $2 || '%')
+                      ))
+                   ORDER BY (p.satker_tujuan_id = $1 OR p.satker_asal_id = $1) DESC, p.created_at DESC LIMIT 6`;
+            const lpParams = isAdmin ? [] : [satkerId, poldaPrefix];
             const lpRows = await this.dataSource.query(lpSql, lpParams);
             items.push(...lpRows.map((r: any, idx: number) => this.humanizeNotificationItem({
                 id: 'lp_' + r.id,
