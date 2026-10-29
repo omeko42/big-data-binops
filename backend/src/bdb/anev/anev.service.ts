@@ -1084,8 +1084,14 @@ export class AnevService {
     }
 
     async buildFilteredPetaTree(f: any) {
-        const params: any[] = [];
-        const wh: string[] = ['1=1'];
+        const params = [];
+        const wh = ['1=1'];
+        const kel = String(f.kelompok || 'INTERNAL_RESERSE').toUpperCase();
+        if (kel === 'INTERNAL_RESERSE') {
+            wh.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            wh.push('is_internal_reserse = false');
+        }
         if (f.date_from) {
             params.push(f.date_from);
             wh.push(`tanggal >= $${params.length}::date`);
@@ -1094,11 +1100,11 @@ export class AnevService {
             params.push(f.date_to);
             wh.push(`tanggal <= $${params.length}::date`);
         }
-        if (f.year) {
+        if (f.year && !f.date_from && !f.date_to) {
             params.push(Number(f.year));
             wh.push(`extract(year from tanggal) = $${params.length}`);
         }
-        if (f.month) {
+        if (f.month && !f.date_from && !f.date_to) {
             params.push(Number(f.month));
             wh.push(`extract(month from tanggal) = $${params.length}`);
         }
@@ -1140,15 +1146,15 @@ export class AnevService {
 
         const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
         const statuses = await this.allStatuses();
-        const node = new Map<number, AnevNode>();
-        const parentOf = new Map<number, number | null>();
+        const node = new Map();
+        const parentOf = new Map();
         for (const s of satkers) {
             const sidNum = Number(s.id);
             const pidNum = s.parent_id != null ? Number(s.parent_id) : null;
             node.set(sidNum, { id: sidNum, kode: s.kode, nama: s.deskripsi, parent_id: pidNum, depth: Number(s.depth || 0), status: {}, ct: 0, cc: 0, total: 0 });
             parentOf.set(sidNum, pidNum);
         }
-        const direct = new Map<number, { status: Record<string, number>; ct: number; cc: number; total: number }>();
+        const direct = new Map();
         for (const c of counts) {
             const cSid = Number(c.sid);
             let d = direct.get(cSid);
@@ -1164,11 +1170,11 @@ export class AnevService {
             d.total += jmlNum;
         }
         for (const [sid, d] of direct) {
-            let cur: number | null | undefined = sid;
-            const guard = new Set<number>();
+            let cur = sid;
+            const guard = new Set();
             while (cur != null && node.has(cur) && !guard.has(cur)) {
                 guard.add(cur);
-                const n = node.get(cur)!;
+                const n = node.get(cur);
                 for (const [code, v] of Object.entries(d.status)) {
                     n.status[code] = (n.status[code] || 0) + v;
                 }
@@ -1178,17 +1184,17 @@ export class AnevService {
                 cur = parentOf.get(cur) ?? null;
             }
         }
-        const byId = new Map<number, AnevNode>();
+        const byId = new Map();
         for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
-        const roots: AnevNode[] = [];
+        const roots = [];
         for (const n of byId.values()) {
             const p = n.parent_id != null ? byId.get(n.parent_id) : null;
-            if (p) p.children!.push(n);
+            if (p) p.children.push(n);
             else roots.push(n);
         }
         const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
-        const byKode = new Map<string, AnevNode>();
-        const indexRec = (arr: AnevNode[]) => arr.forEach((n) => {
+        const byKode = new Map();
+        const indexRec = (arr) => arr.forEach((n) => {
             byKode.set(n.kode, n);
             if (n.children) indexRec(n.children);
         });
@@ -1197,8 +1203,14 @@ export class AnevService {
     }
 
     async queryPetaHotspotsAndCrimes(f: any) {
-        const hParams: any[] = [];
-        const hWhere: string[] = ['1=1'];
+        const hParams = [];
+        const hWhere = ['1=1'];
+        const kel = String(f.kelompok || 'INTERNAL_RESERSE').toUpperCase();
+        if (kel === 'INTERNAL_RESERSE') {
+            hWhere.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            hWhere.push('is_internal_reserse = false');
+        }
         const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
         const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
         hParams.push(ymFrom);
@@ -1266,8 +1278,13 @@ export class AnevService {
             LIMIT 320
         `;
 
-        const cParams: any[] = [];
-        const cWhere: string[] = ['jenis_kejahatan_id <> 516'];
+        const cParams = [];
+        const cWhere = ['jenis_kejahatan_id <> 516'];
+        if (kel === 'INTERNAL_RESERSE') {
+            cWhere.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            cWhere.push('is_internal_reserse = false');
+        }
         if (f.date_from) {
             cParams.push(f.date_from);
             cWhere.push(`tanggal >= $${cParams.length}::date`);
@@ -1311,8 +1328,8 @@ export class AnevService {
             this.ds.query(crimeCountsSql, cParams).catch(() => [])
         ]);
 
-        const maxHotCT = Math.max(1, ...(hotRows.map((r: any) => Number(r.ct || 0))));
-        const hotspots = hotRows.map((r: any, idx: number) => {
+        const maxHotCT = Math.max(1, ...(hotRows.map(r => Number(r.ct || 0))));
+        const hotspots = hotRows.map((r, idx) => {
             const ctVal = Number(r.ct || 0);
             const ccVal = Number(r.cc || 0);
             const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
@@ -1339,8 +1356,18 @@ export class AnevService {
     }
 
     async petaKejahatan(f: any, userId?: number) {
-        const dateFrom = String(f.date_from || f.from || `${new Date().getFullYear()}-01-01`).trim();
-        const dateTo = String(f.date_to || f.to || `${new Date().getFullYear()}-12-31`).trim();
+        const rawYear = f.year ? Number(f.year) : null;
+        const rawMonth = f.month ? Number(f.month) : null;
+        const pad2 = (n) => String(n).padStart(2, '0');
+        let defaultFrom = `${rawYear || new Date().getFullYear()}-01-01`;
+        let defaultTo = `${rawYear || new Date().getFullYear()}-12-31`;
+        if (rawYear && rawMonth && rawMonth >= 1 && rawMonth <= 12) {
+            const lastDay = new Date(rawYear, rawMonth, 0).getDate();
+            defaultFrom = `${rawYear}-${pad2(rawMonth)}-01`;
+            defaultTo = `${rawYear}-${pad2(rawMonth)}-${pad2(lastDay)}`;
+        }
+        const dateFrom = String(f.date_from || f.from || defaultFrom).trim();
+        const dateTo = String(f.date_to || f.to || defaultTo).trim();
         const parentKode = f.parent ? String(f.parent).trim() : '';
         const jenisKejahatan = String(f.jenis_kejahatan || f.kategori_kejahatan || f.crime || '').trim();
         const golonganId = (f.golongan_id || f.golongan_kejahatan_id) ? Number(f.golongan_id || f.golongan_kejahatan_id) : null;
@@ -1352,6 +1379,14 @@ export class AnevService {
         const searchQ = (f.search || f.q) ? String(f.search || f.q).trim() : '';
         const force = String(f.force || f.refresh || '') === '1';
 
+        const rawKelompok = String(f.kelompok || f.functionDomain || f.function_domain || 'INTERNAL_RESERSE').trim().toUpperCase();
+        const kelompok = (rawKelompok === 'EKSTERNAL_RESERSE' || rawKelompok === 'EKSTERNAL')
+            ? 'EKSTERNAL_RESERSE'
+            : (rawKelompok === 'SEMUA' || rawKelompok === 'ALL')
+                ? 'SEMUA'
+                : 'INTERNAL_RESERSE';
+        const organizationDomain = String(f.organizationDomain || f.organization_domain || 'INTERNAL_POLRI').trim().toUpperCase();
+
         const hasCustomFilter = Boolean(
             (jenisKejahatan && jenisKejahatan.toUpperCase() !== 'SEMUA' && jenisKejahatan.toUpperCase() !== 'ALL') ||
             golonganId ||
@@ -1361,8 +1396,10 @@ export class AnevService {
 
         const scope = await this.resolveScope(userId);
         const cacheKey = [
-            'PETA_V3',
+            'PETA_V4',
             scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
+            kelompok,
+            organizationDomain,
             dateFrom,
             dateTo,
             parentKode || 'ROOT',
@@ -1384,10 +1421,12 @@ export class AnevService {
         }
 
         const treeFilter = {
+            kelompok,
+            organizationDomain,
             date_from: dateFrom,
             date_to: dateTo,
-            year: f.year,
-            month: f.month,
+            year: rawYear,
+            month: rawMonth,
             jenis_kejahatan: jenisKejahatan,
             golongan_id: golonganId,
             model_lp: modelLp,
@@ -1398,11 +1437,82 @@ export class AnevService {
             search: searchQ
         };
 
-        const { roots, statuses, totals, byKode } = hasCustomFilter
-            ? await this.buildFilteredPetaTree(treeFilter)
-            : await this.buildTree({ date_from: dateFrom, date_to: dateTo, year: f.year, month: f.month });
+        const { roots, statuses, totals, byKode } = await this.buildFilteredPetaTree(treeFilter);
 
-        const mapNode = (n: AnevNode) => {
+        // Enrich with bdb_kinerja_perkara_summary_snapshot when kelompok === 'INTERNAL_RESERSE' and no custom crime filter is active
+        let kinerjaSnap = null;
+        if (kelompok === 'INTERNAL_RESERSE' && !hasCustomFilter) {
+            let snapTahun = rawYear;
+            let snapBulan = rawMonth;
+            const mFrom = dateFrom.match(/^(\d{4})-(\d{2})-01$/);
+            const mTo = dateTo.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
+                snapTahun = Number(mFrom[1]);
+                snapBulan = Number(mFrom[2]);
+            } else if (/^(\d{4})-01-01$/.test(dateFrom) && /^(\d{4})-12-31$/.test(dateTo) && dateFrom.slice(0, 4) === dateTo.slice(0, 4)) {
+                snapTahun = Number(dateFrom.slice(0, 4));
+                snapBulan = null;
+            }
+            if (snapTahun != null) {
+                try {
+                    const snapRows = snapBulan != null
+                        ? await this.ds.query(
+                            "SELECT summary_data, rekap_totals, rekap_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' ORDER BY refreshed_at DESC LIMIT 1",
+                            [snapTahun, snapBulan]
+                        )
+                        : await this.ds.query(
+                            "SELECT summary_data, rekap_totals, rekap_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' ORDER BY refreshed_at DESC LIMIT 1",
+                            [snapTahun]
+                        );
+                    if (snapRows.length > 0) {
+                        kinerjaSnap = snapRows[0];
+                    }
+                } catch (_e) {}
+            }
+        }
+
+        const snapNodeByKode = new Map();
+        const snapNodeById = new Map();
+        if (kinerjaSnap?.rekap_data?.children) {
+            for (const childGroup of Object.values(kinerjaSnap.rekap_data.children)) {
+                const nodes = childGroup?.nodes;
+                if (Array.isArray(nodes)) {
+                    for (const sn of nodes) {
+                        if (sn?.kode) snapNodeByKode.set(String(sn.kode), sn);
+                        if (sn?.id != null) snapNodeById.set(Number(sn.id), sn);
+                    }
+                }
+            }
+        }
+
+        const mapNode = (n) => {
+            const sn = snapNodeByKode.get(String(n.kode)) || snapNodeById.get(Number(n.id));
+            if (sn) {
+                const ctVal = Number(sn.ct ?? n.total ?? 0);
+                const ccAkt = Number(sn.cc_aktual ?? n.cc ?? 0);
+                const ccTgk = Number(sn.cc_tunggakan ?? 0);
+                const ccVal = ccAkt + ccTgk;
+                const cpBerjalan = Number(sn.cp_berjalan ?? Math.max(0, ctVal - ccAkt));
+                const cpTunggakan = Number(sn.cp_tunggakan ?? 0);
+                const crVal = Number(sn.cr ?? (ctVal > 0 ? Math.round((ccVal / (ctVal + ccTgk)) * 10000) / 100 : 0));
+                return {
+                    id: n.id,
+                    kode: n.kode,
+                    nama: n.nama,
+                    has_children: Boolean((n.children && n.children.length > 0) || sn.has_children),
+                    ct: ctVal,
+                    cc: ccVal,
+                    cc_aktual: ccAkt,
+                    cc_tunggakan: ccTgk,
+                    cp_berjalan: cpBerjalan,
+                    cp_tunggakan: cpTunggakan,
+                    belum_selesai: cpBerjalan + cpTunggakan,
+                    cr: crVal,
+                    crime_rate: sn.crime_rate ?? null,
+                    crime_clock_detik: sn.crime_clock_detik ?? null,
+                    status: sn.status || n.status || {}
+                };
+            }
             const ctVal = Number(n.total || 0);
             const ccVal = Number(n.cc || 0);
             const cpBerjalan = Math.max(0, ctVal - ccVal);
@@ -1418,6 +1528,7 @@ export class AnevService {
                 cc_tunggakan: 0,
                 cp_berjalan: cpBerjalan,
                 cp_tunggakan: 0,
+                belum_selesai: cpBerjalan,
                 cr: crVal,
                 status: n.status || {}
             };
@@ -1435,8 +1546,8 @@ export class AnevService {
                 }
             }
             const children = (targetNode?.children || []).map(mapNode).sort((a, b) => b.ct - a.ct);
-            let childHotspots: any[] = [];
-            let childTopRawan: any[] = [];
+            let childHotspots = [];
+            let childTopRawan = [];
             if (targetNode?.id) {
                 const hRes = await this.queryPetaHotspotsAndCrimes({
                     ...treeFilter,
@@ -1479,13 +1590,14 @@ export class AnevService {
             { match: /TIPIDTER/i, label: 'Dittipidter Bareskrim Polri', alamat: 'Gedung Bareskrim Polri Lt. 8, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2394, lng: 106.8012 },
             { match: /PPA|PPO/i, label: 'Dit PPA & PPO Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2390, lng: 106.8002 }
         ];
-        const direktoratList: any[] = [];
+        const direktoratList = [];
         let mabesCT = 0;
         let mabesCC = 0;
         for (const spec of mabesDirektoratCoords) {
             const found = allNodes.find((n) => spec.match.test(String(n.nama || '')) && /BARESKRIM/i.test(String(n.nama || '')));
-            const ctVal = Number(found?.total || 0);
-            const ccVal = Number(found?.cc || 0);
+            const mapped = found ? mapNode(found) : null;
+            const ctVal = Number(mapped?.ct || 0);
+            const ccVal = Number(mapped?.cc || 0);
             mabesCT += ctVal;
             mabesCC += ccVal;
             direktoratList.push({
@@ -1498,33 +1610,44 @@ export class AnevService {
                 lng: spec.lng,
                 ct: ctVal,
                 cc: ccVal,
-                cp_berjalan: Math.max(0, ctVal - ccVal),
-                cp_tunggakan: 0,
-                cr: ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0
+                cc_aktual: Number(mapped?.cc_aktual || ccVal),
+                cc_tunggakan: Number(mapped?.cc_tunggakan || 0),
+                cp_berjalan: Number(mapped?.cp_berjalan ?? Math.max(0, ctVal - ccVal)),
+                cp_tunggakan: Number(mapped?.cp_tunggakan || 0),
+                cr: Number(mapped?.cr ?? (ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0))
             });
         }
         const bareskrimRoot = allNodes.find((n) => /^BARESKRIM POLRI$/i.test(String(n.nama || '').trim()));
-        if (bareskrimRoot && Number(bareskrimRoot.total || 0) > mabesCT) {
-            mabesCT = Number(bareskrimRoot.total || 0);
-            mabesCC = Number(bareskrimRoot.cc || 0);
+        const bareskrimMapped = bareskrimRoot ? mapNode(bareskrimRoot) : null;
+        if (bareskrimMapped && Number(bareskrimMapped.ct || 0) > mabesCT) {
+            mabesCT = Number(bareskrimMapped.ct || 0);
+            mabesCC = Number(bareskrimMapped.cc || 0);
         }
-        const statusTotals: Record<string, number> = {};
+        const statusTotals = {};
         for (const r of roots) {
             for (const [k, v] of Object.entries(r.status || {})) {
                 statusTotals[k] = (statusTotals[k] || 0) + Number(v || 0);
             }
         }
-        const per_status = statuses.map((s: any) => ({
+        const per_status = statuses.map((s) => ({
             code: s.code,
             nama: s.nama,
             kategori: s.kategori || 'CT',
             urutan: s.urutan,
             jumlah: Number(statusTotals[s.code] || 0)
         }));
-        const totalCT = Number(totals.total || 0);
-        const totalCC = Number(totals.cc || 0);
-        const totalCR = totalCT > 0 ? Math.round((totalCC / totalCT) * 10000) / 100 : 0;
-        let scopeSatker: string | null = null;
+
+        const snapSum = kinerjaSnap?.summary_data?.data || kinerjaSnap?.rekap_totals || null;
+        const totalCT = Number(snapSum?.ct ?? totals.total ?? 0);
+        const ccAktual = Number(snapSum?.cc_aktual ?? totals.cc ?? 0);
+        const ccTunggakan = Number(snapSum?.cc_tunggakan ?? 0);
+        const totalCC = ccAktual + ccTunggakan;
+        const cpBerjalan = Number(snapSum?.cp_berjalan ?? Math.max(0, totalCT - ccAktual));
+        const cpTunggakan = Number(snapSum?.cp_tunggakan ?? 0);
+        const belumSelesai = cpBerjalan + cpTunggakan;
+        const totalCR = Number(snapSum?.cr ?? (totalCT > 0 ? Math.round((totalCC / (totalCT + ccTunggakan)) * 10000) / 100 : 0));
+
+        let scopeSatker = null;
         if (!scope.all && scope.satkerId) {
             const sr = await this.ds.query('select deskripsi from bdb_satker where id=$1', [scope.satkerId]);
             scopeSatker = sr[0]?.deskripsi || null;
@@ -1534,7 +1657,14 @@ export class AnevService {
             data: {
                 from: dateFrom,
                 to: dateTo,
+                taxonomy: {
+                    functionDomain: kelompok,
+                    organizationDomain
+                },
                 applied_filters: {
+                    kelompok,
+                    functionDomain: kelompok,
+                    organizationDomain,
                     jenis_kejahatan: jenisKejahatan || 'SEMUA',
                     golongan_id: golonganId,
                     model_lp: modelLp || 'SEMUA',
@@ -1543,16 +1673,26 @@ export class AnevService {
                     search: searchQ || ''
                 },
                 ct: totalCT,
+                total_ct: totalCT,
                 cc: totalCC,
+                total_cc: totalCC,
+                cc_aktual: ccAktual,
+                cc_tunggakan: ccTunggakan,
+                cp_berjalan: cpBerjalan,
+                cp_tunggakan: cpTunggakan,
+                belum_selesai: belumSelesai,
                 cr: totalCR,
                 pct: totalCR,
                 summary: {
                     ct: totalCT,
+                    total_ct: totalCT,
                     cc: totalCC,
-                    cc_aktual: totalCC,
-                    cc_tunggakan: 0,
-                    cp_berjalan: Math.max(0, totalCT - totalCC),
-                    cp_tunggakan: 0,
+                    total_cc: totalCC,
+                    cc_aktual: ccAktual,
+                    cc_tunggakan: ccTunggakan,
+                    cp_berjalan: cpBerjalan,
+                    cp_tunggakan: cpTunggakan,
+                    belum_selesai: belumSelesai,
                     cr: totalCR
                 },
                 mabes: {
@@ -1564,9 +1704,11 @@ export class AnevService {
                     lng: 106.8006,
                     ct: mabesCT,
                     cc: mabesCC,
-                    cp_berjalan: Math.max(0, mabesCT - mabesCC),
-                    cp_tunggakan: 0,
-                    cr: mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0,
+                    cc_aktual: Number(bareskrimMapped?.cc_aktual ?? mabesCC),
+                    cc_tunggakan: Number(bareskrimMapped?.cc_tunggakan ?? 0),
+                    cp_berjalan: Number(bareskrimMapped?.cp_berjalan ?? Math.max(0, mabesCT - mabesCC)),
+                    cp_tunggakan: Number(bareskrimMapped?.cp_tunggakan ?? 0),
+                    cr: Number(bareskrimMapped?.cr ?? (mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0)),
                     direktorat: direktoratList
                 },
                 polda: poldaNodes,

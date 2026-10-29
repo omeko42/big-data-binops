@@ -1677,17 +1677,42 @@ export class JukrahService {
 
         const data = rows.map(mapUserRow);
 
+        let activePersonnelTotal = total;
+        const allActiveCache = this.networkCountCache.get('0|all||');
+        if (allActiveCache && allActiveCache.exp > now) {
+            activePersonnelTotal = allActiveCache.total;
+        } else {
+            try {
+                const actRes = await this.dataSource.query(
+                    `SELECT COUNT(*)::int as total FROM auth_users u WHERE (u.status = 'AKTIF' OR u.status = 'active')`
+                );
+                activePersonnelTotal = Number(actRes[0]?.total || total);
+                this.networkCountCache.set('0|all||', { exp: Date.now() + JukrahService.NETWORK_CACHE_TTL_MS, total: activePersonnelTotal });
+            } catch {}
+        }
+
         let counts = { incoming: 0, connected: 0, outgoing: 0 };
         let incomingRequests: any[] = [];
         if (uid > 0) {
             try {
                 const summaryRes = await this.dataSource.query(
-                    `SELECT
-                        COUNT(*) FILTER (WHERE addressee_id = $1 AND status = 'PENDING')::int as incoming_count,
-                        COUNT(*) FILTER (WHERE requester_id = $1 AND status = 'PENDING')::int as outgoing_count,
-                        COUNT(*) FILTER (WHERE (requester_id = $1 OR addressee_id = $1) AND status = 'ACCEPTED')::int as connected_count
-                     FROM user_connections
-                     WHERE requester_id = $1 OR addressee_id = $1`,
+                    `WITH peer_conns AS (
+                        SELECT
+                            CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END as peer_id,
+                            uc.requester_id,
+                            uc.addressee_id,
+                            uc.status
+                        FROM user_connections uc
+                        WHERE (uc.requester_id = $1 OR uc.addressee_id = $1)
+                          AND uc.requester_id <> uc.addressee_id
+                    )
+                    SELECT
+                        COUNT(DISTINCT pc.peer_id) FILTER (WHERE pc.addressee_id = $1 AND pc.status = 'PENDING')::int as incoming_count,
+                        COUNT(DISTINCT pc.peer_id) FILTER (WHERE pc.requester_id = $1 AND pc.status = 'PENDING')::int as outgoing_count,
+                        COUNT(DISTINCT pc.peer_id) FILTER (WHERE pc.status = 'ACCEPTED')::int as connected_count
+                    FROM peer_conns pc
+                    JOIN auth_users u ON u.id = pc.peer_id
+                    WHERE (u.status = 'AKTIF' OR u.status = 'active') AND u.id <> $1`,
                     [uid]
                 );
                 if (summaryRes.length) {
@@ -1715,6 +1740,7 @@ export class JukrahService {
                              LIMIT 1
                          ) tp ON true
                          WHERE uc.addressee_id = $1 AND uc.status = 'PENDING'
+                           AND (u.status = 'AKTIF' OR u.status = 'active') AND u.id <> $1
                          ORDER BY uc.updated_at DESC
                          LIMIT 12`,
                         [uid]
@@ -1729,6 +1755,7 @@ export class JukrahService {
             data,
             incoming_requests: incomingRequests,
             counts,
+            active_personnel_total: activePersonnelTotal,
             total,
             total_pages: Math.ceil(total / limit) || 1,
             page,

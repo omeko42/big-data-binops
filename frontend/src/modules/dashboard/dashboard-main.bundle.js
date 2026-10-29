@@ -1368,7 +1368,11 @@ function CasPetaKejahatanView({
     });
   }
 
-  // Operational Filter State (Defaulting like Daftar LP / Kinerja Perkara + Crime Heatmap Filtering)
+  // Operational Filter State (Defaulting 1:1 with Kinerja Perkara & Daftar LP: Internal Reserse + Tahun 2026 = 383.642 CT)
+  const [kelompokFilter, setKelompokFilter] = (0, a.useState)("INTERNAL_RESERSE");
+  const [periodMode, setPeriodMode] = (0, a.useState)("tahun"); // "bulan" | "tahun" | "custom"
+  const [selectedYear, setSelectedYear] = (0, a.useState)(2026);
+  const [selectedMonth, setSelectedMonth] = (0, a.useState)(10);
   const [filterFrom, setFilterFrom] = (0, a.useState)(() => ee || "2026-01-01");
   const [filterTo, setFilterTo] = (0, a.useState)(() => et || "2026-12-31");
   const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
@@ -1379,59 +1383,119 @@ function CasPetaKejahatanView({
   const [tkpSearch, setTkpSearch] = (0, a.useState)("");
   const [showHotspotPins, setShowHotspotPins] = (0, a.useState)(true);
   const [selectedHotspot, setSelectedHotspot] = (0, a.useState)(null);
+  const [showFilterPopover, setShowFilterPopover] = (0, a.useState)(false);
+  const [filterPopoverTab, setFilterPopoverTab] = (0, a.useState)("periode"); // "periode" | "satker" | "kejahatan" | "parameter"
 
-  (0, a.useEffect)(() => {
-    if (ee) setFilterFrom(ee);
-    if (et) setFilterTo(et);
-  }, [ee, et]);
+  const MONTH_NAMES_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
   const applyPeriodPreset = (preset) => {
     setPeriodPreset(preset);
     if (preset === "tahun_ini") {
+      setPeriodMode("tahun");
+      setSelectedYear(2026);
       setFilterFrom("2026-01-01");
       setFilterTo("2026-12-31");
-    } else if (preset === "tahun_2025") {
+    } else if (preset === "tahun_lalu" || preset === "tahun_2025") {
+      setPeriodMode("tahun");
+      setSelectedYear(2025);
       setFilterFrom("2025-01-01");
       setFilterTo("2025-12-31");
-    } else if (preset === "semua") {
-      setFilterFrom("2025-01-01");
-      setFilterTo("2026-12-31");
-    } else if (preset === "q1_2026") {
-      setFilterFrom("2026-01-01");
-      setFilterTo("2026-03-31");
-    } else if (preset === "q2_2026") {
-      setFilterFrom("2026-04-01");
-      setFilterTo("2026-06-30");
-    } else if (preset === "q3_2026") {
-      setFilterFrom("2026-07-01");
+    } else if (preset === "bulan_ini") {
+      setPeriodMode("bulan");
+      setSelectedYear(2026);
+      setSelectedMonth(10);
+      setFilterFrom("2026-10-01");
+      setFilterTo("2026-10-31");
+    } else if (preset === "bulan_lalu") {
+      setPeriodMode("bulan");
+      setSelectedYear(2026);
+      setSelectedMonth(9);
+      setFilterFrom("2026-09-01");
       setFilterTo("2026-09-30");
     }
   };
 
+  const handleSelectYearMonth = (mode, yr, mo) => {
+    const y = Number(yr || selectedYear || 2026);
+    const m = Number(mo || selectedMonth || 10);
+    setPeriodMode(mode);
+    setSelectedYear(y);
+    setSelectedMonth(m);
+    if (mode === "tahun") {
+      setPeriodPreset(y === 2026 ? "tahun_ini" : "tahun_lalu");
+      setFilterFrom(y + "-01-01");
+      setFilterTo(y + "-12-31");
+    } else if (mode === "bulan") {
+      setPeriodPreset("custom_bulan");
+      const lastDay = new Date(y, m, 0).getDate();
+      const mm = String(m).padStart(2, "0");
+      const dd = String(lastDay).padStart(2, "0");
+      setFilterFrom(y + "-" + mm + "-01");
+      setFilterTo(y + "-" + mm + "-" + dd);
+    }
+  };
+
   const resetOperationalFilters = () => {
+    setKelompokFilter("INTERNAL_RESERSE");
+    setPeriodMode("tahun");
+    setSelectedYear(2026);
+    setSelectedMonth(10);
     setPeriodPreset("tahun_ini");
-    setFilterFrom(ee || "2026-01-01");
-    setFilterTo(et || "2026-12-31");
+    setFilterFrom("2026-01-01");
+    setFilterTo("2026-12-31");
     setCrimeFilter("SEMUA");
     setGolonganFilter("SEMUA");
     setModelLpFilter("SEMUA");
     setStatusFilter("SEMUA");
     setTkpSearch("");
+    setSearchQ("");
     setSelectedHotspot(null);
+    handleResetNasional();
   };
+
+  const activePeriodBadgeLabel = (0, a.useMemo)(() => {
+    if (periodMode === "tahun") return "Tahun " + selectedYear;
+    if (periodMode === "bulan") return (MONTH_NAMES_ID[selectedMonth - 1] || "Bulan") + " " + selectedYear;
+    return (filterFrom || "2026-01-01") + " s/d " + (filterTo || "2026-12-31");
+  }, [periodMode, selectedYear, selectedMonth, filterFrom, filterTo]);
+
+  const activeKelompokLabel = (0, a.useMemo)(() => {
+    if (kelompokFilter === "EKSTERNAL_RESERSE") return "Eksternal Reserse";
+    if (kelompokFilter === "SEMUA") return "Semua Kelompok";
+    return "Internal Reserse";
+  }, [kelompokFilter]);
+
+  const activeFilterCount = (0, a.useMemo)(() => {
+    let c = 3; // Default 3 active pills like Kinerja Perkara: Tahun, Kelompok, Satker
+    if (crimeFilter !== "SEMUA") c++;
+    if (golonganFilter !== "SEMUA") c++;
+    if (modelLpFilter !== "SEMUA") c++;
+    if (statusFilter !== "SEMUA") c++;
+    if (tkpSearch.trim()) c++;
+    return c;
+  }, [crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
 
   const activeFilterParams = (0, a.useMemo)(() => {
     const p = {
-      from: filterFrom || ee || "2026-01-01",
-      to: filterTo || et || "2026-12-31"
+      from: filterFrom || "2026-01-01",
+      to: filterTo || "2026-12-31",
+      kelompok: kelompokFilter || "INTERNAL_RESERSE",
+      functionDomain: kelompokFilter || "INTERNAL_RESERSE",
+      organizationDomain: "INTERNAL_POLRI"
     };
+    if (periodMode === "tahun") {
+      p.year = selectedYear;
+    } else if (periodMode === "bulan") {
+      p.year = selectedYear;
+      p.month = selectedMonth;
+    }
     if (crimeFilter && crimeFilter !== "SEMUA") p.jenis_kejahatan = crimeFilter;
     if (golonganFilter && golonganFilter !== "SEMUA") p.golongan_id = golonganFilter;
     if (modelLpFilter && modelLpFilter !== "SEMUA") p.model_lp = modelLpFilter;
     if (statusFilter && statusFilter !== "SEMUA") p.status = statusFilter;
     if (tkpSearch && tkpSearch.trim()) p.search = tkpSearch.trim();
     return p;
-  }, [filterFrom, filterTo, ee, et, crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
+  }, [filterFrom, filterTo, kelompokFilter, periodMode, selectedYear, selectedMonth, crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
 
   // Camera & 4-Mode Drilldown State (0 = Nasional/36 Wilkum Polda, 1 = Polda/Polres, 2 = Polres/Polsek, 3 = Mabes/Bareskrim Polri)
   const [drillLevel, setDrillLevel] = (0, a.useState)(0);
@@ -2833,6 +2897,8 @@ function CasPetaKejahatanView({
           ".cas-peta-grid { display: grid; grid-template-columns: minmax(0, 1.88fr) minmax(320px, 1fr); gap: 0.85rem; align-items: stretch; }",
           ".cas-peta-scroll-bar { display: flex; align-items: center; gap: 0.38rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }",
           ".cas-peta-scroll-bar::-webkit-scrollbar { display: none; }",
+          ".cas-peta-pop-hdr, .cas-peta-pop-hdr .cas-peta-pop-title { color: #ffffff !important; }",
+          ".cas-peta-pop-hdr .cas-peta-pop-sub { color: #cbd5e1 !important; }",
           "@media (max-width: 1120px) {",
           "  .cas-peta-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }",
           "  .cas-peta-grid { grid-template-columns: 1fr !important; }",
@@ -2963,344 +3029,926 @@ function CasPetaKejahatanView({
           boxShadow: T.cardShadow
         },
         children: [
-          // Row 0A: Default Operational Filter Bar (Like Daftar LP / Kinerja Perkara)
+          // Row 0: Simple 1-Row Filter Bar + 4-Tab Popover (Matching Kinerja Perkara & Daftar LP 100%)
           (0, t.jsxs)("div", {
             style: {
+              position: "relative",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              flexDirection: "column",
               gap: "0.45rem",
               paddingBottom: "0.5rem",
               borderBottom: "1px solid " + T.divider
             },
             children: [
               (0, t.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", flex: "1 1 auto" },
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "nowrap",
+                  gap: "0.4rem",
+                  overflowX: "auto"
+                },
                 children: [
-                  (0, t.jsx)("span", {
-                    style: { fontSize: "0.7rem", fontWeight: 800, color: T.textPrimary, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginRight: "0.1rem" },
-                    children: "🔎 Filter Operasional LP:"
-                  }),
-                  // Period Preset Selector
-                  (0, t.jsxs)("select", {
-                    value: periodPreset,
-                    onChange: ev => applyPeriodPreset(ev.target.value),
-                    title: "Pilih rentang periode Laporan Polisi",
-                    style: {
-                      padding: "0.32rem 0.55rem",
-                      borderRadius: 7,
-                      border: "1px solid " + T.inputBorder,
-                      background: T.inputBg,
-                      color: T.textPrimary,
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "tahun_ini", children: "📅 Tahun Ini (2026)" }),
-                      (0, t.jsx)("option", { value: "tahun_2025", children: "📅 Tahun 2025" }),
-                      (0, t.jsx)("option", { value: "semua", children: "📅 Semua Periode (2025–2026)" }),
-                      (0, t.jsx)("option", { value: "q1_2026", children: "📅 Triwulan I 2026" }),
-                      (0, t.jsx)("option", { value: "q2_2026", children: "📅 Triwulan II 2026" }),
-                      (0, t.jsx)("option", { value: "q3_2026", children: "📅 Triwulan III 2026" }),
-                      (0, t.jsx)("option", { value: "custom", children: "📅 Kustom Tanggal" })
-                    ]
-                  }),
-                  // Date From & To Inputs
+                  // Left: [ 🎛️ Filter Perkara (N) ▾ ] + Segmented Quick Buttons (Kelompok | Satker | Kejahatan | Periode)
                   (0, t.jsxs)("div", {
-                    style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "nowrap", flexShrink: 0 },
                     children: [
-                      (0, t.jsx)("input", {
-                        type: "date",
-                        value: filterFrom,
-                        onChange: ev => { setPeriodPreset("custom"); setFilterFrom(ev.target.value); },
-                        title: "Tanggal Mulai LP",
+                      (0, t.jsxs)("button", {
+                        type: "button",
+                        onClick: () => setShowFilterPopover(v => !v),
                         style: {
-                          padding: "0.28rem 0.45rem",
-                          borderRadius: 7,
-                          border: "1px solid " + T.inputBorder,
-                          background: T.inputBg,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.4rem",
+                          padding: "0.36rem 0.72rem",
+                          borderRadius: 8,
+                          border: "1.5px solid " + (showFilterPopover ? "#dc2626" : T.ctBorder),
+                          background: showFilterPopover ? (isDark ? "rgba(220,38,38,0.22)" : "#fef2f2") : T.cardBg,
                           color: T.textPrimary,
-                          fontSize: "0.71rem",
-                          fontWeight: 600
-                        }
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          boxShadow: showFilterPopover ? "0 2px 8px rgba(220,38,38,0.18)" : "none"
+                        },
+                        children: [
+                          (0, t.jsx)("span", { style: { color: "#dc2626" }, children: "🎛️" }),
+                          (0, t.jsx)("span", { children: "Filter Perkara" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              minWidth: 19,
+                              height: 19,
+                              padding: "0 0.32rem",
+                              borderRadius: 999,
+                              background: "#dc2626",
+                              color: "#ffffff",
+                              fontSize: "0.68rem",
+                              fontWeight: 800
+                            },
+                            children: String(activeFilterCount)
+                          }),
+                          (0, t.jsx)("span", { style: { fontSize: "0.65rem", color: T.textMuted }, children: showFilterPopover ? "▴" : "▾" })
+                        ]
                       }),
-                      (0, t.jsx)("span", { style: { fontSize: "0.7rem", color: T.textMuted, fontWeight: 700 }, children: "s/d" }),
-                      (0, t.jsx)("input", {
-                        type: "date",
-                        value: filterTo,
-                        onChange: ev => { setPeriodPreset("custom"); setFilterTo(ev.target.value); },
-                        title: "Tanggal Akhir LP",
+
+                      // Segmented Quick-Trigger Bar (Like Daftar LP)
+                      (0, t.jsxs)("div", {
                         style: {
-                          padding: "0.28rem 0.45rem",
-                          borderRadius: 7,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          borderRadius: 8,
                           border: "1px solid " + T.inputBorder,
-                          background: T.inputBg,
-                          color: T.textPrimary,
-                          fontSize: "0.71rem",
-                          fontWeight: 600
-                        }
+                          background: T.subCardBg,
+                          overflow: "hidden",
+                          flexWrap: "wrap"
+                        },
+                        children: [
+                          // 1. Kelompok Button
+                          (0, t.jsxs)("button", {
+                            type: "button",
+                            title: "Klik untuk mengatur Kelompok Satker (Internal Reserse / Eksternal / Semua)",
+                            onClick: () => {
+                              setFilterPopoverTab("satker");
+                              setShowFilterPopover(true);
+                            },
+                            style: {
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.28rem",
+                              padding: "0.34rem 0.62rem",
+                              border: "none",
+                              borderRight: "1px solid " + T.divider,
+                              background: "transparent",
+                              color: T.textSecondary,
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            },
+                            children: [
+                              (0, t.jsx)("span", { children: "🗂️" }),
+                              (0, t.jsx)("span", { style: { color: T.textMuted }, children: "Kelompok:" }),
+                              (0, t.jsx)("strong", { style: { color: T.textPrimary, fontWeight: 800 }, children: activeKelompokLabel })
+                            ]
+                          }),
+                          // 2. Satker Button
+                          (0, t.jsxs)("button", {
+                            type: "button",
+                            title: "Klik untuk memilih Satker / Wilayah Hukum Polda",
+                            onClick: () => {
+                              setFilterPopoverTab("satker");
+                              setShowFilterPopover(true);
+                            },
+                            style: {
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.28rem",
+                              padding: "0.34rem 0.62rem",
+                              border: "none",
+                              borderRight: "1px solid " + T.divider,
+                              background: "transparent",
+                              color: T.textSecondary,
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            },
+                            children: [
+                              (0, t.jsx)("span", { children: "🏛️" }),
+                              (0, t.jsx)("span", { style: { color: T.textMuted }, children: "Satker:" }),
+                              (0, t.jsx)("strong", {
+                                style: { color: drillLevel > 0 ? T.accentText : T.textPrimary, fontWeight: 800 },
+                                children: drillLevel === 3 ? "Bareskrim Polri" : (drillLevel >= 1 && selectedRegion ? selectedRegion.polda : "Mabes Polri")
+                              })
+                            ]
+                          }),
+                          // 3. Kejahatan Button
+                          (0, t.jsxs)("button", {
+                            type: "button",
+                            title: "Klik untuk memfilter Jenis Kejahatan (Curas, Curat, Curanmor, Narkoba, Siber, dll.)",
+                            onClick: () => {
+                              setFilterPopoverTab("kejahatan");
+                              setShowFilterPopover(true);
+                            },
+                            style: {
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.28rem",
+                              padding: "0.34rem 0.62rem",
+                              border: "none",
+                              borderRight: "1px solid " + T.divider,
+                              background: crimeFilter !== "SEMUA" ? T.ctBg : "transparent",
+                              color: crimeFilter !== "SEMUA" ? T.ctText : T.textSecondary,
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            },
+                            children: [
+                              (0, t.jsx)("span", { children: crimeFilter !== "SEMUA" ? (activeCrimeMeta.icon || "🔥") : "🛡️" }),
+                              (0, t.jsx)("span", { style: { color: crimeFilter !== "SEMUA" ? T.ctText : T.textMuted }, children: "Kejahatan:" }),
+                              (0, t.jsx)("strong", {
+                                style: { color: crimeFilter !== "SEMUA" ? T.ctText : T.textPrimary, fontWeight: 800 },
+                                children: crimeFilter !== "SEMUA" ? (activeCrimeMeta.label || crimeFilter) : "Semua"
+                              })
+                            ]
+                          }),
+                          // 4. Periode Button
+                          (0, t.jsxs)("button", {
+                            type: "button",
+                            title: "Klik untuk mengatur Periode Bulan / Tahun / Rentang Tanggal",
+                            onClick: () => {
+                              setFilterPopoverTab("periode");
+                              setShowFilterPopover(true);
+                            },
+                            style: {
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.28rem",
+                              padding: "0.34rem 0.62rem",
+                              border: "none",
+                              background: "transparent",
+                              color: T.textSecondary,
+                              fontSize: "0.72rem",
+                              cursor: "pointer",
+                              whiteSpace: "nowrap"
+                            },
+                            children: [
+                              (0, t.jsx)("span", { children: "📅" }),
+                              (0, t.jsx)("strong", { style: { color: T.textPrimary, fontWeight: 800 }, children: activePeriodBadgeLabel })
+                            ]
+                          })
+                        ]
                       })
                     ]
                   }),
-                  // Wilayah Hukum Polda Dropdown
-                  (0, t.jsxs)("select", {
-                    value: drillLevel === 3 ? "MABES" : (drillLevel >= 1 && selectedRegion ? selectedRegion.id : "SEMUA"),
-                    onChange: ev => {
-                      const val = ev.target.value;
-                      if (val === "SEMUA") {
-                        handleResetNasional();
-                      } else if (val === "MABES") {
-                        handleSelectMabesAndZoom(mabesUnitNodes[0]);
-                      } else {
-                        const found = mergedRegions.find(r => r.id === val);
-                        if (found) handleSelectPoldaAndZoom(found);
-                      }
-                    },
-                    title: "Filter berdasarkan Wilayah Hukum Polda / Satker",
-                    style: {
-                      padding: "0.32rem 0.55rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (drillLevel > 0 ? T.accentBorder : T.inputBorder),
-                      background: drillLevel > 0 ? T.accentBg : T.inputBg,
-                      color: drillLevel > 0 ? T.accentText : T.textPrimary,
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      maxWidth: "185px"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "SEMUA", children: "🛡️ Semua Polda (Nasional)" }),
-                      (0, t.jsx)("option", { value: "MABES", children: "🏛️ Mabes / Bareskrim Polri" }),
-                      mergedRegions.map(r => (0, t.jsx)("option", {
-                        key: r.id,
-                        value: r.id,
-                        children: r.polda + " (" + z(r.ct) + " LP)"
-                      }))
-                    ]
-                  }),
-                  // Jenis Kejahatan Dropdown
-                  (0, t.jsxs)("select", {
-                    value: crimeFilter,
-                    onChange: ev => { setCrimeFilter(ev.target.value); setSelectedHotspot(null); },
-                    title: "Filter Jenis Kejahatan untuk melihat Titik Rawan (Heatmap) kejahatan tertentu seperti Curas, Curat, Curanmor",
-                    style: {
-                      padding: "0.32rem 0.55rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (crimeFilter !== "SEMUA" ? T.ctBorder : T.inputBorder),
-                      background: crimeFilter !== "SEMUA" ? T.ctBg : T.inputBg,
-                      color: crimeFilter !== "SEMUA" ? T.ctText : T.textPrimary,
-                      fontSize: "0.72rem",
-                      fontWeight: crimeFilter !== "SEMUA" ? 800 : 700,
-                      cursor: "pointer",
-                      maxWidth: "215px"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "SEMUA", children: "⚖️ Semua Jenis Kejahatan" }),
-                      (0, t.jsx)("option", { value: "CURAS", children: "🔥 Curas (Pencurian dgn Kekerasan)" }),
-                      (0, t.jsx)("option", { value: "CURAT", children: "⚡ Curat (Pencurian dgn Pemberatan)" }),
-                      (0, t.jsx)("option", { value: "CURANMOR", children: "🏍️ Curanmor (Kendaraan Bermotor)" }),
-                      (0, t.jsx)("option", { value: "ANIRAT", children: "🔪 Anirat & Penganiayaan" }),
-                      (0, t.jsx)("option", { value: "NARKOBA", children: "💊 Narkotika & Obat Terlarang" }),
-                      (0, t.jsx)("option", { value: "SIBER", children: "💻 Kejahatan ITE / Siber" }),
-                      (0, t.jsx)("option", { value: "PENIPUAN", children: "📄 Penipuan & Penggelapan" }),
-                      (0, t.jsx)("option", { value: "PPA", children: "🛡️ Perlindungan Anak (PPA) & KDRT" }),
-                      (0, t.jsx)("option", { value: "TIPIKOR", children: "⚖️ Tindak Pidana Korupsi (Tipikor)" }),
-                      (0, t.jsx)("option", { value: "JUDI", children: "🎲 Perjudian" }),
-                      (0, t.jsx)("option", { value: "PEMBUNUHAN", children: "🚨 Pembunuhan" }),
-                      (0, t.jsx)("option", { value: "PENCURIAN", children: "👜 Semua Pencurian (Curas/Curat/Curanmor)" })
-                    ]
-                  }),
-                  // Golongan Kejahatan Dropdown
-                  (0, t.jsxs)("select", {
-                    value: golonganFilter,
-                    onChange: ev => setGolonganFilter(ev.target.value),
-                    title: "Filter Golongan Kejahatan",
-                    style: {
-                      padding: "0.32rem 0.52rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (golonganFilter !== "SEMUA" ? T.accentBorder : T.inputBorder),
-                      background: golonganFilter !== "SEMUA" ? T.accentBg : T.inputBg,
-                      color: golonganFilter !== "SEMUA" ? T.accentText : T.textPrimary,
-                      fontSize: "0.71rem",
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "SEMUA", children: "📂 Semua Golongan" }),
-                      (0, t.jsx)("option", { value: "1", children: "Konvensional" }),
-                      (0, t.jsx)("option", { value: "2", children: "Transnasional" }),
-                      (0, t.jsx)("option", { value: "3", children: "Kekayaan Negara" }),
-                      (0, t.jsx)("option", { value: "4", children: "Kontinjensi" })
-                    ]
-                  }),
-                  // Model LP Dropdown
-                  (0, t.jsxs)("select", {
-                    value: modelLpFilter,
-                    onChange: ev => setModelLpFilter(ev.target.value),
-                    title: "Filter Model Laporan Polisi (Model A / Model B)",
-                    style: {
-                      padding: "0.32rem 0.52rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (modelLpFilter !== "SEMUA" ? T.accentBorder : T.inputBorder),
-                      background: modelLpFilter !== "SEMUA" ? T.accentBg : T.inputBg,
-                      color: modelLpFilter !== "SEMUA" ? T.accentText : T.textPrimary,
-                      fontSize: "0.71rem",
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "SEMUA", children: "📋 Semua Model LP" }),
-                      (0, t.jsx)("option", { value: "A", children: "LP Model A" }),
-                      (0, t.jsx)("option", { value: "B", children: "LP Model B" })
-                    ]
-                  }),
-                  // Status Penyelesaian Dropdown
-                  (0, t.jsxs)("select", {
-                    value: statusFilter,
-                    onChange: ev => setStatusFilter(ev.target.value),
-                    title: "Filter Status Penyelesaian Perkara (CT / CC)",
-                    style: {
-                      padding: "0.32rem 0.52rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (statusFilter !== "SEMUA" ? T.ccBorder : T.inputBorder),
-                      background: statusFilter !== "SEMUA" ? T.ccBg : T.inputBg,
-                      color: statusFilter !== "SEMUA" ? T.ccText : T.textPrimary,
-                      fontSize: "0.71rem",
-                      fontWeight: 700,
-                      cursor: "pointer"
-                    },
-                    children: [
-                      (0, t.jsx)("option", { value: "SEMUA", children: "📌 Semua Status LP" }),
-                      (0, t.jsx)("option", { value: "CT", children: "🔥 Proses (Lidik/Sidik)" }),
-                      (0, t.jsx)("option", { value: "CC", children: "✅ Selesai (P21/SP3/RJ)" })
-                    ]
-                  }),
-                  // Search TKP / Satker Input
-                  (0, t.jsx)("input", {
-                    type: "text",
-                    value: tkpSearch,
-                    onChange: ev => setTkpSearch(ev.target.value),
-                    placeholder: "🔍 Cari Jalan TKP / Satker…",
-                    title: "Cari nama jalan Tempat Kejadian Perkara (TKP) atau nama Satker/Polres/Polsek",
-                    style: {
-                      padding: "0.3rem 0.6rem",
-                      borderRadius: 7,
-                      border: "1px solid " + (tkpSearch.trim() ? T.accentBorder : T.inputBorder),
-                      background: T.inputBg,
-                      color: T.textPrimary,
-                      fontSize: "0.71rem",
-                      minWidth: "155px"
-                    }
-                  })
-                ]
-              }),
-              // Right side of Row 0A: Loading badge + Reset Filter Button
-              (0, t.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.38rem" },
-                children: [
-                  petaLoading && (0, t.jsx)("span", {
-                    style: { fontSize: "0.68rem", fontWeight: 800, color: T.accentText, padding: "0.2rem 0.5rem", borderRadius: 6, background: T.accentBg },
-                    children: "⏳ Memperbarui Heatmap…"
-                  }),
-                  (crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA" || modelLpFilter !== "SEMUA" || statusFilter !== "SEMUA" || tkpSearch.trim() || periodPreset !== "tahun_ini") && (0, t.jsx)("button", {
-                    type: "button",
-                    onClick: resetOperationalFilters,
-                    title: "Kembalikan seluruh filter operasional ke default",
-                    style: {
-                      padding: "0.3rem 0.58rem",
-                      borderRadius: 7,
-                      border: "1px solid " + T.ctBorder,
-                      background: T.ctBg,
-                      color: T.ctText,
-                      fontSize: "0.7rem",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      whiteSpace: "nowrap"
-                    },
-                    children: "✕ Reset Filter"
-                  })
-                ]
-              })
-            ]
-          }),
 
-          // Row 0B: 1-Click Crime Heatmap Quick Filter Chips (Curas, Curat, Curanmor, Narkoba, Siber, dll.)
-          (0, t.jsxs)("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "0.45rem",
-              paddingBottom: "0.45rem",
-              borderBottom: "1px solid " + T.divider
-            },
-            children: [
-              (0, t.jsxs)("div", {
-                className: "cas-peta-scroll-bar",
-                children: [
-                  (0, t.jsx)("span", {
-                    style: { fontSize: "0.69rem", fontWeight: 800, color: T.textMuted, marginRight: "0.12rem", flexShrink: 0 },
-                    children: "🎯 Filter Heatmap Kejahatan:"
+                  // Middle: Dismissible Extra Filter Pills (Fokus Kejahatan / Golongan / Model LP)
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "nowrap", flex: "1 1 auto", whiteSpace: "nowrap" },
+                    children: [
+                      // Pill 1: Crime Filter (if active)
+                      crimeFilter !== "SEMUA" && (0, t.jsxs)("span", {
+                        style: {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.28rem",
+                          padding: "0.22rem 0.58rem",
+                          borderRadius: 999,
+                          background: T.ctBg,
+                          border: "1px solid " + T.ctBorder,
+                          color: T.ctText,
+                          fontSize: "0.7rem",
+                          fontWeight: 800
+                        },
+                        children: [
+                          (activeCrimeMeta.icon || "🔥") + " Fokus: " + (activeCrimeMeta.label || crimeFilter),
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => { setCrimeFilter("SEMUA"); setSelectedHotspot(null); },
+                            style: { border: "none", background: "transparent", color: "inherit", cursor: "pointer", padding: 0, fontWeight: 800, fontSize: "0.74rem" },
+                            children: "×"
+                          })
+                        ]
+                      }),
+                      // Pill 2: Golongan (if active)
+                      golonganFilter !== "SEMUA" && (0, t.jsxs)("span", {
+                        style: {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.28rem",
+                          padding: "0.22rem 0.55rem",
+                          borderRadius: 999,
+                          background: T.accentBg,
+                          border: "1px solid " + T.accentBorder,
+                          color: T.accentText,
+                          fontSize: "0.7rem",
+                          fontWeight: 700
+                        },
+                        children: [
+                          "📂 Golongan #" + golonganFilter,
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => setGolonganFilter("SEMUA"),
+                            style: { border: "none", background: "transparent", color: "inherit", cursor: "pointer", padding: 0, fontWeight: 800, fontSize: "0.74rem" },
+                            children: "×"
+                          })
+                        ]
+                      }),
+                      // Pill 3: Model LP (if active)
+                      modelLpFilter !== "SEMUA" && (0, t.jsxs)("span", {
+                        style: {
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.28rem",
+                          padding: "0.22rem 0.55rem",
+                          borderRadius: 999,
+                          background: T.accentBg,
+                          border: "1px solid " + T.accentBorder,
+                          color: T.accentText,
+                          fontSize: "0.7rem",
+                          fontWeight: 700
+                        },
+                        children: [
+                          "📋 Model " + modelLpFilter,
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => setModelLpFilter("SEMUA"),
+                            style: { border: "none", background: "transparent", color: "inherit", cursor: "pointer", padding: 0, fontWeight: 800, fontSize: "0.74rem" },
+                            children: "×"
+                          })
+                        ]
+                      })
+                    ]
                   }),
-                  CAS_CRIME_QUICK_FILTERS.map(cf => {
-                    const active = crimeFilter === cf.id;
-                    return (0, t.jsx)("button", {
-                      key: cf.id,
-                      type: "button",
-                      title: cf.desc + " — Klik untuk memfilter peta heatmap & titik rawan TKP",
-                      onClick: () => {
-                        setCrimeFilter(cf.id);
-                        setSelectedHotspot(null);
-                      },
-                      style: {
-                        padding: "0.26rem 0.6rem",
-                        borderRadius: 999,
-                        border: "1px solid " + (active ? cf.color : T.btnBorder),
-                        background: active ? (isDark ? "rgba(239,68,68,0.22)" : "#fef2f2") : T.btnBg,
-                        color: active ? (isDark ? "#fca5a5" : cf.color) : T.btnText,
-                        fontSize: "0.7rem",
-                        fontWeight: active ? 800 : 600,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        boxShadow: active ? ("0 2px 8px " + cf.color + "33") : "none",
-                        transition: "all 120ms ease"
-                      },
-                      children: cf.icon + " " + cf.label
-                    });
+
+                  // Right: Single Compact Search + Reset Button
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.35rem" },
+                    children: [
+                      petaLoading && (0, t.jsx)("span", {
+                        style: { fontSize: "0.68rem", fontWeight: 800, color: T.accentText, padding: "0.2rem 0.45rem", borderRadius: 6, background: T.accentBg },
+                        children: "⏳ Memuat…"
+                      }),
+                      (0, t.jsx)("input", {
+                        type: "text",
+                        value: searchQ,
+                        onChange: ev => {
+                          const v = ev.target.value;
+                          setSearchQ(v);
+                          setTkpSearch(v);
+                        },
+                        placeholder: "🔍 Cari Polda / Polres / TKP...",
+                        style: {
+                          padding: "0.32rem 0.55rem",
+                          borderRadius: 8,
+                          border: "1px solid " + (searchQ.trim() ? T.accentBorder : T.inputBorder),
+                          background: T.inputBg,
+                          color: T.textPrimary,
+                          fontSize: "0.71rem",
+                          width: "165px"
+                        }
+                      }),
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: resetOperationalFilters,
+                        title: "Kembalikan seluruh filter ke default (Tahun 2026 • Internal Reserse • Mabes Polri)",
+                        style: {
+                          padding: "0.32rem 0.55rem",
+                          borderRadius: 8,
+                          border: "1px solid " + T.btnBorder,
+                          background: T.btnBg,
+                          color: T.textSecondary,
+                          fontSize: "0.71rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap"
+                        },
+                        children: "↺ Reset"
+                      })
+                    ]
                   })
                 ]
               }),
-              (0, t.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 },
+
+              // 4-Tab Popover Panel (Matching Kinerja Perkara "Filter & Parameter Kinerja Perkara" 100%)
+              showFilterPopover && (0, t.jsxs)("div", {
+                className: "cas-peta-filter-popover",
+                style: {
+                  marginTop: "0.35rem",
+                  borderRadius: 12,
+                  border: "1px solid " + T.cardBorder,
+                  background: T.cardBg,
+                  boxShadow: "0 16px 38px rgba(15, 23, 42, 0.22)",
+                  overflow: "hidden",
+                  zIndex: 1200
+                },
                 children: [
-                  crimeFilter !== "SEMUA" && (0, t.jsx)("span", {
+                  // Header
+                  (0, t.jsxs)("div", {
+                    className: "cas-peta-pop-hdr",
                     style: {
-                      fontSize: "0.68rem",
-                      fontWeight: 800,
-                      padding: "0.18rem 0.55rem",
-                      borderRadius: 999,
-                      background: T.ctBg,
-                      color: T.ctText,
-                      border: "1px solid " + T.ctBorder
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0.75rem 1.1rem",
+                      background: isDark ? "#1e293b" : "#f8fafc",
+                      borderBottom: "1px solid " + T.divider,
+                      color: T.textPrimary
                     },
-                    children: activeCrimeMeta.icon + " Heatmap Aktif: " + activeCrimeMeta.label + " (" + z(stats.totalCT) + " LP)"
+                    children: [
+                      (0, t.jsxs)("div", {
+                        children: [
+                          (0, t.jsx)("div", { style: { fontSize: "0.86rem", fontWeight: 800, color: T.textPrimary }, children: "🎛️ Filter & Parameter Peta Kejahatan" }),
+                          (0, t.jsx)("div", { style: { fontSize: "0.7rem", color: T.textSecondary, marginTop: "0.1rem" }, children: "Atur periode, satker kewilayahan, klasifikasi kejahatan, dan parameter analisis heatmap" })
+                        ]
+                      }),
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: () => setShowFilterPopover(false),
+                        style: {
+                          width: 28,
+                          height: 28,
+                          borderRadius: 6,
+                          border: "1px solid " + T.btnBorder,
+                          background: T.btnBg,
+                          color: T.textSecondary,
+                          fontSize: "0.85rem",
+                          fontWeight: 800,
+                          cursor: "pointer"
+                        },
+                        children: "×"
+                      })
+                    ]
                   }),
-                  (0, t.jsx)("span", {
-                    className: "tabular-nums",
+
+                  // 4-Tab Navigation Bar
+                  (0, t.jsx)("div", {
                     style: {
-                      fontSize: "0.68rem",
-                      fontWeight: 800,
-                      padding: "0.18rem 0.55rem",
-                      borderRadius: 999,
-                      background: T.subCardBg,
-                      color: T.textSecondary,
-                      border: "1px solid " + T.subCardBorder
+                      display: "grid",
+                      gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                      borderBottom: "1px solid " + T.divider,
+                      background: T.subCardBg
                     },
-                    children: "📍 " + z(activeHotspots.length) + " Klaster Titik Rawan TKP"
+                    children: [
+                      { id: "periode", icon: "📅", label: "Periode" },
+                      { id: "satker", icon: "🏛️", label: "Satker & Wilayah" },
+                      { id: "kejahatan", icon: "🛡️", label: "Kejahatan", badge: crimeFilter !== "SEMUA" ? 1 : 0 },
+                      { id: "parameter", icon: "⚙️", label: "Parameter & Model" }
+                    ].map(tb => {
+                      const active = filterPopoverTab === tb.id;
+                      return (0, t.jsxs)("button", {
+                        key: tb.id,
+                        type: "button",
+                        onClick: () => setFilterPopoverTab(tb.id),
+                        style: {
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "0.38rem",
+                          padding: "0.68rem 0.5rem",
+                          border: "none",
+                          borderBottom: active ? "2.5px solid #dc2626" : "2.5px solid transparent",
+                          background: active ? T.cardBg : "transparent",
+                          color: active ? "#dc2626" : T.textSecondary,
+                          fontSize: "0.75rem",
+                          fontWeight: active ? 800 : 700,
+                          cursor: "pointer"
+                        },
+                        children: [
+                          (0, t.jsx)("span", { children: tb.icon }),
+                          (0, t.jsx)("span", { children: tb.label }),
+                          tb.badge > 0 && (0, t.jsx)("span", {
+                            style: { padding: "0.05rem 0.38rem", borderRadius: 999, background: "#dc2626", color: "#fff", fontSize: "0.64rem", fontWeight: 800 },
+                            children: String(tb.badge)
+                          })
+                        ]
+                      });
+                    })
+                  }),
+
+                  // Tab Body
+                  (0, t.jsxs)("div", {
+                    style: { padding: "1rem 1.15rem" },
+                    children: [
+                      // TAB 1: PERIODE
+                      filterPopoverTab === "periode" && (0, t.jsxs)("div", {
+                        style: { display: "flex", flexDirection: "column", gap: "0.85rem" },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.6rem" },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                children: [
+                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Mode Rentang Waktu" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "inline-flex", borderRadius: 8, border: "1px solid " + T.inputBorder, overflow: "hidden" },
+                                    children: [
+                                      { id: "bulan", label: "Bulan" },
+                                      { id: "tahun", label: "Tahun" },
+                                      { id: "custom", label: "Custom" }
+                                    ].map(m => {
+                                      const active = periodMode === m.id;
+                                      return (0, t.jsx)("button", {
+                                        key: m.id,
+                                        type: "button",
+                                        onClick: () => handleSelectYearMonth(m.id, selectedYear, selectedMonth),
+                                        style: {
+                                          padding: "0.38rem 0.9rem",
+                                          border: "none",
+                                          background: active ? "#dc2626" : T.cardBg,
+                                          color: active ? "#ffffff" : T.textSecondary,
+                                          fontSize: "0.74rem",
+                                          fontWeight: 800,
+                                          cursor: "pointer"
+                                        },
+                                        children: m.label
+                                      });
+                                    })
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                children: [
+                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Pilih Cepat" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                                    children: [
+                                      { id: "bulan_ini", label: "Bulan Ini" },
+                                      { id: "bulan_lalu", label: "Bulan Lalu" },
+                                      { id: "tahun_ini", label: "Tahun Ini" },
+                                      { id: "tahun_lalu", label: "Tahun Lalu" }
+                                    ].map(pr => {
+                                      const active = periodPreset === pr.id;
+                                      return (0, t.jsx)("button", {
+                                        key: pr.id,
+                                        type: "button",
+                                        onClick: () => applyPeriodPreset(pr.id),
+                                        style: {
+                                          padding: "0.36rem 0.72rem",
+                                          borderRadius: 8,
+                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
+                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
+                                          color: active ? "#dc2626" : T.textSecondary,
+                                          fontSize: "0.72rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer"
+                                        },
+                                        children: pr.label
+                                      });
+                                    })
+                                  })
+                                ]
+                              })
+                            ]
+                          }),
+
+                          periodMode === "tahun" && (0, t.jsxs)("div", {
+                            style: { display: "grid", gridTemplateColumns: "180px 1fr", gap: "0.75rem", alignItems: "end" },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.28rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "TAHUN" }),
+                                  (0, t.jsxs)("select", {
+                                    value: selectedYear,
+                                    onChange: ev => handleSelectYearMonth("tahun", Number(ev.target.value), selectedMonth),
+                                    style: { padding: "0.45rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700 },
+                                    children: [
+                                      (0, t.jsx)("option", { value: 2026, children: "2026" }),
+                                      (0, t.jsx)("option", { value: 2025, children: "2025" })
+                                    ]
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: {
+                                  padding: "0.52rem 0.85rem",
+                                  borderRadius: 8,
+                                  background: isDark ? "rgba(16,185,129,0.14)" : "#f0fdf4",
+                                  border: "1px solid " + (isDark ? "rgba(16,185,129,0.35)" : "#bbf7d0"),
+                                  color: isDark ? "#34d399" : "#15803d",
+                                  fontSize: "0.74rem",
+                                  fontWeight: 600
+                                },
+                                children: [
+                                  "Menampilkan akumulasi penuh 1 tahun kalender: ",
+                                  (0, t.jsx)("strong", { children: "1 Januari " + selectedYear + " s/d 31 Desember " + selectedYear }),
+                                  " (365 hari)"
+                                ]
+                              })
+                            ]
+                          }),
+
+                          periodMode === "bulan" && (0, t.jsxs)("div", {
+                            style: { display: "grid", gridTemplateColumns: "200px 160px 1fr", gap: "0.75rem", alignItems: "end" },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.28rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "BULAN" }),
+                                  (0, t.jsx)("select", {
+                                    value: selectedMonth,
+                                    onChange: ev => handleSelectYearMonth("bulan", selectedYear, Number(ev.target.value)),
+                                    style: { padding: "0.45rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700 },
+                                    children: MONTH_NAMES_ID.map((mName, idx) => (0, t.jsx)("option", { key: idx + 1, value: idx + 1, children: mName }))
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.28rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "TAHUN" }),
+                                  (0, t.jsxs)("select", {
+                                    value: selectedYear,
+                                    onChange: ev => handleSelectYearMonth("bulan", Number(ev.target.value), selectedMonth),
+                                    style: { padding: "0.45rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700 },
+                                    children: [
+                                      (0, t.jsx)("option", { value: 2026, children: "2026" }),
+                                      (0, t.jsx)("option", { value: 2025, children: "2025" })
+                                    ]
+                                  })
+                                ]
+                              }),
+                              (0, t.jsx)("div", {
+                                style: { padding: "0.52rem 0.85rem", borderRadius: 8, background: T.subCardBg, border: "1px solid " + T.subCardBorder, color: T.textSecondary, fontSize: "0.73rem" },
+                                children: "Periode Bulanan: " + filterFrom + " s/d " + filterTo
+                              })
+                            ]
+                          }),
+
+                          periodMode === "custom" && (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.25rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "DARI TANGGAL" }),
+                                  (0, t.jsx)("input", {
+                                    type: "date",
+                                    value: filterFrom,
+                                    onChange: ev => { setPeriodPreset("custom"); setFilterFrom(ev.target.value); },
+                                    style: { padding: "0.42rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem" }
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.25rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "SAMPAI TANGGAL" }),
+                                  (0, t.jsx)("input", {
+                                    type: "date",
+                                    value: filterTo,
+                                    onChange: ev => { setPeriodPreset("custom"); setFilterTo(ev.target.value); },
+                                    style: { padding: "0.42rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem" }
+                                  })
+                                ]
+                              })
+                            ]
+                          })
+                        ]
+                      }),
+
+                      // TAB 2: SATKER & WILAYAH
+                      filterPopoverTab === "satker" && (0, t.jsxs)("div", {
+                        style: { display: "flex", flexDirection: "column", gap: "0.85rem" },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                            children: [
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Kelompok Satker (Taxonomy Domain)" }),
+                              (0, t.jsx)("div", {
+                                style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.55rem" },
+                                children: [
+                                  { id: "INTERNAL_RESERSE", title: "🗂️ Internal Reserse (Default)", desc: "Standar Kinerja Perkara & Dashboard Ringkasan (Reskrim, Narkoba, Siber, Krimsus, PPA)" },
+                                  { id: "EKSTERNAL_RESERSE", title: "🗂️ Eksternal Reserse", desc: "Satker Non-Reserse (Lantas, Samapta, Polair, Pamobvit)" },
+                                  { id: "SEMUA", title: "🌐 Semua Kelompok Satker", desc: "Gabungan seluruh LP Internal & Eksternal Polri" }
+                                ].map(k => {
+                                  const active = kelompokFilter === k.id;
+                                  return (0, t.jsxs)("button", {
+                                    key: k.id,
+                                    type: "button",
+                                    onClick: () => setKelompokFilter(k.id),
+                                    style: {
+                                      textAlign: "left",
+                                      padding: "0.6rem 0.75rem",
+                                      borderRadius: 9,
+                                      border: "1.5px solid " + (active ? "#dc2626" : T.btnBorder),
+                                      background: active ? (isDark ? "rgba(220,38,38,0.18)" : "#fef2f2") : T.subCardBg,
+                                      cursor: "pointer"
+                                    },
+                                    children: [
+                                      (0, t.jsx)("div", { style: { fontSize: "0.75rem", fontWeight: 800, color: active ? "#dc2626" : T.textPrimary }, children: k.title }),
+                                      (0, t.jsx)("div", { style: { fontSize: "0.66rem", color: T.textMuted, marginTop: "0.18rem", lineHeight: 1.35 }, children: k.desc })
+                                    ]
+                                  });
+                                })
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "grid", gridTemplateColumns: "280px 1fr", gap: "0.75rem", alignItems: "start" },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "PILIH SATKER / POLDA" }),
+                                  (0, t.jsxs)("select", {
+                                    value: drillLevel === 3 ? "MABES" : (drillLevel >= 1 && selectedRegion ? selectedRegion.id : "SEMUA"),
+                                    onChange: ev => {
+                                      const val = ev.target.value;
+                                      if (val === "SEMUA") handleResetNasional();
+                                      else if (val === "MABES") handleSelectMabesAndZoom(mabesUnitNodes[0]);
+                                      else {
+                                        const found = mergedRegions.find(r => r.id === val);
+                                        if (found) handleSelectPoldaAndZoom(found);
+                                      }
+                                    },
+                                    style: { padding: "0.45rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 700 },
+                                    children: [
+                                      (0, t.jsx)("option", { value: "SEMUA", children: "🏛️ Mabes Polri (Nasional - 36 Polda)" }),
+                                      (0, t.jsx)("option", { value: "MABES", children: "⭐ Kantor Bareskrim / Mabes Polri" }),
+                                      mergedRegions.map(r => (0, t.jsx)("option", {
+                                        key: r.id,
+                                        value: r.id,
+                                        children: r.polda + " (" + z(r.ct) + " LP)"
+                                      }))
+                                    ]
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                children: [
+                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "FOKUS KEPULAUAN" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                                    children: Object.keys(CAS_PULAU_VIEWS).map(pName => {
+                                      const active = pulauFilter === pName && drillLevel === 0;
+                                      return (0, t.jsx)("button", {
+                                        key: pName,
+                                        type: "button",
+                                        onClick: () => handleSelectPulau(pName),
+                                        style: {
+                                          padding: "0.36rem 0.68rem",
+                                          borderRadius: 7,
+                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
+                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
+                                          color: active ? "#dc2626" : T.textSecondary,
+                                          fontSize: "0.72rem",
+                                          fontWeight: active ? 800 : 600,
+                                          cursor: "pointer"
+                                        },
+                                        children: pName
+                                      });
+                                    })
+                                  })
+                                ]
+                              })
+                            ]
+                          })
+                        ]
+                      }),
+
+                      // TAB 3: KEJAHATAN (Quick Chips Curas, Curat, Curanmor, dll. + Golongan Kejahatan)
+                      filterPopoverTab === "kejahatan" && (0, t.jsxs)("div", {
+                        style: { display: "flex", flexDirection: "column", gap: "0.85rem" },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", flexDirection: "column", gap: "0.38rem" },
+                            children: [
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Pilih Fokus Jenis Kejahatan (Heatmap & Titik Rawan TKP)" }),
+                              (0, t.jsx)("div", {
+                                style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "0.42rem" },
+                                children: CAS_CRIME_QUICK_FILTERS.map(cf => {
+                                  const active = crimeFilter === cf.id;
+                                  const iconStr = cf.icon || "🔥";
+                                  const lblStr = cf.label || cf.shortLabel || cf.id;
+                                  return (0, t.jsxs)("button", {
+                                    key: cf.id,
+                                    type: "button",
+                                    onClick: () => {
+                                      setCrimeFilter(cf.id);
+                                      setSelectedHotspot(null);
+                                    },
+                                    style: {
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "0.4rem",
+                                      padding: "0.48rem 0.68rem",
+                                      borderRadius: 8,
+                                      border: "1.5px solid " + (active ? "#dc2626" : T.btnBorder),
+                                      background: active ? (isDark ? "rgba(220,38,38,0.22)" : "#fef2f2") : T.subCardBg,
+                                      color: active ? (isDark ? "#fca5a5" : "#dc2626") : T.textPrimary,
+                                      fontSize: "0.73rem",
+                                      fontWeight: active ? 800 : 700,
+                                      cursor: "pointer",
+                                      textAlign: "left"
+                                    },
+                                    children: [
+                                      (0, t.jsx)("span", { children: iconStr }),
+                                      (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: lblStr })
+                                    ]
+                                  });
+                                })
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                            children: [
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Golongan Kejahatan (Klasifikasi Pusiknas)" }),
+                              (0, t.jsx)("div", {
+                                style: { display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" },
+                                children: [
+                                  { id: "SEMUA", label: "Semua Golongan" },
+                                  { id: "1", label: "Kejahatan Konvensional" },
+                                  { id: "2", label: "Kejahatan Transnasional" },
+                                  { id: "3", label: "Terhadap Kekayaan Negara" },
+                                  { id: "4", label: "Berimplikasi Kontinjensi" }
+                                ].map(g => {
+                                  const active = golonganFilter === g.id;
+                                  return (0, t.jsx)("button", {
+                                    key: g.id,
+                                    type: "button",
+                                    onClick: () => setGolonganFilter(g.id),
+                                    style: {
+                                      padding: "0.38rem 0.75rem",
+                                      borderRadius: 8,
+                                      border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
+                                      background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
+                                      color: active ? "#dc2626" : T.textSecondary,
+                                      fontSize: "0.72rem",
+                                      fontWeight: active ? 800 : 600,
+                                      cursor: "pointer"
+                                    },
+                                    children: g.label
+                                  });
+                                })
+                              })
+                            ]
+                          })
+                        ]
+                      }),
+
+                      // TAB 4: PARAMETER & MODEL
+                      filterPopoverTab === "parameter" && (0, t.jsxs)("div", {
+                        style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                            children: [
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Model Laporan Polisi" }),
+                              (0, t.jsx)("div", {
+                                style: { display: "flex", gap: "0.4rem", flexWrap: "wrap" },
+                                children: [
+                                  { id: "SEMUA", label: "Semua Model LP" },
+                                  { id: "A", label: "LP Model A (Temuan Petugas)" },
+                                  { id: "B", label: "LP Model B (Laporan Masyarakat)" }
+                                ].map(m => {
+                                  const active = modelLpFilter === m.id;
+                                  return (0, t.jsx)("button", {
+                                    key: m.id,
+                                    type: "button",
+                                    onClick: () => setModelLpFilter(m.id),
+                                    style: {
+                                      padding: "0.4rem 0.75rem",
+                                      borderRadius: 8,
+                                      border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
+                                      background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
+                                      color: active ? "#dc2626" : T.textSecondary,
+                                      fontSize: "0.72rem",
+                                      fontWeight: active ? 800 : 600,
+                                      cursor: "pointer"
+                                    },
+                                    children: m.label
+                                  });
+                                })
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                            children: [
+                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Status Penyelesaian Perkara" }),
+                              (0, t.jsx)("div", {
+                                style: { display: "flex", gap: "0.4rem", flexWrap: "wrap" },
+                                children: [
+                                  { id: "SEMUA", label: "Semua Status" },
+                                  { id: "CT", label: "🔥 Proses (Lidik / Sidik)" },
+                                  { id: "CC", label: "✅ Selesai (P21 / SP3 / RJ)" }
+                                ].map(st => {
+                                  const active = statusFilter === st.id;
+                                  return (0, t.jsx)("button", {
+                                    key: st.id,
+                                    type: "button",
+                                    onClick: () => setStatusFilter(st.id),
+                                    style: {
+                                      padding: "0.4rem 0.75rem",
+                                      borderRadius: 8,
+                                      border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
+                                      background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
+                                      color: active ? "#dc2626" : T.textSecondary,
+                                      fontSize: "0.72rem",
+                                      fontWeight: active ? 800 : 600,
+                                      cursor: "pointer"
+                                    },
+                                    children: st.label
+                                  });
+                                })
+                              })
+                            ]
+                          })
+                        ]
+                      })
+                    ]
+                  }),
+
+                  // Popover Footer
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0.65rem 1.1rem",
+                      background: T.subCardBg,
+                      borderTop: "1px solid " + T.divider
+                    },
+                    children: [
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: resetOperationalFilters,
+                        style: {
+                          padding: "0.38rem 0.75rem",
+                          borderRadius: 8,
+                          border: "1px solid " + T.btnBorder,
+                          background: T.cardBg,
+                          color: T.textSecondary,
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          cursor: "pointer"
+                        },
+                        children: "↺ Reset Default"
+                      }),
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", gap: "0.5rem" },
+                        children: [
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => setShowFilterPopover(false),
+                            style: {
+                              padding: "0.38rem 0.8rem",
+                              borderRadius: 8,
+                              border: "none",
+                              background: "transparent",
+                              color: T.textSecondary,
+                              fontSize: "0.74rem",
+                              fontWeight: 700,
+                              cursor: "pointer"
+                            },
+                            children: "Batal"
+                          }),
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => setShowFilterPopover(false),
+                            style: {
+                              padding: "0.4rem 0.95rem",
+                              borderRadius: 8,
+                              border: "1px solid #dc2626",
+                              background: "#dc2626",
+                              color: "#ffffff",
+                              fontSize: "0.74rem",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                              boxShadow: "0 2px 8px rgba(220,38,38,0.25)"
+                            },
+                            children: "✓ Terapkan Filter"
+                          })
+                        ]
+                      })
+                    ]
                   })
                 ]
               })
@@ -6109,7 +6757,7 @@ function switchDashView(targetView) {
     }, 25);
   } catch(_e) {}
 }
-return(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{className:"dash-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.45rem",flexWrap:"nowrap",marginBottom:"0.35rem"},children:[(0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:[(0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.05rem",fontWeight:800,whiteSpace:"nowrap"},children:dashView==="peta-kejahatan"?"Peta Kejahatan":"Ringkasan"}),(0,t.jsx)("button",{type:"button",onClick:()=>switchDashView(dashView==="peta-kejahatan"?"ringkasan":"peta-kejahatan"),style:{marginLeft:"0.35rem",padding:"0.22rem 0.62rem",borderRadius:999,border:dashView==="peta-kejahatan"?"1px solid #93c5fd":"1px solid #fca5a5",background:dashView==="peta-kejahatan"?"#eff6ff":"#fef2f2",color:dashView==="peta-kejahatan"?"#1d4ed8":"#dc2626",fontSize:"0.7rem",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0},children:dashView==="peta-kejahatan"?"📊 Ringkasan":"🗺️ Peta Kejahatan"}),l?.scoped&&(0,t.jsxs)("span",{className:"dash-scope-badge",style:{fontSize:"0.66rem",padding:"0.1rem 0.45rem",whiteSpace:"nowrap",flexShrink:0},children:[(0,t.jsx)("i",{className:"pi pi-sitemap",style:{fontSize:"0.65rem",marginRight:"0.25rem"}}),abbrSatkerName(l.scope_satker||"Belum ditetapkan",!1)]})]}),(0,t.jsx)("div",{style:{flexShrink:0},children:(0,t.jsx)(g.default,{refreshing:eo,updatedAt:ec,onRefresh:dashForceRefresh})})]}),(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"0.4rem",padding:"0.5rem 0.65rem",display:"flex",flexWrap:"nowrap",alignItems:"center",gap:"0.38rem"},children:[(0,t.jsxs)("div",{style:{position:"relative",flex:"1 1 auto",minWidth:0},children:[(0,t.jsx)(S.Search,{size:14,style:{position:"absolute",left:"0.58rem",top:"50%",transform:"translateY(-50%)",color:"#94a3b8",pointerEvents:"none"}}),(0,t.jsx)(m.InputText,{id:"dash-global-search",name:"search_global",value:ea,onChange:e=>er(e.target.value),onKeyDown:e=>"Enter"===e.key&&en(),placeholder:"Cari No. LP, nama, atau NIK…",style:{width:"100%",height:"34px",fontSize:"0.75rem",paddingLeft:"1.8rem",paddingRight:"0.5rem"}})]}),(0,t.jsxs)("button",{type:"button",className:"att-btn",onClick:en,disabled:ea.trim().length<5,title:ea.trim().length<5?"Ketik minimal 5 karakter":"Cari",style:{height:"34px",padding:"0 0.6rem",fontSize:"0.74rem",display:"inline-flex",alignItems:"center",gap:"0.28rem",flexShrink:0,whiteSpace:"nowrap"},children:[(0,t.jsx)(S.Search,{size:13}),"Cari"]}),
+return(0,t.jsxs)("div",{children:[(0,t.jsxs)("div",{className:"dash-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.45rem",flexWrap:"nowrap",marginBottom:"0.35rem"},children:[(0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:[(0,t.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.05rem",fontWeight:800,whiteSpace:"nowrap"},children:dashView==="peta-kejahatan"?"Peta Kejahatan":"Ringkasan"}),(0,t.jsx)("button",{type:"button",onClick:()=>switchDashView(dashView==="peta-kejahatan"?"ringkasan":"peta-kejahatan"),style:{marginLeft:"0.35rem",padding:"0.22rem 0.62rem",borderRadius:999,border:dashView==="peta-kejahatan"?"1px solid #93c5fd":"1px solid #fca5a5",background:dashView==="peta-kejahatan"?"#eff6ff":"#fef2f2",color:dashView==="peta-kejahatan"?"#1d4ed8":"#dc2626",fontSize:"0.7rem",fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0},children:dashView==="peta-kejahatan"?"📊 Ringkasan":"🗺️ Peta Kejahatan"}),l?.scoped&&(0,t.jsxs)("span",{className:"dash-scope-badge",style:{fontSize:"0.66rem",padding:"0.1rem 0.45rem",whiteSpace:"nowrap",flexShrink:0},children:[(0,t.jsx)("i",{className:"pi pi-sitemap",style:{fontSize:"0.65rem",marginRight:"0.25rem"}}),abbrSatkerName(l.scope_satker||"Belum ditetapkan",!1)]})]}),(0,t.jsx)("div",{style:{flexShrink:0},children:(0,t.jsx)(g.default,{refreshing:eo,updatedAt:ec,onRefresh:dashForceRefresh})})]}),(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"0.4rem",padding:"0.5rem 0.65rem",display:dashView==="peta-kejahatan"?"none":"flex",flexWrap:"nowrap",alignItems:"center",gap:"0.38rem"},children:[(0,t.jsxs)("div",{style:{position:"relative",flex:"1 1 auto",minWidth:0},children:[(0,t.jsx)(S.Search,{size:14,style:{position:"absolute",left:"0.58rem",top:"50%",transform:"translateY(-50%)",color:"#94a3b8",pointerEvents:"none"}}),(0,t.jsx)(m.InputText,{id:"dash-global-search",name:"search_global",value:ea,onChange:e=>er(e.target.value),onKeyDown:e=>"Enter"===e.key&&en(),placeholder:"Cari No. LP, nama, atau NIK…",style:{width:"100%",height:"34px",fontSize:"0.75rem",paddingLeft:"1.8rem",paddingRight:"0.5rem"}})]}),(0,t.jsxs)("button",{type:"button",className:"att-btn",onClick:en,disabled:ea.trim().length<5,title:ea.trim().length<5?"Ketik minimal 5 karakter":"Cari",style:{height:"34px",padding:"0 0.6rem",fontSize:"0.74rem",display:"inline-flex",alignItems:"center",gap:"0.28rem",flexShrink:0,whiteSpace:"nowrap"},children:[(0,t.jsx)(S.Search,{size:13}),"Cari"]}),
 (0,t.jsxs)("div",{
 style:{
   position:"relative",
