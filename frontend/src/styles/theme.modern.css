@@ -2116,7 +2116,7 @@ body[data-theme="dark"] .p-card {
    ========================================================================== */
 
 .p-dialog {
-  border-radius: 18px;
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--cas-shadow-pop);
   border: 1px solid var(--cas-border-card) !important;
@@ -2581,7 +2581,7 @@ body[data-theme="dark"] .p-card {
 /* Modern Today Cards (Presisi Red & Green) */
 .dash-today-card {
   color: #ffffff;
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 1.4rem 1.65rem;
   position: relative;
   overflow: hidden;
@@ -3495,8 +3495,7 @@ div[style*="calc(100% + 0.45rem)"] {
 
 /* --- 5. SENADA STATUS TAGS & BADGES --- */
 .p-tag,
-.p-badge,
-.att-chip {
+.p-badge {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3508,6 +3507,21 @@ div[style*="calc(100% + 0.45rem)"] {
   padding: 0.2rem 0.65rem !important;
   border-radius: 999px !important;
   border: 1px solid transparent !important;
+  text-shadow: none !important;
+  transition: all 0.18s ease-in-out !important;
+}
+
+.att-chip {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  padding: 0.45rem 0.75rem !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--cas-border, #e2e8f0) !important;
   text-shadow: none !important;
   transition: all 0.18s ease-in-out !important;
 }
@@ -6413,7 +6427,7 @@ div[style*="margin-top:-1.6rem"] > span {
     width: auto !important;
     min-width: max-content !important;
     padding: 0.3rem 0.58rem !important;
-    border-radius: 999px !important;
+    border-radius: 10px !important;
     display: inline-flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -6434,7 +6448,7 @@ div[style*="margin-top:-1.6rem"] > span {
     min-width: max-content !important;
     max-width: none !important;
     padding: 0.3rem 0.65rem !important;
-    border-radius: 999px !important;
+    border-radius: 10px !important;
     display: inline-flex !important;
     flex-direction: row !important;
     align-items: center !important;
@@ -6582,7 +6596,7 @@ div[style*="margin-top:-1.6rem"] > span {
     align-items: center !important;
     gap: 0.32rem !important;
     padding: 0.32rem 0.65rem !important;
-    border-radius: 999px !important;
+    border-radius: 10px !important;
   }
 
   .lp-status-cards .lp-stat:not(.active) .n {
@@ -6592,7 +6606,7 @@ div[style*="margin-top:-1.6rem"] > span {
   .lp-status-cards .lp-stat.active {
     flex-direction: row !important;
     align-items: center !important;
-    border-radius: 999px !important;
+    border-radius: 10px !important;
     padding: 0.32rem 0.68rem !important;
     gap: 0.35rem !important;
   }

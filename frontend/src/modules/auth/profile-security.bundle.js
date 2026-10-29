@@ -1684,7 +1684,7 @@ if((0,n.useEffect)(()=>{(async()=>{try{let e=await eT(),t=String(e?.role_bdb||""
             background:"var(--cas-bg-surface, #ffffff)",
             color:"var(--cas-text-primary, #0f172a)",
             border:"1px solid var(--cas-border, #cbd5e1)",
-            borderRadius:"24px",
+            borderRadius:"10px",
             padding:"0.5rem 1.25rem",
             fontSize:"0.84rem",
             fontWeight:700,
@@ -3120,7 +3120,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           (0,t.jsx)("button",{
             type:"button",
             onClick:openEditIntro,
-            style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.45rem",boxShadow:"0 2px 8px rgba(37,99,235,0.35)"},
+            style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"10px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.45rem",boxShadow:"0 2px 8px rgba(37,99,235,0.35)"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.78rem"}}),
               (0,t.jsx)("span",{children:"Edit Profile"})
@@ -3129,7 +3129,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           (0,t.jsx)("button",{
             type:"button",
             onClick:()=>setAddSectionModal(!0),
-            style:{background:"transparent",color:"#0284c7",border:"1px solid #0284c7",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+            style:{background:"transparent",color:"#0284c7",border:"1px solid #0284c7",borderRadius:"10px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-plus",style:{fontSize:"0.76rem"}}),
               (0,t.jsx)("span",{children:"Tambahkan bagian"})
@@ -3148,7 +3148,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                 background:"rgba(16,185,129,0.14)",
                 color:"#047857",
                 border:"1px solid rgba(16,185,129,0.45)",
-                borderRadius:"24px",
+                borderRadius:"10px",
                 padding:"0.45rem 1.15rem",
                 fontSize:"0.84rem",
                 fontWeight:700,
@@ -3162,7 +3162,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                 background:"#0284c7",
                 color:"#fff",
                 border:"1px solid #0284c7",
-                borderRadius:"24px",
+                borderRadius:"10px",
                 padding:"0.45rem 1.15rem",
                 fontSize:"0.84rem",
                 fontWeight:700,
@@ -3193,7 +3193,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                 }
               }));
             },
-            style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem",boxShadow:"0 2px 8px rgba(37,99,235,0.35)"},
+            style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"10px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.4rem",boxShadow:"0 2px 8px rgba(37,99,235,0.35)"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-comments",style:{fontSize:"0.82rem"}}),
               (0,t.jsx)("span",{children:"Kirim Pesan Taktis"})
@@ -3201,7 +3201,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           }),
 
           (0,t.jsxs)("div",{
-            style:{background:"rgba(2,132,199,0.12)",color:"#0369a1",border:"1px solid rgba(2,132,199,0.35)",borderRadius:"24px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.4rem"},
+            style:{background:"rgba(2,132,199,0.12)",color:"#0369a1",border:"1px solid rgba(2,132,199,0.35)",borderRadius:"10px",padding:"0.45rem 1.15rem",fontSize:"0.84rem",fontWeight:700,display:"inline-flex",alignItems:"center",gap:"0.4rem"},
             children:[
               (0,t.jsx)("i",{className:"pi pi-lock",style:{fontSize:"0.8rem"}}),
               (0,t.jsx)("span",{children:"Mode Kedinasan"})
