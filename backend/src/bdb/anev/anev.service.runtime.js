@@ -1029,6 +1029,12 @@ let AnevService = class AnevService {
     async buildFilteredPetaTree(f) {
         const params = [];
         const wh = ['1=1'];
+        const kel = String(f.kelompok || 'INTERNAL_RESERSE').toUpperCase();
+        if (kel === 'INTERNAL_RESERSE') {
+            wh.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            wh.push('is_internal_reserse = false');
+        }
         if (f.date_from) {
             params.push(f.date_from);
             wh.push(`tanggal >= $${params.length}::date`);
@@ -1037,1202 +1043,11 @@ let AnevService = class AnevService {
             params.push(f.date_to);
             wh.push(`tanggal <= $${params.length}::date`);
         }
-        if (f.year) {
+        if (f.year && !f.date_from && !f.date_to) {
             params.push(Number(f.year));
             wh.push(`extract(year from tanggal) = $${params.length}`);
         }
-        if (f.month) {
-            params.push(Number(f.month));
-            wh.push(`extract(month from tanggal) = $${params.length}`);
-        }
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, params, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            wh.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            params.push(Number(f.golongan_id));
-            wh.push(`golongan_kejahatan_id = $${params.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                params.push(m);
-                wh.push(`model_lp = $${params.length}`);
-            }
-        }
-        if (f.status) {
-            const stUp = String(f.status).trim().toUpperCase();
-            if (stUp === 'CT' || stUp === 'CC') {
-                params.push(stUp);
-                wh.push(`kategori = $${params.length}`);
-            } else {
-                const arr = stUp.split(',').map(s => s.trim()).filter(Boolean);
-                if (arr.length) {
-                    params.push(arr);
-                    wh.push(`status_code = any($${params.length})`);
-                }
-            }
-        }
-
-        const counts = await this.ds.query(`
-            SELECT satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
-            FROM bdb_peta_kejahatan_agg
-            WHERE ${wh.join(' AND ')}
-            GROUP BY satker_id, status_code, kategori
-        `, params);
-
-        const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
-        const statuses = await this.allStatuses();
-        const node = new Map();
-        const parentOf = new Map();
-        for (const s of satkers) {
-            node.set(s.id, { id: s.id, kode: s.kode, nama: s.deskripsi, parent_id: s.parent_id, depth: s.depth, status: {}, ct: 0, cc: 0, total: 0 });
-            parentOf.set(s.id, s.parent_id);
-        }
-        const direct = new Map();
-        for (const c of counts) {
-            let d = direct.get(c.sid);
-            if (!d) {
-                d = { status: {}, ct: 0, cc: 0, total: 0 };
-                direct.set(c.sid, d);
-            }
-            const code = c.status_code || 'TANPA_STATUS';
-            d.status[code] = (d.status[code] || 0) + c.jml;
-            if (c.kategori === 'CC') d.cc += c.jml;
-            else d.ct += c.jml;
-            d.total += c.jml;
-        }
-        for (const [sid, d] of direct) {
-            let cur = sid;
-            const guard = new Set();
-            while (cur != null && node.has(cur) && !guard.has(cur)) {
-                guard.add(cur);
-                const n = node.get(cur);
-                for (const [code, v] of Object.entries(d.status)) {
-                    n.status[code] = (n.status[code] || 0) + v;
-                }
-                n.ct += d.ct;
-                n.cc += d.cc;
-                n.total += d.total;
-                cur = parentOf.get(cur) ?? null;
-            }
-        }
-        const byId = new Map();
-        for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
-        const roots = [];
-        for (const n of byId.values()) {
-            const p = n.parent_id != null ? byId.get(n.parent_id) : null;
-            if (p) p.children.push(n);
-            else roots.push(n);
-        }
-        const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
-        const byKode = new Map();
-        const indexRec = (arr) => arr.forEach((n) => {
-            byKode.set(n.kode, n);
-            if (n.children) indexRec(n.children);
-        });
-        indexRec(roots);
-        return { roots, statuses, totals, byKode };
-    }
-
-    async queryPetaHotspotsAndCrimes(f) {
-        const hParams = [];
-        const hWhere = ['1=1'];
-        const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
-        const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
-        hParams.push(ymFrom);
-        hWhere.push(`ym >= $${hParams.length}::date`);
-        hParams.push(ymTo);
-        hWhere.push(`ym <= $${hParams.length}::date`);
-
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, hParams, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            hWhere.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            hParams.push(Number(f.golongan_id));
-            hWhere.push(`golongan_kejahatan_id = $${hParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                hParams.push(m);
-                hWhere.push(`model_lp = $${hParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            hParams.push(String(f.polda_key).trim().toUpperCase());
-            hWhere.push(`polda_key = $${hParams.length}`);
-        }
-        if (f.polda_id) {
-            hParams.push(Number(f.polda_id));
-            hWhere.push(`polda_id = $${hParams.length}`);
-        }
-        if (f.polres_id) {
-            hParams.push(Number(f.polres_id));
-            hWhere.push(`polres_id = $${hParams.length}`);
-        }
-        if (f.satker_id) {
-            hParams.push(Number(f.satker_id));
-            hWhere.push(`(satker_id = $${hParams.length} OR polres_id = $${hParams.length} OR polda_id = $${hParams.length})`);
-        }
-        if (f.search) {
-            hParams.push('%' + String(f.search).trim() + '%');
-            hWhere.push(`(tkp_label ILIKE $${hParams.length} OR satker_nama ILIKE $${hParams.length} OR polda_nama ILIKE $${hParams.length})`);
-        }
-
-        const hotspotsSql = `
-            SELECT
-                grid_lat,
-                grid_lng,
-                round(avg(lat)::numeric, 5)::double precision AS lat,
-                round(avg(lng)::numeric, 5)::double precision AS lng,
-                sum(ct)::int AS ct,
-                sum(cc)::int AS cc,
-                max(polda_key) AS polda_key,
-                max(polda_nama) AS polda_nama,
-                max(satker_nama) AS satker_nama,
-                max(tkp_label) AS tkp_label,
-                mode() WITHIN GROUP (ORDER BY jenis_kejahatan_nama) AS dominant_crime,
-                to_jsonb((array_agg(sample_lps->0 ORDER BY ct DESC) FILTER (WHERE sample_lps IS NOT NULL AND jsonb_array_length(sample_lps) > 0))[1:4]) AS sample_lps
-            FROM bdb_peta_kejahatan_hotspots
-            WHERE ${hWhere.join(' AND ')}
-            GROUP BY grid_lat, grid_lng
-            ORDER BY ct DESC
-            LIMIT 320
-        `;
-
-        // Also compute crime filter counts for the period/region (without jenis_kejahatan filter so chips always show counts!)
-        const cParams = [];
-        const cWhere = ['jenis_kejahatan_id <> 516'];
-        if (f.date_from) {
-            cParams.push(f.date_from);
-            cWhere.push(`tanggal >= $${cParams.length}::date`);
-        }
-        if (f.date_to) {
-            cParams.push(f.date_to);
-            cWhere.push(`tanggal <= $${cParams.length}::date`);
-        }
-        if (f.golongan_id) {
-            cParams.push(Number(f.golongan_id));
-            cWhere.push(`golongan_kejahatan_id = $${cParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                cParams.push(m);
-                cWhere.push(`model_lp = $${cParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            cParams.push(String(f.polda_key).trim().toUpperCase());
-            cWhere.push(`polda_key = $${cParams.length}`);
-        }
-
-        const crimeCountsSql = `
-            SELECT
-                a.jenis_kejahatan_id AS id,
-                coalesce(jk.keterangan, 'Lainnya') AS nama,
-                sum(a.total_lp)::int AS ct,
-                sum(case when a.kategori = 'CC' then a.total_lp else 0 end)::int AS cc
-            FROM bdb_peta_kejahatan_agg a
-            JOIN cm_jenis_kejahatan jk ON jk.id = a.jenis_kejahatan_id
-            WHERE ${cWhere.join(' AND ')}
-            GROUP BY 1, 2
-            ORDER BY ct DESC
-            LIMIT 30
-        `;
-
-        const [hotRows, crimeRows] = await Promise.all([
-            this.ds.query(hotspotsSql, hParams).catch(() => []),
-            this.ds.query(crimeCountsSql, cParams).catch(() => [])
-        ]);
-
-        const maxHotCT = Math.max(1, ...(hotRows.map(r => Number(r.ct || 0))));
-        const hotspots = hotRows.map((r, idx) => {
-            const ctVal = Number(r.ct || 0);
-            const ccVal = Number(r.cc || 0);
-            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
-            const weight = Number(Math.min(1, Math.max(0.15, Math.pow(ctVal / maxHotCT, 0.48))).toFixed(3));
-            return {
-                rank: idx + 1,
-                lat: Number(r.lat),
-                lng: Number(r.lng),
-                ct: ctVal,
-                cc: ccVal,
-                cr: crVal,
-                weight,
-                polda_key: r.polda_key || '',
-                polda_nama: r.polda_nama || '',
-                satker_nama: r.satker_nama || '',
-                tkp_label: r.tkp_label || '',
-                dominant_crime: r.dominant_crime || 'Tindak Pidana',
-                sample_lps: Array.isArray(r.sample_lps) ? r.sample_lps.filter(Boolean) : []
-            };
-        });
-
-        const top_rawan_locations = hotspots.slice(0, 12);
-        return { hotspots, top_rawan_locations, crime_types: crimeRows };
-    }
-
-    resolvePetaCrimeCondition(jenisRaw, params, colName = 'jenis_kejahatan_id') {
-        if (!jenisRaw) return '';
-        const up = String(jenisRaw).trim().toUpperCase();
-        if (!up || up === 'SEMUA' || up === 'ALL') return '';
-        if (up === 'CURAS') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 22 OR keterangan ILIKE '%curas%' OR keterangan ILIKE '%pencurian dengan kekerasan%')`;
-        }
-        if (up === 'CURAT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 20 OR keterangan ILIKE '%curat%' OR keterangan ILIKE '%pencurian dengan pemberatan%')`;
-        }
-        if (up === 'CURANMOR') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 186 OR keterangan ILIKE '%curanmor%' OR keterangan ILIKE '%kendaraan bermotor%')`;
-        }
-        if (up === 'ANIRAT' || up === 'PENGANIAYAAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (16, 254, 234) OR keterangan ILIKE '%anirat%' OR keterangan ILIKE '%penganiayaan%' OR keterangan ILIKE '%pengeroyokan%')`;
-        }
-        if (up === 'NARKOBA' || up === 'NARKOTIKA') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (43, 407) OR keterangan ILIKE '%narkotika%' OR keterangan ILIKE '%narkoba%' OR keterangan ILIKE '%obat keras%' OR keterangan ILIKE '%psikotropika%')`;
-        }
-        if (up === 'SIBER' || up === 'ITE') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (551, 246) OR keterangan ILIKE '%elektronik%' OR keterangan ILIKE '%siber%' OR keterangan ILIKE '%ite%')`;
-        }
-        if (up === 'TIPIKOR' || up === 'KORUPSI') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE '%korupsi%' OR keterangan ILIKE '%suap%' OR keterangan ILIKE '%gratifikasi%')`;
-        }
-        if (up === 'PENIPUAN' || up === 'PENGGELAPAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (25, 435) OR keterangan ILIKE '%penipuan%' OR keterangan ILIKE '%penggelapan%' OR keterangan ILIKE '%curang%')`;
-        }
-        if (up === 'PPA' || up === 'PERLINDUNGAN_ANAK' || up === 'KDRT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (457, 30, 313, 225, 680, 10) OR keterangan ILIKE '%anak%' OR keterangan ILIKE '%rumah tangga%' OR keterangan ILIKE '%seksual%' OR keterangan ILIKE '%cabul%' OR keterangan ILIKE '%perkosaan%')`;
-        }
-        if (up === 'JUDI' || up === 'PERJUDIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 273 OR keterangan ILIKE '%judi%')`;
-        }
-        if (up === 'PEMBUNUHAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 15 OR keterangan ILIKE '%pembunuhan%')`;
-        }
-        if (up === 'PENCURIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (19, 21) OR keterangan ILIKE '%pencurian biasa%' OR keterangan ILIKE '%pencurian ringan%')`;
-        }
-        if (/^\d+$/.test(up)) {
-            params.push(Number(up));
-            return `${colName} = $${params.length}`;
-        }
-        params.push('%' + String(jenisRaw).trim() + '%');
-        return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE $${params.length})`;
-    }
-
-    async buildFilteredPetaTree(f) {
-        const params = [];
-        const wh = ['1=1'];
-        if (f.date_from) {
-            params.push(f.date_from);
-            wh.push(`tanggal >= $${params.length}::date`);
-        }
-        if (f.date_to) {
-            params.push(f.date_to);
-            wh.push(`tanggal <= $${params.length}::date`);
-        }
-        if (f.year) {
-            params.push(Number(f.year));
-            wh.push(`extract(year from tanggal) = $${params.length}`);
-        }
-        if (f.month) {
-            params.push(Number(f.month));
-            wh.push(`extract(month from tanggal) = $${params.length}`);
-        }
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, params, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            wh.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            params.push(Number(f.golongan_id));
-            wh.push(`golongan_kejahatan_id = $${params.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                params.push(m);
-                wh.push(`model_lp = $${params.length}`);
-            }
-        }
-        if (f.status) {
-            const stUp = String(f.status).trim().toUpperCase();
-            if (stUp === 'CT' || stUp === 'CC') {
-                params.push(stUp);
-                wh.push(`kategori = $${params.length}`);
-            } else {
-                const arr = stUp.split(',').map(s => s.trim()).filter(Boolean);
-                if (arr.length) {
-                    params.push(arr);
-                    wh.push(`status_code = any($${params.length})`);
-                }
-            }
-        }
-
-        const counts = await this.ds.query(`
-            SELECT satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
-            FROM bdb_peta_kejahatan_agg
-            WHERE ${wh.join(' AND ')}
-            GROUP BY satker_id, status_code, kategori
-        `, params);
-
-        const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
-        const statuses = await this.allStatuses();
-        const node = new Map();
-        const parentOf = new Map();
-        for (const s of satkers) {
-            node.set(s.id, { id: s.id, kode: s.kode, nama: s.deskripsi, parent_id: s.parent_id, depth: s.depth, status: {}, ct: 0, cc: 0, total: 0 });
-            parentOf.set(s.id, s.parent_id);
-        }
-        const direct = new Map();
-        for (const c of counts) {
-            let d = direct.get(c.sid);
-            if (!d) {
-                d = { status: {}, ct: 0, cc: 0, total: 0 };
-                direct.set(c.sid, d);
-            }
-            const code = c.status_code || 'TANPA_STATUS';
-            d.status[code] = (d.status[code] || 0) + c.jml;
-            if (c.kategori === 'CC') d.cc += c.jml;
-            else d.ct += c.jml;
-            d.total += c.jml;
-        }
-        for (const [sid, d] of direct) {
-            let cur = sid;
-            const guard = new Set();
-            while (cur != null && node.has(cur) && !guard.has(cur)) {
-                guard.add(cur);
-                const n = node.get(cur);
-                for (const [code, v] of Object.entries(d.status)) {
-                    n.status[code] = (n.status[code] || 0) + v;
-                }
-                n.ct += d.ct;
-                n.cc += d.cc;
-                n.total += d.total;
-                cur = parentOf.get(cur) ?? null;
-            }
-        }
-        const byId = new Map();
-        for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
-        const roots = [];
-        for (const n of byId.values()) {
-            const p = n.parent_id != null ? byId.get(n.parent_id) : null;
-            if (p) p.children.push(n);
-            else roots.push(n);
-        }
-        const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
-        const byKode = new Map();
-        const indexRec = (arr) => arr.forEach((n) => {
-            byKode.set(n.kode, n);
-            if (n.children) indexRec(n.children);
-        });
-        indexRec(roots);
-        return { roots, statuses, totals, byKode };
-    }
-
-    async queryPetaHotspotsAndCrimes(f) {
-        const hParams = [];
-        const hWhere = ['1=1'];
-        const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
-        const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
-        hParams.push(ymFrom);
-        hWhere.push(`ym >= $${hParams.length}::date`);
-        hParams.push(ymTo);
-        hWhere.push(`ym <= $${hParams.length}::date`);
-
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, hParams, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            hWhere.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            hParams.push(Number(f.golongan_id));
-            hWhere.push(`golongan_kejahatan_id = $${hParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                hParams.push(m);
-                hWhere.push(`model_lp = $${hParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            hParams.push(String(f.polda_key).trim().toUpperCase());
-            hWhere.push(`polda_key = $${hParams.length}`);
-        }
-        if (f.polda_id) {
-            hParams.push(Number(f.polda_id));
-            hWhere.push(`polda_id = $${hParams.length}`);
-        }
-        if (f.polres_id) {
-            hParams.push(Number(f.polres_id));
-            hWhere.push(`polres_id = $${hParams.length}`);
-        }
-        if (f.satker_id) {
-            hParams.push(Number(f.satker_id));
-            hWhere.push(`(satker_id = $${hParams.length} OR polres_id = $${hParams.length} OR polda_id = $${hParams.length})`);
-        }
-        if (f.search) {
-            hParams.push('%' + String(f.search).trim() + '%');
-            hWhere.push(`(tkp_label ILIKE $${hParams.length} OR satker_nama ILIKE $${hParams.length} OR polda_nama ILIKE $${hParams.length})`);
-        }
-
-        const hotspotsSql = `
-            SELECT
-                grid_lat,
-                grid_lng,
-                round(avg(lat)::numeric, 5)::double precision AS lat,
-                round(avg(lng)::numeric, 5)::double precision AS lng,
-                sum(ct)::int AS ct,
-                sum(cc)::int AS cc,
-                max(polda_key) AS polda_key,
-                max(polda_nama) AS polda_nama,
-                max(satker_nama) AS satker_nama,
-                max(tkp_label) AS tkp_label,
-                mode() WITHIN GROUP (ORDER BY jenis_kejahatan_nama) AS dominant_crime,
-                to_jsonb((array_agg(sample_lps->0 ORDER BY ct DESC) FILTER (WHERE sample_lps IS NOT NULL AND jsonb_array_length(sample_lps) > 0))[1:4]) AS sample_lps
-            FROM bdb_peta_kejahatan_hotspots
-            WHERE ${hWhere.join(' AND ')}
-            GROUP BY grid_lat, grid_lng
-            ORDER BY ct DESC
-            LIMIT 320
-        `;
-
-        // Also compute crime filter counts for the period/region (without jenis_kejahatan filter so chips always show counts!)
-        const cParams = [];
-        const cWhere = ['jenis_kejahatan_id <> 516'];
-        if (f.date_from) {
-            cParams.push(f.date_from);
-            cWhere.push(`tanggal >= $${cParams.length}::date`);
-        }
-        if (f.date_to) {
-            cParams.push(f.date_to);
-            cWhere.push(`tanggal <= $${cParams.length}::date`);
-        }
-        if (f.golongan_id) {
-            cParams.push(Number(f.golongan_id));
-            cWhere.push(`golongan_kejahatan_id = $${cParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                cParams.push(m);
-                cWhere.push(`model_lp = $${cParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            cParams.push(String(f.polda_key).trim().toUpperCase());
-            cWhere.push(`polda_key = $${cParams.length}`);
-        }
-
-        const crimeCountsSql = `
-            SELECT
-                a.jenis_kejahatan_id AS id,
-                coalesce(jk.keterangan, 'Lainnya') AS nama,
-                sum(a.total_lp)::int AS ct,
-                sum(case when a.kategori = 'CC' then a.total_lp else 0 end)::int AS cc
-            FROM bdb_peta_kejahatan_agg a
-            JOIN cm_jenis_kejahatan jk ON jk.id = a.jenis_kejahatan_id
-            WHERE ${cWhere.join(' AND ')}
-            GROUP BY 1, 2
-            ORDER BY ct DESC
-            LIMIT 30
-        `;
-
-        const [hotRows, crimeRows] = await Promise.all([
-            this.ds.query(hotspotsSql, hParams).catch(() => []),
-            this.ds.query(crimeCountsSql, cParams).catch(() => [])
-        ]);
-
-        const maxHotCT = Math.max(1, ...(hotRows.map(r => Number(r.ct || 0))));
-        const hotspots = hotRows.map((r, idx) => {
-            const ctVal = Number(r.ct || 0);
-            const ccVal = Number(r.cc || 0);
-            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
-            const weight = Number(Math.min(1, Math.max(0.15, Math.pow(ctVal / maxHotCT, 0.48))).toFixed(3));
-            return {
-                rank: idx + 1,
-                lat: Number(r.lat),
-                lng: Number(r.lng),
-                ct: ctVal,
-                cc: ccVal,
-                cr: crVal,
-                weight,
-                polda_key: r.polda_key || '',
-                polda_nama: r.polda_nama || '',
-                satker_nama: r.satker_nama || '',
-                tkp_label: r.tkp_label || '',
-                dominant_crime: r.dominant_crime || 'Tindak Pidana',
-                sample_lps: Array.isArray(r.sample_lps) ? r.sample_lps.filter(Boolean) : []
-            };
-        });
-
-        const top_rawan_locations = hotspots.slice(0, 12);
-        return { hotspots, top_rawan_locations, crime_types: crimeRows };
-    }
-
-    resolvePetaCrimeCondition(jenisRaw, params, colName = 'jenis_kejahatan_id') {
-        if (!jenisRaw) return '';
-        const up = String(jenisRaw).trim().toUpperCase();
-        if (!up || up === 'SEMUA' || up === 'ALL') return '';
-        if (up === 'CURAS') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 22 OR keterangan ILIKE '%curas%' OR keterangan ILIKE '%pencurian dengan kekerasan%')`;
-        }
-        if (up === 'CURAT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 20 OR keterangan ILIKE '%curat%' OR keterangan ILIKE '%pencurian dengan pemberatan%')`;
-        }
-        if (up === 'CURANMOR') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 186 OR keterangan ILIKE '%curanmor%' OR keterangan ILIKE '%kendaraan bermotor%')`;
-        }
-        if (up === 'ANIRAT' || up === 'PENGANIAYAAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (16, 254, 234) OR keterangan ILIKE '%anirat%' OR keterangan ILIKE '%penganiayaan%' OR keterangan ILIKE '%pengeroyokan%')`;
-        }
-        if (up === 'NARKOBA' || up === 'NARKOTIKA') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (43, 407) OR keterangan ILIKE '%narkotika%' OR keterangan ILIKE '%narkoba%' OR keterangan ILIKE '%obat keras%' OR keterangan ILIKE '%psikotropika%')`;
-        }
-        if (up === 'SIBER' || up === 'ITE') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (551, 246) OR keterangan ILIKE '%elektronik%' OR keterangan ILIKE '%siber%' OR keterangan ILIKE '%ite%')`;
-        }
-        if (up === 'TIPIKOR' || up === 'KORUPSI') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE '%korupsi%' OR keterangan ILIKE '%suap%' OR keterangan ILIKE '%gratifikasi%')`;
-        }
-        if (up === 'PENIPUAN' || up === 'PENGGELAPAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (25, 435) OR keterangan ILIKE '%penipuan%' OR keterangan ILIKE '%penggelapan%' OR keterangan ILIKE '%curang%')`;
-        }
-        if (up === 'PPA' || up === 'PERLINDUNGAN_ANAK' || up === 'KDRT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (457, 30, 313, 225, 680, 10) OR keterangan ILIKE '%anak%' OR keterangan ILIKE '%rumah tangga%' OR keterangan ILIKE '%seksual%' OR keterangan ILIKE '%cabul%' OR keterangan ILIKE '%perkosaan%')`;
-        }
-        if (up === 'JUDI' || up === 'PERJUDIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 273 OR keterangan ILIKE '%judi%')`;
-        }
-        if (up === 'PEMBUNUHAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 15 OR keterangan ILIKE '%pembunuhan%')`;
-        }
-        if (up === 'PENCURIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (19, 21) OR keterangan ILIKE '%pencurian biasa%' OR keterangan ILIKE '%pencurian ringan%')`;
-        }
-        if (/^\d+$/.test(up)) {
-            params.push(Number(up));
-            return `${colName} = $${params.length}`;
-        }
-        params.push('%' + String(jenisRaw).trim() + '%');
-        return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE $${params.length})`;
-    }
-
-    async buildFilteredPetaTree(f) {
-        const params = [];
-        const wh = ['1=1'];
-        if (f.date_from) {
-            params.push(f.date_from);
-            wh.push(`tanggal >= $${params.length}::date`);
-        }
-        if (f.date_to) {
-            params.push(f.date_to);
-            wh.push(`tanggal <= $${params.length}::date`);
-        }
-        if (f.year) {
-            params.push(Number(f.year));
-            wh.push(`extract(year from tanggal) = $${params.length}`);
-        }
-        if (f.month) {
-            params.push(Number(f.month));
-            wh.push(`extract(month from tanggal) = $${params.length}`);
-        }
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, params, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            wh.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            params.push(Number(f.golongan_id));
-            wh.push(`golongan_kejahatan_id = $${params.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                params.push(m);
-                wh.push(`model_lp = $${params.length}`);
-            }
-        }
-        if (f.status) {
-            const stUp = String(f.status).trim().toUpperCase();
-            if (stUp === 'CT' || stUp === 'CC') {
-                params.push(stUp);
-                wh.push(`kategori = $${params.length}`);
-            } else {
-                const arr = stUp.split(',').map(s => s.trim()).filter(Boolean);
-                if (arr.length) {
-                    params.push(arr);
-                    wh.push(`status_code = any($${params.length})`);
-                }
-            }
-        }
-
-        const counts = await this.ds.query(`
-            SELECT satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
-            FROM bdb_peta_kejahatan_agg
-            WHERE ${wh.join(' AND ')}
-            GROUP BY satker_id, status_code, kategori
-        `, params);
-
-        const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
-        const statuses = await this.allStatuses();
-        const node = new Map();
-        const parentOf = new Map();
-        for (const s of satkers) {
-            node.set(s.id, { id: s.id, kode: s.kode, nama: s.deskripsi, parent_id: s.parent_id, depth: s.depth, status: {}, ct: 0, cc: 0, total: 0 });
-            parentOf.set(s.id, s.parent_id);
-        }
-        const direct = new Map();
-        for (const c of counts) {
-            let d = direct.get(c.sid);
-            if (!d) {
-                d = { status: {}, ct: 0, cc: 0, total: 0 };
-                direct.set(c.sid, d);
-            }
-            const code = c.status_code || 'TANPA_STATUS';
-            d.status[code] = (d.status[code] || 0) + c.jml;
-            if (c.kategori === 'CC') d.cc += c.jml;
-            else d.ct += c.jml;
-            d.total += c.jml;
-        }
-        for (const [sid, d] of direct) {
-            let cur = sid;
-            const guard = new Set();
-            while (cur != null && node.has(cur) && !guard.has(cur)) {
-                guard.add(cur);
-                const n = node.get(cur);
-                for (const [code, v] of Object.entries(d.status)) {
-                    n.status[code] = (n.status[code] || 0) + v;
-                }
-                n.ct += d.ct;
-                n.cc += d.cc;
-                n.total += d.total;
-                cur = parentOf.get(cur) ?? null;
-            }
-        }
-        const byId = new Map();
-        for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
-        const roots = [];
-        for (const n of byId.values()) {
-            const p = n.parent_id != null ? byId.get(n.parent_id) : null;
-            if (p) p.children.push(n);
-            else roots.push(n);
-        }
-        const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
-        const byKode = new Map();
-        const indexRec = (arr) => arr.forEach((n) => {
-            byKode.set(n.kode, n);
-            if (n.children) indexRec(n.children);
-        });
-        indexRec(roots);
-        return { roots, statuses, totals, byKode };
-    }
-
-    async queryPetaHotspotsAndCrimes(f) {
-        const hParams = [];
-        const hWhere = ['1=1'];
-        const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
-        const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
-        hParams.push(ymFrom);
-        hWhere.push(`ym >= $${hParams.length}::date`);
-        hParams.push(ymTo);
-        hWhere.push(`ym <= $${hParams.length}::date`);
-
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, hParams, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            hWhere.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            hParams.push(Number(f.golongan_id));
-            hWhere.push(`golongan_kejahatan_id = $${hParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                hParams.push(m);
-                hWhere.push(`model_lp = $${hParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            hParams.push(String(f.polda_key).trim().toUpperCase());
-            hWhere.push(`polda_key = $${hParams.length}`);
-        }
-        if (f.polda_id) {
-            hParams.push(Number(f.polda_id));
-            hWhere.push(`polda_id = $${hParams.length}`);
-        }
-        if (f.polres_id) {
-            hParams.push(Number(f.polres_id));
-            hWhere.push(`polres_id = $${hParams.length}`);
-        }
-        if (f.satker_id) {
-            hParams.push(Number(f.satker_id));
-            hWhere.push(`(satker_id = $${hParams.length} OR polres_id = $${hParams.length} OR polda_id = $${hParams.length})`);
-        }
-        if (f.search) {
-            hParams.push('%' + String(f.search).trim() + '%');
-            hWhere.push(`(tkp_label ILIKE $${hParams.length} OR satker_nama ILIKE $${hParams.length} OR polda_nama ILIKE $${hParams.length})`);
-        }
-
-        const hotspotsSql = `
-            SELECT
-                grid_lat,
-                grid_lng,
-                round(avg(lat)::numeric, 5)::double precision AS lat,
-                round(avg(lng)::numeric, 5)::double precision AS lng,
-                sum(ct)::int AS ct,
-                sum(cc)::int AS cc,
-                max(polda_key) AS polda_key,
-                max(polda_nama) AS polda_nama,
-                max(satker_nama) AS satker_nama,
-                max(tkp_label) AS tkp_label,
-                mode() WITHIN GROUP (ORDER BY jenis_kejahatan_nama) AS dominant_crime,
-                to_jsonb((array_agg(sample_lps->0 ORDER BY ct DESC) FILTER (WHERE sample_lps IS NOT NULL AND jsonb_array_length(sample_lps) > 0))[1:4]) AS sample_lps
-            FROM bdb_peta_kejahatan_hotspots
-            WHERE ${hWhere.join(' AND ')}
-            GROUP BY grid_lat, grid_lng
-            ORDER BY ct DESC
-            LIMIT 320
-        `;
-
-        // Also compute crime filter counts for the period/region (without jenis_kejahatan filter so chips always show counts!)
-        const cParams = [];
-        const cWhere = ['jenis_kejahatan_id <> 516'];
-        if (f.date_from) {
-            cParams.push(f.date_from);
-            cWhere.push(`tanggal >= $${cParams.length}::date`);
-        }
-        if (f.date_to) {
-            cParams.push(f.date_to);
-            cWhere.push(`tanggal <= $${cParams.length}::date`);
-        }
-        if (f.golongan_id) {
-            cParams.push(Number(f.golongan_id));
-            cWhere.push(`golongan_kejahatan_id = $${cParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                cParams.push(m);
-                cWhere.push(`model_lp = $${cParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            cParams.push(String(f.polda_key).trim().toUpperCase());
-            cWhere.push(`polda_key = $${cParams.length}`);
-        }
-
-        const crimeCountsSql = `
-            SELECT
-                a.jenis_kejahatan_id AS id,
-                coalesce(jk.keterangan, 'Lainnya') AS nama,
-                sum(a.total_lp)::int AS ct,
-                sum(case when a.kategori = 'CC' then a.total_lp else 0 end)::int AS cc
-            FROM bdb_peta_kejahatan_agg a
-            JOIN cm_jenis_kejahatan jk ON jk.id = a.jenis_kejahatan_id
-            WHERE ${cWhere.join(' AND ')}
-            GROUP BY 1, 2
-            ORDER BY ct DESC
-            LIMIT 30
-        `;
-
-        const [hotRows, crimeRows] = await Promise.all([
-            this.ds.query(hotspotsSql, hParams).catch(() => []),
-            this.ds.query(crimeCountsSql, cParams).catch(() => [])
-        ]);
-
-        const maxHotCT = Math.max(1, ...(hotRows.map(r => Number(r.ct || 0))));
-        const hotspots = hotRows.map((r, idx) => {
-            const ctVal = Number(r.ct || 0);
-            const ccVal = Number(r.cc || 0);
-            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
-            const weight = Number(Math.min(1, Math.max(0.15, Math.pow(ctVal / maxHotCT, 0.48))).toFixed(3));
-            return {
-                rank: idx + 1,
-                lat: Number(r.lat),
-                lng: Number(r.lng),
-                ct: ctVal,
-                cc: ccVal,
-                cr: crVal,
-                weight,
-                polda_key: r.polda_key || '',
-                polda_nama: r.polda_nama || '',
-                satker_nama: r.satker_nama || '',
-                tkp_label: r.tkp_label || '',
-                dominant_crime: r.dominant_crime || 'Tindak Pidana',
-                sample_lps: Array.isArray(r.sample_lps) ? r.sample_lps.filter(Boolean) : []
-            };
-        });
-
-        const top_rawan_locations = hotspots.slice(0, 12);
-        return { hotspots, top_rawan_locations, crime_types: crimeRows };
-    }
-
-    resolvePetaCrimeCondition(jenisRaw, params, colName = 'jenis_kejahatan_id') {
-        if (!jenisRaw) return '';
-        const up = String(jenisRaw).trim().toUpperCase();
-        if (!up || up === 'SEMUA' || up === 'ALL') return '';
-        if (up === 'CURAS') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 22 OR keterangan ILIKE '%curas%' OR keterangan ILIKE '%pencurian dengan kekerasan%')`;
-        }
-        if (up === 'CURAT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 20 OR keterangan ILIKE '%curat%' OR keterangan ILIKE '%pencurian dengan pemberatan%')`;
-        }
-        if (up === 'CURANMOR') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 186 OR keterangan ILIKE '%curanmor%' OR keterangan ILIKE '%kendaraan bermotor%')`;
-        }
-        if (up === 'ANIRAT' || up === 'PENGANIAYAAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (16, 254, 234) OR keterangan ILIKE '%anirat%' OR keterangan ILIKE '%penganiayaan%' OR keterangan ILIKE '%pengeroyokan%')`;
-        }
-        if (up === 'NARKOBA' || up === 'NARKOTIKA') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (43, 407) OR keterangan ILIKE '%narkotika%' OR keterangan ILIKE '%narkoba%' OR keterangan ILIKE '%obat keras%' OR keterangan ILIKE '%psikotropika%')`;
-        }
-        if (up === 'SIBER' || up === 'ITE') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (551, 246) OR keterangan ILIKE '%elektronik%' OR keterangan ILIKE '%siber%' OR keterangan ILIKE '%ite%')`;
-        }
-        if (up === 'TIPIKOR' || up === 'KORUPSI') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE '%korupsi%' OR keterangan ILIKE '%suap%' OR keterangan ILIKE '%gratifikasi%')`;
-        }
-        if (up === 'PENIPUAN' || up === 'PENGGELAPAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (25, 435) OR keterangan ILIKE '%penipuan%' OR keterangan ILIKE '%penggelapan%' OR keterangan ILIKE '%curang%')`;
-        }
-        if (up === 'PPA' || up === 'PERLINDUNGAN_ANAK' || up === 'KDRT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (457, 30, 313, 225, 680, 10) OR keterangan ILIKE '%anak%' OR keterangan ILIKE '%rumah tangga%' OR keterangan ILIKE '%seksual%' OR keterangan ILIKE '%cabul%' OR keterangan ILIKE '%perkosaan%')`;
-        }
-        if (up === 'JUDI' || up === 'PERJUDIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 273 OR keterangan ILIKE '%judi%')`;
-        }
-        if (up === 'PEMBUNUHAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 15 OR keterangan ILIKE '%pembunuhan%')`;
-        }
-        if (up === 'PENCURIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (19, 21) OR keterangan ILIKE '%pencurian biasa%' OR keterangan ILIKE '%pencurian ringan%')`;
-        }
-        if (/^\d+$/.test(up)) {
-            params.push(Number(up));
-            return `${colName} = $${params.length}`;
-        }
-        params.push('%' + String(jenisRaw).trim() + '%');
-        return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE $${params.length})`;
-    }
-
-    async buildFilteredPetaTree(f) {
-        const params = [];
-        const wh = ['1=1'];
-        if (f.date_from) {
-            params.push(f.date_from);
-            wh.push(`tanggal >= $${params.length}::date`);
-        }
-        if (f.date_to) {
-            params.push(f.date_to);
-            wh.push(`tanggal <= $${params.length}::date`);
-        }
-        if (f.year) {
-            params.push(Number(f.year));
-            wh.push(`extract(year from tanggal) = $${params.length}`);
-        }
-        if (f.month) {
-            params.push(Number(f.month));
-            wh.push(`extract(month from tanggal) = $${params.length}`);
-        }
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, params, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            wh.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            params.push(Number(f.golongan_id));
-            wh.push(`golongan_kejahatan_id = $${params.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                params.push(m);
-                wh.push(`model_lp = $${params.length}`);
-            }
-        }
-        if (f.status) {
-            const stUp = String(f.status).trim().toUpperCase();
-            if (stUp === 'CT' || stUp === 'CC') {
-                params.push(stUp);
-                wh.push(`kategori = $${params.length}`);
-            } else {
-                const arr = stUp.split(',').map(s => s.trim()).filter(Boolean);
-                if (arr.length) {
-                    params.push(arr);
-                    wh.push(`status_code = any($${params.length})`);
-                }
-            }
-        }
-
-        const counts = await this.ds.query(`
-            SELECT satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
-            FROM bdb_peta_kejahatan_agg
-            WHERE ${wh.join(' AND ')}
-            GROUP BY satker_id, status_code, kategori
-        `, params);
-
-        const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
-        const statuses = await this.allStatuses();
-        const node = new Map();
-        const parentOf = new Map();
-        for (const s of satkers) {
-            node.set(s.id, { id: s.id, kode: s.kode, nama: s.deskripsi, parent_id: s.parent_id, depth: s.depth, status: {}, ct: 0, cc: 0, total: 0 });
-            parentOf.set(s.id, s.parent_id);
-        }
-        const direct = new Map();
-        for (const c of counts) {
-            let d = direct.get(c.sid);
-            if (!d) {
-                d = { status: {}, ct: 0, cc: 0, total: 0 };
-                direct.set(c.sid, d);
-            }
-            const code = c.status_code || 'TANPA_STATUS';
-            d.status[code] = (d.status[code] || 0) + c.jml;
-            if (c.kategori === 'CC') d.cc += c.jml;
-            else d.ct += c.jml;
-            d.total += c.jml;
-        }
-        for (const [sid, d] of direct) {
-            let cur = sid;
-            const guard = new Set();
-            while (cur != null && node.has(cur) && !guard.has(cur)) {
-                guard.add(cur);
-                const n = node.get(cur);
-                for (const [code, v] of Object.entries(d.status)) {
-                    n.status[code] = (n.status[code] || 0) + v;
-                }
-                n.ct += d.ct;
-                n.cc += d.cc;
-                n.total += d.total;
-                cur = parentOf.get(cur) ?? null;
-            }
-        }
-        const byId = new Map();
-        for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
-        const roots = [];
-        for (const n of byId.values()) {
-            const p = n.parent_id != null ? byId.get(n.parent_id) : null;
-            if (p) p.children.push(n);
-            else roots.push(n);
-        }
-        const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
-        const byKode = new Map();
-        const indexRec = (arr) => arr.forEach((n) => {
-            byKode.set(n.kode, n);
-            if (n.children) indexRec(n.children);
-        });
-        indexRec(roots);
-        return { roots, statuses, totals, byKode };
-    }
-
-    async queryPetaHotspotsAndCrimes(f) {
-        const hParams = [];
-        const hWhere = ['1=1'];
-        const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
-        const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
-        hParams.push(ymFrom);
-        hWhere.push(`ym >= $${hParams.length}::date`);
-        hParams.push(ymTo);
-        hWhere.push(`ym <= $${hParams.length}::date`);
-
-        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, hParams, 'jenis_kejahatan_id');
-        if (crimeCond) {
-            hWhere.push(crimeCond);
-        }
-        if (f.golongan_id) {
-            hParams.push(Number(f.golongan_id));
-            hWhere.push(`golongan_kejahatan_id = $${hParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                hParams.push(m);
-                hWhere.push(`model_lp = $${hParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            hParams.push(String(f.polda_key).trim().toUpperCase());
-            hWhere.push(`polda_key = $${hParams.length}`);
-        }
-        if (f.polda_id) {
-            hParams.push(Number(f.polda_id));
-            hWhere.push(`polda_id = $${hParams.length}`);
-        }
-        if (f.polres_id) {
-            hParams.push(Number(f.polres_id));
-            hWhere.push(`polres_id = $${hParams.length}`);
-        }
-        if (f.satker_id) {
-            hParams.push(Number(f.satker_id));
-            hWhere.push(`(satker_id = $${hParams.length} OR polres_id = $${hParams.length} OR polda_id = $${hParams.length})`);
-        }
-        if (f.search) {
-            hParams.push('%' + String(f.search).trim() + '%');
-            hWhere.push(`(tkp_label ILIKE $${hParams.length} OR satker_nama ILIKE $${hParams.length} OR polda_nama ILIKE $${hParams.length})`);
-        }
-
-        const hotspotsSql = `
-            SELECT
-                grid_lat,
-                grid_lng,
-                round(avg(lat)::numeric, 5)::double precision AS lat,
-                round(avg(lng)::numeric, 5)::double precision AS lng,
-                sum(ct)::int AS ct,
-                sum(cc)::int AS cc,
-                (array_agg(polda_key ORDER BY ct DESC))[1] AS polda_key,
-                (array_agg(polda_nama ORDER BY ct DESC))[1] AS polda_nama,
-                (array_agg(satker_nama ORDER BY ct DESC))[1] AS satker_nama,
-                coalesce(
-                    (array_agg(tkp_label ORDER BY ct DESC) FILTER (WHERE tkp_label IS NOT NULL AND tkp_label NOT LIKE 'Wilkum %' AND tkp_label NOT LIKE 'JL -%'))[1],
-                    (array_agg(tkp_label ORDER BY ct DESC))[1]
-                ) AS tkp_label,
-                (array_agg(jenis_kejahatan_nama ORDER BY ct DESC))[1] AS dominant_crime,
-                to_jsonb((array_agg(sample_lps->0 ORDER BY ct DESC) FILTER (WHERE sample_lps IS NOT NULL AND jsonb_array_length(sample_lps) > 0))[1:4]) AS sample_lps
-            FROM bdb_peta_kejahatan_hotspots
-            WHERE ${hWhere.join(' AND ')}
-            GROUP BY grid_lat, grid_lng
-            ORDER BY ct DESC
-            LIMIT 320
-        `;
-
-        // Also compute crime filter counts for the period/region (without jenis_kejahatan filter so chips always show counts!)
-        const cParams = [];
-        const cWhere = ['jenis_kejahatan_id <> 516'];
-        if (f.date_from) {
-            cParams.push(f.date_from);
-            cWhere.push(`tanggal >= $${cParams.length}::date`);
-        }
-        if (f.date_to) {
-            cParams.push(f.date_to);
-            cWhere.push(`tanggal <= $${cParams.length}::date`);
-        }
-        if (f.golongan_id) {
-            cParams.push(Number(f.golongan_id));
-            cWhere.push(`golongan_kejahatan_id = $${cParams.length}`);
-        }
-        if (f.model_lp) {
-            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
-            if (['A', 'B', 'C'].includes(m)) {
-                cParams.push(m);
-                cWhere.push(`model_lp = $${cParams.length}`);
-            }
-        }
-        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
-            cParams.push(String(f.polda_key).trim().toUpperCase());
-            cWhere.push(`polda_key = $${cParams.length}`);
-        }
-
-        const crimeCountsSql = `
-            SELECT
-                a.jenis_kejahatan_id AS id,
-                coalesce(jk.keterangan, 'Lainnya') AS nama,
-                sum(a.total_lp)::int AS ct,
-                sum(case when a.kategori = 'CC' then a.total_lp else 0 end)::int AS cc
-            FROM bdb_peta_kejahatan_agg a
-            JOIN cm_jenis_kejahatan jk ON jk.id = a.jenis_kejahatan_id
-            WHERE ${cWhere.join(' AND ')}
-            GROUP BY 1, 2
-            ORDER BY ct DESC
-            LIMIT 30
-        `;
-
-        const [hotRows, crimeRows] = await Promise.all([
-            this.ds.query(hotspotsSql, hParams).catch(() => []),
-            this.ds.query(crimeCountsSql, cParams).catch(() => [])
-        ]);
-
-        const maxHotCT = Math.max(1, ...(hotRows.map(r => Number(r.ct || 0))));
-        const hotspots = hotRows.map((r, idx) => {
-            const ctVal = Number(r.ct || 0);
-            const ccVal = Number(r.cc || 0);
-            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
-            const weight = Number(Math.min(1, Math.max(0.15, Math.pow(ctVal / maxHotCT, 0.48))).toFixed(3));
-            return {
-                rank: idx + 1,
-                lat: Number(r.lat),
-                lng: Number(r.lng),
-                ct: ctVal,
-                cc: ccVal,
-                cr: crVal,
-                weight,
-                polda_key: r.polda_key || '',
-                polda_nama: r.polda_nama || '',
-                satker_nama: r.satker_nama || '',
-                tkp_label: r.tkp_label || '',
-                dominant_crime: r.dominant_crime || 'Tindak Pidana',
-                sample_lps: Array.isArray(r.sample_lps) ? r.sample_lps.filter(Boolean) : []
-            };
-        });
-
-        const top_rawan_locations = hotspots.slice(0, 12);
-        return { hotspots, top_rawan_locations, crime_types: crimeRows };
-    }
-
-    resolvePetaCrimeCondition(jenisRaw, params, colName = 'jenis_kejahatan_id') {
-        if (!jenisRaw) return '';
-        const up = String(jenisRaw).trim().toUpperCase();
-        if (!up || up === 'SEMUA' || up === 'ALL') return '';
-        if (up === 'CURAS') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 22 OR keterangan ILIKE '%curas%' OR keterangan ILIKE '%pencurian dengan kekerasan%')`;
-        }
-        if (up === 'CURAT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 20 OR keterangan ILIKE '%curat%' OR keterangan ILIKE '%pencurian dengan pemberatan%')`;
-        }
-        if (up === 'CURANMOR') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 186 OR keterangan ILIKE '%curanmor%' OR keterangan ILIKE '%kendaraan bermotor%')`;
-        }
-        if (up === 'ANIRAT' || up === 'PENGANIAYAAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (16, 254, 234) OR keterangan ILIKE '%anirat%' OR keterangan ILIKE '%penganiayaan%' OR keterangan ILIKE '%pengeroyokan%')`;
-        }
-        if (up === 'NARKOBA' || up === 'NARKOTIKA') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (43, 407) OR keterangan ILIKE '%narkotika%' OR keterangan ILIKE '%narkoba%' OR keterangan ILIKE '%obat keras%' OR keterangan ILIKE '%psikotropika%')`;
-        }
-        if (up === 'SIBER' || up === 'ITE') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (551, 246) OR keterangan ILIKE '%elektronik%' OR keterangan ILIKE '%siber%' OR keterangan ILIKE '%ite%')`;
-        }
-        if (up === 'TIPIKOR' || up === 'KORUPSI') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE '%korupsi%' OR keterangan ILIKE '%suap%' OR keterangan ILIKE '%gratifikasi%')`;
-        }
-        if (up === 'PENIPUAN' || up === 'PENGGELAPAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (25, 435) OR keterangan ILIKE '%penipuan%' OR keterangan ILIKE '%penggelapan%' OR keterangan ILIKE '%curang%')`;
-        }
-        if (up === 'PPA' || up === 'PERLINDUNGAN_ANAK' || up === 'KDRT') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (457, 30, 313, 225, 680, 10) OR keterangan ILIKE '%anak%' OR keterangan ILIKE '%rumah tangga%' OR keterangan ILIKE '%seksual%' OR keterangan ILIKE '%cabul%' OR keterangan ILIKE '%perkosaan%')`;
-        }
-        if (up === 'JUDI' || up === 'PERJUDIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 273 OR keterangan ILIKE '%judi%')`;
-        }
-        if (up === 'PEMBUNUHAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 15 OR keterangan ILIKE '%pembunuhan%')`;
-        }
-        if (up === 'PENCURIAN') {
-            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (19, 21) OR keterangan ILIKE '%pencurian biasa%' OR keterangan ILIKE '%pencurian ringan%')`;
-        }
-        if (/^\d+$/.test(up)) {
-            params.push(Number(up));
-            return `${colName} = $${params.length}`;
-        }
-        params.push('%' + String(jenisRaw).trim() + '%');
-        return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE $${params.length})`;
-    }
-
-    async buildFilteredPetaTree(f) {
-        const params = [];
-        const wh = ['1=1'];
-        if (f.date_from) {
-            params.push(f.date_from);
-            wh.push(`tanggal >= $${params.length}::date`);
-        }
-        if (f.date_to) {
-            params.push(f.date_to);
-            wh.push(`tanggal <= $${params.length}::date`);
-        }
-        if (f.year) {
-            params.push(Number(f.year));
-            wh.push(`extract(year from tanggal) = $${params.length}`);
-        }
-        if (f.month) {
+        if (f.month && !f.date_from && !f.date_to) {
             params.push(Number(f.month));
             wh.push(`extract(month from tanggal) = $${params.length}`);
         }
@@ -2333,6 +1148,12 @@ let AnevService = class AnevService {
     async queryPetaHotspotsAndCrimes(f) {
         const hParams = [];
         const hWhere = ['1=1'];
+        const kel = String(f.kelompok || 'INTERNAL_RESERSE').toUpperCase();
+        if (kel === 'INTERNAL_RESERSE') {
+            hWhere.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            hWhere.push('is_internal_reserse = false');
+        }
         const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
         const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
         hParams.push(ymFrom);
@@ -2400,9 +1221,13 @@ let AnevService = class AnevService {
             LIMIT 320
         `;
 
-        // Also compute crime filter counts for the period/region (without jenis_kejahatan filter so chips always show counts!)
         const cParams = [];
         const cWhere = ['jenis_kejahatan_id <> 516'];
+        if (kel === 'INTERNAL_RESERSE') {
+            cWhere.push('is_internal_reserse = true');
+        } else if (kel === 'EKSTERNAL_RESERSE') {
+            cWhere.push('is_internal_reserse = false');
+        }
         if (f.date_from) {
             cParams.push(f.date_from);
             cWhere.push(`tanggal >= $${cParams.length}::date`);
@@ -2474,8 +1299,18 @@ let AnevService = class AnevService {
     }
 
     async petaKejahatan(f, userId) {
-        const dateFrom = String(f.date_from || f.from || `${new Date().getFullYear()}-01-01`).trim();
-        const dateTo = String(f.date_to || f.to || `${new Date().getFullYear()}-12-31`).trim();
+        const rawYear = f.year ? Number(f.year) : null;
+        const rawMonth = f.month ? Number(f.month) : null;
+        const pad2 = (n) => String(n).padStart(2, '0');
+        let defaultFrom = `${rawYear || new Date().getFullYear()}-01-01`;
+        let defaultTo = `${rawYear || new Date().getFullYear()}-12-31`;
+        if (rawYear && rawMonth && rawMonth >= 1 && rawMonth <= 12) {
+            const lastDay = new Date(rawYear, rawMonth, 0).getDate();
+            defaultFrom = `${rawYear}-${pad2(rawMonth)}-01`;
+            defaultTo = `${rawYear}-${pad2(rawMonth)}-${pad2(lastDay)}`;
+        }
+        const dateFrom = String(f.date_from || f.from || defaultFrom).trim();
+        const dateTo = String(f.date_to || f.to || defaultTo).trim();
         const parentKode = f.parent ? String(f.parent).trim() : '';
         const jenisKejahatan = String(f.jenis_kejahatan || f.kategori_kejahatan || f.crime || '').trim();
         const golonganId = (f.golongan_id || f.golongan_kejahatan_id) ? Number(f.golongan_id || f.golongan_kejahatan_id) : null;
@@ -2487,6 +1322,14 @@ let AnevService = class AnevService {
         const searchQ = (f.search || f.q) ? String(f.search || f.q).trim() : '';
         const force = String(f.force || f.refresh || '') === '1';
 
+        const rawKelompok = String(f.kelompok || f.functionDomain || f.function_domain || 'INTERNAL_RESERSE').trim().toUpperCase();
+        const kelompok = (rawKelompok === 'EKSTERNAL_RESERSE' || rawKelompok === 'EKSTERNAL')
+            ? 'EKSTERNAL_RESERSE'
+            : (rawKelompok === 'SEMUA' || rawKelompok === 'ALL')
+                ? 'SEMUA'
+                : 'INTERNAL_RESERSE';
+        const organizationDomain = String(f.organizationDomain || f.organization_domain || 'INTERNAL_POLRI').trim().toUpperCase();
+
         const hasCustomFilter = Boolean(
             (jenisKejahatan && jenisKejahatan.toUpperCase() !== 'SEMUA' && jenisKejahatan.toUpperCase() !== 'ALL') ||
             golonganId ||
@@ -2496,8 +1339,10 @@ let AnevService = class AnevService {
 
         const scope = await this.resolveScope(userId);
         const cacheKey = [
-            'PETA_V3',
+            'PETA_V4',
             scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
+            kelompok,
+            organizationDomain,
             dateFrom,
             dateTo,
             parentKode || 'ROOT',
@@ -2519,10 +1364,12 @@ let AnevService = class AnevService {
         }
 
         const treeFilter = {
+            kelompok,
+            organizationDomain,
             date_from: dateFrom,
             date_to: dateTo,
-            year: f.year,
-            month: f.month,
+            year: rawYear,
+            month: rawMonth,
             jenis_kejahatan: jenisKejahatan,
             golongan_id: golonganId,
             model_lp: modelLp,
@@ -2533,11 +1380,82 @@ let AnevService = class AnevService {
             search: searchQ
         };
 
-        const { roots, statuses, totals, byKode } = hasCustomFilter
-            ? await this.buildFilteredPetaTree(treeFilter)
-            : await this.buildTree({ date_from: dateFrom, date_to: dateTo, year: f.year, month: f.month });
+        const { roots, statuses, totals, byKode } = await this.buildFilteredPetaTree(treeFilter);
+
+        // Enrich with bdb_kinerja_perkara_summary_snapshot when kelompok === 'INTERNAL_RESERSE' and no custom crime filter is active
+        let kinerjaSnap = null;
+        if (kelompok === 'INTERNAL_RESERSE' && !hasCustomFilter) {
+            let snapTahun = rawYear;
+            let snapBulan = rawMonth;
+            const mFrom = dateFrom.match(/^(\d{4})-(\d{2})-01$/);
+            const mTo = dateTo.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
+                snapTahun = Number(mFrom[1]);
+                snapBulan = Number(mFrom[2]);
+            } else if (/^(\d{4})-01-01$/.test(dateFrom) && /^(\d{4})-12-31$/.test(dateTo) && dateFrom.slice(0, 4) === dateTo.slice(0, 4)) {
+                snapTahun = Number(dateFrom.slice(0, 4));
+                snapBulan = null;
+            }
+            if (snapTahun != null) {
+                try {
+                    const snapRows = snapBulan != null
+                        ? await this.ds.query(
+                            "SELECT summary_data, rekap_totals, rekap_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' ORDER BY refreshed_at DESC LIMIT 1",
+                            [snapTahun, snapBulan]
+                        )
+                        : await this.ds.query(
+                            "SELECT summary_data, rekap_totals, rekap_data FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan IS NULL AND scope_key = 'ALL' ORDER BY refreshed_at DESC LIMIT 1",
+                            [snapTahun]
+                        );
+                    if (snapRows.length > 0) {
+                        kinerjaSnap = snapRows[0];
+                    }
+                } catch (_e) {}
+            }
+        }
+
+        const snapNodeByKode = new Map();
+        const snapNodeById = new Map();
+        if (kinerjaSnap?.rekap_data?.children) {
+            for (const childGroup of Object.values(kinerjaSnap.rekap_data.children)) {
+                const nodes = childGroup?.nodes;
+                if (Array.isArray(nodes)) {
+                    for (const sn of nodes) {
+                        if (sn?.kode) snapNodeByKode.set(String(sn.kode), sn);
+                        if (sn?.id != null) snapNodeById.set(Number(sn.id), sn);
+                    }
+                }
+            }
+        }
 
         const mapNode = (n) => {
+            const sn = snapNodeByKode.get(String(n.kode)) || snapNodeById.get(Number(n.id));
+            if (sn) {
+                const ctVal = Number(sn.ct ?? n.total ?? 0);
+                const ccAkt = Number(sn.cc_aktual ?? n.cc ?? 0);
+                const ccTgk = Number(sn.cc_tunggakan ?? 0);
+                const ccVal = ccAkt + ccTgk;
+                const cpBerjalan = Number(sn.cp_berjalan ?? Math.max(0, ctVal - ccAkt));
+                const cpTunggakan = Number(sn.cp_tunggakan ?? 0);
+                const crVal = Number(sn.cr ?? (ctVal > 0 ? Math.round((ccVal / (ctVal + ccTgk)) * 10000) / 100 : 0));
+                return {
+                    id: n.id,
+                    kode: n.kode,
+                    nama: n.nama,
+                    has_children: Boolean((n.children && n.children.length > 0) || sn.has_children),
+                    ct: ctVal,
+                    cc: ccVal,
+                    cc_aktual: ccAkt,
+                    cc_tunggakan: ccTgk,
+                    cp_berjalan: cpBerjalan,
+                    cp_tunggakan: cpTunggakan,
+                    belum_selesai: cpBerjalan + cpTunggakan,
+                    cr: crVal,
+                    crime_rate: sn.crime_rate ?? null,
+                    crime_clock_detik: sn.crime_clock_detik ?? null,
+                    status: sn.status || n.status || {}
+                };
+            }
             const ctVal = Number(n.total || 0);
             const ccVal = Number(n.cc || 0);
             const cpBerjalan = Math.max(0, ctVal - ccVal);
@@ -2553,6 +1471,7 @@ let AnevService = class AnevService {
                 cc_tunggakan: 0,
                 cp_berjalan: cpBerjalan,
                 cp_tunggakan: 0,
+                belum_selesai: cpBerjalan,
                 cr: crVal,
                 status: n.status || {}
             };
@@ -2619,8 +1538,9 @@ let AnevService = class AnevService {
         let mabesCC = 0;
         for (const spec of mabesDirektoratCoords) {
             const found = allNodes.find((n) => spec.match.test(String(n.nama || '')) && /BARESKRIM/i.test(String(n.nama || '')));
-            const ctVal = Number(found?.total || 0);
-            const ccVal = Number(found?.cc || 0);
+            const mapped = found ? mapNode(found) : null;
+            const ctVal = Number(mapped?.ct || 0);
+            const ccVal = Number(mapped?.cc || 0);
             mabesCT += ctVal;
             mabesCC += ccVal;
             direktoratList.push({
@@ -2633,15 +1553,18 @@ let AnevService = class AnevService {
                 lng: spec.lng,
                 ct: ctVal,
                 cc: ccVal,
-                cp_berjalan: Math.max(0, ctVal - ccVal),
-                cp_tunggakan: 0,
-                cr: ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0
+                cc_aktual: Number(mapped?.cc_aktual || ccVal),
+                cc_tunggakan: Number(mapped?.cc_tunggakan || 0),
+                cp_berjalan: Number(mapped?.cp_berjalan ?? Math.max(0, ctVal - ccVal)),
+                cp_tunggakan: Number(mapped?.cp_tunggakan || 0),
+                cr: Number(mapped?.cr ?? (ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0))
             });
         }
         const bareskrimRoot = allNodes.find((n) => /^BARESKRIM POLRI$/i.test(String(n.nama || '').trim()));
-        if (bareskrimRoot && Number(bareskrimRoot.total || 0) > mabesCT) {
-            mabesCT = Number(bareskrimRoot.total || 0);
-            mabesCC = Number(bareskrimRoot.cc || 0);
+        const bareskrimMapped = bareskrimRoot ? mapNode(bareskrimRoot) : null;
+        if (bareskrimMapped && Number(bareskrimMapped.ct || 0) > mabesCT) {
+            mabesCT = Number(bareskrimMapped.ct || 0);
+            mabesCC = Number(bareskrimMapped.cc || 0);
         }
         const statusTotals = {};
         for (const r of roots) {
@@ -2656,9 +1579,17 @@ let AnevService = class AnevService {
             urutan: s.urutan,
             jumlah: Number(statusTotals[s.code] || 0)
         }));
-        const totalCT = Number(totals.total || 0);
-        const totalCC = Number(totals.cc || 0);
-        const totalCR = totalCT > 0 ? Math.round((totalCC / totalCT) * 10000) / 100 : 0;
+
+        const snapSum = kinerjaSnap?.summary_data?.data || kinerjaSnap?.rekap_totals || null;
+        const totalCT = Number(snapSum?.ct ?? totals.total ?? 0);
+        const ccAktual = Number(snapSum?.cc_aktual ?? totals.cc ?? 0);
+        const ccTunggakan = Number(snapSum?.cc_tunggakan ?? 0);
+        const totalCC = ccAktual + ccTunggakan;
+        const cpBerjalan = Number(snapSum?.cp_berjalan ?? Math.max(0, totalCT - ccAktual));
+        const cpTunggakan = Number(snapSum?.cp_tunggakan ?? 0);
+        const belumSelesai = cpBerjalan + cpTunggakan;
+        const totalCR = Number(snapSum?.cr ?? (totalCT > 0 ? Math.round((totalCC / (totalCT + ccTunggakan)) * 10000) / 100 : 0));
+
         let scopeSatker = null;
         if (!scope.all && scope.satkerId) {
             const sr = await this.ds.query('select deskripsi from bdb_satker where id=$1', [scope.satkerId]);
@@ -2669,7 +1600,14 @@ let AnevService = class AnevService {
             data: {
                 from: dateFrom,
                 to: dateTo,
+                taxonomy: {
+                    functionDomain: kelompok,
+                    organizationDomain
+                },
                 applied_filters: {
+                    kelompok,
+                    functionDomain: kelompok,
+                    organizationDomain,
                     jenis_kejahatan: jenisKejahatan || 'SEMUA',
                     golongan_id: golonganId,
                     model_lp: modelLp || 'SEMUA',
@@ -2678,16 +1616,26 @@ let AnevService = class AnevService {
                     search: searchQ || ''
                 },
                 ct: totalCT,
+                total_ct: totalCT,
                 cc: totalCC,
+                total_cc: totalCC,
+                cc_aktual: ccAktual,
+                cc_tunggakan: ccTunggakan,
+                cp_berjalan: cpBerjalan,
+                cp_tunggakan: cpTunggakan,
+                belum_selesai: belumSelesai,
                 cr: totalCR,
                 pct: totalCR,
                 summary: {
                     ct: totalCT,
+                    total_ct: totalCT,
                     cc: totalCC,
-                    cc_aktual: totalCC,
-                    cc_tunggakan: 0,
-                    cp_berjalan: Math.max(0, totalCT - totalCC),
-                    cp_tunggakan: 0,
+                    total_cc: totalCC,
+                    cc_aktual: ccAktual,
+                    cc_tunggakan: ccTunggakan,
+                    cp_berjalan: cpBerjalan,
+                    cp_tunggakan: cpTunggakan,
+                    belum_selesai: belumSelesai,
                     cr: totalCR
                 },
                 mabes: {
@@ -2699,9 +1647,11 @@ let AnevService = class AnevService {
                     lng: 106.8006,
                     ct: mabesCT,
                     cc: mabesCC,
-                    cp_berjalan: Math.max(0, mabesCT - mabesCC),
-                    cp_tunggakan: 0,
-                    cr: mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0,
+                    cc_aktual: Number(bareskrimMapped?.cc_aktual ?? mabesCC),
+                    cc_tunggakan: Number(bareskrimMapped?.cc_tunggakan ?? 0),
+                    cp_berjalan: Number(bareskrimMapped?.cp_berjalan ?? Math.max(0, mabesCT - mabesCC)),
+                    cp_tunggakan: Number(bareskrimMapped?.cp_tunggakan ?? 0),
+                    cr: Number(bareskrimMapped?.cr ?? (mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0)),
                     direktorat: direktoratList
                 },
                 polda: poldaNodes,
@@ -2717,6 +1667,7 @@ let AnevService = class AnevService {
         this.petaCache.set(cacheKey, { at: Date.now(), res: result });
         return result;
     }
+
     async refreshDashboardSnapshots(onlyActivePeriod = false) {
         const now = new Date();
         const currentYear = now.getFullYear();

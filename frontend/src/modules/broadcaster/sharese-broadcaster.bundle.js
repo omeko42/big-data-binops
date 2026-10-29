@@ -361,6 +361,13 @@ e.s(["default",0,function() {
     } catch { return {}; }
   });
 
+  var getSafeAccessToken = () => {
+    try {
+      if (typeof window === 'undefined') return '';
+      return localStorage.getItem('auth.access_token') || localStorage.getItem('auth_token') || localStorage.getItem('token') || (typeof f?.getAuth === 'function' ? f.getAuth()?.access_token : '') || '';
+    } catch (_e) { return ''; }
+  };
+
   // Sync currentUser with localStorage & backend profile so Composer avatar always matches Topbar & Feed posts
   (0,n.useEffect)(() => {
     var syncFromStorage = () => {
@@ -381,6 +388,9 @@ e.s(["default",0,function() {
     window.addEventListener('storage', syncFromStorage);
     (async () => {
       try {
+        var tok = getSafeAccessToken();
+        var sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search || '') : null;
+        if (!tok || (sp && sp.get('share') && tok.length <= 15)) return;
         var res = await k.apiAuth.get('/user/me/profile');
         var d = res?.data?.data || res?.data;
         if (d && (d.photo_url || d.foto || d.id)) {
@@ -502,7 +512,7 @@ e.s(["default",0,function() {
   var [isLoggedUser, setIsLoggedUser] = (0,n.useState)(() => {
     try {
       if (typeof window === 'undefined') return true;
-      var tok = localStorage.getItem('auth.access_token') || (0,k.getAuth)()?.access_token || '';
+      var tok = getSafeAccessToken();
       return Boolean(tok && tok.length > 15);
     } catch { return false; }
   });
@@ -729,7 +739,7 @@ e.s(["default",0,function() {
     var sp = new URLSearchParams(window.location.search || '');
     var sh = sp.get('share') || sp.get('post') || '';
     if (!sh) return;
-    var tok = localStorage.getItem('auth.access_token') || (0,k.getAuth)()?.access_token || '';
+    var tok = getSafeAccessToken();
     var logged = Boolean(tok && tok.length > 15);
     setIsLoggedUser(logged);
     if (logged) {
@@ -738,11 +748,12 @@ e.s(["default",0,function() {
       k.apiAuth.get('/bdb/jukrah/shared/' + encodeURIComponent(targetParam)).then(res => {
         var p = res.data?.data;
         if (p && p.id) {
-          setSharedHighlightPost(p);
+          var pWithFlag = { ...p, _fromShareLink: !0 };
+          setSharedHighlightPost(pWithFlag);
           setExpandedPosts(prev => ({ ...prev, [p.id]: !0 }));
           setPosts(prev => {
             var filtered = prev.filter(x => Number(x.id) !== Number(p.id));
-            return [p, ...filtered];
+            return [pWithFlag, ...filtered];
           });
           setTimeout(() => {
             try {
@@ -754,6 +765,7 @@ e.s(["default",0,function() {
       }).catch(() => {});
     } else if (sp.get('share')) {
       setExternalShareToken(sh);
+      setLoading(!1);
       loadExternalChallenge(sh);
     }
   }, [loadExternalChallenge]);
@@ -877,6 +889,12 @@ e.s(["default",0,function() {
 
   // Fetch feed
   var fetchFeed = (0,n.useCallback)(async () => {
+    var tok = getSafeAccessToken();
+    var sp = typeof window !== 'undefined' ? new URLSearchParams(window.location.search || '') : null;
+    if (!tok || (sp && sp.get('share') && tok.length <= 15)) {
+      setLoading(!1);
+      return;
+    }
     setLoading(!0);
     try {
       var apiType = feedCategory === 'saved' ? 'saved' : feedCategory === 'mine' ? 'mine' : 'all';
@@ -888,9 +906,16 @@ e.s(["default",0,function() {
         }
       });
       var list = res.data?.data || [];
-      setPosts(list);
+      setPosts(prev => {
+        var hl = prev.find(x => x && x._fromShareLink);
+        if (hl) {
+          var rest = list.filter(x => Number(x.id) !== Number(hl.id));
+          return [hl, ...rest];
+        }
+        return list;
+      });
     } catch (err) {
-      setPosts([]);
+      setPosts(prev => prev.filter(x => x && x._fromShareLink));
     } finally {
       setLoading(!1);
     }
