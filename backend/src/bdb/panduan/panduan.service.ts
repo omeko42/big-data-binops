@@ -435,14 +435,39 @@ export class PanduanService {
      */
     async streamMedia(token: string, req: any, res: any) {
         const payload = decryptTokenPayload(token);
-        if (!payload || (payload.kind !== 'panduan_stream' && payload.kind !== 'panduan_share')) {
-            throw new ForbiddenException('Token stream terenkripsi tidak valid atau telah kedaluwarsa.');
+        let rows: any[] = [];
+        if (payload && (payload.kind === 'panduan_stream' || payload.kind === 'panduan_share')) {
+            const id = Number(payload.id || 0);
+            rows = await this.dataSource.query(
+                `select id, judul, tipe, file_name, object_key, content_type, size, status from bdb_panduan_pengguna where id = $1 limit 1`,
+                [id]
+            );
+        } else {
+            let decoded = '';
+            try {
+                decoded = decodeURIComponent(String(token || '').trim());
+            } catch {
+                decoded = String(token || '').trim();
+            }
+            if (/^\d+$/.test(decoded)) {
+                rows = await this.dataSource.query(
+                    `select id, judul, tipe, file_name, object_key, content_type, size, status from bdb_panduan_pengguna where id = $1 limit 1`,
+                    [Number(decoded)]
+                );
+            } else if (decoded) {
+                rows = await this.dataSource.query(
+                    `select id, judul, tipe, file_name, object_key, content_type, size, status from bdb_panduan_pengguna
+                     where lower(file_name) = lower($1)
+                        or lower(object_key) = lower($1)
+                        or lower(object_key) like '%/' || lower($1)
+                     order by id asc limit 1`,
+                    [decoded]
+                );
+            }
+            if (!rows.length) {
+                throw new ForbiddenException('Token stream terenkripsi tidak valid atau telah kedaluwarsa.');
+            }
         }
-        const id = Number(payload.id || 0);
-        const rows = await this.dataSource.query(
-            `select id, judul, tipe, file_name, object_key, content_type, size, status from bdb_panduan_pengguna where id = $1 limit 1`,
-            [id]
-        );
         if (!rows.length || rows[0].status !== 'AKTIF') {
             throw new NotFoundException('Berkas panduan tidak ditemukan.');
         }
