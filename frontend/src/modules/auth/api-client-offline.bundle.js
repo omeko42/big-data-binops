@@ -39,7 +39,7 @@ function bdbIsIdle(e=Date.now()){
 
 function bdbIsPublicPanduanShare(){
   try{
-    return typeof window!=="undefined"&&window.location.pathname.startsWith("/cms/panduan")&&new URLSearchParams(window.location.search).has("share")
+    return typeof window!=="undefined"&&(new URLSearchParams(window.location.search).has("share")||window.location.pathname.startsWith("/sharese-publik"))
   }catch{return!1}
 }
 
@@ -684,7 +684,7 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
     if (e.key === "auth" && e.newValue) setTimeout(() => bdbPreload13Periods(true), 1500);
     if (e.key === null || e.key === "bdb.auth.logout_broadcast" || ((e.key === "auth" || e.key === "user" || e.key === "auth.access_token") && !e.newValue)) {
       bdbClearAllCache();
-      const isPubShare = typeof window !== "undefined" && window.location.pathname.startsWith("/cms/panduan") && new URLSearchParams(window.location.search).has("share");
+      const isPubShare = bdbIsPublicPanduanShare();
       if (!bdbCurrentAccess() && !window.location.pathname.startsWith("/login") && !isPubShare) {
         window.location.replace("/login");
       }

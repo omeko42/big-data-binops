@@ -19,6 +19,7 @@ export type AnevNode = { id: number; kode: string; nama: string; parent_id: numb
 @Injectable()
 export class AnevService {
     private dashCache = new Map<string, { at: number; res: any }>();
+    private petaCache = new Map<string, { at: number; res: any }>();
     async refreshRekapSnapshot() {
         await this.ds.query(`
             INSERT INTO bdb_anev_rekap_snapshot (satker_id, status_code, kategori, tanggal, total_lp, refreshed_at)
@@ -1032,6 +1033,554 @@ export class AnevService {
         }
 
         return finalResult;
+    }
+
+    resolvePetaCrimeCondition(jenisRaw: any, params: any[], colName = 'jenis_kejahatan_id') {
+        if (!jenisRaw) return '';
+        const up = String(jenisRaw).trim().toUpperCase();
+        if (!up || up === 'SEMUA' || up === 'ALL') return '';
+        if (up === 'CURAS') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 22 OR keterangan ILIKE '%curas%' OR keterangan ILIKE '%pencurian dengan kekerasan%')`;
+        }
+        if (up === 'CURAT') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 20 OR keterangan ILIKE '%curat%' OR keterangan ILIKE '%pencurian dengan pemberatan%')`;
+        }
+        if (up === 'CURANMOR') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 186 OR keterangan ILIKE '%curanmor%' OR keterangan ILIKE '%kendaraan bermotor%')`;
+        }
+        if (up === 'ANIRAT' || up === 'PENGANIAYAAN') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (16, 254, 234) OR keterangan ILIKE '%anirat%' OR keterangan ILIKE '%penganiayaan%' OR keterangan ILIKE '%pengeroyokan%')`;
+        }
+        if (up === 'NARKOBA' || up === 'NARKOTIKA') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (43, 407) OR keterangan ILIKE '%narkotika%' OR keterangan ILIKE '%narkoba%' OR keterangan ILIKE '%obat keras%' OR keterangan ILIKE '%psikotropika%')`;
+        }
+        if (up === 'SIBER' || up === 'ITE') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (551, 246) OR keterangan ILIKE '%elektronik%' OR keterangan ILIKE '%siber%' OR keterangan ILIKE '%ite%')`;
+        }
+        if (up === 'TIPIKOR' || up === 'KORUPSI') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE '%korupsi%' OR keterangan ILIKE '%suap%' OR keterangan ILIKE '%gratifikasi%')`;
+        }
+        if (up === 'PENIPUAN' || up === 'PENGGELAPAN') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (25, 435) OR keterangan ILIKE '%penipuan%' OR keterangan ILIKE '%penggelapan%' OR keterangan ILIKE '%curang%')`;
+        }
+        if (up === 'PPA' || up === 'PERLINDUNGAN_ANAK' || up === 'KDRT') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (457, 30, 313, 225, 680, 10) OR keterangan ILIKE '%anak%' OR keterangan ILIKE '%rumah tangga%' OR keterangan ILIKE '%seksual%' OR keterangan ILIKE '%cabul%' OR keterangan ILIKE '%perkosaan%')`;
+        }
+        if (up === 'JUDI' || up === 'PERJUDIAN') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 273 OR keterangan ILIKE '%judi%')`;
+        }
+        if (up === 'PEMBUNUHAN') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id = 15 OR keterangan ILIKE '%pembunuhan%')`;
+        }
+        if (up === 'PENCURIAN') {
+            return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE id IN (19, 21) OR keterangan ILIKE '%pencurian biasa%' OR keterangan ILIKE '%pencurian ringan%')`;
+        }
+        if (/^\d+$/.test(up)) {
+            params.push(Number(up));
+            return `${colName} = $${params.length}`;
+        }
+        params.push('%' + String(jenisRaw).trim() + '%');
+        return `${colName} IN (SELECT id FROM cm_jenis_kejahatan WHERE keterangan ILIKE $${params.length})`;
+    }
+
+    async buildFilteredPetaTree(f: any) {
+        const params: any[] = [];
+        const wh: string[] = ['1=1'];
+        if (f.date_from) {
+            params.push(f.date_from);
+            wh.push(`tanggal >= $${params.length}::date`);
+        }
+        if (f.date_to) {
+            params.push(f.date_to);
+            wh.push(`tanggal <= $${params.length}::date`);
+        }
+        if (f.year) {
+            params.push(Number(f.year));
+            wh.push(`extract(year from tanggal) = $${params.length}`);
+        }
+        if (f.month) {
+            params.push(Number(f.month));
+            wh.push(`extract(month from tanggal) = $${params.length}`);
+        }
+        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, params, 'jenis_kejahatan_id');
+        if (crimeCond) {
+            wh.push(crimeCond);
+        }
+        if (f.golongan_id) {
+            params.push(Number(f.golongan_id));
+            wh.push(`golongan_kejahatan_id = $${params.length}`);
+        }
+        if (f.model_lp) {
+            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
+            if (['A', 'B', 'C'].includes(m)) {
+                params.push(m);
+                wh.push(`model_lp = $${params.length}`);
+            }
+        }
+        if (f.status) {
+            const stUp = String(f.status).trim().toUpperCase();
+            if (stUp === 'CT' || stUp === 'CC') {
+                params.push(stUp);
+                wh.push(`kategori = $${params.length}`);
+            } else {
+                const arr = stUp.split(',').map(s => s.trim()).filter(Boolean);
+                if (arr.length) {
+                    params.push(arr);
+                    wh.push(`status_code = any($${params.length})`);
+                }
+            }
+        }
+
+        const counts = await this.ds.query(`
+            SELECT satker_id as sid, status_code, coalesce(kategori, 'CT') as kategori, sum(total_lp)::int as jml
+            FROM bdb_peta_kejahatan_agg
+            WHERE ${wh.join(' AND ')}
+            GROUP BY satker_id, status_code, kategori
+        `, params);
+
+        const satkers = await this.ds.query('SELECT id, kode, deskripsi, parent_id, depth FROM bdb_satker');
+        const statuses = await this.allStatuses();
+        const node = new Map<number, AnevNode>();
+        const parentOf = new Map<number, number | null>();
+        for (const s of satkers) {
+            const sidNum = Number(s.id);
+            const pidNum = s.parent_id != null ? Number(s.parent_id) : null;
+            node.set(sidNum, { id: sidNum, kode: s.kode, nama: s.deskripsi, parent_id: pidNum, depth: Number(s.depth || 0), status: {}, ct: 0, cc: 0, total: 0 });
+            parentOf.set(sidNum, pidNum);
+        }
+        const direct = new Map<number, { status: Record<string, number>; ct: number; cc: number; total: number }>();
+        for (const c of counts) {
+            const cSid = Number(c.sid);
+            let d = direct.get(cSid);
+            if (!d) {
+                d = { status: {}, ct: 0, cc: 0, total: 0 };
+                direct.set(cSid, d);
+            }
+            const code = c.status_code || 'TANPA_STATUS';
+            const jmlNum = Number(c.jml || 0);
+            d.status[code] = (d.status[code] || 0) + jmlNum;
+            if (c.kategori === 'CC') d.cc += jmlNum;
+            else d.ct += jmlNum;
+            d.total += jmlNum;
+        }
+        for (const [sid, d] of direct) {
+            let cur: number | null | undefined = sid;
+            const guard = new Set<number>();
+            while (cur != null && node.has(cur) && !guard.has(cur)) {
+                guard.add(cur);
+                const n = node.get(cur)!;
+                for (const [code, v] of Object.entries(d.status)) {
+                    n.status[code] = (n.status[code] || 0) + v;
+                }
+                n.ct += d.ct;
+                n.cc += d.cc;
+                n.total += d.total;
+                cur = parentOf.get(cur) ?? null;
+            }
+        }
+        const byId = new Map<number, AnevNode>();
+        for (const n of node.values()) byId.set(n.id, { ...n, children: [] });
+        const roots: AnevNode[] = [];
+        for (const n of byId.values()) {
+            const p = n.parent_id != null ? byId.get(n.parent_id) : null;
+            if (p) p.children!.push(n);
+            else roots.push(n);
+        }
+        const totals = roots.reduce((a, n) => ({ ct: a.ct + n.ct, cc: a.cc + n.cc, total: a.total + n.total }), { ct: 0, cc: 0, total: 0 });
+        const byKode = new Map<string, AnevNode>();
+        const indexRec = (arr: AnevNode[]) => arr.forEach((n) => {
+            byKode.set(n.kode, n);
+            if (n.children) indexRec(n.children);
+        });
+        indexRec(roots);
+        return { roots, statuses, totals, byKode };
+    }
+
+    async queryPetaHotspotsAndCrimes(f: any) {
+        const hParams: any[] = [];
+        const hWhere: string[] = ['1=1'];
+        const ymFrom = f.date_from ? String(f.date_from).slice(0, 7) + '-01' : '2026-01-01';
+        const ymTo = f.date_to ? String(f.date_to).slice(0, 10) : '2026-12-31';
+        hParams.push(ymFrom);
+        hWhere.push(`ym >= $${hParams.length}::date`);
+        hParams.push(ymTo);
+        hWhere.push(`ym <= $${hParams.length}::date`);
+
+        const crimeCond = this.resolvePetaCrimeCondition(f.jenis_kejahatan, hParams, 'jenis_kejahatan_id');
+        if (crimeCond) {
+            hWhere.push(crimeCond);
+        }
+        if (f.golongan_id) {
+            hParams.push(Number(f.golongan_id));
+            hWhere.push(`golongan_kejahatan_id = $${hParams.length}`);
+        }
+        if (f.model_lp) {
+            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
+            if (['A', 'B', 'C'].includes(m)) {
+                hParams.push(m);
+                hWhere.push(`model_lp = $${hParams.length}`);
+            }
+        }
+        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
+            hParams.push(String(f.polda_key).trim().toUpperCase());
+            hWhere.push(`polda_key = $${hParams.length}`);
+        }
+        if (f.polda_id) {
+            hParams.push(Number(f.polda_id));
+            hWhere.push(`polda_id = $${hParams.length}`);
+        }
+        if (f.polres_id) {
+            hParams.push(Number(f.polres_id));
+            hWhere.push(`polres_id = $${hParams.length}`);
+        }
+        if (f.satker_id) {
+            hParams.push(Number(f.satker_id));
+            hWhere.push(`(satker_id = $${hParams.length} OR polres_id = $${hParams.length} OR polda_id = $${hParams.length})`);
+        }
+        if (f.search) {
+            hParams.push('%' + String(f.search).trim() + '%');
+            hWhere.push(`(tkp_label ILIKE $${hParams.length} OR satker_nama ILIKE $${hParams.length} OR polda_nama ILIKE $${hParams.length})`);
+        }
+
+        const hotspotsSql = `
+            SELECT
+                grid_lat,
+                grid_lng,
+                round(avg(lat)::numeric, 5)::double precision AS lat,
+                round(avg(lng)::numeric, 5)::double precision AS lng,
+                sum(ct)::int AS ct,
+                sum(cc)::int AS cc,
+                (array_agg(polda_key ORDER BY ct DESC))[1] AS polda_key,
+                (array_agg(polda_nama ORDER BY ct DESC))[1] AS polda_nama,
+                (array_agg(satker_nama ORDER BY ct DESC))[1] AS satker_nama,
+                coalesce(
+                    (array_agg(tkp_label ORDER BY ct DESC) FILTER (WHERE tkp_label IS NOT NULL AND tkp_label NOT LIKE 'Wilkum %' AND tkp_label NOT LIKE 'JL -%'))[1],
+                    (array_agg(tkp_label ORDER BY ct DESC))[1]
+                ) AS tkp_label,
+                (array_agg(jenis_kejahatan_nama ORDER BY ct DESC))[1] AS dominant_crime,
+                to_jsonb((array_agg(sample_lps->0 ORDER BY ct DESC) FILTER (WHERE sample_lps IS NOT NULL AND jsonb_array_length(sample_lps) > 0))[1:4]) AS sample_lps
+            FROM bdb_peta_kejahatan_hotspots
+            WHERE ${hWhere.join(' AND ')}
+            GROUP BY grid_lat, grid_lng
+            ORDER BY ct DESC
+            LIMIT 320
+        `;
+
+        const cParams: any[] = [];
+        const cWhere: string[] = ['jenis_kejahatan_id <> 516'];
+        if (f.date_from) {
+            cParams.push(f.date_from);
+            cWhere.push(`tanggal >= $${cParams.length}::date`);
+        }
+        if (f.date_to) {
+            cParams.push(f.date_to);
+            cWhere.push(`tanggal <= $${cParams.length}::date`);
+        }
+        if (f.golongan_id) {
+            cParams.push(Number(f.golongan_id));
+            cWhere.push(`golongan_kejahatan_id = $${cParams.length}`);
+        }
+        if (f.model_lp) {
+            const m = String(f.model_lp).trim().toUpperCase().replace(/^LP_MODEL_/i, '');
+            if (['A', 'B', 'C'].includes(m)) {
+                cParams.push(m);
+                cWhere.push(`model_lp = $${cParams.length}`);
+            }
+        }
+        if (f.polda_key && f.polda_key !== 'SEMUA' && f.polda_key !== 'ALL') {
+            cParams.push(String(f.polda_key).trim().toUpperCase());
+            cWhere.push(`polda_key = $${cParams.length}`);
+        }
+
+        const crimeCountsSql = `
+            SELECT
+                a.jenis_kejahatan_id AS id,
+                coalesce(jk.keterangan, 'Lainnya') AS nama,
+                sum(a.total_lp)::int AS ct,
+                sum(case when a.kategori = 'CC' then a.total_lp else 0 end)::int AS cc
+            FROM bdb_peta_kejahatan_agg a
+            JOIN cm_jenis_kejahatan jk ON jk.id = a.jenis_kejahatan_id
+            WHERE ${cWhere.join(' AND ')}
+            GROUP BY 1, 2
+            ORDER BY ct DESC
+            LIMIT 30
+        `;
+
+        const [hotRows, crimeRows] = await Promise.all([
+            this.ds.query(hotspotsSql, hParams).catch(() => []),
+            this.ds.query(crimeCountsSql, cParams).catch(() => [])
+        ]);
+
+        const maxHotCT = Math.max(1, ...(hotRows.map((r: any) => Number(r.ct || 0))));
+        const hotspots = hotRows.map((r: any, idx: number) => {
+            const ctVal = Number(r.ct || 0);
+            const ccVal = Number(r.cc || 0);
+            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 1000) / 10 : 0;
+            const weight = Number(Math.min(1, Math.max(0.15, Math.pow(ctVal / maxHotCT, 0.48))).toFixed(3));
+            return {
+                rank: idx + 1,
+                lat: Number(r.lat),
+                lng: Number(r.lng),
+                ct: ctVal,
+                cc: ccVal,
+                cr: crVal,
+                weight,
+                polda_key: r.polda_key || '',
+                polda_nama: r.polda_nama || '',
+                satker_nama: r.satker_nama || '',
+                tkp_label: r.tkp_label || '',
+                dominant_crime: r.dominant_crime || 'Tindak Pidana',
+                sample_lps: Array.isArray(r.sample_lps) ? r.sample_lps.filter(Boolean) : []
+            };
+        });
+
+        const top_rawan_locations = hotspots.slice(0, 12);
+        return { hotspots, top_rawan_locations, crime_types: crimeRows };
+    }
+
+    async petaKejahatan(f: any, userId?: number) {
+        const dateFrom = String(f.date_from || f.from || `${new Date().getFullYear()}-01-01`).trim();
+        const dateTo = String(f.date_to || f.to || `${new Date().getFullYear()}-12-31`).trim();
+        const parentKode = f.parent ? String(f.parent).trim() : '';
+        const jenisKejahatan = String(f.jenis_kejahatan || f.kategori_kejahatan || f.crime || '').trim();
+        const golonganId = (f.golongan_id || f.golongan_kejahatan_id) ? Number(f.golongan_id || f.golongan_kejahatan_id) : null;
+        const modelLp = f.model_lp ? String(f.model_lp).trim().toUpperCase() : '';
+        const statusFilter = (f.status || f.status_perkara) ? String(f.status || f.status_perkara).trim().toUpperCase() : '';
+        const poldaKey = f.polda ? String(f.polda).trim().toUpperCase() : '';
+        const polresId = f.polres_id ? Number(f.polres_id) : null;
+        const satkerId = f.satker_id ? Number(f.satker_id) : null;
+        const searchQ = (f.search || f.q) ? String(f.search || f.q).trim() : '';
+        const force = String(f.force || f.refresh || '') === '1';
+
+        const hasCustomFilter = Boolean(
+            (jenisKejahatan && jenisKejahatan.toUpperCase() !== 'SEMUA' && jenisKejahatan.toUpperCase() !== 'ALL') ||
+            golonganId ||
+            modelLp ||
+            statusFilter
+        );
+
+        const scope = await this.resolveScope(userId);
+        const cacheKey = [
+            'PETA_V3',
+            scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
+            dateFrom,
+            dateTo,
+            parentKode || 'ROOT',
+            jenisKejahatan || 'ALL',
+            golonganId || 'ALL',
+            modelLp || 'ALL',
+            statusFilter || 'ALL',
+            poldaKey || 'ALL',
+            polresId || 'ALL',
+            satkerId || 'ALL',
+            searchQ || ''
+        ].join(':');
+
+        if (!force) {
+            const hit = this.petaCache.get(cacheKey);
+            if (hit && Date.now() - hit.at < 300000) {
+                return hit.res;
+            }
+        }
+
+        const treeFilter = {
+            date_from: dateFrom,
+            date_to: dateTo,
+            year: f.year,
+            month: f.month,
+            jenis_kejahatan: jenisKejahatan,
+            golongan_id: golonganId,
+            model_lp: modelLp,
+            status: statusFilter,
+            polda_key: poldaKey,
+            polres_id: polresId,
+            satker_id: satkerId,
+            search: searchQ
+        };
+
+        const { roots, statuses, totals, byKode } = hasCustomFilter
+            ? await this.buildFilteredPetaTree(treeFilter)
+            : await this.buildTree({ date_from: dateFrom, date_to: dateTo, year: f.year, month: f.month });
+
+        const mapNode = (n: AnevNode) => {
+            const ctVal = Number(n.total || 0);
+            const ccVal = Number(n.cc || 0);
+            const cpBerjalan = Math.max(0, ctVal - ccVal);
+            const crVal = ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0;
+            return {
+                id: n.id,
+                kode: n.kode,
+                nama: n.nama,
+                has_children: Boolean(n.children && n.children.length > 0),
+                ct: ctVal,
+                cc: ccVal,
+                cc_aktual: ccVal,
+                cc_tunggakan: 0,
+                cp_berjalan: cpBerjalan,
+                cp_tunggakan: 0,
+                cr: crVal,
+                status: n.status || {}
+            };
+        };
+
+        if (parentKode) {
+            let targetNode = byKode.get(parentKode);
+            if (!targetNode) {
+                const up = parentKode.toUpperCase();
+                for (const n of byKode.values()) {
+                    if (String(n.kode || '').toUpperCase() === up || String(n.nama || '').toUpperCase() === up) {
+                        targetNode = n;
+                        break;
+                    }
+                }
+            }
+            const children = (targetNode?.children || []).map(mapNode).sort((a, b) => b.ct - a.ct);
+            let childHotspots: any[] = [];
+            let childTopRawan: any[] = [];
+            if (targetNode?.id) {
+                const hRes = await this.queryPetaHotspotsAndCrimes({
+                    ...treeFilter,
+                    satker_id: Number(targetNode.id)
+                });
+                childHotspots = hRes.hotspots;
+                childTopRawan = hRes.top_rawan_locations;
+            }
+            const outChild = {
+                status: 1,
+                data: {
+                    parent: parentKode,
+                    parent_id: targetNode?.id || null,
+                    parent_nama: targetNode?.nama || null,
+                    nodes: children,
+                    hotspots: childHotspots,
+                    top_rawan_locations: childTopRawan
+                }
+            };
+            this.petaCache.set(cacheKey, { at: Date.now(), res: outChild });
+            return outChild;
+        }
+
+        const [{ hotspots, top_rawan_locations, crime_types }] = await Promise.all([
+            this.queryPetaHotspotsAndCrimes(treeFilter)
+        ]);
+
+        const allNodes = [...byKode.values()];
+        const poldaNodes = allNodes
+            .filter((n) => n.depth === 1 && /^POLDA\b/i.test(String(n.nama || '')))
+            .map(mapNode)
+            .sort((a, b) => b.ct - a.ct);
+
+        const mabesDirektoratCoords = [
+            { match: /TIPIDUM/i, label: 'Dittipidum Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2389, lng: 106.8010 },
+            { match: /TIPIDEKSUS/i, label: 'Dittipideksus Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2392, lng: 106.8013 },
+            { match: /TIPIDKOR/i, label: 'Dittipidkor Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2396, lng: 106.8009 },
+            { match: /TIPIDNARKOBA/i, label: 'Dittipidnarkoba Bareskrim Polri', alamat: 'Jl. MT Haryono No. 11, Cawang, Kramat Jati, Jakarta Timur', lat: -6.2458, lng: 106.8665 },
+            { match: /TIPIDSIBER/i, label: 'Dittipidsiber Bareskrim Polri', alamat: 'Gedung Bareskrim Polri Lt. 15, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2388, lng: 106.8005 },
+            { match: /TIPIDTER/i, label: 'Dittipidter Bareskrim Polri', alamat: 'Gedung Bareskrim Polri Lt. 8, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2394, lng: 106.8012 },
+            { match: /PPA|PPO/i, label: 'Dit PPA & PPO Bareskrim Polri', alamat: 'Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan', lat: -6.2390, lng: 106.8002 }
+        ];
+        const direktoratList: any[] = [];
+        let mabesCT = 0;
+        let mabesCC = 0;
+        for (const spec of mabesDirektoratCoords) {
+            const found = allNodes.find((n) => spec.match.test(String(n.nama || '')) && /BARESKRIM/i.test(String(n.nama || '')));
+            const ctVal = Number(found?.total || 0);
+            const ccVal = Number(found?.cc || 0);
+            mabesCT += ctVal;
+            mabesCC += ccVal;
+            direktoratList.push({
+                id: found?.id || null,
+                kode: found?.kode || spec.label,
+                nama: found?.nama || spec.label,
+                label: spec.label,
+                alamat: spec.alamat,
+                lat: spec.lat,
+                lng: spec.lng,
+                ct: ctVal,
+                cc: ccVal,
+                cp_berjalan: Math.max(0, ctVal - ccVal),
+                cp_tunggakan: 0,
+                cr: ctVal > 0 ? Math.round((ccVal / ctVal) * 10000) / 100 : 0
+            });
+        }
+        const bareskrimRoot = allNodes.find((n) => /^BARESKRIM POLRI$/i.test(String(n.nama || '').trim()));
+        if (bareskrimRoot && Number(bareskrimRoot.total || 0) > mabesCT) {
+            mabesCT = Number(bareskrimRoot.total || 0);
+            mabesCC = Number(bareskrimRoot.cc || 0);
+        }
+        const statusTotals: Record<string, number> = {};
+        for (const r of roots) {
+            for (const [k, v] of Object.entries(r.status || {})) {
+                statusTotals[k] = (statusTotals[k] || 0) + Number(v || 0);
+            }
+        }
+        const per_status = statuses.map((s: any) => ({
+            code: s.code,
+            nama: s.nama,
+            kategori: s.kategori || 'CT',
+            urutan: s.urutan,
+            jumlah: Number(statusTotals[s.code] || 0)
+        }));
+        const totalCT = Number(totals.total || 0);
+        const totalCC = Number(totals.cc || 0);
+        const totalCR = totalCT > 0 ? Math.round((totalCC / totalCT) * 10000) / 100 : 0;
+        let scopeSatker: string | null = null;
+        if (!scope.all && scope.satkerId) {
+            const sr = await this.ds.query('select deskripsi from bdb_satker where id=$1', [scope.satkerId]);
+            scopeSatker = sr[0]?.deskripsi || null;
+        }
+        const result = {
+            status: 1,
+            data: {
+                from: dateFrom,
+                to: dateTo,
+                applied_filters: {
+                    jenis_kejahatan: jenisKejahatan || 'SEMUA',
+                    golongan_id: golonganId,
+                    model_lp: modelLp || 'SEMUA',
+                    status: statusFilter || 'SEMUA',
+                    polda: poldaKey || 'SEMUA',
+                    search: searchQ || ''
+                },
+                ct: totalCT,
+                cc: totalCC,
+                cr: totalCR,
+                pct: totalCR,
+                summary: {
+                    ct: totalCT,
+                    cc: totalCC,
+                    cc_aktual: totalCC,
+                    cc_tunggakan: 0,
+                    cp_berjalan: Math.max(0, totalCT - totalCC),
+                    cp_tunggakan: 0,
+                    cr: totalCR
+                },
+                mabes: {
+                    id: bareskrimRoot?.id || 13,
+                    kode: bareskrimRoot?.kode || 'BARESKRIM',
+                    nama: 'BARESKRIM POLRI / MABES POLRI',
+                    alamat: 'Jl. Trunojoyo No. 3, Selong, Kec. Kebayoran Baru, Jakarta Selatan 12110',
+                    lat: -6.2393,
+                    lng: 106.8006,
+                    ct: mabesCT,
+                    cc: mabesCC,
+                    cp_berjalan: Math.max(0, mabesCT - mabesCC),
+                    cp_tunggakan: 0,
+                    cr: mabesCT > 0 ? Math.round((mabesCC / mabesCT) * 10000) / 100 : 0,
+                    direktorat: direktoratList
+                },
+                polda: poldaNodes,
+                kinerja: poldaNodes,
+                hotspots,
+                top_rawan_locations,
+                crime_types,
+                per_status,
+                scoped: !scope.all,
+                scope_satker: scopeSatker
+            }
+        };
+        this.petaCache.set(cacheKey, { at: Date.now(), res: result });
+        return result;
     }
 
     /** Memperbarui seluruh snapshot 13 partisi Dashboard Anev */

@@ -673,14 +673,119 @@ function resolveCasPolsekCoords(rawName, polresNode, idx, total, zoom) {
 }
 
 const CAS_PULAU_VIEWS = {
-  "Semua": { scale: 1, tx: 0, ty: 0, lat: -2.5, lng: 118.0, zoom: 5 },
-  "Sumatera": { scale: 2.3, tx: -5, ty: -35, lat: -0.5, lng: 101.5, zoom: 6 },
-  "Jawa": { scale: 3.2, tx: -760, ty: -880, lat: -7.0, lng: 109.5, zoom: 7 },
-  "Kalimantan": { scale: 2.4, tx: -720, ty: -230, lat: -0.5, lng: 114.5, zoom: 6 },
-  "Sulawesi": { scale: 2.5, tx: -1120, ty: -320, lat: -1.8, lng: 121.0, zoom: 6 },
-  "Bali & Nusra": { scale: 2.8, tx: -1240, ty: -820, lat: -8.8, lng: 118.5, zoom: 7 },
-  "Maluku & Papua": { scale: 2.1, tx: -1450, ty: -260, lat: -3.2, lng: 134.5, zoom: 6 }
+  "Semua": { scale: 1, tx: 0, ty: 0, lat: -2.2, lng: 118.0, zoom: 5, bounds: [[-10.9, 95.0], [6.1, 141.0]] },
+  "Sumatera": { scale: 2.15, tx: 15, ty: 10, lat: 0.4, lng: 100.6, zoom: 5.75, bounds: [[-6.2, 94.5], [6.8, 106.5]] },
+  "Jawa": { scale: 3.2, tx: -760, ty: -880, lat: -7.0, lng: 109.5, zoom: 7, bounds: [[-9.2, 105.0], [-5.2, 115.0]] },
+  "Kalimantan": { scale: 2.4, tx: -720, ty: -230, lat: 0.5, lng: 114.2, zoom: 6, bounds: [[-4.8, 108.2], [5.2, 119.5]] },
+  "Sulawesi": { scale: 2.5, tx: -1120, ty: -320, lat: -1.5, lng: 121.2, zoom: 6, bounds: [[-6.2, 118.2], [2.8, 125.8]] },
+  "Bali & Nusra": { scale: 2.8, tx: -1240, ty: -820, lat: -8.8, lng: 119.5, zoom: 6.5, bounds: [[-11.2, 114.3], [-7.5, 125.5]] },
+  "Maluku & Papua": { scale: 2.1, tx: -1450, ty: -260, lat: -3.2, lng: 134.0, zoom: 5.5, bounds: [[-9.2, 125.5], [2.5, 141.5]] }
 };
+
+const CAS_CRIME_QUICK_FILTERS = [
+  { id: "SEMUA", icon: "🌐", label: "Semua Kejahatan", shortLabel: "Semua Kejahatan", desc: "Seluruh Jenis Tindak Pidana", color: "#dc2626", matchRegex: null },
+  { id: "CURAS", icon: "🔥", label: "Curas", shortLabel: "Curas (Pencurian dgn Kekerasan)", desc: "Pencurian dengan Kekerasan (Curas)", color: "#dc2626", matchRegex: /curas|pencurian dengan kekerasan/i },
+  { id: "CURAT", icon: "⚡", label: "Curat", shortLabel: "Curat (Pencurian dgn Pemberatan)", desc: "Pencurian dengan Pemberatan (Curat)", color: "#ea580c", matchRegex: /curat|pencurian dengan pemberatan/i },
+  { id: "CURANMOR", icon: "🏍️", label: "Curanmor", shortLabel: "Curanmor", desc: "Pencurian Kendaraan Bermotor (Curanmor)", color: "#d97706", matchRegex: /curanmor|kendaraan bermotor/i },
+  { id: "ANIRAT", icon: "🔪", label: "Anirat / Penganiayaan", shortLabel: "Anirat & Penganiayaan", desc: "Penganiayaan Berat (Anirat) & Pengeroyokan", color: "#dc2626", matchRegex: /anirat|penganiayaan|pengeroyokan/i },
+  { id: "NARKOBA", icon: "💊", label: "Narkoba", shortLabel: "Narkotika & Obat Keras", desc: "Tindak Pidana Narkotika, Psikotropika & Obat Keras", color: "#7c3aed", matchRegex: /narkotika|narkoba|obat keras|psikotropika/i },
+  { id: "SIBER", icon: "💻", label: "Siber / ITE", shortLabel: "Kejahatan Siber / ITE", desc: "Kejahatan Informasi & Transaksi Elektronik (ITE)", color: "#2563eb", matchRegex: /elektronik|siber|ite|pencemaran/i },
+  { id: "PENIPUAN", icon: "📄", label: "Penipuan & Penggelapan", shortLabel: "Penipuan & Penggelapan", desc: "Penipuan / Perbuatan Curang & Penggelapan", color: "#0284c7", matchRegex: /penipuan|penggelapan|curang/i },
+  { id: "PPA", icon: "🛡️", label: "PPA & KDRT", shortLabel: "Perlindungan Anak & KDRT", desc: "Perlindungan Perempuan & Anak (PPA) serta KDRT", color: "#db2777", matchRegex: /anak|rumah tangga|seksual|cabul|perkosaan/i },
+  { id: "TIPIKOR", icon: "⚖️", label: "Tipikor", shortLabel: "Tindak Pidana Korupsi", desc: "Tindak Pidana Korupsi (Tipikor)", color: "#b45309", matchRegex: /korupsi|suap|gratifikasi/i },
+  { id: "JUDI", icon: "🎲", label: "Judi", shortLabel: "Perjudian", desc: "Tindak Pidana Perjudian", color: "#4f46e5", matchRegex: /judi/i },
+  { id: "PEMBUNUHAN", icon: "⚠️", label: "Pembunuhan", shortLabel: "Pembunuhan", desc: "Tindak Pidana Pembunuhan", color: "#991b1b", matchRegex: /pembunuhan/i }
+];
+
+let _casThermalLut = null;
+function getCasThermalColorLut() {
+  if (_casThermalLut) return _casThermalLut;
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, 256, 0);
+  grad.addColorStop(0.05, "rgba(14, 165, 233, 0)");
+  grad.addColorStop(0.22, "rgba(6, 182, 212, 0.52)");
+  grad.addColorStop(0.42, "rgba(16, 185, 129, 0.70)");
+  grad.addColorStop(0.62, "rgba(234, 179, 8, 0.84)");
+  grad.addColorStop(0.82, "rgba(249, 115, 22, 0.92)");
+  grad.addColorStop(1.00, "rgba(220, 38, 38, 0.98)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 1);
+  _casThermalLut = ctx.getImageData(0, 0, 256, 1).data;
+  return _casThermalLut;
+}
+
+function drawCasThermalCanvasOverlay(map, containerEl, points, enabled) {
+  if (!containerEl || !map) return;
+  let canvas = containerEl.querySelector(".cas-leaflet-thermal-canvas");
+  if (!enabled || !Array.isArray(points) || points.length === 0) {
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = "none";
+    }
+    return;
+  }
+  if (!canvas) {
+    canvas = document.createElement("canvas");
+    canvas.className = "cas-leaflet-thermal-canvas";
+    canvas.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:380;";
+    containerEl.appendChild(canvas);
+  }
+  canvas.style.display = "block";
+  const rect = containerEl.getBoundingClientRect();
+  const W = Math.max(1, Math.round(rect.width));
+  const H = Math.max(1, Math.round(rect.height));
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width = W;
+    canvas.height = H;
+  }
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return;
+  ctx.clearRect(0, 0, W, H);
+
+  const z = map.getZoom ? map.getZoom() : 5;
+  const baseRadius = z >= 12 ? 38 : z >= 9 ? 32 : z >= 7 ? 27 : 22;
+
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (p.lat == null || p.lng == null) continue;
+    let pt;
+    try { pt = map.latLngToContainerPoint([p.lat, p.lng]); } catch (_e) { continue; }
+    if (!pt || pt.x < -baseRadius || pt.y < -baseRadius || pt.x > W + baseRadius || pt.y > H + baseRadius) continue;
+    const w = Math.min(1, Math.max(0.22, Number(p.weight || 0.45)));
+    const r = Math.round(baseRadius * (0.75 + w * 0.55));
+    const g = ctx.createRadialGradient(pt.x, pt.y, r * 0.08, pt.x, pt.y, r);
+    g.addColorStop(0, "rgba(0,0,0," + (0.28 + w * 0.62).toFixed(2) + ")");
+    g.addColorStop(0.55, "rgba(0,0,0," + (0.12 + w * 0.30).toFixed(2) + ")");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  try {
+    const img = ctx.getImageData(0, 0, W, H);
+    const data = img.data;
+    const lut = getCasThermalColorLut();
+    for (let idx = 0; idx < data.length; idx += 4) {
+      const a = data[idx + 3];
+      if (a > 6) {
+        const lutIdx = Math.min(255, a) * 4;
+        data[idx] = lut[lutIdx];
+        data[idx + 1] = lut[lutIdx + 1];
+        data[idx + 2] = lut[lutIdx + 2];
+        data[idx + 3] = Math.min(225, Math.round(lut[lutIdx + 3] * 0.88));
+      } else {
+        data[idx + 3] = 0;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  } catch (_e) {}
+}
 
 function normCasPoldaKey(raw) {
   if (!raw) return "";
@@ -1263,6 +1368,71 @@ function CasPetaKejahatanView({
     });
   }
 
+  // Operational Filter State (Defaulting like Daftar LP / Kinerja Perkara + Crime Heatmap Filtering)
+  const [filterFrom, setFilterFrom] = (0, a.useState)(() => ee || "2026-01-01");
+  const [filterTo, setFilterTo] = (0, a.useState)(() => et || "2026-12-31");
+  const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
+  const [crimeFilter, setCrimeFilter] = (0, a.useState)("SEMUA");
+  const [golonganFilter, setGolonganFilter] = (0, a.useState)("SEMUA");
+  const [modelLpFilter, setModelLpFilter] = (0, a.useState)("SEMUA");
+  const [statusFilter, setStatusFilter] = (0, a.useState)("SEMUA");
+  const [tkpSearch, setTkpSearch] = (0, a.useState)("");
+  const [showHotspotPins, setShowHotspotPins] = (0, a.useState)(true);
+  const [selectedHotspot, setSelectedHotspot] = (0, a.useState)(null);
+
+  (0, a.useEffect)(() => {
+    if (ee) setFilterFrom(ee);
+    if (et) setFilterTo(et);
+  }, [ee, et]);
+
+  const applyPeriodPreset = (preset) => {
+    setPeriodPreset(preset);
+    if (preset === "tahun_ini") {
+      setFilterFrom("2026-01-01");
+      setFilterTo("2026-12-31");
+    } else if (preset === "tahun_2025") {
+      setFilterFrom("2025-01-01");
+      setFilterTo("2025-12-31");
+    } else if (preset === "semua") {
+      setFilterFrom("2025-01-01");
+      setFilterTo("2026-12-31");
+    } else if (preset === "q1_2026") {
+      setFilterFrom("2026-01-01");
+      setFilterTo("2026-03-31");
+    } else if (preset === "q2_2026") {
+      setFilterFrom("2026-04-01");
+      setFilterTo("2026-06-30");
+    } else if (preset === "q3_2026") {
+      setFilterFrom("2026-07-01");
+      setFilterTo("2026-09-30");
+    }
+  };
+
+  const resetOperationalFilters = () => {
+    setPeriodPreset("tahun_ini");
+    setFilterFrom(ee || "2026-01-01");
+    setFilterTo(et || "2026-12-31");
+    setCrimeFilter("SEMUA");
+    setGolonganFilter("SEMUA");
+    setModelLpFilter("SEMUA");
+    setStatusFilter("SEMUA");
+    setTkpSearch("");
+    setSelectedHotspot(null);
+  };
+
+  const activeFilterParams = (0, a.useMemo)(() => {
+    const p = {
+      from: filterFrom || ee || "2026-01-01",
+      to: filterTo || et || "2026-12-31"
+    };
+    if (crimeFilter && crimeFilter !== "SEMUA") p.jenis_kejahatan = crimeFilter;
+    if (golonganFilter && golonganFilter !== "SEMUA") p.golongan_id = golonganFilter;
+    if (modelLpFilter && modelLpFilter !== "SEMUA") p.model_lp = modelLpFilter;
+    if (statusFilter && statusFilter !== "SEMUA") p.status = statusFilter;
+    if (tkpSearch && tkpSearch.trim()) p.search = tkpSearch.trim();
+    return p;
+  }, [filterFrom, filterTo, ee, et, crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
+
   // Camera & 4-Mode Drilldown State (0 = Nasional/36 Wilkum Polda, 1 = Polda/Polres, 2 = Polres/Polsek, 3 = Mabes/Bareskrim Polri)
   const [drillLevel, setDrillLevel] = (0, a.useState)(0);
   const [zoom, setZoom] = (0, a.useState)(1);
@@ -1282,8 +1452,12 @@ function CasPetaKejahatanView({
 
   const [poldaKodeMap, setPoldaKodeMap] = (0, a.useState)({});
   const [subSatkers, setSubSatkers] = (0, a.useState)([]);
+  const [subHotspots, setSubHotspots] = (0, a.useState)([]);
+  const [subTopRawan, setSubTopRawan] = (0, a.useState)([]);
   const [subLoading, setSubLoading] = (0, a.useState)(false);
   const [polsekSatkers, setPolsekSatkers] = (0, a.useState)([]);
+  const [polsekHotspots, setPolsekHotspots] = (0, a.useState)([]);
+  const [polsekTopRawan, setPolsekTopRawan] = (0, a.useState)([]);
   const [polsekLoading, setPolsekLoading] = (0, a.useState)(false);
 
   // GeoJSON Wilkum Polygon Boundary State (for Nasional 36 Polda, Polda, Polres, and Polsek — NEVER for Mabes!)
@@ -1328,13 +1502,13 @@ function CasPetaKejahatanView({
     };
   }, []);
 
-  // Fetch dedicated Peta Kejahatan API (/bdb/anev/peta-kejahatan)
+  // Fetch dedicated Peta Kejahatan API (/bdb/anev/peta-kejahatan) with active operational & crime filters
   (0, a.useEffect)(() => {
     if (!apiAuth) return;
     let cancelled = false;
     setPetaLoading(true);
     apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: { from: ee, to: et }
+      params: activeFilterParams
     }).then(res => {
       if (cancelled) return;
       const d = res?.data?.data || null;
@@ -1353,7 +1527,7 @@ function CasPetaKejahatanView({
       if (!cancelled) setPetaLoading(false);
     });
     return () => { cancelled = true; };
-  }, [ee, et, apiAuth]);
+  }, [activeFilterParams, apiAuth]);
 
   // Helper to center any SVG coordinate (targetX, targetY) in the 1200x470 viewport at scale s
   const focusCameraOn = (0, a.useCallback)((targetX, targetY, targetScale) => {
@@ -1436,7 +1610,7 @@ function CasPetaKejahatanView({
   const { mergedRegions, mabesSummary } = (0, a.useMemo)(() => {
     const activeDash = petaData || l;
     const activeSum = petaData?.summary || i;
-    const activeKin = Array.isArray(petaData?.kinerja) && petaData.kinerja.length > 0 ? petaData.kinerja : kRows;
+    const activeKin = petaData ? (Array.isArray(petaData.kinerja) ? petaData.kinerja : []) : kRows;
 
     const mapByKey = new Map();
     for (const g of CAS_INDONESIA_GEO_DATA) {
@@ -1690,7 +1864,7 @@ function CasPetaKejahatanView({
     const activeSum = petaData?.summary || i;
     const sumRegionCT = mergedRegions.reduce((s, r) => s + r.ct, 0);
     const sumRegionCC = mergedRegions.reduce((s, r) => s + r.cc, 0);
-    const totalCT = Number(activeSum?.ct || activeDash?.ct || sumRegionCT || 0);
+    const totalCT = Number(activeSum?.ct ?? activeDash?.ct ?? sumRegionCT ?? 0);
     const totalCC = Number(((activeSum?.cc_aktual || 0) + (activeSum?.cc_tunggakan || 0)) || activeDash?.cc || sumRegionCC || 0);
     const avgCR = Number(activeSum?.cr ?? activeDash?.cr ?? (totalCT > 0 ? (totalCC / totalCT) * 100 : 0));
     const sortedCT = [...mergedRegions].sort((a, b) => b.ct - a.ct);
@@ -1708,7 +1882,7 @@ function CasPetaKejahatanView({
 
   // Select default Polda (#1 hotspot or scoped Polda) without zooming out of Nasional on initial load
   (0, a.useEffect)(() => {
-    if (!selectedId && mergedRegions.length > 0) {
+    if (!selectedId && mergedRegions.length > 0 && stats.totalCT > 0) {
       if (l?.scoped && l?.scope_satker) {
         const sk = normCasPoldaKey(l.scope_satker);
         const found = mergedRegions.find(r => r.id === sk);
@@ -1721,44 +1895,60 @@ function CasPetaKejahatanView({
         setSelectedId(stats.topHotspot.id);
       }
     }
-  }, [selectedId, mergedRegions, stats.topHotspot, l]);
+  }, [selectedId, mergedRegions, stats.topHotspot, stats.totalCT, l]);
+
+  // When crimeFilter changes in National view (drillLevel === 0) and pulauFilter === "Semua", auto-focus the #1 Polda for that crime
+  (0, a.useEffect)(() => {
+    if (drillLevel === 0 && pulauFilter === "Semua" && stats.topHotspot && stats.totalCT > 0) {
+      setSelectedId(stats.topHotspot.id);
+    }
+  }, [crimeFilter, stats.topHotspot?.id, stats.totalCT]);
 
   const selectedRegion = (0, a.useMemo)(() => {
     return mergedRegions.find(r => r.id === selectedId) || stats.topHotspot || mergedRegions[0];
   }, [mergedRegions, selectedId, stats.topHotspot]);
 
-  // Fetch Level 1 children: Polres / Polrestabes / Direktorat under selectedRegion via dedicated API (/bdb/anev/peta-kejahatan)
+  // Fetch Level 1 children: Polres / Polrestabes / Direktorat + TKP Hotspots under selectedRegion via dedicated API (/bdb/anev/peta-kejahatan)
   (0, a.useEffect)(() => {
     const kode = selectedRegion?.kode || poldaKodeMap[selectedRegion?.id];
     if (!kode || !apiAuth) {
       setSubSatkers([]);
+      setSubHotspots([]);
+      setSubTopRawan([]);
       return;
     }
     let cancelled = false;
     setSubLoading(true);
     apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: { parent: kode, from: ee, to: et }
+      params: { ...activeFilterParams, parent: kode }
     }).then(res => {
       if (cancelled) return;
-      const nodes = Array.isArray(res?.data?.data?.nodes) ? res.data.data.nodes : [];
+      const d = res?.data?.data || {};
+      const nodes = Array.isArray(d.nodes) ? d.nodes : [];
+      setSubHotspots(Array.isArray(d.hotspots) ? d.hotspots : []);
+      setSubTopRawan(Array.isArray(d.top_rawan_locations) ? d.top_rawan_locations : []);
       if (nodes.length > 0) {
         setSubSatkers([...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)));
         return null;
       }
       return apiAuth.get("/bdb/kinerja-perkara/rekap", {
-        params: { parent: kode, from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+        params: { parent: kode, from: activeFilterParams.from, to: activeFilterParams.to, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
       });
     }).then(resFallback => {
       if (cancelled || !resFallback) return;
       const nodes = Array.isArray(resFallback?.data?.data?.nodes) ? resFallback.data.data.nodes : [];
       setSubSatkers([...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)));
     }).catch(() => {
-      if (!cancelled) setSubSatkers([]);
+      if (!cancelled) {
+        setSubSatkers([]);
+        setSubHotspots([]);
+        setSubTopRawan([]);
+      }
     }).finally(() => {
       if (!cancelled) setSubLoading(false);
     });
     return () => { cancelled = true; };
-  }, [selectedRegion?.id, selectedRegion?.kode, poldaKodeMap, ee, et, apiAuth]);
+  }, [selectedRegion?.id, selectedRegion?.kode, poldaKodeMap, activeFilterParams, apiAuth]);
 
   // Resolve real Kabupaten/Kota & Mako Google Maps coordinates for Polres inside the selected Polda
   const polresMapNodes = (0, a.useMemo)(() => {
@@ -1794,37 +1984,72 @@ function CasPetaKejahatanView({
     });
   }, [selectedRegion, subSatkers]);
 
-  // Fetch Level 2 children: Polsek / Unit under selectedPolres via dedicated API (/bdb/anev/peta-kejahatan)
+  // Fetch Level 2 children: Polsek / Unit + TKP Hotspots under selectedPolres via dedicated API (/bdb/anev/peta-kejahatan)
   (0, a.useEffect)(() => {
     if (!selectedPolres?.kode || !apiAuth) {
       setPolsekSatkers([]);
+      setPolsekHotspots([]);
+      setPolsekTopRawan([]);
       return;
     }
     let cancelled = false;
     setPolsekLoading(true);
     apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: { parent: selectedPolres.kode, from: ee, to: et }
+      params: { ...activeFilterParams, parent: selectedPolres.kode }
     }).then(res => {
       if (cancelled) return;
-      const nodes = Array.isArray(res?.data?.data?.nodes) ? res.data.data.nodes : [];
+      const d = res?.data?.data || {};
+      const nodes = Array.isArray(d.nodes) ? d.nodes : [];
+      setPolsekHotspots(Array.isArray(d.hotspots) ? d.hotspots : []);
+      setPolsekTopRawan(Array.isArray(d.top_rawan_locations) ? d.top_rawan_locations : []);
       if (nodes.length > 0) {
         setPolsekSatkers([...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)));
         return null;
       }
       return apiAuth.get("/bdb/kinerja-perkara/rekap", {
-        params: { parent: selectedPolres.kode, from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+        params: { parent: selectedPolres.kode, from: activeFilterParams.from, to: activeFilterParams.to, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
       });
     }).then(resFallback => {
       if (cancelled || !resFallback) return;
       const nodes = Array.isArray(resFallback?.data?.data?.nodes) ? resFallback.data.data.nodes : [];
       setPolsekSatkers([...nodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)));
     }).catch(() => {
-      if (!cancelled) setPolsekSatkers([]);
+      if (!cancelled) {
+        setPolsekSatkers([]);
+        setPolsekHotspots([]);
+        setPolsekTopRawan([]);
+      }
     }).finally(() => {
       if (!cancelled) setPolsekLoading(false);
     });
     return () => { cancelled = true; };
-  }, [selectedPolres?.kode, ee, et, apiAuth]);
+  }, [selectedPolres?.kode, activeFilterParams, apiAuth]);
+
+  // Active TKP Hotspots & Top Rawan Locations based on current drilldown & island/crime filter
+  const activeHotspots = (0, a.useMemo)(() => {
+    if (drillLevel === 2 && polsekHotspots.length > 0) return polsekHotspots;
+    if (drillLevel >= 1 && drillLevel !== 3 && subHotspots.length > 0) return subHotspots;
+    const rootH = Array.isArray(petaData?.hotspots) ? petaData.hotspots : [];
+    if (drillLevel >= 1 && drillLevel !== 3 && selectedRegion) {
+      const byPolda = rootH.filter(h => normCasPoldaKey(h.polda_key || h.polda_nama) === selectedRegion.id);
+      if (byPolda.length > 0) return byPolda;
+    }
+    if (pulauFilter !== "Semua" && drillLevel === 0) {
+      const poldaIdsInPulau = new Set(mergedRegions.filter(r => r.pulau === pulauFilter).map(r => r.id));
+      return rootH.filter(h => poldaIdsInPulau.has(normCasPoldaKey(h.polda_key || h.polda_nama)));
+    }
+    return rootH;
+  }, [drillLevel, polsekHotspots, subHotspots, petaData?.hotspots, selectedRegion?.id, pulauFilter, mergedRegions]);
+
+  const activeTopRawan = (0, a.useMemo)(() => {
+    if (drillLevel === 2 && polsekTopRawan.length > 0) return polsekTopRawan;
+    if (drillLevel >= 1 && drillLevel !== 3 && subTopRawan.length > 0) return subTopRawan;
+    return activeHotspots.slice(0, 12);
+  }, [drillLevel, polsekTopRawan, subTopRawan, activeHotspots]);
+
+  const activeCrimeMeta = (0, a.useMemo)(() => {
+    return CAS_CRIME_QUICK_FILTERS.find(c => c.id === crimeFilter) || CAS_CRIME_QUICK_FILTERS[0];
+  }, [crimeFilter]);
 
   // Resolve real Kecamatan geospatial coordinates for Polsek under the selected Polres
   const polsekMapNodes = (0, a.useMemo)(() => {
@@ -1894,11 +2119,24 @@ function CasPetaKejahatanView({
     setSelectedPolres(null);
     setSelectedPolsek(null);
     setSelectedMabesUnit(null);
+    setSelectedHotspot(null);
     setPulauFilter("Semua");
     lastFittedGeoKeyRef.current = "";
     focusCameraOn(600, 235, 1);
     if (leafletMapRef.current && isGoogleTileMode) {
-      try { leafletMapRef.current.flyTo([-2.5, 118.0], 5, { duration: 0.5 }); } catch (_e) {}
+      try {
+        const v = CAS_PULAU_VIEWS["Semua"];
+        if (v && v.bounds) {
+          leafletMapRef.current.fitBounds(v.bounds, {
+            paddingTopLeft: [20, 48],
+            paddingBottomRight: [20, 24],
+            animate: true,
+            duration: 0.5
+          });
+        } else {
+          leafletMapRef.current.flyTo([-2.2, 117.8], 5, { duration: 0.5 });
+        }
+      } catch (_e) {}
     }
   };
 
@@ -1907,6 +2145,7 @@ function CasPetaKejahatanView({
     setSelectedMabesUnit(targetUnit);
     setSelectedPolres(null);
     setSelectedPolsek(null);
+    setSelectedHotspot(null);
     setDrillLevel(3);
     lastFittedGeoKeyRef.current = "MABES_" + targetUnit.id;
     const svgPt = latLngToCasSvg(targetUnit.lat, targetUnit.lng);
@@ -1922,6 +2161,7 @@ function CasPetaKejahatanView({
     setSelectedPolres(null);
     setSelectedPolsek(null);
     setSelectedMabesUnit(null);
+    setSelectedHotspot(null);
     setDrillLevel(1);
     const targetX = reg.bx || reg.cx;
     const targetY = reg.by || reg.cy;
@@ -1937,6 +2177,7 @@ function CasPetaKejahatanView({
     setSelectedPolres(polresNode);
     setSelectedPolsek(null);
     setSelectedMabesUnit(null);
+    setSelectedHotspot(null);
     setDrillLevel(2);
     const nextScale = Math.min(10.5, Math.max(5.2, zoom * 1.75));
     focusCameraOn(polresNode.px, polresNode.py, nextScale);
@@ -1949,12 +2190,32 @@ function CasPetaKejahatanView({
     if (!polsekNode) return;
     setSelectedPolsek(polsekNode);
     setSelectedMabesUnit(null);
+    setSelectedHotspot(null);
     if (leafletMapRef.current && isGoogleTileMode) {
       try { leafletMapRef.current.flyTo([polsekNode.lat, polsekNode.lng], 14, { duration: 0.5 }); } catch (_e) {}
     }
   };
 
+  const handleSelectHotspotAndZoom = (hs) => {
+    if (!hs || !Number.isFinite(Number(hs.lat)) || !Number.isFinite(Number(hs.lng))) return;
+    setSelectedHotspot(hs);
+    const pKey = normCasPoldaKey(hs.polda_key || hs.polda_nama);
+    if (pKey && pKey !== "MABES") {
+      setSelectedId(pKey);
+    }
+    const svgPt = latLngToCasSvg(Number(hs.lat), Number(hs.lng));
+    focusCameraOn(svgPt.px, svgPt.py, 7.5);
+    if (leafletMapRef.current && isGoogleTileMode) {
+      try {
+        leafletMapRef.current.flyTo([Number(hs.lat), Number(hs.lng)], 14, { duration: 0.6 });
+      } catch (_e) {}
+    }
+  };
+
   const handleStepBack = () => {
+    if (selectedHotspot) {
+      setSelectedHotspot(null);
+    }
     if (drillLevel === 2 && selectedPolsek) {
       setSelectedPolsek(null);
       if (selectedPolres && leafletMapRef.current && isGoogleTileMode) {
@@ -1984,11 +2245,27 @@ function CasPetaKejahatanView({
     setSelectedPolres(null);
     setSelectedPolsek(null);
     setSelectedMabesUnit(null);
+    setSelectedHotspot(null);
     const v = CAS_PULAU_VIEWS[pulau] || CAS_PULAU_VIEWS["Semua"];
     setZoom(v.scale);
     setPan({ x: v.tx, y: v.ty });
+    if (pulau !== "Semua") {
+      const inPulau = mergedRegions.filter(r => r.pulau === pulau).sort((a, b) => b.ct - a.ct);
+      if (inPulau[0]) setSelectedId(inPulau[0].id);
+    }
     if (leafletMapRef.current && isGoogleTileMode) {
-      try { leafletMapRef.current.flyTo([v.lat, v.lng], v.zoom, { duration: 0.5 }); } catch (_e) {}
+      try {
+        if (v.bounds) {
+          leafletMapRef.current.fitBounds(v.bounds, {
+            paddingTopLeft: [20, 48],
+            paddingBottomRight: [20, 24],
+            animate: true,
+            duration: 0.5
+          });
+        } else {
+          leafletMapRef.current.flyTo([v.lat, v.lng], v.zoom, { duration: 0.5 });
+        }
+      } catch (_e) {}
     }
   };
 
@@ -2022,7 +2299,7 @@ function CasPetaKejahatanView({
     return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: z(reg.ct) };
   }
 
-  // Google Maps Street & Satellite Tile Engine + Irisan Peta (GeoJSON Polygon Boundary) + Mabes Point-Only Markers
+  // Google Maps Street & Satellite Tile Engine + Irisan Peta (GeoJSON Polygon Boundary) + True Thermal Crime Heatmap + TKP Hotspot Pins
   (0, a.useEffect)(() => {
     if (!isGoogleTileMode || typeof window === "undefined" || !leafletContainerRef.current) return;
     let cancelled = false;
@@ -2030,6 +2307,65 @@ function CasPetaKejahatanView({
     const tileUrl = mapEngine === "gmaps_sat"
       ? "https://{s}.google.com/vt/lyrs=y&hl=id&x={x}&y={y}&z={z}"
       : "https://{s}.google.com/vt/lyrs=m&hl=id&x={x}&y={y}&z={z}";
+
+    function renderHotspotPinsOnMap(L, map) {
+      if (!showHotspotPins || drillLevel === 3 || !Array.isArray(activeHotspots) || activeHotspots.length === 0) return;
+      const maxPins = drillLevel === 0 ? 75 : 140;
+      const slice = activeHotspots.slice(0, maxPins);
+      slice.forEach((hs, idx) => {
+        const lat = Number(hs.lat);
+        const lng = Number(hs.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        const isSelHs = selectedHotspot && Math.abs(Number(selectedHotspot.lat) - lat) < 0.001 && Math.abs(Number(selectedHotspot.lng) - lng) < 0.001;
+        const w = Number(hs.weight || 0.4);
+        const pinColor = w >= 0.78 ? "#dc2626" : w >= 0.52 ? "#ea580c" : w >= 0.30 ? "#d97706" : "#059669";
+        const pinRadius = isSelHs ? 10 : Math.max(4.5, Math.min(9.5, 4.0 + w * 5.2));
+        const marker = L.circleMarker([lat, lng], {
+          radius: pinRadius,
+          fillColor: isSelHs ? "#7c3aed" : pinColor,
+          color: isSelHs ? "#fef08a" : "#ffffff",
+          weight: isSelHs ? 2.8 : 1.4,
+          opacity: 0.96,
+          fillOpacity: isSelHs ? 0.98 : 0.86
+        });
+
+        const samples = Array.isArray(hs.sample_lps) ? hs.sample_lps.slice(0, 3) : [];
+        const samplesHtml = samples.length > 0
+          ? ("<div style='margin-top:6px;padding-top:5px;border-top:1px dashed #cbd5e1;font-size:11px'>" +
+             "<div style='font-weight:800;color:#0f172a;margin-bottom:3px'>📋 Sampel LP pada Titik Koordinat Ini:</div>" +
+             samples.map(s => (
+               "<div style='margin-bottom:4px;padding:3px 5px;background:#f8fafc;border-radius:4px;border:1px solid #e2e8f0'>" +
+               "<div style='font-weight:700;color:#1d4ed8;word-break:break-all'>" + (s.no_laporan || "-") + "</div>" +
+               "<div style='color:#334155'>⚖️ " + (s.jenis_kejahatan || hs.dominant_crime || "-") + " • <b>" + (s.status || "LP") + "</b></div>" +
+               "<div style='color:#64748b;font-size:10px'>📍 " + (s.tkp || hs.tkp_label || "-") + " (" + (s.lat || lat) + ", " + (s.lng || lng) + ")</div>" +
+               "</div>"
+             )).join("") +
+             "</div>")
+          : "";
+
+        const popupHtml =
+          "<div style='font-family:sans-serif;font-size:12px;line-height:1.45;min-width:250px;max-width:320px'>" +
+          "<div style='display:flex;align-items:center;justify-content:space-between;gap:6px'>" +
+          "<strong style='color:#b91c1c;font-size:12.5px'>🎯 Titik Rawan (TKP) #" + (hs.rank || (idx + 1)) + "</strong>" +
+          "<span style='background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:999px;padding:1px 7px;font-size:10.5px;font-weight:800'>" + z(hs.ct) + " LP</span>" +
+          "</div>" +
+          "<div style='font-weight:800;color:#0f172a;margin-top:3px'>📍 " + (hs.tkp_label || "Lokasi TKP") + "</div>" +
+          "<div style='color:#475569;font-size:11px;margin-top:2px'>🛡️ " + (hs.satker_nama || "-") + " • " + (hs.polda_nama || "-") + "</div>" +
+          "<div style='color:#1e40af;font-size:11px;font-weight:700;margin-top:2px'>⚖️ Dominan: " + (hs.dominant_crime || activeCrimeMeta.label) + "</div>" +
+          "<div style='color:#64748b;font-size:10.5px;margin-top:2px'>🌐 Koordinat LP: <b>" + lat.toFixed(5) + ", " + lng.toFixed(5) + "</b></div>" +
+          "<div style='margin-top:4px;font-size:11.5px'>🔥 CT: <b style='color:#dc2626'>" + z(hs.ct) + " LP</b> • ✅ CC: <b style='color:#15803d'>" + z(hs.cc) + " LP</b> • 🛡️ CR: <b>" + Number(hs.cr || 0).toFixed(1) + "%</b></div>" +
+          samplesHtml +
+          "</div>";
+
+        marker.bindTooltip(popupHtml, { direction: "top", offset: [0, -6] });
+        marker.bindPopup(popupHtml, { maxWidth: 340 });
+        marker.on("click", () => handleSelectHotspotAndZoom(hs));
+        marker.addTo(leafletLayerGroupRef.current);
+        if (isSelHs) {
+          try { marker.openPopup(); } catch (_e) {}
+        }
+      });
+    }
 
     function renderLeafletLayers(L, map) {
       if (leafletLayerGroupRef.current) {
@@ -2041,6 +2377,17 @@ function CasPetaKejahatanView({
         try { map.removeLayer(leafletGeoJsonLayerRef.current); } catch (_e) {}
         leafletGeoJsonLayerRef.current = null;
       }
+
+      // Bind & render True Thermal Crime Heatmap Canvas Overlay from LP Latitude & Longitude points
+      const redrawThermal = () => {
+        drawCasThermalCanvasOverlay(map, leafletContainerRef.current, activeHotspots, showThermal && drillLevel !== 3);
+      };
+      if (map.__casThermalRedraw) {
+        try { map.off("move zoom viewreset resize", map.__casThermalRedraw); } catch (_e) {}
+      }
+      map.__casThermalRedraw = redrawThermal;
+      map.on("move zoom viewreset resize", redrawThermal);
+      redrawThermal();
 
       // 0. Level 0 (Nasional): Render 36 Wilkum Polda Choropleth Heatmap Polygons + Boundary Lines ("Data Garis-Garis") 1:1 on Google Maps Indonesia
       if (drillLevel === 0 && allPoldaGeoJson && Array.isArray(allPoldaGeoJson.features) && allPoldaGeoJson.features.length > 0) {
@@ -2062,14 +2409,14 @@ function CasPetaKejahatanView({
               const st = reg ? getRegionStyle(reg) : { fill: "#10b981", badgeColor: "#059669" };
               const isSel = reg && selectedRegion?.id === reg.id;
               const baseFillOpacity = mapEngine === "vector"
-                ? (showThermal ? 0.56 : 0.34)
-                : (showThermal ? 0.36 : 0.16);
+                ? (showThermal ? 0.44 : 0.32)
+                : (showThermal ? 0.28 : 0.15);
               return {
                 color: isSel ? "#1d4ed8" : "#dc2626",
-                weight: isSel ? 2.8 : 1.6,
-                opacity: 0.92,
+                weight: isSel ? 2.8 : 1.5,
+                opacity: 0.90,
                 fillColor: st.fill,
-                fillOpacity: reg && reg.ct === 0 ? 0.18 : baseFillOpacity,
+                fillOpacity: reg && reg.ct === 0 ? 0.14 : baseFillOpacity,
                 dashArray: isSel ? null : "5, 3"
               };
             },
@@ -2080,6 +2427,7 @@ function CasPetaKejahatanView({
               layer.bindTooltip(
                 "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
                 "<strong>🛡️ Wilkum " + reg.polda + "</strong> (#" + reg.rank + " Nasional)<br/>" +
+                (crimeFilter !== "SEMUA" ? ("<span style='color:#dc2626;font-weight:800'>Filter: " + activeCrimeMeta.label + "</span><br/>") : "") +
                 "📍 Mako: " + (reg.makoAddr || "-") + "<br/>" +
                 "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%) • ✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
                 "<em>Klik poligon wilayah untuk zoom ke Wilkum " + reg.polda + " & Polres jajaran</em></div>",
@@ -2090,7 +2438,7 @@ function CasPetaKejahatanView({
                   layer.setStyle({
                     weight: 3.0,
                     color: "#1d4ed8",
-                    fillOpacity: mapEngine === "vector" ? 0.72 : 0.48,
+                    fillOpacity: mapEngine === "vector" ? 0.65 : 0.42,
                     dashArray: null
                   });
                 } catch (_e) {}
@@ -2113,8 +2461,8 @@ function CasPetaKejahatanView({
             ? (selectedPolsek ? (selectedPolsek.color || "#ea4335") : (selectedPolres ? (selectedPolres.color || "#ea4335") : "#ea4335"))
             : (selectedRegion ? getRegionStyle(selectedRegion).fill : "#ea4335");
           const activeFillOpacity = mapEngine === "vector"
-            ? (showThermal ? 0.36 : 0.20)
-            : (drillLevel === 2 && selectedPolsek ? 0.20 : 0.14);
+            ? (showThermal ? 0.30 : 0.18)
+            : (drillLevel === 2 && selectedPolsek ? 0.18 : 0.12);
 
           const geoLayer = L.geoJSON(wilkumGeoJson, {
             style: () => ({
@@ -2174,7 +2522,7 @@ function CasPetaKejahatanView({
         return;
       }
 
-      // 3. Level 2: Polres Hub + Polsek Kecamatan Nodes
+      // 3. Level 2: Polres Hub + Polsek Kecamatan Nodes + TKP Hotspot Pins
       if (drillLevel === 2) {
         if (selectedPolres) {
           const fullPolresName = formatFullWilkumSatkerName(selectedPolres.nama);
@@ -2219,10 +2567,11 @@ function CasPetaKejahatanView({
           c.on("click", () => handleSelectPolsekAndZoom(psk));
           c.addTo(leafletLayerGroupRef.current);
         });
+        renderHotspotPinsOnMap(L, map);
         return;
       }
 
-      // 4. Level 1: Polda Zoomed -> Mako Polda + Polres Pins inside Unified Polda Wilkum Polygon
+      // 4. Level 1: Polda Zoomed -> Mako Polda + Polres Pins inside Unified Polda Wilkum Polygon + TKP Hotspot Pins
       if (drillLevel === 1 && polresMapNodes.length > 0) {
         polresMapNodes.forEach(prs => {
           const fullPrsName = formatFullWilkumSatkerName(prs.nama);
@@ -2246,13 +2595,14 @@ function CasPetaKejahatanView({
           c.on("click", () => handleSelectPolresAndZoom(prs));
           c.addTo(leafletLayerGroupRef.current);
         });
+        renderHotspotPinsOnMap(L, map);
         return;
       }
 
-      // 5. Level 0: Nasional -> 36 Wilkum Polda Badges + Mabes Polri Marker
+      // 5. Level 0: Nasional -> 36 Wilkum Polda Badges + Mabes Polri Marker + TKP Hotspot Pins
       if (pulauFilter === "Semua" || pulauFilter === "Jawa") {
         const mbsMarker = L.circleMarker([mabesSummary.lat, mabesSummary.lng], {
-          radius: 11,
+          radius: 10,
           fillColor: "#f59e0b",
           color: "#ffffff",
           weight: 2.5,
@@ -2274,18 +2624,19 @@ function CasPetaKejahatanView({
       mergedRegions.forEach(reg => {
         if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return;
         const st = getRegionStyle(reg);
-        const radius = Math.max(8, Math.min(24, 7 + reg.ratioCT * 16));
+        const radius = Math.max(7, Math.min(20, 6.5 + reg.ratioCT * 13));
         const circle = L.circleMarker([reg.lat, reg.lng], {
           radius,
           fillColor: st.badgeColor,
           color: reg.id === selectedRegion?.id ? "#1d4ed8" : "#ffffff",
-          weight: reg.id === selectedRegion?.id ? 3 : 1.8,
-          opacity: 0.96,
-          fillOpacity: reg.ct > 0 ? 0.86 : 0.40
+          weight: reg.id === selectedRegion?.id ? 2.8 : 1.6,
+          opacity: 0.94,
+          fillOpacity: reg.ct > 0 ? 0.82 : 0.35
         });
         circle.bindTooltip(
           "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
           "<strong>🛡️ Wilkum " + reg.polda + "</strong> (#" + reg.rank + ")<br/>" +
+          (crimeFilter !== "SEMUA" ? ("<span style='color:#dc2626;font-weight:800'>Filter: " + activeCrimeMeta.label + "</span><br/>") : "") +
           "📍 Mako: " + (reg.makoAddr || "-") + "<br/>" +
           "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%) • ✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
           "<em>Klik untuk menampilkan Irisan Peta Wilkum Polda & Polres jajaran</em></div>",
@@ -2294,13 +2645,15 @@ function CasPetaKejahatanView({
         circle.on("click", () => handleSelectPoldaAndZoom(reg));
         circle.addTo(leafletLayerGroupRef.current);
       });
+
+      renderHotspotPinsOnMap(L, map);
     }
 
     function initLeaflet() {
       if (cancelled || !leafletContainerRef.current || !window.L) return;
       const L = window.L;
       if (!leafletMapRef.current) {
-        let initCenter = [-2.5, 118.0];
+        let initCenter = [-2.2, 117.8];
         let initZoom = 5;
         if (drillLevel === 3) {
           const u = selectedMabesUnit || mabesUnitNodes[0];
@@ -2323,6 +2676,8 @@ function CasPetaKejahatanView({
         const map = L.map(leafletContainerRef.current, {
           center: initCenter,
           zoom: initZoom,
+          zoomSnap: 0.1,
+          zoomDelta: 0.5,
           zoomControl: true,
           attributionControl: false
         });
@@ -2331,6 +2686,19 @@ function CasPetaKejahatanView({
           maxZoom: 20
         }).addTo(map);
         leafletMapRef.current = map;
+
+        if (drillLevel === 0) {
+          const v = CAS_PULAU_VIEWS[pulauFilter] || CAS_PULAU_VIEWS["Semua"];
+          if (v && v.bounds) {
+            try {
+              map.fitBounds(v.bounds, {
+                paddingTopLeft: [6, 36],
+                paddingBottomRight: [6, 14],
+                animate: false
+              });
+            } catch (_e) {}
+          }
+        }
       } else if (leafletTileLayerRef.current) {
         leafletTileLayerRef.current.setUrl(tileUrl);
       }
@@ -2362,7 +2730,33 @@ function CasPetaKejahatanView({
     }
 
     return () => { cancelled = true; };
-  }, [mapEngine, isGoogleTileMode, allPoldaGeoJson, showThermal, showLabels, mergedRegions, mabesSummary, mabesUnitNodes, vizMode, pulauFilter, selectedRegion?.id, drillLevel, polresMapNodes, polsekMapNodes, selectedPolres?.kode, selectedPolsek?.kode, selectedMabesUnit?.id, wilkumGeoJson, isDark]);
+  }, [mapEngine, isGoogleTileMode, allPoldaGeoJson, showThermal, showHotspotPins, showLabels, mergedRegions, activeHotspots, selectedHotspot, crimeFilter, activeCrimeMeta, mabesSummary, mabesUnitNodes, vizMode, pulauFilter, selectedRegion?.id, drillLevel, polresMapNodes, polsekMapNodes, selectedPolres?.kode, selectedPolsek?.kode, selectedMabesUnit?.id, wilkumGeoJson, isDark]);
+
+  // Attach ResizeObserver to leafletContainerRef so when the card stretches to match the right column height, Leaflet fills 100% of the height with zero white space!
+  (0, a.useEffect)(() => {
+    if (typeof window === "undefined" || !leafletContainerRef.current || typeof ResizeObserver === "undefined") return;
+    const el = leafletContainerRef.current;
+    const ro = new ResizeObserver(() => {
+      const map = leafletMapRef.current;
+      if (!map) return;
+      try {
+        map.invalidateSize({ animate: false });
+        if (drillLevel === 0 && !selectedHotspot) {
+          const v = CAS_PULAU_VIEWS[pulauFilter] || CAS_PULAU_VIEWS["Semua"];
+          if (v && v.bounds) {
+            map.fitBounds(v.bounds, {
+              paddingTopLeft: [6, 36],
+              paddingBottomRight: [6, 14],
+              animate: false
+            });
+          }
+        }
+        if (map.__casThermalRedraw) map.__casThermalRedraw();
+      } catch (_e) {}
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isGoogleTileMode, isFullPage, drillLevel, pulauFilter, selectedHotspot]);
 
   (0, a.useEffect)(() => {
     if (!isGoogleTileMode && leafletMapRef.current) {
@@ -2555,11 +2949,11 @@ function CasPetaKejahatanView({
         ]
       }),
 
-      // 2. Clean Theme-Harmonized Control & Filter Bar
+      // 2. Clean Theme-Harmonized Operational Filter & Control Bar (Matching Daftar LP / Kinerja Perkara + Crime Heatmap Filtering)
       (0, t.jsxs)("div", {
-        className: "cms-card",
+        className: "cms-card cas-peta-filter-bar",
         style: {
-          padding: "0.7rem 0.9rem",
+          padding: "0.75rem 0.95rem",
           display: "flex",
           flexDirection: "column",
           gap: "0.55rem",
@@ -2569,6 +2963,350 @@ function CasPetaKejahatanView({
           boxShadow: T.cardShadow
         },
         children: [
+          // Row 0A: Default Operational Filter Bar (Like Daftar LP / Kinerja Perkara)
+          (0, t.jsxs)("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.45rem",
+              paddingBottom: "0.5rem",
+              borderBottom: "1px solid " + T.divider
+            },
+            children: [
+              (0, t.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", flex: "1 1 auto" },
+                children: [
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.7rem", fontWeight: 800, color: T.textPrimary, display: "inline-flex", alignItems: "center", gap: "0.25rem", marginRight: "0.1rem" },
+                    children: "🔎 Filter Operasional LP:"
+                  }),
+                  // Period Preset Selector
+                  (0, t.jsxs)("select", {
+                    value: periodPreset,
+                    onChange: ev => applyPeriodPreset(ev.target.value),
+                    title: "Pilih rentang periode Laporan Polisi",
+                    style: {
+                      padding: "0.32rem 0.55rem",
+                      borderRadius: 7,
+                      border: "1px solid " + T.inputBorder,
+                      background: T.inputBg,
+                      color: T.textPrimary,
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "tahun_ini", children: "📅 Tahun Ini (2026)" }),
+                      (0, t.jsx)("option", { value: "tahun_2025", children: "📅 Tahun 2025" }),
+                      (0, t.jsx)("option", { value: "semua", children: "📅 Semua Periode (2025–2026)" }),
+                      (0, t.jsx)("option", { value: "q1_2026", children: "📅 Triwulan I 2026" }),
+                      (0, t.jsx)("option", { value: "q2_2026", children: "📅 Triwulan II 2026" }),
+                      (0, t.jsx)("option", { value: "q3_2026", children: "📅 Triwulan III 2026" }),
+                      (0, t.jsx)("option", { value: "custom", children: "📅 Kustom Tanggal" })
+                    ]
+                  }),
+                  // Date From & To Inputs
+                  (0, t.jsxs)("div", {
+                    style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                    children: [
+                      (0, t.jsx)("input", {
+                        type: "date",
+                        value: filterFrom,
+                        onChange: ev => { setPeriodPreset("custom"); setFilterFrom(ev.target.value); },
+                        title: "Tanggal Mulai LP",
+                        style: {
+                          padding: "0.28rem 0.45rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.inputBorder,
+                          background: T.inputBg,
+                          color: T.textPrimary,
+                          fontSize: "0.71rem",
+                          fontWeight: 600
+                        }
+                      }),
+                      (0, t.jsx)("span", { style: { fontSize: "0.7rem", color: T.textMuted, fontWeight: 700 }, children: "s/d" }),
+                      (0, t.jsx)("input", {
+                        type: "date",
+                        value: filterTo,
+                        onChange: ev => { setPeriodPreset("custom"); setFilterTo(ev.target.value); },
+                        title: "Tanggal Akhir LP",
+                        style: {
+                          padding: "0.28rem 0.45rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.inputBorder,
+                          background: T.inputBg,
+                          color: T.textPrimary,
+                          fontSize: "0.71rem",
+                          fontWeight: 600
+                        }
+                      })
+                    ]
+                  }),
+                  // Wilayah Hukum Polda Dropdown
+                  (0, t.jsxs)("select", {
+                    value: drillLevel === 3 ? "MABES" : (drillLevel >= 1 && selectedRegion ? selectedRegion.id : "SEMUA"),
+                    onChange: ev => {
+                      const val = ev.target.value;
+                      if (val === "SEMUA") {
+                        handleResetNasional();
+                      } else if (val === "MABES") {
+                        handleSelectMabesAndZoom(mabesUnitNodes[0]);
+                      } else {
+                        const found = mergedRegions.find(r => r.id === val);
+                        if (found) handleSelectPoldaAndZoom(found);
+                      }
+                    },
+                    title: "Filter berdasarkan Wilayah Hukum Polda / Satker",
+                    style: {
+                      padding: "0.32rem 0.55rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (drillLevel > 0 ? T.accentBorder : T.inputBorder),
+                      background: drillLevel > 0 ? T.accentBg : T.inputBg,
+                      color: drillLevel > 0 ? T.accentText : T.textPrimary,
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      maxWidth: "185px"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "SEMUA", children: "🛡️ Semua Polda (Nasional)" }),
+                      (0, t.jsx)("option", { value: "MABES", children: "🏛️ Mabes / Bareskrim Polri" }),
+                      mergedRegions.map(r => (0, t.jsx)("option", {
+                        key: r.id,
+                        value: r.id,
+                        children: r.polda + " (" + z(r.ct) + " LP)"
+                      }))
+                    ]
+                  }),
+                  // Jenis Kejahatan Dropdown
+                  (0, t.jsxs)("select", {
+                    value: crimeFilter,
+                    onChange: ev => { setCrimeFilter(ev.target.value); setSelectedHotspot(null); },
+                    title: "Filter Jenis Kejahatan untuk melihat Titik Rawan (Heatmap) kejahatan tertentu seperti Curas, Curat, Curanmor",
+                    style: {
+                      padding: "0.32rem 0.55rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (crimeFilter !== "SEMUA" ? T.ctBorder : T.inputBorder),
+                      background: crimeFilter !== "SEMUA" ? T.ctBg : T.inputBg,
+                      color: crimeFilter !== "SEMUA" ? T.ctText : T.textPrimary,
+                      fontSize: "0.72rem",
+                      fontWeight: crimeFilter !== "SEMUA" ? 800 : 700,
+                      cursor: "pointer",
+                      maxWidth: "215px"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "SEMUA", children: "⚖️ Semua Jenis Kejahatan" }),
+                      (0, t.jsx)("option", { value: "CURAS", children: "🔥 Curas (Pencurian dgn Kekerasan)" }),
+                      (0, t.jsx)("option", { value: "CURAT", children: "⚡ Curat (Pencurian dgn Pemberatan)" }),
+                      (0, t.jsx)("option", { value: "CURANMOR", children: "🏍️ Curanmor (Kendaraan Bermotor)" }),
+                      (0, t.jsx)("option", { value: "ANIRAT", children: "🔪 Anirat & Penganiayaan" }),
+                      (0, t.jsx)("option", { value: "NARKOBA", children: "💊 Narkotika & Obat Terlarang" }),
+                      (0, t.jsx)("option", { value: "SIBER", children: "💻 Kejahatan ITE / Siber" }),
+                      (0, t.jsx)("option", { value: "PENIPUAN", children: "📄 Penipuan & Penggelapan" }),
+                      (0, t.jsx)("option", { value: "PPA", children: "🛡️ Perlindungan Anak (PPA) & KDRT" }),
+                      (0, t.jsx)("option", { value: "TIPIKOR", children: "⚖️ Tindak Pidana Korupsi (Tipikor)" }),
+                      (0, t.jsx)("option", { value: "JUDI", children: "🎲 Perjudian" }),
+                      (0, t.jsx)("option", { value: "PEMBUNUHAN", children: "🚨 Pembunuhan" }),
+                      (0, t.jsx)("option", { value: "PENCURIAN", children: "👜 Semua Pencurian (Curas/Curat/Curanmor)" })
+                    ]
+                  }),
+                  // Golongan Kejahatan Dropdown
+                  (0, t.jsxs)("select", {
+                    value: golonganFilter,
+                    onChange: ev => setGolonganFilter(ev.target.value),
+                    title: "Filter Golongan Kejahatan",
+                    style: {
+                      padding: "0.32rem 0.52rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (golonganFilter !== "SEMUA" ? T.accentBorder : T.inputBorder),
+                      background: golonganFilter !== "SEMUA" ? T.accentBg : T.inputBg,
+                      color: golonganFilter !== "SEMUA" ? T.accentText : T.textPrimary,
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "SEMUA", children: "📂 Semua Golongan" }),
+                      (0, t.jsx)("option", { value: "1", children: "Konvensional" }),
+                      (0, t.jsx)("option", { value: "2", children: "Transnasional" }),
+                      (0, t.jsx)("option", { value: "3", children: "Kekayaan Negara" }),
+                      (0, t.jsx)("option", { value: "4", children: "Kontinjensi" })
+                    ]
+                  }),
+                  // Model LP Dropdown
+                  (0, t.jsxs)("select", {
+                    value: modelLpFilter,
+                    onChange: ev => setModelLpFilter(ev.target.value),
+                    title: "Filter Model Laporan Polisi (Model A / Model B)",
+                    style: {
+                      padding: "0.32rem 0.52rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (modelLpFilter !== "SEMUA" ? T.accentBorder : T.inputBorder),
+                      background: modelLpFilter !== "SEMUA" ? T.accentBg : T.inputBg,
+                      color: modelLpFilter !== "SEMUA" ? T.accentText : T.textPrimary,
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "SEMUA", children: "📋 Semua Model LP" }),
+                      (0, t.jsx)("option", { value: "A", children: "LP Model A" }),
+                      (0, t.jsx)("option", { value: "B", children: "LP Model B" })
+                    ]
+                  }),
+                  // Status Penyelesaian Dropdown
+                  (0, t.jsxs)("select", {
+                    value: statusFilter,
+                    onChange: ev => setStatusFilter(ev.target.value),
+                    title: "Filter Status Penyelesaian Perkara (CT / CC)",
+                    style: {
+                      padding: "0.32rem 0.52rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (statusFilter !== "SEMUA" ? T.ccBorder : T.inputBorder),
+                      background: statusFilter !== "SEMUA" ? T.ccBg : T.inputBg,
+                      color: statusFilter !== "SEMUA" ? T.ccText : T.textPrimary,
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      cursor: "pointer"
+                    },
+                    children: [
+                      (0, t.jsx)("option", { value: "SEMUA", children: "📌 Semua Status LP" }),
+                      (0, t.jsx)("option", { value: "CT", children: "🔥 Proses (Lidik/Sidik)" }),
+                      (0, t.jsx)("option", { value: "CC", children: "✅ Selesai (P21/SP3/RJ)" })
+                    ]
+                  }),
+                  // Search TKP / Satker Input
+                  (0, t.jsx)("input", {
+                    type: "text",
+                    value: tkpSearch,
+                    onChange: ev => setTkpSearch(ev.target.value),
+                    placeholder: "🔍 Cari Jalan TKP / Satker…",
+                    title: "Cari nama jalan Tempat Kejadian Perkara (TKP) atau nama Satker/Polres/Polsek",
+                    style: {
+                      padding: "0.3rem 0.6rem",
+                      borderRadius: 7,
+                      border: "1px solid " + (tkpSearch.trim() ? T.accentBorder : T.inputBorder),
+                      background: T.inputBg,
+                      color: T.textPrimary,
+                      fontSize: "0.71rem",
+                      minWidth: "155px"
+                    }
+                  })
+                ]
+              }),
+              // Right side of Row 0A: Loading badge + Reset Filter Button
+              (0, t.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.38rem" },
+                children: [
+                  petaLoading && (0, t.jsx)("span", {
+                    style: { fontSize: "0.68rem", fontWeight: 800, color: T.accentText, padding: "0.2rem 0.5rem", borderRadius: 6, background: T.accentBg },
+                    children: "⏳ Memperbarui Heatmap…"
+                  }),
+                  (crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA" || modelLpFilter !== "SEMUA" || statusFilter !== "SEMUA" || tkpSearch.trim() || periodPreset !== "tahun_ini") && (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: resetOperationalFilters,
+                    title: "Kembalikan seluruh filter operasional ke default",
+                    style: {
+                      padding: "0.3rem 0.58rem",
+                      borderRadius: 7,
+                      border: "1px solid " + T.ctBorder,
+                      background: T.ctBg,
+                      color: T.ctText,
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: "✕ Reset Filter"
+                  })
+                ]
+              })
+            ]
+          }),
+
+          // Row 0B: 1-Click Crime Heatmap Quick Filter Chips (Curas, Curat, Curanmor, Narkoba, Siber, dll.)
+          (0, t.jsxs)("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "0.45rem",
+              paddingBottom: "0.45rem",
+              borderBottom: "1px solid " + T.divider
+            },
+            children: [
+              (0, t.jsxs)("div", {
+                className: "cas-peta-scroll-bar",
+                children: [
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.69rem", fontWeight: 800, color: T.textMuted, marginRight: "0.12rem", flexShrink: 0 },
+                    children: "🎯 Filter Heatmap Kejahatan:"
+                  }),
+                  CAS_CRIME_QUICK_FILTERS.map(cf => {
+                    const active = crimeFilter === cf.id;
+                    return (0, t.jsx)("button", {
+                      key: cf.id,
+                      type: "button",
+                      title: cf.desc + " — Klik untuk memfilter peta heatmap & titik rawan TKP",
+                      onClick: () => {
+                        setCrimeFilter(cf.id);
+                        setSelectedHotspot(null);
+                      },
+                      style: {
+                        padding: "0.26rem 0.6rem",
+                        borderRadius: 999,
+                        border: "1px solid " + (active ? cf.color : T.btnBorder),
+                        background: active ? (isDark ? "rgba(239,68,68,0.22)" : "#fef2f2") : T.btnBg,
+                        color: active ? (isDark ? "#fca5a5" : cf.color) : T.btnText,
+                        fontSize: "0.7rem",
+                        fontWeight: active ? 800 : 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        boxShadow: active ? ("0 2px 8px " + cf.color + "33") : "none",
+                        transition: "all 120ms ease"
+                      },
+                      children: cf.icon + " " + cf.label
+                    });
+                  })
+                ]
+              }),
+              (0, t.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 },
+                children: [
+                  crimeFilter !== "SEMUA" && (0, t.jsx)("span", {
+                    style: {
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      padding: "0.18rem 0.55rem",
+                      borderRadius: 999,
+                      background: T.ctBg,
+                      color: T.ctText,
+                      border: "1px solid " + T.ctBorder
+                    },
+                    children: activeCrimeMeta.icon + " Heatmap Aktif: " + activeCrimeMeta.label + " (" + z(stats.totalCT) + " LP)"
+                  }),
+                  (0, t.jsx)("span", {
+                    className: "tabular-nums",
+                    style: {
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      padding: "0.18rem 0.55rem",
+                      borderRadius: 999,
+                      background: T.subCardBg,
+                      color: T.textSecondary,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: "📍 " + z(activeHotspots.length) + " Klaster Titik Rawan TKP"
+                  })
+                ]
+              })
+            ]
+          }),
+
           // Row 1: Indicator Mode Pills + Map View & Fullpage Buttons
           (0, t.jsxs)("div", {
             style: {
@@ -2623,7 +3361,7 @@ function CasPetaKejahatanView({
                   (0, t.jsx)("button", {
                     type: "button",
                     onClick: () => setMapEngine("vector"),
-                    title: "Mode Peta Wilkum Polri (SVG Interaktif 36 Wilkum Polda + Mabes Polri)",
+                    title: "Mode Peta Wilkum Polri (36 Wilkum Polda + Heatmap Titik Koordinat LP)",
                     style: {
                       padding: "0.34rem 0.62rem",
                       borderRadius: 8,
@@ -2776,7 +3514,7 @@ function CasPetaKejahatanView({
                 children: [
                   (0, t.jsx)("button", {
                     type: "button",
-                    title: "Tampilkan atau sembunyikan pendaran radius termal (Heatmap)",
+                    title: "Tampilkan atau sembunyikan lapisan pendaran termal (Thermal Crime Heatmap) berdasarkan titik koordinat LP",
                     onClick: () => setShowThermal(v => !v),
                     style: {
                       padding: "0.24rem 0.55rem",
@@ -2790,6 +3528,23 @@ function CasPetaKejahatanView({
                       whiteSpace: "nowrap"
                     },
                     children: showThermal ? "🔥 Heatmap: Aktif" : "🔥 Heatmap: Nonaktif"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Tampilkan atau sembunyikan penanda titik rawan kejadian (TKP) dari koordinat Latitude & Longitude LP",
+                    onClick: () => setShowHotspotPins(v => !v),
+                    style: {
+                      padding: "0.24rem 0.55rem",
+                      borderRadius: 6,
+                      border: "1px solid " + (showHotspotPins ? T.warnBorder : T.btnBorder),
+                      background: showHotspotPins ? T.warnBg : T.btnBg,
+                      color: showHotspotPins ? T.warnText : T.textMuted,
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
+                    },
+                    children: showHotspotPins ? "📍 Titik TKP: Aktif" : "📍 Titik TKP: Nonaktif"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
@@ -2860,21 +3615,22 @@ function CasPetaKejahatanView({
       (0, t.jsxs)("div", {
         className: "cas-peta-grid",
         children: [
-          // Left Column: Map Canvas Card
+          // Left Column: Map Canvas Card (Stretches 100% of column height with ZERO top/bottom white space!)
           (0, t.jsxs)("div", {
             className: "cms-card",
             style: {
               padding: "0.85rem",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
+              gap: "0.55rem",
               background: T.cardBg,
               border: "1px solid " + T.cardBorder,
               borderRadius: 12,
               boxShadow: T.cardShadow,
               overflow: "hidden",
               position: "relative",
-              minHeight: isFullPage ? "62vh" : "28.5rem"
+              minHeight: isFullPage ? "68vh" : "39rem"
             },
             children: [
               // Interactive 4-Mode Map Breadcrumb & Back Bar
@@ -2885,7 +3641,6 @@ function CasPetaKejahatanView({
                   justifyContent: "space-between",
                   flexWrap: "wrap",
                   gap: "0.45rem",
-                  marginBottom: "0.55rem",
                   zIndex: 2
                 },
                 children: [
@@ -2893,7 +3648,7 @@ function CasPetaKejahatanView({
                   (0, t.jsxs)("div", {
                     style: { display: "flex", alignItems: "center", gap: "0.32rem", flexWrap: "wrap" },
                     children: [
-                      (drillLevel > 0 || zoom > 1.05) && (0, t.jsx)("button", {
+                      (drillLevel > 0 || zoom > 1.05 || selectedHotspot) && (0, t.jsx)("button", {
                         type: "button",
                         onClick: handleStepBack,
                         title: "Kembali ke tingkat sebelumnya",
@@ -3000,6 +3755,23 @@ function CasPetaKejahatanView({
                             children: "📍 Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama) + " (Kec. " + formatFullWilkumSatkerName(cleanPolsekKecName(selectedPolsek.nama)) + ")"
                           })
                         ]
+                      }),
+                      selectedHotspot && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid #ef4444",
+                              background: T.ctBg,
+                              color: T.ctText,
+                              fontSize: "0.71rem",
+                              fontWeight: 800
+                            },
+                            children: "🎯 TKP #" + (selectedHotspot.rank || 1) + ": " + String(selectedHotspot.tkp_label || "").slice(0, 28)
+                          })
+                        ]
                       })
                     ]
                   }),
@@ -3009,22 +3781,24 @@ function CasPetaKejahatanView({
                     children: drillLevel === 3
                       ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah — Klik Pin untuk CT/CC)"
                       : drillLevel === 0
-                      ? "💡 Klik Wilkum Polda untuk zoom ke Polres jajaran"
+                      ? "💡 Klik Poligon Polda atau Titik Rawan TKP untuk detail LP"
                       : drillLevel === 1
-                      ? "💡 Klik titik Polres untuk melihat Irisan Peta Wilkum & Polsek"
-                      : "💡 Klik titik Polsek untuk melihat Irisan Peta Kecamatan"
+                      ? "💡 Klik titik Polres / Titik Rawan TKP untuk melihat Irisan Wilkum & Polsek"
+                      : "💡 Klik titik Polsek / Titik Rawan TKP untuk detail Kecamatan & LP"
                   })
                 ]
               }),
 
-              // Main Map Viewport: 1) Google Maps Native Embed Simulation, 2) Google Maps Street/Sat + GeoJSON Polygon Overlay, 3) Vector Wilkum SVG
+              // Main Map Viewport: Fills 100% of remaining card height (flex: 1 1 auto) with zero white space!
               isGoogleEmbedMode ? (
                 (0, t.jsxs)("div", {
                   className: "cas-peta-map-box",
                   style: {
                     position: "relative",
                     width: "100%",
-                    height: isFullPage ? "58vh" : "395px",
+                    flex: "1 1 auto",
+                    minHeight: isFullPage ? "66vh" : "580px",
+                    height: "100%",
                     borderRadius: 10,
                     overflow: "hidden",
                     border: "1px solid " + T.mapBorder,
@@ -3035,7 +3809,7 @@ function CasPetaKejahatanView({
                       key: gmapsEmbedInfo.q,
                       title: gmapsEmbedInfo.title,
                       src: "https://maps.google.com/maps?q=" + encodeURIComponent(gmapsEmbedInfo.q) + "&hl=id&z=" + gmapsEmbedInfo.z + "&output=embed",
-                      style: { width: "100%", height: "100%", border: 0, display: "block" },
+                      style: { width: "100%", height: "100%", minHeight: isFullPage ? "66vh" : "580px", border: 0, display: "block" },
                       loading: "lazy",
                       referrerPolicy: "no-referrer-when-downgrade"
                     }),
@@ -3102,21 +3876,31 @@ function CasPetaKejahatanView({
                 })
               ) : isGoogleTileMode ? (
                 (0, t.jsxs)("div", {
-                  style: { position: "relative", width: "100%", height: isFullPage ? "58vh" : "395px" },
+                  style: {
+                    position: "relative",
+                    width: "100%",
+                    flex: "1 1 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: isFullPage ? "66vh" : "580px",
+                    height: "100%"
+                  },
                   children: [
                     (0, t.jsx)("div", {
                       ref: leafletContainerRef,
                       className: "cas-peta-map-box",
                       style: {
+                        flex: "1 1 auto",
                         width: "100%",
                         height: "100%",
+                        minHeight: isFullPage ? "66vh" : "580px",
                         borderRadius: 10,
                         overflow: "hidden",
                         border: "1px solid " + T.mapBorder,
                         background: isDark ? "#0b1220" : "#e0f2fe"
                       }
                     }),
-                    // Status Pill for GeoJSON Wilkum Polygon Boundary Overlay (or Mabes Point-Only Notice)
+                    // Status Pill for GeoJSON Wilkum Polygon Boundary Overlay & Active Crime Heatmap
                     (0, t.jsx)("div", {
                       style: {
                         position: "absolute",
@@ -3137,11 +3921,11 @@ function CasPetaKejahatanView({
                       children: drillLevel === 3
                         ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah)"
                         : drillLevel === 0
-                        ? "✅ Peta Heatmap 1:1 Google Maps Indonesia (36 Wilkum Polda)"
+                        ? ("🔥 Heatmap Titik Rawan LP: " + (crimeFilter !== "SEMUA" ? activeCrimeMeta.label : "36 Wilkum Polda & TKP Nasional"))
                         : wilkumGeoLoading
                         ? "⏳ Memuat irisan batas Wilkum Google Maps…"
                         : wilkumGeoJson
-                        ? ("✅ Irisan Peta & Heatmap: " + (wilkumGeoJson.label || "Batas Wilkum Aktif"))
+                        ? ("✅ Irisan Peta & Heatmap TKP: " + (wilkumGeoJson.label || "Batas Wilkum Aktif"))
                         : ("🛡️ Wilkum " + (drillLevel === 2 && selectedPolres ? formatFullWilkumSatkerName(selectedPolres.nama) : (selectedRegion?.polda || "Aktif")))
                     })
                   ]
@@ -4123,13 +4907,102 @@ function CasPetaKejahatanView({
                     });
                   })(),
 
+                  // NEW: Ranking Titik Rawan Kejadian (TKP) Tertinggi (Berdasarkan Koordinat Latitude & Longitude LP) — Placed FIRST for immediate visibility!
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.38rem",
+                      padding: "0.55rem 0.65rem",
+                      borderRadius: 10,
+                      background: T.subCardBg,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
+                        children: [
+                          (0, t.jsx)("span", {
+                            children: "🎯 Titik Rawan Kejadian (TKP) Tertinggi"
+                          }),
+                          (0, t.jsx)("span", {
+                            style: { fontSize: "0.64rem", color: T.ctText, fontWeight: 800 },
+                            children: crimeFilter !== "SEMUA" ? (activeCrimeMeta.icon + " " + activeCrimeMeta.label) : "Koordinat LP"
+                          })
+                        ]
+                      }),
+                      activeTopRawan.length === 0 ? (
+                        (0, t.jsx)("div", {
+                          style: { fontSize: "0.7rem", color: T.textMuted, padding: "0.35rem 0" },
+                          children: petaLoading ? "Memuat klaster koordinat TKP dari LP…" : "Belum ada titik koordinat TKP pada filter ini."
+                        })
+                      ) : (
+                        (0, t.jsx)("div", {
+                          className: "tabular-nums",
+                          style: { display: "flex", flexDirection: "column", gap: "0.3rem", maxHeight: "145px", overflowY: "auto", paddingRight: "0.2rem" },
+                          children: activeTopRawan.slice(0, 8).map((hs, idx) => {
+                            const isSelHs = selectedHotspot && Math.abs(Number(selectedHotspot.lat) - Number(hs.lat)) < 0.001 && Math.abs(Number(selectedHotspot.lng) - Number(hs.lng)) < 0.001;
+                            return (0, t.jsxs)("div", {
+                              key: "rawan_" + idx + "_" + hs.lat + "_" + hs.lng,
+                              onClick: () => handleSelectHotspotAndZoom(hs),
+                              title: "Klik untuk zoom ke titik koordinat LP (" + Number(hs.lat).toFixed(5) + ", " + Number(hs.lng).toFixed(5) + ") & lihat sampel LP",
+                              style: {
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.12rem",
+                                padding: "0.32rem 0.46rem",
+                                borderRadius: 8,
+                                cursor: "pointer",
+                                background: isSelHs ? T.ctBg : T.rowCardBg,
+                                border: "1px solid " + (isSelHs ? T.ctBorder : T.rowCardBorder),
+                                transition: "all 120ms ease"
+                              },
+                              children: [
+                                (0, t.jsxs)("div", {
+                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.68rem" },
+                                  children: [
+                                    (0, t.jsx)("span", {
+                                      style: { fontWeight: 800, color: isSelHs ? T.ctText : T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                      children: "#" + (idx + 1) + " • " + (hs.tkp_label || "Lokasi TKP")
+                                    }),
+                                    (0, t.jsx)("span", {
+                                      style: { flexShrink: 0, fontWeight: 800, color: T.ctText, fontSize: "0.66rem", background: isDark ? "rgba(239,68,68,0.2)" : "#fef2f2", padding: "0.04rem 0.36rem", borderRadius: 999, border: "1px solid " + T.ctBorder },
+                                      children: z(hs.ct) + " LP"
+                                    })
+                                  ]
+                                }),
+                                (0, t.jsxs)("div", {
+                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.62rem", color: T.textMuted },
+                                  children: [
+                                    (0, t.jsx)("span", {
+                                      style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                      children: "🛡️ " + (hs.satker_nama || "-") + " (" + String(hs.polda_nama || "").replace(/^POLDAs+/i, "") + ")"
+                                    }),
+                                    (0, t.jsx)("span", {
+                                      style: { flexShrink: 0, fontFamily: "monospace", color: T.accentText, fontWeight: 700 },
+                                      children: Number(hs.lat).toFixed(4) + ", " + Number(hs.lng).toFixed(4)
+                                    })
+                                  ]
+                                }),
+                                (0, t.jsx)("div", {
+                                  style: { fontSize: "0.61rem", color: T.textSecondary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                  children: "⚖️ Dominan: " + (hs.dominant_crime || activeCrimeMeta.label)
+                                })
+                              ]
+                            });
+                          })
+                        })
+                      )
+                    ]
+                  }),
+
                   // Interactive List: Either Polres List (Level 0/1) OR Polsek List (Level 2)
                   (0, t.jsxs)("div", {
                     style: {
                       display: "flex",
                       flexDirection: "column",
-                      gap: "0.42rem",
-                      padding: "0.62rem 0.7rem",
+                      gap: "0.38rem",
+                      padding: "0.55rem 0.65rem",
                       borderRadius: 10,
                       background: T.subCardBg,
                       border: "1px solid " + T.subCardBorder
@@ -4168,7 +5041,7 @@ function CasPetaKejahatanView({
                         ) : (
                           (0, t.jsx)("div", {
                             className: "tabular-nums",
-                            style: { display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "162px", overflowY: "auto", paddingRight: "0.2rem" },
+                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "130px", overflowY: "auto", paddingRight: "0.2rem" },
                             children: polsekMapNodes.map((psk, idx) => {
                               const maxPskCT = Math.max(1, Number(polsekMapNodes[0]?.ct || 1));
                               const pct = Math.max(5, Math.round((psk.ct / maxPskCT) * 100));
@@ -4180,8 +5053,8 @@ function CasPetaKejahatanView({
                                 style: {
                                   display: "flex",
                                   flexDirection: "column",
-                                  gap: "0.18rem",
-                                  padding: "0.34rem 0.48rem",
+                                  gap: "0.16rem",
+                                  padding: "0.3rem 0.45rem",
                                   borderRadius: 8,
                                   cursor: "pointer",
                                   background: isSelPsk ? T.accentBg : T.rowCardBg,
@@ -4189,7 +5062,7 @@ function CasPetaKejahatanView({
                                 },
                                 children: [
                                   (0, t.jsxs)("div", {
-                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.7rem", gap: "0.35rem" },
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
                                     children: [
                                       (0, t.jsx)("span", {
                                         style: { color: isSelPsk ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
@@ -4225,7 +5098,7 @@ function CasPetaKejahatanView({
                         ) : (
                           (0, t.jsx)("div", {
                             className: "tabular-nums",
-                            style: { display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "162px", overflowY: "auto", paddingRight: "0.2rem" },
+                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "130px", overflowY: "auto", paddingRight: "0.2rem" },
                             children: polresMapNodes.map((prs, idx) => {
                               const maxSubCT = Math.max(1, Number(polresMapNodes[0]?.ct || 1));
                               const pct = Math.max(5, Math.round((prs.ct / maxSubCT) * 100));
@@ -4236,8 +5109,8 @@ function CasPetaKejahatanView({
                                 style: {
                                   display: "flex",
                                   flexDirection: "column",
-                                  gap: "0.18rem",
-                                  padding: "0.34rem 0.48rem",
+                                  gap: "0.16rem",
+                                  padding: "0.3rem 0.45rem",
                                   borderRadius: 8,
                                   cursor: "pointer",
                                   background: T.rowCardBg,
@@ -4245,7 +5118,7 @@ function CasPetaKejahatanView({
                                 },
                                 children: [
                                   (0, t.jsxs)("div", {
-                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.7rem", gap: "0.35rem" },
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
                                     children: [
                                       (0, t.jsx)("span", {
                                         style: { color: T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
