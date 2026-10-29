@@ -393,12 +393,99 @@ function initCasExpensivePcHpStandards() {
       "    min-height: 38px;",
       "  }",
       "}",
-      "/* 1D9M28ZPyu: Animated Log Out Button */",
-      ".cms-logout {",
-      "  display: inline-flex;",
-      "  align-items: center;",
-      "  gap: 0.38rem;",
+      "/* 1D9M28ZPyu: Animated Log Out Button + Anti-Offside Topbar & Brand Alignment */",
+      ".cms-topbar .cms-logout, button.cms-logout, .cms-logout {",
+      "  width: auto !important;",
+      "  min-width: max-content !important;",
+      "  height: 2.2rem !important;",
+      "  padding: 0 0.8rem !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  gap: 0.38rem !important;",
+      "  white-space: nowrap !important;",
+      "  flex-shrink: 0 !important;",
+      "  overflow: visible !important;",
+      "  border-radius: 0.5rem !important;",
+      "  box-sizing: border-box !important;",
       "  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1), background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;",
+      "}",
+      ".cms-logout .cas-logout-label {",
+      "  display: inline-block !important;",
+      "  white-space: nowrap !important;",
+      "  overflow: visible !important;",
+      "  line-height: 1.2 !important;",
+      "}",
+      "@media (max-width: 768px) {",
+      "  .cms-topbar .cms-logout, button.cms-logout, .cms-logout {",
+      "    width: auto !important;",
+      "    min-width: max-content !important;",
+      "    height: 2.05rem !important;",
+      "    padding: 0 0.65rem !important;",
+      "    font-size: 0.74rem !important;",
+      "  }",
+      "}",
+      "@media (max-width: 640px) {",
+      "  .cms-topbar .cms-logout, button.cms-logout, .cms-logout {",
+      "    width: auto !important;",
+      "    min-width: max-content !important;",
+      "    height: 2rem !important;",
+      "    padding: 0 0.58rem !important;",
+      "  }",
+      "}",
+      ".cms-sidebar .cms-brand, .cms-topbar {",
+      "  height: 3.75rem !important;",
+      "  min-height: 3.75rem !important;",
+      "  max-height: 3.75rem !important;",
+      "  box-sizing: border-box !important;",
+      "  border-bottom: 1px solid var(--cas-border, #e2e8f0) !important;",
+      "}",
+      "@media (max-width: 768px) {",
+      "  .cms-sidebar .cms-brand, .cms-topbar {",
+      "    height: 3.5rem !important;",
+      "    min-height: 3.5rem !important;",
+      "    max-height: 3.5rem !important;",
+      "  }",
+      "}",
+      ".cms-main > .cms-content, main.cms-content, .cms-content {",
+      "  padding-top: calc(var(--cms-header-h, 6.85rem) + 1.15rem) !important;",
+      "}",
+      "@media (max-width: 768px) {",
+      "  .cms-main > .cms-content, main.cms-content, .cms-content {",
+      "    padding-top: calc(var(--cms-header-h, 6.35rem) + 0.85rem) !important;",
+      "  }",
+      "}",
+      ".cas-koneksi-bento-grid {",
+      "  display: grid !important;",
+      "  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;",
+      "  gap: 0.9rem !important;",
+      "  align-items: stretch !important;",
+      "}",
+      "@media (max-width: 1199px) {",
+      "  .cas-koneksi-bento-grid {",
+      "    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;",
+      "  }",
+      "}",
+      "@media (max-width: 899px) {",
+      "  .cas-koneksi-bento-grid {",
+      "    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;",
+      "  }",
+      "}",
+      "@media (max-width: 599px) {",
+      "  .cas-koneksi-bento-grid {",
+      "    grid-template-columns: minmax(0, 1fr) !important;",
+      "  }",
+      "}",
+      ".cas-keamanan-bento-grid {",
+      "  display: grid !important;",
+      "  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;",
+      "  gap: 20px !important;",
+      "  align-items: stretch !important;",
+      "}",
+      "@media (max-width: 900px) {",
+      "  .cas-keamanan-bento-grid {",
+      "    grid-template-columns: minmax(0, 1fr) !important;",
+      "  }",
       "}",
       ".cms-logout .cas-logout-icon, .cms-logout .cas-logout-arrow {",
       "  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;",
@@ -561,9 +648,59 @@ function initCasExpensivePcHpStandards() {
       "  background: var(--cas-card-bg, #ffffff) !important;",
       "  border-color: var(--cas-border-strong, #cbd5e1) !important;",
       "  color: var(--cas-text-primary, #0f172a) !important;",
+      "}",
+      "/* Global Card Persegi Rounded-Corner (Anti-Oval) Standard */",
+      ".p-card, .dash-hero-card, .dash-panel, .cas-bento-card, .cms-card, .dash-today-card, [class*=\"card\"]:not(.cms-user-avatar):not(.cas-avatar), [class*=\"banner\"], [class*=\"panel\"] {",
+      "  border-radius: 12px !important;",
+      "}",
+      ".lp-stat, .kp-kpi-card, .kp-kpi-card-v2, #kp-summary-strip .kp-kpi-card-v2.kp-pill-collapsed, #kp-summary-strip .kp-kpi-card.is-pill-collapsed, #kp-summary-strip .kp-kpi-card-v2.kp-pill-expanded, #kp-summary-strip .kp-kpi-card.is-pill-expanded, .lp-status-cards .lp-stat, .lp-status-cards .lp-stat.active, .att-chip {",
+      "  border-radius: 10px !important;",
       "}"
     ].join("\n");
     document.head.appendChild(st);
+  }
+  if (typeof window !== "undefined" && !window.__casAntiOvalCardGuard) {
+    window.__casAntiOvalCardGuard = true;
+    var enforceSquareRoundedCards = function(root) {
+      if (!root || !root.querySelectorAll) return;
+      var boxes = root.querySelectorAll("div, section, article, form, aside");
+      for (var i = 0; i < boxes.length; i++) {
+        var el = boxes[i];
+        var w = el.offsetWidth;
+        var h = el.offsetHeight;
+        if (h >= 44 && w >= 140 && Math.abs(w - h) > 6) {
+          var br = parseFloat(window.getComputedStyle(el).borderTopLeftRadius);
+          if (br > 16) {
+            el.style.setProperty("border-radius", "12px", "important");
+          }
+        }
+      }
+      var inputs = root.querySelectorAll("input[type=\"text\"], input[type=\"search\"], input:not([type])");
+      for (var j = 0; j < inputs.length; j++) {
+        var inp = inputs[j];
+        if (inp.offsetWidth >= 160) {
+          var ibr = parseFloat(window.getComputedStyle(inp).borderTopLeftRadius);
+          if (ibr > 14) {
+            inp.style.setProperty("border-radius", "10px", "important");
+          }
+        }
+      }
+    };
+    var rafPending = false;
+    var scheduleAntiOval = function() {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(function() {
+        rafPending = false;
+        if (document.body) enforceSquareRoundedCards(document.body);
+      });
+    };
+    if (document.body) scheduleAntiOval();
+    if (typeof MutationObserver !== "undefined" && document.body) {
+      var ovalObs = new MutationObserver(scheduleAntiOval);
+      try { ovalObs.observe(document.body, { childList: true, subtree: true }); } catch(_e) {}
+    }
+    window.addEventListener("resize", scheduleAntiOval, { passive: true });
   }
   if (typeof window !== "undefined" && !window.__casTileHarmonyGuard) {
     window.__casTileHarmonyGuard = true;
@@ -585,6 +722,37 @@ function initCasExpensivePcHpStandards() {
         }
       });
       try { tileObs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] }); } catch(_e) {}
+    }
+  }
+  if (typeof window !== "undefined" && !window.__casHeaderHeightGuard) {
+    window.__casHeaderHeightGuard = true;
+    var syncFixedHeaderHeight = function() {
+      if (typeof document === "undefined") return;
+      var hdr = document.querySelector(".cms-header-fixed");
+      if (hdr) {
+        var rectH = Math.ceil(hdr.getBoundingClientRect().height);
+        if (rectH >= 48 && rectH <= 260) {
+          document.documentElement.style.setProperty("--cms-header-h", rectH + "px");
+        }
+      }
+    };
+    syncFixedHeaderHeight();
+    window.addEventListener("resize", syncFixedHeaderHeight, { passive: true });
+    if (typeof ResizeObserver !== "undefined") {
+      var hdrRo = new ResizeObserver(syncFixedHeaderHeight);
+      var attachHdrRo = function() {
+        var hdrEl = document.querySelector(".cms-header-fixed");
+        if (hdrEl && !hdrEl.__casRoAttached) {
+          hdrEl.__casRoAttached = true;
+          try { hdrRo.observe(hdrEl); } catch(_e) {}
+          syncFixedHeaderHeight();
+        }
+      };
+      attachHdrRo();
+      if (typeof MutationObserver !== "undefined" && document.body) {
+        var hdrMo = new MutationObserver(attachHdrRo);
+        try { hdrMo.observe(document.body, { childList: true, subtree: true }); } catch(_e) {}
+      }
     }
   }
   if (typeof window !== "undefined" && !window.__casConfirmDelete) {
@@ -746,88 +914,329 @@ function formatDateDividerLabel(dateStr) {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 }
 
+const CAS_PRESERVE_UPPER_TOKENS = new Set([
+  "POLRI", "BARESKRIM", "ROBINOPSNAL", "BINOPS", "MABES", "POLDA", "POLRES", "POLRESTA", "POLRESTABES", "POLSEK",
+  "SATRESKRIM", "DITRESKRIMUM", "DITRESKRIMSUS", "DITRESNARKOBA", "DITTAHTI", "KORLANTAS", "DIVPROPAM",
+  "IRJEN", "BRIGJEN", "KOMBES", "AKBP", "KOMPOL", "AKP", "IPTU", "IPDA", "AIPTU", "AIPDA", "BRIPKA", "BRIGPOL", "BRIGADIR", "BRIPTU", "BRIPDA",
+  "CAS", "BDB", "LP", "SP2HP", "SP3", "P21", "RJ", "DORS", "KUHP", "UU", "SOP", "SDM", "TOTP", "OTP", "AI", "II", "III", "IV"
+]);
+
+function casFormatHumanName(rawName) {
+  const s = String(rawName || "").trim();
+  if (!s) return "Rekan Personil";
+  if (s.startsWith("@")) return s;
+  if (/^AI\s+Agen\s+Taktis\s+CAS$/i.test(s)) return "AI Agen Taktis CAS";
+  return s
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map(tok => {
+      const clean = tok.replace(/[^A-Za-z0-9.]/g, "");
+      const upper = clean.toUpperCase();
+      if (CAS_PRESERVE_UPPER_TOKENS.has(upper)) return upper;
+      if (/^(S\.I\.K\.?|S\.H\.?|M\.H\.?|M\.Si\.?|M\.M\.?|S\.Kom\.?|S\.T\.?|Ph\.D\.?)$/i.test(tok)) {
+        return tok;
+      }
+      const dedup = tok.replace(/([A-Za-z])\1{2,}/g, "$1").replace(/([A-Za-z]{2,})\1$/i, "$1$1");
+      const trimmedRepeat = dedup.length > 3 ? dedup.replace(/([aiueonAIUEON])\1+$/i, "$1") : dedup;
+      return trimmedRepeat.charAt(0).toUpperCase() + trimmedRepeat.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function casCapitalizeEachWordSatker(rawSatker) {
+  const s = String(rawSatker || "").replace(/^[\s\-·—]+|[\s\-·—]+$/g, "").trim();
+  if (!s || s === "-" || s === "--" || s.toLowerCase() === "null" || s.toLowerCase() === "undefined") {
+    return "";
+  }
+  const upperAcronyms = new Set([
+    "II", "III", "IV", "VI", "VII", "VIII", "IX", "DKI", "DIY", "NTB", "NTT",
+    "KP", "K.P.", "PPA", "PPO", "PPA-PPO", "LP", "DORS", "SPKT", "CAS", "BDB",
+    "IT", "TI", "SDM", "SIM", "STNK", "BPKB", "DPO", "KPK", "BNN", "TNI", "PPNS"
+  ]);
+  return s
+    .split(/\s+/)
+    .map(token => {
+      if (!token) return "";
+      const cleanUpper = token.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9.]+$/g, "").toUpperCase();
+      if (upperAcronyms.has(cleanUpper)) return cleanUpper;
+      if (token.includes("-")) {
+        return token
+          .split("-")
+          .map(part => {
+            const pUp = part.toUpperCase();
+            if (upperAcronyms.has(pUp)) return pUp;
+            return part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : "";
+          })
+          .join("-");
+      }
+      if (token.includes("/")) {
+        return token
+          .split("/")
+          .map(part => {
+            const pUp = part.toUpperCase();
+            if (upperAcronyms.has(pUp)) return pUp;
+            return part ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : "";
+          })
+          .join("/");
+      }
+      return token.charAt(0).toUpperCase() + token.slice(1).toLowerCase();
+    })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function casFormatPangkatSatkerLine(rawPangkat, rawSatker, isUserOne) {
+  const satkerCap = casCapitalizeEachWordSatker(isUserOne ? "Robinopsnal Bareskrim Polri" : (rawSatker || "Polri")) || "Polri";
+  let p = String(rawPangkat || "").replace(/^[\s\-·—]+|[\s\-·—]+$/g, "").trim();
+  if (isUserOne) p = "Kompol";
+  if (
+    !p ||
+    p === "-" ||
+    p === "--" ||
+    p.toLowerCase() === "null" ||
+    p.toLowerCase() === "undefined" ||
+    p.toLowerCase() === "personil" ||
+    p.toLowerCase() === "personil polri"
+  ) {
+    return satkerCap;
+  }
+  const pangkatCap = casCapitalizeEachWordSatker(p);
+  return pangkatCap ? `${pangkatCap} · ${satkerCap}` : satkerCap;
+}
+
+function renderCasMetaBadge(u, size = 15) {
+  const uidStr = String(u?.id || u?.user_id || "");
+  const uname = String(u?.callsign || u?.username || "").toLowerCase();
+  const roleStr = String(u?.role_bdb || u?.role || "").toLowerCase();
+  const isSuper = uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super");
+  const isBinops = roleStr.includes("binops");
+  const fillCol = isSuper ? "#f59e0b" : isBinops ? "#6366f1" : "#0095f6";
+  const badgeTitle = isSuper ? "Superadmin Terverifikasi (Robinopsnal Bareskrim Polri)" : isBinops ? "Admin Binops Terverifikasi" : "Personil Polri Terverifikasi";
+  return (0, a.jsx)("span", {
+    title: badgeTitle,
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: `${size}px`,
+      height: `${size}px`,
+      flexShrink: 0,
+      verticalAlign: "middle"
+    },
+    children: (0, a.jsxs)("svg", {
+      viewBox: "0 0 24 24",
+      width: size,
+      height: size,
+      fill: "none",
+      style: { display: "block", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" },
+      children: [
+        (0, a.jsx)("path", {
+          d: "M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",
+          transform: "scale(0.92) translate(1, 0)",
+          fill: fillCol
+        }),
+        (0, a.jsx)("path", {
+          d: "M8.5 12.5L10.8 14.8L15.8 9.8",
+          stroke: "#ffffff",
+          strokeWidth: 2.35,
+          strokeLinecap: "round",
+          strokeLinejoin: "round"
+        })
+      ]
+    })
+  });
+}
+
+function casGetReadNotifIds() {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem("cas_notif_read_ids_v2");
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function casMarkNotifIdsReadLocal(ids) {
+  if (typeof window === "undefined" || !Array.isArray(ids) || !ids.length) return;
+  try {
+    const set = casGetReadNotifIds();
+    ids.forEach(id => {
+      if (id !== undefined && id !== null) set.add(String(id));
+    });
+    const list = Array.from(set).slice(-500);
+    localStorage.setItem("cas_notif_read_ids_v2", JSON.stringify(list));
+  } catch {}
+}
+
+function casCleanQuoteSnippet(raw, maxLen = 45) {
+  const s = String(raw || "")
+    .replace(/[«»"""]/g, "")
+    .replace(/^📢\s*/, "")
+    .replace(/\s*—\s*ketuk untuk membaca\s*&\s*konfirmasi\.?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!s) return "";
+  return s.length > maxLen ? `${s.slice(0, maxLen).trim()}...` : s;
+}
+
 function humanizeCasNotification(raw) {
   const it = raw || {};
   const type = String(it.type || "social").toLowerCase();
-  const cat = String(it.category || (type === "dinas" || type === "jukrah" ? "dinas" : "social")).toLowerCase();
+  const cat = String(it.category || (type === "dinas" || type === "jukrah" || type === "limpah" || type === "pelimpahan" ? "dinas" : "social")).toLowerCase();
   const rawSender = String(it.actor_name || it.sender_name || "").trim();
   const rawHandle = String(it.sender_handle || "").trim();
-  const cleanHandle = rawHandle
+  let cleanHandle = rawHandle
     ? (rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`)
-    : (rawSender && !rawSender.includes(" ") ? `@${rawSender.replace(/^@/, "")}` : "@rekan_polri");
-  const actorName = (rawSender && !rawSender.startsWith("@"))
+    : (rawSender && !rawSender.includes(" ") ? `@${rawSender.replace(/^@/, "")}` : "");
+  if (!cleanHandle || cleanHandle === "@bareskrim" || cleanHandle === "@robinopsnal_mabes") {
+    if (rawSender && !/robinopsnal|bareskrim|polri|rekan/i.test(rawSender)) {
+      const slug = rawSender.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 20);
+      cleanHandle = slug ? `@${slug}` : "@robinops";
+    } else {
+      cleanHandle = cat === "dinas" ? "@robinops" : "@rekan";
+    }
+  }
+  const rawActor = (rawSender && !rawSender.startsWith("@"))
     ? rawSender
-    : (cleanHandle === "@robinopsnal_mabes" || cat === "dinas" ? "Robinopsnal Bareskrim Polri" : cleanHandle.replace(/^@/, "").replace(/[._-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()));
+    : (cat === "dinas" ? "Robinopsnal Bareskrim Polri" : cleanHandle.replace(/^@/, "").replace(/[._-]+/g, " "));
+  const actorName = casFormatHumanName(rawActor);
   const avatarUrl = it.sender_photo || "/images/default-avatar-polki.png";
+  const localReadSet = casGetReadNotifIds();
+  const isReadFinal = Boolean(it.is_read || (it.id !== undefined && localReadSet.has(String(it.id))));
+
   let badgeIcon = it.badge_icon || "🔔";
   let badgeColor = it.badge_color || "#2563eb";
+  let badgeLabel = it.badge_label || (cat === "dinas" ? "Jukrah" : "Sharese");
   let filterGroup = it.filter_group || "social";
   let actionText = "";
   let snippetText = "";
+  let tickerText = "";
   const rawMsg = String(it.message || "").trim();
+  const rawTitle = String(it.title || "").trim();
 
-  if (cat === "dinas" || type === "dinas" || type === "jukrah") {
+  const isLimpah = type === "pelimpahan" || type === "limpah" || type === "case_transfer" || /dilimpahkan|pelimpahan\s+lp|pelimpahan\s+ke/i.test(rawTitle + " " + rawMsg);
+
+  if (isLimpah) {
+    badgeIcon = "⚖️";
+    badgeColor = "#7c3aed";
+    badgeLabel = "Limpah";
+    filterGroup = "limpah";
+    if (/^\(DORS\)/i.test(rawTitle)) {
+      actionText = rawTitle;
+      snippetText = rawMsg || "";
+      tickerText = rawTitle;
+    } else {
+      const mDari = (rawMsg + " " + rawTitle).match(/dari\s+([^.,;]+?)(?:\s+ke\s+|$)/i);
+      const mKe = (rawTitle + " " + rawMsg).match(/ke\s+([^.,;]+?)(?:\s+dari\s+|$)/i);
+      const satAsal = casCapitalizeEachWordSatker(it.satker_asal_nama || (mDari ? mDari[1] : "Satker Asal")) || "Satker Asal";
+      const satTujuan = casCapitalizeEachWordSatker(it.satker_tujuan_nama || (mKe ? mKe[1] : "Satker Tujuan")) || "Satker Tujuan";
+      const mLp = (rawTitle + " " + rawMsg).match(/(LP\/[A-Za-z0-9/.\-]+|LP\s*#?\d+)/i);
+      const rawLpToken = it.no_laporan || (mLp ? mLp[1].replace(/^LP\s*#?/i, "") : (it.lp_id || "101"));
+      const fullLpNo = /^LP\//i.test(String(rawLpToken))
+        ? String(rawLpToken)
+        : `LP/B/${rawLpToken}/X/2026/SPKT/${satAsal}`;
+      const limpahLine = `(DORS) ${fullLpNo} dilimpahkan dari ${satAsal} ke ${satTujuan}`;
+      actionText = limpahLine;
+      snippetText = `Pelimpahan perkara dari ${satAsal} ke ${satTujuan}`;
+      tickerText = limpahLine;
+    }
+  } else if (cat === "dinas" || type === "dinas" || type === "jukrah" || type === "official_jukrah" || type === "official_broadcast") {
     badgeIcon = "📢";
     badgeColor = "#d97706";
-    filterGroup = "arahan";
-    actionText = `Arahan Resmi Baru dari ${actorName} — ketuk untuk membaca & konfirmasi`;
-    snippetText = rawMsg.replace(/^📢\s*/, "");
-  } else if (type === "comment") {
+    badgeLabel = "Jukrah";
+    filterGroup = "jukrah";
+    let cleanBody = (rawMsg || rawTitle)
+      .replace(/^📢\s*/, "")
+      .replace(/^\[JUKRAH\/PENGUMUMAN\]\s*/i, "")
+      .replace(/^(?:Arahan\s+(?:Resmi\s+)?(?:Baru)?|Jukrah\s+(?:Resmi\s+)?(?:Baru)?)(?:\s+dari\s+[^:—-]+)?\s*[:—-]*\s*/i, "")
+      .replace(/^@[a-z0-9_.]+\s*:\s*/i, "")
+      .replace(/\s*—\s*ketuk untuk membaca\s*&\s*konfirmasi\.?/gi, "")
+      .replace(/^[«"“”]+|[»"“”]+$/g, "")
+      .trim();
+    snippetText = casCleanQuoteSnippet(cleanBody, 68) || "Jukrah resmi kedinasan";
+    actionText = `mengirim Jukrah: "${snippetText}"`;
+    tickerText = `${cleanHandle}: "${casCleanQuoteSnippet(cleanBody, 58) || "Jukrah resmi kedinasan"}"`;
+  } else if (type === "comment" || type === "reply") {
     badgeIcon = "💬";
     badgeColor = "#2563eb";
+    badgeLabel = "Sharese";
     filterGroup = "komentar";
     const m = rawMsg.match(/[«"](.+?)[»"]/);
-    snippetText = m ? m[1] : rawMsg.replace(/^.*?mengomentari.*?:\s*/i, "");
+    const extracted = m ? m[1] : rawMsg.replace(/^.*?mengomentari.*?:\s*/i, "");
+    snippetText = casCleanQuoteSnippet(extracted, 48);
     actionText = "mengomentari kiriman Anda";
+    tickerText = snippetText ? `${cleanHandle} mengomentari kiriman Anda: "${snippetText}"` : `${cleanHandle} mengomentari kiriman Anda`;
   } else if (type === "mention") {
     badgeIcon = "💬";
     badgeColor = "#2563eb";
+    badgeLabel = "Sharese";
     filterGroup = "komentar";
     const m = rawMsg.match(/[«"](.+?)[»"]/);
-    snippetText = m ? m[1] : rawMsg.replace(/^.*?menyebut Anda.*?:\s*/i, "");
-    actionText = "menyebut Anda dalam sebuah diskusi";
-  } else if (type === "reaction" || type === "like") {
-    badgeIcon = rawMsg.includes("🫡") ? "🫡" : rawMsg.includes("💡") ? "💡" : rawMsg.includes("👏") ? "👏" : rawMsg.includes("🔥") ? "🔥" : "❤️";
+    const extracted = m ? m[1] : rawMsg.replace(/^.*?menyebut Anda.*?:\s*/i, "");
+    snippetText = casCleanQuoteSnippet(extracted, 48);
+    actionText = "menyebut Anda dalam diskusi";
+    tickerText = snippetText ? `${cleanHandle} menyebut Anda: "${snippetText}"` : `${cleanHandle} menyebut Anda dalam diskusi`;
+  } else if (["reaction", "like", "respect", "insightful", "applause", "fire"].includes(type)) {
+    badgeIcon = type === "respect" || rawMsg.includes("🫡") ? "🫡" : type === "insightful" || rawMsg.includes("💡") ? "💡" : type === "applause" || rawMsg.includes("👏") ? "👏" : type === "fire" || rawMsg.includes("🔥") ? "🔥" : "❤️";
     badgeColor = "#e11d48";
+    badgeLabel = "Sharese";
     filterGroup = "komentar";
     const m = rawMsg.match(/[«"](.+?)[»"]/);
-    snippetText = m ? m[1] : "";
-    actionText = rawMsg.includes("hormat") ? "memberi hormat pada kiriman Anda" : rawMsg.includes("apresiasi") ? "mengapresiasi kiriman Anda" : "menyukai kiriman Anda";
+    snippetText = m ? casCleanQuoteSnippet(m[1], 45) : "";
+    actionText = (type === "respect" || rawMsg.includes("hormat")) ? "memberi hormat pada kiriman Anda" : (type === "applause" || rawMsg.includes("apresiasi")) ? "mengapresiasi kiriman Anda" : "menyukai kiriman Anda";
+    tickerText = `${cleanHandle} ${actionText}`;
   } else if (type === "repost") {
     badgeIcon = "🔁";
     badgeColor = "#0284c7";
+    badgeLabel = "Sharese";
     filterGroup = "komentar";
-    actionText = "membagikan ulang kiriman Anda kepada jejaring";
+    actionText = "membagikan ulang kiriman Anda";
+    tickerText = `${cleanHandle} membagikan ulang kiriman Anda`;
   } else if (type === "connection" || type === "follow") {
     badgeIcon = "🤝";
     badgeColor = "#16a34a";
+    badgeLabel = "Sharese";
     filterGroup = "social";
-    actionText = "mulai terhubung dengan Anda";
-  } else if (type === "message") {
+    const isPendingConn = it.status === "PENDING" || /permintaan koneksi/i.test(rawTitle + " " + rawMsg);
+    actionText = isPendingConn ? "mengirim permintaan koneksi kepada Anda" : "terhubung dengan Anda di Sharese";
+    snippetText = isPendingConn ? "Ketuk untuk Terima atau Abaikan permintaan koneksi" : "";
+    tickerText = `${cleanHandle} ${actionText}`;
+  } else if (type === "message" || type === "dm") {
     badgeIcon = "💬";
-    badgeColor = "#2563eb";
+    badgeColor = "#16a34a";
+    badgeLabel = "Obrolan";
     filterGroup = "social";
     const m = rawMsg.match(/[«"](.+?)[»"]/);
-    snippetText = m ? m[1] : rawMsg.replace(/^.*?mengirim pesan.*?:\s*/i, "");
+    const extracted = m ? m[1] : rawMsg.replace(/^.*?mengirim pesan.*?:\s*/i, "");
+    snippetText = casCleanQuoteSnippet(extracted, 48);
     actionText = "mengirim pesan baru kepada Anda";
+    tickerText = snippetText ? `${cleanHandle} mengirim pesan: "${snippetText}"` : `${cleanHandle} mengirim pesan baru kepada Anda`;
   } else {
     badgeIcon = "🔔";
     badgeColor = "#2563eb";
+    badgeLabel = "Sharese";
     filterGroup = "komentar";
-    actionText = it.title || "berinteraksi dengan kiriman Anda";
-    snippetText = rawMsg;
+    snippetText = casCleanQuoteSnippet(rawMsg || rawTitle, 55);
+    actionText = snippetText || "Pembaruan aktivitas";
+    tickerText = `${cleanHandle}: "${actionText}"`;
   }
 
   return {
     ...it,
+    is_read: isReadFinal,
+    isLimpah,
     actorName,
     actorHandle: cleanHandle,
     avatarUrl,
     badgeIcon,
     badgeColor,
+    badgeLabel,
     filterGroup,
     actionText,
     snippetText,
+    tickerText,
     friendlyTime: formatFriendlyNotifTime(it.created_at),
     timeBucket: getNotifTimeBucket(it.created_at)
   };
@@ -868,6 +1277,7 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
       type:"button",
       onClick:async()=>{
         try {
+          casMarkNotifIdsReadLocal((Array.isArray(F)?F:[]).map(x=>x.id));
           await M.apiAuth.post("/bdb/jukrah/notifications/read-all", {});
           H(prev => prev.map(item => ({ ...item, is_read: !0 })));
           G({ total: 0, per_entity: [] });
@@ -880,9 +1290,9 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
   ]}),
   (0,a.jsx)("div",{style:{display:"flex",gap:"0.3rem",marginBottom:"0.65rem",overflowX:"auto",paddingBottom:"0.15rem"},children:[
     { id: "all", label: "Semua" },
-    { id: "unread", label: `Belum Dibaca (${(Array.isArray(F)?F:[]).filter(x=>!x.is_read).length})` },
-    { id: "komentar", label: "Komentar & Sebutan" },
-    { id: "arahan", label: "Arahan Resmi" }
+    { id: "unread", label: `Belum Dibaca (${(Array.isArray(F)?F:[]).map(humanizeCasNotification).filter(x=>!x.is_read).length})` },
+    { id: "komentar", label: "Sharese" },
+    { id: "jukrah", label: "Jukrah & Limpah" }
   ].map(tb => (0,a.jsx)("button",{
     key: tb.id,
     type:"button",
@@ -905,7 +1315,7 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
     const normList = (Array.isArray(F) ? F : []).map(humanizeCasNotification).filter(it => {
       if (notifTab === "unread") return !it.is_read;
       if (notifTab === "komentar") return it.filterGroup === "komentar" || it.filterGroup === "social";
-      if (notifTab === "arahan") return it.filterGroup === "arahan" || it.category === "dinas";
+      if (notifTab === "jukrah" || notifTab === "arahan") return it.filterGroup === "jukrah" || it.filterGroup === "limpah" || it.category === "dinas";
       return true;
     });
     if (normList.length === 0) {
@@ -915,9 +1325,11 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
       href:it.link||"/cms/broadcaster",
       onClick:async()=>{
         J(!1);
-        if(!it.is_read && typeof it.id === "number"){
+        casMarkNotifIdsReadLocal([it.id]);
+        if(typeof it.id === "number"){
           try { await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`); } catch {}
         }
+        try { window.dispatchEvent(new Event("cas-notif-updated")); } catch {}
         setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25);
       },
       style:{
@@ -936,7 +1348,7 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
         (0,a.jsxs)("div",{style:{position:"relative",width:40,height:40,flexShrink:0},children:[
           (0,a.jsx)("img",{
             src:it.avatarUrl||"/images/default-avatar-polki.png",
-            alt:it.actorName,
+            alt:it.actorHandle,
             onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},
             style:{width:40,height:40,borderRadius:"50%",objectFit:"cover",border:"1.5px solid var(--cas-border, rgba(148,163,184,0.3))"}
           }),
@@ -962,14 +1374,13 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
         ]}),
         (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
           (0,a.jsxs)("div",{style:{fontSize:"0.78rem",lineHeight:1.4,color:"var(--cas-text-primary, #f8fafc)",wordBreak:"break-word"},children:[
-            it.category === "dinas" ? (0,a.jsx)("span",{style:{fontWeight:700},children:it.actionText}) : (0,a.jsxs)(a.Fragment,{children:[
-              (0,a.jsx)("span",{style:{fontWeight:800},children:it.actorName}),
-              " ",
-              (0,a.jsx)("span",{style:{color:"#2563eb",fontWeight:600,fontSize:"0.73rem"},children:`(${it.actorHandle})`}),
+            (0,a.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:800,padding:"0.06rem 0.38rem",borderRadius:999,marginRight:"0.35rem",background:it.badgeLabel==="Limpah"?"rgba(124,58,237,0.16)":it.badgeLabel==="Jukrah"?"rgba(217,119,6,0.16)":"rgba(37,99,235,0.14)",color:it.badgeLabel==="Limpah"?"#7c3aed":it.badgeLabel==="Jukrah"?"#d97706":"#2563eb"},children:it.badgeLabel}),
+            it.isLimpah ? (0,a.jsx)("span",{style:{fontWeight:700},children:it.actionText}) : (0,a.jsxs)(a.Fragment,{children:[
+              (0,a.jsx)("span",{style:{color:"#2563eb",fontWeight:800},children:it.actorHandle}),
               " ",
               (0,a.jsx)("span",{children:it.actionText})
             ]}),
-            it.snippetText ? (0,a.jsx)("span",{style:{display:"block",color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.74rem",marginTop:"0.15rem",fontStyle:"italic"},children:`«${String(it.snippetText).slice(0,90)}»`}) : null
+            (!it.isLimpah && it.snippetText && it.badgeLabel !== "Jukrah") ? (0,a.jsx)("span",{style:{display:"block",color:"var(--cas-text-secondary, #94a3b8)",fontSize:"0.74rem",marginTop:"0.15rem",fontStyle:"italic"},children:`"${String(it.snippetText).slice(0,90)}"`}) : null
           ]}),
           (0,a.jsx)("div",{style:{fontSize:"0.68rem",color:it.is_read?"#64748b":"#2563eb",fontWeight:it.is_read?500:700,marginTop:"0.2rem"},children:it.friendlyTime})
         ]}),
@@ -977,8 +1388,8 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
       ]
     },it.id+"_"+idx))});
   })(),
-  (0,a.jsx)("div",{style:{marginTop:"0.65rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.48rem 0.75rem",borderRadius:10,background:"rgba(37,99,235,0.12)",border:"1px solid rgba(37,99,235,0.3)",color:"#2563eb",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Lihat Semua Notifikasi ➔"})})
-]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isVendorRole?"Vendor / Mitra (Read-Only)":isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isVendorRole?"#0d9488":isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0.36rem 0.65rem",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],uDinas=Number(nRes.data?.unread_dinas||0),uSoc=Number(nRes.data?.unread_social||0),uMsg=Number(mRes.data?.total_unread||0),convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0).forEach(c=>{combined.push({id:"msg_"+c.partner_id,badge:"PESAN BARU",color:"#34d399",text:`${c.name||c.handle}: "${String(c.last_message||"").slice(0,65)}" (${c.unread_count} belum dibaca)`})});nList.slice(0,12).forEach(it=>{let b=it.category==="dinas"?"DINAS":it.type==="connection"?"JEJARING":it.type==="message"?"OBROLAN":"SHARESE";let c=it.category==="dinas"?"#38bdf8":it.type==="connection"?"#a78bfa":"#fbbf24";combined.push({id:String(it.id),badge:b,color:c,text:`${it.title?it.title+" — ":""}${String(it.message||"").slice(0,80)}`})});if(!combined.length){combined.push({id:"default-1",badge:"INFO CAS",color:"#38bdf8",text:"Sistem Big Data Binops & Jejaring Taktis Sharese Aktif — Klik pita ini untuk membuka Halaman Penuh Notifikasi."})}setTickerItems(combined);setUnreadTotal(uDinas+uSoc+uMsg)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:3.2rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 90s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik untuk membuka Halaman Penuh Notifikasi Sharese & Kedinasan",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.6rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.32rem",color:unreadTotal>0?"#dc2626":"#0284c7",fontSize:"0.7rem",fontWeight:800,flexShrink:0,letterSpacing:"0.02em"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#0284c7",animation:"casPulseDot 2s infinite"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} BARU:`:"INFO:"]}),(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:[...tickerItems,...tickerItems].map((it,idx)=>(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.38rem",fontSize:"0.74rem",color:"var(--cas-text-secondary, #475569)"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,color:it.badge==="DINAS"?"#2563eb":it.badge==="PESAN BARU"?"#16a34a":"#d97706"},children:`[${it.badge}]`}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
+  (0,a.jsx)("div",{style:{marginTop:"0.65rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.48rem 0.75rem",borderRadius:10,background:"rgba(37,99,235,0.12)",border:"1px solid rgba(37,99,235,0.3)",color:"#2563eb",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Lihat Semua Arsip Notifikasi ➔"})})
+]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isVendorRole?"Vendor / Mitra (Read-Only)":isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isVendorRole?"#0d9488":isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0 0.78rem",height:"2.2rem",width:"auto",minWidth:"max-content",flexShrink:0,whiteSpace:"nowrap",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];const readSet=casGetReadNotifIds();let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0&&!readSet.has("msg_"+c.partner_id)).forEach(c=>{const rawH=String(c.handle||c.callsign||c.username||"").trim();const senderHandle=rawH?(rawH.startsWith("@")?rawH:`@${rawH}`):"@rekan";const shortMsg=casCleanQuoteSnippet(c.last_message,45);combined.push({id:"msg_"+c.partner_id,badge:"Obrolan",color:"#16a34a",link:`/cms/broadcaster?view=obrolan&partner=${c.partner_id}`,text:shortMsg?`${senderHandle} mengirim pesan: "${shortMsg}"`:`${senderHandle} mengirim ${c.unread_count} pesan baru`})});nList.map(humanizeCasNotification).filter(h=>!h.is_read).slice(0,14).forEach(h=>{let b=h.badgeLabel||(h.isLimpah?"Limpah":h.category==="dinas"?"Jukrah":"Sharese");let c=b==="Limpah"?"#7c3aed":b==="Jukrah"?"#2563eb":b==="Obrolan"?"#16a34a":"#d97706";combined.push({id:String(h.id),badge:b,color:c,link:h.link||"/cms/broadcaster?view=notifikasi",text:h.tickerText||h.actionText})});setTickerItems(combined);setUnreadTotal(combined.length)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);const handleTickerItemClick=async(ev,it)=>{if(ev)ev.stopPropagation();if(it&&it.id){casMarkNotifIdsReadLocal([it.id]);setTickerItems(prev=>{const next=prev.filter(x=>String(x.id)!==String(it.id));setUnreadTotal(next.length);return next;});if(/^\d+$/.test(String(it.id))){try{await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`)}catch{}}}casNav(router,(it&&it.link)||"/cms/broadcaster?view=notifikasi")};let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:2.8rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 220s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik item notifikasi untuk membaca dan membuka detail, atau klik untuk membuka Arsip Notifikasi",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",color:unreadTotal>0?"#dc2626":"#16a34a",fontSize:"0.72rem",fontWeight:800,flexShrink:0,paddingRight:"0.15rem"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#16a34a",animation:unreadTotal>0?"casPulseDot 2s infinite":"none"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} Baru`:"✓ Terbaca"]}),tickerItems.length===0?(0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted, #64748b)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:"Semua notifikasi terbaru telah dibaca — klik untuk melihat arsip riwayat notifikasi"}):(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative",maskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)",WebkitMaskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:(tickerItems.length>1?[...tickerItems,...tickerItems]:tickerItems).map((it,idx)=>(0,a.jsxs)("span",{onClick:ev=>handleTickerItemClick(ev,it),style:{display:"inline-flex",alignItems:"center",gap:"0.42rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #475569)",cursor:"pointer"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.08rem 0.46rem",borderRadius:999,background:it.badge==="Limpah"?"rgba(124,58,237,0.14)":it.badge==="Jukrah"?"rgba(37,99,235,0.12)":it.badge==="Obrolan"?"rgba(22,163,74,0.12)":"rgba(217,119,6,0.12)",color:it.color||"#0284c7"},children:it.badge}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
 function TacticalMessengerWidget() {
   const router = (0, r.useRouter)();
   const [isOpen, setIsOpen] = (0, t.useState)(false);
@@ -1106,7 +1517,7 @@ function TacticalMessengerWidget() {
           maxHeight: "76vh",
           background: "var(--cas-card-bg, #ffffff)",
           border: "1px solid var(--cas-border-strong, rgba(148,163,184,0.35))",
-          borderRadius: "18px",
+          borderRadius: "12px",
           boxShadow: "0 20px 50px rgba(15,23,42,0.32)",
           display: "flex",
           flexDirection: "column",
@@ -1183,7 +1594,7 @@ function TacticalMessengerWidget() {
                 if (m.sender === 'system') {
                   return (0, a.jsx)("div", {
                     key: m.id || idx,
-                    style: { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: "999px", padding: "0.35rem 0.75rem", fontSize: "0.7rem", color: "var(--cas-text-secondary, #64748b)", textAlign: "center", alignSelf: "center" },
+                    style: { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: "10px", padding: "0.35rem 0.75rem", fontSize: "0.7rem", color: "var(--cas-text-secondary, #64748b)", textAlign: "center", alignSelf: "center" },
                     children: m.text
                   });
                 }
@@ -1280,7 +1691,7 @@ function TacticalMessengerWidget() {
                 onChange: ev => setInputVal(ev.target.value),
                 onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
                 placeholder: "Tulis pesan... (Enter untuk kirim)",
-                style: { flex: 1, background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "24px", padding: "0.48rem 0.85rem", color: "var(--cas-text-primary)", fontSize: "0.82rem", outline: "none" }
+                style: { flex: 1, background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "10px", padding: "0.48rem 0.85rem", color: "var(--cas-text-primary)", fontSize: "0.82rem", outline: "none" }
               }),
               (0, a.jsx)("button", {
                 type: "button",
@@ -1524,15 +1935,18 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   };
 
   const filteredConvs=convs.filter(c=>{
+    const lm=String(c.last_message||"").trim();
+    const isUnchattedPlaceholder=!lm||/Terhubung di Jejaring Sharese|Ketuk untuk memulai obrolan/i.test(lm);
+    if(!c.is_ai&&Number(c.partner_id)!==Number(selectedId)&&isUnchattedPlaceholder)return!1;
     if(convFilter==="unread"&&!(Number(c.unread_count||0)>0))return!1;
     if(convFilter==="satker"&&!c.is_same_satker&&!c.is_ai)return!1;
     if(convFilter==="resmi"&&!c.is_official&&!c.is_ai)return!1;
     if(!searchQ.trim())return!0;
     const q=searchQ.toLowerCase();
-    return String(c.name||"").toLowerCase().includes(q)||String(c.handle||"").toLowerCase().includes(q)||String(c.satker||"").toLowerCase().includes(q)||String(c.last_message||"").toLowerCase().includes(q);
+    return String(c.name||"").toLowerCase().includes(q)||String(c.handle||"").toLowerCase().includes(q)||String(c.satker||"").toLowerCase().includes(q)||lm.toLowerCase().includes(q);
   });
 
-  const activePartner=partner||convs.find(c=>Number(c.partner_id)===Number(selectedId))||{
+  const rawActivePartner=partner||convs.find(c=>Number(c.partner_id)===Number(selectedId))||{
     id:selectedId,
     is_ai:selectedId===-1,
     name:selectedId===-1?"AI Agen Taktis CAS":"Personil Polri",
@@ -1541,6 +1955,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     photo_url:"/images/default-avatar-polki.png",
     online:!0
   };
+  const activePartner={...rawActivePartner,name:casFormatHumanName(rawActivePartner.name)};
 
   const displayedMessages=messages.filter(m=>{
     if(!threadSearchQ.trim())return!0;
@@ -1562,14 +1977,14 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const emojiList=["👍","❤️","🙏","🫡","✅","🔥","👏","🤝","📄","📌","⚠️","😊","😂","🎉","💬","🔍"];
 
   return(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem",position:"relative"},children:[
-    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",bottom:"28px",left:"50%",transform:"translateX(-50%)",zIndex:10000,background:"#0f172a",color:"#fff",padding:"0.5rem 1.1rem",borderRadius:999,fontSize:"0.78rem",fontWeight:700,boxShadow:"0 8px 24px rgba(0,0,0,0.3)",border:"1px solid rgba(56,189,248,0.4)"},children:copyToast}),
+    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",bottom:"28px",left:"50%",transform:"translateX(-50%)",zIndex:10000,background:"#0f172a",color:"#fff",padding:"0.5rem 1.1rem",borderRadius:10,fontSize:"0.78rem",fontWeight:700,boxShadow:"0 8px 24px rgba(0,0,0,0.3)",border:"1px solid rgba(56,189,248,0.4)"},children:copyToast}),
 
     newMsgModalOpen&&(0,a.jsx)("div",{
       onClick:()=>setNewMsgModalOpen(!1),
       style:{position:"fixed",inset:0,zIndex:9998,background:"rgba(15,23,42,0.55)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"},
       children:(0,a.jsxs)("div",{
         onClick:e=>e.stopPropagation(),
-        style:{width:"100%",maxWidth:"460px",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",borderRadius:18,boxShadow:"0 24px 60px rgba(0,0,0,0.35)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"80vh"},
+        style:{width:"100%",maxWidth:"460px",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",borderRadius:12,boxShadow:"0 24px 60px rgba(0,0,0,0.35)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"80vh"},
         children:[
           (0,a.jsxs)("div",{style:{padding:"1rem 1.2rem",borderBottom:"1px solid var(--cas-border)",display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
             (0,a.jsxs)("div",{children:[
@@ -1584,7 +1999,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             value:newMsgSearch,
             onChange:e=>setNewMsgSearch(e.target.value),
             placeholder:"🔍 Cari nama personel, @username, atau Satker...",
-            style:{width:"100%",padding:"0.55rem 0.9rem",borderRadius:999,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem",outline:"none",boxSizing:"border-box"}
+            style:{width:"100%",padding:"0.55rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem",outline:"none",boxSizing:"border-box"}
           })}),
           (0,a.jsx)("div",{style:{flex:1,overflowY:"auto",padding:"0.5rem"},children:newMsgUsers.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar rekan personel..."}):newMsgUsers.map(u=>(0,a.jsxs)("div",{
             key:"newdm_"+u.id,
@@ -1601,7 +2016,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 (0,a.jsx)("span",{style:{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:"#22c55e",border:"2px solid var(--cas-card-bg)"}})
               ]}),
               (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.85rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+                (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.85rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:casFormatHumanName(u.name)}),
                 (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"#2563eb",fontWeight:600},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
               ]}),
               (0,a.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,color:"#2563eb",padding:"0.25rem 0.6rem",borderRadius:999,background:"rgba(37,99,235,0.1)"},children:"Chat ➔"})
@@ -1644,7 +2059,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 (0,a.jsx)("button",{
                   type:"button",
                   onClick:()=>setNewMsgModalOpen(!0),
-                  style:{padding:"0.38rem 0.75rem",borderRadius:999,border:"1px solid rgba(37,99,235,0.35)",background:"rgba(37,99,235,0.1)",color:"#2563eb",fontWeight:700,fontSize:"0.75rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
+                  style:{padding:"0.38rem 0.75rem",borderRadius:10,border:"1px solid rgba(37,99,235,0.35)",background:"rgba(37,99,235,0.1)",color:"#2563eb",fontWeight:700,fontSize:"0.75rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
                   children:"✎ Pesan Baru"
                 })
               ]}),
@@ -1653,7 +2068,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 value:searchQ,
                 onChange:e=>setSearchQ(e.target.value),
                 placeholder:"🔍 Cari obrolan, nama rekan, atau @username...",
-                style:{width:"100%",padding:"0.5rem 0.9rem",borderRadius:999,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",outline:"none",boxSizing:"border-box"}
+                style:{width:"100%",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",outline:"none",boxSizing:"border-box"}
               }),
               (0,a.jsx)("div",{style:{display:"flex",gap:"0.32rem",overflowX:"auto",paddingBottom:"0.1rem"},children:[
                 {id:"all",label:"Semua"},
@@ -1666,7 +2081,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 onClick:()=>setConvFilter(pill.id),
                 style:{
                   padding:"0.28rem 0.65rem",
-                  borderRadius:999,
+                  borderRadius:8,
                   border:convFilter===pill.id?"1px solid #2563eb":"1px solid var(--cas-border)",
                   background:convFilter===pill.id?"#2563eb":"var(--cas-surface-subtle)",
                   color:convFilter===pill.id?"#ffffff":"var(--cas-text-secondary)",
@@ -1681,7 +2096,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             ]}),
 
             (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"},children:[
-              loadingConvs?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.length===0?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Tidak ada percakapan yang sesuai filter."}):filteredConvs.map(c=>{
+              loadingConvs?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.length===0?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Belum ada percakapan aktif. Klik ✎ Pesan Baru untuk memulai obrolan."}):filteredConvs.map(c=>{
                 const isSel=Number(c.partner_id)===Number(selectedId);
                 const hasUnread=Number(c.unread_count||0)>0;
                 const cleanHandle=String(c.handle||"").startsWith("@")?c.handle:`@${c.handle||"personel"}`;
@@ -1735,7 +2150,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                               overflow:"hidden",
                               textOverflow:"ellipsis"
                             },
-                            children:c.name
+                            children:casFormatHumanName(c.name)
                           }),
                           (0,a.jsx)("span",{
                             style:{
@@ -1813,7 +2228,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   children:[
                     (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}),
                     (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                      (0,a.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:700,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
+                      (0,a.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:700,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:casFormatHumanName(u.name)}),
                       (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
                     ]})
                   ]
@@ -1909,7 +2324,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   value:threadSearchQ,
                   onChange:e=>setThreadSearchQ(e.target.value),
                   placeholder:"Ketik kata kunci untuk mencari pesan dalam percakapan ini...",
-                  style:{flex:1,padding:"0.4rem 0.8rem",borderRadius:999,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",fontSize:"0.78rem",outline:"none"}
+                  style:{flex:1,padding:"0.4rem 0.8rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",fontSize:"0.78rem",outline:"none"}
                 }),
                 threadSearchQ&&(0,a.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",fontWeight:600},children:`${displayedMessages.length} hasil`}),
                 (0,a.jsx)("button",{type:"button",onClick:()=>{setThreadSearchQ("");setThreadSearchOpen(!1);},style:{background:"none",border:"none",color:"var(--cas-text-muted)",cursor:"pointer",fontWeight:700},children:"✕"})
@@ -2269,7 +2684,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 (0,a.jsxs)("div",{
                   style:{
                     flex:1,
-                    borderRadius:24,
+                    borderRadius:10,
                     background:"var(--cas-surface-subtle)",
                     border:"1px solid var(--cas-border-strong)",
                     padding:"0.35rem 0.5rem 0.35rem 0.85rem",
@@ -2362,6 +2777,8 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
   const[searchQ,setSearchQ]=(0,t.useState)("");
   const[page,setPage]=(0,t.useState)(1);
   const[users,setUsers]=(0,t.useState)([]);
+  const[incomingReqs,setIncomingReqs]=(0,t.useState)([]);
+  const[connCounts,setConnCounts]=(0,t.useState)({incoming:0,connected:0,outgoing:0});
   const[total,setTotal]=(0,t.useState)(0);
   const[totalPages,setTotalPages]=(0,t.useState)(1);
   const[loading,setLoading]=(0,t.useState)(!0);
@@ -2377,16 +2794,20 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
   const loadDirectory=(0,t.useCallback)(async()=>{
     setLoading(!0);
     try{
-      const params={page,limit:24,search:searchQ.trim()||void 0};
+      const params={page,limit:24,search:searchQ.trim()||void 0,filter:activeTab};
       if(activeTab==="connected"&&curUser?.id)params.connected_to=curUser.id;
       const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params});
       let list=Array.isArray(res.data?.data)?res.data.data:[];
-      if(activeTab==="recommendations"&&curUser?.id){
+      if(curUser?.id&&activeTab==="all"){
         list=list.filter(u=>Number(u.id)!==Number(curUser.id));
       }
+      list=list.slice(0,24);
+      const totCount=Number(res.data?.total||list.length);
       setUsers(list);
-      setTotal(Number(res.data?.total||list.length));
-      setTotalPages(Number(res.data?.total_pages||1));
+      if(Array.isArray(res.data?.incoming_requests))setIncomingReqs(res.data.incoming_requests);
+      if(res.data?.counts)setConnCounts(res.data.counts);
+      setTotal(totCount);
+      setTotalPages(Math.max(1,Math.ceil(totCount/24)));
     }catch{setUsers([]);}finally{setLoading(!1);}
   },[page,searchQ,activeTab,curUser?.id]);
 
@@ -2424,21 +2845,59 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
     return()=>{cancelled=!0;};
   },[profileIdParam]);
 
+  const handleAcceptRequest=async(targetUid)=>{
+    if(!targetUid||togglingId)return;
+    setTogglingId(targetUid);
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/network/connect/${targetUid}`);
+      setIncomingReqs(prev=>prev.filter(r=>Number(r.id)!==Number(targetUid)));
+      setConnCounts(prev=>({...prev,incoming:Math.max(0,(prev.incoming||0)-1),connected:(prev.connected||0)+1}));
+      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:!0,is_connected:!0,connection_status:"connected"}:u));
+      if(profData&&Number(profData.id)===Number(targetUid)){
+        setProfData(prev=>({...prev,is_following:!0,is_connected:!0,connection_status:"connected",connections_count:Number(prev.connections_count||0)+1}));
+      }
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setTogglingId(null);}
+  };
+
+  const handleIgnoreRequest=async(targetUid)=>{
+    if(!targetUid||togglingId)return;
+    setTogglingId(targetUid);
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/network/disconnect/${targetUid}`);
+      setIncomingReqs(prev=>prev.filter(r=>Number(r.id)!==Number(targetUid)));
+      setConnCounts(prev=>({...prev,incoming:Math.max(0,(prev.incoming||0)-1)}));
+      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:!1,is_connected:!1,connection_status:"none"}:u));
+      if(profData&&Number(profData.id)===Number(targetUid)){
+        setProfData(prev=>({...prev,is_following:!1,is_connected:!1,connection_status:"none"}));
+      }
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{}finally{setTogglingId(null);}
+  };
+
   const handleFollowToggle=async(targetUid,inProfile=!1)=>{
     if(!targetUid||togglingId)return;
     setTogglingId(targetUid);
     try{
       const res=await M.apiAuth.post(`/bdb/jukrah/follow/${targetUid}`);
-      const isNowConn=Boolean(res.data?.data?.is_connected);
-      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:isNowConn,is_connected:isNowConn,connection_status:isNowConn?"ACCEPTED":"NONE"}:u));
+      const newStatus=res.data?.data?.connection_status||(res.data?.data?.is_connected?"connected":"none");
+      const isNowConn=newStatus==="connected";
+      const isOutgoing=newStatus==="outgoing";
+      setUsers(prev=>prev.map(u=>Number(u.id)===Number(targetUid)?{...u,is_following:isNowConn||isOutgoing,is_connected:isNowConn,connection_status:newStatus}:u));
+      if(newStatus==="connected"){
+        setIncomingReqs(prev=>prev.filter(r=>Number(r.id)!==Number(targetUid)));
+      }
       if(inProfile&&profData&&Number(profData.id)===Number(targetUid)){
-        setProfData(prev=>({...prev,is_following:isNowConn,is_connected:isNowConn,connections_count:Math.max(0,Number(prev.connections_count||0)+(isNowConn?1:-1))}));
+        setProfData(prev=>({...prev,is_following:isNowConn||isOutgoing,is_connected:isNowConn,connection_status:newStatus,connections_count:Math.max(0,Number(prev.connections_count||0)+(isNowConn?1:newStatus==="none"&&prev.is_connected?-1:0))}));
       }
       try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
     }catch{}finally{setTogglingId(null);}
   };
 
   if(profileIdParam){
+    const profHandle=String(profData?.callsign||profData?.username||"personil").replace(/^@/,"").toLowerCase();
+    const profPangkatSatker=casFormatPangkatSatkerLine(profData?.pangkat,profData?.satker_nama||profData?.satker,Number(profData?.id)===1);
+    const profStatus=profData?.connection_status||(profData?.is_connected?"connected":"none");
     return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
         (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.5rem 1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"var(--cas-card-bg)",color:"#0284c7",fontWeight:800,fontSize:"0.82rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.45rem"},children:"← Kembali ke Daftar Koneksi Personil"}),
@@ -2448,22 +2907,25 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
         (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"1rem",marginBottom:"0.5rem"},children:profErr||"Profil personil tidak ditemukan."}),
         (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/broadcaster?view=koneksi"),style:{padding:"0.45rem 1rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:700,cursor:"pointer"},children:"Kembali ke Direktori Koneksi"})
       ]}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
-        (0,a.jsxs)("div",{style:{borderRadius:18,overflow:"hidden",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",boxShadow:"0 12px 32px rgba(15,23,42,0.08)"},children:[
+        (0,a.jsxs)("div",{style:{borderRadius:12,overflow:"hidden",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",boxShadow:"0 12px 32px rgba(15,23,42,0.08)"},children:[
           (0,a.jsx)("div",{style:{height:175,background:profData.banner_theme&&profData.banner_theme.startsWith("linear-gradient")?profData.banner_theme:`url(${profData.banner_theme||"/images/default-banner-polri.jpg"}) center/cover no-repeat`,position:"relative"}}),
           (0,a.jsxs)("div",{style:{padding:"0 1.5rem 1.5rem",position:"relative"},children:[
             (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",flexWrap:"wrap",gap:"1rem",marginTop:"-48px",marginBottom:"1rem"},children:[
               (0,a.jsxs)("div",{style:{display:"flex",alignItems:"flex-end",gap:"1rem",flexWrap:"wrap"},children:[
-                (0,a.jsx)("img",{src:profData.photo_url||"/images/default-avatar-polki.png",alt:profData.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:96,height:96,borderRadius:"50%",objectFit:"cover",border:"4px solid var(--cas-card-bg)",background:"var(--cas-surface-subtle)",boxShadow:"0 8px 24px rgba(15,23,42,0.2)"}}),
+                (0,a.jsx)("img",{src:profData.photo_url||"/images/default-avatar-polki.png",alt:profHandle,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:96,height:96,borderRadius:"50%",objectFit:"cover",border:"4px solid var(--cas-card-bg)",background:"var(--cas-surface-subtle)",boxShadow:"0 8px 24px rgba(15,23,42,0.2)"}}),
                 (0,a.jsxs)("div",{style:{paddingBottom:"0.2rem"},children:[
-                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
-                    (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.3rem",fontWeight:800,color:"var(--cas-text-primary)"},children:profData.name}),
-                    (0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,background:"rgba(56,189,248,0.16)",border:"1px solid rgba(56,189,248,0.4)",color:"#0284c7",fontSize:"0.72rem",fontWeight:800},children:`@${profData.callsign||profData.username}`})
+                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                    (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.28rem",fontWeight:800,color:"#0284c7"},children:`@${profHandle}`}),
+                    renderCasMetaBadge(profData,18)
                   ]}),
-                  (0,a.jsx)("div",{style:{fontSize:"0.84rem",color:"var(--cas-text-secondary)",fontWeight:600,marginTop:"0.2rem"},children:`${profData.pangkat||"Personil Polri"} · ${profData.satker_nama||profData.satker||"Polri"}`})
+                  (0,a.jsx)("div",{style:{fontSize:"0.84rem",color:"var(--cas-text-secondary)",fontWeight:600,marginTop:"0.2rem"},children:profPangkatSatker})
                 ]})
               ]}),
               Number(profData.id)!==Number(curUser?.id)&&(0,a.jsxs)("div",{style:{display:"flex",gap:"0.55rem",flexWrap:"wrap"},children:[
-                (0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleFollowToggle(profData.id,!0),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:profData.is_following?"1px solid #10b981":"none",background:profData.is_following?"rgba(16,185,129,0.16)":"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:profData.is_following?"#059669":"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:profData.is_following?"✓ Terhubung (Mengikuti)":"➕ Ikuti / Hubungkan"}),
+                profStatus==="incoming"?(0,a.jsxs)(a.Fragment,{children:[
+                  (0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleAcceptRequest(profData.id),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:"none",background:"linear-gradient(135deg, #059669 0%, #10b981 100%)",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:"✓ Terima Koneksi"}),
+                  (0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleIgnoreRequest(profData.id),style:{padding:"0.52rem 0.95rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-secondary)",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"},children:"✕ Abaikan"})
+                ]}):(0,a.jsx)("button",{type:"button",disabled:togglingId===profData.id,onClick:()=>handleFollowToggle(profData.id,!0),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:profStatus==="connected"?"1px solid #10b981":profStatus==="outgoing"?"1px solid #f59e0b":"none",background:profStatus==="connected"?"rgba(16,185,129,0.16)":profStatus==="outgoing"?"rgba(245,158,11,0.15)":"linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",color:profStatus==="connected"?"#059669":profStatus==="outgoing"?"#d97706":"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:profStatus==="connected"?"✓ Terhubung":profStatus==="outgoing"?"⏳ Permintaan Terkirim":"+ Hubungkan"}),
                 (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${profData.id}`),style:{padding:"0.52rem 1.1rem",borderRadius:10,border:"1px solid rgba(56,189,248,0.45)",background:"rgba(2,132,199,0.16)",color:"#0284c7",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:"💬 Kirim Pesan Taktis"})
               ]})
             ]}),
@@ -2471,8 +2933,8 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
             (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:"0.75rem"},children:[
               {label:"Postingan Sharese",val:profData.posts_count??profPosts.length,color:"#0284c7"},
               {label:"Jejaring Terhubung",val:profData.connections_count||0,color:"#059669"},
-              {label:"Satuan Kerja",val:profData.satker||"Polri",color:"#7c3aed"},
-              {label:"Pangkat / Peran",val:profData.pangkat||profData.role_bdb||"Personil",color:"#d97706"}
+              {label:"Satuan Kerja",val:casCapitalizeEachWordSatker(profData.satker||"Polri"),color:"#7c3aed"},
+              {label:"Pangkat / Peran",val:casCapitalizeEachWordSatker(profData.pangkat&&profData.pangkat!=="-"?profData.pangkat:profData.role_bdb||"Personil Polri"),color:"#d97706"}
             ].map((st,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.75rem 0.95rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
               (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:700},children:st.label}),
               (0,a.jsx)("div",{style:{fontSize:"1.02rem",fontWeight:800,color:st.color,marginTop:"0.2rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:st.val})
@@ -2486,7 +2948,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
         ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setProfTab(tb.id),style:{padding:"0.5rem 1rem",borderRadius:10,border:profTab===tb.id?"1px solid #38bdf8":"1px solid var(--cas-border)",background:profTab===tb.id?"rgba(2,132,199,0.16)":"var(--cas-card-bg)",color:profTab===tb.id?"#0284c7":"var(--cas-text-secondary)",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:tb.label}))}),
         profTab==="posts"&&(0,a.jsx)("div",{style:{display:"grid",gap:"0.75rem"},children:profPosts.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Personil ini belum memiliki postingan publik di linimasa Sharese."}):profPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"1rem 1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
           (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.74rem",color:"var(--cas-text-muted)",marginBottom:"0.45rem"},children:[
-            (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`@${profData.callsign} · ${profData.satker}`}),
+            (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`@${profHandle} · ${casCapitalizeEachWordSatker(profData.satker)}`}),
             (0,a.jsx)("span",{children:p.created_at?new Date(p.created_at).toLocaleString("id-ID"):""})
           ]}),
           (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"var(--cas-text-primary)",whiteSpace:"pre-wrap",lineHeight:1.55},children:p.content}),
@@ -2496,20 +2958,24 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
             (0,a.jsx)("span",{children:`🔁 ${p.repost_count||0} Terusan`})
           ]})
         ]}))}),
-        profTab==="connections"&&(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(250px, 1fr))",gap:"0.75rem"},children:profConns.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)",gridColumn:"1 / -1"},children:"Belum ada daftar koneksi yang ditampilkan."}):profConns.map(c=>(0,a.jsxs)("div",{key:c.id,onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${c.id}`),style:{padding:"0.85rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer"},children:[
-          (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:c.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}),
-          (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.name}),
-            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#0284c7"},children:`@${c.callsign||c.username}`}),
-            (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:c.satker})
-          ]})
-        ]}))}),
+        profTab==="connections"&&(0,a.jsx)("div",{className:"cas-koneksi-bento-grid",children:profConns.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)",gridColumn:"1 / -1"},children:"Belum ada daftar koneksi yang ditampilkan."}):profConns.map(c=>{
+          const cHandle=String(c.callsign||c.username||"personil").replace(/^@/,"").toLowerCase();
+          return(0,a.jsxs)("div",{key:c.id,onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${c.id}`),style:{padding:"0.85rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer"},children:[
+            (0,a.jsx)("img",{src:c.photo_url||"/images/default-avatar-polki.png",alt:cHandle,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:44,height:44,borderRadius:"50%",objectFit:"cover"}}),
+            (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.25rem",fontWeight:800,fontSize:"0.84rem",color:"#0284c7",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:[
+                (0,a.jsx)("span",{children:`@${cHandle}`}),
+                renderCasMetaBadge(c,14)
+              ]}),
+              (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:casFormatPangkatSatkerLine(c.pangkat,c.satker,Number(c.id)===1)})
+            ]})
+          ]});
+        })}),
         profTab==="info"&&(0,a.jsx)("div",{style:{padding:"1.25rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))",gap:"1rem"},children:[
-          {k:"Nama Lengkap",v:profData.name},
-          {k:"Callsign Sharese",v:"@"+(profData.callsign||profData.username)},
-          {k:"Pangkat / Golongan",v:profData.pangkat||"-"},
-          {k:"Jabatan",v:profData.jabatan||"-"},
-          {k:"Satuan Kerja (Satker)",v:profData.satker_nama||profData.satker||"Polri"},
+          {k:"Username Sharese",v:"@"+profHandle},
+          {k:"Pangkat / Golongan",v:casCapitalizeEachWordSatker(profData.pangkat&&profData.pangkat!=="-"?profData.pangkat:"Personil Polri")},
+          {k:"Jabatan",v:casCapitalizeEachWordSatker(profData.jabatan&&profData.jabatan!=="-"?profData.jabatan:"Pejabat Kedinasan")},
+          {k:"Satuan Kerja (Satker)",v:casCapitalizeEachWordSatker(profData.satker_nama||profData.satker||"Polri")},
           {k:"Email Kedinasan",v:profData.email_polri||profData.email||"-"}
         ].map((row,idx)=>(0,a.jsxs)("div",{key:idx,children:[
           (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",fontWeight:700},children:row.k}),
@@ -2519,44 +2985,152 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
     ]});
   }
 
-  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem",paddingTop:"0.2rem"},children:[
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
       (0,a.jsxs)("div",{children:[
-        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"👥 Jejaring & Koneksi Personil Sharese"}),
-        (0,a.jsx)("p",{className:"cms-page-sub",children:"Direktori resmi personil Polri di seluruh Satker & Polda. Hubungkan jejaring dan klik kartu personil untuk membuka profil lengkap."})
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0,lineHeight:1.25},children:"👥 Jejaring & Koneksi Personil Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",style:{margin:"0.25rem 0 0"},children:"Kelola permintaan koneksi masuk, perluas jejaring rekan sejawat lintas Satker & Polda, dan klik kartu `@username` untuk membuka profil personil."})
       ]}),
-      (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#0284c7",padding:"0.4rem 0.85rem",borderRadius:999,background:"rgba(2,132,199,0.14)",border:"1px solid rgba(56,189,248,0.35)"},children:`Total Personil Aktif: ${total.toLocaleString("id-ID")}`})
+      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap"},children:[
+        connCounts.incoming>0&&(0,a.jsx)("span",{onClick:()=>{setActiveTab("incoming");setPage(1);},style:{fontSize:"0.76rem",fontWeight:800,color:"#fff",padding:"0.4rem 0.85rem",borderRadius:10,background:"linear-gradient(135deg, #2563eb, #0284c7)",cursor:"pointer",boxShadow:"0 4px 12px rgba(37,99,235,0.25)"},children:`📥 ${connCounts.incoming} Permintaan Masuk`}),
+        (0,a.jsx)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#0284c7",padding:"0.4rem 0.85rem",borderRadius:10,background:"rgba(2,132,199,0.14)",border:"1px solid rgba(56,189,248,0.35)"},children:`Total Personil Aktif: ${total.toLocaleString("id-ID")}`})
+      ]})
     ]}),
+
+    incomingReqs.length>0&&activeTab!=="connected"&&activeTab!=="outgoing"&&(0,a.jsxs)("div",{
+      style:{
+        background:"var(--cas-card-bg)",
+        border:"1.5px solid rgba(37,99,235,0.35)",
+        borderRadius:16,
+        padding:"1rem 1.15rem",
+        boxShadow:"0 8px 24px rgba(15,23,42,0.06)"
+      },
+      children:[
+        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",marginBottom:"0.85rem"},children:[
+          (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem"},children:[
+            (0,a.jsx)("span",{style:{fontSize:"0.92rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"📥 Permintaan Koneksi Masuk"}),
+            (0,a.jsx)("span",{style:{padding:"0.12rem 0.55rem",borderRadius:999,background:"#2563eb",color:"#fff",fontSize:"0.72rem",fontWeight:800},children:incomingReqs.length})
+          ]}),
+          (0,a.jsx)("span",{style:{fontSize:"0.75rem",color:"var(--cas-text-muted)",fontWeight:600},children:"Terima permintaan untuk terhubung dua arah di Sharese & Obrolan Taktis"})
+        ]}),
+        (0,a.jsx)("div",{
+          style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))",gap:"0.75rem"},
+          children:incomingReqs.slice(0,6).map(req=>{
+            const reqHandle=String(req.callsign||req.username||"personil").replace(/^@/,"").toLowerCase();
+            const reqSub=casFormatPangkatSatkerLine(req.pangkat,req.satker,Number(req.id)===1);
+            return(0,a.jsxs)("div",{
+              key:"inc_"+req.id,
+              style:{
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"space-between",
+                gap:"0.75rem",
+                padding:"0.75rem 0.9rem",
+                borderRadius:12,
+                background:"var(--cas-surface-subtle)",
+                border:"1px solid var(--cas-border-strong)"
+              },
+              children:[
+                (0,a.jsxs)("div",{
+                  onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${req.id}`),
+                  style:{display:"flex",alignItems:"center",gap:"0.65rem",minWidth:0,flex:1,cursor:"pointer"},
+                  children:[
+                    (0,a.jsx)("img",{
+                      src:req.photo_url||"/images/default-avatar-polki.png",
+                      alt:reqHandle,
+                      onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},
+                      style:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid #2563eb",flexShrink:0}
+                    }),
+                    (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.25rem",fontWeight:800,fontSize:"0.84rem",color:"#0284c7",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:[
+                        (0,a.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis"},children:`@${reqHandle}`}),
+                        renderCasMetaBadge(req,14)
+                      ]}),
+                      (0,a.jsx)("div",{style:{fontSize:"0.71rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:reqSub})
+                    ]})
+                  ]
+                }),
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.38rem",flexShrink:0},children:[
+                  (0,a.jsx)("button",{
+                    type:"button",
+                    disabled:togglingId===req.id,
+                    onClick:()=>handleAcceptRequest(req.id),
+                    style:{padding:"0.38rem 0.7rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontSize:"0.73rem",fontWeight:800,cursor:"pointer"},
+                    children:"✓ Terima"
+                  }),
+                  (0,a.jsx)("button",{
+                    type:"button",
+                    disabled:togglingId===req.id,
+                    onClick:()=>handleIgnoreRequest(req.id),
+                    style:{padding:"0.38rem 0.6rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-secondary)",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},
+                    children:"Abaikan"
+                  })
+                ]})
+              ]
+            });
+          })
+        })
+      ]
+    }),
+
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",background:"var(--cas-card-bg)",padding:"0.85rem 1rem",borderRadius:14,border:"1px solid var(--cas-border-strong)"},children:[
       (0,a.jsx)("div",{style:{display:"flex",gap:"0.45rem",flexWrap:"wrap"},children:[
-        {id:"all",label:"🌐 Seluruh Direktori Personil"},
-        {id:"connected",label:"🤝 Terhubung / Mengikuti"},
-        {id:"recommendations",label:"✨ Rekomendasi Rekan Sejawat"}
+        {id:"all",label:"🌐 Direktori & Rekomendasi"},
+        {id:"incoming",label:`📥 Permintaan Masuk (${connCounts.incoming||incomingReqs.length||0})`},
+        {id:"connected",label:`🤝 Koneksi Saya (${connCounts.connected||0})`},
+        {id:"outgoing",label:`📤 Terkirim (${connCounts.outgoing||0})`}
       ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setActiveTab(tb.id);setPage(1);},style:{padding:"0.45rem 0.9rem",borderRadius:9,border:activeTab===tb.id?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:activeTab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"var(--cas-surface-subtle)",color:activeTab===tb.id?"#fff":"var(--cas-text-primary)",fontSize:"0.78rem",fontWeight:700,cursor:"pointer"},children:tb.label}))}),
-      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>{setSearchQ(e.target.value);setPage(1);},placeholder:"🔍 Cari nama personil, callsign, NRP, atau Satker…",style:{flex:"1 1 260px",maxWidth:"420px",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem"}})
+      (0,a.jsx)("input",{type:"text",value:searchQ,onChange:e=>{setSearchQ(e.target.value);setPage(1);},placeholder:"🔍 Cari @username, pangkat, NRP, atau Satker…",style:{flex:"1 1 260px",maxWidth:"420px",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem"}})
     ]}),
-    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat direktori jejaring personil…"}):users.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Tidak ada personil yang cocok dengan pencarian Anda."}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(275px, 1fr))",gap:"0.9rem"},children:users.map(u=>{
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat direktori jejaring personil…"}):users.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Tidak ada personil pada kategori ini."}):(0,a.jsx)("div",{className:"cas-koneksi-bento-grid",children:users.map(u=>{
       const isMe=Number(u.id)===Number(curUser?.id);
+      const uHandle=String(u.callsign||u.username||"personil").replace(/^@/,"").toLowerCase();
+      const uPangkatSatker=casFormatPangkatSatkerLine(u.pangkat,u.satker,Number(u.id)===1);
+      const cStatus=u.connection_status||(u.is_connected?"connected":u.is_following?"outgoing":"none");
       return(0,a.jsxs)("div",{key:u.id,style:{padding:"1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"0.85rem",boxShadow:"0 4px 14px rgba(15,23,42,0.06)"},children:[
-        (0,a.jsxs)("div",{onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{display:"flex",alignItems:"center",gap:"0.8rem",cursor:"pointer"},title:"Klik untuk membuka profil lengkap personil ini",children:[
-          (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:54,height:54,borderRadius:"50%",objectFit:"cover",border:"2px solid #0284c7",flexShrink:0}}),
+        (0,a.jsxs)("div",{onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{display:"flex",alignItems:"center",gap:"0.8rem",cursor:"pointer"},title:"Klik untuk membuka profil personil ini",children:[
+          (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:uHandle,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:54,height:54,borderRadius:"50%",objectFit:"cover",border:"2px solid #0284c7",flexShrink:0}}),
           (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-            (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.9rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.name}),
-            (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#0284c7",fontWeight:700},children:`@${u.callsign||u.username}`}),
-            (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:`${u.pangkat||"Personil"} · ${u.satker||"Polri"}`})
+            (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.25rem",fontWeight:800,fontSize:"0.9rem",color:"#0284c7",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:[
+              (0,a.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis"},children:`@${uHandle}`}),
+              renderCasMetaBadge(u,15)
+            ]}),
+            (0,a.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.18rem"},children:uPangkatSatker})
           ]})
         ]}),
         (0,a.jsxs)("div",{style:{display:"flex",gap:"0.45rem"},children:[
-          (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},children:"👤 Profil"}),
-          !isMe&&(0,a.jsx)("button",{type:"button",disabled:togglingId===u.id,onClick:()=>handleFollowToggle(u.id,!1),style:{flex:1,padding:"0.42rem 0.6rem",borderRadius:8,border:u.is_following?"1px solid #10b981":"none",background:u.is_following?"rgba(16,185,129,0.16)":"#2563eb",color:u.is_following?"#059669":"#fff",fontSize:"0.74rem",fontWeight:800,cursor:"pointer"},children:u.is_following?"✓ Terhubung":"➕ Hubungkan"}),
+          (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{padding:"0.42rem 0.65rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},children:"👤 Profil"}),
+          !isMe&&cStatus==="incoming"?(0,a.jsxs)(a.Fragment,{children:[
+            (0,a.jsx)("button",{type:"button",disabled:togglingId===u.id,onClick:()=>handleAcceptRequest(u.id),style:{flex:1,padding:"0.42rem 0.55rem",borderRadius:8,border:"none",background:"#059669",color:"#fff",fontSize:"0.73rem",fontWeight:800,cursor:"pointer"},children:"✓ Terima"}),
+            (0,a.jsx)("button",{type:"button",disabled:togglingId===u.id,onClick:()=>handleIgnoreRequest(u.id),style:{padding:"0.42rem 0.55rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-secondary)",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},children:"✕"})
+          ]}):!isMe&&(0,a.jsx)("button",{
+            type:"button",
+            disabled:togglingId===u.id,
+            onClick:()=>handleFollowToggle(u.id,!1),
+            style:{
+              flex:1,
+              padding:"0.42rem 0.6rem",
+              borderRadius:8,
+              border:cStatus==="connected"?"1px solid #10b981":cStatus==="outgoing"?"1px solid #f59e0b":"none",
+              background:cStatus==="connected"?"rgba(16,185,129,0.16)":cStatus==="outgoing"?"rgba(245,158,11,0.15)":"#2563eb",
+              color:cStatus==="connected"?"#059669":cStatus==="outgoing"?"#d97706":"#fff",
+              fontSize:"0.74rem",
+              fontWeight:800,
+              cursor:"pointer"
+            },
+            children:cStatus==="connected"?"✓ Terhubung":cStatus==="outgoing"?"⏳ Menunggu":"+ Hubungkan"
+          }),
           !isMe&&(0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,`/cms/broadcaster?view=obrolan&partner=${u.id}`),style:{padding:"0.42rem 0.65rem",borderRadius:8,border:"1px solid rgba(56,189,248,0.4)",background:"rgba(2,132,199,0.14)",color:"#0284c7",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},title:"Kirim Pesan",children:"💬"})
         ]})
       ]});
     })}),
-    totalPages>1&&(0,a.jsxs)("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",gap:"0.75rem",marginTop:"0.5rem"},children:[
-      (0,a.jsx)("button",{type:"button",disabled:page<=1,onClick:()=>setPage(p=>Math.max(1,p-1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",cursor:page<=1?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"← Sebelumnya"}),
-      (0,a.jsx)("span",{style:{fontSize:"0.8rem",color:"var(--cas-text-secondary)",fontWeight:700},children:`Halaman ${page} dari ${totalPages}`}),
-      (0,a.jsx)("button",{type:"button",disabled:page>=totalPages,onClick:()=>setPage(p=>Math.min(totalPages,p+1)),style:{padding:"0.45rem 0.9rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-card-bg)",color:"var(--cas-text-primary)",cursor:page>=totalPages?"not-allowed":"pointer",fontSize:"0.78rem",fontWeight:700},children:"Berikutnya →"})
+    users.length>0&&(0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"0.75rem",marginTop:"0.35rem",padding:"0.75rem 1rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+      (0,a.jsx)("span",{style:{fontSize:"0.78rem",color:"var(--cas-text-muted)",fontWeight:600},children:`Menampilkan ${users.length} dari ${total.toLocaleString("id-ID")} personil (24 per halaman)`}),
+      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.6rem"},children:[
+        (0,a.jsx)("button",{type:"button",disabled:page<=1,onClick:()=>setPage(p=>Math.max(1,p-1)),style:{padding:"0.42rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:page<=1?"var(--cas-surface-subtle)":"var(--cas-card-bg)",color:page<=1?"var(--cas-text-muted)":"var(--cas-text-primary)",cursor:page<=1?"not-allowed":"pointer",fontSize:"0.76rem",fontWeight:700},children:"← Sebelumnya"}),
+        (0,a.jsx)("span",{style:{fontSize:"0.78rem",color:"var(--cas-text-primary)",fontWeight:800,padding:"0 0.25rem"},children:`Halaman ${page} dari ${Math.max(1,totalPages)}`}),
+        (0,a.jsx)("button",{type:"button",disabled:page>=totalPages,onClick:()=>setPage(p=>Math.min(totalPages,p+1)),style:{padding:"0.42rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:page>=totalPages?"var(--cas-surface-subtle)":"var(--cas-card-bg)",color:page>=totalPages?"var(--cas-text-muted)":"var(--cas-text-primary)",cursor:page>=totalPages?"not-allowed":"pointer",fontSize:"0.76rem",fontWeight:700},children:"Berikutnya →"})
+      ]})
     ]})
   ]});
 }
@@ -2574,7 +3148,8 @@ function CasNotifikasiFullPage({user:curUser}){
     setLoading(!0);
     try{
       const res=await M.apiAuth.get("/bdb/jukrah/notifications");
-      setItems(Array.isArray(res.data?.data)?res.data.data:[]);
+      const rawList=Array.isArray(res.data?.data)?res.data.data:[];
+      setItems(rawList);
       setUnreadDinas(Number(res.data?.unread_dinas||0));
       setUnreadSocial(Number(res.data?.unread_social||0));
     }catch{setItems([]);}finally{setLoading(!1);}
@@ -2584,6 +3159,7 @@ function CasNotifikasiFullPage({user:curUser}){
 
   const markAllRead=async()=>{
     try{
+      casMarkNotifIdsReadLocal(items.map(x=>x.id));
       await M.apiAuth.post("/bdb/jukrah/notifications/read-all",{});
       setItems(prev=>prev.map(it=>({...it,is_read:!0})));
       setUnreadDinas(0);setUnreadSocial(0);
@@ -2592,13 +3168,14 @@ function CasNotifikasiFullPage({user:curUser}){
   };
 
   const handleClickItem=async(it)=>{
+    casMarkNotifIdsReadLocal([it.id]);
+    setItems(prev=>prev.map(x=>String(x.id)===String(it.id)?{...x,is_read:!0}:x));
     if(!it.is_read&&typeof it.id==="number"){
       try{
         await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`);
-        setItems(prev=>prev.map(x=>x.id===it.id?{...x,is_read:!0}:x));
-        try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
       }catch{}
     }
+    try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
     casNav(router,it.link||"/cms/broadcaster");
   };
 
@@ -2607,11 +3184,12 @@ function CasNotifikasiFullPage({user:curUser}){
 
   const filtered=humanizedItems.filter(it=>{
     if(filterCat==="unread"&&it.is_read)return!1;
-    if(filterCat==="komentar"&&it.filterGroup!=="komentar"&&it.filterGroup!=="social")return!1;
-    if(filterCat==="arahan"&&it.filterGroup!=="arahan"&&it.category!=="dinas")return!1;
+    if(filterCat==="komentar"&&it.badgeLabel!=="Sharese"&&it.filterGroup!=="komentar"&&it.filterGroup!=="social")return!1;
+    if(filterCat==="jukrah"&&it.badgeLabel!=="Jukrah")return!1;
+    if(filterCat==="limpah"&&it.badgeLabel!=="Limpah")return!1;
     if(searchQ.trim()){
       const q=searchQ.toLowerCase();
-      return String(it.actorName||"").toLowerCase().includes(q)||String(it.actorHandle||"").toLowerCase().includes(q)||String(it.actionText||"").toLowerCase().includes(q)||String(it.snippetText||"").toLowerCase().includes(q)||String(it.message||"").toLowerCase().includes(q);
+      return String(it.actorHandle||"").toLowerCase().includes(q)||String(it.actionText||"").toLowerCase().includes(q)||String(it.snippetText||"").toLowerCase().includes(q)||String(it.message||"").toLowerCase().includes(q)||String(it.badgeLabel||"").toLowerCase().includes(q);
     }
     return!0;
   });
@@ -2628,17 +3206,17 @@ function CasNotifikasiFullPage({user:curUser}){
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem",padding:"1rem 1.25rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
       (0,a.jsxs)("div",{children:[
         (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem"},children:[
-          (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.25rem"},children:"Notifikasi"}),
-          totalUnreadCount>0&&(0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,background:"#2563eb",color:"#fff",fontSize:"0.72rem",fontWeight:800},children:`${totalUnreadCount} baru`})
+          (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0,fontSize:"1.25rem"},children:"Notifikasi & Arsip Riwayat"}),
+          totalUnreadCount>0&&(0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,background:"#2563eb",color:"#fff",fontSize:"0.72rem",fontWeight:800},children:`${totalUnreadCount} belum dibaca`})
         ]}),
-        (0,a.jsx)("p",{className:"cms-page-sub",style:{margin:"0.2rem 0 0"},children:"Kabar terbaru dari rekan sejawat, komentar, sebutan (@mention), koneksi, dan arahan kedinasan."})
+        (0,a.jsx)("p",{className:"cms-page-sub",style:{margin:"0.2rem 0 0"},children:"Seluruh riwayat notifikasi Jukrah, Pelimpahan Perkara (DORS), interaksi Sharese, dan permintaan koneksi tersimpan di sini sebagai arsip."})
       ]}),
       (0,a.jsx)("button",{
         type:"button",
         onClick:markAllRead,
         style:{
           padding:"0.5rem 0.95rem",
-          borderRadius:999,
+          borderRadius:10,
           border:"1px solid rgba(37,99,235,0.35)",
           background:"rgba(37,99,235,0.1)",
           color:"#2563eb",
@@ -2653,10 +3231,11 @@ function CasNotifikasiFullPage({user:curUser}){
 
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",padding:"0.75rem 1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
       (0,a.jsx)("div",{style:{display:"flex",gap:"0.4rem",flexWrap:"wrap"},children:[
-        {id:"all",label:"Semua",count:humanizedItems.length},
+        {id:"all",label:"Semua (Arsip)",count:humanizedItems.length},
         {id:"unread",label:"Belum Dibaca",count:totalUnreadCount},
-        {id:"komentar",label:"Komentar & Sebutan",count:humanizedItems.filter(x=>x.filterGroup==="komentar"||x.filterGroup==="social").length},
-        {id:"arahan",label:"Arahan Resmi",count:humanizedItems.filter(x=>x.filterGroup==="arahan"||x.category==="dinas").length}
+        {id:"jukrah",label:"Jukrah",count:humanizedItems.filter(x=>x.badgeLabel==="Jukrah").length},
+        {id:"limpah",label:"Limpah",count:humanizedItems.filter(x=>x.badgeLabel==="Limpah").length},
+        {id:"komentar",label:"Sharese",count:humanizedItems.filter(x=>x.badgeLabel==="Sharese").length}
       ].map(tb=>{
         const isActive=filterCat===tb.id;
         return(0,a.jsxs)("button",{
@@ -2665,7 +3244,7 @@ function CasNotifikasiFullPage({user:curUser}){
           onClick:()=>setFilterCat(tb.id),
           style:{
             padding:"0.42rem 0.85rem",
-            borderRadius:999,
+            borderRadius:8,
             border:isActive?"1px solid #2563eb":"1px solid var(--cas-border)",
             background:isActive?"#2563eb":"var(--cas-surface-subtle)",
             color:isActive?"#ffffff":"var(--cas-text-primary)",
@@ -2698,15 +3277,15 @@ function CasNotifikasiFullPage({user:curUser}){
         type:"text",
         value:searchQ,
         onChange:e=>setSearchQ(e.target.value),
-        placeholder:"🔍 Cari nama rekan, @username, atau isi...",
-        style:{padding:"0.45rem 0.9rem",borderRadius:999,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",minWidth:"230px",outline:"none"}
+        placeholder:"🔍 Cari @username, nomor LP, atau isi...",
+        style:{padding:"0.45rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",minWidth:"230px",outline:"none"}
       })
     ]}),
 
     loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",borderRadius:16,border:"1px solid var(--cas-border)",color:"var(--cas-text-muted)"},children:"Memuat daftar notifikasi…"}):groupedSections.length===0?(0,a.jsxs)("div",{style:{padding:"3.5rem 1.5rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:16,color:"var(--cas-text-muted)"},children:[
       (0,a.jsx)("div",{style:{fontSize:"2rem",marginBottom:"0.5rem"},children:"🔔"}),
       (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.92rem",color:"var(--cas-text-primary)"},children:"Belum ada notifikasi pada kategori ini"}),
-      (0,a.jsx)("div",{style:{fontSize:"0.78rem",marginTop:"0.25rem"},children:"Interaksi terbaru dari rekan sejawat dan arahan kedinasan akan tampil di sini."})
+      (0,a.jsx)("div",{style:{fontSize:"0.78rem",marginTop:"0.25rem"},children:"Interaksi terbaru dari rekan sejawat, pelimpahan perkara, dan Jukrah akan tampil di sini."})
     ]}):(0,a.jsx)("div",{style:{display:"grid",gap:"1.15rem"},children:groupedSections.map(sec=>(0,a.jsxs)("div",{
       key:sec.bucket,
       style:{background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:16,overflow:"hidden",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},
@@ -2739,7 +3318,7 @@ function CasNotifikasiFullPage({user:curUser}){
                 (0,a.jsxs)("div",{style:{position:"relative",width:44,height:44,flexShrink:0},children:[
                   (0,a.jsx)("img",{
                     src:it.avatarUrl||"/images/default-avatar-polki.png",
-                    alt:it.actorName,
+                    alt:it.actorHandle,
                     onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},
                     style:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"1.5px solid var(--cas-border-strong)"}
                   }),
@@ -2765,14 +3344,30 @@ function CasNotifikasiFullPage({user:curUser}){
                 ]}),
                 (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
                   (0,a.jsxs)("div",{style:{fontSize:"0.86rem",lineHeight:1.45,color:"var(--cas-text-primary)",wordBreak:"break-word"},children:[
-                    it.category==="dinas"?(0,a.jsx)("span",{style:{fontWeight:700},children:`📢 ${it.actionText}`}):(0,a.jsxs)(a.Fragment,{children:[
-                      (0,a.jsx)("span",{style:{fontWeight:800},children:it.actorName}),
+                    (0,a.jsx)("span",{
+                      style:{
+                        display:"inline-block",
+                        padding:"0.08rem 0.45rem",
+                        borderRadius:999,
+                        fontSize:"0.66rem",
+                        fontWeight:800,
+                        background:it.badgeColor||"#2563eb",
+                        color:"#fff",
+                        marginRight:"0.45rem",
+                        verticalAlign:"middle"
+                      },
+                      children:it.badgeLabel||"Sharese"
+                    }),
+                    it.type==="limpah"?(0,a.jsx)("span",{style:{fontWeight:700},children:it.actionText}):it.type==="jukrah"?(0,a.jsxs)(a.Fragment,{children:[
+                      (0,a.jsx)("span",{style:{fontWeight:800,color:"#0284c7"},children:`${it.actorHandle}:`}),
                       " ",
-                      (0,a.jsx)("span",{style:{color:"#2563eb",fontWeight:600,fontSize:"0.8rem"},children:`(${it.actorHandle})`}),
+                      (0,a.jsx)("span",{style:{fontWeight:600},children:it.snippetText?`"${it.snippetText}"`:it.actionText})
+                    ]}):(0,a.jsxs)(a.Fragment,{children:[
+                      (0,a.jsx)("span",{style:{fontWeight:800,color:"#0284c7"},children:it.actorHandle}),
                       " ",
                       (0,a.jsx)("span",{children:it.actionText})
                     ]}),
-                    it.snippetText&&(0,a.jsx)("div",{
+                    it.snippetText&&it.type!=="jukrah"&&(0,a.jsx)("div",{
                       style:{
                         marginTop:"0.28rem",
                         padding:"0.35rem 0.65rem",
@@ -2782,7 +3377,7 @@ function CasNotifikasiFullPage({user:curUser}){
                         color:"var(--cas-text-secondary)",
                         fontSize:"0.8rem"
                       },
-                      children:`«${it.snippetText}»`
+                      children:`"${it.snippetText}"`
                     })
                   ]}),
                   (0,a.jsx)("div",{
@@ -2792,7 +3387,7 @@ function CasNotifikasiFullPage({user:curUser}){
                       fontWeight:it.is_read?500:700,
                       marginTop:"0.3rem"
                     },
-                    children:it.friendlyTime
+                    children:`${it.friendlyTime}${it.is_read?" · Sudah dibaca":""}`
                   })
                 ]})
               ]}),
@@ -2810,7 +3405,7 @@ function CasNotifikasiFullPage({user:curUser}){
                     borderRadius:999,
                     background:"rgba(37,99,235,0.08)"
                   },
-                  children:it.type==="message"?"Balas 💬":"Lihat ➔"
+                  children:it.type==="message"?"Balas 💬":it.type==="follow"?"Koneksi 🤝":"Lihat ➔"
                 })
               ]})
             ]
@@ -2894,6 +3489,14 @@ function CasKeamananPengaturanFullPage({user:curUser}){
     try{return JSON.parse(localStorage.getItem("cas_security_prefs")||"null")||{default_audience:"public",show_online:!0,ticker_enabled:!0};}catch{return{default_audience:"public",show_online:!0,ticker_enabled:!0};}
   });
 
+  const passChecks=[
+    {label:"Minimal 8 karakter",ok:newPass.length>=8},
+    {label:"Huruf besar & kecil (A-Z, a-z)",ok:/[A-Z]/.test(newPass)&&/[a-z]/.test(newPass)},
+    {label:"Mengandung angka (0-9)",ok:/\d/.test(newPass)},
+    {label:"Mengandung simbol (!@#$%^&*)",ok:/[^A-Za-z0-9]/.test(newPass)}
+  ];
+  const passScore=passChecks.filter(c=>c.ok).length;
+
   const handlePassSubmit=async(ev)=>{
     ev.preventDefault();
     if(!oldPass||!newPass){setMsg({type:"err",text:"Kata sandi lama dan kata sandi baru wajib diisi."});return;}
@@ -2920,10 +3523,13 @@ function CasKeamananPengaturanFullPage({user:curUser}){
     }finally{setSaving(!1);}
   };
 
-  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
-    (0,a.jsxs)("div",{children:[
-      (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"🛡️ Keamanan & Pengaturan Akun Sharese"}),
-      (0,a.jsx)("p",{className:"cms-page-sub",children:"Kelola kata sandi, autentikasi dua faktor (TOTP/OTP), privasi linimasa Sharese, dan keamanan sesi aktif Anda."})
+  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem",paddingTop:"0.2rem"},children:[
+    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.75rem"},children:[
+      (0,a.jsxs)("div",{children:[
+        (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0,lineHeight:1.25},children:"🛡️ Keamanan & Pengaturan Akun Sharese"}),
+        (0,a.jsx)("p",{className:"cms-page-sub",style:{margin:"0.25rem 0 0"},children:"Kelola kata sandi, autentikasi dua faktor (TOTP/OTP), privasi linimasa Sharese, dan keamanan sesi aktif Anda."})
+      ]}),
+      (0,a.jsx)("span",{style:{padding:"0.38rem 0.85rem",borderRadius:10,background:"rgba(16,185,129,0.14)",border:"1px solid rgba(16,185,129,0.35)",color:"#059669",fontSize:"0.76rem",fontWeight:800},children:"🔒 Proteksi Akun Kedinasan Aktif"})
     ]}),
     (0,a.jsx)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
       {id:"password",label:"🔑 Ubah Kata Sandi"},
@@ -2932,60 +3538,118 @@ function CasKeamananPengaturanFullPage({user:curUser}){
       {id:"session",label:"💻 Informasi Sesi & Perangkat"}
     ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>{setTab(tb.id);setMsg(null);},style:{padding:"0.5rem 1rem",borderRadius:10,border:tab===tb.id?"1.5px solid #38bdf8":"1px solid var(--cas-border-strong)",background:tab===tb.id?"linear-gradient(135deg, #0284c7, #2563eb)":"var(--cas-card-bg)",color:tab===tb.id?"#fff":"var(--cas-text-primary)",fontSize:"0.8rem",fontWeight:800,cursor:"pointer"},children:tb.label}))}),
     msg&&(0,a.jsx)("div",{style:{padding:"0.75rem 1rem",borderRadius:10,background:msg.type==="ok"?"rgba(16,185,129,0.16)":"rgba(239,68,68,0.16)",border:msg.type==="ok"?"1px solid #10b981":"1px solid #ef4444",color:msg.type==="ok"?"#059669":"#dc2626",fontSize:"0.82rem",fontWeight:700},children:msg.text}),
-    tab==="password"&&(0,a.jsxs)("form",{onSubmit:handlePassSubmit,style:{maxWidth:"520px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.9rem"},children:[
-      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Perbarui Kata Sandi Akun CAS"}),
-      (0,a.jsxs)("div",{children:[
-        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Saat Ini"}),
-        (0,a.jsx)("input",{type:"password",required:!0,value:oldPass,onChange:e=>setOldPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
-      ]}),
-      (0,a.jsxs)("div",{children:[
-        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Baru (Min. 8 Karakter)"}),
-        (0,a.jsx)("input",{type:"password",required:!0,value:newPass,onChange:e=>setNewPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
-      ]}),
-      (0,a.jsxs)("div",{children:[
-        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Konfirmasi Kata Sandi Baru"}),
-        (0,a.jsx)("input",{type:"password",required:!0,value:confPass,onChange:e=>setConfPass(e.target.value),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box"}})
-      ]}),
-      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem"},children:[
-        (0,a.jsx)("button",{type:"submit",disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer"},children:saving?"Menyimpan…":"Simpan Kata Sandi Baru"}),
-        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-password"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"#0284c7",fontWeight:700,cursor:"pointer"},children:"Buka Modul Reset Password Lengkap ➔"})
-      ]})
-    ]}),
-    tab==="2fa"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.9rem"},children:[
-      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Autentikasi Dua Faktor (TOTP Google/Microsoft Authenticator)"}),
-      (0,a.jsx)("p",{style:{margin:0,fontSize:"0.83rem",color:"var(--cas-text-muted)",lineHeight:1.5},children:"Lindungi akun kedinasan Anda dengan verifikasi 2 langkah (TOTP QR Code atau OTP Email Polri) setiap kali melakukan login dari perangkat baru."}),
-      (0,a.jsxs)("div",{style:{display:"flex",gap:"0.65rem",flexWrap:"wrap"},children:[
-        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-totp"),style:{padding:"0.55rem 1.15rem",borderRadius:8,border:"none",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,cursor:"pointer"},children:"📱 Konfigurasi / Reset QR TOTP Sekarang"}),
-        (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile"),style:{padding:"0.55rem 1rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontWeight:700,cursor:"pointer"},children:"👤 Kembali ke Profil Saya"})
-      ]})
-    ]}),
-    tab==="privacy"&&(0,a.jsxs)("div",{style:{maxWidth:"580px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"1rem"},children:[
-      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Preferensi Privasi & Visibilitas Sharese"}),
-      (0,a.jsxs)("div",{children:[
-        (0,a.jsx)("label",{style:{display:"block",fontSize:"0.8rem",fontWeight:700,color:"var(--cas-text-secondary)",marginBottom:"0.35rem"},children:"Audiens Default Saat Membuat Postingan Baru"}),
-        (0,a.jsxs)("select",{value:prefs.default_audience,onChange:e=>setPrefs(p=>({...p,default_audience:e.target.value})),style:{width:"100%",padding:"0.55rem 0.85rem",borderRadius:8,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)"},children:[
-          (0,a.jsx)("option",{value:"public",children:"🌐 Publik Seluruh Jajaran Polri"}),
-          (0,a.jsx)("option",{value:"regional",children:"🏢 Internal Satker / Polda Terkait"}),
-          (0,a.jsx)("option",{value:"friends",children:"🤝 Hanya Jejaring Koneksi"})
+    (0,a.jsxs)("div",{className:"cas-keamanan-bento-grid",children:[
+      (0,a.jsxs)("div",{style:{display:"flex",flexDirection:"column"},children:[
+        tab==="password"&&(0,a.jsxs)("form",{onSubmit:handlePassSubmit,style:{flex:1,padding:"1.4rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},children:[
+          (0,a.jsxs)("div",{style:{display:"grid",gap:"0.9rem"},children:[
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsx)("h3",{style:{margin:0,fontSize:"1.02rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"Perbarui Kata Sandi Akun CAS"}),
+              (0,a.jsx)("p",{style:{margin:"0.2rem 0 0",fontSize:"0.76rem",color:"var(--cas-text-muted)"},children:"Pastikan kata sandi baru memenuhi standar keamanan siber Bareskrim Polri."})
+            ]}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Saat Ini"}),
+              (0,a.jsx)("input",{type:"password",required:!0,placeholder:"Masukkan kata sandi saat ini",value:oldPass,onChange:e=>setOldPass(e.target.value),style:{width:"100%",padding:"0.58rem 0.85rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box",fontSize:"0.84rem"}})
+            ]}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Kata Sandi Baru (Min. 8 Karakter)"}),
+              (0,a.jsx)("input",{type:"password",required:!0,placeholder:"Kombinasi huruf, angka & simbol",value:newPass,onChange:e=>setNewPass(e.target.value),style:{width:"100%",padding:"0.58rem 0.85rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box",fontSize:"0.84rem"}})
+            ]}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsx)("label",{style:{display:"block",fontSize:"0.78rem",color:"var(--cas-text-secondary)",fontWeight:700,marginBottom:"0.3rem"},children:"Konfirmasi Kata Sandi Baru"}),
+              (0,a.jsx)("input",{type:"password",required:!0,placeholder:"Ulangi kata sandi baru",value:confPass,onChange:e=>setConfPass(e.target.value),style:{width:"100%",padding:"0.58rem 0.85rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",boxSizing:"border-box",fontSize:"0.84rem"}})
+            ]}),
+            (0,a.jsxs)("div",{style:{padding:"0.75rem 0.9rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"0.45rem"},children:[
+                (0,a.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:800,color:"var(--cas-text-secondary)"},children:"Indikator Kekuatan Kata Sandi"}),
+                (0,a.jsx)("span",{style:{fontSize:"0.72rem",fontWeight:800,color:passScore>=3?"#059669":passScore>=2?"#d97706":"#64748b"},children:newPass?passScore===4?"Sangat Kuat":passScore===3?"Kuat":passScore===2?"Sedang":"Lemah":"Belum diisi"})
+              ]}),
+              (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(2, minmax(0, 1fr))",gap:"0.35rem"},children:passChecks.map((chk,idx)=>(0,a.jsxs)("div",{key:idx,style:{display:"flex",alignItems:"center",gap:"0.35rem",fontSize:"0.73rem",color:chk.ok?"#059669":"var(--cas-text-muted)",fontWeight:chk.ok?700:500},children:[
+                (0,a.jsx)("span",{children:chk.ok?"✓":"○"}),
+                (0,a.jsx)("span",{children:chk.label})
+              ]}))})
+            ]})
+          ]}),
+          (0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",flexWrap:"wrap",paddingTop:"0.25rem"},children:[
+            (0,a.jsx)("button",{type:"submit",disabled:saving,style:{padding:"0.58rem 1.25rem",borderRadius:9,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:saving?"Menyimpan…":"Simpan Kata Sandi Baru"}),
+            (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-password"),style:{padding:"0.58rem 1rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"#0284c7",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"},children:"Buka Modul Reset Password Lengkap ➔"})
+          ]})
+        ]}),
+        tab==="2fa"&&(0,a.jsxs)("div",{style:{flex:1,padding:"1.4rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},children:[
+          (0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem"},children:[
+            (0,a.jsx)("h3",{style:{margin:0,fontSize:"1.02rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"Autentikasi Dua Faktor (TOTP Google/Microsoft Authenticator)"}),
+            (0,a.jsx)("p",{style:{margin:0,fontSize:"0.83rem",color:"var(--cas-text-muted)",lineHeight:1.55},children:"Lindungi akun kedinasan Anda dengan verifikasi 2 langkah (TOTP QR Code atau OTP Email Polri) setiap kali melakukan login dari perangkat baru."}),
+            (0,a.jsx)("div",{style:{padding:"0.85rem 1rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",fontSize:"0.78rem",color:"var(--cas-text-secondary)",lineHeight:1.5},children:"Aplikasi yang didukung: Google Authenticator, Microsoft Authenticator, Authy, atau OTP Email Resmi Polri."})
+          ]}),
+          (0,a.jsxs)("div",{style:{display:"flex",gap:"0.65rem",flexWrap:"wrap"},children:[
+            (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile/reset-totp"),style:{padding:"0.58rem 1.15rem",borderRadius:9,border:"none",background:"linear-gradient(135deg, #0284c7, #2563eb)",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer"},children:"📱 Konfigurasi / Reset QR TOTP Sekarang"}),
+            (0,a.jsx)("button",{type:"button",onClick:()=>casNav(router,"/cms/profile"),style:{padding:"0.58rem 1rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontWeight:700,fontSize:"0.82rem",cursor:"pointer"},children:"👤 Kembali ke Profil Saya"})
+          ]})
+        ]}),
+        tab==="privacy"&&(0,a.jsxs)("div",{style:{flex:1,padding:"1.4rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},children:[
+          (0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
+            (0,a.jsx)("h3",{style:{margin:0,fontSize:"1.02rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"Preferensi Privasi & Visibilitas Sharese"}),
+            (0,a.jsxs)("div",{children:[
+              (0,a.jsx)("label",{style:{display:"block",fontSize:"0.8rem",fontWeight:700,color:"var(--cas-text-secondary)",marginBottom:"0.35rem"},children:"Audiens Default Saat Membuat Postingan Baru"}),
+              (0,a.jsxs)("select",{value:prefs.default_audience,onChange:e=>setPrefs(p=>({...p,default_audience:e.target.value})),style:{width:"100%",padding:"0.58rem 0.85rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.84rem"},children:[
+                (0,a.jsx)("option",{value:"public",children:"🌐 Publik Seluruh Jajaran Polri"}),
+                (0,a.jsx)("option",{value:"regional",children:"🏢 Internal Satker / Polda Terkait"}),
+                (0,a.jsx)("option",{value:"friends",children:"🤝 Hanya Jejaring Koneksi"})
+              ]})
+            ]}),
+            (0,a.jsxs)("label",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.84rem",color:"var(--cas-text-secondary)",cursor:"pointer"},children:[
+              (0,a.jsx)("input",{type:"checkbox",checked:Boolean(prefs.show_online),onChange:e=>setPrefs(p=>({...p,show_online:e.target.checked}))}),
+              "Tampilkan indikator status Online (Aktif) pada menu Obrolan & Koneksi"
+            ]})
+          ]}),
+          (0,a.jsx)("button",{type:"button",onClick:savePrefs,disabled:saving,style:{padding:"0.58rem 1.25rem",borderRadius:9,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,fontSize:"0.82rem",cursor:"pointer", alignSelf:"flex-start"},children:"Simpan Preferensi Privasi"})
+        ]}),
+        tab==="session"&&(0,a.jsxs)("div",{style:{flex:1,padding:"1.4rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},children:[
+          (0,a.jsxs)("div",{style:{display:"grid",gap:"0.85rem"},children:[
+            (0,a.jsx)("h3",{style:{margin:0,fontSize:"1.02rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"Sesi Login Kedinasan Aktif"}),
+            (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(2, minmax(0, 1fr))",gap:"0.75rem",fontSize:"0.82rem"},children:[
+              {k:"Nama Personil",v:casFormatHumanName(curUser?.name||"-")},
+              {k:"Username / Callsign",v:formatUserCallsign(curUser)||"-"},
+              {k:"Role RBAC",v:curUser?.role_bdb||"operator"},
+              {k:"Satker",v:curUser?.satker_nama||curUser?.satker||"Polri"}
+            ].map((r,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.7rem 0.85rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
+              (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:600},children:r.k}),
+              (0,a.jsx)("div",{style:{fontWeight:800,color:"var(--cas-text-primary)",marginTop:"0.15rem"},children:r.v})
+            ]}))})
+          ]}),
+          (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"var(--cas-text-muted)"},children:"Sesi ini dilindungi dengan token otorisasi terenkripsi dan diaudit secara otomatis."})
         ]})
       ]}),
-      (0,a.jsxs)("label",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.84rem",color:"var(--cas-text-secondary)",cursor:"pointer"},children:[
-        (0,a.jsx)("input",{type:"checkbox",checked:Boolean(prefs.show_online),onChange:e=>setPrefs(p=>({...p,show_online:e.target.checked}))}),
-        "Tampilkan indikator status Online (Aktif) pada menu Obrolan & Koneksi"
-      ]}),
-      (0,a.jsx)("button",{type:"button",onClick:savePrefs,disabled:saving,style:{padding:"0.55rem 1.2rem",borderRadius:8,border:"none",background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer",justifySelf:"start"},children:"Simpan Preferensi Privasi"})
-    ]}),
-    tab==="session"&&(0,a.jsxs)("div",{style:{maxWidth:"620px",padding:"1.35rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"grid",gap:"0.85rem"},children:[
-      (0,a.jsx)("h3",{style:{margin:0,fontSize:"1rem",color:"var(--cas-text-primary)"},children:"Sesi Login Kedinasan Aktif"}),
-      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem",fontSize:"0.82rem"},children:[
-        {k:"Nama Personil",v:curUser?.name||"-"},
-        {k:"Username / Callsign",v:formatUserCallsign(curUser)||"-"},
-        {k:"Role RBAC",v:curUser?.role_bdb||"operator"},
-        {k:"Satker",v:curUser?.satker_nama||curUser?.satker||"Polri"}
-      ].map((r,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.65rem 0.85rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
-        (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)"},children:r.k}),
-        (0,a.jsx)("div",{style:{fontWeight:800,color:"var(--cas-text-primary)",marginTop:"0.15rem"},children:r.v})
-      ]}))})
+      (0,a.jsxs)("div",{style:{padding:"1.4rem",borderRadius:16,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"1rem",boxShadow:"0 4px 16px rgba(15,23,42,0.04)"},children:[
+        (0,a.jsxs)("div",{style:{display:"grid",gap:"0.85rem"},children:[
+          (0,a.jsxs)("div",{children:[
+            (0,a.jsx)("h3",{style:{margin:0,fontSize:"0.98rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"🛡️ Status Proteksi & Standar Keamanan Akun"}),
+            (0,a.jsx)("p",{style:{margin:"0.2rem 0 0",fontSize:"0.75rem",color:"var(--cas-text-muted)"},children:"Ringkasan lapisan pelindung aktif pada akun Big Data Binops & Sharese Anda."})
+          ]}),
+          (0,a.jsx)("div",{style:{display:"grid",gap:"0.55rem"},children:[
+            {title:"Enkripsi Sesi JWT & TLS Aktif",desc:"Lalu lintas data LP, Jukrah, dan Obrolan dienkripsi penuh.",badge:"Aktif",color:"#059669"},
+            {title:"Verifikasi PIN 4-Digit & Captcha Aktif",desc:"Gerbang login dilindungi PIN keamanan dan verifikasi anti-bot.",badge:"Aktif",color:"#0284c7"},
+            {title:"Audit Log Bareskrim Aktif",desc:"Setiap perubahan sandi dan akses dokumen tercatat otomatis.",badge:"Tercatat",color:"#7c3aed"}
+          ].map((item,idx)=>(0,a.jsxs)("div",{key:idx,style:{padding:"0.7rem 0.85rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.65rem"},children:[
+            (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+              (0,a.jsx)("div",{style:{fontSize:"0.8rem",fontWeight:800,color:"var(--cas-text-primary)"},children:item.title}),
+              (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",marginTop:"0.15rem",lineHeight:1.4},children:item.desc})
+            ]}),
+            (0,a.jsx)("span",{style:{padding:"0.15rem 0.55rem",borderRadius:999,fontSize:"0.68rem",fontWeight:800,background:"rgba(16,185,129,0.14)",color:item.color,flexShrink:0},children:`✓ ${item.badge}`})
+          ]}))}),
+          (0,a.jsxs)("div",{style:{padding:"0.8rem 0.95rem",borderRadius:12,background:"rgba(37,99,235,0.06)",border:"1px solid rgba(37,99,235,0.2)",fontSize:"0.75rem",color:"var(--cas-text-secondary)",lineHeight:1.5},children:[
+            (0,a.jsx)("div",{style:{fontWeight:800,color:"#2563eb",marginBottom:"0.3rem"},children:"📌 Pedoman Keamanan Sandi Polri:"}),
+            (0,a.jsxs)("ul",{style:{margin:0,paddingLeft:"1.1rem",display:"grid",gap:"0.2rem"},children:[
+              (0,a.jsx)("li",{children:"Gunakan kombinasi huruf besar, huruf kecil, angka, dan simbol."}),
+              (0,a.jsx)("li",{children:"Hindari menggunakan NRP atau tanggal lahir sebagai kata sandi."}),
+              (0,a.jsx)("li",{children:"Perbarui kata sandi secara berkala setiap 90 hari."})
+            ]})
+          ]})
+        ]}),
+        (0,a.jsxs)("div",{style:{paddingTop:"0.65rem",borderTop:"1px solid var(--cas-border)",display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"0.74rem",color:"var(--cas-text-muted)"},children:[
+          (0,a.jsx)("span",{children:`Akun: ${casFormatHumanName(curUser?.name||"Personil Polri")}`}),
+          (0,a.jsx)("span",{style:{fontWeight:700,color:"#0284c7"},children:formatUserCallsign(curUser)||"@personil"})
+        ]})
+      ]})
     ]})
   ]});
 }
