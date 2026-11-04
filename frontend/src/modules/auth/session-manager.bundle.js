@@ -146,9 +146,30 @@ function initCasExpensivePcHpStandards() {
       ".p-datatable .p-datatable-header {",
       "  padding: 0.85rem 1.1rem !important;",
       "}",
-      "/* Floating Chat Button Clearance (Prevent Overlapping Bottom-Right Table Action Icons) */",
+      "/* Floating Chat Button Clearance & Universal Container Width Guard */",
       ".layout-main, .cms-main, .cms-content, main.cms-content {",
       "  padding-bottom: 5rem !important;",
+      "}",
+      ".cms-main {",
+      "  min-width: 0 !important;",
+      "  max-width: 100% !important;",
+      "  overflow-x: hidden !important;",
+      "}",
+      ".cms-content, main.cms-content {",
+      "  width: 100% !important;",
+      "  max-width: 100% !important;",
+      "  min-width: 0 !important;",
+      "  box-sizing: border-box !important;",
+      "  overflow-x: hidden !important;",
+      "}",
+      ".cms-content > *:not(table), .cms-content [style*=\"display: grid\"]:not(table) > *:not(table), .cms-content [style*=\"display:grid\"]:not(table) > *:not(table) {",
+      "  min-width: 0 !important;",
+      "  max-width: 100% !important;",
+      "}",
+      ".cms-content [style*=\"display: grid\"]:not([style*=\"grid-template-columns\"]):not([class]), .cms-content [style*=\"display:grid\"]:not([style*=\"grid-template-columns\"]):not([class]) {",
+      "  grid-template-columns: minmax(0, 1fr) !important;",
+      "  min-width: 0 !important;",
+      "  max-width: 100% !important;",
       "}",
       "/* Anti-Offside Icons, Avatars & Brand Logos Across All Devices */",
       ".layout-sidebar img, .layout-topbar img, .cms-sidebar img, .cms-topbar img, .cas-avatar, .cms-user-avatar img, svg {",
@@ -485,6 +506,21 @@ function initCasExpensivePcHpStandards() {
       "@media (max-width: 900px) {",
       "  .cas-keamanan-bento-grid {",
       "    grid-template-columns: minmax(0, 1fr) !important;",
+      "  }",
+      "}",
+      ".cas-insight-kpi-grid {",
+      "  display: grid !important;",
+      "  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;",
+      "  gap: 0.85rem !important;",
+      "}",
+      "@media (max-width: 1599px) {",
+      "  .cas-insight-kpi-grid {",
+      "    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;",
+      "  }",
+      "}",
+      "@media (max-width: 640px) {",
+      "  .cas-insight-kpi-grid {",
+      "    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;",
       "  }",
       "}",
       ".cms-logout .cas-logout-icon, .cms-logout .cas-logout-arrow {",
@@ -2930,7 +2966,10 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     (0,a.jsxs)("div",{
       style:{
         display:"grid",
-        gridTemplateColumns:isMobileView?"1fr":"340px 1fr",
+        gridTemplateColumns:isMobileView?"minmax(0, 1fr)":"340px minmax(0, 1fr)",
+        width:"100%",
+        maxWidth:"100%",
+        minWidth:0,
         height:isMobileView?"calc(100vh - var(--cms-header-h, 6.85rem) - 1.25rem)":"calc(100vh - var(--cms-header-h, 6.85rem) - 2rem)",
         minHeight:"520px",
         marginBottom:0,
@@ -4584,49 +4623,58 @@ function CasInsightFullPage({user:curUser}){
 
   const d=data||{};
   const topPosts=Array.isArray(d.top_posts)?d.top_posts:[];
-  const satkerDist=Array.isArray(d.satker_distribution)?d.satker_distribution:[];
+  const satkerDist=Array.isArray(d.satker_distribution)&&d.satker_distribution.length>0?d.satker_distribution:Array.isArray(d.activity_by_day)?d.activity_by_day.map(a=>({satker_label:`📅 ${a.label||a.date}`,personil_count:Number(a.total_activity||0),sub_unit:`${a.posts_count||0} post · ${a.reactions_count||0} reaksi · ${a.comments_count||0} komentar`})) :[];
+  const isActivityFallback=!Array.isArray(d.satker_distribution)||d.satker_distribution.length===0;
   const maxSat=Math.max(1,...satkerDist.map(s=>Number(s.personil_count||0)));
+  const estReach=Number(d.estimated_reach??d.total_views_estimated??0);
+  const totPosts=Number(d.total_posts??0);
+  const totJukrah=Number(d.total_jukrah_posts??topPosts.filter(x=>x.is_official_jukrah).length??0);
+  const totReactions=Number(d.total_reactions_received??d.total_likes_received??0);
+  const totComments=Number(d.total_comments_received??0);
+  const totReposts=Number(d.total_reposts??d.total_reposts_received??0);
+  const totReads=Number(d.total_read_receipts??d.total_views_estimated??0);
+  const totConns=Number(d.total_connections??d.mutual_connections_count??d.followers_count??0);
 
-  return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
-    (0,a.jsxs)("div",{children:[
+  return(0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"minmax(0, 1fr)",gap:"1rem",width:"100%",maxWidth:"100%",minWidth:0,boxSizing:"border-box"},children:[
+    (0,a.jsxs)("div",{style:{minWidth:0},children:[
       (0,a.jsx)("h1",{className:"cms-page-title",style:{margin:0},children:"📈 Insight & Analitik Akun Sharese"}),
       (0,a.jsx)("p",{className:"cms-page-sub",children:"Statistik jangkauan publikasi, tingkat konfirmasi baca (Read Receipts), interaksi sejawat, dan sebaran keterlibatan per Satker."})
     ]}),
-    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Menghitung metrik analitik akun Anda…"}):(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
-      (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(185px, 1fr))",gap:"0.85rem"},children:[
-        {label:"Estimasi Jangkauan (Reach)",val:Number(d.estimated_reach||0).toLocaleString("id-ID"),sub:"Impresi Linimasa Polri",color:"#0284c7"},
-        {label:"Total Postingan Aktif",val:Number(d.total_posts||0).toLocaleString("id-ID"),sub:`${d.total_jukrah_posts||0} Jukrah Kedinasan`,color:"#7c3aed"},
-        {label:"Total Apresiasi Diterima",val:Number(d.total_reactions_received||0).toLocaleString("id-ID"),sub:"Reaksi Personil",color:"#059669"},
-        {label:"Diskusi & Komentar",val:Number(d.total_comments_received||0).toLocaleString("id-ID"),sub:`${d.total_reposts||0} Kali Diteruskan`,color:"#d97706"},
-        {label:"Konfirmasi Baca Jukrah",val:Number(d.total_read_receipts||0).toLocaleString("id-ID"),sub:"Read Receipts Tercatat",color:"#db2777"},
-        {label:"Jejaring Koneksi Aktif",val:Number(d.total_connections||0).toLocaleString("id-ID"),sub:`${d.total_messages||0} Pesan Taktis`,color:"#2563eb"}
-      ].map((k,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"1rem 1.15rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+    loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Menghitung metrik analitik akun Anda…"}):(0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"minmax(0, 1fr)",gap:"1rem",width:"100%",maxWidth:"100%",minWidth:0},children:[
+      (0,a.jsx)("div",{className:"cas-insight-kpi-grid",style:{display:"grid",gap:"0.85rem",width:"100%",minWidth:0},children:[
+        {label:"Estimasi Jangkauan (Reach)",val:estReach.toLocaleString("id-ID"),sub:"Impresi Linimasa Polri",color:"#0284c7"},
+        {label:"Total Postingan Aktif",val:totPosts.toLocaleString("id-ID"),sub:`${totJukrah} Jukrah Kedinasan`,color:"#7c3aed"},
+        {label:"Total Apresiasi Diterima",val:totReactions.toLocaleString("id-ID"),sub:"Reaksi Personil",color:"#059669"},
+        {label:"Diskusi & Komentar",val:totComments.toLocaleString("id-ID"),sub:`${totReposts} Kali Diteruskan`,color:"#d97706"},
+        {label:"Estimasi Tayangan & Baca",val:totReads.toLocaleString("id-ID"),sub:`Engagement ${d.engagement_rate||0}%`,color:"#db2777"},
+        {label:"Jejaring Koneksi Aktif",val:totConns.toLocaleString("id-ID"),sub:`${d.followers_count||totConns} Pengikut Jejaring`,color:"#2563eb"}
+      ].map((k,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"1rem 1.15rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",minWidth:0,overflow:"hidden"},children:[
         (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",fontWeight:700},children:k.label}),
         (0,a.jsx)("div",{style:{fontSize:"1.55rem",fontWeight:800,color:k.color,margin:"0.25rem 0"},children:k.val}),
         (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:600},children:k.sub})
       ]}))}),
-      (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(min(100%, 250px), 1fr))",gap:"1rem"},children:[
-        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
-          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"🏢 Sebaran Interaksi & Jejaring per Satker"}),
-          satkerDist.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada data distribusi Satker."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem"},children:satkerDist.map((s,idx)=>{
+      (0,a.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(min(100%, 340px), 1fr))",gap:"1rem",width:"100%",minWidth:0},children:[
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",minWidth:0,overflow:"hidden"},children:[
+          (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary)"},children:isActivityFallback?"📊 Aktivitas & Interaksi 7 Hari Terakhir":"🏢 Sebaran Interaksi & Jejaring per Satker"}),
+          satkerDist.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada data distribusi aktivitas."}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"minmax(0, 1fr)",gap:"0.65rem",minWidth:0},children:satkerDist.map((s,idx)=>{
             const pct=Math.max(8,Math.round(Number(s.personil_count||0)/maxSat*100));
-            return(0,a.jsxs)("div",{key:idx,children:[
-              (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.78rem",marginBottom:"0.22rem"},children:[
-                (0,a.jsx)("span",{style:{color:"var(--cas-text-secondary)",fontWeight:700},children:s.satker_label}),
-                (0,a.jsxs)("span",{style:{color:"#0284c7",fontWeight:800},children:[s.personil_count," personil"]})
+            return(0,a.jsxs)("div",{key:idx,style:{minWidth:0},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.78rem",marginBottom:"0.22rem",minWidth:0},children:[
+                (0,a.jsx)("span",{style:{color:"var(--cas-text-secondary)",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0,flex:1},children:s.satker_label}),
+                (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:800,flexShrink:0},children:s.sub_unit||`${s.personil_count} personil`})
               ]}),
               (0,a.jsx)("div",{style:{height:8,borderRadius:999,background:"var(--cas-surface-hover)",overflow:"hidden"},children:(0,a.jsx)("div",{style:{width:`${pct}%`,height:"100%",background:"linear-gradient(90deg, #0284c7, #38bdf8)",borderRadius:999}})})
             ]});
           })})
         ]}),
-        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
+        (0,a.jsxs)("div",{style:{padding:"1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",minWidth:0,overflow:"hidden"},children:[
           (0,a.jsx)("h3",{style:{margin:"0 0 0.85rem",fontSize:"0.95rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"🔥 Postingan dengan Performa Tertinggi"}),
-          topPosts.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada publikasi pada akun Anda."}):(0,a.jsx)("div",{style:{display:"grid",gap:"0.65rem",maxHeight:"320px",overflowY:"auto"},children:topPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"0.75rem 0.9rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
-            (0,a.jsx)("div",{style:{fontSize:"0.8rem",color:"var(--cas-text-primary)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:p.content}),
-            (0,a.jsxs)("div",{style:{display:"flex",gap:"0.85rem",marginTop:"0.4rem",fontSize:"0.72rem",color:"var(--cas-text-muted)"},children:[
-              (0,a.jsx)("span",{style:{color:"#059669",fontWeight:700},children:`👍 ${p.reactions_count} Reaksi`}),
-              (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`💬 ${p.comments_count} Komentar`}),
-              (0,a.jsx)("span",{style:{color:"#d97706",fontWeight:700},children:`✓✓ ${p.reads_count} Dibaca`})
+          topPosts.length===0?(0,a.jsx)("div",{style:{color:"var(--cas-text-muted)",fontSize:"0.82rem",padding:"1rem 0"},children:"Belum ada publikasi pada akun Anda."}):(0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"minmax(0, 1fr)",gap:"0.65rem",maxHeight:"320px",overflowY:"auto",overflowX:"hidden",minWidth:0},children:topPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"0.75rem 0.9rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",minWidth:0,overflow:"hidden"},children:[
+            (0,a.jsx)("div",{style:{fontSize:"0.8rem",color:"var(--cas-text-primary)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"},children:p.content}),
+            (0,a.jsxs)("div",{style:{display:"flex",flexWrap:"wrap",gap:"0.85rem",marginTop:"0.4rem",fontSize:"0.72rem",color:"var(--cas-text-muted)"},children:[
+              (0,a.jsx)("span",{style:{color:"#059669",fontWeight:700},children:`👍 ${p.reactions_count??p.likes??0} Reaksi`}),
+              (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`💬 ${p.comments_count??p.comments??0} Komentar`}),
+              (0,a.jsx)("span",{style:{color:"#d97706",fontWeight:700},children:`✓✓ ${p.reads_count??p.views??0} Tayangan`})
             ]})
           ]}))})
         ]})
