@@ -12,6 +12,7 @@ dotenv.config();
 // time zone (lihat pg_type). Paksa selalu diparse sbg UTC, cocok dgn cara Postgres benar2 menyimpannya
 // -- TIDAK bergantung TZ proses (yg tetap Asia/Jakarta utk keperluan lain, mis. jadwal cron).
 pgTypes.setTypeParser(1114, (str: string) => new Date(str + 'Z'));
+pgTypes.setTypeParser(1082, (str: string) => str);
 
 // Pasangan fix di atas (SISI BACA) -- ini SISI TULIS, bug BEDA yg baru ketemu 5 Agu 2026 (akun
 // auth_users.locked_until kekunci 7 jam lebih lama dari 30 menit yg seharusnya). Root cause:

@@ -214,7 +214,7 @@ export class LpPelimpahanService {
                        and (
                            deskripsi ilike '%RESKRIM%' or deskripsi ilike '%SATRESKRIM%'
                            or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%'
-                           or deskripsi ilike '%LANTAS%' or deskripsi ilike '%TAHTI%'
+                           or deskripsi ilike '%LANTAS%'
                        )
                      order by deskripsi asc`,
                     [hier.polresId]
@@ -535,10 +535,53 @@ export class LpPelimpahanService {
         return rows.length > 0;
     }
 
+    private validatePelimpahanDokumen(nomorDokumen?: string, tanggalDokumen?: string, keterangan?: string): { noDoc: string | undefined; tglDoc: string | undefined; ket: string | undefined } {
+        const noDoc = String(nomorDokumen ?? '').trim().replace(/\s+/g, ' ');
+        const tglDoc = String(tanggalDokumen ?? '').trim().slice(0, 10);
+        const ket = String(keterangan ?? '').trim().replace(/\s+/g, ' ');
+
+        if (!noDoc && !tglDoc) {
+            throw new BadRequestException('Nomor Dokumen Limpah dan Tanggal Dokumen Limpah tidak boleh kosong dua-duanya (minimal salah satu wajib diisi).');
+        }
+        if (noDoc) {
+            if (noDoc.length < 3 || noDoc.length > 150 || /[<>]/.test(noDoc) || !/[a-zA-Z0-9]/.test(noDoc)) {
+                throw new BadRequestException('Nomor Dokumen Limpah tidak valid (minimal 3 karakter alfanumerik, maksimal 150 karakter).');
+            }
+        }
+        if (tglDoc) {
+            const m = tglDoc.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) {
+                throw new BadRequestException('Format Tanggal Dokumen Limpah tidak valid (gunakan YYYY-MM-DD).');
+            }
+            const y = Number(m[1]);
+            const mo = Number(m[2]);
+            const d = Number(m[3]);
+            const dt = new Date(Date.UTC(y, mo - 1, d));
+            if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== mo || dt.getUTCDate() !== d || y < 1990) {
+                throw new BadRequestException('Tanggal Dokumen Limpah tidak valid.');
+            }
+            const todayWib = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+            if (tglDoc > todayWib) {
+                throw new BadRequestException('Tanggal Dokumen Limpah tidak boleh melebihi tanggal hari ini.');
+            }
+        }
+        if ((!noDoc || !tglDoc) && ket.length < 5) {
+            throw new BadRequestException('Apabila Nomor Dokumen Limpah atau Tanggal Dokumen Limpah salah satunya kosong (misal karena arsip rusak/buram/hilang), Keterangan Pelimpahan wajib diisi minimal 5 karakter.');
+        }
+        if (ket.length > 1000 || /[<>]/.test(ket)) {
+            throw new BadRequestException('Keterangan Pelimpahan tidak valid (maksimal 1000 karakter dan tanpa tag HTML).');
+        }
+        return { noDoc: noDoc || undefined, tglDoc: tglDoc || undefined, ket: ket || undefined };
+    }
+
     /** Buat pelimpahan internal: validasi akses + validasi batas hierarki (server-side). */
     async create(opts: { lpId: number; satkerTujuanId: number; keterangan?: string; nomorDokumen?: string; tanggalDokumen?: string; userId?: number; statement?: { pernyataan?: string; alasan?: string } }) {
         await this.monitoring.assertNotViewer(opts?.userId);
         await this.ensureTable();
+        const { noDoc, tglDoc, ket } = this.validatePelimpahanDokumen(opts.nomorDokumen, opts.tanggalDokumen, opts.keterangan);
+        opts.nomorDokumen = noDoc;
+        opts.tanggalDokumen = tglDoc;
+        opts.keterangan = ket;
         const lp = await this.lpRow(opts.lpId);
         if (!lp) throw new NotFoundException('LP tidak ditemukan.');
         if (!lp.satker_id) throw new BadRequestException('LP ini belum punya satker penanganan.');
@@ -643,6 +686,10 @@ export class LpPelimpahanService {
     async createEksternal(opts: { lpId: number; satkerEksternalId: number; keterangan?: string; nomorDokumen?: string; tanggalDokumen?: string; userId?: number; statement?: { pernyataan?: string; alasan?: string } }) {
         await this.monitoring.assertNotViewer(opts?.userId);
         await this.ensureTable();
+        const { noDoc, tglDoc, ket } = this.validatePelimpahanDokumen(opts.nomorDokumen, opts.tanggalDokumen, opts.keterangan);
+        opts.nomorDokumen = noDoc;
+        opts.tanggalDokumen = tglDoc;
+        opts.keterangan = ket;
         const lp = await this.dataSource.query(
             'select id, satker_id, satker_nama, unit_satker_id, unit_satker_nama, no_laporan, dilimpahkan_eksternal from bdb_laporan_polisi where id=$1',
             [opts.lpId]

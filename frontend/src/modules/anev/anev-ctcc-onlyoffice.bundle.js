@@ -953,9 +953,9 @@ e.s(["default", 0, function() {
                                                                                             children: [
                                                                                                 (0, t.jsx)("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem", color: "#475569" }, children: "Dari Tanggal" }),
                                                                                                 (0, t.jsx)(s.InputText, {
-                                                                                                    type: "date",
+                                                                                                    type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                                                                                     value: kpCustomFrom,
-                                                                                                    onChange: (e) => setKpCustomFrom(e.target.value),
+                                                                                                    onChange: (e) => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setKpCustomFrom(v && v > td ? td : v); },
                                                                                                     style: { width: "100%" }
                                                                                                 })
                                                                                             ]
@@ -964,9 +964,9 @@ e.s(["default", 0, function() {
                                                                                             children: [
                                                                                                 (0, t.jsx)("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem", color: "#475569" }, children: "Sampai Tanggal" }),
                                                                                                 (0, t.jsx)(s.InputText, {
-                                                                                                    type: "date",
+                                                                                                    type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                                                                                     value: kpCustomTo,
-                                                                                                    onChange: (e) => setKpCustomTo(e.target.value),
+                                                                                                    onChange: (e) => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setKpCustomTo(v && v > td ? td : v); },
                                                                                                     style: { width: "100%" }
                                                                                                 })
                                                                                             ]
@@ -1519,9 +1519,9 @@ e.s(["default", 0, function() {
                                             children: [
                                                 (0, t.jsx)("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem" }, children: "Periode Dari:" }),
                                                 (0, t.jsx)(s.InputText, {
-                                                    type: "date",
+                                                    type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                                     value: filterDateStart,
-                                                    onChange: (e) => setFilterDateStart(e.target.value),
+                                                    onChange: (e) => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setFilterDateStart(v && v > td ? td : v); },
                                                     style: { width: "100%" }
                                                 })
                                             ]
@@ -1530,9 +1530,9 @@ e.s(["default", 0, function() {
                                             children: [
                                                 (0, t.jsx)("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem" }, children: "Periode Sampai:" }),
                                                 (0, t.jsx)(s.InputText, {
-                                                    type: "date",
+                                                    type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                                     value: filterDateEnd,
-                                                    onChange: (e) => setFilterDateEnd(e.target.value),
+                                                    onChange: (e) => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setFilterDateEnd(v && v > td ? td : v); },
                                                     style: { width: "100%" }
                                                 })
                                             ]

@@ -858,16 +858,18 @@
               }),
               jsx("input", {
                 type: "date",
+                max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                 value: curFilter.from || "",
-                onChange: function(ev) { updateFilter(activeTab, { from: ev.target.value, page: 1 }); },
+                onChange: function(ev) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; updateFilter(activeTab, { from: v && v > td ? td : v, page: 1 }); },
                 title: "Periode Mulai",
                 className: "p-inputtext p-component",
                 style: { height: "38px", padding: "0 0.6rem", borderRadius: "8px", fontSize: "0.8rem", boxSizing: "border-box" }
               }),
               jsx("input", {
                 type: "date",
+                max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                 value: curFilter.to || "",
-                onChange: function(ev) { updateFilter(activeTab, { to: ev.target.value, page: 1 }); },
+                onChange: function(ev) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; updateFilter(activeTab, { to: v && v > td ? td : v, page: 1 }); },
                 title: "Periode Selesai",
                 className: "p-inputtext p-component",
                 style: { height: "38px", padding: "0 0.6rem", borderRadius: "8px", fontSize: "0.8rem", boxSizing: "border-box" }
@@ -1529,7 +1531,7 @@
                   jsxs("div", {
                     children: [
                       jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Sprin" }),
-                      jsx("input", { type: "date", value: sprinTgl, onChange: function(e) { setSprinTgl(e.target.value); }, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box", padding: "0 0.5rem" } })
+                      jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: sprinTgl, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setSprinTgl(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box", padding: "0 0.5rem" } })
                     ]
                   })
                 ]

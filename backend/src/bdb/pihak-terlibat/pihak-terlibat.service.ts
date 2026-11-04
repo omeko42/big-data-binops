@@ -81,7 +81,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     private toDate(v: any): string | null {
         if (!v) return null;
         const t = String(v).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return null;
+        const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+        if (t > todayWib) throw new BadRequestException('Tanggal BAP / dokumen tidak boleh di masa depan (melebihi hari ini).');
+        return t;
     }
 
     private scopeClause(scope: { all: boolean; satkerId: number | null }, params: any[], query?: any): string {
@@ -2879,7 +2882,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 this.toText(dto?.nik),
                 this.toText(dto?.jenis_kelamin),
                 this.toText(dto?.tempat_lahir),
-                this.toText(dto?.tgl_lahir),
+                (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
                 this.toText(dto?.pekerjaan),
                 this.toText(dto?.alamat),
                 this.toText(dto?.no_hp),
@@ -3017,7 +3020,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 (this.toText(dto?.keterlibatan) || 'saksi').toLowerCase(),
                 this.toText(dto?.jenis_kelamin),
                 this.toText(dto?.tempat_lahir),
-                this.toText(dto?.tgl_lahir),
+                (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
                 this.toText(dto?.pekerjaan),
                 this.toText(dto?.alamat),
                 this.toText(dto?.no_hp)
@@ -3090,7 +3093,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 this.toText(dto?.nik),
                 this.toText(dto?.jenis_kelamin),
                 this.toText(dto?.tempat_lahir),
-                this.toText(dto?.tgl_lahir),
+                (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
                 this.toText(dto?.pekerjaan),
                 this.toText(dto?.alamat),
                 this.toText(dto?.no_hp),

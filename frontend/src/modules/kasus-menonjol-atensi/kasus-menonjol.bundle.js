@@ -1037,7 +1037,7 @@
                           jsxs("div", {
                             children: [
                               jsx("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Rilis" }),
-                              jsx("input", { type: "date", value: formData.tanggal_rilis || "", onChange: function(e) { setField("tanggal_rilis", e.target.value); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
+                              jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: formData.tanggal_rilis || "", onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setField("tanggal_rilis", v && v > td ? td : v); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                             ]
                           })
                         ]
@@ -1075,7 +1075,7 @@
                           jsxs("div", {
                             children: [
                               jsx("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Atensi" }),
-                              jsx("input", { type: "date", value: formData.tanggal_atensi || "", onChange: function(e) { setField("tanggal_atensi", e.target.value); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
+                              jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: formData.tanggal_atensi || "", onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setField("tanggal_atensi", v && v > td ? td : v); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                             ]
                           })
                         ]
@@ -1099,7 +1099,7 @@
                           jsxs("div", {
                             children: [
                               jsx("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Periode Mulai" }),
-                              jsx("input", { type: "date", value: formData.tanggal_mulai || "", onChange: function(e) { setField("tanggal_mulai", e.target.value); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
+                              jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: formData.tanggal_mulai || "", onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setField("tanggal_mulai", v && v > td ? td : v); }, disabled: isViewOnly, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                             ]
                           }),
                           jsxs("div", {
@@ -1193,7 +1193,7 @@
                         style: { display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "0.6rem" },
                         children: [
                           jsx(InputText, { value: pendSprinNomor, onChange: function(e) { setPendSprinNomor(e.target.value); }, placeholder: "Nomor Sprin (mis. Sprin/120/III/2026)", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
-                          jsx("input", { type: "date", value: pendSprinTgl, onChange: function(e) { setPendSprinTgl(e.target.value); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
+                          jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: pendSprinTgl, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setPendSprinTgl(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
                           jsx(InputText, { value: pendSprinCatatan, onChange: function(e) { setPendSprinCatatan(e.target.value); }, placeholder: "Catatan Revisi / Perpanjangan Sprin…", style: { width: "100%", height: "36px", boxSizing: "border-box" } })
                         ]
                       }),
@@ -1872,7 +1872,7 @@
                   jsxs("div", {
                     children: [
                       jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Sprin" }),
-                      jsx("input", { type: "date", value: sprinTgl, onChange: function(e) { setSprinTgl(e.target.value); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box", padding: "0 0.5rem" } })
+                      jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: sprinTgl, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setSprinTgl(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box", padding: "0 0.5rem" } })
                     ]
                   })
                 ]

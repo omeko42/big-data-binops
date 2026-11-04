@@ -341,20 +341,19 @@ export class DorsService implements OnModuleInit {
         }
     }
 
-    /** Semua endpoint DORS (monitor/config/data) dibatasi superadmin, admin binops, dan operator. */
+    /** Semua endpoint DORS (monitor/config/data) dibatasi khusus superadmin dan admin binops. */
     private assertAdmin(authUser: any) {
         const role = String(authUser?.role_bdb || authUser?.role_name || '').toLowerCase();
         const orgRole = String(authUser?.OrganisasiRole?.role_name || '').toLowerCase();
         if (
-            ['superadmin', 'admin_binops', 'operator', 'vendor_mitra', 'vendor', 'mitra'].includes(role) ||
+            ['superadmin', 'admin_binops'].includes(role) ||
             role.includes('admin') ||
             role.includes('super') ||
-            orgRole.includes('admin') ||
-            orgRole.includes('operator')
+            orgRole.includes('admin')
         ) {
             return;
         }
-        throw new ForbiddenException('Hanya superadmin/admin/operator yang dapat mengakses Integrasi DORS.');
+        throw new ForbiddenException('Hanya Superadmin atau Admin Binops yang dapat mengakses Integrasi DORS.');
     }
 
     async getConfigPublic(authUser: any) {
@@ -395,7 +394,7 @@ export class DorsService implements OnModuleInit {
         return String(n).padStart(2, '0');
     }
     private ymd(d: Date) {
-        return `${d.getFullYear()}-${this.twoDigit(d.getMonth() + 1)}-${this.twoDigit(d.getDate())}`;
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(d);
     }
 
     private async checkOne(cfg: DorsConfig, src: DorsSource, from?: string, to?: string) {
@@ -658,33 +657,12 @@ export class DorsService implements OnModuleInit {
             const slice = valid.slice(i, i + CHUNK);
             // baris yang benar-benar baru (belum ada di raw untuk model ini)
             const ids = slice.map((r) => r.id);
-            const existRows = await this.dataSource.query(
-                `select id, dors_lp_id,
-                        coalesce(payload_json->>'pelimpahan','') as pelimpahan,
-                        coalesce(payload_json#>>'{unit,unit}','') as unit_nama,
-                        coalesce(payload_json#>>'{unit,level}','') as unit_level,
-                        coalesce(payload_json#>>'{polda,kode_pusiknas}','') as polda_kp,
-                        coalesce(payload_json#>>'{polres,kode_pusiknas}','') as polres_kp,
-                        coalesce(payload_json#>>'{polsek,kode_pusiknas}','') as polsek_kp
-                 from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`,
-                [model, ids]
-            );
-            const existMap = new Map<string, any>(existRows.map((r: any) => [String(r.dors_lp_id), r]));
-            const fresh = slice.filter((r) => {
-                const ex = existMap.get(String(r.id));
-                if (!ex) return true;
-                return (
-                    String(r.pelimpahan ?? '') !== ex.pelimpahan ||
-                    String(r.unit?.unit ?? '') !== ex.unit_nama ||
-                    String(r.unit?.level ?? '') !== ex.unit_level ||
-                    String(r.polda?.kode_pusiknas ?? '') !== ex.polda_kp ||
-                    String(r.polres?.kode_pusiknas ?? '') !== ex.polres_kp ||
-                    String(r.polsek?.kode_pusiknas ?? '') !== ex.polsek_kp
-                );
-            });
+            const existRows = await this.dataSource.query(`select dors_lp_id from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`, [model, ids]);
+            const existing = new Set(existRows.map((r: any) => String(r.dors_lp_id)));
+            const fresh = slice.filter((r) => !existing.has(String(r.id)));
             if (!fresh.length) continue;
 
-            // insert raw (payload utuh) untuk yang baru atau berubah unit/pelimpahan
+            // insert raw (payload utuh) untuk yang baru
             const params: any[] = [];
             const scopeIdx = fresh.length * 4 + 1;
             const batchIdx = fresh.length * 4 + 2;
@@ -699,11 +677,7 @@ export class DorsService implements OnModuleInit {
             const ret = await this.dataSource.query(
                 `insert into bdb_dors_raw_lp (dors_lp_id, model_lp, no_laporan, payload_json, source, data_scope, import_batch, synced_at, created_at, updated_at)
                  values ${valuesSql}
-                 on conflict (dors_lp_id, model_lp) do update
-                    set payload_json = excluded.payload_json,
-                        no_laporan = coalesce(excluded.no_laporan, bdb_dors_raw_lp.no_laporan),
-                        synced_at = now(),
-                        updated_at = now()
+                 on conflict (dors_lp_id, model_lp) do nothing
                  returning id, dors_lp_id`,
                 params
             );
@@ -968,8 +942,24 @@ export class DorsService implements OnModuleInit {
         const cfg = await this.getConfig();
         const today = this.ymd(new Date());
         const t = to || today;
-        // manual: default hari ini; cron/terjadwal: mundur N hari s/d hari ini
-        const f = from || (trigger === 'cron' ? this.daysAgo(cfg.sync_days_back) : today);
+        // manual: default hari ini; cron/terjadwal: mundur N hari s/d hari ini + auto-catchup bila server sempat mati
+        let cronFrom = this.daysAgo(cfg.sync_days_back);
+        if (!from && trigger === 'cron') {
+            try {
+                const lastOk = await this.syncLogs.query(
+                    "SELECT to_char((MAX(to_date::date) - INTERVAL '1 day')::date, 'YYYY-MM-DD') AS catchup_from FROM bdb_dors_sync_log WHERE status = 'success'",
+                    [],
+                    false
+                );
+                const catchupFrom = lastOk?.[0]?.catchup_from;
+                const minAllowed = this.daysAgo(Math.max(cfg.sync_days_back, 30));
+                if (catchupFrom && catchupFrom < cronFrom) {
+                    cronFrom = catchupFrom < minAllowed ? minAllowed : catchupFrom;
+                    this.logger.log(`Auto-catchup DORS pasca server downtime: menarik mundur dari ${cronFrom} s/d ${t}`);
+                }
+            } catch {}
+        }
+        const f = from || (trigger === 'cron' ? cronFrom : today);
         if (!cfg.client_id) {
             this.syncing = false;
             DorsService.invalidateCache();
@@ -1006,8 +996,6 @@ export class DorsService implements OnModuleInit {
                 if (unmapped > 0) {
                     const mapRes = await this.laporanPolisi.mapFromDors();
                     mappedBaru = mapRes?.data?.mapped_baru || 0;
-                } else {
-                    await this.laporanPolisi.syncPelimpahanOwnershipFromDors();
                 }
             } catch (e: any) {
                 this.logger.warn('auto-map ke Laporan Polisi gagal: ' + (e?.message || e));

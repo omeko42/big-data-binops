@@ -11,7 +11,7 @@ import { MailService } from '@app_core/helper/service/mail.service';
 import { AuditService } from 'src/bdb/audit/audit.service';
 import { resolveOrganisasiRoleId } from '@app_core/auth/organisasi-role.util';
 
-const BDB_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'] as const;
+const BDB_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'] as const;
 type BdbRole = (typeof BDB_ROLES)[number];
 type ScopeRow = { id: string; satker_key: string };
 
@@ -45,89 +45,12 @@ export class UserService {
         this.tableHelper = new TableHelperService();
     }
 
-    generateDefaultHandle(id: any, rawName?: any): string {
-        if (Number(id) === 1 || String(id) === '1') return 'om.eko_42';
-        let s = String(rawName || '').trim();
-        if (s) {
-            const commaIdx = s.indexOf(',');
-            if (commaIdx !== -1) s = s.slice(0, commaIdx);
-            s = s.replace(/\([^)]*\)/g, ' ');
-            s = s.replace(/\b(?:prof|dr|drs|dra|ir|h|hj|kh|ny|tn|alm|sh|sik|mh|msi|skom|st|ssos|spd|sap|spsi|se|mm|msc|mkrim|amd|phd|mkom|mt|mpd|ma|mkn|sp|shi|mip|map|skm|skep|ners|apt|psi)\s*\./gi, ' ');
-            s = s.replace(/\b(?:s|m|a)\s*\.\s*[a-z]{1,5}\s*\.?(?:\s*[a-z]{1,4}\.?)?/gi, ' ');
-            const ignored = new Set([
-                'jenderal', 'komjen', 'irjen', 'brigjen', 'kombes', 'akbp', 'kompol', 'akp',
-                'iptu', 'ipda', 'aiptu', 'aipda', 'bripka', 'brigpol', 'brigadir', 'briptu',
-                'bripda', 'abrip', 'abriptu', 'abripda', 'bharaka', 'bharatu', 'bharada',
-                'pol', 'polri', 'tni', 'purn', 'pns', 'asn', 'cpns',
-                'pembina', 'penata', 'pengatur', 'juru', 'penda', 'muda', 'madya', 'utama', 'tingkat', 'tk', 'i', 'ii', 'iii', 'iv',
-                'dr', 'drs', 'dra', 'ir', 'prof', 'h', 'hj', 'kh', 'ny', 'tn', 'alm',
-                'sh', 'sik', 'mh', 'msi', 'skom', 'st', 'ssos', 'spd', 'sap', 'spsi',
-                'se', 'mm', 'msc', 'mkrim', 'amd', 'phd', 'mkom', 'mt', 'mpd', 'ma', 'mkn', 'sp', 'shi', 'mip', 'map', 'skm', 'skep', 'ners', 'apt', 'psi'
-            ]);
-            const words: string[] = [];
-            for (const tok of s.split(/[\s./\-_'"`]+/)) {
-                const w = tok.toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (!w || ignored.has(w) || /^\d+$/.test(w)) continue;
-                words.push(w);
-            }
-            if (words.length >= 2) return `${words[0]}.${words[1]}`;
-            if (words.length === 1) return words[0];
-        }
-        return 'personel';
-    }
-
-    normalizeCleanHandle(rawHandle: any, id?: any, rawName?: any): string {
-        if (Number(id) === 1 || String(id) === '1') return 'om.eko_42';
-        let h = String(rawHandle || '').trim().replace(/^@+/, '').toLowerCase();
-        if (h.includes('@')) h = h.split('@')[0];
-        h = h.replace(/[^a-z0-9._]/g, '');
-        if (!h || h === 'personel' || h === 'anggota' || /^user_[a-z0-9]+$/i.test(h) || /^pers_[0-9]+$/i.test(h) || /^\d+$/.test(h)) {
-            return this.generateDefaultHandle(id, rawName);
-        }
-        return h;
-    }
-
-    async resolveUniqueHandleForUser(rawName: any, excludeUserId?: number, preferredHandle?: any, executor: any = this.dataSource): Promise<string> {
-        if (Number(excludeUserId) === 1) return 'om.eko_42';
-        const sanitizedPref = this.sanitizeUsernameInput(preferredHandle);
-        const isPrefClean = sanitizedPref && !/^user_[a-z0-9]+$/i.test(sanitizedPref) && !/^pers_[0-9]+$/i.test(sanitizedPref) && sanitizedPref !== 'personel' && sanitizedPref !== 'anggota' && !/^\d+$/.test(sanitizedPref);
-        if (isPrefClean) {
-            return sanitizedPref!;
-        }
-        const base = this.generateDefaultHandle(excludeUserId, rawName);
-        try {
-            const rows = await executor.query(
-                `SELECT id, lower(coalesce(nullif(callsign, ''), nullif(username, ''))) AS handle
-                 FROM auth_users
-                 WHERE ($1::bigint IS NULL OR id <> $1::bigint)
-                   AND (
-                     lower(username) = $2
-                     OR lower(callsign) = $2
-                     OR lower(username) ~ ('^' || regexp_replace($2, '([.\\^$*+?()\\[\\]{}|])', '\\\\\\1', 'g') || '_[0-9]+$')
-                     OR lower(callsign) ~ ('^' || regexp_replace($2, '([.\\^$*+?()\\[\\]{}|])', '\\\\\\1', 'g') || '_[0-9]+$')
-                   )
-                 ORDER BY id ASC`,
-                [excludeUserId ? Number(excludeUserId) : null, base]
-            );
-            if (!rows || rows.length === 0) {
-                return base;
-            }
-            const taken = new Set<string>();
-            for (const r of rows) {
-                if (r.handle) taken.add(String(r.handle).toLowerCase());
-                if (String(r.handle).toLowerCase() === base && r.id) {
-                    const firstHandle = `${base}_1`;
-                    await executor.query('UPDATE auth_users SET username = $1, callsign = $1 WHERE id = $2', [firstHandle, r.id]);
-                    taken.delete(base);
-                    taken.add(firstHandle);
-                }
-            }
-            let seq = 1;
-            while (taken.has(`${base}_${seq}`)) seq++;
-            return `${base}_${seq}`;
-        } catch {
-            return base;
-        }
+    generateDefaultHandle(id: any): string {
+        const seed = String(id || '0');
+        let num = 0;
+        for (let i = 0; i < seed.length; i++) num = (num * 31 + seed.charCodeAt(i)) % 100000;
+        const code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
+        return 'user_' + seed + code;
     }
 
     sanitizeUsernameInput(raw: any): string | null {
@@ -136,8 +59,315 @@ export class UserService {
         if (!u) return null;
         if (u.startsWith('@')) u = u.slice(1);
         if (u.includes('@')) u = u.split('@')[0];
-        u = u.replace(/[^a-z0-9_.]/g, '').slice(0, 64);
+        u = u.replace(/[^a-z0-9_.]/g, '').replace(/\.{2,}/g, '.').replace(/^\.+|\.+$/g, '').slice(0, 30);
         return u || null;
+    }
+
+    validateAndNormalizeName(rawName: any, required = true): string | null {
+        const clean = String(rawName ?? '').trim().replace(/\s+/g, ' ');
+        if (!clean) {
+            if (required) {
+                throw new BadRequestException({
+                    message: 'Nama lengkap wajib diisi.',
+                    errors: { name: ['Nama lengkap wajib diisi.'] }
+                });
+            }
+            return null;
+        }
+        if (clean.length < 2 || clean.length > 100) {
+            throw new BadRequestException({
+                message: 'Nama lengkap harus terdiri dari 2 hingga 100 karakter.',
+                errors: { name: ['Nama lengkap harus terdiri dari 2 hingga 100 karakter.'] }
+            });
+        }
+        if (!/[a-zA-Z]{2,}/.test(clean) || !/^[a-zA-Z\s.,'`\-()]+$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'Nama lengkap hanya boleh berisi huruf dan tanda baca gelar resmi (.,\'-()). Tidak boleh berisi angka atau simbol khusus.',
+                errors: { name: ['Nama lengkap hanya boleh berisi huruf dan tanda baca gelar resmi (.,\'-()). Tidak boleh berisi angka atau simbol khusus.'] }
+            });
+        }
+        return clean;
+    }
+
+    validateAndNormalizeUsername(rawUsername: any, emailPolri?: string, required = false): string | null {
+        const rawTrim = String(rawUsername ?? '').trim();
+        if (!rawTrim) {
+            if (required) {
+                throw new BadRequestException({
+                    message: 'Username wajib diisi.',
+                    errors: { username: ['Username wajib diisi.'] }
+                });
+            }
+            return null;
+        }
+        const withoutLeadingAt = rawTrim.replace(/^@/, '');
+        if (withoutLeadingAt.includes('@')) {
+            throw new BadRequestException({
+                message: 'Format Username salah: tidak boleh memakai @domain/email. Gunakan 3-30 karakter huruf kecil, angka, titik (.), atau underscore (_).',
+                errors: { username: ['Format Username salah: tidak boleh memakai @domain/email.'] }
+            });
+        }
+        if (!/^[a-z0-9_.]{3,30}$/i.test(withoutLeadingAt)) {
+            throw new BadRequestException({
+                message: 'Username hanya boleh 3-30 karakter huruf kecil (a-z), angka (0-9), titik (.), atau underscore (_) tanpa spasi.',
+                errors: { username: ['Username hanya boleh 3-30 karakter huruf kecil (a-z), angka (0-9), titik (.), atau underscore (_) tanpa spasi.'] }
+            });
+        }
+        const lowerU = withoutLeadingAt.toLowerCase();
+        if (/^\.|\.$|\.\./.test(lowerU)) {
+            throw new BadRequestException({
+                message: 'Username tidak boleh diawali/diakhiri tanda titik (.) atau memiliki titik berurutan (..).',
+                errors: { username: ['Username tidak boleh diawali/diakhiri tanda titik (.) atau memiliki titik berurutan (..).'] }
+            });
+        }
+        if (emailPolri && this.normalizeEmail(emailPolri) === lowerU) {
+            throw new BadRequestException({
+                message: 'Username tidak boleh sama dengan Email Dinas Polri.',
+                errors: { username: ['Username tidak boleh sama dengan Email Dinas Polri.'] }
+            });
+        }
+        return lowerU;
+    }
+
+    validateAndNormalizeEmailPolri(rawEmail: any, required = false): string | null {
+        const clean = this.normalizeEmail(rawEmail);
+        if (!clean) {
+            if (required) {
+                throw new BadRequestException({
+                    message: 'Email Dinas Polri (Utama) wajib diisi.',
+                    errors: { email_polri: ['Email Dinas Polri (Utama) wajib diisi.'] }
+                });
+            }
+            return null;
+        }
+        if (clean.length > 120 || !/^[a-z0-9._%+-]+@polri\.go\.id$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'Email Dinas Polri wajib menggunakan format email yang sah dengan domain @polri.go.id.',
+                errors: { email_polri: ['Email Dinas Polri wajib menggunakan format email yang sah dengan domain @polri.go.id.'] }
+            });
+        }
+        return clean;
+    }
+
+    validateAndNormalizeSecondaryEmail(rawEmail: any, emailPolri?: string | null): string | null {
+        const clean = this.normalizeEmail(rawEmail);
+        if (!clean) return null;
+        if (emailPolri && clean === this.normalizeEmail(emailPolri)) return null;
+        if (clean.length > 120 || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'Format Email Sekunder tidak valid.',
+                errors: { email: ['Format Email Sekunder tidak valid.'] }
+            });
+        }
+        return clean;
+    }
+
+    validateAndNormalizePhone(rawPhone: any, required = false): string | null {
+        let clean = String(rawPhone ?? '').trim().replace(/[\s\-().]/g, '');
+        if (!clean) {
+            if (required) {
+                throw new BadRequestException({
+                    message: 'Nomor HP wajib diisi.',
+                    errors: { no_hp: ['Nomor HP wajib diisi.'] }
+                });
+            }
+            return null;
+        }
+        if (clean.startsWith('+62')) clean = '0' + clean.slice(3);
+        else if (clean.startsWith('628')) clean = '0' + clean.slice(2);
+        if (!/^08[1-9][0-9]{7,11}$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'Nomor HP tidak valid. Gunakan format nomor seluler Indonesia aktif diawali 08 (10 s.d. 14 digit angka), contoh: 081234567890.',
+                errors: { no_hp: ['Nomor HP tidak valid. Gunakan format nomor seluler Indonesia aktif diawali 08 (10 s.d. 14 digit angka).'] }
+            });
+        }
+        return clean;
+    }
+
+    async assertNoHpAvailable(noHp: string | null, excludeEmails: (string | undefined | null)[] = []): Promise<void> {
+        if (!noHp) return;
+        const cleanEmails = Array.from(new Set(excludeEmails.map(e => this.normalizeEmail(e || '')).filter(Boolean)));
+        const rows = await this.dataSource.query(
+            `SELECT p.no_hp, p.email, u.id as user_id, u.name, s.deskripsi as satker_nama
+             FROM trb_police p
+             JOIN auth_users u ON (lower(u.email) = lower(p.email) OR lower(u.email_polri) = lower(p.email))
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE p.deleted_at IS NULL
+               AND u.deleted_at IS NULL
+               AND p.no_hp = $1
+               AND NOT (lower(p.email) = ANY($2::text[]))
+             LIMIT 1`,
+            [noHp, cleanEmails]
+        );
+        if (rows.length) {
+            const ownerInfo = rows[0].satker_nama ? ` pada satker ${rows[0].satker_nama}` : '';
+            throw new ConflictException({
+                message: `Nomor HP ${noHp} sudah terdaftar atas nama ${rows[0].name || rows[0].email}${ownerInfo}.`,
+                errors: { no_hp: [`Nomor HP ${noHp} sudah terdaftar atas nama ${rows[0].name || rows[0].email}${ownerInfo}.`] }
+            });
+        }
+    }
+
+    validateAndNormalizePositionField(rawVal: any, fieldKey: string, fieldLabel: string, maxLen = 120): string | null {
+        if (rawVal === undefined || rawVal === null) return null;
+        const clean = String(rawVal).trim().replace(/\s+/g, ' ');
+        if (!clean) return null;
+        if (clean.length > maxLen) {
+            throw new BadRequestException({
+                message: `${fieldLabel} maksimal ${maxLen} karakter.`,
+                errors: { [fieldKey]: [`${fieldLabel} maksimal ${maxLen} karakter.`] }
+            });
+        }
+        if (/[<>]/.test(clean) || /javascript:/i.test(clean)) {
+            throw new BadRequestException({
+                message: `${fieldLabel} mengandung karakter yang tidak diizinkan.`,
+                errors: { [fieldKey]: [`${fieldLabel} mengandung karakter yang tidak diizinkan.`] }
+            });
+        }
+        return clean;
+    }
+
+    sanitizeAndValidateSocialMedia(rawSoc: any): Record<string, any> {
+        if (!rawSoc || typeof rawSoc !== 'object' || Array.isArray(rawSoc)) return {};
+        const out: Record<string, any> = { ...rawSoc };
+        const checkSafeLinkOrHandle = (val: string, label: string): string => {
+            const trimmed = val.trim();
+            if (!trimmed) return '';
+            if (trimmed.length > 200) {
+                throw new BadRequestException({
+                    message: `${label} terlalu panjang (maksimal 200 karakter).`,
+                    errors: { social_media: [`${label} terlalu panjang (maksimal 200 karakter).`] }
+                });
+            }
+            if (/[<>"]/.test(trimmed) || /^(javascript|data|vbscript):/i.test(trimmed)) {
+                throw new BadRequestException({
+                    message: `${label} mengandung format tautan yang tidak aman.`,
+                    errors: { social_media: [`${label} mengandung format tautan yang tidak aman.`] }
+                });
+            }
+            const isUrl = /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s<>"]*)?$/i.test(trimmed);
+            const isDomainPath = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s<>"]+$/i.test(trimmed);
+            const isHandle = /^@?[a-zA-Z0-9_.-]{2,60}$/.test(trimmed);
+            if (!isUrl && !isDomainPath && !isHandle) {
+                throw new BadRequestException({
+                    message: `${label} tidak valid. Masukkan URL lengkap (https://...) atau username/handle medsos yang sah.`,
+                    errors: { social_media: [`${label} tidak valid. Masukkan URL lengkap (https://...) atau username/handle medsos yang sah.`] }
+                });
+            }
+            return isDomainPath ? `https://${trimmed}` : trimmed;
+        };
+        if (Array.isArray(out.urls)) {
+            if (out.urls.length > 10) {
+                throw new BadRequestException({
+                    message: 'Maksimal 10 tautan media sosial yang dapat ditambahkan.',
+                    errors: { social_media: ['Maksimal 10 tautan media sosial yang dapat ditambahkan.'] }
+                });
+            }
+            out.urls = out.urls
+                .map((u: any, idx: number) => (typeof u === 'string' ? checkSafeLinkOrHandle(u, `Tautan Media Sosial #${idx + 1}`) : ''))
+                .filter(Boolean);
+        }
+        for (const key of ['instagram', 'tiktok', 'facebook', 'twitter', 'x', 'youtube', 'linkedin', 'threads', 'website']) {
+            if (typeof out[key] === 'string') {
+                out[key] = checkSafeLinkOrHandle(out[key], `Media Sosial (${key})`);
+            }
+        }
+        for (const textKey of ['bio', 'headline', 'about']) {
+            if (typeof out[textKey] === 'string') {
+                const cleanText = out[textKey].trim();
+                if (cleanText.length > 3000) {
+                    throw new BadRequestException({
+                        message: `Kolom ${textKey} maksimal 3.000 karakter.`,
+                        errors: { social_media: [`Kolom ${textKey} maksimal 3.000 karakter.`] }
+                    });
+                }
+                if (/<script/i.test(cleanText) || /javascript:/i.test(cleanText)) {
+                    throw new BadRequestException({
+                        message: `Kolom ${textKey} mengandung konten yang tidak diizinkan.`,
+                        errors: { social_media: [`Kolom ${textKey} mengandung konten yang tidak diizinkan.`] }
+                    });
+                }
+                out[textKey] = cleanText;
+            }
+        }
+        return out;
+    }
+
+    normalizeAndValidateNrp(rawNrp: any, emailPolri?: string, username?: string, required = false, isPns?: boolean): string | null {
+        let clean = String(rawNrp ?? '').trim().replace(/^'+/, '').replace(/\s+/g, '');
+        if (!clean) {
+            if (required) {
+                throw new BadRequestException({
+                    message: 'NRP / NIP wajib diisi (maksimal 8 digit angka untuk NRP Polri atau 18 digit angka untuk NIP PNS).',
+                    errors: { nrp: ['NRP / NIP wajib diisi (maksimal 8 digit angka untuk NRP Polri atau 18 digit angka untuk NIP PNS).'] }
+                });
+            }
+            return null;
+        }
+        if (!/^\d+$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'NRP / NIP hanya boleh berisi angka (maksimal 8 digit untuk NRP Polri atau 18 digit untuk NIP PNS).',
+                errors: { nrp: ['NRP / NIP hanya boleh berisi angka (maksimal 8 digit untuk NRP Polri atau 18 digit untuk NIP PNS).'] }
+            });
+        }
+        if (/^\d{7}$/.test(clean)) {
+            const padded = '0' + clean;
+            const ep = String(emailPolri || '').toLowerCase();
+            const un = String(username || '').toLowerCase();
+            if (ep.includes(padded) || un.includes(padded)) {
+                clean = padded;
+            }
+        }
+        if (isPns === true) {
+            if (!/^\d{18}$/.test(clean)) {
+                throw new BadRequestException({
+                    message: 'NIP PNS Polri wajib terdiri dari 18 digit angka.',
+                    errors: { nrp: ['NIP PNS Polri wajib terdiri dari 18 digit angka.'] }
+                });
+            }
+            return clean;
+        }
+        if (isPns === false) {
+            if (!/^\d{1,8}$/.test(clean)) {
+                throw new BadRequestException({
+                    message: 'NRP Anggota Polri hanya boleh berisi angka dengan maksimal 8 digit (jika PNS Polri 18 digit, pilih status PNS Polri).',
+                    errors: { nrp: ['NRP Anggota Polri hanya boleh berisi angka dengan maksimal 8 digit.'] }
+                });
+            }
+            return clean;
+        }
+        if (!/^\d{1,8}$/.test(clean) && !/^\d{18}$/.test(clean)) {
+            throw new BadRequestException({
+                message: 'NRP Polri maksimal 8 digit angka, sedangkan NIP PNS Polri wajib 18 digit angka.',
+                errors: { nrp: ['NRP Polri maksimal 8 digit angka, sedangkan NIP PNS Polri wajib 18 digit angka.'] }
+            });
+        }
+        return clean;
+    }
+
+    async assertNrpAvailable(nrp: string | null, excludeEmails: (string | undefined | null)[] = []): Promise<void> {
+        if (!nrp) return;
+        const cleanEmails = Array.from(new Set(excludeEmails.map(e => this.normalizeEmail(e || '')).filter(Boolean)));
+        const rows = await this.dataSource.query(
+            `SELECT p.nrp, p.email, u.id as user_id, u.name, s.deskripsi as satker_nama
+             FROM trb_police p
+             JOIN auth_users u ON (lower(u.email) = lower(p.email) OR lower(u.email_polri) = lower(p.email))
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE p.deleted_at IS NULL
+               AND u.deleted_at IS NULL
+               AND p.nrp = $1
+               AND NOT (lower(p.email) = ANY($2::text[]))
+             LIMIT 1`,
+            [nrp, cleanEmails]
+        );
+        if (rows.length) {
+            const label = nrp.length === 18 ? 'NIP' : 'NRP';
+            const ownerInfo = rows[0].satker_nama ? ` pada satker ${rows[0].satker_nama}` : '';
+            throw new ConflictException({
+                message: `${label} ${nrp} sudah terdaftar atas nama ${rows[0].name || rows[0].email}${ownerInfo}.`,
+                errors: { nrp: [`${label} ${nrp} sudah terdaftar atas nama ${rows[0].name || rows[0].email}${ownerInfo}.`] }
+            });
+        }
     }
     private normalizeEmail(email?: string): string {
         return String(email || '').trim().toLowerCase();
@@ -145,7 +375,6 @@ export class UserService {
 
     private normalizeBdbRole(role?: string): BdbRole {
         const value = String(role || '').trim().toLowerCase();
-        if (value === 'vendor' || value === 'mitra' || value === 'vendor_mitra') return 'vendor_mitra';
         return (BDB_ROLES as readonly string[]).includes(value) ? (value as BdbRole) : 'viewer';
     }
 
@@ -160,7 +389,7 @@ export class UserService {
     }
 
     private shouldRequireScope(role: BdbRole, status?: string, approvalStatus?: string, isSuperadmin = false): boolean {
-        if (role === 'superadmin' || role === 'vendor_mitra') return false;
+        if (role === 'superadmin') return false;
         if (role === 'viewer' && isSuperadmin) return false;
         return this.normalizeStatus(status || 'AKTIF') === 'AKTIF' && this.normalizeStatus(approvalStatus || 'APPROVED') === 'APPROVED';
     }
@@ -260,7 +489,6 @@ export class UserService {
             .where('lower(user.email_polri) = :id', { id: raw })
             .orWhere('lower(user.username) = :id', { id: raw }).orWhere('lower(user.username) = :uLocal', { uLocal: raw.includes('@') ? raw.split('@')[0] : raw })
             .orWhere('lower(user.email) = :id', { id: raw })
-            .orWhere('lower(user.callsign) = :cid', { cid: normalized })
             .addSelect('user.password')
             .addSelect('user.security_pin_hash')
             .addSelect('user.totp_secret')
@@ -268,21 +496,36 @@ export class UserService {
     }
 
     /** Cek ketersediaan username/email_polri -- dipakai form Master Pengguna sblm submit (live validation). */
-    async checkIdentifierAvailability(field: 'username' | 'email_polri' | 'email', value: string, excludeUserId?: number): Promise<{ available: boolean; satker_nama?: string }> {
+    async checkIdentifierAvailability(field: 'username' | 'email_polri' | 'email', value: string, excludeUserId?: number): Promise<{ available: boolean; satker_nama?: string; reason?: string }> {
         const normalized = this.normalizeEmail(value);
         const rawTrim = String(value || '').trim();
         if (field === 'username' && rawTrim) {
-            if (rawTrim.includes('@')) {
+            const withoutAt = rawTrim.replace(/^@/, '');
+            if (withoutAt.includes('@')) {
                 const suggested = this.sanitizeUsernameInput(rawTrim) || 'username';
                 return { available: false, reason: 'Format salah: Username tidak boleh memakai @domain/email! Cukup ketik "' + suggested + '" saja.' };
             }
-            if (!/^[a-z0-9_.]{3,30}$/i.test(rawTrim)) {
+            if (!/^[a-z0-9_.]{3,30}$/i.test(withoutAt)) {
                 return { available: false, reason: 'Format salah: Gunakan 3-30 karakter huruf kecil, angka, titik (.), atau underscore (_) tanpa spasi.' };
+            }
+            if (/^\.|\.$|\.\./.test(withoutAt)) {
+                return { available: false, reason: 'Format salah: Username tidak boleh diawali/diakhiri titik (.) atau memiliki titik berurutan (..).' };
+            }
+        }
+        if (field === 'email_polri' && rawTrim) {
+            if (rawTrim.length > 120 || !/^[a-z0-9._%+-]+@polri\.go\.id$/i.test(rawTrim)) {
+                return { available: false, reason: 'Format salah: Email Dinas Polri wajib menggunakan format email sah dengan domain @polri.go.id.' };
+            }
+        }
+        if (field === 'email' && rawTrim) {
+            if (rawTrim.length > 120 || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(rawTrim)) {
+                return { available: false, reason: 'Format salah: Masukkan alamat email yang sah.' };
             }
         }
         if (!normalized)
             return { available: true };
-        const qb = this.userRepository.createQueryBuilder('user').where(`lower(user.${field}) = :v`, { v: normalized });
+        const lookupVal = field === 'username' ? normalized.replace(/^@/, '') : normalized;
+        const qb = this.userRepository.createQueryBuilder('user').where(`lower(user.${field}) = :v`, { v: lookupVal });
         if (excludeUserId) qb.andWhere('user.id <> :id', { id: excludeUserId });
         const existing = await qb.getOne();
         if (!existing) return { available: true };
@@ -303,12 +546,22 @@ export class UserService {
             });
         }
 
-        const normalizedEmail = this.normalizeEmail(email);
+        rest.name = this.validateAndNormalizeName(rest.name, true);
+        if (rest.email_polri) {
+            rest.email_polri = this.validateAndNormalizeEmailPolri(rest.email_polri, false);
+        }
+        const normalizedEmail = this.normalizeEmail(email || rest.email_polri);
+        if (!normalizedEmail || normalizedEmail.length > 120 || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(normalizedEmail)) {
+            throw new BadRequestException({
+                message: 'Format email tidak valid.',
+                errors: { email: ['Format email tidak valid.'] }
+            });
+        }
         const existingUser = await this.findByEmail(normalizedEmail);
         if (existingUser) {
             throw new ConflictException({
-                message: 'Bad Request',
-                errors: { email: ['Email already in use'] }
+                message: 'Email sudah terdaftar pada akun lain.',
+                errors: { email: ['Email sudah terdaftar pada akun lain.'] }
             });
         }
         if (rest.email_polri && rest.username && this.normalizeEmail(rest.email_polri) === this.normalizeEmail(rest.username)) {
@@ -323,15 +576,32 @@ export class UserService {
         if (rest.email_polri) {
             const check = await this.checkIdentifierAvailability('email_polri', rest.email_polri);
             if (!check.available) {
-                throw new ConflictException({ errors: { email_polri: [`Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                throw new ConflictException({ errors: { email_polri: [check.reason || `Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
             }
         }
-        if (rest.username) {
-            const check = await this.checkIdentifierAvailability('username', rest.username);
+        if (rest.username !== undefined && String(rest.username).trim() !== '') {
+            const cleanU = this.validateAndNormalizeUsername(rest.username, rest.email_polri || normalizedEmail, false)!;
+            const check = await this.checkIdentifierAvailability('username', cleanU);
             if (!check.available) {
-                throw new ConflictException({ errors: { username: [`Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                throw new ConflictException({ errors: { username: [check.reason || `Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
             }
+            rest.username = cleanU;
         }
+        if (rest.nrp !== undefined && String(rest.nrp).trim() !== '') {
+            const isPnsFlag = rest.is_pns !== undefined ? Boolean(rest.is_pns) : undefined;
+            const validNrp = this.normalizeAndValidateNrp(rest.nrp, rest.email_polri || normalizedEmail, rest.username, false, isPnsFlag);
+            rest.nrp = validNrp;
+            if (validNrp && validNrp.length === 18) rest.is_pns = true;
+            await this.assertNrpAvailable(validNrp, [normalizedEmail, rest.email_polri]);
+        }
+        if (rest.no_hp !== undefined && String(rest.no_hp).trim() !== '') {
+            rest.no_hp = this.validateAndNormalizePhone(rest.no_hp, false);
+            await this.assertNoHpAvailable(rest.no_hp, [normalizedEmail, rest.email_polri]);
+        }
+        if (rest.pangkat !== undefined) rest.pangkat = this.validateAndNormalizePositionField(rest.pangkat, 'pangkat', 'Pangkat', 50);
+        if (rest.jabatan !== undefined) rest.jabatan = this.validateAndNormalizePositionField(rest.jabatan, 'jabatan', 'Jabatan', 120);
+        if (rest.satuan !== undefined) rest.satuan = this.validateAndNormalizePositionField(rest.satuan, 'satuan', 'Satuan', 120);
+        if (rest.social_media !== undefined) rest.social_media = this.sanitizeAndValidateSocialMedia(rest.social_media);
 
         const roleBdb = this.normalizeBdbRole(rest.role_bdb || 'viewer');
         const initialStatus = rest.status || 'AKTIF';
@@ -375,27 +645,37 @@ export class UserService {
             ...(organisasiRoleId != null ? { OrganisasiRole: { id: organisasiRoleId } } : {}),
             Timestamps: { created_by: authUser?.id ? Number(authUser.id) : null }
         } as any) as unknown as User;
-        const savedUser = await this.userRepository.save(user);
-        const finalHandle = await this.resolveUniqueHandleForUser(savedUser.name, Number(savedUser.id), savedUser.username);
-        if (savedUser.username !== finalHandle || savedUser.callsign !== finalHandle) {
-            savedUser.username = finalHandle;
-            savedUser.callsign = finalHandle;
-            await this.dataSource.query('UPDATE auth_users SET username = $1, callsign = $1 WHERE id = $2', [finalHandle, savedUser.id]);
-        }
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
-            await this.dataSource.query(
-                `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
-                 VALUES ($1, $2, NOW())
-                 ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
-                [Number(savedUser.id), finalHandle]
+            const savedUser = await queryRunner.manager.save(User, user);
+            const finalHandle = (savedUser.username && String(savedUser.username).trim())
+                ? String(savedUser.username).trim().replace(/^@/, '').toLowerCase()
+                : this.generateDefaultHandle(savedUser.id);
+            if (savedUser.username !== finalHandle) {
+                savedUser.username = finalHandle;
+                await queryRunner.query('UPDATE auth_users SET username = $1::text WHERE id = $2', [finalHandle, savedUser.id]);
+            }
+            savedUser.callsign = finalHandle;
+            await this.upsertPoliceProfileByEmail(
+                savedUser.email,
+                {
+                    ...rest,
+                    name: savedUser.name,
+                    email: savedUser.email
+                },
+                queryRunner,
+                savedUser.email_polri
             );
-        } catch {}
-        await this.upsertPoliceProfileByEmail(savedUser.email, {
-            ...rest,
-            name: savedUser.name,
-            email: savedUser.email
-        });
-        return savedUser;
+            await queryRunner.commitTransaction();
+            return savedUser;
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        } finally {
+            await queryRunner.release();
+        }
     }
 
     async findAll(request: any) {
@@ -447,16 +727,6 @@ export class UserService {
             }
         }
 
-        const rawRoleFilter = request?.query?.roleFilter;
-        const roleFilter = String(Array.isArray(rawRoleFilter) ? rawRoleFilter[0] : rawRoleFilter || '').trim().toLowerCase();
-        if (roleFilter) {
-            if (roleFilter === 'vendor_mitra' || roleFilter === 'vendor' || roleFilter === 'mitra') {
-                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, '')) in ('vendor_mitra', 'vendor', 'mitra')");
-            } else {
-                queryBuilder.andWhere("lower(coalesce(user.role_bdb, 'viewer')) = :roleFilter", { roleFilter });
-            }
-        }
-
         const rawSearchAll = request?.query?.searchAll;
         const masterUserKeyword = String(Array.isArray(rawSearchAll) ? rawSearchAll[0] : rawSearchAll || '').trim().toLowerCase();
         if (masterUserKeyword) {
@@ -466,7 +736,6 @@ export class UserService {
                 or lower(coalesce(user.email_google, '')) like :masterUserKeyword
                 or lower(coalesce(user.email_polri, '')) like :masterUserKeyword
                 or lower(coalesce(user.username, '')) like :masterUserKeyword
-                or lower(coalesce(user.callsign, '')) like :masterUserKeyword
                 or lower(coalesce(user.role_name, '')) like :masterUserKeyword
                 or lower(coalesce(user.role_bdb, '')) like :masterUserKeyword
                 or lower(coalesce(user.approval_status, '')) like :masterUserKeyword
@@ -524,7 +793,6 @@ export class UserService {
         delete filterQuery.sort;
         delete filterQuery['sort[]'];
         delete filterQuery['sort[0]'];
-        delete filterQuery.roleFilter;
         if (masterUserKeyword) {
             delete filterQuery.searchAll;
         }
@@ -567,7 +835,20 @@ export class UserService {
                 throw new NotFoundException('User with ID ' + id + ' not found.');
             }
 
+            if (dto.name !== undefined && String(dto.name).trim() !== '') {
+                dto.name = this.validateAndNormalizeName(dto.name, true)!;
+            }
+            if ((dto as any).email_polri !== undefined && String((dto as any).email_polri).trim() !== '') {
+                (dto as any).email_polri = this.validateAndNormalizeEmailPolri((dto as any).email_polri, false);
+            }
             const polriToCheck = (dto as any).email_polri !== undefined ? (dto as any).email_polri : user.email_polri;
+            if (dto.email !== undefined && String(dto.email).trim() !== '') {
+                const secNorm = this.validateAndNormalizeSecondaryEmail(dto.email, polriToCheck);
+                dto.email = secNorm || polriToCheck || user.email;
+            }
+            if ((dto as any).username !== undefined && String((dto as any).username).trim() !== '') {
+                (dto as any).username = this.validateAndNormalizeUsername((dto as any).username, polriToCheck, false);
+            }
             const usernameToCheck = (dto as any).username !== undefined ? (dto as any).username : user.username;
             if (polriToCheck && usernameToCheck && this.normalizeEmail(polriToCheck) === this.normalizeEmail(usernameToCheck)) {
                 throw new BadRequestException({
@@ -582,15 +863,30 @@ export class UserService {
             if ((dto as any).email_polri && this.normalizeEmail((dto as any).email_polri) !== this.normalizeEmail(user.email_polri)) {
                 const check = await this.checkIdentifierAvailability('email_polri', (dto as any).email_polri, Number(id));
                 if (!check.available) {
-                    throw new ConflictException({ errors: { email_polri: [`Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                    throw new ConflictException({ errors: { email_polri: [check.reason || `Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
                 }
             }
             if ((dto as any).username && this.normalizeEmail((dto as any).username) !== this.normalizeEmail(user.username)) {
                 const check = await this.checkIdentifierAvailability('username', (dto as any).username, Number(id));
                 if (!check.available) {
-                    throw new ConflictException({ errors: { username: [`Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                    throw new ConflictException({ errors: { username: [check.reason || `Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
                 }
             }
+            if ((dto as any).nrp !== undefined && String((dto as any).nrp).trim() !== '') {
+                const isPnsFlag = (dto as any).is_pns !== undefined ? Boolean((dto as any).is_pns) : undefined;
+                const validNrp = this.normalizeAndValidateNrp((dto as any).nrp, polriToCheck, usernameToCheck, false, isPnsFlag);
+                (dto as any).nrp = validNrp;
+                if (validNrp && validNrp.length === 18) (dto as any).is_pns = true;
+                await this.assertNrpAvailable(validNrp, [user.email, user.email_polri, dto.email, (dto as any).email_polri]);
+            }
+            if ((dto as any).no_hp !== undefined && String((dto as any).no_hp).trim() !== '') {
+                (dto as any).no_hp = this.validateAndNormalizePhone((dto as any).no_hp, false);
+                await this.assertNoHpAvailable((dto as any).no_hp, [user.email, user.email_polri, dto.email, (dto as any).email_polri]);
+            }
+            if ((dto as any).pangkat !== undefined) (dto as any).pangkat = this.validateAndNormalizePositionField((dto as any).pangkat, 'pangkat', 'Pangkat', 50);
+            if ((dto as any).jabatan !== undefined) (dto as any).jabatan = this.validateAndNormalizePositionField((dto as any).jabatan, 'jabatan', 'Jabatan', 120);
+            if ((dto as any).satuan !== undefined) (dto as any).satuan = this.validateAndNormalizePositionField((dto as any).satuan, 'satuan', 'Satuan', 120);
+            if ((dto as any).social_media !== undefined) (dto as any).social_media = this.sanitizeAndValidateSocialMedia((dto as any).social_media);
 
             const roleBdb = this.normalizeBdbRole((dto as any).role_bdb || dto.role_name || user.role_bdb);
             const requestedStatus = (dto as any).status ?? user.status ?? 'AKTIF';
@@ -610,17 +906,15 @@ export class UserService {
             // kena bug create() (organisasiRoleId nyasar ke superadmin) tetap rusak akses menunya
             // walau adminnya sudah "perbaiki" lewat edit role di UI (lihat resolveOrganisasiRoleId).
             const organisasiRoleId = roleBdb !== this.normalizeBdbRole(user.role_bdb) ? await this.resolveOrganisasiRoleId(roleBdb) : null;
-            const preferredHandle = (dto as any).username !== undefined
-                ? (dto as any).username
-                : (user.callsign || user.username);
-            const resolvedUsername = await this.resolveUniqueHandleForUser(dto.name ?? user.name, Number(id), preferredHandle, queryRunner);
+            const resolvedUsername = ((dto as any).username !== undefined
+                ? (this.sanitizeUsernameInput((dto as any).username) || this.generateDefaultHandle(id))
+                : (user.username ? String(user.username).trim().replace(/^@/, '') : this.generateDefaultHandle(id)));
             const updatedData: Partial<User> = {
                 name: dto.name ?? user.name,
                 email: dto.email ? this.normalizeEmail(dto.email) : user.email,
                 email_google: (dto as any).email_google ?? user.email_google,
                 email_polri: (dto as any).email_polri ?? user.email_polri,
                 username: resolvedUsername,
-                callsign: resolvedUsername,
                 password: dto.password ? await bcrypt.hash(dto.password, 10) : user.password,
                 role_name: dto.role_name || roleBdb,
                 role_bdb: roleBdb,
@@ -630,7 +924,6 @@ export class UserService {
                 login_method: (dto as any).login_method || user.login_method,
                 local_password_enabled: (dto as any).local_password_enabled ?? user.local_password_enabled,
                 two_factor_required: (dto as any).two_factor_required ?? user.two_factor_required,
-                ...((dto as any).two_factor_required === false ? { totp: false, totp_secret: null, pin_required: false, security_pin_hash: null, failed_login_attempts: 0, locked_until: null } : {}),
                 status: (dto as any).status ?? user.status,
                 approval_status: (dto as any).approval_status ?? user.approval_status
             };
@@ -686,14 +979,6 @@ export class UserService {
             }
 
             await queryRunner.manager.update(User, id, updatedData);
-            try {
-                await queryRunner.query(
-                    `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
-                     VALUES ($1, $2, NOW())
-                     ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
-                    [Number(id), resolvedUsername]
-                );
-            } catch {}
             await this.upsertPoliceProfileByEmail(
                 updatedData.email || user.email,
                 {
@@ -705,7 +990,7 @@ export class UserService {
                 user.email
             );
             await queryRunner.commitTransaction();
-            return { ...user, ...updatedData };
+            return { ...user, ...updatedData, callsign: resolvedUsername };
         } catch (error) {
             await queryRunner.rollbackTransaction();
             throw error;
@@ -719,8 +1004,8 @@ export class UserService {
         const params: any[] = [];
         let where = "u.approval_status = 'PENDING_APPROVAL'";
 
-        if (role === 'superadmin' || role === 'vendor_mitra') {
-            // Superadmin & Vendor/Mitra melihat semua antrian.
+        if (role === 'superadmin') {
+            // Superadmin melihat semua antrian.
         } else if (role === 'admin_binops') {
             const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
             const isMabes = !scopeId || scopeId === 1 || scopeId === 13;
@@ -895,7 +1180,9 @@ export class UserService {
         const resolvedGender = isFemale ? 'P' : 'L';
         mergedSocial.jenis_kelamin = resolvedGender;
         mergedSocial.gender = resolvedGender;
-        const resolvedHandle = this.normalizeCleanHandle(user.callsign || user.username, user.id, user.name || policeProfile?.nama);
+        const resolvedHandle = (user.username && String(user.username).trim())
+            ? String(user.username).trim().replace(/^@/, '')
+            : this.generateDefaultHandle(user.id);
         return {
             id: user.id,
             name: user.name,
@@ -968,7 +1255,8 @@ export class UserService {
                 existingPoliceSoc = pRows[0].social_media;
             }
         } catch {}
-        const name = (dto.name || '').trim();
+        const rawNamePresent = dto.name !== undefined && String(dto.name).trim() !== '';
+        const name = rawNamePresent ? this.validateAndNormalizeName(dto.name, true)! : '';
         const authUpdate: Partial<User> = {};
         if (name && name !== authUser.name) authUpdate.name = name;
         if (dto.is_pns !== undefined) authUpdate.is_pns = Boolean(dto.is_pns);
@@ -979,7 +1267,7 @@ export class UserService {
         if (dto.social_media !== undefined || normJk) {
             const dbSoc = (dbUser?.social_media && typeof dbUser.social_media === 'object') ? dbUser.social_media : ((authUser.social_media && typeof authUser.social_media === 'object') ? authUser.social_media : {});
             const baseSoc: any = { ...existingPoliceSoc, ...dbSoc };
-            const incomingSoc = (dto.social_media && typeof dto.social_media === 'object') ? dto.social_media : {};
+            const incomingSoc = (dto.social_media && typeof dto.social_media === 'object') ? this.sanitizeAndValidateSocialMedia(dto.social_media) : {};
             const nextSoc: any = { ...baseSoc, ...incomingSoc };
             const isCustomBanner = (val: any) => typeof val === 'string' && val.trim().length > 5 && !val.includes('default-banner');
             if (!isCustomBanner(incomingSoc.banner_theme) && (isCustomBanner(dbSoc.banner_theme) || isCustomBanner(existingPoliceSoc.banner_theme))) {
@@ -1009,55 +1297,46 @@ export class UserService {
         }
 
         if (dto.email_polri !== undefined) {
-            const emailPolri = this.normalizeEmail(dto.email_polri);
+            const emailPolri = String(dto.email_polri).trim() ? this.validateAndNormalizeEmailPolri(dto.email_polri, false) : '';
             if (emailPolri !== this.normalizeEmail(authUser.email_polri)) {
                 if (emailPolri) {
                     const check = await this.checkIdentifierAvailability('email_polri', emailPolri, Number(authUser.id));
                     if (!check.available) {
-                        throw new ConflictException({ errors: { email_polri: [`Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                        throw new ConflictException({ errors: { email_polri: [check.reason || `Email dinas Polri ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
                     }
                 }
                 authUpdate.email_polri = emailPolri || null;
             }
         }
         if (dto.email !== undefined) {
-            const secondaryEmail = this.normalizeEmail(dto.email);
-            const targetEmail = secondaryEmail || authUpdate.email_polri || authUser.email_polri || authUser.email;
+            const effectivePolriForEmail = authUpdate.email_polri !== undefined ? authUpdate.email_polri : (dbUser?.email_polri || authUser.email_polri);
+            const secondaryEmail = String(dto.email).trim() ? this.validateAndNormalizeSecondaryEmail(dto.email, effectivePolriForEmail) : null;
+            const targetEmail = secondaryEmail || effectivePolriForEmail || authUser.email;
             if (targetEmail && targetEmail !== this.normalizeEmail(authUser.email)) {
                 const check = await this.checkIdentifierAvailability('email', targetEmail, Number(authUser.id));
                 if (!check.available) {
-                    throw new ConflictException({ errors: { email: [`Email ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                    throw new ConflictException({ errors: { email: [check.reason || `Email ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
                 }
                 authUpdate.email = targetEmail;
             }
         }
         if (dto.username !== undefined) {
             const rawTrim = String(dto.username || '').trim();
-            const cleanU = rawTrim ? this.sanitizeUsernameInput(rawTrim) : null;
-            if (rawTrim && (!cleanU || cleanU.length < 3)) {
-                throw new BadRequestException({
-                    message: 'Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore).',
-                    errors: { username: ['Username minimal 3 karakter (huruf kecil, angka, titik, atau underscore, tanpa @domain).'] }
-                });
-            }
-            const nextUsername = await this.resolveUniqueHandleForUser(name || dbUser?.name || authUser.name, Number(authUser.id), cleanU);
+            const effectivePolriForUser = authUpdate.email_polri !== undefined ? authUpdate.email_polri : (dbUser?.email_polri || authUser.email_polri);
+            const cleanU = rawTrim ? this.validateAndNormalizeUsername(rawTrim, effectivePolriForUser, false) : null;
+            const nextUsername = cleanU || this.generateDefaultHandle(authUser.id);
             if (this.normalizeEmail(nextUsername) !== this.normalizeEmail(dbUser?.username || authUser.username)) {
                 const check = await this.checkIdentifierAvailability('username', nextUsername, Number(authUser.id));
                 if (!check.available) {
-                    throw new ConflictException({ errors: { username: [`Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
+                    throw new ConflictException({ errors: { username: [check.reason || `Username ini sudah terdaftar${check.satker_nama ? ` oleh satker ${check.satker_nama}` : ''}. Butuh bantuan? Hubungi Pusat Bantuan.`] } });
                 }
             }
             authUpdate.username = nextUsername;
-            authUpdate.callsign = nextUsername;
         }
         const effectivePolri = authUpdate.email_polri !== undefined ? authUpdate.email_polri : (dbUser?.email_polri || authUser.email_polri);
         const effectiveUsername = authUpdate.username !== undefined
             ? authUpdate.username
-            : this.normalizeCleanHandle(dbUser?.callsign || dbUser?.username || authUser.username, authUser.id, name || dbUser?.name || authUser.name);
-        if (dbUser?.callsign !== effectiveUsername || dbUser?.username !== effectiveUsername) {
-            authUpdate.username = effectiveUsername;
-            authUpdate.callsign = effectiveUsername;
-        }
+            : ((dbUser?.username && String(dbUser.username).trim()) ? String(dbUser.username).trim().replace(/^@/, '') : ((authUser.username && String(authUser.username).trim()) ? String(authUser.username).trim().replace(/^@/, '') : this.generateDefaultHandle(authUser.id)));
         if (effectivePolri && effectiveUsername && this.normalizeEmail(effectivePolri) === this.normalizeEmail(effectiveUsername)) {
             throw new BadRequestException({
                 message: 'Username dan Email Dinas Polri tidak boleh sama. Gunakan username alfanumerik / alias unik.',
@@ -1067,17 +1346,25 @@ export class UserService {
                 }
             });
         }
+        if (dto.nrp !== undefined && String(dto.nrp).trim() !== '') {
+            const isPnsFlag = dto.is_pns !== undefined ? Boolean(dto.is_pns) : (dbUser?.is_pns !== undefined ? Boolean(dbUser.is_pns) : undefined);
+            dto.nrp = this.normalizeAndValidateNrp(dto.nrp, effectivePolri, effectiveUsername, false, isPnsFlag);
+            if (dto.nrp && dto.nrp.length === 18) {
+                dto.is_pns = true;
+                authUpdate.is_pns = true;
+            }
+            await this.assertNrpAvailable(dto.nrp, [authUser.email, authUser.email_polri, dbUser?.email, dbUser?.email_polri]);
+        }
+        if (dto.no_hp !== undefined && String(dto.no_hp).trim() !== '') {
+            dto.no_hp = this.validateAndNormalizePhone(dto.no_hp, false);
+            await this.assertNoHpAvailable(dto.no_hp, [authUser.email, authUser.email_polri, dbUser?.email, dbUser?.email_polri]);
+        }
+        if (dto.pangkat !== undefined) dto.pangkat = this.validateAndNormalizePositionField(dto.pangkat, 'pangkat', 'Pangkat', 50);
+        if (dto.jabatan !== undefined) dto.jabatan = this.validateAndNormalizePositionField(dto.jabatan, 'jabatan', 'Jabatan', 120);
+        if (dto.satuan !== undefined) dto.satuan = this.validateAndNormalizePositionField(dto.satuan, 'satuan', 'Satuan', 120);
         if (Object.keys(authUpdate).length) {
             await this.userRepository.update(Number(authUser.id), authUpdate);
         }
-        try {
-            await this.dataSource.query(
-                `INSERT INTO bdb_user_social_profiles (user_id, callsign, updated_at)
-                 VALUES ($1, $2, NOW())
-                 ON CONFLICT (user_id) DO UPDATE SET callsign = EXCLUDED.callsign, updated_at = NOW()`,
-                [Number(authUser.id), effectiveUsername]
-            );
-        } catch {}
 
         await this.upsertPoliceProfileByEmail(authUser.email, {
             nrp: dto.nrp,
@@ -1322,7 +1609,7 @@ export class UserService {
     }
 
     private async resolveScope(role: BdbRole, scopeSatkerId?: number, scopeSatkerKey?: string, required = true) {
-        if (role === 'superadmin' || role === 'vendor_mitra') {
+        if (role === 'superadmin') {
             return { scope_satker_id: null, scope_satker_key: null };
         }
 
@@ -1421,14 +1708,10 @@ export class UserService {
         const pkByKey = new Map(pkRows.map((row) => [row.satker_key, row]));
 
         users.forEach((user) => {
-            const unifiedHandle = this.normalizeCleanHandle(user.callsign || user.username, user.id, user.name);
-            user.username = unifiedHandle;
-            user.callsign = unifiedHandle;
-            const normRole = this.normalizeBdbRole(user.role_bdb);
-            if (normRole === 'superadmin' || normRole === 'vendor_mitra') {
+            if (this.normalizeBdbRole(user.role_bdb) === 'superadmin') {
                 user.scope_satker_name = '-';
                 user.scope_satker_display = '-';
-                user.scope_access_display = normRole === 'vendor_mitra' ? 'Nasional (Read-Only)' : 'Nasional';
+                user.scope_access_display = 'Nasional';
                 return;
             }
 
@@ -1479,10 +1762,11 @@ export class UserService {
             select id
             from trb_police
             where lower(email) = any($1::text[])
-            order by id desc
+               or ($2::text is not null and nrp = $2::text)
+            order by (case when lower(email) = any($1::text[]) then 0 else 1 end), id desc
             limit 1
             `,
-            [emails]
+            [emails, nrp]
         );
 
         const existing = existingRows[0];
@@ -1620,8 +1904,8 @@ export class UserService {
         }
 
         const currentTargetRole = this.normalizeBdbRole(target.role_bdb);
-        if (currentTargetRole === 'superadmin' || currentTargetRole === 'admin_binops' || currentTargetRole === 'vendor_mitra') {
-            throw new ForbiddenException('Admin/Binops tidak boleh mengelola Superadmin, Admin/Binops, atau Vendor/Mitra');
+        if (currentTargetRole === 'superadmin' || currentTargetRole === 'admin_binops') {
+            throw new ForbiddenException('Admin/Binops tidak boleh mengelola Superadmin atau Admin/Binops lain');
         }
 
         await this.assertCanReview(authUser, targetRole, targetScopeId, targetScopeKey);
@@ -1660,7 +1944,7 @@ export class UserService {
             throw new ForbiddenException('Tidak berwenang approve user');
         }
 
-        if (targetRole === 'superadmin' || targetRole === 'admin_binops' || targetRole === 'vendor_mitra') {
+        if (targetRole === 'superadmin' || targetRole === 'admin_binops') {
             throw new ForbiddenException('Admin/Binops hanya boleh approve Operator atau Viewer');
         }
 
@@ -1833,7 +2117,7 @@ export class UserService {
 
     // ===================== Import Massal Pengguna (Excel) =====================
     private static readonly IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email Dinas Polri (Utama)', 'Email Sekunder (Opsional)', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
-    private static readonly IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'];
+    private static readonly IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
     private static readonly IMPORT_STATUS_OPTS = ['AKTIF', 'NONAKTIF'];
 
     /** Password acak (huruf besar+kecil+angka, 10 karakter) -- dipakai baris import yg tak isi password. */
@@ -1857,9 +2141,11 @@ export class UserService {
     private async resolveSatkerForImport(raw?: string): Promise<{ key: string; name: string } | null> {
         const value = String(raw || '').trim();
         if (!value) return null;
-        if (/^[0-9.]+$/.test(value)) {
-            const rows = await this.dataSource.query('select kode, deskripsi from bdb_satker where is_synthetic=false and kode=$1 limit 1', [value]);
-            return rows.length ? { key: rows[0].kode, name: rows[0].deskripsi } : null;
+        const codeMatch = value.match(/^([0-9]+(?:\.[0-9]+)+)(?:\s|$|\(|-)/);
+        const cleanCode = /^[0-9.]+$/.test(value) ? value : (codeMatch ? codeMatch[1] : null);
+        if (cleanCode) {
+            const rows = await this.dataSource.query('select kode, deskripsi from bdb_satker where is_synthetic=false and kode=$1 limit 1', [cleanCode]);
+            if (rows.length) return { key: rows[0].kode, name: rows[0].deskripsi };
         }
         const rows = await this.dataSource.query('select kode, deskripsi from bdb_satker where is_synthetic=false and lower(deskripsi)=lower($1) order by id limit 2', [value]);
         if (rows.length === 1) return { key: rows[0].kode, name: rows[0].deskripsi };
@@ -1913,28 +2199,30 @@ export class UserService {
         if (!raw.length) throw new BadRequestException('Tidak ada baris data ditemukan (isi dari baris ke-2, baris 1 = header).');
 
         // Deteksi duplikat DI DALAM file yg sama (blm tentu ketahuan dari cek DB krn blm ada di DB).
-        const seen = { email: new Map<string, number>(), email_polri: new Map<string, number>(), username: new Map<string, number>() };
+        const seen = { email: new Map<string, number>(), email_polri: new Map<string, number>(), username: new Map<string, number>(), nrp: new Map<string, number>() };
         const results: ImportPreviewRow[] = [];
 
         for (const r of raw) {
             try {
-                if (!r.name) throw new BadRequestException('Nama wajib diisi.');
-                if (!r.nrp) throw new BadRequestException('NRP/NIP wajib diisi.');
-                if (!r.email_polri) throw new BadRequestException('Email Dinas Polri (Utama) wajib diisi.');
-                const emailPolriNorm = this.normalizeEmail(r.email_polri);
-                if (!emailPolriNorm.endsWith('@polri.go.id')) throw new BadRequestException('Email Dinas Polri wajib menggunakan domain @polri.go.id.');
+                r.name = this.validateAndNormalizeName(r.name, true)!;
+                const cleanNrp = this.normalizeAndValidateNrp(r.nrp, r.email_polri, r.username, true)!;
+                r.nrp = cleanNrp;
+                const emailPolriNorm = this.validateAndNormalizeEmailPolri(r.email_polri, true)!;
+                const secEmailNorm = (r.email && r.email.toLowerCase() !== emailPolriNorm)
+                    ? (this.validateAndNormalizeSecondaryEmail(r.email, emailPolriNorm) || '')
+                    : '';
+                const cleanUsername = r.username ? (this.validateAndNormalizeUsername(r.username, emailPolriNorm, false) || '') : '';
+                if (cleanUsername) r.username = cleanUsername;
 
-                const secEmailNorm = r.email && r.email.toLowerCase() !== emailPolriNorm ? this.normalizeEmail(r.email) : '';
-                if (secEmailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(secEmailNorm)) throw new BadRequestException('Format email sekunder tidak valid.');
-                if (secEmailNorm && secEmailNorm === emailPolriNorm) throw new BadRequestException('Email sekunder tidak boleh sama dengan email dinas Polri.');
-
-                for (const [field, val] of [['email_polri', emailPolriNorm], ['email', secEmailNorm], ['username', r.username ? r.username.toLowerCase() : '']] as const) {
+                for (const [field, val] of [['nrp', cleanNrp], ['email_polri', emailPolriNorm], ['email', secEmailNorm], ['username', cleanUsername]] as const) {
                     if (!val) continue;
                     const dupRow = seen[field].get(val);
-                    if (dupRow) throw new BadRequestException(`${field === 'email' ? 'Email Sekunder' : field === 'email_polri' ? 'Email Dinas Polri' : 'Username'} ini sudah dipakai di baris ${dupRow} pada file yang sama.`);
+                    const fieldLabel = field === 'nrp' ? (cleanNrp.length === 18 ? 'NIP' : 'NRP') : field === 'email' ? 'Email Sekunder' : field === 'email_polri' ? 'Email Dinas Polri' : 'Username';
+                    if (dupRow) throw new BadRequestException(`${fieldLabel} ini sudah dipakai di baris ${dupRow} pada file yang sama.`);
                     seen[field].set(val, r.row);
                 }
 
+                await this.assertNrpAvailable(cleanNrp, [emailPolriNorm, secEmailNorm]);
                 const existingPolri = await this.findByEmail(emailPolriNorm);
                 if (existingPolri) throw new ConflictException('Email Dinas Polri sudah dipakai akun lain di sistem.');
                 if (secEmailNorm) {
@@ -1953,7 +2241,7 @@ export class UserService {
                 const status = UserService.IMPORT_STATUS_OPTS.includes(r.status) ? r.status : 'AKTIF';
 
                 let satker: { key: string; name: string } | null = null;
-                if (roleBdb !== 'superadmin' && roleBdb !== 'vendor_mitra') {
+                if (roleBdb !== 'superadmin') {
                     if (!r.satker_raw) throw new BadRequestException('Kode/Nama Satker wajib diisi untuk role selain Superadmin.');
                     satker = await this.resolveSatkerForImport(r.satker_raw);
                     if (!satker) throw new BadRequestException(`Satker "${r.satker_raw}" tidak ditemukan (isi kode Puskarda persis, atau nama satker persis & unik).`);

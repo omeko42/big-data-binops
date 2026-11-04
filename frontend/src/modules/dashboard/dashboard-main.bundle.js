@@ -1374,7 +1374,7 @@ function CasPetaKejahatanView({
   const [selectedYear, setSelectedYear] = (0, a.useState)(2026);
   const [selectedMonth, setSelectedMonth] = (0, a.useState)(10);
   const [filterFrom, setFilterFrom] = (0, a.useState)(() => ee || "2026-01-01");
-  const [filterTo, setFilterTo] = (0, a.useState)(() => et || "2026-12-31");
+  const [filterTo, setFilterTo] = (0, a.useState)(() => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = et || td; return v > td ? td : v; });
   const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
   const [crimeFilter, setCrimeFilter] = (0, a.useState)("SEMUA");
   const [golonganFilter, setGolonganFilter] = (0, a.useState)("SEMUA");
@@ -3672,8 +3672,9 @@ function CasPetaKejahatanView({
                                   (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "DARI TANGGAL" }),
                                   (0, t.jsx)("input", {
                                     type: "date",
+                                    max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                     value: filterFrom,
-                                    onChange: ev => { setPeriodPreset("custom"); setFilterFrom(ev.target.value); },
+                                    onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterFrom(v && v > td ? td : v); },
                                     style: { padding: "0.42rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem" }
                                   })
                                 ]
@@ -3684,8 +3685,9 @@ function CasPetaKejahatanView({
                                   (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "SAMPAI TANGGAL" }),
                                   (0, t.jsx)("input", {
                                     type: "date",
+                                    max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
                                     value: filterTo,
-                                    onChange: ev => { setPeriodPreset("custom"); setFilterTo(ev.target.value); },
+                                    onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterTo(v && v > td ? td : v); },
                                     style: { padding: "0.42rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem" }
                                   })
                                 ]
@@ -6242,8 +6244,9 @@ function dashApplyPeriod(){
     label=from+" s/d "+to;
   }
 
-  G(from);
-  Q(to);
+  let _td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date());
+  G(from>_td?_td:from);
+  Q(to>_td?_td:to);
 
   X("custom");
   setAppliedCustomFrom(from);
@@ -6995,8 +6998,9 @@ children:[
             id:"dash-custom-from",
             name:"date_from",
             type:"date",
+            max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
             value:q,
-            onChange:e=>G(e.target.value),
+            onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;G(v&&v>td?td:v)},
             style:{width:"100%"}
           }),
           (0,t.jsx)("span",{
@@ -7007,8 +7011,9 @@ children:[
             id:"dash-custom-to",
             name:"date_to",
             type:"date",
+            max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
             value:Z,
-            onChange:e=>Q(e.target.value),
+            onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;Q(v&&v>td?td:v)},
             style:{width:"100%"}
           })
         ]
@@ -7155,7 +7160,7 @@ children:[
             let code = Math.abs((num * 9301 + 49297) % 65536).toString(16).padStart(4, '0');
             return '@user_' + (idStr || '0') + code;
           })();
-          let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? '#6366f1' : ((roleStr === 'operator') ? '#0095f6' : '#64748b'));
+          let bColor = isSuper ? '#f59e0b' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops' || roleStr === 'admin') ? '#10b981' : ((roleStr === 'operator' || roleStr === 'viewer') ? '#0095f6' : 'transparent'));
           let bTitle = isSuper ? 'Superadmin Terverifikasi' : ((roleStr === 'admin_binops' || roleStr === 'binops' || roleStr === 'admin binops') ? 'Admin Binops Terverifikasi' : ((roleStr === 'operator') ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
           let rawSat = String(item.author_satker || item.satker_name || item.satker || item.satker_singkat || item.satker_nama || '').trim();
           let rawSatLow = rawSat.toLowerCase();

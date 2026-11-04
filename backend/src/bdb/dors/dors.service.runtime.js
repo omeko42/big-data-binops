@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var DorsService_1;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DorsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -22,17 +23,7 @@ const satker_service_1 = require("../satker/satker.service");
 const sync_log_store_1 = require("./sync-log.store");
 const DORS_CRON_NAME = 'dors-lp-sync';
 const DORS_INTERVAL_NAME = 'dors-lp-sync-interval';
-let DorsService = class DorsService {
-    static { DorsService_1 = this; }
-    dataSource;
-    scheduler;
-    laporanPolisi;
-    satkerService;
-    logger = new common_1.Logger('DorsService');
-    syncing = false;
-    stopRequested = false;
-    syncLogStore = null;
-    configSchemaCheck = null;
+let DorsService = DorsService_1 = class DorsService {
     get syncLogs() {
         return this.syncLogStore ||= new sync_log_store_1.SyncLogStore(this.dataSource, this.logger);
     }
@@ -40,12 +31,18 @@ let DorsService = class DorsService {
         if (this.syncLogStore)
             await this.syncLogStore.close();
     }
-    nextIntervalRun = null;
     constructor(dataSource, scheduler, laporanPolisi, satkerService) {
         this.dataSource = dataSource;
         this.scheduler = scheduler;
         this.laporanPolisi = laporanPolisi;
         this.satkerService = satkerService;
+        this.logger = new common_1.Logger('DorsService');
+        this.syncing = false;
+        this.stopRequested = false;
+        this.syncLogStore = null;
+        this.configSchemaCheck = null;
+        this.nextIntervalRun = null;
+        this.normReady = false;
     }
     async onModuleInit() {
         try {
@@ -311,14 +308,13 @@ let DorsService = class DorsService {
     assertAdmin(authUser) {
         const role = String(authUser?.role_bdb || authUser?.role_name || '').toLowerCase();
         const orgRole = String(authUser?.OrganisasiRole?.role_name || '').toLowerCase();
-        if (['superadmin', 'admin_binops', 'operator', 'vendor_mitra', 'vendor', 'mitra'].includes(role) ||
+        if (['superadmin', 'admin_binops'].includes(role) ||
             role.includes('admin') ||
             role.includes('super') ||
-            orgRole.includes('admin') ||
-            orgRole.includes('operator')) {
+            orgRole.includes('admin')) {
             return;
         }
-        throw new common_1.ForbiddenException('Hanya superadmin/admin/operator yang dapat mengakses Integrasi DORS.');
+        throw new common_1.ForbiddenException('Hanya Superadmin atau Admin Binops yang dapat mengakses Integrasi DORS.');
     }
     async getConfigPublic(authUser) {
         this.assertAdmin(authUser);
@@ -355,7 +351,7 @@ let DorsService = class DorsService {
         return String(n).padStart(2, '0');
     }
     ymd(d) {
-        return `${d.getFullYear()}-${this.twoDigit(d.getMonth() + 1)}-${this.twoDigit(d.getDate())}`;
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(d);
     }
     async checkOne(cfg, src, from, to) {
         const today = this.ymd(new Date());
@@ -450,33 +446,6 @@ let DorsService = class DorsService {
         }
         throw lastErr;
     }
-    static MAIN_COLS = [
-        'apa_terjadi', 'bagaimana_terjadi', 'dilimpahkan', 'id_emp_modus_operandi', 'id_emp_motif_kejahatan', 'id_emp_sasaran_kejahatan',
-        'id_hubungan_korban_pelaku', 'id_kategori_lokasi', 'id_operasi', 'id_pasal_kamtibmas', 'id_polda', 'id_polres', 'id_polsek',
-        'id_satuan', 'id_unit_terusan', 'kategori', 'kerugian', 'nama_mengetahui', 'nama_pembuat', 'no_laporan', 'no_sttlp',
-        'nrp_mengetahui', 'nrp_pembuat', 'nrp_penerima', 'pangkat_mengetahui', 'pangkat_pembuat', 'pelimpahan', 'perhatian_publik',
-        'redaksional_mengetahui_spkt', 'status_aktif', 'tempat_kejadian', 'tgl_laporan', 'tkp_id_desa', 'tkp_id_kecamatan',
-        'tkp_id_kota', 'tkp_id_provinsi', 'uraian_kejadian', 'uraian_singkat_kejadian', 'waktu_kejadian', 'waktu_kejadian_faktual', 'zona_waktu'
-    ];
-    static OBJ_RELS = {
-        polda: ['id', 'kode', 'nama', 'alamat', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
-        polres: ['id', 'kode', 'nama', 'alamat', 'kode_polda', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
-        polsek: ['id', 'kode', 'nama', 'alamat', 'alamat_web', 'kode_polda', 'kode_polres', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
-        unit: ['id', 'unit', 'level', 'id_emp'],
-        tkp_provinsi: ['kode_provinsi', 'provinsi', 'singkatan'],
-        tkp_kota: ['kode_provinsi', 'kode_kabupaten', 'kabupaten', 'ibukota', 'singkatan'],
-        tkp_kecamatan: ['kode_provinsi', 'kode_kabupaten', 'kode_kecamatan', 'kecamatan', 'singkatan'],
-        tkp_desa: ['kode_provinsi', 'kode_kabupaten', 'kode_kecamatan', 'kode_desa', 'desa', 'singkatan'],
-        hubungan_korban_pelaku: ['id', 'nama'],
-        kategori_gk: ['id', 'id_emp', 'id_sub_golongan', 'id_uu', 'pasal', 'pasal_mapping', 'keterangan', 'kasus_menonjol', 'atensi_pimpinan'],
-        kategori_lokasi: ['id', 'id_emp', 'lokasi'],
-        petugas_penerima: ['nrp_admin', 'username', 'nama', 'pangkat', 'email', 'no_telpon']
-    };
-    static ARR_RELS = {
-        terlibat: ['id', 'id_laporan', 'nama', 'nik', 'jenis_identitas', 'jenis_kelamin', 'gender', 'tempat_lahir', 'tgl_lahir', 'umur', 'agama', 'suku', 'kewarganegaraan', 'pekerjaan', 'pendidikan_terakhir', 'alamat', 'alamat_non_nkri', 'no_hp', 'telphone', 'email', 'sosmed', 'keterlibatan', 'jenis_korban', 'status_korban', 'nomor_visum', 'created_at', 'updated_at'],
-        tindak_pidana: ['id', 'id_lp', 'id_kategori_kejahatan', 'nama_kategori_kejahatan', 'id_uu', 'nama_uu', 'pasal', 'pasal_tambahan', 'pasal_mapping', 'juncto', 'subsider', 'updated_at'],
-        barang_bukti: ['id', 'id_laporan', 'kode_bb', 'jenis_bb', 'jumlah', 'keterangan', 'ran_jenis', 'ran_merk', 'ran_model', 'ran_type', 'ran_warna', 'ran_warna_tnkb', 'ran_no_registrasi', 'ran_no_rangka', 'ran_no_mesin', 'ran_no_bpkb', 'ran_nama_pemilik', 'ran_alamat', 'ran_thn_pembuatan', 'ran_thn_registrasi', 'ran_isi_silinder', 'ran_bahan_bakar', 'created_at', 'updated_at']
-    };
     tableOf(rel) {
         return `bdb_dors_lp_${rel}`;
     }
@@ -496,7 +465,6 @@ let DorsService = class DorsService {
             return JSON.stringify(v);
         return String(v);
     }
-    normReady = false;
     async ensureNormalizedTables() {
         if (this.normReady)
             return;
@@ -588,27 +556,9 @@ let DorsService = class DorsService {
         for (let i = 0; i < valid.length; i += CHUNK) {
             const slice = valid.slice(i, i + CHUNK);
             const ids = slice.map((r) => r.id);
-            const existRows = await this.dataSource.query(`select id, dors_lp_id,
-                    coalesce(payload_json->>'pelimpahan','') as pelimpahan,
-                    coalesce(payload_json#>>'{unit,unit}','') as unit_nama,
-                    coalesce(payload_json#>>'{unit,level}','') as unit_level,
-                    coalesce(payload_json#>>'{polda,kode_pusiknas}','') as polda_kp,
-                    coalesce(payload_json#>>'{polres,kode_pusiknas}','') as polres_kp,
-                    coalesce(payload_json#>>'{polsek,kode_pusiknas}','') as polsek_kp
-                 from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`, [model, ids]);
-            const existMap = new Map(existRows.map((r) => [String(r.dors_lp_id), r]));
-            const fresh = slice.filter((r) => {
-                const ex = existMap.get(String(r.id));
-                if (!ex) return true;
-                return (
-                    String(r.pelimpahan ?? '') !== ex.pelimpahan ||
-                    String(r.unit?.unit ?? '') !== ex.unit_nama ||
-                    String(r.unit?.level ?? '') !== ex.unit_level ||
-                    String(r.polda?.kode_pusiknas ?? '') !== ex.polda_kp ||
-                    String(r.polres?.kode_pusiknas ?? '') !== ex.polres_kp ||
-                    String(r.polsek?.kode_pusiknas ?? '') !== ex.polsek_kp
-                );
-            });
+            const existRows = await this.dataSource.query(`select dors_lp_id from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`, [model, ids]);
+            const existing = new Set(existRows.map((r) => String(r.dors_lp_id)));
+            const fresh = slice.filter((r) => !existing.has(String(r.id)));
             if (!fresh.length)
                 continue;
             const params = [];
@@ -624,11 +574,7 @@ let DorsService = class DorsService {
             params.push(scope, batch);
             const ret = await this.dataSource.query(`insert into bdb_dors_raw_lp (dors_lp_id, model_lp, no_laporan, payload_json, source, data_scope, import_batch, synced_at, created_at, updated_at)
                  values ${valuesSql}
-                 on conflict (dors_lp_id, model_lp) do update
-                    set payload_json = excluded.payload_json,
-                        no_laporan = coalesce(excluded.no_laporan, bdb_dors_raw_lp.no_laporan),
-                        synced_at = now(),
-                        updated_at = now()
+                 on conflict (dors_lp_id, model_lp) do nothing
                  returning id, dors_lp_id`, params);
             const rawIdByDors = new Map((ret || []).map((x) => [String(x.dors_lp_id), x.id]));
             for (const r of fresh) {
@@ -668,8 +614,6 @@ let DorsService = class DorsService {
         const remain = await this.dataSource.query(`select count(*)::int as c from bdb_dors_raw_lp r left join bdb_dors_lp n on n.dors_lp_id=r.dors_lp_id and n.model_lp=r.model_lp where n.id is null`);
         return { status: 1, data: { normalized: done, failed: fail, remaining: remain[0]?.c || 0 }, message: `Backfill: ${done} dinormalisasi, sisa ${remain[0]?.c || 0}.` };
     }
-    static MAX_AUTO_ATTEMPTS = 5;
-    static RETRY_BACKOFF_MS = [5000, 15000, 30000, 60000, 60000];
     async persistProgress(logId, states, extra) {
         const chunksDone = states.filter((s) => s.status === 'done').length;
         await this.syncLogs.progress(`update bdb_dors_sync_log set sources_json=$2::jsonb, current_source=$3, current_page=$4, current_last_page=$5, current_chunk_from=$6, current_chunk_to=$7, chunks_done=$8, chunks_total=$9, attempt=$10, total_fetched=$11, total_upserted=$12 where id=$1`, [logId, JSON.stringify(states), extra.current_source ?? null, extra.current_page ?? null, extra.current_last_page ?? null, extra.current_chunk_from ?? null, extra.current_chunk_to ?? null, chunksDone, states.length, extra.attempt, states.reduce((n, s) => n + s.fetched, 0), states.reduce((n, s) => n + s.upserted, 0)]);
@@ -792,7 +736,6 @@ let DorsService = class DorsService {
                 await new Promise((r) => setTimeout(r, wait));
             }
         }
-        // Jalankan penarikan riwayat LP dihapus (gk_history_delete) serentak untuk periode yang sama
         const hdState = states.find((s) => s.key === 'history_delete');
         if (hdState && !this.stopRequested) {
             hdState.status = 'running';
@@ -809,7 +752,8 @@ let DorsService = class DorsService {
                 hdState.error = hdRes?.status === 1 ? null : (hdRes?.message || 'Gagal sinkron');
                 hdState.ms = Date.now() - hdStart;
                 this.logger.log(`Auto-sync riwayat hapus DORS (${f}..${t}) selesai: ${hdRes?.data?.total_fetched || 0} riwayat ditarik, ${hdRes?.data?.applied_lp_count || 0} soft-deleted.`);
-            } catch (err) {
+            }
+            catch (err) {
                 hdState.status = 'error';
                 hdState.error = err?.message || 'Gagal sinkron';
                 hdState.ms = Date.now() - hdStart;
@@ -817,7 +761,6 @@ let DorsService = class DorsService {
             }
             await this.persistProgress(logId, states, { current_source: 'history_delete', current_page: 1, current_last_page: 1, attempt });
         }
-
         const allDone = states.every((s) => s.status === 'done');
         const lpStates = states.filter((s) => s.key !== 'history_delete');
         const totalFetched = lpStates.reduce((a, s) => a + s.fetched, 0);
@@ -840,7 +783,20 @@ let DorsService = class DorsService {
             const cfg = await this.getConfig();
             const today = this.ymd(new Date());
             const t = to || today;
-            const f = from || (trigger === 'cron' ? this.daysAgo(cfg.sync_days_back) : today);
+            let cronFrom = this.daysAgo(cfg.sync_days_back);
+            if (!from && trigger === 'cron') {
+                try {
+                    const lastOk = await this.syncLogs.query("SELECT to_char((MAX(to_date::date) - INTERVAL '1 day')::date, 'YYYY-MM-DD') AS catchup_from FROM bdb_dors_sync_log WHERE status = 'success'", [], false);
+                    const catchupFrom = lastOk?.[0]?.catchup_from;
+                    const minAllowed = this.daysAgo(Math.max(cfg.sync_days_back, 30));
+                    if (catchupFrom && catchupFrom < cronFrom) {
+                        cronFrom = catchupFrom < minAllowed ? minAllowed : catchupFrom;
+                        this.logger.log(`Auto-catchup DORS pasca server downtime: menarik mundur dari ${cronFrom} s/d ${t}`);
+                    }
+                }
+                catch { }
+            }
+            const f = from || (trigger === 'cron' ? cronFrom : today);
             if (!cfg.client_id) {
                 this.syncing = false;
                 DorsService_1.invalidateCache();
@@ -869,8 +825,6 @@ let DorsService = class DorsService {
                 if (unmapped > 0) {
                     const mapRes = await this.laporanPolisi.mapFromDors();
                     mappedBaru = mapRes?.data?.mapped_baru || 0;
-                } else {
-                    await this.laporanPolisi.syncPelimpahanOwnershipFromDors();
                 }
             }
             catch (e) {
@@ -882,10 +836,10 @@ let DorsService = class DorsService {
             catch (e) {
                 this.logger.warn('sinkron Jumlah Penduduk dari DORS gagal: ' + (e?.message || e));
             }
-            // Pastikan sisa pending history-delete ikut diterapkan setelah mapping LP baru selesai
             try {
                 await this.applyPendingHistoryDelete({ role_bdb: 'superadmin' });
-            } catch (e) {
+            }
+            catch (e) {
                 this.logger.warn('apply pending history-delete gagal: ' + (e?.message || e));
             }
             const hdStateFinal = result.states.find((s) => s.key === 'history_delete');
@@ -955,10 +909,8 @@ let DorsService = class DorsService {
         this.assertAdmin(authUser);
         await this.ensureConfigTable();
         if (!this.syncing) {
-            await this.syncLogs.query(
-                `update bdb_dors_sync_log set status='error', stopped_reason='Proses terhenti di latar belakang.', error='Terputus.', finished_at=now()
-                 where status='running'`
-            );
+            await this.syncLogs.query(`update bdb_dors_sync_log set status='error', stopped_reason='Proses terhenti di latar belakang.', error='Terputus.', finished_at=now()
+                 where status='running'`);
         }
         const rows = await this.syncLogs.query(`select id, trigger, from_date, to_date, status, total_fetched, total_upserted, sources_json, error, stopped_reason,
                     attempt, max_attempts, current_source, current_page, current_last_page, current_chunk_from, current_chunk_to,
@@ -980,8 +932,6 @@ let DorsService = class DorsService {
             }
         };
     }
-    static STATS_CACHE = null;
-    static COUNT_CACHE = new Map();
     static invalidateCache() {
         DorsService_1.STATS_CACHE = null;
         DorsService_1.COUNT_CACHE.clear();
@@ -1311,9 +1261,9 @@ let DorsService = class DorsService {
                 WHERE lp.id = m.lp_id
                 RETURNING lp.id
             )
-            SELECT count(*)::int as c FROM upd_lp`);
+            SELECT count(*)::int as c FROM upd_lp
+        `);
         const countById = Number(resId[0]?.c || 0);
-
         const resNo = await this.dataSource.query(`
             WITH matched AS (
                 SELECT hd.id as hd_id, hd.action_date, lp.id as lp_id
@@ -1330,20 +1280,20 @@ let DorsService = class DorsService {
                 WHERE lp.id = m.lp_id
                 RETURNING lp.id
             )
-            SELECT count(*)::int as c FROM upd_lp`);
+            SELECT count(*)::int as c FROM upd_lp
+        `);
         const countByNo = Number(resNo[0]?.c || 0);
         const appliedCount = countById + countByNo;
-
         await this.dataSource.query(`
             UPDATE bdb_dors_history_delete 
             SET applied = true, applied_at = now(), updated_at = now() 
-            WHERE applied = false`);
-
+            WHERE applied = false
+        `);
         await this.dataSource.query(`
             DELETE FROM bdb_kinerja_perkara_snapshot s
             USING bdb_laporan_polisi lp
-            WHERE s.lp_id = lp.id AND lp.deleted_at IS NOT NULL`);
-
+            WHERE s.lp_id = lp.id AND lp.deleted_at IS NOT NULL
+        `);
         return {
             status: 1,
             data: {
@@ -1397,11 +1347,39 @@ let DorsService = class DorsService {
     }
 };
 exports.DorsService = DorsService;
+DorsService.MAIN_COLS = [
+    'apa_terjadi', 'bagaimana_terjadi', 'dilimpahkan', 'id_emp_modus_operandi', 'id_emp_motif_kejahatan', 'id_emp_sasaran_kejahatan',
+    'id_hubungan_korban_pelaku', 'id_kategori_lokasi', 'id_operasi', 'id_pasal_kamtibmas', 'id_polda', 'id_polres', 'id_polsek',
+    'id_satuan', 'id_unit_terusan', 'kategori', 'kerugian', 'nama_mengetahui', 'nama_pembuat', 'no_laporan', 'no_sttlp',
+    'nrp_mengetahui', 'nrp_pembuat', 'nrp_penerima', 'pangkat_mengetahui', 'pangkat_pembuat', 'pelimpahan', 'perhatian_publik',
+    'redaksional_mengetahui_spkt', 'status_aktif', 'tempat_kejadian', 'tgl_laporan', 'tkp_id_desa', 'tkp_id_kecamatan',
+    'tkp_id_kota', 'tkp_id_provinsi', 'uraian_kejadian', 'uraian_singkat_kejadian', 'waktu_kejadian', 'waktu_kejadian_faktual', 'zona_waktu'
+];
+DorsService.OBJ_RELS = {
+    polda: ['id', 'kode', 'nama', 'alamat', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
+    polres: ['id', 'kode', 'nama', 'alamat', 'kode_polda', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
+    polsek: ['id', 'kode', 'nama', 'alamat', 'alamat_web', 'kode_polda', 'kode_polres', 'kode_pusiknas', 'jml_desa', 'jml_kel', 'jml_penduduk', 'jml_pers_dsp', 'jml_pers_riil', 'luas_wilayah'],
+    unit: ['id', 'unit', 'level', 'id_emp'],
+    tkp_provinsi: ['kode_provinsi', 'provinsi', 'singkatan'],
+    tkp_kota: ['kode_provinsi', 'kode_kabupaten', 'kabupaten', 'ibukota', 'singkatan'],
+    tkp_kecamatan: ['kode_provinsi', 'kode_kabupaten', 'kode_kecamatan', 'kecamatan', 'singkatan'],
+    tkp_desa: ['kode_provinsi', 'kode_kabupaten', 'kode_kecamatan', 'kode_desa', 'desa', 'singkatan'],
+    hubungan_korban_pelaku: ['id', 'nama'],
+    kategori_gk: ['id', 'id_emp', 'id_sub_golongan', 'id_uu', 'pasal', 'pasal_mapping', 'keterangan', 'kasus_menonjol', 'atensi_pimpinan'],
+    kategori_lokasi: ['id', 'id_emp', 'lokasi'],
+    petugas_penerima: ['nrp_admin', 'username', 'nama', 'pangkat', 'email', 'no_telpon']
+};
+DorsService.ARR_RELS = {
+    terlibat: ['id', 'id_laporan', 'nama', 'nik', 'jenis_identitas', 'jenis_kelamin', 'gender', 'tempat_lahir', 'tgl_lahir', 'umur', 'agama', 'suku', 'kewarganegaraan', 'pekerjaan', 'pendidikan_terakhir', 'alamat', 'alamat_non_nkri', 'no_hp', 'telphone', 'email', 'sosmed', 'keterlibatan', 'jenis_korban', 'status_korban', 'nomor_visum', 'created_at', 'updated_at'],
+    tindak_pidana: ['id', 'id_lp', 'id_kategori_kejahatan', 'nama_kategori_kejahatan', 'id_uu', 'nama_uu', 'pasal', 'pasal_tambahan', 'pasal_mapping', 'juncto', 'subsider', 'updated_at'],
+    barang_bukti: ['id', 'id_laporan', 'kode_bb', 'jenis_bb', 'jumlah', 'keterangan', 'ran_jenis', 'ran_merk', 'ran_model', 'ran_type', 'ran_warna', 'ran_warna_tnkb', 'ran_no_registrasi', 'ran_no_rangka', 'ran_no_mesin', 'ran_no_bpkb', 'ran_nama_pemilik', 'ran_alamat', 'ran_thn_pembuatan', 'ran_thn_registrasi', 'ran_isi_silinder', 'ran_bahan_bakar', 'created_at', 'updated_at']
+};
+DorsService.MAX_AUTO_ATTEMPTS = 5;
+DorsService.RETRY_BACKOFF_MS = [5000, 15000, 30000, 60000, 60000];
+DorsService.STATS_CACHE = null;
+DorsService.COUNT_CACHE = new Map();
 exports.DorsService = DorsService = DorsService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        schedule_1.SchedulerRegistry,
-        laporan_polisi_service_1.LaporanPolisiService,
-        satker_service_1.SatkerService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof schedule_1.SchedulerRegistry !== "undefined" && schedule_1.SchedulerRegistry) === "function" ? _b : Object, typeof (_c = typeof laporan_polisi_service_1.LaporanPolisiService !== "undefined" && laporan_polisi_service_1.LaporanPolisiService) === "function" ? _c : Object, typeof (_d = typeof satker_service_1.SatkerService !== "undefined" && satker_service_1.SatkerService) === "function" ? _d : Object])
 ], DorsService);
 //# sourceMappingURL=dors.service.js.map

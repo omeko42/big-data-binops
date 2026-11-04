@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LpPelimpahanService = exports.POLDA_WILAYAH_MAP = void 0;
 const common_1 = require("@nestjs/common");
@@ -55,16 +56,13 @@ exports.POLDA_WILAYAH_MAP = {
     '060.01.37': { name: 'Papua Tengah', code: '94' },
 };
 let LpPelimpahanService = class LpPelimpahanService {
-    dataSource;
-    minio;
-    monitoring;
-    logger = new common_1.Logger('LpPelimpahanService');
     constructor(dataSource, minio, monitoring) {
         this.dataSource = dataSource;
         this.minio = minio;
         this.monitoring = monitoring;
+        this.logger = new common_1.Logger('LpPelimpahanService');
+        this.schemaCheck = null;
     }
-    schemaCheck = null;
     async ensureTable() {
         if (!this.schemaCheck) {
             this.schemaCheck = (async () => {
@@ -174,7 +172,7 @@ let LpPelimpahanService = class LpPelimpahanService {
                        and (
                            deskripsi ilike '%RESKRIM%' or deskripsi ilike '%SATRESKRIM%'
                            or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%'
-                           or deskripsi ilike '%LANTAS%' or deskripsi ilike '%TAHTI%'
+                           or deskripsi ilike '%LANTAS%'
                        )
                      order by deskripsi asc`, [hier.polresId]);
                 if (induk.length === 0) {
@@ -399,9 +397,50 @@ let LpPelimpahanService = class LpPelimpahanService {
              ) limit 1`, [targetExternalSatkerId, provPatterns]);
         return rows.length > 0;
     }
+    validatePelimpahanDokumen(nomorDokumen, tanggalDokumen, keterangan) {
+        const noDoc = String(nomorDokumen ?? '').trim().replace(/\s+/g, ' ');
+        const tglDoc = String(tanggalDokumen ?? '').trim().slice(0, 10);
+        const ket = String(keterangan ?? '').trim().replace(/\s+/g, ' ');
+        if (!noDoc && !tglDoc) {
+            throw new common_1.BadRequestException('Nomor Dokumen Limpah dan Tanggal Dokumen Limpah tidak boleh kosong dua-duanya (minimal salah satu wajib diisi).');
+        }
+        if (noDoc) {
+            if (noDoc.length < 3 || noDoc.length > 150 || /[<>]/.test(noDoc) || !/[a-zA-Z0-9]/.test(noDoc)) {
+                throw new common_1.BadRequestException('Nomor Dokumen Limpah tidak valid (minimal 3 karakter alfanumerik, maksimal 150 karakter).');
+            }
+        }
+        if (tglDoc) {
+            const m = tglDoc.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            if (!m) {
+                throw new common_1.BadRequestException('Format Tanggal Dokumen Limpah tidak valid (gunakan YYYY-MM-DD).');
+            }
+            const y = Number(m[1]);
+            const mo = Number(m[2]);
+            const d = Number(m[3]);
+            const dt = new Date(Date.UTC(y, mo - 1, d));
+            if (dt.getUTCFullYear() !== y || dt.getUTCMonth() + 1 !== mo || dt.getUTCDate() !== d || y < 1990) {
+                throw new common_1.BadRequestException('Tanggal Dokumen Limpah tidak valid.');
+            }
+            const todayWib = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+            if (tglDoc > todayWib) {
+                throw new common_1.BadRequestException('Tanggal Dokumen Limpah tidak boleh melebihi tanggal hari ini.');
+            }
+        }
+        if ((!noDoc || !tglDoc) && ket.length < 5) {
+            throw new common_1.BadRequestException('Apabila Nomor Dokumen Limpah atau Tanggal Dokumen Limpah salah satunya kosong (misal karena arsip rusak/buram/hilang), Keterangan Pelimpahan wajib diisi minimal 5 karakter.');
+        }
+        if (ket.length > 1000 || /[<>]/.test(ket)) {
+            throw new common_1.BadRequestException('Keterangan Pelimpahan tidak valid (maksimal 1000 karakter dan tanpa tag HTML).');
+        }
+        return { noDoc: noDoc || undefined, tglDoc: tglDoc || undefined, ket: ket || undefined };
+    }
     async create(opts) {
         await this.monitoring.assertNotViewer(opts?.userId);
         await this.ensureTable();
+        const { noDoc, tglDoc, ket } = this.validatePelimpahanDokumen(opts.nomorDokumen, opts.tanggalDokumen, opts.keterangan);
+        opts.nomorDokumen = noDoc;
+        opts.tanggalDokumen = tglDoc;
+        opts.keterangan = ket;
         const lp = await this.lpRow(opts.lpId);
         if (!lp)
             throw new common_1.NotFoundException('LP tidak ditemukan.');
@@ -489,6 +528,10 @@ let LpPelimpahanService = class LpPelimpahanService {
     async createEksternal(opts) {
         await this.monitoring.assertNotViewer(opts?.userId);
         await this.ensureTable();
+        const { noDoc, tglDoc, ket } = this.validatePelimpahanDokumen(opts.nomorDokumen, opts.tanggalDokumen, opts.keterangan);
+        opts.nomorDokumen = noDoc;
+        opts.tanggalDokumen = tglDoc;
+        opts.keterangan = ket;
         const lp = await this.dataSource.query('select id, satker_id, satker_nama, unit_satker_id, unit_satker_nama, no_laporan, dilimpahkan_eksternal from bdb_laporan_polisi where id=$1', [opts.lpId]);
         if (!lp.length)
             throw new common_1.NotFoundException('LP tidak ditemukan.');
@@ -726,8 +769,6 @@ let LpPelimpahanService = class LpPelimpahanService {
 exports.LpPelimpahanService = LpPelimpahanService;
 exports.LpPelimpahanService = LpPelimpahanService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        minio_service_1.MinioService,
-        lp_monitoring_access_service_1.LpMonitoringAccessService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _b : Object, typeof (_c = typeof lp_monitoring_access_service_1.LpMonitoringAccessService !== "undefined" && lp_monitoring_access_service_1.LpMonitoringAccessService) === "function" ? _c : Object])
 ], LpPelimpahanService);
 //# sourceMappingURL=lp-pelimpahan.service.js.map
