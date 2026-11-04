@@ -6531,9 +6531,9 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   .p-button.p-button-icon-only,
-  button[aria-label="Muat ulang"],
-  button[title="Refresh"],
-  button[title="Muat Ulang"] {
+  button[aria-label="Muat ulang"]:not(:has(span, strong)),
+  button[title="Refresh"]:not(:has(span, strong)),
+  button[title="Muat Ulang"]:not(:has(span, strong)) {
     width: 2rem !important;
     min-width: 2rem !important;
     height: 2rem !important;
@@ -6745,19 +6745,20 @@ div[style*="margin-top:-1.6rem"] > span {
   .lp-kelompok-popover,
   .lp-crime-popover,
   .lp-satker-popover,
+  .lp-period-popover,
   .lp-period-popover-v2,
   .pt-period-popover,
   .bb-period-popover {
     position: fixed !important;
     left: 0.5rem !important;
     right: 0.5rem !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    top: calc(var(--cms-header-h, 6.2rem) + 0.4rem) !important;
+    transform: none !important;
     width: calc(100vw - 1rem) !important;
     max-width: calc(100vw - 1rem) !important;
-    max-height: 86dvh !important;
+    max-height: calc(100dvh - var(--cms-header-h, 6.2rem) - 0.8rem) !important;
     overflow-y: auto !important;
-    z-index: 3200 !important;
+    z-index: 9999 !important;
     margin: 0 !important;
     border-radius: 12px !important;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45) !important;
@@ -6838,6 +6839,9 @@ div[style*="margin-top:-1.6rem"] > span {
   width: 1.45rem !important;
   height: 1.45rem !important;
   min-width: 1.45rem !important;
+  min-height: 1.45rem !important;
+  max-height: 1.45rem !important;
+  aspect-ratio: 1 / 1 !important;
   border-radius: 6px !important;
   background: rgba(37, 99, 235, 0.1) !important;
   border: 1px solid rgba(59, 130, 246, 0.32) !important;
@@ -7343,7 +7347,7 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 }
 
-@media (pointer: coarse) and (max-width: 640px) {
+  @media (pointer: coarse) and (max-width: 640px) {
   /* Prevent iOS Safari / Mobile Browser Auto-Zoom on Input Focus (<16px) */
   input.p-inputtext:not([type="checkbox"]):not([type="radio"]),
   select,
@@ -7357,6 +7361,217 @@ div[style*="margin-top:-1.6rem"] > span {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
   }
 }
+
+/* ============================================================================
+   UNIFIED GROUP A & B MOBILE VIEWPORT & 6-DIGIT OTP HARDENING (360x800 / 375x812)
+   ============================================================================ */
+
+/* 6-Digit OTP / PIN Guard Styling (.p-inputotp) */
+.p-inputotp {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.p-inputotp .p-inputotp-input,
+.p-dialog-content .p-inputotp .p-inputotp-input {
+  width: clamp(2.25rem, 11.5vw, 2.85rem) !important;
+  min-width: 0 !important;
+  height: clamp(2.6rem, 12.5vw, 3.1rem) !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: 1.2rem !important;
+  font-weight: 800 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  border-radius: 10px !important;
+  flex: 0 1 clamp(2.25rem, 11.5vw, 2.85rem) !important;
+}
+
+@keyframes casOtpShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.p-inputotp.cas-otp-error,
+.cas-otp-shake {
+  animation: casOtpShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Floating Messenger & Toast Positioning Protection */
+#cas-floating-tactical-messenger {
+  z-index: 990 !important;
+}
+
+body.p-overflow-hidden #cas-floating-tactical-messenger,
+body:has(.p-dialog-mask) #cas-floating-tactical-messenger {
+  display: none !important;
+}
+
+.p-toast.p-toast-top-right {
+  top: calc(var(--cms-header-h, 100px) + 0.5rem) !important;
+  right: 0.75rem !important;
+  max-width: calc(100vw - 1.5rem) !important;
+}
+
+@media (max-width: 768px) {
+  /* G1: Prevent sticky column 2 text from bleeding over column 3 */
+  .p-datatable .p-datatable-thead > tr > th.cas-freeze-col-2,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2,
+  .p-datatable .p-datatable-thead > tr > th.cas-sticky-col-2,
+  .p-datatable .p-datatable-tbody > tr > td.cas-sticky-col-2,
+  .p-treetable table th.cas-sticky-col-2,
+  .p-treetable table td.cas-sticky-col-2,
+  .p-datatable table th.cas-sticky-col-2,
+  .p-datatable table td.cas-sticky-col-2 {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .p-datatable table td.cas-sticky-col-2 span,
+  .p-datatable table td.cas-sticky-col-2 div,
+  .p-datatable table td.cas-sticky-col-2 a,
+  .p-datatable table td.cas-sticky-col-2 strong,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2 span,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2 div,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2 a,
+  .p-datatable .p-datatable-tbody > tr > td.cas-freeze-col-2 strong {
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* G6: DORS Schedule Grid & Detail LP Fact Cards & Multi-line Table Tags */
+  html body .dors-sched-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lp-fact-card {
+    min-width: 0 !important;
+  }
+
+  .p-selectbutton {
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .p-datatable .p-tag {
+    border-radius: 0.375rem !important;
+    white-space: normal !important;
+    text-align: left !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Breadcrumb & Ticker Balance on 360px/375px */
+  .cms-breadcrumb {
+    max-width: 54% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .cms-ticker-wrap {
+    min-width: 42% !important;
+    flex: 1 1 42% !important;
+  }
+
+  /* Dashboard Panel Head & Peta Kejahatan Filter Bar */
+  .dash-panel-head {
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .dash-panel-title {
+    white-space: normal !important;
+    min-width: 140px !important;
+    flex: 1 1 auto !important;
+  }
+
+  .cas-peta-filter-bar,
+  .cas-peta-filter-bar > div {
+    flex-wrap: wrap !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .leaflet-top.leaflet-left {
+    top: 3.1rem !important;
+  }
+
+  /* Sharese Profile & Feed Header/Composer */
+  .profile-row {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .profile-row-value {
+    flex: 1 1 calc(100% - 3rem) !important;
+    min-width: 160px !important;
+  }
+
+  .sharese-sticky-header {
+    position: relative !important;
+    top: auto !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+
+  .sharese-composer-toolbar {
+    flex-wrap: wrap !important;
+    gap: 0.35rem !important;
+  }
+
+  /* G5 & G6: Page Header Wrapping, 2x2 CMS Cards, and Modal Grid Safety Net */
+  .cms-page-header,
+  .cms-header-row {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .cms-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .p-dialog {
+    max-width: calc(100vw - 0.75rem) !important;
+    margin: 0.35rem !important;
+  }
+
+  .p-dialog .p-dialog-content {
+    overflow-x: hidden !important;
+  }
+
+  .p-dialog .p-dialog-content * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Kinerja Perkara Popover 2x2 Tab Bar & Wrapped Footer on Mobile */
+  .kp-tab-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.3rem !important;
+  }
+
+  .kp-modal-footer {
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+}
+
 
 
 
