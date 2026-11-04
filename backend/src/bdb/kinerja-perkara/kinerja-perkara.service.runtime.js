@@ -1793,19 +1793,34 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
         const isStandardRekap = (!jenisKejahatanIds?.length && !golonganIds?.length && !iccsKategoriIds?.length && !modelFilter && !closureReason && (!kelompokHitung || !kelompokHitung.length) && (bucketMode === 'age' || !bucketMode) && (mode === 'both' || !mode) && isDefaultTaxonomy);
         if (isStandardRekap) {
             const scope = await (0, scope_util_1.resolveScope)(this.ds, userId);
-            const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
+            const hasAccountFunctionGroup = !scope.all && scope.satkerId
+                ? Boolean((0, exports.buildKinerjaRegionalScopePlan)(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                : false;
+            const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun = null;
             let targetBulan = null;
             if (from && to) {
                 const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
                 const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
                 if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                    targetTahun = Number(mFrom[1]);
-                    targetBulan = Number(mFrom[2]);
+                    const y = Number(mFrom[1]);
+                    const m = Number(mFrom[2]);
+                    const lastDay = String(new Date(y, m, 0).getDate()).padStart(2, '0');
+                    // Hanya gunakan snapshot bulanan jika 'to' adalah tanggal terakhir di bulan tsb
+                    if (mTo[3] === lastDay) {
+                        targetTahun = y;
+                        targetBulan = m;
+                    }
                 }
-                else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                    targetTahun = Number(from.slice(0, 4));
-                    targetBulan = null;
+                else {
+                    const yStr = String(from).slice(0, 4);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    // Hanya gunakan snapshot tahunan (bulan IS NULL) jika rentang adalah 1 tahun penuh
+                    // (01-01 s.d. 12-31) atau default load tahun berjalan sampai hari ini (todayStr)
+                    if (from === `${yStr}-01-01` && (to === `${yStr}-12-31` || to === todayStr)) {
+                        targetTahun = Number(yStr);
+                        targetBulan = null;
+                    }
                 }
             }
             else if (!from && !to) {
@@ -1970,19 +1985,34 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
         const isStandardSummary = (!jenisKejahatanIds?.length && !golonganIds?.length && !iccsKategoriIds?.length && !modelFilter && !closureReason && (!kelompokHitung || !kelompokHitung.length) && (bucketMode === 'age' || !bucketMode) && (mode === 'both' || !mode) && isDefaultTaxonomy);
         if (isStandardSummary) {
             const scope = await (0, scope_util_1.resolveScope)(this.ds, userId);
-            const isNational = visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId);
+            const hasAccountFunctionGroup = !scope.all && scope.satkerId
+                ? Boolean((0, exports.buildKinerjaRegionalScopePlan)(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                : false;
+            const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun = null;
             let targetBulan = null;
             if (from && to) {
                 const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
                 const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
                 if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                    targetTahun = Number(mFrom[1]);
-                    targetBulan = Number(mFrom[2]);
+                    const y = Number(mFrom[1]);
+                    const m = Number(mFrom[2]);
+                    const lastDay = String(new Date(y, m, 0).getDate()).padStart(2, '0');
+                    // Hanya gunakan snapshot bulanan jika 'to' adalah tanggal terakhir di bulan tsb
+                    if (mTo[3] === lastDay) {
+                        targetTahun = y;
+                        targetBulan = m;
+                    }
                 }
-                else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                    targetTahun = Number(from.slice(0, 4));
-                    targetBulan = null;
+                else {
+                    const yStr = String(from).slice(0, 4);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    // Hanya gunakan snapshot tahunan (bulan IS NULL) jika rentang adalah 1 tahun penuh
+                    // (01-01 s.d. 12-31) atau default load tahun berjalan sampai hari ini (todayStr)
+                    if (from === `${yStr}-01-01` && (to === `${yStr}-12-31` || to === todayStr)) {
+                        targetTahun = Number(yStr);
+                        targetBulan = null;
+                    }
                 }
             }
             else if (!from && !to) {
@@ -2357,6 +2387,19 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                 const allowedSet = new Set(allowed);
                 filteredSubtree = filteredSubtree.filter((id) => allowedSet.has(id));
             }
+            else if (accountPlan?.functionGroup) {
+                const satkerById = new Map(satkers.map((s) => [Number(s.id), s]));
+                filteredSubtree = filteredSubtree.filter((id) => {
+                    const node = satkerById.get(Number(id));
+                    if (!node)
+                        return false;
+                    if (normalizedSatkerWords(node.tipe_satker) === 'FUNGSI') {
+                        const fg = (0, exports.kinerjaScopeFunctionGroup)(node.deskripsi);
+                        return !fg || fg === accountPlan.functionGroup;
+                    }
+                    return true;
+                });
+            }
             if (!filteredSubtree.length)
                 return emptyResult();
             targetSubtreeIds = filteredSubtree;
@@ -2607,6 +2650,7 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
             const tglLp = r.tgl_laporan ? String(r.tgl_laporan).slice(0, 10) : (r.tanggal_mulai_penanganan ? String(r.tanggal_mulai_penanganan).slice(0, 10) : '-');
             const satkerNama = r.satker_nama || '-';
             const statusNama = r.status_nama || r.status_code || 'Belum Update';
+            const canEdit = Boolean(scope.all || (scope.satkerId && Number(r.satker_id) === Number(scope.satkerId)));
             return {
                 id: Number(r.lp_id),
                 pid: (0, id_cipher_util_1.encodeId)(Number(r.lp_id)),
@@ -2627,13 +2671,18 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                 status: statusNama,
                 tingkat_kesulitan: r.tingkat_kesulitan || 'Belum dipilih',
                 uraian_singkat: r.uraian_singkat || '',
-                is_rj: Boolean(r.is_rj)
+                is_rj: Boolean(r.is_rj),
+                can_edit: canEdit,
+                is_read_only: !canEdit
             };
         });
         return {
             status: 1,
             data: {
                 items,
+                can_edit_scope_satker_id: scope.all ? null : (scope.satkerId ? Number(scope.satkerId) : null),
+                is_read_only: !scope.all && items.length > 0 && items.every((it) => !it.can_edit),
+                has_readonly_items: !scope.all && items.some((it) => !it.can_edit),
                 pagination: {
                     page,
                     limit,
