@@ -6531,9 +6531,10 @@ div[style*="margin-top:-1.6rem"] > span {
   }
 
   .p-button.p-button-icon-only,
-  button[aria-label="Muat ulang"]:not(:has(span, strong)),
-  button[title="Refresh"]:not(:has(span, strong)),
-  button[title="Muat Ulang"]:not(:has(span, strong)) {
+  .cms-topbar button[aria-label="Muat ulang"],
+  button[aria-label="Muat ulang"]:has(> svg:only-child),
+  button[title="Refresh"]:has(> svg:only-child),
+  button[title="Muat Ulang"]:has(> svg:only-child) {
     width: 2rem !important;
     min-width: 2rem !important;
     height: 2rem !important;
