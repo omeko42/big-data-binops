@@ -389,7 +389,7 @@ function initCasExpensivePcHpStandards() {
       "  }",
       "}",
       "@media (pointer: coarse) {",
-      "  button:not(.cms-NotifItem):not(.cms-title-info-btn), .cms-sidebar-link, .cms-sidebar-sublink {",
+      "  button:not(.cms-NotifItem):not(.cms-title-info-btn):not(#cas-floating-tactical-messenger button), .cms-sidebar-link, .cms-sidebar-sublink {",
       "    min-height: 38px;",
       "  }",
       "}",
@@ -650,9 +650,15 @@ function initCasExpensivePcHpStandards() {
       "  color: var(--cas-text-primary, #0f172a) !important;",
       "}",
       "/* Global Card Persegi Rounded-Corner (Anti-Oval) Standard */",
-      ".p-card, .dash-hero-card, .dash-panel, .cas-bento-card, .cms-card, .dash-today-card, [class*=\"card\"]:not(.cms-user-avatar):not(.cas-avatar), [class*=\"banner\"], [class*=\"panel\"], div[style*=\"border-radius: 24px\"], div[style*=\"border-radius:24px\"], div[style*=\"border-radius: 20px\"], div[style*=\"border-radius:20px\"], div[style*=\"border-radius: 18px\"], div[style*=\"border-radius:18px\"], section[style*=\"border-radius: 24px\"], section[style*=\"border-radius: 20px\"] {",
+      ".p-card, .dash-hero-card, .dash-panel, .cas-bento-card, .cms-card, .dash-today-card, [class*=\"card\"]:not(.cms-user-avatar):not(.cas-avatar):not(.cas-floating-chat-launcher), [class*=\"banner\"], [class*=\"panel\"]:not(.cas-floating-chat-panel), div[style*=\"border-radius: 24px\"]:not(.cas-floating-chat-launcher), div[style*=\"border-radius:24px\"]:not(.cas-floating-chat-launcher), div[style*=\"border-radius: 20px\"]:not(.cas-floating-chat-launcher), div[style*=\"border-radius:20px\"]:not(.cas-floating-chat-launcher), div[style*=\"border-radius: 18px\"]:not(.cas-floating-chat-launcher), div[style*=\"border-radius:18px\"]:not(.cas-floating-chat-launcher), section[style*=\"border-radius: 24px\"], section[style*=\"border-radius: 20px\"] {",
       "  border-radius: 12px !important;",
       "}",
+      "#cas-floating-tactical-messenger .cas-floating-chat-launcher {",
+      "  width: 54px !important; height: 54px !important; min-width: 54px !important; max-width: 54px !important; min-height: 54px !important; max-height: 54px !important; padding: 0 !important; border-radius: 9999px !important; aspect-ratio: 1 / 1 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; line-height: 1 !important; box-sizing: border-box !important; flex-shrink: 0 !important;",
+      "}",
+      "#cas-floating-tactical-messenger .cas-floating-chat-launcher svg { width: 25px !important; height: 25px !important; display: block !important; flex-shrink: 0 !important; }",
+      "#cas-floating-tactical-messenger .cas-floating-chat-dot { position: absolute !important; top: 0px !important; right: 0px !important; width: 14px !important; height: 14px !important; border-radius: 9999px !important; background: #22c55e !important; border: 2.5px solid #ffffff !important; box-sizing: border-box !important; pointer-events: none !important; }",
+      "@media (max-width: 768px) { #cas-floating-tactical-messenger { bottom: 16px !important; right: 16px !important; } #cas-floating-tactical-messenger .cas-floating-chat-launcher { width: 50px !important; height: 50px !important; min-width: 50px !important; max-width: 50px !important; min-height: 50px !important; max-height: 50px !important; } #cas-floating-tactical-messenger .cas-floating-chat-panel { position: fixed !important; left: 10px !important; right: 10px !important; bottom: 76px !important; width: auto !important; max-width: calc(100vw - 20px) !important; height: min(540px, calc(100dvh - 96px)) !important; max-height: calc(100dvh - 96px) !important; } }",
       ".lp-stat, .kp-kpi-card, .kp-kpi-card-v2, #kp-summary-strip .kp-kpi-card-v2.kp-pill-collapsed, #kp-summary-strip .kp-kpi-card.is-pill-collapsed, #kp-summary-strip .kp-kpi-card-v2.kp-pill-expanded, #kp-summary-strip .kp-kpi-card.is-pill-expanded, .lp-status-cards .lp-stat, .lp-status-cards .lp-stat.active, .att-chip, input[type=\"text\"][style*=\"999px\"], input[type=\"search\"][style*=\"999px\"], input:not([type])[style*=\"999px\"] {",
       "  border-radius: 10px !important;",
       "}",
@@ -1459,12 +1465,15 @@ function TacticalMessengerWidget() {
   const [sending, setSending] = (0, t.useState)(false);
   const [replyTo, setReplyTo] = (0, t.useState)(null);
   const [viewMode, setViewMode] = (0, t.useState)("chat");
+  const [chatSubView, setChatSubView] = (0, t.useState)("thread");
   const [contactSearch, setContactSearch] = (0, t.useState)("");
   const [convList, setConvList] = (0, t.useState)([]);
   const [dirList, setDirList] = (0, t.useState)([]);
   const [loadingContacts, setLoadingContacts] = (0, t.useState)(false);
   const [editingMsg, setEditingMsg] = (0, t.useState)(null);
   const [confirmDeleteId, setConfirmDeleteId] = (0, t.useState)(null);
+  const [forwardMsg, setForwardMsg] = (0, t.useState)(null);
+  const [forwardSearch, setForwardSearch] = (0, t.useState)("");
   const msgEndRef = (0, t.useRef)(null);
 
   const loadThread = (0, t.useCallback)(async (targetObj) => {
@@ -1478,6 +1487,7 @@ function TacticalMessengerWidget() {
         senderName: m.sender_name || (m.is_mine ? 'Anda' : (targetObj?.name || 'Rekan')),
         text: m.content,
         is_edited: Boolean(m.is_edited),
+        is_pinned: Boolean(m.is_pinned),
         reply_to: m.reply_to || null,
         time: m.created_at ? new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
       })));
@@ -1494,7 +1504,7 @@ function TacticalMessengerWidget() {
       setMessages([{
         id: 'sys-1',
         sender: 'system',
-        text: '🔒 Saluran Obrolan Kedinasan & Koordinasi Personel Polri siap digunakan.',
+        text: 'Saluran Obrolan Kedinasan & Koordinasi Personel Polri siap digunakan.',
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       }]);
     }
@@ -1505,7 +1515,7 @@ function TacticalMessengerWidget() {
     try {
       const [cRes, uRes] = await Promise.all([
         M.apiAuth.get('/bdb/jukrah/messages/conversations').catch(() => ({ data: { data: [] } })),
-        M.apiAuth.get('/bdb/jukrah/network/users', { params: { search: (qStr || '').trim() || void 0, limit: 18 } }).catch(() => ({ data: { data: [] } }))
+        M.apiAuth.get('/bdb/jukrah/network/users', { params: { search: (qStr || '').trim() || void 0, limit: 24 } }).catch(() => ({ data: { data: [] } }))
       ]);
       setConvList(Array.isArray(cRes.data?.data) ? cRes.data.data : []);
       setDirList(Array.isArray(uRes.data?.data) ? uRes.data.data : []);
@@ -1515,11 +1525,12 @@ function TacticalMessengerWidget() {
   }, []);
 
   (0, t.useEffect)(() => {
-    if (isOpen && viewMode === 'contacts') {
-      const timer = setTimeout(() => loadContacts(contactSearch), 180);
+    if (isOpen && (viewMode === 'contacts' || chatSubView === 'list' || forwardMsg)) {
+      const q = forwardMsg ? forwardSearch : contactSearch;
+      const timer = setTimeout(() => loadContacts(q), 160);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, viewMode, contactSearch, loadContacts]);
+  }, [isOpen, viewMode, chatSubView, contactSearch, forwardMsg, forwardSearch, loadContacts]);
 
   (0, t.useEffect)(() => {
     function handleOpenChat(ev) {
@@ -1534,6 +1545,7 @@ function TacticalMessengerWidget() {
         };
         setActiveTarget(norm);
         setViewMode('chat');
+        setChatSubView('thread');
         setIsOpen(true);
         loadThread(norm);
       } else {
@@ -1545,16 +1557,16 @@ function TacticalMessengerWidget() {
   }, [loadThread]);
 
   (0, t.useEffect)(() => {
-    if (isOpen && viewMode === 'chat') {
+    if (isOpen && viewMode === 'chat' && chatSubView === 'thread') {
       loadThread(activeTarget || { id: -1 });
     }
-  }, [isOpen, activeTarget, viewMode, loadThread]);
+  }, [isOpen, activeTarget, viewMode, chatSubView, loadThread]);
 
   (0, t.useEffect)(() => {
-    if (msgEndRef.current && viewMode === 'chat') {
+    if (msgEndRef.current && viewMode === 'chat' && chatSubView === 'thread') {
       msgEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen, viewMode]);
+  }, [messages, isOpen, viewMode, chatSubView]);
 
   const handleSend = async (textToSend) => {
     const text = (textToSend || inputVal || "").trim();
@@ -1586,7 +1598,7 @@ function TacticalMessengerWidget() {
     setInputVal("");
     setReplyTo(null);
     setSending(true);
-    setMessages(prev => [...prev, { id: tempId, sender: 'me', senderName: 'Anda', text, is_edited: false, reply_to: currentReply, time: nowTime }]);
+    setMessages(prev => [...prev, { id: tempId, sender: 'me', senderName: 'Anda', text, is_edited: false, is_pinned: false, reply_to: currentReply, time: nowTime }]);
     try {
       const res = await M.apiAuth.post('/bdb/jukrah/messages/send', { receiver_id: tid, content: text, reply_to: currentReply });
       const sentMsg = res.data?.data;
@@ -1601,6 +1613,7 @@ function TacticalMessengerWidget() {
           senderName: defaultTarget.name,
           text: aiMsg.content,
           is_edited: false,
+          is_pinned: false,
           time: new Date(aiMsg.created_at || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
         }]);
       }
@@ -1631,6 +1644,42 @@ function TacticalMessengerWidget() {
     }
   };
 
+  const handlePinQuickMsg = async (msgObj) => {
+    if (!msgObj || !msgObj.id || String(msgObj.id).startsWith('sys-') || String(msgObj.id).startsWith('temp-')) return;
+    const nextPinned = !Boolean(msgObj.is_pinned);
+    setMessages(prev => prev.map(m => String(m.id) === String(msgObj.id) ? { ...m, is_pinned: nextPinned } : m));
+    try {
+      await M.apiAuth.post(`/bdb/jukrah/messages/${msgObj.id}/pin`, { pinned: nextPinned });
+      if (typeof window !== "undefined" && window.casShowCenterAlert) {
+        window.casShowCenterAlert(nextPinned ? "Pesan disematkan di atas percakapan." : "Sematan pesan dilepas.", "success");
+      }
+    } catch {
+      if (typeof window !== "undefined" && window.casShowCenterAlert) {
+        window.casShowCenterAlert(nextPinned ? "Pesan disematkan." : "Sematan pesan dilepas.", "info");
+      }
+    }
+  };
+
+  const handleForwardQuickMsg = async (targetPartner) => {
+    if (!forwardMsg || !targetPartner) return;
+    const targetId = targetPartner.id ?? -1;
+    try {
+      await M.apiAuth.post(`/bdb/jukrah/messages/${forwardMsg.id}/forward`, { receiver_id: targetId });
+    } catch {
+      const fwdText = `↪ Diteruskan dari ${forwardMsg.senderName || "Percakapan"}:\n${forwardMsg.text}`;
+      await M.apiAuth.post('/bdb/jukrah/messages/send', { receiver_id: targetId, content: fwdText }).catch(() => {});
+    }
+    setForwardMsg(null);
+    setForwardSearch("");
+    if (typeof window !== "undefined" && window.casShowCenterAlert) {
+      window.casShowCenterAlert(`Pesan diteruskan ke ${targetPartner.name || "Rekan"}.`, "success");
+    }
+    if (Number(targetId) === Number(defaultTarget.id)) {
+      loadThread(defaultTarget);
+    }
+    try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
+  };
+
   const defaultTarget = activeTarget || {
     id: -1,
     name: 'AI Agen Taktis CAS',
@@ -1639,202 +1688,460 @@ function TacticalMessengerWidget() {
     photo: '/images/default-avatar-polki.png'
   };
 
+  const pinnedQuickMsg = [...messages].reverse().find(m => m.is_pinned);
+
+  const buildCombinedContacts = (qRaw) => {
+    const seenIds = new Set([-1]);
+    const combined = [{
+      id: -1,
+      name: 'AI Agen Taktis CAS',
+      callsign: '@ai_taktis_cas',
+      satker: 'Robinopsnal Bareskrim Polri',
+      photo: '/images/default-avatar-polki.png',
+      sub: 'Asisten Cerdas Bareskrim Polri',
+      unread: 0,
+      is_ai: true
+    }];
+    convList.forEach(c => {
+      const pid = Number(c.partner_id);
+      if (!seenIds.has(pid)) {
+        seenIds.add(pid);
+        combined.push({
+          id: pid,
+          name: casFormatHumanName(c.name),
+          callsign: String(c.handle || "").startsWith("@") ? c.handle : `@${c.handle || "personel"}`,
+          satker: c.satker || "Polri",
+          photo: c.photo_url,
+          sub: c.last_message || c.satker || "Polri",
+          unread: Number(c.unread_count || 0)
+        });
+      }
+    });
+    dirList.forEach(u => {
+      const uid = Number(u.id);
+      if (!seenIds.has(uid)) {
+        seenIds.add(uid);
+        combined.push({
+          id: uid,
+          name: casFormatHumanName(u.name),
+          callsign: `@${u.callsign || u.username || "personel"}`,
+          satker: u.satker || "Polri",
+          photo: u.photo_url,
+          sub: u.satker || "Polri",
+          unread: 0
+        });
+      }
+    });
+    const q = (qRaw || "").trim().toLowerCase();
+    return q ? combined.filter(item => item.name.toLowerCase().includes(q) || item.callsign.toLowerCase().includes(q) || item.satker.toLowerCase().includes(q)) : combined;
+  };
+
   if (isObrolanFullPage) return null;
 
-  return (0, a.jsxs)("div",{
+  return (0, a.jsxs)("div", {
     id: "cas-floating-tactical-messenger",
     style: { position: "fixed", bottom: "24px", right: "24px", zIndex: 990, fontFamily: "inherit" },
     children: [
       isOpen && (0, a.jsxs)("div", {
+        className: "cas-floating-chat-panel",
         style: {
           position: "absolute",
           bottom: "68px",
           right: "0",
-          width: "395px",
-          height: "540px",
+          width: "400px",
+          height: "550px",
           maxWidth: "92vw",
           maxHeight: "78vh",
           background: "var(--cas-card-bg, #ffffff)",
           border: "1px solid var(--cas-border-strong, rgba(148,163,184,0.35))",
-          borderRadius: "12px",
-          boxShadow: "0 20px 50px rgba(15,23,42,0.32)",
+          borderRadius: "14px",
+          boxShadow: "0 20px 50px rgba(15,23,42,0.34)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden"
         },
         children: [
+          /* HEADER UTAMA BIRU: Bersih, hanya judul "Obrolan Cepat" & Tab Navigasi (Obrolan | Kontak | Layar Penuh | Tutup) */
           (0, a.jsxs)("div", {
             style: {
-              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-              padding: "0.7rem 0.85rem",
+              background: "linear-gradient(135deg, #1e40af 0%, #2563eb 100%)",
+              padding: "0.58rem 0.7rem",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: "0.4rem"
+              gap: "0.3rem",
+              borderBottom: "1px solid rgba(255,255,255,0.14)",
+              flexShrink: 0
             },
             children: [
               (0, a.jsxs)("div", {
-                onClick: () => setViewMode(v => v === 'contacts' ? 'chat' : 'contacts'),
-                title: "Klik untuk ganti rekan obrolan",
-                style: { display: "flex", alignItems: "center", gap: "0.55rem", minWidth: 0, flex: 1, cursor: "pointer" },
+                style: { display: "flex", alignItems: "center", gap: "0.4rem", minWidth: 0, flexShrink: 0 },
                 children: [
-                  (0, a.jsxs)("div", {
-                    style: { position: "relative", width: "36px", height: "36px", borderRadius: "50%", background: "#0f172a", border: "2px solid rgba(255,255,255,0.8)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.82rem", color: "#fff", flexShrink: 0 },
-                    children: [
-                      defaultTarget.photo ? (0, a.jsx)("img", { src: defaultTarget.photo, alt: "Avatar", onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (defaultTarget.name || 'P').charAt(0).toUpperCase(),
-                      (0, a.jsx)("span", { style: { position: "absolute", bottom: "1px", right: "1px", width: "9px", height: "9px", borderRadius: "50%", background: "#22c55e", border: "1.5px solid #fff" } })
-                    ]
+                  (0, a.jsx)("span", {
+                    style: {
+                      width: "26px",
+                      height: "26px",
+                      borderRadius: "7px",
+                      background: "rgba(255,255,255,0.16)",
+                      border: "1px solid rgba(255,255,255,0.28)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
+                    },
+                    children: (0, a.jsx)("svg", {
+                      width: 14,
+                      height: 14,
+                      viewBox: "0 0 24 24",
+                      fill: "none",
+                      stroke: "#ffffff",
+                      strokeWidth: 2.2,
+                      strokeLinecap: "round",
+                      strokeLinejoin: "round",
+                      children: (0, a.jsx)("path", { d: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" })
+                    })
                   }),
-                  (0, a.jsxs)("div", {
-                    style: { minWidth: 0 },
-                    children: [
-                      (0, a.jsxs)("div", {
-                        style: { fontWeight: 800, fontSize: "0.82rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.3rem" },
-                        children: [
-                          (0, a.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis" }, children: defaultTarget.name || defaultTarget.callsign }),
-                          (0, a.jsx)("span", { style: { fontSize: "0.62rem", background: "rgba(255,255,255,0.2)", padding: "0.06rem 0.34rem", borderRadius: "999px", fontWeight: 700, flexShrink: 0 }, children: "🟢 Aktif" })
-                        ]
-                      }),
-                      (0, a.jsx)("div", {
-                        style: { fontSize: "0.68rem", color: "#dbeafe", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-                        children: `${defaultTarget.callsign || "@personel"} · ${defaultTarget.satker || "Robinopsnal Bareskrim Polri"}`
-                      })
-                    ]
+                  (0, a.jsx)("span", {
+                    style: { fontWeight: 800, fontSize: "0.82rem", color: "#ffffff", letterSpacing: "-0.01em", whiteSpace: "nowrap" },
+                    children: "Obrolan Cepat"
                   })
                 ]
               }),
               (0, a.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 },
+                style: { display: "flex", alignItems: "center", gap: "0.22rem", flexShrink: 0 },
                 children: [
-                  (0, a.jsx)("button", {
+                  (0, a.jsxs)("button", {
                     type: "button",
-                    title: viewMode === 'contacts' ? "Kembali ke Percakapan" : "Pilih Rekan / Kontak Personel",
-                    onClick: () => setViewMode(v => v === 'contacts' ? 'chat' : 'contacts'),
-                    style: { background: viewMode === 'contacts' ? "#ffffff" : "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.4)", color: viewMode === 'contacts' ? "#1d4ed8" : "#fff", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 800, whiteSpace: "nowrap" },
-                    children: viewMode === 'contacts' ? "💬 Obrolan" : "👥 Kontak"
+                    title: "Tab Percakapan Obrolan",
+                    onClick: () => { setViewMode('chat'); setForwardMsg(null); },
+                    style: {
+                      background: viewMode === 'chat' ? "#ffffff" : "rgba(255,255,255,0.14)",
+                      border: "1px solid rgba(255,255,255,0.35)",
+                      color: viewMode === 'chat' ? "#1e40af" : "#ffffff",
+                      borderRadius: "7px",
+                      padding: "0.2rem 0.44rem",
+                      minHeight: "26px",
+                      cursor: "pointer",
+                      fontSize: "0.66rem",
+                      fontWeight: 800,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.22rem",
+                      whiteSpace: "nowrap"
+                    },
+                    children: [
+                      (0, a.jsx)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: (0, a.jsx)("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }) }),
+                      "Obrolan"
+                    ]
+                  }),
+                  (0, a.jsxs)("button", {
+                    type: "button",
+                    title: "Daftar Kontak Personel & AI Agen Taktis",
+                    onClick: () => { setViewMode('contacts'); setForwardMsg(null); },
+                    style: {
+                      background: viewMode === 'contacts' ? "#ffffff" : "rgba(255,255,255,0.14)",
+                      border: "1px solid rgba(255,255,255,0.35)",
+                      color: viewMode === 'contacts' ? "#1e40af" : "#ffffff",
+                      borderRadius: "7px",
+                      padding: "0.2rem 0.44rem",
+                      minHeight: "26px",
+                      cursor: "pointer",
+                      fontSize: "0.66rem",
+                      fontWeight: 800,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.22rem",
+                      whiteSpace: "nowrap"
+                    },
+                    children: [
+                      (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("path", { d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }), (0, a.jsx)("circle", { cx: "9", cy: "7", r: "4" }), (0, a.jsx)("path", { d: "M23 21v-2a4 4 0 0 0-3-3.87" }), (0, a.jsx)("path", { d: "M16 3.13a4 4 0 0 1 0 7.75" })] }),
+                      "Kontak"
+                    ]
                   }),
                   (0, a.jsx)("button", {
                     type: "button",
-                    title: "Buka di Halaman Penuh Sharese Obrolan",
+                    title: "Buka Layar Penuh Sharese Obrolan",
                     onClick: () => {
                       setIsOpen(false);
                       casNav(router, `/cms/broadcaster?view=obrolan&partner=${defaultTarget.id ?? -1}`);
                     },
-                    style: { background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)", color: "#fff", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" },
-                    children: "⤢ Layar Penuh"
+                    style: {
+                      background: "rgba(255,255,255,0.14)",
+                      border: "1px solid rgba(255,255,255,0.32)",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      width: "28px",
+                      height: "28px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    },
+                    children: (0, a.jsxs)("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "15 3 21 3 21 9" }), (0, a.jsx)("polyline", { points: "9 21 3 21 3 15" }), (0, a.jsx)("line", { x1: "21", y1: "3", x2: "14", y2: "10" }), (0, a.jsx)("line", { x1: "3", y1: "21", x2: "10", y2: "14" })] })
                   }),
                   (0, a.jsx)("button", {
                     type: "button",
+                    title: "Tutup",
                     onClick: () => setIsOpen(false),
-                    style: { background: "rgba(0,0,0,0.2)", border: "none", color: "#fff", borderRadius: "50%", width: "26px", height: "26px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.82rem", fontWeight: 700 },
-                    children: "✕"
+                    style: {
+                      background: "rgba(15,23,42,0.28)",
+                      border: "1px solid rgba(255,255,255,0.24)",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      width: "28px",
+                      height: "28px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    },
+                    children: (0, a.jsxs)("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), (0, a.jsx)("line", { x1: "6", y1: "6", x2: "18", y2: "18" })] })
                   })
                 ]
               })
             ]
           }),
 
-          viewMode === 'contacts' ? (0, a.jsxs)("div", {
+          /* MODAL / DRAWER TERUSKAN PESAN DI DALAM OBROLAN CEPAT */
+          forwardMsg ? (0, a.jsxs)("div", {
             style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--cas-card-bg, #ffffff)" },
             children: [
+              (0, a.jsxs)("div", {
+                style: { padding: "0.65rem 0.8rem", background: "var(--cas-surface-subtle)", borderBottom: "1px solid var(--cas-border)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" },
+                children: [
+                  (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                    (0, a.jsx)("div", { style: { fontWeight: 800, fontSize: "0.8rem", color: "var(--cas-text-primary)" }, children: "Teruskan Pesan ke Rekan" }),
+                    (0, a.jsx)("div", { style: { fontSize: "0.7rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: `«${forwardMsg.text}»` })
+                  ]}),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    onClick: () => { setForwardMsg(null); setForwardSearch(""); },
+                    style: { padding: "0.24rem 0.55rem", borderRadius: "6px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-card-bg)", color: "var(--cas-text-secondary)", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" },
+                    children: "Batal"
+                  })
+                ]
+              }),
               (0, a.jsx)("div", {
-                style: { padding: "0.6rem 0.75rem", borderBottom: "1px solid var(--cas-border)" },
+                style: { padding: "0.55rem 0.75rem", borderBottom: "1px solid var(--cas-border)" },
                 children: (0, a.jsx)("input", {
                   type: "text",
                   autoFocus: true,
-                  value: contactSearch,
-                  onChange: ev => setContactSearch(ev.target.value),
-                  placeholder: "🔍 Cari nama personel, @callsign, atau Satker...",
+                  value: forwardSearch,
+                  onChange: ev => setForwardSearch(ev.target.value),
+                  placeholder: "Cari rekan tujuan terusan...",
                   style: { width: "100%", padding: "0.45rem 0.75rem", borderRadius: "8px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-surface-subtle)", color: "var(--cas-text-primary)", fontSize: "0.78rem", outline: "none", boxSizing: "border-box" }
                 })
               }),
-              (0, a.jsxs)("div", {
+              (0, a.jsx)("div", {
                 style: { flex: 1, overflowY: "auto", padding: "0.45rem 0.6rem", display: "flex", flexDirection: "column", gap: "0.25rem" },
+                children: buildCombinedContacts(forwardSearch).map(item => (0, a.jsxs)("div", {
+                  key: "qfwd_" + item.id,
+                  onClick: () => handleForwardQuickMsg(item),
+                  style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.65rem", borderRadius: "10px", cursor: "pointer", background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border)" },
+                  children: [
+                    (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } }),
+                    (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                      (0, a.jsx)("div", { style: { fontWeight: 700, fontSize: "0.79rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
+                      (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "#2563eb", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: `${item.callsign} · ${item.satker}` })
+                    ]}),
+                    (0, a.jsx)("span", { style: { padding: "0.22rem 0.55rem", borderRadius: "6px", background: "#2563eb", color: "#fff", fontSize: "0.68rem", fontWeight: 800, flexShrink: 0 }, children: "Teruskan" })
+                  ]
+                }))
+              })
+            ]
+          }) : viewMode === 'contacts' || (viewMode === 'chat' && chatSubView === 'list') ? (0, a.jsxs)("div", {
+            style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--cas-card-bg, #ffffff)" },
+            children: [
+              (0, a.jsxs)("div", {
+                style: { padding: "0.6rem 0.75rem", borderBottom: "1px solid var(--cas-border)", display: "flex", flexDirection: "column", gap: "0.4rem" },
                 children: [
                   (0, a.jsxs)("div", {
-                    onClick: () => {
-                      const aiNorm = { id: -1, name: 'AI Agen Taktis CAS', callsign: '@ai_taktis_cas', satker: 'Robinopsnal Bareskrim Polri', photo: '/images/default-avatar-polki.png' };
-                      setActiveTarget(aiNorm);
-                      setViewMode('chat');
-                      loadThread(aiNorm);
-                    },
-                    style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.6rem", borderRadius: "10px", cursor: "pointer", background: Number(defaultTarget.id) === -1 ? "rgba(37,99,235,0.12)" : "var(--cas-surface-subtle)", border: "1px solid rgba(37,99,235,0.28)" },
+                    style: { display: "flex", alignItems: "center", justifyContent: "space-between" },
                     children: [
-                      (0, a.jsx)("img", { src: "/images/default-avatar-polki.png", alt: "AI", style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "1.5px solid #2563eb" } }),
-                      (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                        (0, a.jsx)("div", { style: { fontWeight: 800, fontSize: "0.8rem", color: "var(--cas-text-primary)" }, children: "🤖 AI Agen Taktis CAS" }),
-                        (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "#2563eb", fontWeight: 600 }, children: "@ai_taktis_cas · Asisten Cerdas Bareskrim" })
-                      ]}),
-                      (0, a.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 700, color: "#2563eb" }, children: "Chat ➔" })
+                      (0, a.jsx)("span", {
+                        style: { fontSize: "0.74rem", fontWeight: 800, color: "var(--cas-text-secondary)", textTransform: "uppercase", letterSpacing: "0.03em" },
+                        children: viewMode === 'contacts' ? "Direktori Kontak & Agen AI" : "Daftar Percakapan Aktif"
+                      }),
+                      chatSubView === 'list' && viewMode === 'chat' && (0, a.jsx)("button", {
+                        type: "button",
+                        onClick: () => setChatSubView('thread'),
+                        style: { background: "none", border: "none", color: "#2563eb", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" },
+                        children: "Kembali ke Chat ➔"
+                      })
                     ]
                   }),
+                  (0, a.jsx)("input", {
+                    type: "text",
+                    autoFocus: true,
+                    value: contactSearch,
+                    onChange: ev => setContactSearch(ev.target.value),
+                    placeholder: "Cari nama personel, @callsign, atau Satker...",
+                    style: { width: "100%", padding: "0.45rem 0.75rem", borderRadius: "8px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-surface-subtle)", color: "var(--cas-text-primary)", fontSize: "0.78rem", outline: "none", boxSizing: "border-box" }
+                  })
+                ]
+              }),
+              (0, a.jsxs)("div", {
+                style: { flex: 1, overflowY: "auto", padding: "0.45rem 0.6rem", display: "flex", flexDirection: "column", gap: "0.28rem" },
+                children: [
                   loadingContacts ? (0, a.jsx)("div", { style: { padding: "1.2rem", textAlign: "center", fontSize: "0.76rem", color: "var(--cas-text-muted)" }, children: "Memuat daftar rekan personel..." }) : null,
-                  (() => {
-                    const seenIds = new Set([-1]);
-                    const combined = [];
-                    convList.forEach(c => {
-                      const pid = Number(c.partner_id);
-                      if (!seenIds.has(pid)) {
-                        seenIds.add(pid);
-                        combined.push({
-                          id: pid,
-                          name: casFormatHumanName(c.name),
-                          callsign: String(c.handle || "").startsWith("@") ? c.handle : `@${c.handle || "personel"}`,
-                          satker: c.satker || "Polri",
-                          photo: c.photo_url,
-                          sub: c.last_message || c.satker || "Polri",
-                          unread: Number(c.unread_count || 0)
-                        });
-                      }
-                    });
-                    dirList.forEach(u => {
-                      const uid = Number(u.id);
-                      if (!seenIds.has(uid)) {
-                        seenIds.add(uid);
-                        combined.push({
-                          id: uid,
-                          name: casFormatHumanName(u.name),
-                          callsign: `@${u.callsign || u.username || "personel"}`,
-                          satker: u.satker || "Polri",
-                          photo: u.photo_url,
-                          sub: u.satker || "Polri",
-                          unread: 0
-                        });
-                      }
-                    });
-                    const q = contactSearch.trim().toLowerCase();
-                    const filtered = q ? combined.filter(item => item.name.toLowerCase().includes(q) || item.callsign.toLowerCase().includes(q) || item.satker.toLowerCase().includes(q)) : combined;
-                    return filtered.map(item => (0, a.jsxs)("div", {
-                      key: "qcontact_" + item.id,
-                      onClick: () => {
-                        setActiveTarget(item);
-                        setViewMode('chat');
-                        loadThread(item);
-                      },
-                      style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.48rem 0.6rem", borderRadius: "10px", cursor: "pointer", background: Number(defaultTarget.id) === Number(item.id) ? "rgba(37,99,235,0.12)" : "transparent", border: Number(defaultTarget.id) === Number(item.id) ? "1px solid rgba(37,99,235,0.3)" : "1px solid transparent" },
-                      children: [
-                        (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } }),
-                        (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                          (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.3rem" }, children: [
-                            (0, a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
-                            (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 600 }, children: item.callsign })
-                          ]}),
-                          (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.sub })
+                  buildCombinedContacts(contactSearch).map(item => (0, a.jsxs)("div", {
+                    key: "qcontact_" + item.id,
+                    onClick: () => {
+                      setActiveTarget(item);
+                      setViewMode('chat');
+                      setChatSubView('thread');
+                      loadThread(item);
+                    },
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.65rem",
+                      padding: "0.52rem 0.65rem",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      background: Number(defaultTarget.id) === Number(item.id) ? "rgba(37,99,235,0.12)" : item.is_ai ? "var(--cas-surface-subtle)" : "transparent",
+                      border: Number(defaultTarget.id) === Number(item.id) ? "1px solid rgba(37,99,235,0.32)" : item.is_ai ? "1px solid rgba(37,99,235,0.2)" : "1px solid transparent"
+                    },
+                    children: [
+                      (0, a.jsxs)("div", {
+                        style: { position: "relative", width: 36, height: 36, flexShrink: 0 },
+                        children: [
+                          (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 36, height: 36, borderRadius: "50%", objectFit: "cover", border: item.is_ai ? "1.5px solid #2563eb" : "1px solid var(--cas-border)" } }),
+                          (0, a.jsx)("span", { style: { position: "absolute", bottom: 0, right: 0, width: 9, height: 9, borderRadius: "50%", background: "#22c55e", border: "1.5px solid var(--cas-card-bg, #fff)" } })
+                        ]
+                      }),
+                      (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                        (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.35rem" }, children: [
+                          (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.8rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
+                          (0, a.jsx)("span", { style: { fontSize: "0.67rem", color: "#2563eb", fontWeight: 600, flexShrink: 0 }, children: item.callsign })
                         ]}),
-                        item.unread > 0 ? (0, a.jsx)("span", { style: { background: "#2563eb", color: "#fff", borderRadius: "999px", padding: "0.08rem 0.42rem", fontSize: "0.64rem", fontWeight: 800 }, children: item.unread }) : (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 700 }, children: "Chat" })
-                      ]
-                    }));
-                  })()
+                        (0, a.jsx)("div", { style: { fontSize: "0.69rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.sub })
+                      ]}),
+                      item.unread > 0 ? (0, a.jsx)("span", { style: { background: "#2563eb", color: "#fff", borderRadius: "999px", padding: "0.08rem 0.42rem", fontSize: "0.64rem", fontWeight: 800 }, children: item.unread }) : (0, a.jsx)("span", { style: { fontSize: "0.68rem", color: "#2563eb", fontWeight: 700, flexShrink: 0 }, children: "Buka" })
+                    ]
+                  }))
                 ]
               })
             ]
           }) : (0, a.jsxs)(a.Fragment, {
             children: [
-              confirmDeleteId && (0, a.jsxs)("div", {
-                style: { padding: "0.55rem 0.8rem", background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.35)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.74rem" },
+              /* SUB-HEADER PARTNER AKTIF DI DALAM TAB OBROLAN (Lebar Penuh, Nama Utuh Tanpa Terpotong Sempit) */
+              (0, a.jsxs)("div", {
+                style: {
+                  padding: "0.52rem 0.78rem",
+                  background: "var(--cas-card-bg, #ffffff)",
+                  borderBottom: "1px solid var(--cas-border)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.5rem",
+                  flexShrink: 0
+                },
                 children: [
-                  (0, a.jsx)("span", { style: { fontWeight: 800, color: "#ef4444" }, children: "🗑️ Hapus pesan ini secara permanen?" }),
+                  (0, a.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.55rem", minWidth: 0, flex: 1 },
+                    children: [
+                      (0, a.jsxs)("button", {
+                        type: "button",
+                        title: "Lihat Daftar Percakapan",
+                        onClick: () => setChatSubView('list'),
+                        style: {
+                          padding: "0.26rem 0.48rem",
+                          borderRadius: "7px",
+                          border: "1px solid var(--cas-border-strong)",
+                          background: "var(--cas-surface-subtle)",
+                          color: "var(--cas-text-secondary)",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.22rem",
+                          flexShrink: 0
+                        },
+                        children: [
+                          (0, a.jsx)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", children: (0, a.jsx)("polyline", { points: "15 18 9 12 15 6" }) }),
+                          "Daftar"
+                        ]
+                      }),
+                      (0, a.jsxs)("div", {
+                        style: { position: "relative", width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0 },
+                        children: [
+                          (0, a.jsx)("img", {
+                            src: defaultTarget.photo || "/images/default-avatar-polki.png",
+                            alt: defaultTarget.name,
+                            onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; },
+                            style: { width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--cas-border-strong)" }
+                          }),
+                          (0, a.jsx)("span", { style: { position: "absolute", bottom: "0px", right: "0px", width: "9px", height: "9px", borderRadius: "50%", background: "#22c55e", border: "1.5px solid var(--cas-card-bg, #fff)" } })
+                        ]
+                      }),
+                      (0, a.jsxs)("div", {
+                        style: { minWidth: 0, flex: 1 },
+                        children: [
+                          (0, a.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.35rem" },
+                            children: [
+                              (0, a.jsx)("span", {
+                                style: { fontWeight: 800, fontSize: "0.8rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                                children: defaultTarget.name || defaultTarget.callsign
+                              }),
+                              (0, a.jsx)("span", {
+                                style: { fontSize: "0.62rem", background: "rgba(34,197,94,0.14)", color: "#16a34a", padding: "0.05rem 0.36rem", borderRadius: "999px", fontWeight: 800, flexShrink: 0 },
+                                children: "Aktif"
+                              })
+                            ]
+                          }),
+                          (0, a.jsx)("div", {
+                            style: { fontSize: "0.67rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                            children: `${defaultTarget.callsign || "@personel"} · ${defaultTarget.satker || "Robinopsnal Bareskrim Polri"}`
+                          })
+                        ]
+                      })
+                    ]
+                  })
+                ]
+              }),
+
+              /* BANNER PESAN DISEMATKAN (PINNED MESSAGE) */
+              pinnedQuickMsg && (0, a.jsxs)("div", {
+                style: {
+                  padding: "0.42rem 0.78rem",
+                  background: "rgba(245,158,11,0.1)",
+                  borderBottom: "1px solid rgba(245,158,11,0.28)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.45rem",
+                  fontSize: "0.7rem",
+                  flexShrink: 0
+                },
+                children: [
+                  (0, a.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.4rem", minWidth: 0, flex: 1 },
+                    children: [
+                      (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "#d97706", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 }, children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] }),
+                      (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                        (0, a.jsx)("span", { style: { fontWeight: 800, color: "#d97706", marginRight: "0.3rem" }, children: "Disematkan:" }),
+                        (0, a.jsx)("span", { style: { color: "var(--cas-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "inline-block", maxWidth: "220px", verticalAlign: "bottom" }, children: pinnedQuickMsg.text })
+                      ]})
+                    ]
+                  }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    title: "Lepas sematan",
+                    onClick: () => handlePinQuickMsg(pinnedQuickMsg),
+                    style: { background: "none", border: "none", color: "#d97706", fontSize: "0.68rem", fontWeight: 800, cursor: "pointer", flexShrink: 0 },
+                    children: "Lepas"
+                  })
+                ]
+              }),
+
+              confirmDeleteId && (0, a.jsxs)("div", {
+                style: { padding: "0.52rem 0.8rem", background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.35)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.73rem" },
+                children: [
+                  (0, a.jsx)("span", { style: { fontWeight: 800, color: "#ef4444" }, children: "Hapus pesan ini secara permanen?" }),
                   (0, a.jsxs)("div", { style: { display: "flex", gap: "0.35rem" }, children: [
                     (0, a.jsx)("button", { type: "button", onClick: () => setConfirmDeleteId(null), style: { padding: "0.22rem 0.55rem", borderRadius: "6px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-card-bg)", color: "var(--cas-text-primary)", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }, children: "Batal" }),
                     (0, a.jsx)("button", { type: "button", onClick: () => handleDeleteQuickMsg(confirmDeleteId), style: { padding: "0.22rem 0.6rem", borderRadius: "6px", border: "none", background: "#ef4444", color: "#fff", fontSize: "0.7rem", fontWeight: 800, cursor: "pointer" }, children: "Ya, Hapus" })
@@ -1843,7 +2150,7 @@ function TacticalMessengerWidget() {
               }),
 
               (0, a.jsxs)("div", {
-                style: { flex: 1, overflowY: "auto", padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem", background: "var(--cas-surface-subtle, #f1f5f9)" },
+                style: { flex: 1, overflowY: "auto", padding: "0.8rem", display: "flex", flexDirection: "column", gap: "0.62rem", background: "var(--cas-surface-subtle, #f1f5f9)" },
                 children: [
                   messages.map((m, idx) => {
                     if (m.sender === 'system') {
@@ -1854,16 +2161,30 @@ function TacticalMessengerWidget() {
                       });
                     }
                     const isMe = m.sender === 'me';
-                    const canModify = isMe && !String(m.id).startsWith('temp-') && !String(m.id).startsWith('sys-');
+                    const isRealMsg = !String(m.id).startsWith('temp-') && !String(m.id).startsWith('sys-');
+                    const canModify = isMe && isRealMsg;
+                    const actBtnBase = {
+                      background: "var(--cas-card-bg, #ffffff)",
+                      border: "1px solid var(--cas-border, rgba(148,163,184,0.3))",
+                      borderRadius: "6px",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: "0.14rem 0.38rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.2rem",
+                      lineHeight: 1.1
+                    };
                     return (0, a.jsxs)("div", {
                       key: m.id || idx,
                       style: { display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" },
                       children: [
                         (0, a.jsxs)("div", {
                           style: {
-                            maxWidth: "85%",
+                            maxWidth: "86%",
                             padding: "0.52rem 0.8rem",
-                            borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                            borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                             background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-card-bg, #ffffff)",
                             border: isMe ? "none" : "1px solid var(--cas-border, rgba(148,163,184,0.28))",
                             color: isMe ? "#fff" : "var(--cas-text-primary, #0f172a)",
@@ -1874,6 +2195,13 @@ function TacticalMessengerWidget() {
                             boxShadow: isMe ? "0 2px 6px rgba(37,99,235,0.2)" : "0 1px 2px rgba(0,0,0,0.04)"
                           },
                           children: [
+                            m.is_pinned && (0, a.jsxs)("div", {
+                              style: { fontSize: "0.63rem", fontWeight: 800, color: isMe ? "#fde68a" : "#d97706", marginBottom: "0.2rem", display: "flex", alignItems: "center", gap: "0.22rem" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] }),
+                                "Disematkan"
+                              ]
+                            }),
                             m.reply_to && (0, a.jsxs)("div", {
                               style: {
                                 borderLeft: isMe ? "3px solid #93c5fd" : "3px solid #2563eb",
@@ -1899,41 +2227,78 @@ function TacticalMessengerWidget() {
                             })
                           ]
                         }),
+                        /* BARIS AKSI PESAN DENGAN IKON SVG VEKTOR PRESISI (Balas, Teruskan, Sematkan, Salin, Edit, Hapus) */
                         (0, a.jsxs)("div", {
-                          style: { display: "flex", alignItems: "center", gap: "0.2rem", marginTop: "0.18rem", flexWrap: "wrap" },
+                          style: { display: "flex", alignItems: "center", gap: "0.22rem", marginTop: "0.22rem", flexWrap: "wrap" },
                           children: [
-                            (0, a.jsx)("button", {
+                            (0, a.jsxs)("button", {
                               type: "button",
+                              title: "Balas pesan",
                               onClick: () => setReplyTo({ id: m.id, sender_name: m.senderName || (isMe ? "Anda" : defaultTarget.name), content: m.text }),
-                              style: { background: "none", border: "none", color: "#2563eb", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
-                              children: "↩️ Balas"
+                              style: { ...actBtnBase, color: "#2563eb" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "9 17 4 12 9 7" }), (0, a.jsx)("path", { d: "M20 18v-2a4 4 0 0 0-4-4H4" })] }),
+                                "Balas"
+                              ]
                             }),
-                            (0, a.jsx)("button", {
+                            (0, a.jsxs)("button", {
                               type: "button",
+                              title: "Teruskan pesan ke rekan lain",
+                              onClick: () => { setForwardMsg(m); setForwardSearch(""); },
+                              style: { ...actBtnBase, color: "#0284c7" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "15 17 20 12 15 7" }), (0, a.jsx)("path", { d: "M4 18v-2a4 4 0 0 1 4-4h12" })] }),
+                                "Teruskan"
+                              ]
+                            }),
+                            isRealMsg && (0, a.jsxs)("button", {
+                              type: "button",
+                              title: m.is_pinned ? "Lepas sematan pesan" : "Sematkan pesan",
+                              onClick: () => handlePinQuickMsg(m),
+                              style: { ...actBtnBase, color: m.is_pinned ? "#b45309" : "var(--cas-text-secondary, #475569)", background: m.is_pinned ? "rgba(245,158,11,0.14)" : actBtnBase.background },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] }),
+                                m.is_pinned ? "Lepas" : "Sematkan"
+                              ]
+                            }),
+                            (0, a.jsxs)("button", {
+                              type: "button",
+                              title: "Salin teks pesan",
                               onClick: () => {
                                 try { navigator?.clipboard?.writeText(String(m.text || "")); } catch {}
                                 if (typeof window !== "undefined" && window.casShowCenterAlert) {
                                   window.casShowCenterAlert("Pesan disalin ke papan klip", "success");
                                 }
                               },
-                              style: { background: "none", border: "none", color: "var(--cas-text-muted, #64748b)", fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", padding: "0.1rem 0.28rem" },
-                              children: "📋 Salin"
+                              style: { ...actBtnBase, color: "var(--cas-text-secondary, #475569)" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }), (0, a.jsx)("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" })] }),
+                                "Salin"
+                              ]
                             }),
-                            canModify && (0, a.jsx)("button", {
+                            canModify && (0, a.jsxs)("button", {
                               type: "button",
+                              title: "Edit pesan",
                               onClick: () => {
                                 setEditingMsg({ id: m.id, text: m.text });
                                 setInputVal(m.text);
                                 setReplyTo(null);
                               },
-                              style: { background: "none", border: "none", color: "#d97706", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
-                              children: "✏️ Edit"
+                              style: { ...actBtnBase, color: "#d97706" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("path", { d: "M12 20h9" }), (0, a.jsx)("path", { d: "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" })] }),
+                                "Edit"
+                              ]
                             }),
-                            (canModify || Number(defaultTarget.id) === -1) && !String(m.id).startsWith('sys-') && (0, a.jsx)("button", {
+                            (canModify || Number(defaultTarget.id) === -1) && isRealMsg && (0, a.jsxs)("button", {
                               type: "button",
+                              title: "Hapus pesan",
                               onClick: () => setConfirmDeleteId(m.id),
-                              style: { background: "none", border: "none", color: "#ef4444", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
-                              children: "🗑️ Hapus"
+                              style: { ...actBtnBase, color: "#ef4444" },
+                              children: [
+                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "3 6 5 6 21 6" }), (0, a.jsx)("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" })] }),
+                                "Hapus"
+                              ]
                             })
                           ]
                         })
@@ -1948,7 +2313,7 @@ function TacticalMessengerWidget() {
                 style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", padding: "0.4rem 0.75rem", background: "rgba(245,158,11,0.12)", borderTop: "1px solid rgba(245,158,11,0.35)", borderLeft: "3px solid #f59e0b", fontSize: "0.72rem" },
                 children: [
                   (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                    (0, a.jsx)("div", { style: { fontWeight: 800, color: "#d97706" }, children: "✏️ Mode Edit Pesan" }),
+                    (0, a.jsx)("div", { style: { fontWeight: 800, color: "#d97706" }, children: "Mode Edit Pesan" }),
                     (0, a.jsx)("div", { style: { color: "var(--cas-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: editingMsg.text })
                   ]}),
                   (0, a.jsx)("button", {
@@ -1974,18 +2339,18 @@ function TacticalMessengerWidget() {
               (0, a.jsx)("div", {
                 style: { display: "flex", gap: "0.35rem", padding: "0.4rem 0.65rem", background: "var(--cas-card-bg)", overflowX: "auto", borderTop: "1px solid var(--cas-border)" },
                 children: (defaultTarget.id === -1 ? [
-                  { label: "⚖️ KUHP Baru", text: "Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi." },
-                  { label: "🔄 Panduan DORS", text: "Bagaimana tahapan sinkronisasi data LP dari DORS?" },
-                  { label: "📋 Koordinasi Selra", text: "Mohon koordinasi progres penyelesaian perkara (Selra)." }
+                  { label: "KUHP Baru", text: "Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi." },
+                  { label: "Panduan DORS", text: "Bagaimana tahapan sinkronisasi data LP dari DORS?" },
+                  { label: "Koordinasi Selra", text: "Mohon koordinasi progres penyelesaian perkara (Selra)." }
                 ] : [
-                  { label: "👍 Siap, ditindaklanjuti", text: "👍 Siap, segera kami tindaklanjuti." },
-                  { label: "🙏 Terima kasih infonya", text: "🙏 Terima kasih atas informasinya, Rekan." },
-                  { label: "🫡 Siap Komandan", text: "🫡 Siap Komandan, arahan dimonitor." }
+                  { label: "Siap, ditindaklanjuti", text: "Siap, segera kami tindaklanjuti." },
+                  { label: "Terima kasih infonya", text: "Terima kasih atas informasinya, Rekan." },
+                  { label: "Siap Komandan", text: "Siap Komandan, arahan dimonitor." }
                 ]).map((chip, idx) => (0, a.jsx)("button", {
                   key: idx,
                   type: "button",
                   onClick: () => handleSend(chip.text),
-                  style: { background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "999px", color: "#2563eb", padding: "0.22rem 0.55rem", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
+                  style: { background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "8px", color: "#2563eb", padding: "0.22rem 0.55rem", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
                   children: chip.label
                 }))
               }),
@@ -2015,38 +2380,51 @@ function TacticalMessengerWidget() {
         ]
       }),
 
+      /* FLOATING LAUNCHER BUTTON: 100% Pure Vector SVG, proporsi lingkaran 54x54 terkunci untuk PC & HP */
       (0, a.jsxs)("button", {
         type: "button",
+        className: "cas-floating-chat-launcher",
         onClick: () => setIsOpen(prev => !prev),
         title: "Obrolan Cepat & Asisten CAS",
+        "aria-label": "Obrolan Cepat & Asisten CAS",
         style: {
-          width: "52px",
-          height: "52px",
-          borderRadius: "50%",
+          width: "54px",
+          height: "54px",
+          minWidth: "54px",
+          maxWidth: "54px",
+          minHeight: "54px",
+          maxHeight: "54px",
+          padding: 0,
+          borderRadius: "9999px",
+          aspectRatio: "1 / 1",
           background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-          border: "2px solid rgba(255, 255, 255, 0.85)",
-          boxShadow: "0 8px 24px rgba(37, 99, 235, 0.45), 0 2px 6px rgba(0,0,0,0.25)",
-          display: "flex",
+          border: "2.5px solid rgba(255, 255, 255, 0.92)",
+          boxShadow: "0 10px 26px rgba(37, 99, 235, 0.45), 0 3px 8px rgba(15, 23, 42, 0.25)",
+          display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#fff",
-          fontSize: "1.35rem",
+          color: "#ffffff",
           cursor: "pointer",
           position: "relative",
-          outline: "none"
+          outline: "none",
+          boxSizing: "border-box",
+          flexShrink: 0
         },
         children: [
-          (0, a.jsx)("span", { children: isOpen ? "✕" : "💬" }),
+          isOpen
+            ? (0, a.jsxs)("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "#ffffff", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round", style: { display: "block", flexShrink: 0 }, children: [(0, a.jsx)("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), (0, a.jsx)("line", { x1: "6", y1: "6", x2: "18", y2: "18" })] })
+            : (0, a.jsxs)("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#ffffff", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", style: { display: "block", flexShrink: 0 }, children: [(0, a.jsx)("path", { d: "M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" }), (0, a.jsx)("circle", { cx: "8.5", cy: "11.5", r: "1", fill: "#ffffff", stroke: "none" }), (0, a.jsx)("circle", { cx: "12", cy: "11.5", r: "1", fill: "#ffffff", stroke: "none" }), (0, a.jsx)("circle", { cx: "15.5", cy: "11.5", r: "1", fill: "#ffffff", stroke: "none" })] }),
           !isOpen && (0, a.jsx)("span", {
+            className: "cas-floating-chat-dot",
             style: {
               position: "absolute",
-              top: "-1px",
-              right: "-1px",
+              top: "0px",
+              right: "0px",
               width: "14px",
               height: "14px",
-              borderRadius: "50%",
+              borderRadius: "9999px",
               background: "#22c55e",
-              border: "2.5px solid #fff"
+              border: "2.5px solid #ffffff"
             }
           })
         ]
@@ -2112,6 +2490,9 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const[newMsgUsers,setNewMsgUsers]=(0,t.useState)([]);
   const[editingMessage,setEditingMessage]=(0,t.useState)(null);
   const[deletingMessage,setDeletingMessage]=(0,t.useState)(null);
+  const[forwardingMessage,setForwardingMessage]=(0,t.useState)(null);
+  const[forwardSearch,setForwardSearch]=(0,t.useState)("");
+  const[forwardUsers,setForwardUsers]=(0,t.useState)([]);
   const[isMobileView,setIsMobileView]=(0,t.useState)(typeof window!=="undefined"?window.innerWidth<768:!1);
   const[mobileShowThread,setMobileShowThread]=(0,t.useState)(Boolean(sp.get("partner")));
   const endRef=(0,t.useRef)(null);
@@ -2198,6 +2579,17 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     return()=>clearTimeout(timer);
   },[newMsgModalOpen,newMsgSearch]);
 
+  (0,t.useEffect)(()=>{
+    if(!forwardingMessage)return;
+    const timer=setTimeout(async()=>{
+      try{
+        const res=await M.apiAuth.get("/bdb/jukrah/network/users",{params:{search:forwardSearch.trim()||void 0,limit:24}});
+        setForwardUsers(Array.isArray(res.data?.data)?res.data.data:[]);
+      }catch{setForwardUsers([]);}
+    },200);
+    return()=>clearTimeout(timer);
+  },[forwardingMessage,forwardSearch]);
+
   const sendMessage=async(customText)=>{
     const txt=(customText!==void 0?customText:msgText).trim();
     if((!txt&&!attachedFile)||sending)return;
@@ -2261,7 +2653,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
       fetchConvs();
       setDeletingMessage(null);
       if(typeof window!=="undefined"&&window.casShowCenterAlert){
-        window.casShowCenterAlert("🗑️ Pesan berhasil dihapus","success");
+        window.casShowCenterAlert("Pesan berhasil dihapus","success");
       }
       try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
     }catch{
@@ -2270,6 +2662,45 @@ function CasObrolanFullPage({user:curUser,searchStr}){
         window.casShowCenterAlert("Gagal menghapus pesan","error");
       }
     }
+  };
+
+  const handleTogglePinMessage=async(msgObj)=>{
+    if(!msgObj||!msgObj.id)return;
+    const nextPinned=!Boolean(msgObj.is_pinned);
+    setMessages(prev=>prev.map(item=>Number(item.id)===Number(msgObj.id)?{...item,is_pinned:nextPinned}:item));
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/messages/${msgObj.id}/pin`,{pinned:nextPinned});
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert(nextPinned?"Pesan disematkan di atas percakapan":"Sematan pesan dilepas","success");
+      }
+    }catch{
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert(nextPinned?"Pesan disematkan":"Sematan pesan dilepas","info");
+      }
+    }
+  };
+
+  const handleForwardMessageTo=async(targetUser)=>{
+    if(!forwardingMessage||!targetUser)return;
+    const targetId=Number(targetUser.id??-1);
+    const senderLabel=forwardingMessage.is_mine?"Anda":(forwardingMessage.sender_name||activePartner.name||"Rekan");
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/messages/${forwardingMessage.id}/forward`,{receiver_id:targetId});
+    }catch{
+      const fwdContent=`↪ Diteruskan dari ${senderLabel}:\n${forwardingMessage.content||""}`;
+      await M.apiAuth.post("/bdb/jukrah/messages/send",{receiver_id:targetId,content:fwdContent}).catch(()=>{});
+    }
+    const targetName=casFormatHumanName(targetUser.name||"Rekan");
+    setForwardingMessage(null);
+    setForwardSearch("");
+    fetchConvs();
+    if(Number(targetId)===Number(selectedId)){
+      fetchThread(selectedId);
+    }
+    if(typeof window!=="undefined"&&window.casShowCenterAlert){
+      window.casShowCenterAlert(`Pesan diteruskan ke ${targetName}`,"success");
+    }
+    try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
   };
 
   const toggleBubbleReaction=(msgId,emoji)=>{
@@ -2344,6 +2775,8 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     return String(m.content||"").toLowerCase().includes(threadSearchQ.toLowerCase());
   });
 
+  const pinnedThreadMsg=[...messages].reverse().find(m=>m.is_pinned);
+
   const smartQuickReplies=selectedId===-1?[
     {label:"⚖️ Analisis Pasal KUHP Baru",text:"Jelaskan pemetaan pasal KUHP Baru (UU No. 1 Tahun 2023) pada Laporan Polisi."},
     {label:"🔄 SOP Sinkronisasi DORS",text:"Bagaimana langkah sinkronisasi dan cek duplikat LP dari Portal Integrasi DORS?"},
@@ -2368,7 +2801,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
         onClick:e=>e.stopPropagation(),
         style:{width:"100%",maxWidth:"410px",background:"var(--cas-card-bg, #0f172a)",border:"1.5px solid rgba(239,68,68,0.45)",borderRadius:16,padding:"1.35rem 1.4rem",boxShadow:"0 24px 64px rgba(0,0,0,0.45)",textAlign:"center",display:"flex",flexDirection:"column",gap:"0.75rem"},
         children:[
-          (0,a.jsx)("div",{style:{width:52,height:52,margin:"0 auto",borderRadius:"50%",background:"rgba(239,68,68,0.14)",border:"1.5px solid rgba(239,68,68,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.45rem"},children:"🗑️"}),
+          (0,a.jsx)("div",{style:{width:52,height:52,margin:"0 auto",borderRadius:"50%",background:"rgba(239,68,68,0.14)",border:"1.5px solid rgba(239,68,68,0.4)",display:"flex",alignItems:"center",justifyContent:"center",color:"#ef4444"},children:(0,a.jsxs)("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"3 6 5 6 21 6"}),(0,a.jsx)("path",{d:"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"})]})}),
           (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"1.05rem",color:"var(--cas-text-primary)"},children:"Hapus Pesan?"}),
           (0,a.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--cas-text-secondary)",lineHeight:1.5},children:"Apakah Anda yakin ingin menghapus pesan ini secara permanen?"}),
           (0,a.jsx)("div",{style:{padding:"0.5rem 0.75rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",fontSize:"0.76rem",color:"var(--cas-text-muted)",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`"${String(deletingMessage.content||"").slice(0,90)}"`}),
@@ -2383,8 +2816,65 @@ function CasObrolanFullPage({user:curUser,searchStr}){
               type:"button",
               onClick:handleConfirmDeleteMessage,
               style:{flex:1,padding:"0.55rem 0.9rem",borderRadius:10,border:"none",background:"linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",color:"#ffffff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer",boxShadow:"0 6px 18px rgba(239,68,68,0.35)"},
-              children:"🗑️ Ya, Hapus Pesan"
+              children:"Ya, Hapus Pesan"
             })
+          ]})
+        ]
+      })
+    }),
+
+    /* MODAL TERUSKAN PESAN (FORWARD MESSAGE) */
+    forwardingMessage&&(0,a.jsx)("div",{
+      onClick:()=>setForwardingMessage(null),
+      style:{position:"fixed",inset:0,zIndex:99997,background:"rgba(15,23,42,0.6)",backdropFilter:"blur(5px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"},
+      children:(0,a.jsxs)("div",{
+        onClick:e=>e.stopPropagation(),
+        style:{width:"100%",maxWidth:"460px",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border-strong)",borderRadius:14,boxShadow:"0 24px 60px rgba(0,0,0,0.4)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"80vh"},
+        children:[
+          (0,a.jsxs)("div",{style:{padding:"0.95rem 1.15rem",borderBottom:"1px solid var(--cas-border)",display:"flex",alignItems:"center",justifyContent:"space-between", gap:"0.6rem"},children:[
+            (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+              (0,a.jsxs)("div",{style:{fontWeight:800,fontSize:"0.96rem",color:"var(--cas-text-primary)",display:"flex",alignItems:"center",gap:"0.4rem"},children:[
+                (0,a.jsxs)("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"#2563eb",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"15 17 20 12 15 7"}),(0,a.jsx)("path",{d:"M4 18v-2a4 4 0 0 1 4-4h12"})]}),
+                "Teruskan Pesan ke Rekan"
+              ]}),
+              (0,a.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.15rem"},children:`«${String(forwardingMessage.content||"").slice(0,85)}»`})
+            ]}),
+            (0,a.jsx)("button",{type:"button",onClick:()=>setForwardingMessage(null),style:{background:"var(--cas-surface-subtle)",border:"none",width:30,height:30,borderRadius:"50%",cursor:"pointer",color:"var(--cas-text-primary)",fontWeight:800},children:"✕"})
+          ]}),
+          (0,a.jsx)("div",{style:{padding:"0.7rem 1.1rem",borderBottom:"1px solid var(--cas-border)"},children:(0,a.jsx)("input",{
+            type:"text",
+            autoFocus:!0,
+            value:forwardSearch,
+            onChange:e=>setForwardSearch(e.target.value),
+            placeholder:"Cari nama personel, @username, atau Satker tujuan...",
+            style:{width:"100%",padding:"0.52rem 0.85rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",outline:"none",boxSizing:"border-box"}
+          })}),
+          (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"0.5rem",display:"flex",flexDirection:"column",gap:"0.25rem"},children:[
+            (0,a.jsxs)("div",{
+              onClick:()=>handleForwardMessageTo({id:-1,name:"AI Agen Taktis CAS"}),
+              style:{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.55rem 0.75rem",borderRadius:10,cursor:"pointer",background:"var(--cas-surface-subtle)",border:"1px solid rgba(37,99,235,0.25)"},
+              children:[
+                (0,a.jsx)("img",{src:"/images/default-avatar-polki.png",alt:"AI Agen Taktis CAS",style:{width:38,height:38,borderRadius:"50%",objectFit:"cover",border:"1.5px solid #2563eb"}}),
+                (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                  (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.84rem",color:"var(--cas-text-primary)"},children:"AI Agen Taktis CAS"}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#2563eb",fontWeight:600},children:"@ai_taktis_cas · Asisten Analisis Bareskrim"})
+                ]}),
+                (0,a.jsx)("span",{style:{fontSize:"0.72rem",fontWeight:800,color:"#fff",padding:"0.28rem 0.65rem",borderRadius:8,background:"#2563eb"},children:"Teruskan"})
+              ]
+            }),
+            forwardUsers.map(u=>(0,a.jsxs)("div",{
+              key:"fwddm_"+u.id,
+              onClick:()=>handleForwardMessageTo(u),
+              style:{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.55rem 0.75rem",borderRadius:10,cursor:"pointer",border:"1px solid transparent"},
+              children:[
+                (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:38,height:38,borderRadius:"50%",objectFit:"cover"}}),
+                (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                  (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:casFormatHumanName(u.name)}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"#2563eb",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
+                ]}),
+                (0,a.jsx)("span",{style:{fontSize:"0.72rem",fontWeight:800,color:"#2563eb",padding:"0.26rem 0.62rem",borderRadius:8,background:"rgba(37,99,235,0.12)"},children:"Teruskan"})
+              ]
+            }))
           ]})
         ]
       })
@@ -2743,6 +3233,35 @@ function CasObrolanFullPage({user:curUser,searchStr}){
               ]
             }),
 
+            /* BANNER PESAN DISEMATKAN (PINNED MESSAGE) DI SHARESE OBROLAN */
+            pinnedThreadMsg&&(0,a.jsxs)("div",{
+              style:{
+                padding:"0.48rem 1.1rem",
+                background:"rgba(245,158,11,0.1)",
+                borderBottom:"1px solid rgba(245,158,11,0.28)",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"space-between",
+                gap:"0.6rem",
+                fontSize:"0.75rem"
+              },
+              children:[
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,flex:1},children:[
+                  (0,a.jsxs)("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"#d97706",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0},children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),
+                  (0,a.jsxs)("div",{style:{minWidth:0,flex:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:[
+                    (0,a.jsx)("span",{style:{fontWeight:800,color:"#d97706",marginRight:"0.35rem"},children:"Pesan Disematkan:"}),
+                    (0,a.jsx)("span",{style:{color:"var(--cas-text-primary)"},children:pinnedThreadMsg.content})
+                  ]})
+                ]}),
+                (0,a.jsx)("button",{
+                  type:"button",
+                  onClick:()=>handleTogglePinMessage(pinnedThreadMsg),
+                  style:{background:"rgba(245,158,11,0.16)",border:"1px solid rgba(245,158,11,0.35)",borderRadius:6,padding:"0.18rem 0.5rem",color:"#b45309",fontSize:"0.7rem",fontWeight:800,cursor:"pointer",flexShrink:0},
+                  children:"Lepas Sematan"
+                })
+              ]
+            }),
+
             (0,a.jsxs)("div",{style:{flex:1,display:"flex",minHeight:0,overflow:"hidden"},children:[
               (0,a.jsxs)("div",{
                 ref:msgScrollRef,
@@ -2795,6 +3314,19 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     const reactionEntries=Object.entries(msgReactions).filter(([,cnt])=>Number(cnt)>0);
                     const timeStr=m.created_at?new Date(m.created_at).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"}):"";
                     const isHovered=hoveredMsgId===m.id;
+                    const fullActBtn={
+                      background:"var(--cas-card-bg)",
+                      border:"1px solid var(--cas-border)",
+                      borderRadius:6,
+                      cursor:"pointer",
+                      fontSize:"0.69rem",
+                      fontWeight:700,
+                      padding:"0.16rem 0.44rem",
+                      display:"inline-flex",
+                      alignItems:"center",
+                      gap:"0.24rem",
+                      lineHeight:1.1
+                    };
 
                     return(0,a.jsxs)(a.Fragment,{children:[
                       showDateDivider&&(0,a.jsx)("div",{
@@ -2842,7 +3374,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                 style:{
                                   maxWidth:"72%",
                                   padding:"0.65rem 0.9rem",
-                                  borderRadius:isMine?"18px 18px 4px 18px":"18px 18px 18px 4px",
+                                  borderRadius:isMine?"16px 16px 4px 16px":"16px 16px 16px 4px",
                                   background:isMine?"linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)":"var(--cas-card-bg)",
                                   border:isMine?"none":"1px solid var(--cas-border)",
                                   color:isMine?"#ffffff":"var(--cas-text-primary)",
@@ -2854,6 +3386,13 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                   position:"relative"
                                 },
                                 children:[
+                                  m.is_pinned&&(0,a.jsxs)("div",{
+                                    style:{fontSize:"0.68rem",fontWeight:800,color:isMine?"#fde68a":"#d97706",marginBottom:"0.22rem",display:"flex",alignItems:"center",gap:"0.25rem"},
+                                    children:[
+                                      (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.4,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),
+                                      "Disematkan"
+                                    ]
+                                  }),
                                   !isMine&&(Number(selectedId)===0)&&(0,a.jsx)("div",{
                                     style:{fontSize:"0.72rem",fontWeight:700,color:"#2563eb",marginBottom:"0.2rem"},
                                     children:`${m.sender_name||activePartner.name} (${m.sender_handle||activePartner.handle||"@personel"})`
@@ -2920,24 +3459,28 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                               })
                             ]
                           }),
+                          /* BARIS AKSI PESAN DENGAN IKON SVG VEKTOR PRESISI DI SHARESE OBROLAN */
                           (0,a.jsxs)("div",{
                             style:{
                               display:"flex",
                               alignItems:"center",
-                              gap:"0.25rem",
-                              marginTop:"0.22rem",
+                              gap:"0.28rem",
+                              marginTop:"0.26rem",
                               marginLeft:isMine?0:"2.2rem",
                               flexWrap:"wrap"
                             },
                             children:[
-                              (0,a.jsx)("button",{
+                              (0,a.jsxs)("button",{
                                 type:"button",
                                 onClick:()=>toggleBubbleReaction(m.id,"👍"),
-                                title:"Beri reaksi 👍",
-                                style:{background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:999,cursor:"pointer",fontSize:"0.7rem",padding:"0.12rem 0.42rem",color:"var(--cas-text-secondary)"},
-                                children:"👍"
+                                title:"Beri reaksi jempol",
+                                style:{...fullActBtn,color:"var(--cas-text-secondary)"},
+                                children:[
+                                  (0,a.jsx)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:(0,a.jsx)("path",{d:"M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"})}),
+                                  "Suka"
+                                ]
                               }),
-                              (0,a.jsx)("button",{
+                              (0,a.jsxs)("button",{
                                 type:"button",
                                 onClick:()=>{
                                   setReplyToMessage({
@@ -2949,17 +3492,43 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                   msgInputRef.current?.focus();
                                 },
                                 title:"Balas pesan ini",
-                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#2563eb",padding:"0.1rem 0.3rem"},
-                                children:"↩️ Balas"
+                                style:{...fullActBtn,color:"#2563eb"},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"9 17 4 12 9 7"}),(0,a.jsx)("path",{d:"M20 18v-2a4 4 0 0 0-4-4H4"})]}),
+                                  "Balas"
+                                ]
                               }),
-                              (0,a.jsx)("button",{
+                              (0,a.jsxs)("button",{
+                                type:"button",
+                                onClick:()=>{setForwardingMessage(m);setForwardSearch("");},
+                                title:"Teruskan pesan ke rekan lain",
+                                style:{...fullActBtn,color:"#0284c7"},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"15 17 20 12 15 7"}),(0,a.jsx)("path",{d:"M4 18v-2a4 4 0 0 1 4-4h12"})]}),
+                                  "Teruskan"
+                                ]
+                              }),
+                              (0,a.jsxs)("button",{
+                                type:"button",
+                                onClick:()=>handleTogglePinMessage(m),
+                                title:m.is_pinned?"Lepas sematan pesan":"Sematkan pesan di atas",
+                                style:{...fullActBtn,color:m.is_pinned?"#b45309":"var(--cas-text-secondary)",background:m.is_pinned?"rgba(245,158,11,0.14)":fullActBtn.background},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),
+                                  m.is_pinned?"Lepas":"Sematkan"
+                                ]
+                              }),
+                              (0,a.jsxs)("button",{
                                 type:"button",
                                 onClick:()=>handleCopyMessage(m.content),
                                 title:"Salin teks pesan",
-                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:600,color:"var(--cas-text-secondary)",padding:"0.1rem 0.3rem"},
-                                children:"📋 Salin"
+                                style:{...fullActBtn,color:"var(--cas-text-secondary)"},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("rect",{x:"9",y:"9",width:"13",height:"13",rx:"2",ry:"2"}),(0,a.jsx)("path",{d:"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"})]}),
+                                  "Salin"
+                                ]
                               }),
-                              isMine&&(0,a.jsx)("button",{
+                              isMine&&(0,a.jsxs)("button",{
                                 type:"button",
                                 onClick:()=>{
                                   setEditingMessage(m);
@@ -2968,15 +3537,21 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                   msgInputRef.current?.focus();
                                 },
                                 title:"Edit pesan Anda",
-                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#d97706",padding:"0.1rem 0.3rem"},
-                                children:"✏️ Edit"
+                                style:{...fullActBtn,color:"#d97706"},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M12 20h9"}),(0,a.jsx)("path",{d:"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"})]}),
+                                  "Edit"
+                                ]
                               }),
-                              (isMine||selectedId===-1||m.is_ai||Number(m.sender_id)===-1)&&(0,a.jsx)("button",{
+                              (isMine||selectedId===-1||m.is_ai||Number(m.sender_id)===-1)&&(0,a.jsxs)("button",{
                                 type:"button",
                                 onClick:()=>setDeletingMessage(m),
                                 title:"Hapus pesan ini",
-                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#ef4444",padding:"0.1rem 0.3rem"},
-                                children:"🗑️ Hapus"
+                                style:{...fullActBtn,color:"#ef4444"},
+                                children:[
+                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"3 6 5 6 21 6"}),(0,a.jsx)("path",{d:"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"})]}),
+                                  "Hapus"
+                                ]
                               })
                             ]
                           }),
