@@ -657,8 +657,11 @@ function initCasExpensivePcHpStandards() {
       "  border-radius: 10px !important;",
       "}",
       "@keyframes casCenterAlertPop { 0% { opacity: 0; transform: scale(0.88) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }",
+      "#cas-center-hud-alert-overlay, .cas-center-alert-backdrop {",
+      "  position: fixed !important; inset: 0 !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 99998 !important; pointer-events: none !important;",
+      "}",
       ".p-toast, .p-toast.p-toast-top-right, .p-toast.p-toast-top-center, .p-toast.p-toast-bottom-right, .p-toast.p-toast-bottom-center, .p-toast.p-toast-center {",
-      "  position: fixed !important; top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, -50%) !important; z-index: 100005 !important; width: min(92vw, 440px) !important; max-width: 440px !important; pointer-events: none !important;",
+      "  position: fixed !important; top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, -50%) !important; z-index: 99998 !important; width: min(92vw, 440px) !important; max-width: 440px !important; pointer-events: none !important;",
       "}",
       ".p-toast .p-toast-message {",
       "  pointer-events: auto !important; border-radius: 16px !important; backdrop-filter: blur(18px) saturate(160%) !important; -webkit-backdrop-filter: blur(18px) saturate(160%) !important; box-shadow: 0 24px 64px rgba(0,0,0,0.48), 0 0 0 1px rgba(56,189,248,0.22) !important; animation: casCenterAlertPop 0.22s cubic-bezier(0.22,1,0.36,1) both !important;",
@@ -834,31 +837,33 @@ function initCasExpensivePcHpStandards() {
         info: { icon: "🔔", title: "Informasi", color: "#3b82f6", border: "rgba(59,130,246,0.5)", bgBadge: "rgba(59,130,246,0.16)" }
       }[alertType] || { icon: "🔔", title: "Informasi", color: "#3b82f6", border: "rgba(59,130,246,0.5)", bgBadge: "rgba(59,130,246,0.16)" };
 
+      var isDark = document.documentElement.dataset.theme === "dark" || document.documentElement.classList.contains("dark") || localStorage.getItem("bdb_theme") === "dark";
+
       var wrap = document.createElement("div");
       wrap.id = "cas-center-hud-alert-overlay";
       wrap.className = "cas-center-alert-backdrop";
       wrap.setAttribute("role", "alertdialog");
-      wrap.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100010;pointer-events:none;padding:1rem;transition:opacity 180ms ease;";
+      wrap.style.cssText = "position:fixed !important;inset:0 !important;top:0 !important;left:0 !important;width:100vw !important;height:100vh !important;display:flex !important;align-items:center !important;justify-content:center !important;z-index:99998 !important;pointer-events:none !important;padding:1rem !important;transition:opacity 180ms ease;";
 
       var box = document.createElement("div");
       box.className = "cas-center-alert-box";
-      box.style.cssText = "pointer-events:auto;background:rgba(15,23,42,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid " + cfg.border + ";border-radius:16px;padding:1.15rem 1.45rem;box-shadow:0 24px 60px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.06);max-width:420px;width:90vw;text-align:center;color:#f8fafc;font-family:inherit;animation:casCenterAlertPop 0.22s cubic-bezier(0.22,1,0.36,1) both;";
+      box.style.cssText = "pointer-events:auto;background:" + (isDark ? "#0f172a" : "#ffffff") + " !important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid " + cfg.border + " !important;border-radius:16px;padding:1.25rem 1.5rem;box-shadow:0 24px 60px rgba(0,0,0,0.32), 0 0 0 1px " + cfg.bgBadge + ";max-width:420px;width:90vw;text-align:center;color:" + (isDark ? "#f8fafc" : "#0f172a") + " !important;font-family:inherit;animation:casCenterAlertPop 0.22s cubic-bezier(0.22,1,0.36,1) both;";
 
       var badgeEl = document.createElement("div");
-      badgeEl.style.cssText = "width:46px;height:46px;margin:0 auto 0.65rem;border-radius:50%;background:" + cfg.bgBadge + ";border:1.5px solid " + cfg.border + ";display:flex;align-items:center;justify-content:center;font-size:1.35rem;box-shadow:0 6px 18px " + cfg.bgBadge + ";";
+      badgeEl.style.cssText = "width:48px;height:48px;margin:0 auto 0.65rem;border-radius:50%;background:" + cfg.bgBadge + ";border:1.5px solid " + cfg.border + ";display:flex;align-items:center;justify-content:center;font-size:1.35rem;box-shadow:0 6px 18px " + cfg.bgBadge + ";";
       badgeEl.textContent = cfg.icon;
 
       var titleEl = document.createElement("div");
-      titleEl.style.cssText = "font-size:0.98rem;font-weight:800;color:" + cfg.color + ";margin-bottom:0.3rem;letter-spacing:-0.01em;";
+      titleEl.style.cssText = "font-size:1.02rem;font-weight:800;color:" + cfg.color + " !important;margin-bottom:0.3rem;letter-spacing:-0.01em;";
       titleEl.textContent = cfg.title;
 
       var msgEl = document.createElement("div");
-      msgEl.style.cssText = "font-size:0.84rem;line-height:1.48;color:#e2e8f0;font-weight:600;margin-bottom:0.85rem;word-break:break-word;";
+      msgEl.style.cssText = "font-size:0.86rem;line-height:1.5;color:" + (isDark ? "#e2e8f0" : "#1e293b") + " !important;font-weight:600;margin-bottom:0.9rem;word-break:break-word;";
       msgEl.textContent = String(message);
 
       var closeBtn = document.createElement("button");
       closeBtn.type = "button";
-      closeBtn.style.cssText = "padding:0.36rem 1.15rem;border-radius:999px;border:1px solid " + cfg.border + ";background:" + cfg.bgBadge + ";color:#ffffff;font-size:0.75rem;font-weight:800;cursor:pointer;transition:transform 0.15s ease;";
+      closeBtn.style.cssText = "padding:0.42rem 1.35rem;border-radius:999px;border:1px solid " + cfg.border + ";background:" + cfg.color + " !important;color:#ffffff !important;font-size:0.78rem;font-weight:800;cursor:pointer;box-shadow:0 4px 12px " + cfg.bgBadge + ";transition:transform 0.15s ease;";
       closeBtn.textContent = "OK / Tutup";
 
       var closed = false;
@@ -2354,11 +2359,11 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const emojiList=["👍","❤️","🙏","🫡","✅","🔥","👏","🤝","📄","📌","⚠️","😊","😂","🎉","💬","🔍"];
 
   return(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem",position:"relative"},children:[
-    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%, -50%)",zIndex:100010,background:"rgba(15,23,42,0.95)",color:"#fff",padding:"0.85rem 1.4rem",borderRadius:16,fontSize:"0.85rem",fontWeight:800,boxShadow:"0 24px 60px rgba(0,0,0,0.45)",border:"1.5px solid rgba(16,185,129,0.5)"},children:copyToast}),
+    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%, -50%)",zIndex:99998,background:"rgba(15,23,42,0.95)",color:"#fff",padding:"0.85rem 1.4rem",borderRadius:16,fontSize:"0.85rem",fontWeight:800,boxShadow:"0 24px 60px rgba(0,0,0,0.45)",border:"1.5px solid rgba(16,185,129,0.5)"},children:copyToast}),
 
     deletingMessage&&(0,a.jsx)("div",{
       onClick:()=>setDeletingMessage(null),
-      style:{position:"fixed",inset:0,zIndex:100008,background:"rgba(15,23,42,0.65)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"},
+      style:{position:"fixed",inset:0,zIndex:99997,background:"rgba(15,23,42,0.65)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"},
       children:(0,a.jsxs)("div",{
         onClick:e=>e.stopPropagation(),
         style:{width:"100%",maxWidth:"410px",background:"var(--cas-card-bg, #0f172a)",border:"1.5px solid rgba(239,68,68,0.45)",borderRadius:16,padding:"1.35rem 1.4rem",boxShadow:"0 24px 64px rgba(0,0,0,0.45)",textAlign:"center",display:"flex",flexDirection:"column",gap:"0.75rem"},
