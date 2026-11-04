@@ -1375,7 +1375,7 @@ e.s(["default",0,function() {
       onContextMenu:ev => ev.preventDefault(),
       style:{minHeight:"100vh",background:"radial-gradient(circle at top, #0f172a 0%, #020617 100%)",color:"#f8fafc",padding:"1.25rem 0.75rem 2.5rem",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",boxSizing:"border-box",overflowX:"hidden"},
       children:[
-        (0,t.jsx)(d.Toast,{ref:toastRef}),
+        (0,t.jsx)(d.Toast,{ref:toastRef,position:"center"}),
         (0,t.jsx)(O.default,{file:previewPdf,onHide:() => setPreviewPdf(null)}),
         (0,t.jsxs)("div",{
           className:"cas-sharese-gate-card",
@@ -1592,7 +1592,7 @@ e.s(["default",0,function() {
   }
 
   return (0,t.jsxs)("div",{style:{maxWidth:"74rem",margin:"0 auto",paddingBottom:"3.5rem"},children:[
-    (0,t.jsx)(d.Toast,{ref:toastRef}),
+    (0,t.jsx)(d.Toast,{ref:toastRef,position:"center"}),
     (0,t.jsx)(m.ConfirmDialog,{}),
 
     sharedHighlightPost && (0,t.jsxs)("div",{

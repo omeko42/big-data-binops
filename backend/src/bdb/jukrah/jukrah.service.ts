@@ -89,9 +89,13 @@ export class JukrahService {
                 reply_to_json TEXT,
                 reactions_json TEXT,
                 is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                is_edited BOOLEAN DEFAULT FALSE,
+                updated_at TIMESTAMP DEFAULT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )`);
         await this.dataSource.query("ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS channel_type VARCHAR(32) NOT NULL DEFAULT 'direct', ADD COLUMN IF NOT EXISTS media_url TEXT, ADD COLUMN IF NOT EXISTS attachment_url TEXT, ADD COLUMN IF NOT EXISTS attachment_name TEXT, ADD COLUMN IF NOT EXISTS reply_to_json TEXT, ADD COLUMN IF NOT EXISTS reactions_json TEXT");
+        await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE');
+        await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NULL');
         await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_pair ON bdb_social_messages(sender_id, receiver_id, created_at DESC)');
         await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_recv ON bdb_social_messages(receiver_id, is_read)');
         await this.dataSource.query('ALTER TABLE bdb_social_notifications ADD COLUMN IF NOT EXISTS link TEXT');
@@ -3181,6 +3185,16 @@ export class JukrahService {
         return { status: 1 };
     }
 
+    async deleteNotification(user: any, notifId: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const nid = Number(notifId);
+        if (!isNaN(nid) && nid > 0) {
+            await this.dataSource.query('DELETE FROM bdb_social_notifications WHERE id = $1 AND recipient_id = $2', [nid, uid]);
+        }
+        return { status: 1, message: 'Notifikasi dihapus.', deleted_id: Number(notifId) };
+    }
+
     // =========================================================================
     // OBROLAN TAKTIS CAS (DIRECT MESSAGE, HELPDESK ADMIN & AI AGEN TAKTIS)
     // =========================================================================
@@ -3344,7 +3358,7 @@ export class JukrahService {
         }
 
         let rows = await this.dataSource.query(
-            `SELECT id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at
+            `SELECT id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, created_at
              FROM bdb_social_messages
              WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
              ORDER BY created_at ASC, id ASC
@@ -3357,7 +3371,7 @@ export class JukrahService {
             const ins = await this.dataSource.query(
                 `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
                  VALUES (-1, $1, 'ai_agent', $2, true, NOW())
-                 RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at`,
+                 RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, created_at`,
                 [uid, welcomeText]
             );
             rows = ins;
@@ -3424,6 +3438,8 @@ export class JukrahService {
                 reply_to: replyTo,
                 reactions,
                 is_read: Boolean(m.is_read),
+                is_edited: Boolean(m.is_edited),
+                updated_at: m.updated_at || null,
                 created_at: m.created_at
             };
         });
@@ -3538,6 +3554,112 @@ export class JukrahService {
             },
             sent_message: sentMsg,
             ai_reply: aiReplyMsg
+        };
+    }
+
+    async editSocialMessage(user: any, messageId: number, body: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const mid = Number(messageId);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (!mid || isNaN(mid)) throw new BadRequestException('ID pesan tidak valid.');
+        const rows = await this.dataSource.query('SELECT * FROM bdb_social_messages WHERE id = $1', [mid]);
+        if (!rows.length) {
+            throw new NotFoundException('Pesan tidak ditemukan.');
+        }
+        const row = rows[0];
+        if (Number(row.sender_id) !== uid) {
+            throw new ForbiddenException('Anda hanya dapat mengedit pesan milik Anda sendiri.');
+        }
+        const content = String(body?.content || '').trim();
+        if (!content) {
+            throw new BadRequestException('Isi pesan tidak boleh kosong.');
+        }
+        if (content.length > 4000) {
+            throw new BadRequestException('Pesan maksimal 4.000 karakter.');
+        }
+        const upd = await this.dataSource.query(
+            'UPDATE bdb_social_messages SET content = $1, is_edited = true, updated_at = NOW() WHERE id = $2 RETURNING *',
+            [content, mid]
+        );
+        const updRows = Array.isArray(upd?.[0]) ? upd[0] : upd;
+        const updatedRow = updRows?.[0] || { ...row, content, is_edited: true, updated_at: new Date().toISOString() };
+        let replyTo = null;
+        let reactions = {};
+        try { if (updatedRow.reply_to_json) replyTo = JSON.parse(updatedRow.reply_to_json); } catch {}
+        try { if (updatedRow.reactions_json) reactions = JSON.parse(updatedRow.reactions_json); } catch {}
+        return {
+            status: 1,
+            message: 'Pesan berhasil diperbarui.',
+            data: {
+                ...updatedRow,
+                id: Number(updatedRow.id),
+                sender_id: Number(updatedRow.sender_id),
+                receiver_id: Number(updatedRow.receiver_id),
+                is_mine: true,
+                is_me: true,
+                is_edited: true,
+                updated_at: updatedRow.updated_at || null,
+                reply_to: replyTo,
+                reactions
+            }
+        };
+    }
+
+    async deleteSocialMessage(user: any, messageId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const mid = Number(messageId);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (!mid || isNaN(mid)) throw new BadRequestException('ID pesan tidak valid.');
+        const rows = await this.dataSource.query('SELECT * FROM bdb_social_messages WHERE id = $1', [mid]);
+        if (!rows.length) {
+            throw new NotFoundException('Pesan tidak ditemukan.');
+        }
+        const row = rows[0];
+        const canDelete = Number(row.sender_id) === uid || (Number(row.sender_id) === -1 && Number(row.receiver_id) === uid);
+        if (!canDelete) {
+            throw new ForbiddenException('Anda hanya dapat menghapus pesan milik Anda sendiri.');
+        }
+        await this.dataSource.query('DELETE FROM bdb_social_messages WHERE id = $1', [mid]);
+        return {
+            status: 1,
+            message: 'Pesan berhasil dihapus.',
+            deleted_id: mid
+        };
+    }
+
+    async reactSocialMessage(user: any, messageId: number, body: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const mid = Number(messageId);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (!mid || isNaN(mid)) throw new BadRequestException('ID pesan tidak valid.');
+        const rows = await this.dataSource.query('SELECT * FROM bdb_social_messages WHERE id = $1', [mid]);
+        if (!rows.length) {
+            throw new NotFoundException('Pesan tidak ditemukan.');
+        }
+        const row = rows[0];
+        let reactions: Record<string, any> = {};
+        try {
+            if (row.reactions_json) {
+                const parsed = JSON.parse(row.reactions_json);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    reactions = parsed;
+                }
+            }
+        } catch {}
+        const emoji = String(body?.emoji || body?.reaction || '👍').trim() || '👍';
+        if (reactions[emoji]) {
+            delete reactions[emoji];
+        } else {
+            reactions[emoji] = 1;
+        }
+        await this.dataSource.query('UPDATE bdb_social_messages SET reactions_json = $1 WHERE id = $2', [JSON.stringify(reactions), mid]);
+        return {
+            status: 1,
+            message: 'Reaksi pesan diperbarui.',
+            data: { id: mid, reactions }
         };
     }
 

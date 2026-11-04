@@ -23,64 +23,23 @@ export class JukrahController {
     }
 
     // =========================================================================
-    // SHARE LINK BERHASH & PORTAL VERIFIKASI EKSTERNAL ("SIAPA KAMU?" / "SIAPA SAYA?")
+    // SHARE LINK BERHASH & PORTAL VERIFIKASI EKSTERNAL ("SIAPA KAMU?")
     // =========================================================================
-    @Get(['share-challenge', 'public/captcha'])
-    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string, @Query('hash') hash?: string) {
-        const svc = this.service as any;
-        if (typeof svc.getPublicCaptcha === 'function' && !token && !id && !hash) {
-            return svc.getPublicCaptcha();
-        }
-        return svc.getShareChallenge(token || hash, id ? parseInt(id, 10) : undefined);
+    @Get('share-challenge')
+    getShareChallenge(@Query('token') token?: string, @Query('id') id?: string) {
+        return this.service.getShareChallenge(token, id ? parseInt(id, 10) : undefined);
     }
 
-    @Post(['verify-share', 'public/verify-nrp'])
+    @Post('verify-share')
     verifyShareViewer(@Req() req: any, @Body() body: any) {
         const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
         const userAgent = String(req.headers?.['user-agent'] || '');
-        const svc = this.service as any;
-        if (typeof svc.verifyPublicNrp === 'function' && req.url?.includes('/public/verify-nrp')) {
-            return svc.verifyPublicNrp(body || {}, { ip, userAgent });
-        }
-        return svc.verifyShareViewer(body || {}, { ip, userAgent });
-    }
-
-    @Get('public/post/:idOrHash')
-    getPublicPost(
-        @Req() req: any,
-        @Param('idOrHash') idOrHash: string,
-        @Query('nrp') nrp?: string,
-        @Query('nrp_nip') nrpNip?: string,
-        @Query('token') viewerToken?: string
-    ) {
-        const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
-        const userAgent = String(req.headers?.['user-agent'] || '');
-        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || viewerToken || '').trim();
-        const svc = this.service as any;
-        if (typeof svc.getPublicPostByHash === 'function') {
-            return svc.getPublicPostByHash(idOrHash, effectiveNrp, req?.user, { ip, userAgent });
-        }
-        return svc.getPublicSharedPost(idOrHash, effectiveNrp, req?.user, { ip, userAgent });
+        return this.service.verifyShareViewer(body || {}, { ip, userAgent });
     }
 
     @Get('shared/:token')
-    getSharedPost(
-        @Req() req: any,
-        @Param('token') token: string,
-        @Query('nrp') nrp?: string,
-        @Query('nrp_nip') nrpNip?: string
-    ) {
-        const effectiveNrp = String(nrp || nrpNip || req.headers?.['x-verified-nrp'] || '').trim();
-        const svc = this.service as any;
-        if (effectiveNrp) {
-            const ip = String(req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || '');
-            const userAgent = String(req.headers?.['user-agent'] || '');
-            if (typeof svc.getPublicPostByHash === 'function') {
-                return svc.getPublicPostByHash(token, effectiveNrp, req?.user, { ip, userAgent });
-            }
-            return svc.getPublicSharedPost(token, effectiveNrp, req?.user, { ip, userAgent });
-        }
-        return svc.getSharedPost(req?.user, token);
+    getSharedPost(@Req() req: any, @Param('token') token: string) {
+        return this.service.getSharedPost(req?.user, token);
     }
 
     // =========================================================================
@@ -158,12 +117,37 @@ export class JukrahController {
 
     @Get('messages/thread/:targetId')
     getMessageThread(@Req() req: any, @Param('targetId') targetId: string) {
-        return this.service.getMessageThread(req?.user, parseInt(targetId, 10));
+        return this.service.getMessageThread(req?.user, targetId === 'ai' ? 'ai' : parseInt(targetId, 10));
     }
 
     @Post('messages/send')
     sendMessage(@Req() req: any, @Body() body: any) {
         return this.service.sendSocialMessage(req?.user, body || {});
+    }
+
+    @Patch('messages/:id')
+    editMessagePatch(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.editSocialMessage(req?.user, parseInt(id, 10), body || {});
+    }
+
+    @Post('messages/:id/edit')
+    editMessagePost(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.editSocialMessage(req?.user, parseInt(id, 10), body || {});
+    }
+
+    @Delete('messages/:id')
+    deleteMessageDelete(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteSocialMessage(req?.user, parseInt(id, 10));
+    }
+
+    @Post('messages/:id/delete')
+    deleteMessagePost(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteSocialMessage(req?.user, parseInt(id, 10));
+    }
+
+    @Post('messages/:id/reaction')
+    reactMessage(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.reactSocialMessage(req?.user, parseInt(id, 10), body || {});
     }
 
     @Get('insight')
@@ -287,6 +271,16 @@ export class JukrahController {
     @Post('notifications/read-all')
     markAllNotificationsRead(@Req() req: any, @Body('category') category: string) {
         return this.service.markAllNotificationsRead(req?.user, category || 'social');
+    }
+
+    @Delete('notifications/:id')
+    deleteNotificationDelete(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteNotification(req?.user, id);
+    }
+
+    @Post('notifications/:id/delete')
+    deleteNotificationPost(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteNotification(req?.user, id);
     }
 
     // =========================================================================
