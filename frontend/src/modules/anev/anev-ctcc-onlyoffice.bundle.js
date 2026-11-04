@@ -847,7 +847,7 @@ e.s(["default", 0, function() {
                                                                 // Tab Bar (4 Tabs)
                                                                 (0, t.jsx)("div", {
                                                                     className: "kp-tab-bar",
-                                                                    style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-surface-hover, #f1f5f9)" },
+                                                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(7.8rem, 1fr))", borderBottom: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-surface-hover, #f1f5f9)" },
                                                                     children: [
                                                                         { idx: 0, label: "\uD83D\uDCC5 Periode" },
                                                                         { idx: 1, label: "\uD83C\uDFDB\uFE0F Satker & Wilayah" },
@@ -885,7 +885,7 @@ e.s(["default", 0, function() {
                                                                             children: [
                                                                                 // 3-way toggle
                                                                                 (0, t.jsxs)("div", {
-                                                                                    style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.5rem" },
+                                                                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(6.2rem, 1fr))", gap: "0.5rem" },
                                                                                     children: [
                                                                                         (0, t.jsx)(c.Button, {
                                                                                             label: "Bulan",
@@ -919,7 +919,7 @@ e.s(["default", 0, function() {
 
                                                                                 // Month Dropdowns
                                                                                 kpPeriodMode === "month" && (0, t.jsxs)("div", {
-                                                                                    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
+                                                                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))", gap: "0.75rem" },
                                                                                     children: [
                                                                                         (0, t.jsx)(l.Dropdown, {
                                                                                             value: kpPeriodMonth,
@@ -947,7 +947,7 @@ e.s(["default", 0, function() {
 
                                                                                 // Custom Date Range
                                                                                 kpPeriodMode === "custom" && (0, t.jsxs)("div", {
-                                                                                    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
+                                                                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))", gap: "0.75rem" },
                                                                                     children: [
                                                                                         (0, t.jsxs)("div", {
                                                                                             children: [
@@ -1513,7 +1513,7 @@ e.s(["default", 0, function() {
                                     ]
                                 }),
                                 (0, t.jsxs)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))", gap: "0.6rem" },
                                     children: [
                                         (0, t.jsxs)("div", {
                                             children: [

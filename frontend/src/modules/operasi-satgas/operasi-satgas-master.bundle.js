@@ -788,7 +788,7 @@
                 children: [
                   jsxs("span", { style: { display: "inline-flex", alignItems: "center", gap: "0.45rem" }, children: [jsx("span", { children: tab.icon }), jsx("span", { children: tab.label })] }),
                   jsx("span", {
-                    style: { padding: "0.15rem 0.55rem", borderRadius: "999px", background: isAct ? "rgba(255,255,255,0.24)" : "rgba(15,23,42,0.08)", color: isAct ? "#ffffff" : tab.color, fontSize: "0.74rem", fontWeight: 800 },
+                    style: { padding: "0.15rem 0.55rem", borderRadius: "999px", background: isAct ? "rgba(15,23,42,0.32)" : "rgba(15,23,42,0.08)", color: isAct ? "#ffffff" : tab.color, fontSize: "0.74rem", fontWeight: 800 },
                     children: Number(tab.count || 0).toLocaleString("id-ID")
                   })
                 ]
@@ -990,7 +990,7 @@
                           jsx(InputText, { value: formData.judul || "", onChange: function(e) { setField("judul", e.target.value); }, disabled: isViewOnly, style: { width: "100%", height: "38px", boxSizing: "border-box" } })
                         ]
                       }) : jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.75rem" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 13rem), 1fr))", gap: "0.75rem" },
                         children: [
                           jsxs("div", {
                             children: [
@@ -1015,7 +1015,7 @@
                       }),
 
                       formTargetTab === "SUSJOL" && jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 12rem), 1fr))", gap: "0.75rem" },
                         children: [
                           jsxs("div", {
                             children: [
@@ -1044,7 +1044,7 @@
                       }),
 
                       formTargetTab === "SUSATENSI" && jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))", gap: "0.75rem" },
                         children: [
                           jsxs("div", {
                             children: [
@@ -1082,7 +1082,7 @@
                       }),
 
                       formTargetTab === "OPS_SATGAS" && jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 12rem), 1fr))", gap: "0.75rem" },
                         children: [
                           jsxs("div", {
                             children: [
@@ -1190,7 +1190,7 @@
                         ]
                       }),
                       !isViewOnly && jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "0.6rem" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 11rem), 1fr))", gap: "0.6rem" },
                         children: [
                           jsx(InputText, { value: pendSprinNomor, onChange: function(e) { setPendSprinNomor(e.target.value); }, placeholder: "Nomor Sprin (mis. Sprin/120/III/2026)", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
                           jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: pendSprinTgl, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setPendSprinTgl(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
@@ -1244,7 +1244,7 @@
                         ]
                       }),
                       !isViewOnly && jsxs("div", {
-                        style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem", alignItems: "center" },
+                        style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 12rem), 1fr))", gap: "0.6rem", alignItems: "center" },
                         children: [
                           jsx(InputText, { value: pendDokJudul, onChange: function(e) { setPendDokJudul(e.target.value); }, placeholder: "Keterangan / Judul Dokumentasi (mis. Foto Barang Bukti & Rilis)…", style: { width: "100%", height: "36px", boxSizing: "border-box" } }),
                           jsx("input", { type: "file", multiple: true, onChange: function(e) { setPendDokFiles(Array.from(e.target.files || [])); } })
@@ -1861,7 +1861,7 @@
               }),
               jsx("div", { style: { fontSize: "0.8rem", fontWeight: 700, color: "#334155" }, children: sprinQuickRow.judul || sprinQuickRow.nama }),
               jsxs("div", {
-                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" },
+                style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 12rem), 1fr))", gap: "0.65rem" },
                 children: [
                   jsxs("div", {
                     children: [

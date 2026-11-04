@@ -1481,11 +1481,11 @@ e.s(["default",0,function() {
                   // 6-Char Alphanumeric Login-Style SVG Captcha
                   (0,t.jsxs)("div",{className:"cas-sharese-captcha-row",style:{display:"flex",alignItems:"center",gap:"0.75rem",flexWrap:"wrap",marginTop:"0.15rem",padding:"0.7rem",borderRadius:"10px",background:"rgba(15,23,42,0.85)",border:"1px solid rgba(148,163,184,0.2)"},children:[
                     shareChallenge?.captcha_svg ? (
-                      (0,t.jsx)("img",{className:"cas-sharese-captcha-img",src:shareChallenge.captcha_svg,alt:"Captcha",style:{width:"195px",height:"58px",borderRadius:"8px",border:"1px solid #334155",flexShrink:0}})
+                      (0,t.jsx)("img",{className:"cas-sharese-captcha-img",src:shareChallenge.captcha_svg,alt:"Captcha",style:{width:"195px",height:"58px",borderRadius:"8px",border:"1px solid #334155",flexShrink:0,background:"#ffffff",padding:"2px",filter:"contrast(1.35) brightness(1.08)"}})
                     ) : (
                       (0,t.jsx)("div",{style:{width:"195px",height:"58px",borderRadius:"8px",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",color:"#94a3b8",fontSize:"0.75rem"},children:loadingChallenge ? "Memuat Captcha..." : "Captcha"})
                     ),
-                    (0,t.jsxs)("div",{style:{flex:"1 1 170px",minWidth:0,display:"grid",gap:"0.3rem"},children:[
+                    (0,t.jsxs)("div",{style:{flex:"1 1 170px",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.3rem"},children:[
                       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"},children:[
                         (0,t.jsx)("label",{style:{fontSize:"0.72rem",fontWeight:700,color:"#cbd5e1"},children:"Kode Captcha (6 Karakter) *"}),
                         (0,t.jsx)("button",{type:"button",onClick:() => loadExternalChallenge(externalShareToken),title:"Muat ulang kode Captcha",style:{background:"none",border:"none",color:"#38bdf8",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},children:"🔄 Ganti Kode"})
@@ -1497,7 +1497,7 @@ e.s(["default",0,function() {
                         value:gateForm.captcha_answer,
                         onChange:e => setGateForm(p => ({ ...p, captcha_answer: e.target.value.toUpperCase() })),
                         placeholder:"KETIK 6 KARAKTER",
-                        style:{width:"100%",padding:"0.52rem 0.65rem",borderRadius:"8px",background:"#020617",border:"1px solid #38bdf8",color:"#f8fafc",fontSize:"0.92rem",fontWeight:800,letterSpacing:"0.16em",fontFamily:"monospace",textTransform:"uppercase",boxSizing:"border-box"}
+                        style:{width:"100%",padding:"0.52rem 0.65rem",borderRadius:"8px",background:"#020617",border:"1px solid #38bdf8",color:"#f8fafc",fontSize:"0.92rem",fontWeight:800,letterSpacing:"0.16em",fontFamily:"monospace",textTransform:"uppercase",boxSizing:"border-box",height:"44px",maxHeight:"44px",alignSelf:"center"}
                       })
                     ]})
                   ]}),
@@ -1636,7 +1636,7 @@ e.s(["default",0,function() {
       children:[
         (0,t.jsxs)("div",{
           className:"sharese-header-top-row",
-          style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"nowrap",minWidth:0},
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"wrap",minWidth:0},
           children:[
             (0,t.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",minWidth:0},children:[
               (0,t.jsxs)("h1",{
@@ -1673,7 +1673,7 @@ e.s(["default",0,function() {
             ]}),
             (0,t.jsxs)("div",{
               className:"sharese-search-inline",
-              style:{display:"flex",alignItems:"center",gap:"0.45rem",flex:"1 1 auto",justifyContent:"flex-end",minWidth:0,maxWidth:"38rem"},
+              style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:"0.45rem",flex:"1 1 auto",justifyContent:"flex-end",minWidth:0,maxWidth:"38rem"},
               children:[
                 (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex",alignItems:"center",minWidth:0},children:[
                   (0,t.jsx)("div",{style:{position:"absolute",left:"0.65rem",color:"#64748b",display:"flex",alignItems:"center",pointerEvents:"none"},children:(0,t.jsx)(IconSearch,{size:14})}),
@@ -1795,7 +1795,7 @@ e.s(["default",0,function() {
             style:{width:"100%",borderRadius:"8px",resize:"none",minHeight:"44px",maxHeight:"160px",height:content?void 0:"44px",overflowY:"auto",fontSize:"0.85rem",lineHeight:"1.45",padding:"0.5rem 0.75rem"}
           }),
           // Live character count & 1-line horizontal scrollable shortcut hashtags
-          (0,t.jsxs)("div",{className:"sharese-hashtag-row",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.38rem",flexWrap:"nowrap",gap:"0.4rem",minWidth:0},children:[
+          (0,t.jsxs)("div",{className:"sharese-hashtag-row",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.38rem",flexWrap:"wrap",gap:"0.35rem",minWidth:0},children:[
             (0,t.jsxs)("div",{className:"sharese-hashtag-strip",style:{display:"flex",gap:"0.3rem",flexWrap:"nowrap",overflowX:"auto",whiteSpace:"nowrap",minWidth:0,flex:"1 1 auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"},children:
               HASHTAG_SHORTCUTS.map(tag => (0,t.jsx)("button",{
                 key:tag,
@@ -1863,8 +1863,8 @@ e.s(["default",0,function() {
       ]}),
 
       // Action toolbar: attachment buttons, audience selector, official broadcast toggle, submit button (1 compact row)
-      (0,t.jsxs)("div",{className:"sharese-composer-toolbar",style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.7rem",paddingTop:"0.65rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"nowrap",gap:"0.4rem",minWidth:0},children:[
-        (0,t.jsxs)("div",{className:"sharese-composer-tools-left",style:{display:"flex",alignItems:"center",gap:"0.38rem",flexWrap:"nowrap",minWidth:0,flex:"1 1 auto",overflowX:"auto",scrollbarWidth:"none"},children:[
+      (0,t.jsxs)("div",{className:"sharese-composer-toolbar",style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"0.7rem",paddingTop:"0.65rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.4rem",minWidth:0},children:[
+        (0,t.jsxs)("div",{className:"sharese-composer-tools-left",style:{display:"flex",alignItems:"center",gap:"0.38rem",flexWrap:"wrap",minWidth:0,flex:"1 1 auto",overflowX:"auto",scrollbarWidth:"none"},children:[
           (0,t.jsx)("input",{ref:fileInputRef,type:"file",multiple:!0,accept:"image/png,image/jpeg,image/webp,video/mp4,application/pdf",style:{display:"none"},onChange:handleFileSelect}),
           (0,t.jsxs)("button",{type:"button",className:"sharese-btn-attach",onClick:() => fileInputRef.current?.click(),title:"Lampirkan Berkas",style:{height:"34px",minHeight:"34px",boxSizing:"border-box",display:"inline-flex",alignItems:"center",gap:"0.3rem",background:"var(--cas-bg-subtle, rgba(255,255,255,0.03))",border:"1px solid var(--cas-border, rgba(255,255,255,0.15))",borderRadius:"8px",padding:"0 9px",fontSize:"0.76rem",fontWeight:600,color:"var(--cas-text-primary, #e2e8f0)",cursor:"pointer",whiteSpace:"nowrap",lineHeight:1,flexShrink:0},children:[
             (0,t.jsx)(h.Paperclip,{size:13}),
@@ -1994,8 +1994,8 @@ e.s(["default",0,function() {
             },
             children:[
               // Post Header
-              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.75rem",marginBottom:"0.85rem"},children:[
-                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center",minWidth:0,flex:1},children:[
+              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:"0.45rem",marginBottom:"0.85rem"},children:[
+                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.75rem",alignItems:"center",minWidth:"170px",flex:"1 1 170px"},children:[
                   (0,t.jsx)("div",{
                     onClick:() => handleOpenUserProfile(post.author_id, post),
                     style:{cursor:"pointer",display:"inline-flex",transition:"transform 0.15s ease"},
@@ -2004,7 +2004,7 @@ e.s(["default",0,function() {
                     title:"Klik untuk membuka profil " + (authorNameDisplay || authorHandle),
                     children:renderCornerAvatar(authorAvatar, authorInitials, authorBadge, 2.5, 15, 8.5, post)
                   }),
-                  (0,t.jsxs)("div",{children:[
+                  (0,t.jsxs)("div",{style:{minWidth:"120px",flex:"1 1 120px"},children:[
                     (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
                       (0,t.jsx)("span",{
                         onClick:() => handleOpenUserProfile(post.author_id, post),

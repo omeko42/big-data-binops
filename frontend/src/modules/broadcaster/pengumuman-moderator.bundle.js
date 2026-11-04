@@ -620,16 +620,18 @@ e.s(["default", 0, function() {
                       }),
                       // Live counter & alerts
                       (0, t.jsxs)("div", {
-                        style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.35rem" },
+                        style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.35rem" },
                         children: [
                           (0, t.jsx)("span", {
-                            style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #64748b)" },
+                            style: { fontSize: "0.72rem", color: "var(--cas-text-secondary, #64748b)", flex: "1 1 200px" },
                             children: "Semua personil yang membaca akan diwajibkan mengonfirmasi tombol 'Paham & Siap Laksanakan'."
                           }),
                           (0, t.jsxs)("span", {
                             style: {
                               fontSize: "0.72rem",
                               fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
                               color: formContent.length >= 2800 ? '#ef4444' : '#94a3b8'
                             },
                             children: [formContent.length, " / 3.000 karakter"]
@@ -774,7 +776,7 @@ e.s(["default", 0, function() {
                   },
                   children: [
                     (0, t.jsxs)("div", {
-                      style: { minWidth: "240px", flex: "1 1 60%" },
+                      style: { minWidth: "min(100%, 220px)", flex: "1 1 60%", maxWidth: "100%" },
                       children: [
                         (0, t.jsxs)("div", {
                           style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.4rem" },
@@ -906,7 +908,7 @@ e.s(["default", 0, function() {
                     }),
                     // Actions right
                     (0, t.jsxs)("div", {
-                      style: { display: "flex", flexWrap: "wrap", gap: "0.4rem", flex: "0 0 auto", alignItems: "center", justifyContent: "flex-end" },
+                      style: { display: "flex", flexWrap: "wrap", gap: "0.4rem", flex: "1 1 100%", maxWidth: "100%", boxSizing: "border-box", alignItems: "center", justifyContent: "flex-end" },
                       children: [
                         (0, t.jsxs)("button", {
                           type: "button",

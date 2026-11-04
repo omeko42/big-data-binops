@@ -517,7 +517,7 @@
       }
       if (curFilter.viewMode === "card") {
         return jsx("div", {
-          style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(24rem, 1fr))", gap: "0.85rem" },
+          style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 19rem), 1fr))", gap: "0.85rem" },
           children: rows.map(function(row) {
             var kat = String(row._source_type || row.kategori || "").toUpperCase();
             var isAtensi = kat === "ATENSI" || kat === "SUSATENSI";
@@ -805,7 +805,7 @@
                     style: {
                       padding: "0.15rem 0.55rem",
                       borderRadius: "999px",
-                      background: isAct ? "rgba(255,255,255,0.24)" : "rgba(15,23,42,0.08)",
+                      background: isAct ? "rgba(15,23,42,0.32)" : "rgba(15,23,42,0.08)",
                       color: isAct ? "#ffffff" : tab.color,
                       fontSize: "0.74rem",
                       fontWeight: 800
@@ -1513,7 +1513,7 @@
               }),
               jsx("div", { style: { fontSize: "0.8rem", fontWeight: 700, color: "#334155" }, children: sprinQuickRow.judul || sprinQuickRow.nama }),
               jsxs("div", {
-                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.65rem" },
+                style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 12rem), 1fr))", gap: "0.65rem" },
                 children: [
                   jsxs("div", {
                     children: [
