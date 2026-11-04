@@ -2856,7 +2856,13 @@ let LaporanPolisiService = class LaporanPolisiService {
             'Kedaluwarsa',
             'Amnesti atau abolisi',
             'Maksimum denda dibayar sukarela',
-            'Diversi'
+            'Diversi',
+            'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
+            'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
+            'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
+            'Daya paksa / Keadaan darurat / Overmacht (Pasal 48 KUHP Lama)',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah (Pasal 50-51 KUHP Lama)',
+            'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)'
         ];
         const PERMA_OPTIONS = ['Tipiring', 'LHA PPATK'];
         STATUS_OPTIONS.forEach((v, i) => { refSheet.getCell(`F${i + 2}`).value = v; });
@@ -2885,7 +2891,7 @@ let LaporanPolisiService = class LaporanPolisiService {
             sheet.getCell(`J${i}`).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: ["'Petunjuk & Referensi'!$G$2:$G$11"],
+                formulae: ["'Petunjuk & Referensi'!$G$2:$G$17"],
                 showErrorMessage: true,
                 errorTitle: 'Alasan Tidak Valid',
                 error: 'Pilih alasan penghentian dari daftar dropdown.'
@@ -3104,12 +3110,28 @@ let LaporanPolisiService = class LaporanPolisiService {
             'Penyelesaian luar proses peradilan / Restorative Justice',
             'Ditariknya pengaduan',
             'Putusan tetap / Ne Bis in Idem',
+            'Tersangka atau terdakwa meninggal dunia',
             'Tersangka meninggal dunia',
             'Kedaluwarsa',
             'Amnesti atau abolisi',
+            'Maksimum pidana denda dibayar sukarela',
             'Maksimum denda dibayar sukarela',
-            'Diversi'
+            'Diversi',
+            'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
+            'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
+            'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
+            'Daya paksa / Keadaan darurat / Overmacht (Pasal 48 KUHP Lama)',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah (Pasal 50-51 KUHP Lama)',
+            'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)'
         ];
+        const PRE_2026_ALASAN = new Set([
+            'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
+            'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
+            'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
+            'Daya paksa / Keadaan darurat / Overmacht (Pasal 48 KUHP Lama)',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah (Pasal 50-51 KUHP Lama)',
+            'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)'
+        ]);
         const PERMA_OPTIONS = ['Tipiring', 'LHA PPATK'];
         const todayWib = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
         const processedRows = [];
@@ -3182,6 +3204,18 @@ let LaporanPolisiService = class LaporanPolisiService {
                         status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
                         status_verifikasi: 'ERROR',
                         pesan: 'Alasan penghentian tidak sesuai daftar pilihan resmi.'
+                    });
+                    continue;
+                }
+                const parsedLpForAlasan = this.parseFlexibleDate(dbLp.tgl_laporan);
+                if (PRE_2026_ALASAN.has(matchAlasan) && parsedLpForAlasan && parsedLpForAlasan.dateStr >= '2026-01-01') {
+                    errorCount++;
+                    processedRows.push({
+                        ...row,
+                        lp_id: dbLp.id,
+                        status_saat_ini: dbLp.status_nama || dbLp.status_code || 'Belum Update',
+                        status_verifikasi: 'ERROR',
+                        pesan: `Alasan "${matchAlasan}" hanya melekat untuk LP sebelum tahun 2026.`
                     });
                     continue;
                 }
