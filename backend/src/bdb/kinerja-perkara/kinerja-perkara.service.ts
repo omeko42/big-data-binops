@@ -1126,7 +1126,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                     order by d.created_at desc
                     limit 1
                 ) dok on true
-                where lp.deleted_at is null and coalesce(lp.dilimpahkan_eksternal, false) = false and lp.kategori is distinct from 'pelanggaran' and not (coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)') and not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')))
+                where lp.deleted_at is null and coalesce(lp.dilimpahkan_eksternal, false) = false and lp.kategori is distinct from 'pelanggaran' and not (coalesce(lp.no_laporan, '') ~* '(/GAR/|/GAR-|^GAR/|/GAR$)') and exists (select 1 from bdb_satker sk_chk left join bdb_satker_taxonomy_r11 tx_chk on tx_chk.source_table = 'BDB_SATKER' and tx_chk.entity_id = sk_chk.id where sk_chk.id = coalesce(lp.unit_satker_id, lp.satker_id) and sk_chk.kinerja_aktif = true and coalesce(tx_chk.function_domain, case when sk_chk.tipe_satker = 'FUNGSI' then 'INTERNAL_RESERSE' else 'STRUCTURAL' end) in ('INTERNAL_RESERSE', 'STRUCTURAL') and coalesce(tx_chk.organization_domain, 'INTERNAL_POLRI') = 'INTERNAL_POLRI') and coalesce(lp.jenis_kejahatan_id, -1) not in (148, 153, 163, 204, 348, 349, 350, 516, 640, 641, 645, 711, 712, 713, 741) and not exists (select 1 from bdb_kinerja_crime_group_mapping cgm_off where cgm_off.version_id = 4 and cgm_off.jenis_kejahatan_id = lp.jenis_kejahatan_id and cgm_off.active = false) and not (coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/)' or coalesce(lp.unit_nama, '') ~* '(^LANTAS|SATLANTAS|DITLANTAS)' or (coalesce(lp.penanganan_level, '') <> 'Polsek' and coalesce(lp.unit_nama, '') ~* '(SAMAPTA|SABHARA)') or (exists (select 1 from bdb_satker_taxonomy_r11 tx2 where tx2.source_table = 'BDB_SATKER' and tx2.entity_id = coalesce(lp.unit_satker_id, lp.satker_id) and tx2.function_domain = 'STRUCTURAL') and (coalesce(lp.unit_nama, '') ~* '(LANTAS|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|BINMAS|PROPAM|TAHTI|INTEL|DENSUS)' or coalesce(lp.no_laporan, '') ~* '(SATLANTAS|/LANTAS/|/LL/|SAMAPTA|SABHARA|POLAIR|PAMOBVIT|PROPAM)')))
                 `,
                 [ALASAN_RJ_LIKE, ALASAN_RJ_WORD_RE]
             );
@@ -2230,11 +2230,23 @@ export class KinerjaPerkaraService implements OnModuleInit {
                 const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
                 const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
                 if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                    targetTahun = Number(mFrom[1]);
-                    targetBulan = Number(mFrom[2]);
-                } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                    targetTahun = Number(from.slice(0, 4));
-                    targetBulan = null;
+                    const y = Number(mFrom[1]);
+                    const m = Number(mFrom[2]);
+                    const lastDay = String(new Date(y, m, 0).getDate()).padStart(2, '0');
+                    // Hanya gunakan snapshot bulanan jika 'to' adalah tanggal terakhir di bulan tsb
+                    if (mTo[3] === lastDay) {
+                        targetTahun = y;
+                        targetBulan = m;
+                    }
+                } else {
+                    const yStr = String(from).slice(0, 4);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    // Hanya gunakan snapshot tahunan (bulan IS NULL) jika rentang adalah 1 tahun penuh
+                    // (01-01 s.d. 12-31) atau default load tahun berjalan sampai hari ini (todayStr)
+                    if (from === `${yStr}-01-01` && (to === `${yStr}-12-31` || to === todayStr)) {
+                        targetTahun = Number(yStr);
+                        targetBulan = null;
+                    }
                 }
             } else if (!from && !to) {
                 targetTahun = new Date().getFullYear();
@@ -2449,11 +2461,23 @@ export class KinerjaPerkaraService implements OnModuleInit {
                 const mFrom = String(from).match(/^(\d{4})-(\d{2})-01$/);
                 const mTo = String(to).match(/^(\d{4})-(\d{2})-(\d{2})$/);
                 if (mFrom && mTo && mFrom[1] === mTo[1] && mFrom[2] === mTo[2]) {
-                    targetTahun = Number(mFrom[1]);
-                    targetBulan = Number(mFrom[2]);
-                } else if (from === `${from.slice(0, 4)}-01-01` && (to === `${from.slice(0, 4)}-12-31` || to >= `${from.slice(0, 4)}-09-01`)) {
-                    targetTahun = Number(from.slice(0, 4));
-                    targetBulan = null;
+                    const y = Number(mFrom[1]);
+                    const m = Number(mFrom[2]);
+                    const lastDay = String(new Date(y, m, 0).getDate()).padStart(2, '0');
+                    // Hanya gunakan snapshot bulanan jika 'to' adalah tanggal terakhir di bulan tsb
+                    if (mTo[3] === lastDay) {
+                        targetTahun = y;
+                        targetBulan = m;
+                    }
+                } else {
+                    const yStr = String(from).slice(0, 4);
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    // Hanya gunakan snapshot tahunan (bulan IS NULL) jika rentang adalah 1 tahun penuh
+                    // (01-01 s.d. 12-31) atau default load tahun berjalan sampai hari ini (todayStr)
+                    if (from === `${yStr}-01-01` && (to === `${yStr}-12-31` || to === todayStr)) {
+                        targetTahun = Number(yStr);
+                        targetBulan = null;
+                    }
                 }
             } else if (!from && !to) {
                 targetTahun = new Date().getFullYear();
