@@ -91,11 +91,15 @@ export class JukrahService {
                 is_read BOOLEAN NOT NULL DEFAULT FALSE,
                 is_edited BOOLEAN DEFAULT FALSE,
                 updated_at TIMESTAMP DEFAULT NULL,
+                is_pinned BOOLEAN DEFAULT FALSE,
+                pinned_at TIMESTAMP DEFAULT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )`);
         await this.dataSource.query("ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS channel_type VARCHAR(32) NOT NULL DEFAULT 'direct', ADD COLUMN IF NOT EXISTS media_url TEXT, ADD COLUMN IF NOT EXISTS attachment_url TEXT, ADD COLUMN IF NOT EXISTS attachment_name TEXT, ADD COLUMN IF NOT EXISTS reply_to_json TEXT, ADD COLUMN IF NOT EXISTS reactions_json TEXT");
         await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT FALSE');
         await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NULL');
+        await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE');
+        await this.dataSource.query('ALTER TABLE bdb_social_messages ADD COLUMN IF NOT EXISTS pinned_at TIMESTAMP DEFAULT NULL');
         await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_pair ON bdb_social_messages(sender_id, receiver_id, created_at DESC)');
         await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_bdb_social_msg_recv ON bdb_social_messages(receiver_id, is_read)');
         await this.dataSource.query('ALTER TABLE bdb_social_notifications ADD COLUMN IF NOT EXISTS link TEXT');
@@ -3358,7 +3362,7 @@ export class JukrahService {
         }
 
         let rows = await this.dataSource.query(
-            `SELECT id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, created_at
+            `SELECT id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, is_pinned, pinned_at, created_at
              FROM bdb_social_messages
              WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
              ORDER BY created_at ASC, id ASC
@@ -3371,7 +3375,7 @@ export class JukrahService {
             const ins = await this.dataSource.query(
                 `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
                  VALUES (-1, $1, 'ai_agent', $2, true, NOW())
-                 RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, created_at`,
+                 RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, is_edited, updated_at, is_pinned, pinned_at, created_at`,
                 [uid, welcomeText]
             );
             rows = ins;
@@ -3440,6 +3444,8 @@ export class JukrahService {
                 is_read: Boolean(m.is_read),
                 is_edited: Boolean(m.is_edited),
                 updated_at: m.updated_at || null,
+                is_pinned: Boolean(m.is_pinned),
+                pinned_at: m.pinned_at || null,
                 created_at: m.created_at
             };
         });
@@ -3661,6 +3667,58 @@ export class JukrahService {
             message: 'Reaksi pesan diperbarui.',
             data: { id: mid, reactions }
         };
+    }
+
+    async pinSocialMessage(user: any, messageId: number) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const mid = Number(messageId);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (!mid || isNaN(mid)) throw new BadRequestException('ID pesan tidak valid.');
+        const rows = await this.dataSource.query('SELECT * FROM bdb_social_messages WHERE id = $1', [mid]);
+        if (!rows.length) {
+            throw new NotFoundException('Pesan tidak ditemukan.');
+        }
+        const row = rows[0];
+        const isParty = Number(row.sender_id) === uid || Number(row.receiver_id) === uid || Number(row.receiver_id) === 0 || Number(row.sender_id) === -1;
+        if (!isParty) {
+            throw new ForbiddenException('Anda tidak memiliki akses ke pesan ini.');
+        }
+        const nextPinned = !Boolean(row.is_pinned);
+        await this.dataSource.query(
+            'UPDATE bdb_social_messages SET is_pinned = $1, pinned_at = CASE WHEN $1 THEN NOW() ELSE NULL END WHERE id = $2',
+            [nextPinned, mid]
+        );
+        return {
+            status: 1,
+            message: nextPinned ? 'Pesan berhasil disematkan.' : 'Sematan pesan dilepas.',
+            data: { id: mid, is_pinned: nextPinned }
+        };
+    }
+
+    async forwardSocialMessage(user: any, messageId: number, body: any) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const mid = Number(messageId);
+        if (!uid) throw new ForbiddenException('Sesi tidak valid.');
+        if (!mid || isNaN(mid)) throw new BadRequestException('ID pesan tidak valid.');
+        const rows = await this.dataSource.query('SELECT * FROM bdb_social_messages WHERE id = $1', [mid]);
+        if (!rows.length) {
+            throw new NotFoundException('Pesan tidak ditemukan.');
+        }
+        const row = rows[0];
+        const targetReceiverId = body?.receiver_id;
+        return this.sendSocialMessage(user, {
+            receiver_id: targetReceiverId,
+            content: row.content,
+            attachment_url: row.attachment_url,
+            attachment_name: row.attachment_name,
+            reply_to: {
+                is_forwarded: true,
+                sender_name: '↪ Pesan Diteruskan',
+                content: String(row.content || '').slice(0, 140)
+            }
+        });
     }
 
     // =========================================================================

@@ -150,6 +150,16 @@ export class JukrahController {
         return this.service.reactSocialMessage(req?.user, parseInt(id, 10), body || {});
     }
 
+    @Post('messages/:id/pin')
+    pinMessage(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.pinSocialMessage(req?.user, parseInt(id, 10));
+    }
+
+    @Post('messages/:id/forward')
+    forwardMessage(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.forwardSocialMessage(req?.user, parseInt(id, 10), body || {});
+    }
+
     @Get('insight')
     getAccountInsight(@Req() req: any) {
         return this.service.getAccountInsight(req?.user);
