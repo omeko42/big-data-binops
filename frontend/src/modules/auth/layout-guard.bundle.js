@@ -1090,14 +1090,39 @@ function casFormatPangkatSatkerLine(rawPangkat, rawSatker, isUserOne) {
   return pangkatCap ? `${pangkatCap} · ${satkerCap}` : satkerCap;
 }
 
-function renderCasMetaBadge(u, size = 15) {
-  const uidStr = String(u?.id || u?.user_id || "");
-  const uname = String(u?.callsign || u?.username || "").toLowerCase();
-  const roleStr = String(u?.role_bdb || u?.role || "").toLowerCase();
-  const isSuper = uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super");
-  const isBinops = roleStr.includes("binops");
-  const fillCol = isSuper ? "#f59e0b" : isBinops ? "#6366f1" : "#0095f6";
-  const badgeTitle = isSuper ? "Superadmin Terverifikasi (Robinopsnal Bareskrim Polri)" : isBinops ? "Admin Binops Terverifikasi" : "Personil Polri Terverifikasi";
+function formatChatCallsign(u) {
+  if (!u) return "@personel";
+  if (Number(u.id ?? u.partner_id) === -1 || u.is_ai) return "@ai_taktis_cas";
+  const raw = String(u.callsign || u.handle || u.username || "").trim();
+  if (raw) {
+    const clean = raw.replace(/^@+/, "");
+    if (clean.toLowerCase() === "omeko42") return "@om.eko_42";
+    return `@${clean}`;
+  }
+  const nm = String(u.name || "personel").trim().toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 22);
+  return `@${nm || "personel"}`;
+}
+
+function renderCasMetaBadge(u, size = 14) {
+  const uidStr = String(u?.id ?? u?.partner_id ?? u?.user_id ?? "");
+  const uname = String(u?.callsign || u?.handle || u?.username || "").toLowerCase();
+  const roleStr = String(u?.role_bdb || u?.role?.role_name || u?.role || "").toLowerCase();
+  if (roleStr.includes("vendor") || roleStr.includes("mitra")) return null;
+  const isAi = uidStr === "-1" || Boolean(u?.is_ai) || uname.includes("ai_taktis");
+  const isSuper = !isAi && (uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super") || ["1", "320", "15403", "15404", "16568", "16576", "16594"].includes(uidStr));
+  const isBinops = !isAi && !isSuper && roleStr.includes("binops");
+  const isVerifiedBlue = isAi || !roleStr || roleStr.includes("operator") || roleStr.includes("penyidik") || roleStr.includes("viewer") || roleStr.includes("pimpinan") || roleStr.includes("admin_satker") || roleStr.includes("pejabat");
+  if (!isSuper && !isBinops && !isVerifiedBlue) return null;
+  const fillCol = isSuper ? "#f59e0b" : isBinops ? "#10b981" : "#0095f6";
+  const badgeTitle = isSuper
+    ? "Superadmin Terverifikasi (Robinopsnal Bareskrim Polri)"
+    : isBinops
+    ? "Admin Binops Terverifikasi"
+    : isAi
+    ? "AI Agen Taktis Resmi CAS Bareskrim Polri"
+    : (roleStr.includes("viewer") || roleStr.includes("pimpinan"))
+    ? "Viewer Terverifikasi"
+    : "Operator Satker Terverifikasi";
   return (0, a.jsx)("span", {
     title: badgeTitle,
     style: {
@@ -1478,7 +1503,7 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
     },it.id+"_"+idx))});
   })(),
   (0,a.jsx)("div",{style:{marginTop:"0.65rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.48rem 0.75rem",borderRadius:10,background:"rgba(37,99,235,0.12)",border:"1px solid rgba(37,99,235,0.3)",color:"#2563eb",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Lihat Semua Arsip Notifikasi ➔"})})
-]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isVendorRole?"Vendor / Mitra (Read-Only)":isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isVendorRole?"#0d9488":isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0 0.78rem",height:"2.2rem",width:"auto",minWidth:"max-content",flexShrink:0,whiteSpace:"nowrap",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];const readSet=casGetReadNotifIds();let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0&&!readSet.has("msg_"+c.partner_id)).forEach(c=>{const rawH=String(c.handle||c.callsign||c.username||"").trim();const senderHandle=rawH?(rawH.startsWith("@")?rawH:`@${rawH}`):"@rekan";const shortMsg=casCleanQuoteSnippet(c.last_message,45);combined.push({id:"msg_"+c.partner_id,badge:"Obrolan",color:"#16a34a",link:`/cms/broadcaster?view=obrolan&partner=${c.partner_id}`,text:shortMsg?`${senderHandle} mengirim pesan: "${shortMsg}"`:`${senderHandle} mengirim ${c.unread_count} pesan baru`})});nList.map(humanizeCasNotification).filter(h=>!h.is_read).slice(0,14).forEach(h=>{let b=h.badgeLabel||(h.isLimpah?"Limpah":h.category==="dinas"?"Jukrah":"Sharese");let c=b==="Limpah"?"#7c3aed":b==="Jukrah"?"#2563eb":b==="Obrolan"?"#16a34a":"#d97706";combined.push({id:String(h.id),badge:b,color:c,link:h.link||"/cms/broadcaster?view=notifikasi",text:h.tickerText||h.actionText})});setTickerItems(combined);setUnreadTotal(combined.length)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);const handleTickerItemClick=async(ev,it)=>{if(ev)ev.stopPropagation();if(it&&it.id){casMarkNotifIdsReadLocal([it.id]);setTickerItems(prev=>{const next=prev.filter(x=>String(x.id)!==String(it.id));setUnreadTotal(next.length);return next;});if(/^\d+$/.test(String(it.id))){try{await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`)}catch{}}}casNav(router,(it&&it.link)||"/cms/broadcaster?view=notifikasi")};let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:2.8rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 220s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik item notifikasi untuk membaca dan membuka detail, atau klik untuk membuka Arsip Notifikasi",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",color:unreadTotal>0?"#dc2626":"#16a34a",fontSize:"0.72rem",fontWeight:800,flexShrink:0,paddingRight:"0.15rem"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#16a34a",animation:unreadTotal>0?"casPulseDot 2s infinite":"none"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} Baru`:"✓ Terbaca"]}),tickerItems.length===0?(0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted, #64748b)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:"Semua notifikasi terbaru telah dibaca — klik untuk melihat arsip riwayat notifikasi"}):(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative",maskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)",WebkitMaskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:(tickerItems.length>1?[...tickerItems,...tickerItems]:tickerItems).map((it,idx)=>(0,a.jsxs)("span",{onClick:ev=>handleTickerItemClick(ev,it),style:{display:"inline-flex",alignItems:"center",gap:"0.42rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #475569)",cursor:"pointer"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.08rem 0.46rem",borderRadius:999,background:it.badge==="Limpah"?"rgba(124,58,237,0.14)":it.badge==="Jukrah"?"rgba(37,99,235,0.12)":it.badge==="Obrolan"?"rgba(22,163,74,0.12)":"rgba(217,119,6,0.12)",color:it.color||"#0284c7"},children:it.badge}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
+]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,!isVendorRole&&renderCasMetaBadge(curUser,14)]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0 0.78rem",height:"2.2rem",width:"auto",minWidth:"max-content",flexShrink:0,whiteSpace:"nowrap",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];const readSet=casGetReadNotifIds();let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0&&!readSet.has("msg_"+c.partner_id)).forEach(c=>{const rawH=String(c.handle||c.callsign||c.username||"").trim();const senderHandle=rawH?(rawH.startsWith("@")?rawH:`@${rawH}`):"@rekan";const shortMsg=casCleanQuoteSnippet(c.last_message,45);combined.push({id:"msg_"+c.partner_id,badge:"Obrolan",color:"#16a34a",link:`/cms/broadcaster?view=obrolan&partner=${c.partner_id}`,text:shortMsg?`${senderHandle} mengirim pesan: "${shortMsg}"`:`${senderHandle} mengirim ${c.unread_count} pesan baru`})});nList.map(humanizeCasNotification).filter(h=>!h.is_read).slice(0,14).forEach(h=>{let b=h.badgeLabel||(h.isLimpah?"Limpah":h.category==="dinas"?"Jukrah":"Sharese");let c=b==="Limpah"?"#7c3aed":b==="Jukrah"?"#2563eb":b==="Obrolan"?"#16a34a":"#d97706";combined.push({id:String(h.id),badge:b,color:c,link:h.link||"/cms/broadcaster?view=notifikasi",text:h.tickerText||h.actionText})});setTickerItems(combined);setUnreadTotal(combined.length)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);const handleTickerItemClick=async(ev,it)=>{if(ev)ev.stopPropagation();if(it&&it.id){casMarkNotifIdsReadLocal([it.id]);setTickerItems(prev=>{const next=prev.filter(x=>String(x.id)!==String(it.id));setUnreadTotal(next.length);return next;});if(/^\d+$/.test(String(it.id))){try{await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`)}catch{}}}casNav(router,(it&&it.link)||"/cms/broadcaster?view=notifikasi")};let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:2.8rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 220s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik item notifikasi untuk membaca dan membuka detail, atau klik untuk membuka Arsip Notifikasi",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",color:unreadTotal>0?"#dc2626":"#16a34a",fontSize:"0.72rem",fontWeight:800,flexShrink:0,paddingRight:"0.15rem"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#16a34a",animation:unreadTotal>0?"casPulseDot 2s infinite":"none"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} Baru`:"✓ Terbaca"]}),tickerItems.length===0?(0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted, #64748b)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:"Semua notifikasi terbaru telah dibaca — klik untuk melihat arsip riwayat notifikasi"}):(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative",maskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)",WebkitMaskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:(tickerItems.length>1?[...tickerItems,...tickerItems]:tickerItems).map((it,idx)=>(0,a.jsxs)("span",{onClick:ev=>handleTickerItemClick(ev,it),style:{display:"inline-flex",alignItems:"center",gap:"0.42rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #475569)",cursor:"pointer"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.08rem 0.46rem",borderRadius:999,background:it.badge==="Limpah"?"rgba(124,58,237,0.14)":it.badge==="Jukrah"?"rgba(37,99,235,0.12)":it.badge==="Obrolan"?"rgba(22,163,74,0.12)":"rgba(217,119,6,0.12)",color:it.color||"#0284c7"},children:it.badge}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
 function TacticalMessengerWidget() {
   const router = (0, r.useRouter)(), pathname = (0, r.usePathname)(), searchStr = useCasLocationSearch();
   const isObrolanFullPage = pathname === "/cms/broadcaster" && new URLSearchParams(searchStr || "").get("view") === "obrolan";
@@ -1715,15 +1740,17 @@ function TacticalMessengerWidget() {
       loadThread(defaultTarget);
     }
     if (typeof window !== "undefined" && window.casShowCenterAlert) {
-      window.casShowCenterAlert("Pesan berhasil diteruskan ke " + (target.name || target.callsign || "Rekan"), "success");
+      window.casShowCenterAlert("Pesan berhasil diteruskan ke " + formatChatCallsign(target), "success");
     }
     try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
   };
 
   const defaultTarget = activeTarget || {
     id: -1,
-    name: 'AI Agen Taktis CAS',
+    name: '@ai_taktis_cas',
     callsign: '@ai_taktis_cas',
+    role_bdb: 'ai_taktis',
+    is_ai: true,
     satker: 'Robinopsnal Bareskrim Polri',
     photo: '/images/default-avatar-polki.png'
   };
@@ -1732,8 +1759,9 @@ function TacticalMessengerWidget() {
     const seenIds = new Set([-1]);
     const combined = [{
       id: -1,
-      name: 'AI Agen Taktis CAS',
+      name: '@ai_taktis_cas',
       callsign: '@ai_taktis_cas',
+      role_bdb: 'ai_taktis',
       satker: 'Robinopsnal Bareskrim Polri',
       photo: '/images/default-avatar-polki.png',
       sub: 'Asisten Cerdas & Koordinasi Taktis Bareskrim',
@@ -1744,15 +1772,17 @@ function TacticalMessengerWidget() {
       const pid = Number(c.partner_id);
       if (!seenIds.has(pid)) {
         seenIds.add(pid);
+        const cs = formatChatCallsign(c);
         combined.push({
           id: pid,
-          name: casFormatHumanName(c.name),
-          callsign: String(c.handle || "").startsWith("@") ? c.handle : `@${c.handle || "personel"}`,
+          name: cs,
+          callsign: cs,
+          role_bdb: c.role_bdb || "operator",
           satker: c.satker || "Polri",
           photo: c.photo_url,
           sub: c.last_message || c.satker || "Polri",
           unread: Number(c.unread_count || 0),
-          is_ai: false
+          is_ai: Boolean(c.is_ai || pid === -1)
         });
       }
     });
@@ -1760,10 +1790,12 @@ function TacticalMessengerWidget() {
       const uid = Number(u.id);
       if (!seenIds.has(uid)) {
         seenIds.add(uid);
+        const cs = formatChatCallsign(u);
         combined.push({
           id: uid,
-          name: casFormatHumanName(u.name),
-          callsign: `@${u.callsign || u.username || "personel"}`,
+          name: cs,
+          callsign: cs,
+          role_bdb: u.role_bdb || "operator",
           satker: u.satker || "Polri",
           photo: u.photo_url,
           sub: u.satker || "Polri",
@@ -1773,7 +1805,7 @@ function TacticalMessengerWidget() {
       }
     });
     const q = String(qRaw || "").trim().toLowerCase();
-    return q ? combined.filter(item => item.name.toLowerCase().includes(q) || item.callsign.toLowerCase().includes(q) || item.satker.toLowerCase().includes(q)) : combined;
+    return q ? combined.filter(item => item.callsign.toLowerCase().includes(q) || item.satker.toLowerCase().includes(q)) : combined;
   };
 
   const pinnedQuickMsg = messages.find(m => m.is_pinned);
@@ -1928,10 +1960,13 @@ function TacticalMessengerWidget() {
                   key: "qfwd_" + item.id,
                   style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.46rem 0.6rem", borderRadius: "10px", border: "1px solid var(--cas-border)", background: "var(--cas-surface-subtle)" },
                   children: [
-                    (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } }),
+                    (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.callsign, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } }),
                     (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                      (0, a.jsx)("div", { style: { fontWeight: 700, fontSize: "0.76rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
-                      (0, a.jsx)("div", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: `${item.callsign} · ${item.satker}` })
+                      (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.28rem" }, children: [
+                        (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.76rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: formatChatCallsign(item) }),
+                        renderCasMetaBadge(item, 13)
+                      ]}),
+                      (0, a.jsx)("div", { style: { fontSize: "0.66rem", color: "var(--cas-text-muted)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.satker })
                     ]}),
                     (0, a.jsxs)("button", {
                       type: "button",
@@ -1974,13 +2009,13 @@ function TacticalMessengerWidget() {
                     },
                     style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.6rem", borderRadius: "10px", cursor: "pointer", background: Number(defaultTarget.id) === Number(item.id) ? "rgba(37,99,235,0.12)" : item.is_ai ? "var(--cas-surface-subtle)" : "transparent", border: Number(defaultTarget.id) === Number(item.id) ? "1px solid rgba(37,99,235,0.32)" : item.is_ai ? "1px solid rgba(37,99,235,0.22)" : "1px solid transparent" },
                     children: [
-                      (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: item.is_ai ? "1.5px solid #2563eb" : "1px solid var(--cas-border)" } }),
+                      (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.callsign, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: item.is_ai ? "1.5px solid #2563eb" : "1px solid var(--cas-border)" } }),
                       (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                        (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.3rem" }, children: [
-                          (0, a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
-                          (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 600, flexShrink: 0 }, children: item.callsign })
+                        (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.28rem" }, children: [
+                          (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: formatChatCallsign(item) }),
+                          renderCasMetaBadge(item, 14)
                         ]}),
-                        (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.sub })
+                        (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.satker })
                       ]}),
                       item.unread > 0 ? (0, a.jsx)("span", { style: { background: "#2563eb", color: "#fff", borderRadius: "999px", padding: "0.08rem 0.42rem", fontSize: "0.64rem", fontWeight: 800 }, children: item.unread }) : (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 700 }, children: "Chat" })
                     ]
@@ -2019,9 +2054,9 @@ function TacticalMessengerWidget() {
                       (0, a.jsx)("span", { style: { position: "absolute", bottom: 0, right: 0, width: 9, height: 9, borderRadius: "50%", background: "#22c55e", border: "1.5px solid var(--cas-card-bg)" } })
                     ]}),
                     (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                      (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.3rem" }, children: [
-                        (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
-                        (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 600, flexShrink: 0 }, children: item.callsign })
+                      (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.28rem" }, children: [
+                        (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: formatChatCallsign(item) }),
+                        renderCasMetaBadge(item, 14)
                       ]}),
                       (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.sub })
                     ]}),
@@ -2071,15 +2106,16 @@ function TacticalMessengerWidget() {
                         style: { minWidth: 0, flex: 1 },
                         children: [
                           (0, a.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", gap: "0.32rem" },
+                            style: { display: "flex", alignItems: "center", gap: "0.28rem" },
                             children: [
-                              (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: defaultTarget.name || defaultTarget.callsign }),
-                              (0, a.jsx)("span", { style: { fontSize: "0.6rem", background: "rgba(34,197,94,0.14)", color: "#16a34a", padding: "0.05rem 0.34rem", borderRadius: "999px", fontWeight: 800, flexShrink: 0 }, children: "Aktif" })
+                              (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.79rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: formatChatCallsign(defaultTarget) }),
+                              renderCasMetaBadge(defaultTarget, 14),
+                              (0, a.jsx)("span", { style: { fontSize: "0.58rem", background: "rgba(34,197,94,0.14)", color: "#16a34a", padding: "0.04rem 0.32rem", borderRadius: "999px", fontWeight: 800, flexShrink: 0 }, children: "Aktif" })
                             ]
                           }),
                           (0, a.jsx)("div", {
                             style: { fontSize: "0.66rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-                            children: `${defaultTarget.callsign || "@personel"} · ${defaultTarget.satker || "Robinopsnal Bareskrim Polri"}`
+                            children: defaultTarget.satker || "Robinopsnal Bareskrim Polri"
                           })
                         ]
                       })
@@ -2595,7 +2631,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     }
     fetchConvs();
     if(typeof window!=="undefined"&&window.casShowCenterAlert){
-      window.casShowCenterAlert("Pesan berhasil diteruskan ke "+casFormatHumanName(target.name||target.handle||"Rekan"),"success");
+      window.casShowCenterAlert("Pesan berhasil diteruskan ke "+formatChatCallsign(target),"success");
     }
     try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
   };
@@ -2733,13 +2769,14 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const rawActivePartner=partner||convs.find(c=>Number(c.partner_id)===Number(selectedId))||{
     id:selectedId,
     is_ai:selectedId===-1,
-    name:selectedId===-1?"AI Agen Taktis CAS":"Personil Polri",
+    role_bdb:selectedId===-1?"ai_taktis":"operator",
+    name:selectedId===-1?"@ai_taktis_cas":"@personil",
     handle:selectedId===-1?"@ai_taktis_cas":"@personil",
     satker:"Robinopsnal Bareskrim Polri",
     photo_url:"/images/default-avatar-polki.png",
     online:!0
   };
-  const activePartner={...rawActivePartner,name:casFormatHumanName(rawActivePartner.name)};
+  const activePartner={...rawActivePartner,callsign:formatChatCallsign(rawActivePartner),handle:formatChatCallsign(rawActivePartner),name:formatChatCallsign(rawActivePartner)};
 
   const displayedMessages=messages.filter(m=>{
     if(!threadSearchQ.trim())return!0;
@@ -2804,31 +2841,36 @@ function CasObrolanFullPage({user:curUser,searchStr}){
           })}),
           (0,a.jsx)("div",{style:{flex:1,overflowY:"auto",padding:"0.5rem",display:"flex",flexDirection:"column",gap:"0.25rem"},children:(()=>{
             const seen=new Set([-1]);
-            const list=[{id:-1,name:"AI Agen Taktis CAS",handle:"@ai_taktis_cas",satker:"Robinopsnal Bareskrim Polri",photo_url:"/images/default-avatar-polki.png"}];
+            const list=[{id:-1,is_ai:!0,role_bdb:"ai_taktis",name:"@ai_taktis_cas",handle:"@ai_taktis_cas",satker:"Robinopsnal Bareskrim Polri",photo_url:"/images/default-avatar-polki.png"}];
             convs.forEach(c=>{
               const pid=Number(c.partner_id);
               if(!seen.has(pid)){
                 seen.add(pid);
-                list.push({id:pid,name:casFormatHumanName(c.name),handle:String(c.handle||"").startsWith("@")?c.handle:`@${c.handle||"personel"}`,satker:c.satker||"Polri",photo_url:c.photo_url});
+                const cs=formatChatCallsign(c);
+                list.push({id:pid,is_ai:Boolean(c.is_ai||pid===-1),role_bdb:c.role_bdb||"operator",name:cs,handle:cs,satker:c.satker||"Polri",photo_url:c.photo_url});
               }
             });
             forwardUsers.forEach(u=>{
               const uid=Number(u.id);
               if(!seen.has(uid)){
                 seen.add(uid);
-                list.push({id:uid,name:casFormatHumanName(u.name),handle:`@${u.callsign||u.username||"personel"}`,satker:u.satker||"Polri",photo_url:u.photo_url});
+                const cs=formatChatCallsign(u);
+                list.push({id:uid,is_ai:!1,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:u.satker||"Polri",photo_url:u.photo_url});
               }
             });
             const q=forwardSearch.trim().toLowerCase();
-            const filtered=q?list.filter(it=>it.name.toLowerCase().includes(q)||it.handle.toLowerCase().includes(q)||it.satker.toLowerCase().includes(q)):list;
+            const filtered=q?list.filter(it=>it.handle.toLowerCase().includes(q)||it.satker.toLowerCase().includes(q)):list;
             return filtered.map(it=>(0,a.jsxs)("div",{
               key:"fwd_to_"+it.id,
               style:{display:"flex",alignItems:"center",gap:"0.7rem",padding:"0.55rem 0.7rem",borderRadius:10,border:"1px solid var(--cas-border)",background:"var(--cas-surface-subtle)"},
               children:[
-                (0,a.jsx)("img",{src:it.photo_url||"/images/default-avatar-polki.png",alt:it.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:36,height:36,borderRadius:"50%",objectFit:"cover",flexShrink:0}}),
+                (0,a.jsx)("img",{src:it.photo_url||"/images/default-avatar-polki.png",alt:it.handle,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:36,height:36,borderRadius:"50%",objectFit:"cover",flexShrink:0}}),
                 (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                  (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.82rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:it.name}),
-                  (0,a.jsx)("div",{style:{fontSize:"0.71rem",color:"#2563eb",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`${it.handle} · ${it.satker}`})
+                  (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.3rem"},children:[
+                    (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:it.handle}),
+                    renderCasMetaBadge(it,14)
+                  ]}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.71rem",color:"var(--cas-text-muted)",fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:it.satker})
                 ]}),
                 (0,a.jsxs)("button",{
                   type:"button",
@@ -2897,27 +2939,32 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             placeholder:"🔍 Cari nama personel, @username, atau Satker...",
             style:{width:"100%",padding:"0.55rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.82rem",outline:"none",boxSizing:"border-box"}
           })}),
-          (0,a.jsx)("div",{style:{flex:1,overflowY:"auto",padding:"0.5rem"},children:newMsgUsers.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar rekan personel..."}):newMsgUsers.map(u=>(0,a.jsxs)("div",{
+          (0,a.jsx)("div",{style:{flex:1,overflowY:"auto",padding:"0.5rem"},children:newMsgUsers.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar rekan personel..."}):newMsgUsers.map(u=>{
+            const cs=formatChatCallsign(u);
+            return(0,a.jsxs)("div",{
             key:"newdm_"+u.id,
             onClick:()=>{
               setSelectedId(Number(u.id));
-              setPartner({id:u.id,name:u.name,handle:`@${u.callsign||u.username}`,satker:u.satker||"Polri",photo_url:u.photo_url,online:!0});
+              setPartner({id:u.id,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:u.satker||"Polri",photo_url:u.photo_url,online:!0});
               setNewMsgModalOpen(!1);
               setMobileShowThread(!0);
             },
             style:{display:"flex",alignItems:"center",gap:"0.75rem",padding:"0.6rem 0.75rem",borderRadius:12,cursor:"pointer",transition:"background 0.15s"},
             children:[
               (0,a.jsxs)("div",{style:{position:"relative",width:42,height:42,flexShrink:0},children:[
-                (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:42,height:42,borderRadius:"50%",objectFit:"cover"}}),
+                (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:cs,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:42,height:42,borderRadius:"50%",objectFit:"cover"}}),
                 (0,a.jsx)("span",{style:{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:"#22c55e",border:"2px solid var(--cas-card-bg)"}})
               ]}),
               (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                (0,a.jsx)("div",{style:{fontWeight:700,fontSize:"0.85rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:casFormatHumanName(u.name)}),
-                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"#2563eb",fontWeight:600},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.32rem"},children:[
+                  (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.85rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:cs}),
+                  renderCasMetaBadge(u,14)
+                ]}),
+                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",fontWeight:500},children:u.satker||"Polri"})
               ]}),
               (0,a.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,color:"#2563eb",padding:"0.25rem 0.6rem",borderRadius:999,background:"rgba(37,99,235,0.1)"},children:"Chat ➔"})
             ]
-          }))})
+          });})})
         ]
       })
     }),
@@ -3040,30 +3087,19 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     ]}),
                     (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
                       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.35rem"},children:[
-                        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",minWidth:0,flex:1},children:[
+                        (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.32rem",minWidth:0,flex:1},children:[
                           (0,a.jsx)("span",{
                             style:{
                               fontWeight:hasUnread||isSel?800:700,
-                              fontSize:"0.9rem",
+                              fontSize:"0.88rem",
                               color:"var(--cas-text-primary)",
                               whiteSpace:"nowrap",
                               overflow:"hidden",
                               textOverflow:"ellipsis"
                             },
-                            children:casFormatHumanName(c.name)
+                            children:formatChatCallsign(c)
                           }),
-                          (0,a.jsx)("span",{
-                            style:{
-                              fontSize:"0.68rem",
-                              color:"#2563eb",
-                              background:"rgba(37,99,235,0.08)",
-                              padding:"0.05rem 0.38rem",
-                              borderRadius:999,
-                              fontWeight:600,
-                              flexShrink:0
-                            },
-                            children:cleanHandle
-                          })
+                          renderCasMetaBadge(c,14)
                         ]}),
                         (0,a.jsx)("span",{
                           style:{
@@ -3128,8 +3164,11 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   children:[
                     (0,a.jsx)("img",{src:u.photo_url||"/images/default-avatar-polki.png",alt:u.name,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}),
                     (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                      (0,a.jsx)("div",{style:{fontSize:"0.82rem",fontWeight:700,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:casFormatHumanName(u.name)}),
-                      (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`@${u.callsign||u.username} · ${u.satker||"Polri"}`})
+                      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.28rem"},children:[
+                        (0,a.jsx)("span",{style:{fontSize:"0.82rem",fontWeight:800,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatChatCallsign(u)}),
+                        renderCasMetaBadge(u,14)
+                      ]}),
+                      (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.satker||"Polri"})
                     ]})
                   ]
                 }))
@@ -3179,9 +3218,9 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     (0,a.jsx)("span",{style:{position:"absolute",bottom:0,right:0,width:11,height:11,borderRadius:"50%",background:"#22c55e",border:"2px solid var(--cas-card-bg)"}})
                   ]}),
                   (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
-                    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",flexWrap:"wrap"},children:[
-                      (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:activePartner.name}),
-                      (0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"#2563eb",fontWeight:600},children:activePartner.handle||"@personel"})
+                    (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+                      (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatChatCallsign(activePartner)}),
+                      renderCasMetaBadge(activePartner,15)
                     ]}),
                     (0,a.jsx)("div",{
                       style:{fontSize:"0.74rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
@@ -3572,12 +3611,14 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   (0,a.jsxs)("div",{style:{textAlign:"center",padding:"0.5rem 0"},children:[
                     (0,a.jsx)("img",{
                       src:activePartner.photo_url||"/images/default-avatar-polki.png",
-                      alt:activePartner.name,
+                      alt:formatChatCallsign(activePartner),
                       onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},
                       style:{width:68,height:68,borderRadius:"50%",objectFit:"cover",border:"2px solid #2563eb",margin:"0 auto 0.5rem"}
                     }),
-                    (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"0.92rem",color:"var(--cas-text-primary)"},children:activePartner.name}),
-                    (0,a.jsx)("div",{style:{fontSize:"0.75rem",color:"#2563eb",fontWeight:600,marginTop:"0.15rem"},children:activePartner.handle||"@personel"}),
+                    (0,a.jsxs)("div",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"0.32rem",fontWeight:800,fontSize:"0.92rem",color:"var(--cas-text-primary)"},children:[
+                      (0,a.jsx)("span",{children:formatChatCallsign(activePartner)}),
+                      renderCasMetaBadge(activePartner,15)
+                    ]}),
                     (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",marginTop:"0.25rem"},children:activePartner.satker||"Robinopsnal Bareskrim Polri"})
                   ]}),
                   (0,a.jsxs)("div",{style:{padding:"0.65rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",fontSize:"0.74rem",color:"var(--cas-text-secondary)",lineHeight:1.45},children:[

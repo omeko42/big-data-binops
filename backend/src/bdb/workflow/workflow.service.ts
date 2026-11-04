@@ -693,6 +693,22 @@ export class WorkflowService {
             }
         }
 
+        const PRE_2026_ALASAN = new Set([
+            'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
+            'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
+            'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
+            'Daya paksa / Keadaan darurat / Overmacht (Pasal 48 KUHP Lama)',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah (Pasal 50-51 KUHP Lama)',
+            'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)',
+        ]);
+        if (data.alasan_penghentian && PRE_2026_ALASAN.has(String(data.alasan_penghentian).trim())) {
+            if (tglLp && String(tglLp).slice(0, 4) >= '2026') {
+                throw new BadRequestException(
+                    `Alasan penghentian "${data.alasan_penghentian}" merupakan ketentuan sebelum KUHP & KUHAP baru yang hanya melekat untuk LP sebelum tahun 2026 (Tanggal LP ini: ${tglLp}).`
+                );
+            }
+        }
+
         const pihakArrays = ['tersangka', 'saksi', 'korban', 'terlapor', 'personel'];
         for (const arrKey of pihakArrays) {
             if (Array.isArray(data[arrKey])) {
@@ -739,7 +755,7 @@ export class WorkflowService {
 
         // Guard validasi tanggal dokumen terhadap tanggal LP dan tanggal hari ini (WIB)
         const tglLpCreate = lp[0]?.tgl_lp;
-        const isPenyelidikan = dt.status_target_code === 'PENYELIDIKAN' || Number(dt.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'SP2_LIDIK'].includes(dt.code);
+        const isPenyelidikan = dt.status_target_code === 'PENYELIDIKAN' || Number(dt.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'PENYELIDIKAN'].includes(dt.code);
         this.validateDocumentDates(data, tglLpCreate, isPenyelidikan);
         const fields: FieldDef[] = dt.form_schema?.fields || [];
         if (dt.code === 'PERMA') {
@@ -921,7 +937,7 @@ export class WorkflowService {
 
         // Guard validasi tanggal dokumen terhadap tanggal LP dan tanggal hari ini (WIB)
         const tglLpUpdate = doc.tgl_lp;
-        const isPenyelidikan = doc.target_status_code === 'PENYELIDIKAN' || Number(doc.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'SP2_LIDIK'].includes(doc.type_code);
+        const isPenyelidikan = doc.target_status_code === 'PENYELIDIKAN' || Number(doc.status_target_id) === 2 || ['SP_LIDIK', 'SPT_LIDIK', 'LHP', 'LIDIK', 'PENYELIDIKAN'].includes(doc.type_code);
         this.validateDocumentDates(data, tglLpUpdate, isPenyelidikan);
         const fields: FieldDef[] = doc.form_schema?.fields || [];
         if (doc.type_code === 'PERMA') {
