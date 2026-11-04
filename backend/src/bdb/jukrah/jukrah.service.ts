@@ -113,30 +113,8 @@ export class JukrahService {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_trb_police_lower_email ON trb_police (LOWER(email))');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
         } catch {}
-        await this.ensureMasterUserCallsignSync();
         this.clearNetworkUsersCache();
         this.ready = true;
-    }
-
-    private async ensureMasterUserCallsignSync() {
-        try {
-            const pathMod = require('path');
-            const fsMod = require('fs');
-            const candidates = [
-                pathMod.join(__dirname, '..', '..', '..', 'scripts', 'sync_master_user_callsigns.js'),
-                pathMod.join(process.cwd(), 'scripts', 'sync_master_user_callsigns.js'),
-                pathMod.join(process.cwd(), 'backend', 'scripts', 'sync_master_user_callsigns.js')
-            ];
-            for (const scriptPath of candidates) {
-                if (fsMod.existsSync(scriptPath)) {
-                    const { syncMasterUserCallsigns } = require(scriptPath);
-                    await syncMasterUserCallsigns(this.dataSource);
-                    break;
-                }
-            }
-        } catch (err: any) {
-            this.logger.warn('ensureMasterUserCallsignSync warning: ' + (err?.message || err));
-        }
     }
 
     extractTwoWordCallsignFromName(rawName?: any, authorId?: any): string {
@@ -203,6 +181,34 @@ export class JukrahService {
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
         return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
+    }
+
+    private isVerifiedRole(role: any, isUserOne?: boolean): boolean {
+        if (isUserOne) return true;
+        const r = String(role || '').toLowerCase().trim();
+        return ['superadmin', 'super_admin', 'admin_binops', 'admin binops', 'binops', 'admin', 'operator', 'viewer'].includes(r);
+    }
+
+    private getRoleHierarchyRank(uid: any, role: any): number {
+        const idNum = Number(uid || 0);
+        if (idNum === 1) return 5; // Primary Superadmin (@om.eko_42)
+        const r = String(role || '').toLowerCase().trim();
+        if (r === 'superadmin' || r === 'super_admin' || r.includes('super')) return 4;
+        if (r === 'admin_binops' || r === 'admin binops' || r === 'binops' || r === 'admin') return 3;
+        if (r === 'operator') return 2;
+        if (r === 'viewer') return 1;
+        return 0;
+    }
+
+    private canUserDeleteContent(actorUid: any, actorRole: any, authorId: any, authorRole: any, isAuthorUserOne?: boolean): boolean {
+        const aUid = Number(actorUid || 0);
+        const tUid = Number(authorId || 0);
+        if (!aUid) return false;
+        if (aUid === tUid) return true;
+        if (tUid === 1 || isAuthorUserOne) return false;
+        const actorRank = this.getRoleHierarchyRank(aUid, actorRole);
+        const targetRank = this.getRoleHierarchyRank(tUid, authorRole);
+        return actorRank >= 3 && actorRank > targetRank;
     }
 
     private resolveAuthorSatker(satkerSingkat: any, satkerNama: any, roleBdb: any, isUserOne: boolean): string {
@@ -321,7 +327,7 @@ export class JukrahService {
                 u.id as user_id,
                 u.name as nama,
                 u.username,
-                u.callsign,
+                u.username as callsign,
                 u.email_polri,
                 u.role_bdb,
                 u.is_pns,
@@ -417,7 +423,7 @@ export class JukrahService {
         if (targetId && !isNaN(targetId) && targetId > 0) {
             const rows = await this.dataSource.query(
                 `SELECT p.id, p.author_id, p.audience_type, p.content, p.media_urls, p.is_official_jukrah, p.is_pinned, p.created_at,
-                        u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.role_bdb as author_role,
+                        u.name as raw_author_name, u.username as author_username, u.username as author_callsign, u.role_bdb as author_role,
                         s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat
                  FROM bdb_social_posts p
                  JOIN auth_users u ON u.id = p.author_id
@@ -514,7 +520,7 @@ export class JukrahService {
             `SELECT p.id, p.author_id, p.audience_type, p.target_satker_ids, p.content, p.media_urls, p.case_lp_ids,
                     p.reaction_counts, p.repost_count, p.view_count, p.is_official_jukrah, p.is_pinned, p.is_edited, p.parent_post_id,
                     p.created_at, p.updated_at,
-                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.email_polri as author_email_polri,
+                    u.name as raw_author_name, u.username as author_username, u.username as author_callsign, u.email_polri as author_email_polri,
                     u.role_bdb as author_role, u.photo_url as author_photo, u.social_media as author_social_media, u.scope_satker_id as author_satker_id,
                     s.deskripsi as author_satker_nama, s.nama_singkat as author_satker_singkat,
                     tp.pangkat as author_pangkat, tp.jabatan as author_jabatan,
@@ -543,7 +549,7 @@ export class JukrahService {
         const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
         const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
         const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
-        const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
+        const isVerified = this.isVerifiedRole(r.author_role, isUserOne);
         const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
         const shareHash = this.createPostShareHash(Number(r.id));
 
@@ -554,7 +560,7 @@ export class JukrahService {
 
         const commentRows = await this.dataSource.query(
             `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.likes_count, c.is_edited, c.created_at,
-                    u.name as raw_name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
+                    u.name as raw_name, u.username, u.username as callsign, u.role_bdb, u.photo_url, u.social_media,
                     s.nama_singkat as satker_singkat, s.deskripsi as satker_nama
              FROM bdb_social_comments c
              JOIN auth_users u ON u.id = c.user_id
@@ -949,7 +955,7 @@ export class JukrahService {
         const effectiveSearch = (opts.search || opts.tag || '').trim();
         if (effectiveSearch) {
             params.push(`%${effectiveSearch.replace(/^#/, '')}%`);
-            conditions.push(`(p.content ILIKE $${params.length} OR u.name ILIKE $${params.length} OR u.callsign ILIKE $${params.length} OR u.username ILIKE $${params.length})`);
+            conditions.push(`(p.content ILIKE $${params.length} OR u.name ILIKE $${params.length} OR u.username ILIKE $${params.length})`);
         }
 
         const whereClause = 'WHERE ' + conditions.join(' AND ');
@@ -974,7 +980,7 @@ export class JukrahService {
                 p.updated_at,
                 u.name as raw_author_name,
                 u.username as author_username,
-                u.callsign as author_callsign,
+                u.username as author_callsign,
                 u.email_polri as author_email_polri,
                 u.role_bdb as author_role,
                 u.photo_url as author_photo,
@@ -1013,7 +1019,7 @@ export class JukrahService {
             const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle;
             const displayName = isUserOne ? (r.raw_author_name || 'EKO') : (canSeeRealName ? (r.raw_author_name || handle) : handle);
             const authorSatker = this.resolveAuthorSatker(r.author_satker_singkat, r.author_satker_nama, r.author_role, isUserOne);
-            const isVerified = isUserOne ? true : Boolean(r.author_role && r.author_role !== 'sharese');
+            const isVerified = this.isVerifiedRole(r.author_role, isUserOne);
             const authorRole = isUserOne ? 'superadmin' : (r.author_role || 'sharese');
             const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
             const shareHash = this.createPostShareHash(Number(r.id));
@@ -1061,8 +1067,8 @@ export class JukrahService {
                 comments_count: Number(r.comments_count || 0),
                 created_at: r.created_at,
                 updated_at: r.updated_at,
-                can_edit: !isVendorMitra && (isSelf || isGlobalAdmin),
-                can_delete: !isVendorMitra && (isSelf || isGlobalAdmin),
+                can_edit: !isVendorMitra && isSelf,
+                can_delete: !isVendorMitra && this.canUserDeleteContent(uid, userRole, r.author_id, r.author_role, isUserOne),
                 can_modify_visibility: !isVendorMitra && isSelf,
                 share_hash: shareHash,
                 share_token: shareHash,
@@ -1074,7 +1080,7 @@ export class JukrahService {
         const parentIds = posts.filter(p => p.parent_post_id).map(p => p.parent_post_id);
         if (parentIds.length) {
             const parents = await this.dataSource.query(
-                `SELECT p.id, p.author_id, p.content, p.created_at, u.name as raw_name, u.callsign, u.username, u.role_bdb,
+                `SELECT p.id, p.author_id, p.content, p.created_at, u.name as raw_name, u.username as callsign, u.username, u.role_bdb,
                         s.nama_singkat as satker, s.deskripsi as satker_nama
                  FROM bdb_social_posts p
                  JOIN auth_users u ON u.id = p.author_id
@@ -1208,7 +1214,7 @@ export class JukrahService {
             const handles = Array.from(new Set(mentionMatches.map(m => m.slice(1).toLowerCase())));
             try {
                 const taggedUsers = await this.dataSource.query(
-                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    'SELECT id, username, username as callsign FROM auth_users WHERE lower(username) = ANY($1) AND id <> $2',
                     [handles, uid]
                 );
                 for (const tu of taggedUsers) {
@@ -1333,7 +1339,7 @@ export class JukrahService {
     async getPostReactions(user: any, postId: number) {
         const rows = await this.dataSource.query(
             `SELECT r.id, r.reaction_type, r.created_at,
-                    u.id as user_id, u.name, u.username, u.callsign, u.photo_url, u.role_bdb, u.social_media,
+                    u.id as user_id, u.name, u.username, u.username as callsign, u.photo_url, u.role_bdb, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     p.pangkat, p.nrp, p.jenis_kelamin, p.foto
              FROM bdb_social_reactions r
@@ -1347,7 +1353,7 @@ export class JukrahService {
         const list = rows.map((r: any) => {
             const isUserOne = this.isSuperUserOne(r.user_id, r.username, r.callsign);
             const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri');
-            const isVerified = isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese');
+            const isVerified = this.isVerifiedRole(r.role_bdb, isUserOne);
             const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.foto, r.name, r.jenis_kelamin, r.social_media);
             const resolvedReactionHandle = this.formatCallsign(r.callsign || r.username, r.user_id, r.username, r.name).replace(/^@/, '');
             return {
@@ -1403,12 +1409,11 @@ export class JukrahService {
     /** Edit konten atau visibilitas postingan. */
     async editPost(user: any, postId: number, dto: { content: string; audience_type?: string }) {
         const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
         const post = await this.dataSource.query('SELECT id, author_id FROM bdb_social_posts WHERE id = $1', [postId]);
         if (!post.length) throw new NotFoundException('Postingan tidak ditemukan.');
 
-        if (!isGlobalAdmin && Number(post[0].author_id) !== uid) {
-            throw new ForbiddenException('Hanya pembuat postingan atau admin yang dapat mengedit postingan.');
+        if (Number(post[0].author_id) !== uid) {
+            throw new ForbiddenException('Hanya pembuat asli yang dapat mengedit postingan ini.');
         }
 
         const text = (dto.content || '').trim();
@@ -1607,7 +1612,7 @@ export class JukrahService {
             params.push('%' + search + '%');
             const sIdx = params.length;
             whereClauses.push(
-                `(u.name ILIKE $${sIdx} OR u.username ILIKE $${sIdx} OR u.callsign ILIKE $${sIdx} OR u.email_polri ILIKE $${sIdx} OR u.scope_satker_id IN (SELECT id FROM bdb_satker WHERE deskripsi ILIKE $${sIdx} OR nama_singkat ILIKE $${sIdx}))`
+                `(u.name ILIKE $${sIdx} OR u.username ILIKE $${sIdx} OR u.email_polri ILIKE $${sIdx} OR u.scope_satker_id IN (SELECT id FROM bdb_satker WHERE deskripsi ILIKE $${sIdx} OR nama_singkat ILIKE $${sIdx}))`
             );
         }
         if (satkerId) {
@@ -1660,7 +1665,7 @@ export class JukrahService {
 
         const dataSql = `
             WITH paged_users AS MATERIALIZED (
-                SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id, u.scope_satker_key${countWindowSelect}
+                SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id, u.scope_satker_key${countWindowSelect}
                 FROM auth_users u
                 WHERE ${whereSql}
                 ORDER BY (u.id = 1) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
@@ -1804,7 +1809,7 @@ export class JukrahService {
                 }
                 if (counts.incoming > 0) {
                     const incRows = await this.dataSource.query(
-                        `SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id, u.scope_satker_key,
+                        `SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id, u.scope_satker_key,
                                 s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, tp.pangkat, tp.jabatan, tp.nrp, tp.satuan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto,
                                 'incoming' as peer_conn_state,
                                 (SELECT COUNT(*)::int FROM user_connections uc2 WHERE (uc2.requester_id = u.id OR uc2.addressee_id = u.id) AND uc2.status = 'ACCEPTED') as followers_count,
@@ -1866,13 +1871,13 @@ export class JukrahService {
             if (m) targetUid = Number(m[1]);
         }
 
-        let sql = 'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id ';
+        let sql = 'SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id ';
         let params: any[] = [];
         if (targetUid) {
             sql += 'WHERE u.id = $1 LIMIT 1';
             params = [targetUid];
         } else {
-            sql += 'WHERE lower(u.username) = $1 OR lower(u.callsign) = $1 LIMIT 1';
+            sql += 'WHERE lower(u.username) = $1 LIMIT 1';
             params = [cleanTarget.toLowerCase()];
         }
         let uRes = await this.dataSource.query(sql, params);
@@ -1880,7 +1885,7 @@ export class JukrahService {
             const mHex = cleanTarget.match(/^user_(\d+)[0-9a-f]{4}$/i);
             if (mHex && Number(mHex[1]) > 0) {
                 uRes = await this.dataSource.query(
-                    'SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE u.id = $1 LIMIT 1',
+                    'SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.status, u.last_login_at, u.social_media, u.scope_satker_id, u.scope_satker_key, s.nama_singkat as satker_singkat, s.deskripsi as satker_nama FROM auth_users u LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id WHERE u.id = $1 LIMIT 1',
                     [Number(mHex[1])]
                 );
             }
@@ -2176,7 +2181,7 @@ export class JukrahService {
         const rows = await this.dataSource.query(
             `SELECT c.id, c.parent_id, c.content, c.created_at, c.is_edited, c.updated_at,
                     p.author_id as post_author_id,
-                    u.id as author_id, u.name as raw_name, u.callsign, u.username, u.role_bdb, u.photo_url, u.social_media,
+                    u.id as author_id, u.name as raw_name, u.username as callsign, u.username, u.role_bdb, u.photo_url, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     (SELECT COUNT(*)::int FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id) as likes_count,
                     EXISTS(SELECT 1 FROM bdb_social_comment_reactions cr WHERE cr.comment_id = c.id AND cr.user_id = $2) as is_liked
@@ -2210,11 +2215,11 @@ export class JukrahService {
                 author_role: isUserOne ? 'superadmin' : (r.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker || r.satker_nama || 'Polri'),
                 author_photo: this.resolveDefaultAvatar(r.photo_url, r.raw_name, null, r.social_media),
-                is_verified: isUserOne ? true : Boolean(r.role_bdb && r.role_bdb !== 'sharese'),
+                is_verified: this.isVerifiedRole(r.role_bdb, isUserOne),
                 likes_count: Number(r.likes_count || 0),
                 is_liked: Boolean(r.is_liked),
-                can_edit: !isVendorMitra && (isSelf || isGlobalAdmin),
-                can_delete: !isVendorMitra && (isSelf || Number(r.post_author_id) === uid || isGlobalAdmin)
+                can_edit: !isVendorMitra && isSelf,
+                can_delete: !isVendorMitra && (this.canUserDeleteContent(uid, userRole, r.author_id, r.role_bdb, isUserOne) || (Number(r.post_author_id) === uid && !isUserOne && this.getRoleHierarchyRank(uid, userRole) >= this.getRoleHierarchyRank(r.author_id, r.role_bdb)))
             };
         });
 
@@ -2246,7 +2251,7 @@ export class JukrahService {
             const cHandles = Array.from(new Set(cMentionMatches.map(m => m.slice(1).toLowerCase())));
             try {
                 const cTaggedUsers = await this.dataSource.query(
-                    'SELECT id, username, callsign FROM auth_users WHERE (lower(username) = ANY($1) OR lower(callsign) = ANY($1)) AND id <> $2',
+                    'SELECT id, username, username as callsign FROM auth_users WHERE lower(username) = ANY($1) AND id <> $2',
                     [cHandles, uid]
                 );
                 for (const tu of cTaggedUsers) {
@@ -2278,7 +2283,7 @@ export class JukrahService {
         }
 
         const uRows = await this.dataSource.query(
-            `SELECT u.id, u.name, u.username, u.callsign, u.role_bdb, u.photo_url, u.social_media,
+            `SELECT u.id, u.name, u.username, u.username as callsign, u.role_bdb, u.photo_url, u.social_media,
                     s.nama_singkat as satker, s.deskripsi as satker_nama
              FROM auth_users u
              LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
@@ -2308,7 +2313,7 @@ export class JukrahService {
                 author_role: isUserOne ? 'superadmin' : (uInfo.role_bdb || 'sharese'),
                 author_satker: isUserOne ? 'Robinopsnal Bareskrim Polri' : (uInfo.satker || uInfo.satker_nama || 'Polri'),
                 author_photo: this.resolveDefaultAvatar(uInfo.photo_url, uInfo.name, null, uInfo.social_media),
-                is_verified: isUserOne ? true : Boolean(uInfo.role_bdb && uInfo.role_bdb !== 'sharese'),
+                is_verified: this.isVerifiedRole(uInfo.role_bdb, isUserOne),
                 likes_count: 0,
                 is_liked: false,
                 can_edit: true,
@@ -2321,13 +2326,12 @@ export class JukrahService {
     async editComment(user: any, commentId: number, content: string) {
         await this.ensureTable();
         const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
 
         const com = await this.dataSource.query('SELECT id, user_id, post_id FROM bdb_social_comments WHERE id = $1', [commentId]);
         if (!com.length) throw new NotFoundException('Komentar tidak ditemukan.');
 
-        if (Number(com[0].user_id) !== uid && !isGlobalAdmin) {
-            throw new ForbiddenException('Anda tidak memiliki izin mengedit komentar ini.');
+        if (Number(com[0].user_id) !== uid) {
+            throw new ForbiddenException('Hanya pembuat komentar asli yang dapat mengedit komentar ini.');
         }
 
         const text = (content || '').trim();
@@ -2389,22 +2393,25 @@ export class JukrahService {
     /** Hapus komentar (hanya author komentar atau author post atau admin). */
     async deleteComment(user: any, commentId: number) {
         const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
+        const actorRole = String(user?.role_bdb || '').toLowerCase();
 
         const com = await this.dataSource.query(
-            `SELECT c.id, c.user_id, p.author_id as post_author_id 
+            `SELECT c.id, c.user_id, p.author_id as post_author_id,
+                    u.username as comment_author_username, u.role_bdb as comment_author_role
              FROM bdb_social_comments c 
-             JOIN bdb_social_posts p ON p.id = c.post_id 
+             JOIN bdb_social_posts p ON p.id = c.post_id
+             LEFT JOIN auth_users u ON u.id = c.user_id
              WHERE c.id = $1`,
             [commentId]
         );
         if (!com.length) throw new NotFoundException('Komentar tidak ditemukan.');
 
-        const isCommentAuthor = Number(com[0].user_id) === uid;
-        const isPostAuthor = Number(com[0].post_author_id) === uid;
+        const isAuthorOne = this.isSuperUserOne(com[0].user_id, com[0].comment_author_username);
+        const canModDelete = this.canUserDeleteContent(uid, actorRole, com[0].user_id, com[0].comment_author_role, isAuthorOne);
+        const isPostAuthorAllowed = Number(com[0].post_author_id) === uid && !isAuthorOne && this.getRoleHierarchyRank(uid, actorRole) >= this.getRoleHierarchyRank(com[0].user_id, com[0].comment_author_role);
 
-        if (!isCommentAuthor && !isPostAuthor && !isGlobalAdmin) {
-            throw new ForbiddenException('Anda tidak memiliki izin menghapus komentar ini.');
+        if (!canModDelete && !isPostAuthorAllowed) {
+            throw new ForbiddenException('Anda tidak memiliki wewenang menghapus komentar milik pengguna ini.');
         }
 
         await this.dataSource.query('DELETE FROM bdb_social_comments WHERE id = $1', [commentId]);
@@ -2456,13 +2463,17 @@ export class JukrahService {
     /** Hapus / Takedown postingan. */
     async deletePost(user: any, postId: number) {
         const uid = Number(user?.id);
-        const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(String(user?.role_bdb || '').toLowerCase());
+        const actorRole = String(user?.role_bdb || '').toLowerCase();
 
-        const ex = await this.dataSource.query('SELECT author_id FROM bdb_social_posts WHERE id = $1', [postId]);
+        const ex = await this.dataSource.query(
+            'SELECT p.author_id, u.username as author_username, u.role_bdb as author_role FROM bdb_social_posts p LEFT JOIN auth_users u ON u.id = p.author_id WHERE p.id = $1',
+            [postId]
+        );
         if (!ex.length) throw new NotFoundException('Postingan tidak ditemukan.');
 
-        if (Number(ex[0].author_id) !== uid && !isGlobalAdmin) {
-            throw new ForbiddenException('Hanya pembuat postingan atau admin yang berhak menghapus.');
+        const isAuthorOne = this.isSuperUserOne(ex[0].author_id, ex[0].author_username);
+        if (!this.canUserDeleteContent(uid, actorRole, ex[0].author_id, ex[0].author_role, isAuthorOne)) {
+            throw new ForbiddenException('Anda tidak memiliki wewenang menghapus postingan milik pengguna ini.');
         }
 
         await this.dataSource.query("UPDATE bdb_social_posts SET status = 'deleted', updated_at = NOW() WHERE id = $1", [postId]);
@@ -2859,7 +2870,7 @@ export class JukrahService {
         if (!cat || cat === 'social') {
             const rows = await this.dataSource.query(
                 `SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
+                        u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
                         LEFT(p.content, 110) as post_snippet,
                         (SELECT LEFT(c.content, 110) FROM bdb_social_comments c WHERE c.post_id = n.post_id AND c.user_id = n.sender_id ORDER BY c.created_at DESC LIMIT 1) as comment_snippet
                  FROM bdb_social_notifications n
@@ -2882,7 +2893,7 @@ export class JukrahService {
             try {
                 const recentComments = await this.dataSource.query(
                     `SELECT c.id, c.post_id, c.user_id as sender_id, LEFT(c.content, 110) as comment_snippet, c.created_at,
-                            u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                            u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                      FROM bdb_social_comments c
                      JOIN bdb_social_posts p ON p.id = c.post_id
                      JOIN auth_users u ON u.id = c.user_id
@@ -2915,7 +2926,7 @@ export class JukrahService {
 
                 const recentReactions = await this.dataSource.query(
                     `SELECT r.post_id, r.user_id as sender_id, r.reaction_type, r.created_at, LEFT(p.content, 90) as post_snippet,
-                            u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                            u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                      FROM bdb_social_reactions r
                      JOIN bdb_social_posts p ON p.id = r.post_id
                      JOIN auth_users u ON u.id = r.user_id
@@ -2950,7 +2961,7 @@ export class JukrahService {
 
             const connSql = (!isAdmin && (satkerId > 0 || poldaPrefix))
                 ? `SELECT uc.id, uc.status, uc.updated_at as created_at,
-                          u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                          u.id as other_id, u.name as other_name, u.username as other_username, u.username as other_callsign, u.photo_url as other_photo
                    FROM user_connections uc
                    JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
                    LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
@@ -2959,7 +2970,7 @@ export class JukrahService {
                    ORDER BY (uc.status = 'PENDING') DESC, (u.scope_satker_id = $2) DESC, uc.updated_at DESC
                    LIMIT 10`
                 : `SELECT uc.id, uc.status, uc.updated_at as created_at,
-                          u.id as other_id, u.name as other_name, u.username as other_username, u.callsign as other_callsign, u.photo_url as other_photo
+                          u.id as other_id, u.name as other_name, u.username as other_username, u.username as other_callsign, u.photo_url as other_photo
                    FROM user_connections uc
                    JOIN auth_users u ON u.id = CASE WHEN uc.requester_id = $1 THEN uc.addressee_id ELSE uc.requester_id END
                    WHERE ((uc.addressee_id = $1 AND uc.status = 'PENDING') OR (uc.requester_id = $1 AND uc.status = 'ACCEPTED') OR (uc.addressee_id = $1 AND uc.status = 'ACCEPTED'))
@@ -2989,7 +3000,7 @@ export class JukrahService {
         if (!cat || cat === 'dinas') {
             const dinasRows = await this.dataSource.query(
                 `SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
-                        u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
+                        u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo,
                         LEFT(p.content, 110) as post_snippet
                  FROM bdb_social_notifications n
                  LEFT JOIN auth_users u ON u.id = n.sender_id
@@ -3010,7 +3021,7 @@ export class JukrahService {
             try {
                 const jukPosts = await this.dataSource.query(
                     `SELECT p.id, LEFT(p.content, 110) as post_snippet, p.created_at,
-                            u.id as sender_id, u.name as sender_name, u.callsign as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
+                            u.id as sender_id, u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
                      FROM bdb_social_posts p
                      LEFT JOIN auth_users u ON u.id = p.author_id
                      WHERE p.is_official_jukrah = true AND p.status = 'active'
@@ -3223,7 +3234,7 @@ export class JukrahService {
                 FROM bdb_social_messages
                 WHERE (sender_id = $1 OR receiver_id = $1) AND sender_id > 0 AND receiver_id > 0
             )
-            SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
+            SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
                    s.deskripsi as satker_nama, s.nama_singkat as satker_singkat,
                    tp.pangkat, tp.jabatan, tp.jenis_kelamin, tp.foto as police_foto,
                    lm.content as last_message, lm.created_at as last_time, lm.channel_type as last_channel, lm.sender_id as last_sender_id,
@@ -3657,7 +3668,7 @@ export class JukrahService {
         const emailHelp = sMap.get('pusat_bantuan_email') || 'cas.bareskrim@polri.go.id';
 
         const adminRows = await this.dataSource.query(
-            `SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
+            `SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
                     s.deskripsi as satker_nama, s.nama_singkat as satker_singkat, s.kode as satker_kode,
                     tp.pangkat, tp.jabatan, tp.no_hp, tp.jenis_kelamin, tp.foto as police_foto
              FROM auth_users u
@@ -3751,7 +3762,7 @@ export class JukrahService {
 
         const jukrahRows = await this.dataSource.query(
             `SELECT p.id, p.author_id, p.content, p.created_at,
-                    u.name as raw_author_name, u.username as author_username, u.callsign as author_callsign, u.role_bdb as author_role,
+                    u.name as raw_author_name, u.username as author_username, u.username as author_callsign, u.role_bdb as author_role,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     CASE WHEN rr.id IS NOT NULL THEN true ELSE false END as acknowledged,
                     (SELECT COUNT(*)::int FROM bdb_social_read_receipts rrc WHERE rrc.post_id = p.id) as acknowledged_count
@@ -3782,7 +3793,7 @@ export class JukrahService {
 
         const trendingRows = await this.dataSource.query(
             `SELECT p.id, p.content, p.reaction_counts, p.created_at,
-                    u.id as author_id, u.name as raw_author_name, u.username as author_username, u.callsign, u.role_bdb as author_role,
+                    u.id as author_id, u.name as raw_author_name, u.username as author_username, u.username as callsign, u.role_bdb as author_role,
                     s.nama_singkat as satker, s.deskripsi as satker_nama,
                     (SELECT COUNT(*)::int FROM bdb_social_comments c WHERE c.post_id = p.id) as comments_count
              FROM bdb_social_posts p
@@ -3809,7 +3820,7 @@ export class JukrahService {
 
         const userStats = await this.dataSource.query(
             `SELECT 
-                u.id, u.name, u.username, u.callsign,
+                u.id, u.name, u.username, u.username as callsign,
                 (SELECT COUNT(*)::int FROM bdb_social_posts WHERE author_id = $1 AND status = 'active') as my_posts,
                 (SELECT COUNT(*)::int FROM bdb_social_notifications WHERE recipient_id = $1 AND is_read = false AND category = 'dinas') as unread_dinas
              FROM auth_users u WHERE u.id = $1`,
@@ -3851,7 +3862,7 @@ export class JukrahService {
 
         const readersRows = await this.dataSource.query(
             `SELECT rr.user_id, rr.acknowledged_at,
-                    u.name, u.username, u.callsign, u.role_bdb,
+                    u.name, u.username, u.username as callsign, u.role_bdb,
                     s.nama_singkat as satker_singkat, s.deskripsi as satker_nama
              FROM bdb_social_read_receipts rr
              JOIN auth_users u ON u.id = rr.user_id

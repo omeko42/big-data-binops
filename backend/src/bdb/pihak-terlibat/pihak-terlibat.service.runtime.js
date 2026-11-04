@@ -85,7 +85,12 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         if (!v)
             return null;
         const t = String(v).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : null;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(t))
+            return null;
+        const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+        if (t > todayWib)
+            throw new common_1.BadRequestException('Tanggal BAP / dokumen tidak boleh di masa depan (melebihi hari ini).');
+        return t;
     }
     scopeClause(scope, params, query) {
         if (scope.all)
@@ -2780,7 +2785,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             this.toText(dto?.nik),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            this.toText(dto?.tgl_lahir),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp),
@@ -2897,7 +2902,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             (this.toText(dto?.keterlibatan) || 'saksi').toLowerCase(),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            this.toText(dto?.tgl_lahir),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp)
@@ -2966,7 +2971,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             this.toText(dto?.nik),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            this.toText(dto?.tgl_lahir),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp),

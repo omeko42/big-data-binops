@@ -59,12 +59,21 @@ function timeAgo(dateStr) {
 function getVerificationBadge(role, isUserOne, userId, username) {
   var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
   var uNorm = String(username || '').toLowerCase().trim().replace(/^@/, '');
-  if (isUserOne || SUPER_IDS.includes(String(userId)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm)) return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   var r = String(role || '').toLowerCase().trim();
-  if (r === 'superadmin' || r.includes('super')) return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
-  if (r === 'admin_binops' || r === 'admin binops' || r === 'binops') return { color: '#6366f1', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
-  if (r === 'operator') return { color: '#0095f6', label: 'Operator Satker Terverifikasi', role: 'operator' };
-  return { color: '#64748b', label: 'Personel Terverifikasi', role: 'viewer' };
+  if (r === 'vendor_mitra' || r === 'vendor' || r === 'mitra') return null;
+  if (isUserOne || SUPER_IDS.includes(String(userId)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super')) {
+    return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
+  }
+  if (r === 'admin_binops' || r === 'admin binops' || r === 'binops' || r === 'admin') {
+    return { color: '#10b981', label: 'Admin Binops Terverifikasi', role: 'admin_binops' };
+  }
+  if (r === 'operator') {
+    return { color: '#0095f6', label: 'Operator Satker Terverifikasi (Official)', role: 'operator' };
+  }
+  if (r === 'viewer') {
+    return { color: '#0095f6', label: 'Personel Terverifikasi (Meta Verified)', role: 'viewer' };
+  }
+  return null;
 }
 
 function renderMetaVerifiedBadge(badge, sizePx) {
@@ -1964,7 +1973,7 @@ e.s(["default",0,function() {
           var postReactions = post.reaction_counts || {};
           var currentReact = post.user_reaction || post.my_reaction;
           var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
-          var canEdit = isAuthor || isOfficialRole || post.can_edit;
+          var canEdit = isAuthor && Boolean(post.can_edit !== false); var canDeletePost = isAuthor || Boolean(post.can_delete);
           var authorAvatar = isAuthor ? (currentUser?.photo_url || currentUser?.foto || post.author_photo_url || post.author_photo || null) : (post.author_photo_url || post.author_photo || null);
           var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
           var authorHandle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
@@ -2084,7 +2093,7 @@ e.s(["default",0,function() {
                   }),
 
                   // Delete post
-                  (isAuthor || canBroadcastOfficial) && (0,t.jsx)("button",{
+                  canDeletePost && (0,t.jsx)("button",{
                     type:"button",
                     onClick:() => handleDeletePost(post),
                     title:"Hapus Postingan",
@@ -2566,7 +2575,7 @@ e.s(["default",0,function() {
                       var cmInitials = String(cmHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
                       var cmAvatar = isCmAuthor ? (currentUser?.photo_url || currentUser?.foto || cm.author_photo_url || cm.author_photo || null) : (cm.author_photo_url || cm.author_photo || null);
                       var cmSatker = formatSatkerName(cm.author_satker || cm.satker, isCmSuper, 'Polri');
-                      var canModifyCm = isCmAuthor || canBroadcastOfficial || Boolean(cm.can_edit) || Boolean(cm.can_delete);
+                      var canEditCm = isCmAuthor && Boolean(cm.can_edit !== false); var canDeleteCm = isCmAuthor || Boolean(cm.can_delete);
 
                       return (0,t.jsxs)("div",{key:cm.id,style:{background:"rgba(255,255,255,0.04)",border:"1px solid var(--cas-border, rgba(255,255,255,0.08))",borderRadius:"8px",padding:"0.6rem 0.8rem",fontSize:"0.82rem",display:"flex",gap:"0.65rem",alignItems:"flex-start"},children:[
                         (0,t.jsx)("div",{
@@ -2604,14 +2613,14 @@ e.s(["default",0,function() {
                                   (cm.likes_count || 0) > 0 ? cm.likes_count : "Suka"
                                 ]
                               }),
-                              canModifyCm && (0,t.jsxs)("button",{
+                              canEditCm && (0,t.jsxs)("button",{
                                 type:"button",
                                 onClick:() => handleStartEditComment(cm),
                                 title:"Edit komentar ini",
                                 style:{background:"transparent",border:"none",color:"#38bdf8",cursor:"pointer",padding:"0.15rem 0.35rem",fontSize:"0.72rem",fontWeight:600,display:"inline-flex",alignItems:"center",gap:"0.2rem",borderRadius:"4px"},
                                 children:[(0,t.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.68rem"}}),"Edit"]
                               }),
-                              canModifyCm && (0,t.jsxs)("button",{
+                              canDeleteCm && (0,t.jsxs)("button",{
                                 type:"button",
                                 onClick:() => handleDeleteComment(post.id, cm.id),
                                 title:"Hapus komentar ini",

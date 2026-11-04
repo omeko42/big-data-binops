@@ -830,6 +830,10 @@ return { data: rows, meta: { total: rows.length, period } };
         data: null,
       };
     }
+    const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    if (String(documentDate).trim().slice(0, 10) > todayWib) {
+      return { status: 0, message: 'Tanggal dokumen tidak boleh di masa depan (melebihi hari ini)', data: null };
+    }
 
     const normalizeStatus = (value: any) => String(value || '').trim().toUpperCase();
 
@@ -1054,6 +1058,10 @@ return { data: rows, meta: { total: rows.length, period } };
         message: 'LP, jenis dokumen, nomor dokumen, tanggal dokumen, dan tujuan distribusi wajib diisi',
         data: null,
       };
+    }
+    const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+    if (String(documentDate).trim().slice(0, 10) > todayWib) {
+      return { status: 0, message: 'Tanggal dokumen tidak boleh di masa depan (melebihi hari ini)', data: null };
     }
 
     return this.dataSource.transaction(async (manager) => {
