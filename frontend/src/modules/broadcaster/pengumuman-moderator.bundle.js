@@ -227,6 +227,16 @@ e.s(["default", 0, function() {
   }, [fetchOfficialPosts]);
 
   (0, n.useEffect)(() => {
+    if (feedbackMsg && feedbackMsg.text) {
+      if (typeof window !== "undefined" && typeof window.casShowCenterAlert === "function") {
+        window.casShowCenterAlert(feedbackMsg.text, feedbackMsg.type || "info");
+      }
+      const tmr = setTimeout(() => setFeedbackMsg(null), 3200);
+      return () => clearTimeout(tmr);
+    }
+  }, [feedbackMsg]);
+
+  (0, n.useEffect)(() => {
     if (activeTab === 'reports' && selectedPostId) {
       fetchReport(selectedPostId);
     } else if (activeTab === 'moderation') {
@@ -1757,6 +1767,9 @@ e.s(["default", 0, function() {
                   onClick: () => {
                     navigator.clipboard?.writeText(getPostShareUrl(shareModalPost));
                     setShareCopied(!0);
+                    if (typeof window !== "undefined" && typeof window.casShowCenterAlert === "function") {
+                      window.casShowCenterAlert("✓ Tautan siaran berhash berhasil disalin ke papan klip!", "success");
+                    }
                   },
                   style: {
                     padding: "0.55rem 0.9rem",
@@ -1786,6 +1799,9 @@ e.s(["default", 0, function() {
                       "🔗 Buka Tautan Terenkripsi:\n" + sUrl;
                     navigator.clipboard?.writeText(waMsg);
                     setShareCopied(!0);
+                    if (typeof window !== "undefined" && typeof window.casShowCenterAlert === "function") {
+                      window.casShowCenterAlert("✓ Format pesan WhatsApp berhasil disalin ke papan klip!", "success");
+                    }
                   },
                   style: {
                     padding: "0.55rem 0.9rem",

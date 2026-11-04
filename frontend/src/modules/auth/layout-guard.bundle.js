@@ -655,6 +655,13 @@ function initCasExpensivePcHpStandards() {
       "}",
       ".lp-stat, .kp-kpi-card, .kp-kpi-card-v2, #kp-summary-strip .kp-kpi-card-v2.kp-pill-collapsed, #kp-summary-strip .kp-kpi-card.is-pill-collapsed, #kp-summary-strip .kp-kpi-card-v2.kp-pill-expanded, #kp-summary-strip .kp-kpi-card.is-pill-expanded, .lp-status-cards .lp-stat, .lp-status-cards .lp-stat.active, .att-chip, input[type=\"text\"][style*=\"999px\"], input[type=\"search\"][style*=\"999px\"], input:not([type])[style*=\"999px\"] {",
       "  border-radius: 10px !important;",
+      "}",
+      "@keyframes casCenterAlertPop { 0% { opacity: 0; transform: scale(0.88) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }",
+      ".p-toast, .p-toast.p-toast-top-right, .p-toast.p-toast-top-center, .p-toast.p-toast-bottom-right, .p-toast.p-toast-bottom-center, .p-toast.p-toast-center {",
+      "  position: fixed !important; top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translate(-50%, -50%) !important; z-index: 100005 !important; width: min(92vw, 440px) !important; max-width: 440px !important; pointer-events: none !important;",
+      "}",
+      ".p-toast .p-toast-message {",
+      "  pointer-events: auto !important; border-radius: 16px !important; backdrop-filter: blur(18px) saturate(160%) !important; -webkit-backdrop-filter: blur(18px) saturate(160%) !important; box-shadow: 0 24px 64px rgba(0,0,0,0.48), 0 0 0 1px rgba(56,189,248,0.22) !important; animation: casCenterAlertPop 0.22s cubic-bezier(0.22,1,0.36,1) both !important;",
       "}"
     ].join("\n");
     document.head.appendChild(st);
@@ -807,6 +814,71 @@ function initCasExpensivePcHpStandards() {
         document.body.appendChild(overlay);
         try { btnConfirm.focus(); } catch(_e) {}
       });
+    };
+  }
+  if (typeof window !== "undefined" && !window.casShowCenterAlert) {
+    window.casShowCenterAlert = function(message, type, duration) {
+      if (typeof document === "undefined" || !document.body || !message) return;
+      initCasExpensivePcHpStandards();
+      var alertType = String(type || "info").toLowerCase();
+      var dur = typeof duration === "number" && duration > 0 ? duration : 2600;
+      var prev = document.getElementById("cas-center-hud-alert-overlay");
+      if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+
+      var cfg = {
+        success: { icon: "✅", title: "Berhasil", color: "#10b981", border: "rgba(16,185,129,0.5)", bgBadge: "rgba(16,185,129,0.16)" },
+        warn: { icon: "⚠️", title: "Perhatian", color: "#f59e0b", border: "rgba(245,158,11,0.5)", bgBadge: "rgba(245,158,11,0.16)" },
+        warning: { icon: "⚠️", title: "Perhatian", color: "#f59e0b", border: "rgba(245,158,11,0.5)", bgBadge: "rgba(245,158,11,0.16)" },
+        error: { icon: "❌", title: "Gagal", color: "#ef4444", border: "rgba(239,68,68,0.5)", bgBadge: "rgba(239,68,68,0.16)" },
+        danger: { icon: "❌", title: "Gagal", color: "#ef4444", border: "rgba(239,68,68,0.5)", bgBadge: "rgba(239,68,68,0.16)" },
+        info: { icon: "🔔", title: "Informasi", color: "#3b82f6", border: "rgba(59,130,246,0.5)", bgBadge: "rgba(59,130,246,0.16)" }
+      }[alertType] || { icon: "🔔", title: "Informasi", color: "#3b82f6", border: "rgba(59,130,246,0.5)", bgBadge: "rgba(59,130,246,0.16)" };
+
+      var wrap = document.createElement("div");
+      wrap.id = "cas-center-hud-alert-overlay";
+      wrap.className = "cas-center-alert-backdrop";
+      wrap.setAttribute("role", "alertdialog");
+      wrap.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100010;pointer-events:none;padding:1rem;transition:opacity 180ms ease;";
+
+      var box = document.createElement("div");
+      box.className = "cas-center-alert-box";
+      box.style.cssText = "pointer-events:auto;background:rgba(15,23,42,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid " + cfg.border + ";border-radius:16px;padding:1.15rem 1.45rem;box-shadow:0 24px 60px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.06);max-width:420px;width:90vw;text-align:center;color:#f8fafc;font-family:inherit;animation:casCenterAlertPop 0.22s cubic-bezier(0.22,1,0.36,1) both;";
+
+      var badgeEl = document.createElement("div");
+      badgeEl.style.cssText = "width:46px;height:46px;margin:0 auto 0.65rem;border-radius:50%;background:" + cfg.bgBadge + ";border:1.5px solid " + cfg.border + ";display:flex;align-items:center;justify-content:center;font-size:1.35rem;box-shadow:0 6px 18px " + cfg.bgBadge + ";";
+      badgeEl.textContent = cfg.icon;
+
+      var titleEl = document.createElement("div");
+      titleEl.style.cssText = "font-size:0.98rem;font-weight:800;color:" + cfg.color + ";margin-bottom:0.3rem;letter-spacing:-0.01em;";
+      titleEl.textContent = cfg.title;
+
+      var msgEl = document.createElement("div");
+      msgEl.style.cssText = "font-size:0.84rem;line-height:1.48;color:#e2e8f0;font-weight:600;margin-bottom:0.85rem;word-break:break-word;";
+      msgEl.textContent = String(message);
+
+      var closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.style.cssText = "padding:0.36rem 1.15rem;border-radius:999px;border:1px solid " + cfg.border + ";background:" + cfg.bgBadge + ";color:#ffffff;font-size:0.75rem;font-weight:800;cursor:pointer;transition:transform 0.15s ease;";
+      closeBtn.textContent = "OK / Tutup";
+
+      var closed = false;
+      var dismiss = function() {
+        if (closed) return;
+        closed = true;
+        wrap.style.opacity = "0";
+        setTimeout(function() {
+          if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        }, 180);
+      };
+      closeBtn.addEventListener("click", dismiss);
+
+      box.appendChild(badgeEl);
+      box.appendChild(titleEl);
+      box.appendChild(msgEl);
+      box.appendChild(closeBtn);
+      wrap.appendChild(box);
+      document.body.appendChild(wrap);
+      setTimeout(dismiss, dur);
     };
   }
 }
@@ -1246,6 +1318,9 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
           H(prev => prev.map(item => ({ ...item, is_read: !0 })));
           G({ total: 0, per_entity: [] });
           try { window.dispatchEvent(new Event("cas-notif-updated")); } catch {}
+          if (typeof window !== "undefined" && window.casShowCenterAlert) {
+            window.casShowCenterAlert("Semua notifikasi telah ditandai dibaca", "success");
+          }
         } catch {}
       },
       style:{background:"none",border:"none",color:"#2563eb",fontSize:"0.74rem",cursor:"pointer",fontWeight:700},
@@ -1355,13 +1430,21 @@ let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curU
   (0,a.jsx)("div",{style:{marginTop:"0.65rem",paddingTop:"0.55rem",borderTop:"1px solid rgba(148,163,184,0.16)"},children:(0,a.jsx)(s.default,{href:"/cms/broadcaster?view=notifikasi",onClick:()=>{J(!1);setTimeout(()=>{try{window.dispatchEvent(new Event("cas-url-change"))}catch{}},25)},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.4rem",width:"100%",padding:"0.48rem 0.75rem",borderRadius:10,background:"rgba(37,99,235,0.12)",border:"1px solid rgba(37,99,235,0.3)",color:"#2563eb",fontSize:"0.76rem",fontWeight:800,textDecoration:"none",boxSizing:"border-box"},children:"Lihat Semua Arsip Notifikasi ➔"})})
 ]})]}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){let e=!v;S(e),document.documentElement.dataset.theme=e?"dark":"light",localStorage.setItem("bdb_theme",e?"dark":"light")},title:v?"Mode terang":"Mode gelap","aria-label":"Ganti tema",children:v?(0,a.jsx)(u,{id:"fld-0-gigr76s0g8t-14",name:"field_0_gigr76s0g8t_14",size:18}):(0,a.jsx)(d,{id:"fld-0-gigr76s0g8t-15",name:"field_0_gigr76s0g8t_15",size:18})}),(0,a.jsx)("button",{type:"button",className:"cms-icon-btn",onClick:function(){if(typeof window!=="undefined"){if(window.caches)caches.keys().then(function(k){k.forEach(function(n){caches.delete(n)})});try{sessionStorage.clear()}catch(e){}window.location.reload(true)}},title:"Bersihkan Cache & Refresh (Ctrl+Shift+R Otomatis)","aria-label":"Bersihkan Cache & Refresh",children:(0,a.jsx)(x.RefreshCw,{size:16})}),(0,a.jsxs)("div",{className:"cms-user",children:[(0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",cursor:"pointer"},onClick:()=>{try{sessionStorage.removeItem("cas_view_user")}catch(e){}casNav(o,"/cms/profile")},title:"Klik untuk membuka Profil Saya",children:[(0,a.jsxs)("div",{className:"cms-user-meta",children:[(0,a.jsxs)("div",{className:"cms-user-name",style:{display:"inline-flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"},children:[eo,(0,a.jsx)("span",{title:isVendorRole?"Vendor / Mitra (Read-Only)":isSuper?"Superadmin Terverifikasi":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"Admin Binops Terverifikasi";if(r.includes('viewer')||r.includes('pimpinan'))return"Viewer Terverifikasi";return"Operator Satker Terverifikasi";})(),style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"14px",height:"14px",flexShrink:0,verticalAlign:"middle"},children:(0,a.jsxs)("svg",{viewBox:"0 0 24 24",width:14,height:14,fill:"none",style:{display:"block",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.22))"},children:[(0,a.jsx)("path",{d:"M12 1.25L14.69 3.04L17.91 2.75L19.44 5.6L22.25 7.13L21.96 10.35L23.75 13.04L21.96 15.73L22.25 18.95L19.44 20.48L17.91 23.33L14.69 23.04L12 24.83L9.31 23.04L6.09 23.33L4.56 20.48L1.75 18.95L2.04 15.73L0.25 13.04L2.04 10.35L1.75 7.13L4.56 5.6L6.09 2.75L9.31 3.04L12 1.25Z",transform:"scale(0.92) translate(1, 0)",fill:isVendorRole?"#0d9488":isSuper?"#f59e0b":(function(){var r=String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase();if(r.includes('binops'))return"#6366f1";if(r.includes('viewer')||r.includes('pimpinan'))return"#64748b";return"#0095f6";})()}),(0,a.jsx)("path",{d:"M8.5 12.5L10.8 14.8L15.8 9.8",stroke:"#ffffff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"})]})})]}),(0,a.jsx)("div",{className:"cms-user-role",children:userSatkerDisp})]}),(0,a.jsx)("div",{className:"cms-user-avatar",children:ec})]}),(0,a.jsxs)("button",{type:"button",className:`cms-logout${isLoggingOut?" cas-logging-out":""}`,onClick:function(){if(isLoggingOut)return;setIsLoggingOut(!0);setTimeout(function(){(0,R.logout)(),window.location.replace("/login")},320)},title:"Keluar","aria-label":"Keluar",style:{display:"inline-flex",alignItems:"center",gap:"0.36rem",padding:"0 0.78rem",height:"2.2rem",width:"auto",minWidth:"max-content",flexShrink:0,whiteSpace:"nowrap",borderRadius:8,fontWeight:700,fontSize:"0.76rem"},children:[(0,a.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",className:"cas-logout-icon",children:[(0,a.jsx)("path",{className:"cas-logout-door",d:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"}),(0,a.jsx)("polyline",{className:"cas-logout-arrow",points:"16 17 21 12 16 7"}),(0,a.jsx)("line",{className:"cas-logout-arrow",x1:"21",y1:"12",x2:"9",y2:"12"})]}),(0,a.jsx)("span",{className:"cas-logout-label",children:isLoggingOut?"Keluar...":"Keluar"})]})]})]})}var O=e.i(70187);let T=new Set([...Object.keys(O.MASTERS),"pasal"]),I=new Set(["alur-dokumen","menu","organisasi-role","organisasi-level","organisasi-team"]),E=new Set(["email","login-otp","maintenance","pusat-bantuan"]),z={cms:"Dashboard",dashboard:"Dashboard",main:"Ringkasan",heatmap:"Peta/Heatmap",master:"Master Data","master-ref":"Master Referensi",user:"Pengguna",organisasi:"Satker",kejahatan:"Kejahatan","laporan-polisi":"Laporan","arsip-pelimpahan":"Pelimpahan","jenis-barang-bukti":"Barang Bukti","operasi-satgas":"Kelola Susopsgas",kerma:"Kerja Sama","organisasi-level":"Organisasi Level","organisasi-role":"Organisasi Role","organisasi-team":"Organisasi Team",menu:"Menu / Form",laporan:"Register","rekap-laporan-polisi":"Rekap LP","rekap-kerma":"Rekap Kerma","pihak-sering-terlibat":"Pihak Paling Sering Terlibat","rekap-pihak-terlibat":"Pihak Terlibat","rekap-barang-bukti":"Barang Bukti","rekap-operasi-satgas":"Rekap Susopsgas","kasus-menonjol":"Susopsgas","kasus-atensi":"Susopsgas","laporan-kejahatan":"LP Kejahatan","distribusi-lp":"Distribusi LP","penanganan-lp":"Penanganan LP",report:"Laporan","anev-lp":"Anev LP","kinerja-perkara":"Kinerja Perkara","anev-ctcc":"Lamp. Anev Periodik",generate:"Generate Laporan",cetak:"Cetak Analitik",pengaturan:"Sistem",satker:"Satker",email:"Email (SMTP)","login-otp":"OTP Login",maintenance:"Maintenance Sistem","pusat-bantuan":"Pusat Bantuan","alur-dokumen":"Alur Dokumen LP",profile:"Profile","reset-password":"Ganti Password","reset-totp":"Atur TOTP",broadcaster:"Sharese",pengumuman:"Moderasi",panduan:"Panduan Pengguna",integrasi:"Portal Integrasi",dors:"Tarik Data","dors-data":"Staging","dors-unmapped":"Import ke Database","satker-legacy":"Cek Duplikat","master-data-gap":"Master Tidak Termapping","portal-keluar":"Keluar","satker-tree":"Struktur Satker (Puskarda)","satker-eksternal":"Satker Eksternal"},K=new Set(["master","laporan","report","integrasi","pengaturan","dashboard"]);function $(){let e=(0,r.usePathname)(),router=(0,r.useRouter)(),q=useCasLocationSearch(),sp=new URLSearchParams(q||""),viewParam=sp.get("view")||"",modeParam=sp.get("mode")||"",profileIdParam=sp.get("profileId")||"",[tickerItems,setTickerItems]=(0,t.useState)([]),[unreadTotal,setUnreadTotal]=(0,t.useState)(0);let loadTicker=(0,t.useCallback)(async()=>{try{let[nRes,mRes]=await Promise.all([M.apiAuth.get("/bdb/jukrah/notifications").catch(()=>({data:{data:[]}})),M.apiAuth.get("/bdb/jukrah/messages/conversations").catch(()=>({data:{data:[],total_unread:0}}))]);let nList=Array.isArray(nRes.data?.data)?nRes.data.data:[],convs=Array.isArray(mRes.data?.data)?mRes.data.data:[];const readSet=casGetReadNotifIds();let combined=[];convs.filter(c=>!c.is_ai&&Number(c.unread_count||0)>0&&!readSet.has("msg_"+c.partner_id)).forEach(c=>{const rawH=String(c.handle||c.callsign||c.username||"").trim();const senderHandle=rawH?(rawH.startsWith("@")?rawH:`@${rawH}`):"@rekan";const shortMsg=casCleanQuoteSnippet(c.last_message,45);combined.push({id:"msg_"+c.partner_id,badge:"Obrolan",color:"#16a34a",link:`/cms/broadcaster?view=obrolan&partner=${c.partner_id}`,text:shortMsg?`${senderHandle} mengirim pesan: "${shortMsg}"`:`${senderHandle} mengirim ${c.unread_count} pesan baru`})});nList.map(humanizeCasNotification).filter(h=>!h.is_read).slice(0,14).forEach(h=>{let b=h.badgeLabel||(h.isLimpah?"Limpah":h.category==="dinas"?"Jukrah":"Sharese");let c=b==="Limpah"?"#7c3aed":b==="Jukrah"?"#2563eb":b==="Obrolan"?"#16a34a":"#d97706";combined.push({id:String(h.id),badge:b,color:c,link:h.link||"/cms/broadcaster?view=notifikasi",text:h.tickerText||h.actionText})});setTickerItems(combined);setUnreadTotal(combined.length)}catch{}},[]);(0,t.useEffect)(()=>{loadTicker();let iv=setInterval(loadTicker,45e3);let onUpd=()=>loadTicker();window.addEventListener("cas-notif-updated",onUpd);return()=>{clearInterval(iv);window.removeEventListener("cas-notif-updated",onUpd)}},[loadTicker]);const handleTickerItemClick=async(ev,it)=>{if(ev)ev.stopPropagation();if(it&&it.id){casMarkNotifIdsReadLocal([it.id]);setTickerItems(prev=>{const next=prev.filter(x=>String(x.id)!==String(it.id));setUnreadTotal(next.length);return next;});if(/^\d+$/.test(String(it.id))){try{await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/read`)}catch{}}}casNav(router,(it&&it.link)||"/cms/broadcaster?view=notifikasi")};let n=e.split("/").filter(Boolean),l=n.map((seg,a)=>{let t="/"+n.slice(0,a+1).join("/"),isLast=a===n.length-1;if("cms"===seg)return{seg,label:"Dashboard",href:"/cms/dashboard/main",clickable:!isLast};if("main"===seg&&"dashboard"===n[a-1]&&"peta-kejahatan"===viewParam)return{seg:"peta-kejahatan",label:"Peta Kejahatan",href:"/cms/dashboard/main?view=peta-kejahatan",clickable:!1};if("master"===seg){let s=n[a+1];return s&&I.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!0}:s==="operasi-satgas"?{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!0}:s&&T.has(s)?{seg,label:"Master Referensi",href:"/cms/master-ref",clickable:!isLast}:{seg,label:"Master Data",href:t,clickable:!1}}if("pengaturan"===seg){let s=n[a+1];return s&&E.has(s)?{seg,label:"Kelola Pengaturan",href:"/cms/pengaturan/email",clickable:!1}:{seg,label:"Sistem",href:t,clickable:!1}}if("laporan"===seg){let s=n[a+1];if(s==="rekap-operasi-satgas"||s==="kasus-menonjol"||s==="kasus-atensi")return{seg,label:"Susopsgas",href:"/cms/laporan/rekap-operasi-satgas",clickable:!1};return{seg,label:"Register",href:t,clickable:!1}}if("broadcaster"===seg){if(viewParam==="pusat-bantuan")return{seg,label:"Sistem",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1};return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:Boolean(viewParam)}}if("profile"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("pengumuman"===seg){return{seg,label:"Sharese",href:"/cms/broadcaster",clickable:!0}}if("laporan-polisi"===seg){return{seg,label:"Laporan",href:"/cms/laporan-polisi",clickable:!isLast}}if(a>0&&"laporan-polisi"===n[a-1]&&"arsip-pelimpahan"!==seg){return{seg,label:"Detail LP",href:t,clickable:!1}}let s=!isLast&&!K.has(seg);return{seg,label:z[seg]||O.MASTERS[seg]?.title||seg.replace(/-/g," ").replace(/\b\w/g,c=>c.toUpperCase()),href:t,clickable:s}});if(e==="/cms/broadcaster"){if(viewParam==="obrolan")l.push({seg:"obrolan",label:"Obrolan",href:"/cms/broadcaster?view=obrolan",clickable:!1});else if(viewParam==="koneksi"){l.push({seg:"koneksi",label:"Koneksi",href:"/cms/broadcaster?view=koneksi",clickable:Boolean(profileIdParam)});if(profileIdParam)l.push({seg:"profil-personil",label:"Profil Personil",href:`/cms/broadcaster?view=koneksi&profileId=${profileIdParam}`,clickable:!1})}else if(viewParam==="notifikasi")l.push({seg:"notifikasi",label:"Notifikasi",href:"/cms/broadcaster?view=notifikasi",clickable:!1});else if(viewParam==="insight")l.push({seg:"insight",label:"Insight",href:"/cms/broadcaster?view=insight",clickable:!1});else if(viewParam==="pusat-bantuan")l.push({seg:"pusat-bantuan",label:"Pusat Bantuan",href:"/cms/broadcaster?view=pusat-bantuan",clickable:!1});else l.push({seg:"feed",label:"Feed",href:"/cms/broadcaster",clickable:!1})}else if(e==="/cms/profile"){if(viewParam==="keamanan")l.push({seg:"keamanan",label:"Keamanan",href:"/cms/profile?view=keamanan",clickable:!1});else l.push({seg:"profil-saya",label:"Profile",href:"/cms/profile",clickable:!1})}else if(e==="/cms/pengumuman"){l.push({seg:"moderasi",label:"Moderasi",href:"/cms/pengumuman",clickable:!1})}else if(e==="/cms/panduan"){l.push({seg:modeParam==="kelola"?"kelola":"rekap",label:modeParam==="kelola"?"Kelola":"Rekap",href:modeParam==="kelola"?"/cms/panduan?mode=kelola":"/cms/panduan",clickable:!1})}let i=l.filter((e,a)=>0===a||e.label!==l[a-1].label);return(0,a.jsxs)("nav",{className:"cms-breadcrumb","aria-label":"breadcrumb",style:{display:"flex",alignItems:"center",justifyContent:"flex-start",gap:"0.85rem",flexWrap:"nowrap"},children:[(0,a.jsx)("style",{dangerouslySetInnerHTML:{__html:"@keyframes casTickerMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.cas-ticker-track{display:inline-flex;align-items:center;gap:2.8rem;white-space:nowrap;will-change:transform;animation:casTickerMarquee 220s linear infinite}.cas-ticker-inline:hover .cas-ticker-track{animation-play-state:paused}@keyframes casPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.88)}}"}}),(0,a.jsx)("ol",{style:{margin:0,flex:"0 0 auto",minWidth:0,overflowX:"auto"},children:i.map((e,t)=>{let r=t===i.length-1;return(0,a.jsxs)("li",{children:[t>0&&(0,a.jsx)("i",{className:"pi pi-angle-right cms-bc-chevron"}),e.clickable&&!r?(0,a.jsx)(s.default,{href:e.href,prefetch:!1,children:e.label}):(0,a.jsx)("span",{className:r?"cms-bc-current":"cms-bc-muted",children:e.label})]},e.href+t)})}),(0,a.jsxs)("div",{className:"cas-ticker-inline",role:"button",tabIndex:0,title:"Klik item notifikasi untuk membaca dan membuka detail, atau klik untuk membuka Arsip Notifikasi",onClick:()=>casNav(router,"/cms/broadcaster?view=notifikasi"),onKeyDown:ev=>{if(ev.key==="Enter"||ev.key===" ")casNav(router,"/cms/broadcaster?view=notifikasi")},style:{flex:"1 1 0%",minWidth:"120px",overflow:"hidden",background:"transparent",border:"none",borderLeft:"1.5px solid var(--cas-border, rgba(148,163,184,0.4))",borderRadius:0,padding:"0 0 0 0.85rem",display:"flex",alignItems:"center",gap:"0.75rem",cursor:"pointer",boxShadow:"none",userSelect:"none"},children:[(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",color:unreadTotal>0?"#dc2626":"#16a34a",fontSize:"0.72rem",fontWeight:800,flexShrink:0,paddingRight:"0.15rem"},children:[(0,a.jsx)("span",{style:{width:6,height:6,borderRadius:"50%",background:unreadTotal>0?"#dc2626":"#16a34a",animation:unreadTotal>0?"casPulseDot 2s infinite":"none"}}),unreadTotal>0?`${unreadTotal>99?"99+":unreadTotal} Baru`:"✓ Terbaca"]}),tickerItems.length===0?(0,a.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted, #64748b)",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:"Semua notifikasi terbaru telah dibaca — klik untuk melihat arsip riwayat notifikasi"}):(0,a.jsx)("div",{style:{flex:1,minWidth:0,overflow:"hidden",position:"relative",maskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)",WebkitMaskImage:"linear-gradient(to right, transparent 0px, #000 18px, #000 calc(100% - 18px), transparent 100%)"},children:(0,a.jsx)("div",{className:"cas-ticker-track",children:(tickerItems.length>1?[...tickerItems,...tickerItems]:tickerItems).map((it,idx)=>(0,a.jsxs)("span",{onClick:ev=>handleTickerItemClick(ev,it),style:{display:"inline-flex",alignItems:"center",gap:"0.42rem",fontSize:"0.75rem",color:"var(--cas-text-secondary, #475569)",cursor:"pointer"},children:[(0,a.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.08rem 0.46rem",borderRadius:999,background:it.badge==="Limpah"?"rgba(124,58,237,0.14)":it.badge==="Jukrah"?"rgba(37,99,235,0.12)":it.badge==="Obrolan"?"rgba(22,163,74,0.12)":"rgba(217,119,6,0.12)",color:it.color||"#0284c7"},children:it.badge}),(0,a.jsx)("span",{style:{fontWeight:500},children:it.text})]},it.id+"_"+idx))})})]})]})}
 function TacticalMessengerWidget() {
-  const router = (0, r.useRouter)();
+  const router = (0, r.useRouter)(), pathname = (0, r.usePathname)(), searchStr = useCasLocationSearch();
+  const isObrolanFullPage = pathname === "/cms/broadcaster" && new URLSearchParams(searchStr || "").get("view") === "obrolan";
   const [isOpen, setIsOpen] = (0, t.useState)(false);
   const [activeTarget, setActiveTarget] = (0, t.useState)(null);
   const [messages, setMessages] = (0, t.useState)([]);
   const [inputVal, setInputVal] = (0, t.useState)("");
   const [sending, setSending] = (0, t.useState)(false);
   const [replyTo, setReplyTo] = (0, t.useState)(null);
+  const [viewMode, setViewMode] = (0, t.useState)("chat");
+  const [contactSearch, setContactSearch] = (0, t.useState)("");
+  const [convList, setConvList] = (0, t.useState)([]);
+  const [dirList, setDirList] = (0, t.useState)([]);
+  const [loadingContacts, setLoadingContacts] = (0, t.useState)(false);
+  const [editingMsg, setEditingMsg] = (0, t.useState)(null);
+  const [confirmDeleteId, setConfirmDeleteId] = (0, t.useState)(null);
   const msgEndRef = (0, t.useRef)(null);
 
   const loadThread = (0, t.useCallback)(async (targetObj) => {
@@ -1374,6 +1457,7 @@ function TacticalMessengerWidget() {
         sender: m.is_mine ? 'me' : 'them',
         senderName: m.sender_name || (m.is_mine ? 'Anda' : (targetObj?.name || 'Rekan')),
         text: m.content,
+        is_edited: Boolean(m.is_edited),
         reply_to: m.reply_to || null,
         time: m.created_at ? new Date(m.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
       })));
@@ -1396,6 +1480,27 @@ function TacticalMessengerWidget() {
     }
   }, []);
 
+  const loadContacts = (0, t.useCallback)(async (qStr) => {
+    setLoadingContacts(true);
+    try {
+      const [cRes, uRes] = await Promise.all([
+        M.apiAuth.get('/bdb/jukrah/messages/conversations').catch(() => ({ data: { data: [] } })),
+        M.apiAuth.get('/bdb/jukrah/network/users', { params: { search: (qStr || '').trim() || void 0, limit: 18 } }).catch(() => ({ data: { data: [] } }))
+      ]);
+      setConvList(Array.isArray(cRes.data?.data) ? cRes.data.data : []);
+      setDirList(Array.isArray(uRes.data?.data) ? uRes.data.data : []);
+    } catch {} finally {
+      setLoadingContacts(false);
+    }
+  }, []);
+
+  (0, t.useEffect)(() => {
+    if (isOpen && viewMode === 'contacts') {
+      const timer = setTimeout(() => loadContacts(contactSearch), 180);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, viewMode, contactSearch, loadContacts]);
+
   (0, t.useEffect)(() => {
     function handleOpenChat(ev) {
       const target = ev?.detail;
@@ -1408,6 +1513,7 @@ function TacticalMessengerWidget() {
           photo: target.photo || target.photo_url || null
         };
         setActiveTarget(norm);
+        setViewMode('chat');
         setIsOpen(true);
         loadThread(norm);
       } else {
@@ -1419,29 +1525,54 @@ function TacticalMessengerWidget() {
   }, [loadThread]);
 
   (0, t.useEffect)(() => {
-    if (isOpen) {
+    if (isOpen && viewMode === 'chat') {
       loadThread(activeTarget || { id: -1 });
     }
-  }, [isOpen, activeTarget, loadThread]);
+  }, [isOpen, activeTarget, viewMode, loadThread]);
 
   (0, t.useEffect)(() => {
-    if (msgEndRef.current) {
+    if (msgEndRef.current && viewMode === 'chat') {
       msgEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, viewMode]);
 
   const handleSend = async (textToSend) => {
     const text = (textToSend || inputVal || "").trim();
     if (!text || sending) return;
+    if (editingMsg && !textToSend) {
+      setSending(true);
+      try {
+        await M.apiAuth.post(`/bdb/jukrah/messages/${editingMsg.id}/edit`, { content: text });
+        setMessages(prev => prev.map(m => String(m.id) === String(editingMsg.id) ? { ...m, text, is_edited: true } : m));
+        setEditingMsg(null);
+        setInputVal("");
+        if (typeof window !== "undefined" && window.casShowCenterAlert) {
+          window.casShowCenterAlert("Pesan berhasil diperbarui.", "success");
+        }
+        try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
+      } catch {
+        if (typeof window !== "undefined" && window.casShowCenterAlert) {
+          window.casShowCenterAlert("Gagal memperbarui pesan.", "error");
+        }
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
     const tid = activeTarget?.id ?? -1;
     const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const currentReply = replyTo;
+    const tempId = 'temp-' + Date.now();
     setInputVal("");
     setReplyTo(null);
     setSending(true);
-    setMessages(prev => [...prev, { id: 'temp-' + Date.now(), sender: 'me', senderName: 'Anda', text, reply_to: currentReply, time: nowTime }]);
+    setMessages(prev => [...prev, { id: tempId, sender: 'me', senderName: 'Anda', text, is_edited: false, reply_to: currentReply, time: nowTime }]);
     try {
       const res = await M.apiAuth.post('/bdb/jukrah/messages/send', { receiver_id: tid, content: text, reply_to: currentReply });
+      const sentMsg = res.data?.data;
+      if (sentMsg && sentMsg.id) {
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: sentMsg.id } : m));
+      }
       if (res.data?.ai_reply) {
         const aiMsg = res.data.ai_reply;
         setMessages(prev => [...prev, {
@@ -1449,12 +1580,34 @@ function TacticalMessengerWidget() {
           sender: 'them',
           senderName: defaultTarget.name,
           text: aiMsg.content,
+          is_edited: false,
           time: new Date(aiMsg.created_at || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
         }]);
       }
       try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
     } catch {} finally {
       setSending(false);
+    }
+  };
+
+  const handleDeleteQuickMsg = async (msgId) => {
+    if (!msgId) return;
+    try {
+      await M.apiAuth.post(`/bdb/jukrah/messages/${msgId}/delete`, {});
+      setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
+      setConfirmDeleteId(null);
+      if (editingMsg && String(editingMsg.id) === String(msgId)) {
+        setEditingMsg(null);
+        setInputVal("");
+      }
+      if (typeof window !== "undefined" && window.casShowCenterAlert) {
+        window.casShowCenterAlert("Pesan berhasil dihapus.", "success");
+      }
+      try { window.dispatchEvent(new Event('cas-notif-updated')); } catch {}
+    } catch {
+      if (typeof window !== "undefined" && window.casShowCenterAlert) {
+        window.casShowCenterAlert("Gagal menghapus pesan.", "error");
+      }
     }
   };
 
@@ -1466,6 +1619,8 @@ function TacticalMessengerWidget() {
     photo: '/images/default-avatar-polki.png'
   };
 
+  if (isObrolanFullPage) return null;
+
   return (0, a.jsxs)("div",{
     id: "cas-floating-tactical-messenger",
     style: { position: "fixed", bottom: "24px", right: "24px", zIndex: 990, fontFamily: "inherit" },
@@ -1475,10 +1630,10 @@ function TacticalMessengerWidget() {
           position: "absolute",
           bottom: "68px",
           right: "0",
-          width: "385px",
-          height: "520px",
+          width: "395px",
+          height: "540px",
           maxWidth: "92vw",
-          maxHeight: "76vh",
+          maxHeight: "78vh",
           background: "var(--cas-card-bg, #ffffff)",
           border: "1px solid var(--cas-border-strong, rgba(148,163,184,0.35))",
           borderRadius: "12px",
@@ -1491,19 +1646,21 @@ function TacticalMessengerWidget() {
           (0, a.jsxs)("div", {
             style: {
               background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-              padding: "0.75rem 0.95rem",
+              padding: "0.7rem 0.85rem",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: "0.5rem"
+              gap: "0.4rem"
             },
             children: [
               (0, a.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.65rem", minWidth: 0, flex: 1 },
+                onClick: () => setViewMode(v => v === 'contacts' ? 'chat' : 'contacts'),
+                title: "Klik untuk ganti rekan obrolan",
+                style: { display: "flex", alignItems: "center", gap: "0.55rem", minWidth: 0, flex: 1, cursor: "pointer" },
                 children: [
                   (0, a.jsxs)("div", {
-                    style: { position: "relative", width: "38px", height: "38px", borderRadius: "50%", background: "#0f172a", border: "2px solid rgba(255,255,255,0.8)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.85rem", color: "#fff", flexShrink: 0 },
+                    style: { position: "relative", width: "36px", height: "36px", borderRadius: "50%", background: "#0f172a", border: "2px solid rgba(255,255,255,0.8)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "0.82rem", color: "#fff", flexShrink: 0 },
                     children: [
                       defaultTarget.photo ? (0, a.jsx)("img", { src: defaultTarget.photo, alt: "Avatar", onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (defaultTarget.name || 'P').charAt(0).toUpperCase(),
                       (0, a.jsx)("span", { style: { position: "absolute", bottom: "1px", right: "1px", width: "9px", height: "9px", borderRadius: "50%", background: "#22c55e", border: "1.5px solid #fff" } })
@@ -1513,14 +1670,14 @@ function TacticalMessengerWidget() {
                     style: { minWidth: 0 },
                     children: [
                       (0, a.jsxs)("div", {
-                        style: { fontWeight: 800, fontSize: "0.86rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.35rem" },
+                        style: { fontWeight: 800, fontSize: "0.82rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "0.3rem" },
                         children: [
-                          (0, a.jsx)("span", { children: defaultTarget.name || defaultTarget.callsign }),
-                          (0, a.jsx)("span", { style: { fontSize: "0.66rem", background: "rgba(255,255,255,0.2)", padding: "0.08rem 0.38rem", borderRadius: "999px", fontWeight: 700 }, children: "🟢 Aktif" })
+                          (0, a.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis" }, children: defaultTarget.name || defaultTarget.callsign }),
+                          (0, a.jsx)("span", { style: { fontSize: "0.62rem", background: "rgba(255,255,255,0.2)", padding: "0.06rem 0.34rem", borderRadius: "999px", fontWeight: 700, flexShrink: 0 }, children: "🟢 Aktif" })
                         ]
                       }),
                       (0, a.jsx)("div", {
-                        style: { fontSize: "0.7rem", color: "#dbeafe", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                        style: { fontSize: "0.68rem", color: "#dbeafe", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
                         children: `${defaultTarget.callsign || "@personel"} · ${defaultTarget.satker || "Robinopsnal Bareskrim Polri"}`
                       })
                     ]
@@ -1528,22 +1685,29 @@ function TacticalMessengerWidget() {
                 ]
               }),
               (0, a.jsxs)("div", {
-                style: { display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0 },
+                style: { display: "flex", alignItems: "center", gap: "0.3rem", flexShrink: 0 },
                 children: [
                   (0, a.jsx)("button", {
                     type: "button",
-                    title: "Buka di Halaman Penuh Obrolan",
+                    title: viewMode === 'contacts' ? "Kembali ke Percakapan" : "Pilih Rekan / Kontak Personel",
+                    onClick: () => setViewMode(v => v === 'contacts' ? 'chat' : 'contacts'),
+                    style: { background: viewMode === 'contacts' ? "#ffffff" : "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.4)", color: viewMode === 'contacts' ? "#1d4ed8" : "#fff", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 800, whiteSpace: "nowrap" },
+                    children: viewMode === 'contacts' ? "💬 Obrolan" : "👥 Kontak"
+                  }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    title: "Buka di Halaman Penuh Sharese Obrolan",
                     onClick: () => {
                       setIsOpen(false);
                       casNav(router, `/cms/broadcaster?view=obrolan&partner=${defaultTarget.id ?? -1}`);
                     },
-                    style: { background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)", color: "#fff", borderRadius: "8px", padding: "0.26rem 0.55rem", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700, whiteSpace: "nowrap" },
-                    children: "⛶ Buka Penuh"
+                    style: { background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.35)", color: "#fff", borderRadius: "8px", padding: "0.24rem 0.5rem", cursor: "pointer", fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" },
+                    children: "⤢ Layar Penuh"
                   }),
                   (0, a.jsx)("button", {
                     type: "button",
                     onClick: () => setIsOpen(false),
-                    style: { background: "rgba(0,0,0,0.2)", border: "none", color: "#fff", borderRadius: "50%", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700 },
+                    style: { background: "rgba(0,0,0,0.2)", border: "none", color: "#fff", borderRadius: "50%", width: "26px", height: "26px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.82rem", fontWeight: 700 },
                     children: "✕"
                   })
                 ]
@@ -1551,118 +1715,280 @@ function TacticalMessengerWidget() {
             ]
           }),
 
-          (0, a.jsxs)("div", {
-            style: { flex: 1, overflowY: "auto", padding: "0.9rem", display: "flex", flexDirection: "column", gap: "0.55rem", background: "var(--cas-surface-subtle, #f1f5f9)" },
+          viewMode === 'contacts' ? (0, a.jsxs)("div", {
+            style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--cas-card-bg, #ffffff)" },
             children: [
-              messages.map((m, idx) => {
-                if (m.sender === 'system') {
-                  return (0, a.jsx)("div", {
-                    key: m.id || idx,
-                    style: { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: "10px", padding: "0.35rem 0.75rem", fontSize: "0.7rem", color: "var(--cas-text-secondary, #64748b)", textAlign: "center", alignSelf: "center" },
-                    children: m.text
-                  });
-                }
-                const isMe = m.sender === 'me';
-                return (0, a.jsxs)("div", {
-                  key: m.id || idx,
-                  style: { display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" },
-                  children: [
-                    (0, a.jsxs)("div", {
-                      onClick: () => setReplyTo({ id: m.id, sender_name: m.senderName || (isMe ? "Anda" : defaultTarget.name), content: m.text }),
-                      title: "Ketuk untuk membalas pesan ini",
-                      style: {
-                        maxWidth: "82%",
-                        padding: "0.55rem 0.85rem",
-                        borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                        background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-card-bg, #ffffff)",
-                        border: isMe ? "none" : "1px solid var(--cas-border, rgba(148,163,184,0.28))",
-                        color: isMe ? "#fff" : "var(--cas-text-primary, #0f172a)",
-                        fontSize: "0.8rem",
-                        lineHeight: "1.45",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-                        boxShadow: isMe ? "0 2px 6px rgba(37,99,235,0.2)" : "0 1px 2px rgba(0,0,0,0.04)",
-                        cursor: "pointer"
+              (0, a.jsx)("div", {
+                style: { padding: "0.6rem 0.75rem", borderBottom: "1px solid var(--cas-border)" },
+                children: (0, a.jsx)("input", {
+                  type: "text",
+                  autoFocus: true,
+                  value: contactSearch,
+                  onChange: ev => setContactSearch(ev.target.value),
+                  placeholder: "🔍 Cari nama personel, @callsign, atau Satker...",
+                  style: { width: "100%", padding: "0.45rem 0.75rem", borderRadius: "8px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-surface-subtle)", color: "var(--cas-text-primary)", fontSize: "0.78rem", outline: "none", boxSizing: "border-box" }
+                })
+              }),
+              (0, a.jsxs)("div", {
+                style: { flex: 1, overflowY: "auto", padding: "0.45rem 0.6rem", display: "flex", flexDirection: "column", gap: "0.25rem" },
+                children: [
+                  (0, a.jsxs)("div", {
+                    onClick: () => {
+                      const aiNorm = { id: -1, name: 'AI Agen Taktis CAS', callsign: '@ai_taktis_cas', satker: 'Robinopsnal Bareskrim Polri', photo: '/images/default-avatar-polki.png' };
+                      setActiveTarget(aiNorm);
+                      setViewMode('chat');
+                      loadThread(aiNorm);
+                    },
+                    style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.6rem", borderRadius: "10px", cursor: "pointer", background: Number(defaultTarget.id) === -1 ? "rgba(37,99,235,0.12)" : "var(--cas-surface-subtle)", border: "1px solid rgba(37,99,235,0.28)" },
+                    children: [
+                      (0, a.jsx)("img", { src: "/images/default-avatar-polki.png", alt: "AI", style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", border: "1.5px solid #2563eb" } }),
+                      (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                        (0, a.jsx)("div", { style: { fontWeight: 800, fontSize: "0.8rem", color: "var(--cas-text-primary)" }, children: "🤖 AI Agen Taktis CAS" }),
+                        (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "#2563eb", fontWeight: 600 }, children: "@ai_taktis_cas · Asisten Cerdas Bareskrim" })
+                      ]}),
+                      (0, a.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 700, color: "#2563eb" }, children: "Chat ➔" })
+                    ]
+                  }),
+                  loadingContacts ? (0, a.jsx)("div", { style: { padding: "1.2rem", textAlign: "center", fontSize: "0.76rem", color: "var(--cas-text-muted)" }, children: "Memuat daftar rekan personel..." }) : null,
+                  (() => {
+                    const seenIds = new Set([-1]);
+                    const combined = [];
+                    convList.forEach(c => {
+                      const pid = Number(c.partner_id);
+                      if (!seenIds.has(pid)) {
+                        seenIds.add(pid);
+                        combined.push({
+                          id: pid,
+                          name: casFormatHumanName(c.name),
+                          callsign: String(c.handle || "").startsWith("@") ? c.handle : `@${c.handle || "personel"}`,
+                          satker: c.satker || "Polri",
+                          photo: c.photo_url,
+                          sub: c.last_message || c.satker || "Polri",
+                          unread: Number(c.unread_count || 0)
+                        });
+                      }
+                    });
+                    dirList.forEach(u => {
+                      const uid = Number(u.id);
+                      if (!seenIds.has(uid)) {
+                        seenIds.add(uid);
+                        combined.push({
+                          id: uid,
+                          name: casFormatHumanName(u.name),
+                          callsign: `@${u.callsign || u.username || "personel"}`,
+                          satker: u.satker || "Polri",
+                          photo: u.photo_url,
+                          sub: u.satker || "Polri",
+                          unread: 0
+                        });
+                      }
+                    });
+                    const q = contactSearch.trim().toLowerCase();
+                    const filtered = q ? combined.filter(item => item.name.toLowerCase().includes(q) || item.callsign.toLowerCase().includes(q) || item.satker.toLowerCase().includes(q)) : combined;
+                    return filtered.map(item => (0, a.jsxs)("div", {
+                      key: "qcontact_" + item.id,
+                      onClick: () => {
+                        setActiveTarget(item);
+                        setViewMode('chat');
+                        loadThread(item);
                       },
+                      style: { display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.48rem 0.6rem", borderRadius: "10px", cursor: "pointer", background: Number(defaultTarget.id) === Number(item.id) ? "rgba(37,99,235,0.12)" : "transparent", border: Number(defaultTarget.id) === Number(item.id) ? "1px solid rgba(37,99,235,0.3)" : "1px solid transparent" },
                       children: [
-                        m.reply_to && (0, a.jsxs)("div", {
+                        (0, a.jsx)("img", { src: item.photo || "/images/default-avatar-polki.png", alt: item.name, onError: ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; }, style: { width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } }),
+                        (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                          (0, a.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: "0.3rem" }, children: [
+                            (0, a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.78rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.name }),
+                            (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 600 }, children: item.callsign })
+                          ]}),
+                          (0, a.jsx)("div", { style: { fontSize: "0.68rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: item.sub })
+                        ]}),
+                        item.unread > 0 ? (0, a.jsx)("span", { style: { background: "#2563eb", color: "#fff", borderRadius: "999px", padding: "0.08rem 0.42rem", fontSize: "0.64rem", fontWeight: 800 }, children: item.unread }) : (0, a.jsx)("span", { style: { fontSize: "0.66rem", color: "#2563eb", fontWeight: 700 }, children: "Chat" })
+                      ]
+                    }));
+                  })()
+                ]
+              })
+            ]
+          }) : (0, a.jsxs)(a.Fragment, {
+            children: [
+              confirmDeleteId && (0, a.jsxs)("div", {
+                style: { padding: "0.55rem 0.8rem", background: "rgba(239,68,68,0.12)", borderBottom: "1px solid rgba(239,68,68,0.35)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.74rem" },
+                children: [
+                  (0, a.jsx)("span", { style: { fontWeight: 800, color: "#ef4444" }, children: "🗑️ Hapus pesan ini secara permanen?" }),
+                  (0, a.jsxs)("div", { style: { display: "flex", gap: "0.35rem" }, children: [
+                    (0, a.jsx)("button", { type: "button", onClick: () => setConfirmDeleteId(null), style: { padding: "0.22rem 0.55rem", borderRadius: "6px", border: "1px solid var(--cas-border-strong)", background: "var(--cas-card-bg)", color: "var(--cas-text-primary)", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }, children: "Batal" }),
+                    (0, a.jsx)("button", { type: "button", onClick: () => handleDeleteQuickMsg(confirmDeleteId), style: { padding: "0.22rem 0.6rem", borderRadius: "6px", border: "none", background: "#ef4444", color: "#fff", fontSize: "0.7rem", fontWeight: 800, cursor: "pointer" }, children: "Ya, Hapus" })
+                  ]})
+                ]
+              }),
+
+              (0, a.jsxs)("div", {
+                style: { flex: 1, overflowY: "auto", padding: "0.85rem", display: "flex", flexDirection: "column", gap: "0.6rem", background: "var(--cas-surface-subtle, #f1f5f9)" },
+                children: [
+                  messages.map((m, idx) => {
+                    if (m.sender === 'system') {
+                      return (0, a.jsx)("div", {
+                        key: m.id || idx,
+                        style: { background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: "10px", padding: "0.35rem 0.75rem", fontSize: "0.7rem", color: "var(--cas-text-secondary, #64748b)", textAlign: "center", alignSelf: "center" },
+                        children: m.text
+                      });
+                    }
+                    const isMe = m.sender === 'me';
+                    const canModify = isMe && !String(m.id).startsWith('temp-') && !String(m.id).startsWith('sys-');
+                    return (0, a.jsxs)("div", {
+                      key: m.id || idx,
+                      style: { display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" },
+                      children: [
+                        (0, a.jsxs)("div", {
                           style: {
-                            borderLeft: isMe ? "3px solid #93c5fd" : "3px solid #2563eb",
-                            background: isMe ? "rgba(255,255,255,0.14)" : "var(--cas-surface-subtle, rgba(148,163,184,0.12))",
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "6px",
-                            marginBottom: "0.35rem",
-                            fontSize: "0.7rem"
+                            maxWidth: "85%",
+                            padding: "0.52rem 0.8rem",
+                            borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                            background: isMe ? "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)" : "var(--cas-card-bg, #ffffff)",
+                            border: isMe ? "none" : "1px solid var(--cas-border, rgba(148,163,184,0.28))",
+                            color: isMe ? "#fff" : "var(--cas-text-primary, #0f172a)",
+                            fontSize: "0.8rem",
+                            lineHeight: "1.45",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            boxShadow: isMe ? "0 2px 6px rgba(37,99,235,0.2)" : "0 1px 2px rgba(0,0,0,0.04)"
                           },
                           children: [
-                            (0, a.jsx)("div", { style: { fontWeight: 700, opacity: 0.9 }, children: m.reply_to.sender_name || "Kutipan" }),
-                            (0, a.jsx)("div", { style: { opacity: 0.85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: m.reply_to.content })
+                            m.reply_to && (0, a.jsxs)("div", {
+                              style: {
+                                borderLeft: isMe ? "3px solid #93c5fd" : "3px solid #2563eb",
+                                background: isMe ? "rgba(255,255,255,0.14)" : "var(--cas-surface-subtle, rgba(148,163,184,0.12))",
+                                padding: "0.25rem 0.5rem",
+                                borderRadius: "6px",
+                                marginBottom: "0.35rem",
+                                fontSize: "0.7rem"
+                              },
+                              children: [
+                                (0, a.jsx)("div", { style: { fontWeight: 700, opacity: 0.9 }, children: m.reply_to.sender_name || "Kutipan" }),
+                                (0, a.jsx)("div", { style: { opacity: 0.85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: m.reply_to.content })
+                              ]
+                            }),
+                            (0, a.jsx)("div", { children: m.text }),
+                            (0, a.jsxs)("div", {
+                              style: { fontSize: "0.63rem", color: isMe ? "rgba(255,255,255,0.78)" : "var(--cas-text-muted, #64748b)", marginTop: "0.2rem", display: "flex", justifyContent: "flex-end", gap: "0.25rem", alignItems: "center" },
+                              children: [
+                                m.is_edited && (0, a.jsx)("span", { style: { fontStyle: "italic", opacity: 0.9 }, children: "(diedit)" }),
+                                m.time,
+                                isMe && (0, a.jsx)("span", { style: { color: "#93c5fd", fontWeight: 800 }, children: "✓✓" })
+                              ]
+                            })
                           ]
                         }),
-                        (0, a.jsx)("div", { children: m.text }),
                         (0, a.jsxs)("div", {
-                          style: { fontSize: "0.64rem", color: isMe ? "rgba(255,255,255,0.78)" : "var(--cas-text-muted, #64748b)", marginTop: "0.2rem", display: "flex", justifyContent: "flex-end", gap: "0.25rem", alignItems: "center" },
+                          style: { display: "flex", alignItems: "center", gap: "0.2rem", marginTop: "0.18rem", flexWrap: "wrap" },
                           children: [
-                            m.time,
-                            isMe && (0, a.jsx)("span", { style: { color: "#93c5fd", fontWeight: 800 }, children: "✓✓" })
+                            (0, a.jsx)("button", {
+                              type: "button",
+                              onClick: () => setReplyTo({ id: m.id, sender_name: m.senderName || (isMe ? "Anda" : defaultTarget.name), content: m.text }),
+                              style: { background: "none", border: "none", color: "#2563eb", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
+                              children: "↩️ Balas"
+                            }),
+                            (0, a.jsx)("button", {
+                              type: "button",
+                              onClick: () => {
+                                try { navigator?.clipboard?.writeText(String(m.text || "")); } catch {}
+                                if (typeof window !== "undefined" && window.casShowCenterAlert) {
+                                  window.casShowCenterAlert("Pesan disalin ke papan klip", "success");
+                                }
+                              },
+                              style: { background: "none", border: "none", color: "var(--cas-text-muted, #64748b)", fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", padding: "0.1rem 0.28rem" },
+                              children: "📋 Salin"
+                            }),
+                            canModify && (0, a.jsx)("button", {
+                              type: "button",
+                              onClick: () => {
+                                setEditingMsg({ id: m.id, text: m.text });
+                                setInputVal(m.text);
+                                setReplyTo(null);
+                              },
+                              style: { background: "none", border: "none", color: "#d97706", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
+                              children: "✏️ Edit"
+                            }),
+                            (canModify || Number(defaultTarget.id) === -1) && !String(m.id).startsWith('sys-') && (0, a.jsx)("button", {
+                              type: "button",
+                              onClick: () => setConfirmDeleteId(m.id),
+                              style: { background: "none", border: "none", color: "#ef4444", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", padding: "0.1rem 0.28rem" },
+                              children: "🗑️ Hapus"
+                            })
                           ]
                         })
                       ]
-                    })
-                  ]
-                });
+                    });
+                  }),
+                  (0, a.jsx)("div", { ref: msgEndRef })
+                ]
               }),
-              (0, a.jsx)("div", { ref: msgEndRef })
-            ]
-          }),
 
-          replyTo && (0, a.jsxs)("div", {
-            style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", padding: "0.4rem 0.75rem", background: "var(--cas-surface-subtle)", borderTop: "1px solid var(--cas-border)", borderLeft: "3px solid #2563eb", fontSize: "0.72rem" },
-            children: [
-              (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
-                (0, a.jsx)("div", { style: { fontWeight: 800, color: "#2563eb" }, children: `Membalas ${replyTo.sender_name}` }),
-                (0, a.jsx)("div", { style: { color: "var(--cas-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: replyTo.content })
-              ]}),
-              (0, a.jsx)("button", { type: "button", onClick: () => setReplyTo(null), style: { background: "none", border: "none", color: "var(--cas-text-muted)", cursor: "pointer", fontWeight: 800, fontSize: "0.9rem" }, children: "×" })
-            ]
-          }),
-
-          (0, a.jsx)("div", {
-            style: { display: "flex", gap: "0.35rem", padding: "0.4rem 0.65rem", background: "var(--cas-card-bg)", overflowX: "auto", borderTop: "1px solid var(--cas-border)" },
-            children: (defaultTarget.id === -1 ? [
-              { label: "⚖️ KUHP Baru", text: "Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi." },
-              { label: "🔄 Panduan DORS", text: "Bagaimana tahapan sinkronisasi data LP dari DORS?" },
-              { label: "📋 Koordinasi Selra", text: "Mohon koordinasi progres penyelesaian perkara (Selra)." }
-            ] : [
-              { label: "👍 Siap, ditindaklanjuti", text: "👍 Siap, segera kami tindaklanjuti." },
-              { label: "🙏 Terima kasih infonya", text: "🙏 Terima kasih atas informasinya, Rekan." },
-              { label: "🫡 Siap Komandan", text: "🫡 Siap Komandan, arahan dimonitor." }
-            ]).map((chip, idx) => (0, a.jsx)("button", {
-              key: idx,
-              type: "button",
-              onClick: () => handleSend(chip.text),
-              style: { background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "999px", color: "#2563eb", padding: "0.22rem 0.55rem", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
-              children: chip.label
-            }))
-          }),
-
-          (0, a.jsxs)("div", {
-            style: { padding: "0.55rem 0.75rem", background: "var(--cas-card-bg)", borderTop: "1px solid var(--cas-border)", display: "flex", gap: "0.45rem", alignItems: "center" },
-            children: [
-              (0, a.jsx)("input", {
-                type: "text",
-                value: inputVal,
-                onChange: ev => setInputVal(ev.target.value),
-                onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
-                placeholder: "Tulis pesan... (Enter untuk kirim)",
-                style: { flex: 1, background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "10px", padding: "0.48rem 0.85rem", color: "var(--cas-text-primary)", fontSize: "0.82rem", outline: "none" }
+              editingMsg && (0, a.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", padding: "0.4rem 0.75rem", background: "rgba(245,158,11,0.12)", borderTop: "1px solid rgba(245,158,11,0.35)", borderLeft: "3px solid #f59e0b", fontSize: "0.72rem" },
+                children: [
+                  (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                    (0, a.jsx)("div", { style: { fontWeight: 800, color: "#d97706" }, children: "✏️ Mode Edit Pesan" }),
+                    (0, a.jsx)("div", { style: { color: "var(--cas-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: editingMsg.text })
+                  ]}),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    onClick: () => { setEditingMsg(null); setInputVal(""); },
+                    style: { background: "none", border: "none", color: "#d97706", cursor: "pointer", fontWeight: 800, fontSize: "0.74rem" },
+                    children: "Batal"
+                  })
+                ]
               }),
-              (0, a.jsx)("button", {
-                type: "button",
-                disabled: sending,
-                onClick: () => handleSend(),
-                style: { width: "36px", height: "36px", borderRadius: "50%", background: "#2563eb", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.35)" },
-                children: (0, a.jsx)("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "22", y1: "2", x2: "11", y2: "13" }), (0, a.jsx)("polygon", { points: "22 2 15 22 11 13 2 9 22 2" })] })
+
+              replyTo && (0, a.jsxs)("div", {
+                style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", padding: "0.4rem 0.75rem", background: "var(--cas-surface-subtle)", borderTop: "1px solid var(--cas-border)", borderLeft: "3px solid #2563eb", fontSize: "0.72rem" },
+                children: [
+                  (0, a.jsxs)("div", { style: { minWidth: 0, flex: 1 }, children: [
+                    (0, a.jsx)("div", { style: { fontWeight: 800, color: "#2563eb" }, children: `Membalas ${replyTo.sender_name}` }),
+                    (0, a.jsx)("div", { style: { color: "var(--cas-text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: replyTo.content })
+                  ]}),
+                  (0, a.jsx)("button", { type: "button", onClick: () => setReplyTo(null), style: { background: "none", border: "none", color: "var(--cas-text-muted)", cursor: "pointer", fontWeight: 800, fontSize: "0.9rem" }, children: "×" })
+                ]
+              }),
+
+              (0, a.jsx)("div", {
+                style: { display: "flex", gap: "0.35rem", padding: "0.4rem 0.65rem", background: "var(--cas-card-bg)", overflowX: "auto", borderTop: "1px solid var(--cas-border)" },
+                children: (defaultTarget.id === -1 ? [
+                  { label: "⚖️ KUHP Baru", text: "Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi." },
+                  { label: "🔄 Panduan DORS", text: "Bagaimana tahapan sinkronisasi data LP dari DORS?" },
+                  { label: "📋 Koordinasi Selra", text: "Mohon koordinasi progres penyelesaian perkara (Selra)." }
+                ] : [
+                  { label: "👍 Siap, ditindaklanjuti", text: "👍 Siap, segera kami tindaklanjuti." },
+                  { label: "🙏 Terima kasih infonya", text: "🙏 Terima kasih atas informasinya, Rekan." },
+                  { label: "🫡 Siap Komandan", text: "🫡 Siap Komandan, arahan dimonitor." }
+                ]).map((chip, idx) => (0, a.jsx)("button", {
+                  key: idx,
+                  type: "button",
+                  onClick: () => handleSend(chip.text),
+                  style: { background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "999px", color: "#2563eb", padding: "0.22rem 0.55rem", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
+                  children: chip.label
+                }))
+              }),
+
+              (0, a.jsxs)("div", {
+                style: { padding: "0.55rem 0.75rem", background: "var(--cas-card-bg)", borderTop: "1px solid var(--cas-border)", display: "flex", gap: "0.45rem", alignItems: "center" },
+                children: [
+                  (0, a.jsx)("input", {
+                    type: "text",
+                    value: inputVal,
+                    onChange: ev => setInputVal(ev.target.value),
+                    onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
+                    placeholder: editingMsg ? "Edit isi pesan... (Enter untuk simpan)" : "Tulis pesan... (Enter untuk kirim)",
+                    style: { flex: 1, background: "var(--cas-surface-subtle)", border: editingMsg ? "1.5px solid #f59e0b" : "1px solid var(--cas-border-strong)", borderRadius: "10px", padding: "0.48rem 0.85rem", color: "var(--cas-text-primary)", fontSize: "0.82rem", outline: "none" }
+                  }),
+                  (0, a.jsx)("button", {
+                    type: "button",
+                    disabled: sending,
+                    onClick: () => handleSend(),
+                    style: { width: "36px", height: "36px", borderRadius: "50%", background: editingMsg ? "#f59e0b" : "#2563eb", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.35)" },
+                    children: (0, a.jsx)("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "22", y1: "2", x2: "11", y2: "13" }), (0, a.jsx)("polygon", { points: "22 2 15 22 11 13 2 9 22 2" })] })
+                  })
+                ]
               })
             ]
           })
@@ -1764,6 +2090,8 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const[newMsgModalOpen,setNewMsgModalOpen]=(0,t.useState)(!1);
   const[newMsgSearch,setNewMsgSearch]=(0,t.useState)("");
   const[newMsgUsers,setNewMsgUsers]=(0,t.useState)([]);
+  const[editingMessage,setEditingMessage]=(0,t.useState)(null);
+  const[deletingMessage,setDeletingMessage]=(0,t.useState)(null);
   const[isMobileView,setIsMobileView]=(0,t.useState)(typeof window!=="undefined"?window.innerWidth<768:!1);
   const[mobileShowThread,setMobileShowThread]=(0,t.useState)(Boolean(sp.get("partner")));
   const endRef=(0,t.useRef)(null);
@@ -1851,6 +2179,25 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const sendMessage=async(customText)=>{
     const txt=(customText!==void 0?customText:msgText).trim();
     if((!txt&&!attachedFile)||sending)return;
+    if(editingMessage&&customText===void 0){
+      setSending(!0);
+      try{
+        await M.apiAuth.post(`/bdb/jukrah/messages/${editingMessage.id}/edit`,{content:txt});
+        setMessages(prev=>prev.map(item=>Number(item.id)===Number(editingMessage.id)?{...item,content:txt,is_edited:!0}:item));
+        fetchConvs();
+        setEditingMessage(null);
+        setMsgText("");
+        if(typeof window!=="undefined"&&window.casShowCenterAlert){
+          window.casShowCenterAlert("✓ Pesan berhasil diperbarui","success");
+        }
+        try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+      }catch{
+        if(typeof window!=="undefined"&&window.casShowCenterAlert){
+          window.casShowCenterAlert("Gagal memperbarui pesan","error");
+        }
+      }finally{setSending(!1);}
+      return;
+    }
     setSending(!0);
     const currentReply=replyToMessage;
     const currentFile=attachedFile;
@@ -1879,6 +2226,30 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     }catch{}finally{setSending(!1);}
   };
 
+  const handleConfirmDeleteMessage=async()=>{
+    if(!deletingMessage)return;
+    const targetId=deletingMessage.id;
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/messages/${targetId}/delete`,{});
+      setMessages(prev=>prev.filter(item=>Number(item.id)!==Number(targetId)));
+      if(editingMessage&&Number(editingMessage.id)===Number(targetId)){
+        setEditingMessage(null);
+        setMsgText("");
+      }
+      fetchConvs();
+      setDeletingMessage(null);
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("🗑️ Pesan berhasil dihapus","success");
+      }
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+    }catch{
+      setDeletingMessage(null);
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("Gagal menghapus pesan","error");
+      }
+    }
+  };
+
   const toggleBubbleReaction=(msgId,emoji)=>{
     setLocalReactions(prev=>{
       const cur=prev[msgId]||{};
@@ -1888,6 +2259,9 @@ function CasObrolanFullPage({user:curUser,searchStr}){
       else delete updated[emoji];
       return{...prev,[msgId]:updated};
     });
+    if(msgId){
+      M.apiAuth.post(`/bdb/jukrah/messages/${msgId}/reaction`,{emoji}).catch(()=>{});
+    }
   };
 
   const handleCopyMessage=(text)=>{
@@ -1895,8 +2269,12 @@ function CasObrolanFullPage({user:curUser,searchStr}){
       if(navigator?.clipboard?.writeText){
         navigator.clipboard.writeText(String(text||""));
       }
-      setCopyToast("✓ Pesan disalin ke papan klip");
-      setTimeout(()=>setCopyToast(""),2200);
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("✓ Pesan disalin ke papan klip","success");
+      }else{
+        setCopyToast("✓ Pesan disalin ke papan klip");
+        setTimeout(()=>setCopyToast(""),2200);
+      }
     }catch{}
   };
 
@@ -1911,10 +2289,15 @@ function CasObrolanFullPage({user:curUser,searchStr}){
     ev.target.value="";
   };
 
+  const activeChattedCount=convs.filter(x=>{
+    const l=String(x.last_message||"").trim();
+    return!x.is_ai&&l&&!/Terhubung di Jejaring Sharese|Ketuk untuk memulai obrolan/i.test(l);
+  }).length;
+
   const filteredConvs=convs.filter(c=>{
     const lm=String(c.last_message||"").trim();
     const isUnchattedPlaceholder=!lm||/Terhubung di Jejaring Sharese|Ketuk untuk memulai obrolan/i.test(lm);
-    if(!c.is_ai&&Number(c.partner_id)!==Number(selectedId)&&isUnchattedPlaceholder)return!1;
+    if(!c.is_ai&&Number(c.partner_id)!==Number(selectedId)&&isUnchattedPlaceholder&&activeChattedCount>8&&!searchQ.trim())return!1;
     if(convFilter==="unread"&&!(Number(c.unread_count||0)>0))return!1;
     if(convFilter==="satker"&&!c.is_same_satker&&!c.is_ai)return!1;
     if(convFilter==="resmi"&&!c.is_official&&!c.is_ai)return!1;
@@ -1954,7 +2337,36 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const emojiList=["👍","❤️","🙏","🫡","✅","🔥","👏","🤝","📄","📌","⚠️","😊","😂","🎉","💬","🔍"];
 
   return(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem",position:"relative"},children:[
-    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",bottom:"28px",left:"50%",transform:"translateX(-50%)",zIndex:10000,background:"#0f172a",color:"#fff",padding:"0.5rem 1.1rem",borderRadius:10,fontSize:"0.78rem",fontWeight:700,boxShadow:"0 8px 24px rgba(0,0,0,0.3)",border:"1px solid rgba(56,189,248,0.4)"},children:copyToast}),
+    copyToast&&(0,a.jsx)("div",{style:{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%, -50%)",zIndex:100010,background:"rgba(15,23,42,0.95)",color:"#fff",padding:"0.85rem 1.4rem",borderRadius:16,fontSize:"0.85rem",fontWeight:800,boxShadow:"0 24px 60px rgba(0,0,0,0.45)",border:"1.5px solid rgba(16,185,129,0.5)"},children:copyToast}),
+
+    deletingMessage&&(0,a.jsx)("div",{
+      onClick:()=>setDeletingMessage(null),
+      style:{position:"fixed",inset:0,zIndex:100008,background:"rgba(15,23,42,0.65)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"},
+      children:(0,a.jsxs)("div",{
+        onClick:e=>e.stopPropagation(),
+        style:{width:"100%",maxWidth:"410px",background:"var(--cas-card-bg, #0f172a)",border:"1.5px solid rgba(239,68,68,0.45)",borderRadius:16,padding:"1.35rem 1.4rem",boxShadow:"0 24px 64px rgba(0,0,0,0.45)",textAlign:"center",display:"flex",flexDirection:"column",gap:"0.75rem"},
+        children:[
+          (0,a.jsx)("div",{style:{width:52,height:52,margin:"0 auto",borderRadius:"50%",background:"rgba(239,68,68,0.14)",border:"1.5px solid rgba(239,68,68,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.45rem"},children:"🗑️"}),
+          (0,a.jsx)("div",{style:{fontWeight:800,fontSize:"1.05rem",color:"var(--cas-text-primary)"},children:"Hapus Pesan?"}),
+          (0,a.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--cas-text-secondary)",lineHeight:1.5},children:"Apakah Anda yakin ingin menghapus pesan ini secara permanen?"}),
+          (0,a.jsx)("div",{style:{padding:"0.5rem 0.75rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",fontSize:"0.76rem",color:"var(--cas-text-muted)",fontStyle:"italic",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`"${String(deletingMessage.content||"").slice(0,90)}"`}),
+          (0,a.jsxs)("div",{style:{display:"flex",gap:"0.6rem",marginTop:"0.3rem"},children:[
+            (0,a.jsx)("button",{
+              type:"button",
+              onClick:()=>setDeletingMessage(null),
+              style:{flex:1,padding:"0.55rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontWeight:700,fontSize:"0.8rem",cursor:"pointer"},
+              children:"Batal"
+            }),
+            (0,a.jsx)("button",{
+              type:"button",
+              onClick:handleConfirmDeleteMessage,
+              style:{flex:1,padding:"0.55rem 0.9rem",borderRadius:10,border:"none",background:"linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",color:"#ffffff",fontWeight:800,fontSize:"0.8rem",cursor:"pointer",boxShadow:"0 6px 18px rgba(239,68,68,0.35)"},
+              children:"🗑️ Ya, Hapus Pesan"
+            })
+          ]})
+        ]
+      })
+    }),
 
     newMsgModalOpen&&(0,a.jsx)("div",{
       onClick:()=>setNewMsgModalOpen(!1),
@@ -2038,7 +2450,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   type:"button",
                   onClick:()=>setNewMsgModalOpen(!0),
                   style:{padding:"0.38rem 0.75rem",borderRadius:10,border:"1px solid rgba(37,99,235,0.35)",background:"rgba(37,99,235,0.1)",color:"#2563eb",fontWeight:700,fontSize:"0.75rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
-                  children:"✎ Pesan Baru"
+                  children:"➕ Mulai Obrolan Baru"
                 })
               ]}),
               (0,a.jsx)("input",{
@@ -2456,13 +2868,14 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                       color:isMine?"rgba(255,255,255,0.78)":"var(--cas-text-muted)"
                                     },
                                     children:[
+                                      m.is_edited&&(0,a.jsx)("span",{style:{fontStyle:"italic",opacity:0.92},children:"(diedit)"}),
                                       (0,a.jsx)("span",{children:timeStr}),
                                       isMine&&(0,a.jsx)("span",{style:{color:"#93c5fd",fontWeight:800},children:"✓✓"})
                                     ]
                                   })
                                 ]
                               }),
-                              isHovered&&(0,a.jsxs)("div",{
+                              isHovered&&(0,a.jsx)("div",{
                                 style:{
                                   display:"inline-flex",
                                   alignItems:"center",
@@ -2474,37 +2887,74 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                   boxShadow:"0 4px 12px rgba(0,0,0,0.08)",
                                   flexShrink:0
                                 },
-                                children:[
-                                  ["👍","❤️","🙏","🔥","✅"].map(em=>(0,a.jsx)("button",{
-                                    key:em,
-                                    type:"button",
-                                    onClick:()=>toggleBubbleReaction(m.id,em),
-                                    title:`Beri reaksi ${em}`,
-                                    style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.8rem",padding:"0.1rem 0.2rem"},
-                                    children:em
-                                  })),
-                                  (0,a.jsx)("button",{
-                                    type:"button",
-                                    onClick:()=>{
-                                      setReplyToMessage({
-                                        id:m.id,
-                                        sender_name:isMine?"Anda":(m.sender_name||activePartner.name),
-                                        content:m.content
-                                      });
-                                      msgInputRef.current?.focus();
-                                    },
-                                    title:"Balas pesan ini",
-                                    style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.72rem",fontWeight:700,color:"#2563eb",padding:"0.1rem 0.3rem"},
-                                    children:"↩️ Balas"
-                                  }),
-                                  (0,a.jsx)("button",{
-                                    type:"button",
-                                    onClick:()=>handleCopyMessage(m.content),
-                                    title:"Salin teks pesan",
-                                    style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.72rem",color:"var(--cas-text-secondary)",padding:"0.1rem 0.25rem"},
-                                    children:"📋 Salin"
-                                  })
-                                ]
+                                children:["👍","❤️","🙏","🔥","✅"].map(em=>(0,a.jsx)("button",{
+                                  key:em,
+                                  type:"button",
+                                  onClick:()=>toggleBubbleReaction(m.id,em),
+                                  title:`Beri reaksi ${em}`,
+                                  style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.8rem",padding:"0.1rem 0.2rem"},
+                                  children:em
+                                }))
+                              })
+                            ]
+                          }),
+                          (0,a.jsxs)("div",{
+                            style:{
+                              display:"flex",
+                              alignItems:"center",
+                              gap:"0.25rem",
+                              marginTop:"0.22rem",
+                              marginLeft:isMine?0:"2.2rem",
+                              flexWrap:"wrap"
+                            },
+                            children:[
+                              (0,a.jsx)("button",{
+                                type:"button",
+                                onClick:()=>toggleBubbleReaction(m.id,"👍"),
+                                title:"Beri reaksi 👍",
+                                style:{background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:999,cursor:"pointer",fontSize:"0.7rem",padding:"0.12rem 0.42rem",color:"var(--cas-text-secondary)"},
+                                children:"👍"
+                              }),
+                              (0,a.jsx)("button",{
+                                type:"button",
+                                onClick:()=>{
+                                  setReplyToMessage({
+                                    id:m.id,
+                                    sender_name:isMine?"Anda":(m.sender_name||activePartner.name),
+                                    content:m.content
+                                  });
+                                  setEditingMessage(null);
+                                  msgInputRef.current?.focus();
+                                },
+                                title:"Balas pesan ini",
+                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#2563eb",padding:"0.1rem 0.3rem"},
+                                children:"↩️ Balas"
+                              }),
+                              (0,a.jsx)("button",{
+                                type:"button",
+                                onClick:()=>handleCopyMessage(m.content),
+                                title:"Salin teks pesan",
+                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:600,color:"var(--cas-text-secondary)",padding:"0.1rem 0.3rem"},
+                                children:"📋 Salin"
+                              }),
+                              isMine&&(0,a.jsx)("button",{
+                                type:"button",
+                                onClick:()=>{
+                                  setEditingMessage(m);
+                                  setMsgText(m.content||"");
+                                  setReplyToMessage(null);
+                                  msgInputRef.current?.focus();
+                                },
+                                title:"Edit pesan Anda",
+                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#d97706",padding:"0.1rem 0.3rem"},
+                                children:"✏️ Edit"
+                              }),
+                              (isMine||selectedId===-1||m.is_ai||Number(m.sender_id)===-1)&&(0,a.jsx)("button",{
+                                type:"button",
+                                onClick:()=>setDeletingMessage(m),
+                                title:"Hapus pesan ini",
+                                style:{background:"none",border:"none",cursor:"pointer",fontSize:"0.71rem",fontWeight:700,color:"#ef4444",padding:"0.1rem 0.3rem"},
+                                children:"🗑️ Hapus"
                               })
                             ]
                           }),
@@ -2580,6 +3030,31 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                 ]
               })
             ]}),
+
+            editingMessage&&(0,a.jsxs)("div",{
+              style:{
+                padding:"0.5rem 1.1rem",
+                background:"rgba(245,158,11,0.12)",
+                borderTop:"1px solid rgba(245,158,11,0.35)",
+                borderLeft:"3px solid #f59e0b",
+                display:"flex",
+                alignItems:"center",
+                justifyContent:"space-between",
+                gap:"0.75rem"
+              },
+              children:[
+                (0,a.jsxs)("div",{style:{minWidth:0,flex:1},children:[
+                  (0,a.jsx)("div",{style:{fontSize:"0.74rem",fontWeight:800,color:"#d97706"},children:"✏️ Mengedit pesan Anda:"}),
+                  (0,a.jsx)("div",{style:{fontSize:"0.76rem",color:"var(--cas-text-secondary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:`«${editingMessage.content}»`})
+                ]}),
+                (0,a.jsx)("button",{
+                  type:"button",
+                  onClick:()=>{setEditingMessage(null);setMsgText("");},
+                  style:{background:"rgba(245,158,11,0.16)",border:"1px solid rgba(245,158,11,0.4)",borderRadius:8,padding:"0.22rem 0.65rem",color:"#d97706",cursor:"pointer",fontSize:"0.74rem",fontWeight:800},
+                  children:"Batal Edit"
+                })
+              ]
+            }),
 
             replyToMessage&&(0,a.jsxs)("div",{
               style:{
@@ -3180,7 +3655,27 @@ function CasNotifikasiFullPage({user:curUser}){
       setItems(prev=>prev.map(it=>({...it,is_read:!0})));
       setUnreadDinas(0);setUnreadSocial(0);
       try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("Semua notifikasi telah ditandai dibaca","success");
+      }
     }catch{}
+  };
+
+  const handleDeleteNotif=async(ev,it)=>{
+    if(ev)ev.stopPropagation();
+    if(!it||!it.id)return;
+    try{
+      await M.apiAuth.post(`/bdb/jukrah/notifications/${it.id}/delete`,{});
+      setItems(prev=>prev.filter(x=>String(x.id)!==String(it.id)));
+      try{window.dispatchEvent(new Event("cas-notif-updated"))}catch{}
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("Notifikasi berhasil dihapus","success");
+      }
+    }catch{
+      if(typeof window!=="undefined"&&window.casShowCenterAlert){
+        window.casShowCenterAlert("Gagal menghapus notifikasi","error");
+      }
+    }
   };
 
   const handleClickItem=async(it)=>{
@@ -3407,7 +3902,7 @@ function CasNotifikasiFullPage({user:curUser}){
                   })
                 ]})
               ]}),
-              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.65rem",flexShrink:0},children:[
+              (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexShrink:0},children:[
                 !it.is_read&&(0,a.jsx)("span",{
                   title:"Belum dibaca",
                   style:{width:8,height:8,borderRadius:"50%",background:"#2563eb",display:"inline-block"}
@@ -3422,6 +3917,25 @@ function CasNotifikasiFullPage({user:curUser}){
                     background:"rgba(37,99,235,0.08)"
                   },
                   children:it.type==="message"?"Balas 💬":it.type==="follow"?"Koneksi 🤝":"Lihat ➔"
+                }),
+                (0,a.jsx)("button",{
+                  type:"button",
+                  title:"Hapus notifikasi ini",
+                  onClick:ev=>handleDeleteNotif(ev,it),
+                  style:{
+                    padding:"0.3rem 0.55rem",
+                    borderRadius:8,
+                    border:"1px solid rgba(239,68,68,0.3)",
+                    background:"rgba(239,68,68,0.08)",
+                    color:"#ef4444",
+                    fontSize:"0.72rem",
+                    fontWeight:700,
+                    cursor:"pointer",
+                    display:"inline-flex",
+                    alignItems:"center",
+                    gap:"0.25rem"
+                  },
+                  children:"🗑️ Hapus"
                 })
               ]})
             ]

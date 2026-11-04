@@ -7413,10 +7413,71 @@ body:has(.p-dialog-mask) #cas-floating-tactical-messenger {
   display: none !important;
 }
 
-.p-toast.p-toast-top-right {
-  top: calc(var(--cms-header-h, 100px) + 0.5rem) !important;
-  right: 0.75rem !important;
-  max-width: calc(100vw - 1.5rem) !important;
+/* Universal Centered Alert & Toast HUD System */
+@keyframes casCenterAlertPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.p-toast,
+.p-toast.p-toast-top-right,
+.p-toast.p-toast-top-center,
+.p-toast.p-toast-bottom-right,
+.p-toast.p-toast-bottom-center,
+.p-toast.p-toast-center {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 100005 !important;
+  width: min(92vw, 440px) !important;
+  max-width: 440px !important;
+  pointer-events: none !important;
+}
+
+.p-toast .p-toast-message {
+  pointer-events: auto !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(56, 189, 248, 0.22) !important;
+  animation: casCenterAlertPop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+
+.cas-center-alert-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 100010 !important;
+  pointer-events: none !important;
+  padding: 1rem !important;
+}
+
+.cas-center-alert-box {
+  pointer-events: auto !important;
+  width: min(92vw, 420px) !important;
+  max-width: 420px !important;
+  border-radius: 18px !important;
+  padding: 1.25rem 1.35rem !important;
+  backdrop-filter: blur(20px) saturate(165%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(165%) !important;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.52), 0 0 0 1px rgba(148, 163, 184, 0.2) !important;
+  animation: casCenterAlertPop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 0.55rem !important;
 }
 
 @media (max-width: 768px) {
