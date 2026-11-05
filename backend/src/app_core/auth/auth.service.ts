@@ -1744,8 +1744,8 @@ export class AuthService {
     private getRPInfo() {
         return {
             rpName: 'CAS Bareskrim Polri',
-            rpID: 'cas.bareskrim.polri.go.id',
-            expectedOrigin: 'https://cas.bareskrim.polri.go.id'
+            rpID: process.env.WEBAUTHN_RP_ID || 'localhost',
+            expectedOrigin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000'
         };
     }
 

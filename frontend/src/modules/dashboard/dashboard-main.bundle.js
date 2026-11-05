@@ -8125,7 +8125,7 @@ children:[
       (0,t.jsx)("div",{
         style:{display:"flex",flexDirection:"column",gap:"0.4rem"},
         children:casFeed.slice(0, 5).map(item => {
-          let isUserOne = String(item.author_id) === '1' || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yudi', 'yud08', 'nyoman', 'nyomannnn'].includes(String(item.author_username || '').toLowerCase()) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yudi', 'yud08', 'nyoman', 'nyomannnn'].includes(String(item.author_callsign || '').toLowerCase().replace(/^@/, ''));
+          let isUserOne = String(item.author_id) === '1' || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(item.author_username || '').toLowerCase()) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(item.author_callsign || '').toLowerCase().replace(/^@/, ''));
           let isSuper = isUserOne || String(item.author_role || '').toLowerCase() === 'superadmin';
           let roleStr = String(item.author_role || '').toLowerCase();
           let callsign = (function() {

@@ -33,10 +33,10 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
 
 PORT = 3860
-DOCS_DIR = "/var/www/cas_docs"
+DOCS_DIR = os.environ.get("CAS_DOCS_DIR", "/opt/bdb-docs")
 DB_PATH = os.path.join(DOCS_DIR, "cas_documents.db")
 TEMPLATE_PATH = os.path.join(DOCS_DIR, "TEMPLATE_LAPORAN_PERIODIK_BARESKRIM.docx")
-BASE_URL = "https://cas.bareskrim.polri.go.id"
+BASE_URL = os.environ.get("CAS_BASE_URL", "http://localhost:3000")
 CAS_BE_URL = os.environ.get("CAS_BE_URL", "http://127.0.0.1:3850")
 ONLYOFFICE_INTERNAL_URL = "http://127.0.0.1:8088"
 CAS_BE_JWT_SECRET = os.environ.get("CAS_BE_JWT_SECRET", "")

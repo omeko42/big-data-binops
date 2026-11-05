@@ -1,5 +1,5 @@
 server {
-    server_name api-cas.bareskrim.polri.go.id;
+    server_name api.example.go.id;
 
     # CAS upload: 1 MB per file di aplikasi; ruang proxy untuk multipart multi-file.
     client_max_body_size 24m;
@@ -37,7 +37,7 @@ server {
         proxy_hide_header 'Access-Control-Allow-Headers';
 
         set $cors_origin "";
-        if ($http_origin ~* "^https?://(cas\.bareskrim\.polri\.go\.id|localhost|127\.0\.0\.1)(:[0-9]+)?$") {
+        if ($http_origin ~* "^https?://(app\.example\.go\.id|localhost|127\.0\.0\.1)(:[0-9]+)?$") {
             set $cors_origin $http_origin;
         }
 
@@ -81,18 +81,18 @@ server {
 
     listen 443 ssl;
     ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/star_passless_bareskrim.key;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305';
     ssl_prefer_server_ciphers on;
 }
 
 server {
-    if ($host = api-cas.bareskrim.polri.go.id) {
+    if ($host = api.example.go.id) {
         return 301 https://$host$request_uri;
     }
 
     listen 80;
-    server_name "api-cas.bareskrim.polri.go.id";
+    server_name "api.example.go.id";
     return 404;
 }

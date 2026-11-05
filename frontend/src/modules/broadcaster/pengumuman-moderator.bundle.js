@@ -105,7 +105,7 @@ e.s(["default", 0, function() {
     var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'];
     var uNorm = String(item?.author_username || item?.author_callsign || item?.author_handle || '').toLowerCase().trim().replace(/^@/, '');
     var rNorm = String(item?.author_role || '').toLowerCase().trim();
-    var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'mat.doang7'].includes(uNorm) || rNorm.includes('super') || rNorm.includes('binops');
+    var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(uNorm) || rNorm.includes('super') || rNorm.includes('binops');
     if (isSuper) {
       return 'Robinopsnal Bareskrim Polri';
     }
@@ -843,7 +843,7 @@ e.s(["default", 0, function() {
                                 (function(item){
                                   var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
                                   var uNorm = String(item?.author_username || item?.author_callsign || '').toLowerCase().trim().replace(/^@/, '');
-                                  var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'mat.doang7'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
+                                  var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
                                   var r = String(item?.author_role || '').toLowerCase().trim();
                                   var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? '#6366f1' : (r === 'operator' ? '#0095f6' : '#64748b'));
                                   var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : (r === 'operator' ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));
@@ -1509,7 +1509,7 @@ e.s(["default", 0, function() {
                             (function(item){
                               var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
                               var uNorm = String(item?.author_username || item?.author_callsign || '').toLowerCase().trim().replace(/^@/, '');
-                              var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'mat.doang7'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
+                              var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(uNorm) || String(item?.author_role || '').toLowerCase().includes('super');
                               var r = String(item?.author_role || '').toLowerCase().trim();
                               var bColor = isSuper ? '#f59e0b' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? '#6366f1' : (r === 'operator' ? '#0095f6' : '#64748b'));
                               var bTitle = isSuper ? 'Superadmin Terverifikasi' : ((r === 'admin_binops' || r === 'admin binops' || r === 'binops') ? 'Admin Binops Terverifikasi' : (r === 'operator' ? 'Operator Satker Terverifikasi' : 'Personel Terverifikasi'));

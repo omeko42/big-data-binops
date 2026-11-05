@@ -7,8 +7,8 @@ authors:
     given-names: "Eko"
     alias: "omeko42"
     affiliation: "Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri"
-version: "2.5.0"
-date-released: "2026-10-24"
+version: "2.6.0"
+date-released: "2026-11-06"
 url: "https://github.com/omeko42/big-data-binops"
 repository-code: "https://github.com/omeko42/big-data-binops"
 license: "Proprietary"
@@ -26,6 +26,6 @@ keywords:
 abstract: >-
   Enterprise-grade operational data governance, 4-tier DORS reconciliation,
   and sub-100ms law enforcement analytics platform engineered for Biro
-  Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri, managing over
-  68.89 million live relational records across Mabes Polri, 36 Polda,
-  508+ Polres, and 4,900+ Polsek nationwide.
+  Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri, managing
+  multi-million relational records across Mabes Polri, 36 Polda,
+  Polres, and Polsek nationwide.

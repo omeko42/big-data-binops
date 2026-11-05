@@ -198,7 +198,7 @@ export class JukrahService {
         if (r === 'superadmin' || r === 'super_admin' || r.includes('super') || r === 'admin_binops' || r === 'admin binops') return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'yud08', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'cosersebot', 'ai_taktis_cas'];
+        const superHandles = ['om.eko_42', 'omeko42', 'cosersebot', 'ai_taktis_cas'];
         return superHandles.includes(u) || superHandles.includes(c);
     }
 
@@ -2628,7 +2628,7 @@ export class JukrahService {
                 if (/^[A-Za-z]\.[A-Za-z.]+\.?$/.test(word)) return word.toUpperCase();
                 const clean = word.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
                 if (preserveUpper.has(clean)) return word.toUpperCase();
-                // Collapse 3+ repeated trailing letters in all-caps nicknames like NYOMANNNN -> NYOMAN, RENCIAA -> RENCIA
+                // Collapse 3+ repeated trailing letters in all-caps nicknames in uppercase handles
                 let norm = word;
                 if (/^[A-Z]{4,}$/.test(word)) {
                     norm = word.replace(/([A-Z])\1{2,}$/, '$1').replace(/([AEIOU])\1+$/, '$1');
@@ -4355,7 +4355,7 @@ export class JukrahService {
         const cleanIp = String(ipRaw || '')
             .split(',')[0]
             .trim()
-            .replace(/^::ffff:/i, '') || '10.200.210.1';
+            .replace(/^::ffff:/i, '') || '127.0.0.1';
         const s = String(satkerNama || 'Robinopsnal Bareskrim Polri').trim();
         let loc = 'Jakarta Selatan, DKI Jakarta (Mabes Polri)';
         if (/sumut|sumatera utara|medan|tapanuli/i.test(s)) loc = 'Medan, Sumatera Utara';
@@ -4382,7 +4382,7 @@ export class JukrahService {
         if (!uid) throw new ForbiddenException('Sesi pengguna tidak valid.');
 
         const uaHeader = String(req?.headers?.['user-agent'] || '');
-        const ipHeader = String(req?.headers?.['x-forwarded-for'] || req?.headers?.['x-real-ip'] || req?.ip || req?.socket?.remoteAddress || '10.200.210.1');
+        const ipHeader = String(req?.headers?.['x-forwarded-for'] || req?.headers?.['x-real-ip'] || req?.ip || req?.socket?.remoteAddress || '127.0.0.1');
         const uaMeta = this.parseUserAgentMeta(uaHeader);
 
         const uRows = await this.dataSource.query(

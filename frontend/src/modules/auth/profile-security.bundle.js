@@ -309,7 +309,7 @@ function timeAgo(dateStr) {
 
 function isProfileSuperadmin(userId, role, username) {
   var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'];
-  var SUPER_HANDLES = ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma'];
+  var SUPER_HANDLES = ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'];
   var uNorm = String(username || '').toLowerCase().trim().replace(/^@/, '');
   var r = String(role || '').toLowerCase().trim();
   return SUPER_IDS.includes(String(userId)) || SUPER_HANDLES.includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super');

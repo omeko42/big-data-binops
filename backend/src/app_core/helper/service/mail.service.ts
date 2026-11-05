@@ -97,7 +97,7 @@ export class MailService {
      *
      * `to` WAJIB diisi eksplisit oleh user (ditemukan lewat investigasi laporan user "test bilang
      * tersambung tapi email tak pernah sampai" -- sebelum ini tujuan diam2 fallback ke `from`, dan
-     * `from` sendiri diam2 fallback ke `user` (username SMTP auth, mis. "cas.bareskrim.polri.go.id"
+     * `from` sendiri diam2 fallback ke `user` (username SMTP auth, mis. "smtp.example.go.id"
      * -- BUKAN alamat kotak surat yg valid/bisa dicek) kalau field "From" dikosongkan. Transaksi SMTP
      * bisa saja diterima server (tak ada error), tapi email tak pernah nyampe ke mana pun yg bisa
      * dicek krn alamat tujuannya bukan mailbox sungguhan -- membingungkan & sulit didiagnosa.
