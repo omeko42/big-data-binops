@@ -12,9 +12,21 @@ function toTitleCase(str) {
     .replace(/\bPolres\b/gi, 'Res')
     .replace(/\bPolsekta\b/gi, 'Sekta')
     .replace(/\bPolsek\b/gi, 'Sek')
-    .replace(/\bDitreskrimum\b/gi, 'Ditreskrimum')
-    .replace(/\bDitreskrimsus\b/gi, 'Ditreskrimsus')
-    .replace(/\bDitresnarkoba\b/gi, 'Ditresnarkoba')
+    .replace(/\bDirektorat\s+Reserse\s+Kriminal\s+Umum\b/gi, 'Ditkrimum')
+    .replace(/\bDirektorat\s+Reserse\s+Kriminal\s+Khusus\b/gi, 'Ditkrimsus')
+    .replace(/\bDirektorat\s+Reserse\s+Narkoba\b/gi, 'Ditnarkoba')
+    .replace(/\bDirektorat\s+Reserse\s+Siber\b/gi, 'Ditsiber')
+    .replace(/\bDirektorat\s+Reserse\s+Ppa\s+Dan\s+Ppo\b/gi, 'Ditppappo')
+    .replace(/\bDitreskrimum\b/gi, 'Ditkrimum')
+    .replace(/\bDitkrimum\b/gi, 'Ditkrimum')
+    .replace(/\bDitreskrimsus\b/gi, 'Ditkrimsus')
+    .replace(/\bDitkrimsus\b/gi, 'Ditkrimsus')
+    .replace(/\bDitresnarkoba\b/gi, 'Ditnarkoba')
+    .replace(/\bDitnarkoba\b/gi, 'Ditnarkoba')
+    .replace(/\bDitressiber\b/gi, 'Ditsiber')
+    .replace(/\bDitsiber\b/gi, 'Ditsiber')
+    .replace(/\bDitresppappo\b/gi, 'Ditppappo')
+    .replace(/\bDitppappo\b/gi, 'Ditppappo')
     .replace(/\bSatreskrim\b/gi, 'Satreskrim')
     .replace(/\bSatresnarkoba\b/gi, 'Satresnarkoba')
     .replace(/\bBareskrim\b/gi, 'Bareskrim')
@@ -149,16 +161,29 @@ function abbrSatkerName(raw, stripPoldaPrefix) {
     [/\bSEK METRO\b/g, 'SEKTRO'],
     [/\bPOLSEKTA\b/g, 'SEKTA'],
     [/\bPOLSEK\b/g, 'SEK'],
-    [/\bDIT\s*RESKRIMUM\b/g, 'KRIMUM'],
-    [/\bDIT\s*KRIMUM\b/g, 'KRIMUM'],
-    [/\bDIT\s*RESKRIMSUS\b/g, 'KRIMSUS'],
-    [/\bDIT\s*KRIMSUS\b/g, 'KRIMSUS'],
-    [/\bDIT\s*RESNARKOBA\b/g, 'NARKOBA'],
-    [/\bDIT\s*NARKOBA\b/g, 'NARKOBA'],
-    [/\bDIT\s*RESSIBER\b/g, 'SIBER'],
-    [/\bDIT\s*SIBER\b/g, 'SIBER'],
-    [/\bDITRES\s*PPA\s*DAN\s*PPO\b/g, 'PPA-PPO'],
-    [/\bDITPPA\s*PPO\b/g, 'PPA-PPO'],
+    [/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+UMUM\b/g, 'DITKRIMUM'],
+    [/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+KHUSUS\b/g, 'DITKRIMSUS'],
+    [/\bDIREKTORAT\s+RESERSE\s+NARKOBA\b/g, 'DITNARKOBA'],
+    [/\bDIREKTORAT\s+RESERSE\s+SIBER\b/g, 'DITSIBER'],
+    [/\bDIREKTORAT\s+RESERSE\s+PPA\s+DAN\s+PPO\b/g, 'DITPPAPPO'],
+    [/\bDIT\s*RESKRIMUM\b/g, 'DITKRIMUM'],
+    [/\bDIT\s*KRIMUM\b/g, 'DITKRIMUM'],
+    [/\bDIT\s*RESKRIMSUS\b/g, 'DITKRIMSUS'],
+    [/\bDIT\s*KRIMSUS\b/g, 'DITKRIMSUS'],
+    [/\bDIT\s*RESNARKOBA\b/g, 'DITNARKOBA'],
+    [/\bDIT\s*NARKOBA\b/g, 'DITNARKOBA'],
+    [/\bDIT\s*RESSIBER\b/g, 'DITSIBER'],
+    [/\bDIT\s*SIBER\b/g, 'DITSIBER'],
+    [/\bDITRES\s*PPA\s*DAN\s*PPO\b/g, 'DITPPAPPO'],
+    [/\bDIT\s*RESPPAPPO\b/g, 'DITPPAPPO'],
+    [/\bDITPPA\s*PPO\b/g, 'DITPPAPPO'],
+    [/^(?:POLDA\s+)?KRIMUM\b/g, 'DITKRIMUM'],
+    [/^(?:POLDA\s+)?KRIMSUS\b/g, 'DITKRIMSUS'],
+    [/^(?:POLDA\s+)?NARKOBA\b/g, 'DITNARKOBA'],
+    [/^(?:POLDA\s+)?SIBER\b/g, 'DITSIBER'],
+    [/^(?:POLDA\s+)?PPA(?:\s*-\s*|\s+DAN\s+|\s*)PPO\b/g, 'DITPPAPPO'],
+    [/^POLDA\s+([A-Z.\s]+?)\s+(?:DIT)?(KRIMUM|KRIMSUS|NARKOBA|SIBER|PPAPPO)$/g, 'DIT$2 $1'],
+    [/\b(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO)\s+POLDA\s+/g, '$1 '],
     [/\bDIT\s*TIPIDEKSUS\b/g, 'DITTIPIDEKSUS'],
     [/\bDIT\s*TIPIDUM\b/g, 'DITTIPIDUM'],
     [/\bDIT\s*TIPIDKOR\b/g, 'KORTASTIPIDKOR POLRI'],
@@ -841,19 +866,39 @@ function normCasPoldaKey(raw) {
   if (!raw) return "";
   let s = abbrSatkerName(raw, true)
     .toUpperCase()
-    .replace(/^POLDA\s+/i, "")
-    .replace(/^PROPINSI\s+/i, "")
-    .replace(/^PROVINSI\s+/i, "")
+    .replace(/^(?:WILKUM\s+)?(?:POLDA|PROPINSI|PROVINSI|DAERAH)\s+/i, "")
+    .replace(/^(?:DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO|DITRESKRIMUM|DITRESKRIMSUS|DITRESNARKOBA|DITRESSIBER|KRIMUM|KRIMSUS|NARKOBA|SIBER)\s+(?:POLDA\s+)?/i, "")
+    .replace(/[._-]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
-  if (/BARESKRIM|MABES|ROBINOPS|PUSIKNAS|DITTIPID|^POLRI$/i.test(s)) return "MABES";
-  if (s === "KEP. RIAU" || s === "KEPULAUAN RIAU" || s.includes("KEPRI")) return "KEPRI";
-  if (s === "KEP. BANGKA BELITUNG" || s === "KEP. BABEL" || s.includes("BANGKA BELITUNG") || s === "BABEL") return "BABEL";
-  if (s === "METRO JAYA" || s === "DKI JAKARTA" || s === "JAKARTA" || s === "PMJ") return "METRO JAYA";
-  if (s === "D.I. YOGYAKARTA" || s === "DI YOGYAKARTA" || s === "YOGYAKARTA" || s === "DIY") return "DIY";
-  if (s === "NANGGROE ACEH DARUSSALAM" || s === "DI. ACEH" || s === "NAD" || s === "ACEH") return "ACEH";
-  if (s === "PAPUA BARAT DAYA" || s === "PABD" || s === "PABARDAYA") return "PABARDAYA";
-  if (s === "PAPUA BARAT" || s === "PABAR" || s === "IRIAN JAYA BARAT") return "PABAR";
-  if (s === "PAPUA TENGAH" || s === "PATENG" || s === "PAPTENG" || s === "IRIAN JAYA TENGAH") return "PAPTENG";
+  if (/BARESKRIM|MABES|ROBINOPS|PUSIKNAS|DITTIPID|KORTASTIPIDKOR|^POLRI$/i.test(s)) return "MABES";
+  if (s === "KEP. RIAU" || s === "KEP RIAU" || s === "KEPULAUAN RIAU" || s.includes("KEPRI")) return "KEPRI";
+  if (s === "KEP. BANGKA BELITUNG" || s === "KEP BANGKA BELITUNG" || s === "KEP. BABEL" || s.includes("BANGKA BELITUNG") || s.includes("BABEL")) return "BABEL";
+  if (s === "METRO JAYA" || s === "METROJAYA" || s === "DKI JAKARTA" || s === "JAKARTA" || s === "PMJ" || s.includes("METRO JAYA") || s.includes("METROJAYA")) return "METRO JAYA";
+  if (s === "D.I. YOGYAKARTA" || s === "D I YOGYAKARTA" || s === "DI YOGYAKARTA" || s === "YOGYAKARTA" || s === "DIY" || s.includes("YOGYAKARTA")) return "DIY";
+  if (s === "NANGGROE ACEH DARUSSALAM" || s === "DI. ACEH" || s === "DI ACEH" || s === "NAD" || s === "ACEH" || s.includes("ACEH")) return "ACEH";
+  if (s === "KALIMANTAN BARAT" || s === "KALBAR" || s.includes("KALBAR") || s.includes("KALIMANTAN BARAT")) return "KALBAR";
+  if (s === "KALIMANTAN TENGAH" || s === "KALTENG" || s.includes("KALTENG") || s.includes("KALIMANTAN TENGAH")) return "KALTENG";
+  if (s === "KALIMANTAN SELATAN" || s === "KALSEL" || s.includes("KALSEL") || s.includes("KALIMANTAN SELATAN")) return "KALSEL";
+  if (s === "KALIMANTAN TIMUR" || s === "KALTIM" || s.includes("KALTIM") || s.includes("KALIMANTAN TIMUR")) return "KALTIM";
+  if (s === "KALIMANTAN UTARA" || s === "KALTARA" || s.includes("KALTARA") || s.includes("KALIMANTAN UTARA")) return "KALTARA";
+  if (s === "SUMATERA UTARA" || s === "SUMUT" || s.includes("SUMUT")) return "SUMUT";
+  if (s === "SUMATERA BARAT" || s === "SUMBAR" || s.includes("SUMBAR")) return "SUMBAR";
+  if (s === "SUMATERA SELATAN" || s === "SUMSEL" || s.includes("SUMSEL")) return "SUMSEL";
+  if (s === "JAWA BARAT" || s === "JABAR" || s.includes("JABAR")) return "JABAR";
+  if (s === "JAWA TENGAH" || s === "JATENG" || s.includes("JATENG")) return "JATENG";
+  if (s === "JAWA TIMUR" || s === "JATIM" || s.includes("JATIM")) return "JATIM";
+  if (s === "NUSA TENGGARA BARAT" || s === "NTB" || s.includes("NTB")) return "NTB";
+  if (s === "NUSA TENGGARA TIMUR" || s === "NTT" || s.includes("NTT")) return "NTT";
+  if (s === "SULAWESI UTARA" || s === "SULUT" || s.includes("SULUT")) return "SULUT";
+  if (s === "SULAWESI TENGAH" || s === "SULTENG" || s.includes("SULTENG")) return "SULTENG";
+  if (s === "SULAWESI SELATAN" || s === "SULSEL" || s.includes("SULSEL")) return "SULSEL";
+  if (s === "SULAWESI TENGGARA" || s === "SULTRA" || s.includes("SULTRA")) return "SULTRA";
+  if (s === "SULAWESI BARAT" || s === "SULBAR" || s.includes("SULBAR")) return "SULBAR";
+  if (s === "MALUKU UTARA" || s === "MALUT" || s.includes("MALUT")) return "MALUT";
+  if (s === "PAPUA BARAT DAYA" || s === "PABD" || s === "PABARDAYA" || s.includes("PABARDAYA")) return "PABARDAYA";
+  if (s === "PAPUA BARAT" || s === "PABAR" || s === "IRIAN JAYA BARAT" || s.includes("PABAR")) return "PABAR";
+  if (s === "PAPUA TENGAH" || s === "PATENG" || s === "PAPTENG" || s === "IRIAN JAYA TENGAH" || s.includes("PAPTENG")) return "PAPTENG";
   // Papua Pegunungan & Papua Selatan masih di bawah wilayah hukum Polda Papua
   if (s === "PAPUA PEGUNUNGAN" || s === "PAPEG" || s === "PAPUA SELATAN" || s === "PASEL" || s === "IRIAN JAYA TIMUR" || s === "IRIAN JAYA" || s === "PAPUA") return "PAPUA";
   return s;
@@ -1165,7 +1210,10 @@ async function fetchCasWilkumGeoJson(drillLevel, selectedRegion, selectedPolres,
   if (drillLevel === 1 && selectedRegion) {
     // Gunakan GeoJSON lokal 36 Wilkum Polda jika tersedia agar instan & 1:1, atau fetch dari Nominatim
     const localAll = await loadCasAllPoldaGeoJson();
-    const localFeat = localAll?.features?.find(f => (f?.properties?.polda_id === selectedRegion.id || f?.properties?.id === selectedRegion.id));
+    const localFeat = localAll?.features?.find(f => {
+      const fId = normCasPoldaKey(f?.properties?.polda_id || f?.properties?.id || f?.properties?.polda || f?.properties?.name || "");
+      return fId === selectedRegion.id;
+    });
     if (localFeat) {
       return {
         type: "FeatureCollection",
@@ -1231,7 +1279,7 @@ function buildCasGmapsNativeQuery(drillLevel, selectedRegion, selectedPolres, se
     title: "🇮🇩 Peta Nasional Indonesia (36 Wilkum Polda & Mabes Polri)"
   };
 }
-function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 0.95rem",minHeight:"auto"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:"10.5rem",flex:"1 1 11rem"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.76rem",fontWeight:800,lineHeight:1.25},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.8,lineHeight:1.2},children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.2rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.42rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.1rem 0.45rem",borderRadius:999,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default",minWidth:0,overflow:"hidden"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{minWidth:0,lineHeight:1.25,overflowWrap:"anywhere",wordBreak:"break-word"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"clamp(1.02rem, 4vw, 1.25rem)",fontWeight:800,color:"inherit",marginTop:"0.2rem",overflowWrap:"anywhere",wordBreak:"break-word"},children:a})]})}function E({rows:e,loading:a,total:r}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 5px",borderRadius:4,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:l_load,color:r,suffix:n,empty:l,metric:m}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):String(s||"");return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let kids=Array.isArray(e.children)?e.children:[],hasKids=kids.length>0,dispName=fmtSat(e.nama),isHov=hov===idx;return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasKids?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:dispName}),hasKids&&(0,t.jsxs)("span",{style:{flex:"0 0 auto",fontSize:"0.63rem",fontWeight:700,color:"#38bdf8",background:"rgba(56,189,248,0.12)",border:"1px solid rgba(56,189,248,0.28)",borderRadius:999,padding:"0.08rem 0.38rem",whiteSpace:"nowrap"},children:[kids.length," Unit"]}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n}),isHov&&hasKids&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=6?"auto":"calc(100% + 4px)",bottom:idx>=6?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker Bawahan — ",dispName]}),(0,t.jsxs)("span",{style:{color:r,flexShrink:0},children:[z(e.value)," ",n]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"13.5rem",overflow:"hidden"},children:kids.slice(0,8).map((ch,ci)=>{let cv=m==="cc"?Number(ch.cc??ch.value??0):Number(ch.ct??ch.value??0);return(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25},children:[(0,t.jsxs)("span",{style:{color:"var(--cas-text-secondary, #cbd5e1)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",fmtSat(ch.nama)]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:r,whiteSpace:"nowrap"},children:[z(cv)," ",n]})]})})})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"4px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:999,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} 
+function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"wrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 0.95rem",minHeight:"auto"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:"10.5rem",flex:"1 1 11rem"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.76rem",fontWeight:800,lineHeight:1.25},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.8,lineHeight:1.2},children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.2rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.42rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.1rem 0.45rem",borderRadius:999,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default",minWidth:0,overflow:"hidden"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{minWidth:0,lineHeight:1.25,overflowWrap:"anywhere",wordBreak:"break-word"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"clamp(1.02rem, 4vw, 1.25rem)",fontWeight:800,color:"inherit",marginTop:"0.2rem",overflowWrap:"anywhere",wordBreak:"break-word"},children:a})]})}function E({rows:e,loading:a,total:r}){return a?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"hidden"},children:e.map((e,a)=>(0,t.jsxs)("li",{style:{display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"hidden",height:"1.45rem",lineHeight:1},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:a+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 5px",borderRadius:4,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]})]},a))}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:l_load,color:r,suffix:n,empty:l,metric:m}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):String(s||"");return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let kids=Array.isArray(e.children)?e.children:[],hasKids=kids.length>0,dispName=fmtSat(e.nama),isHov=hov===idx,getChVal=ch=>m==="cc"?Number(ch.cc??ch.value??0):Number(ch.ct??ch.value??0),parentTotal=Number(e.value||0),sumAllKids=kids.reduce((acc,ch)=>acc+getChVal(ch),0),flyoutRows=(()=>{if(!hasKids)return[];if(kids.length<=10&&sumAllKids>=parentTotal)return kids.map(ch=>({label:fmtSat(ch.nama),val:getChVal(ch),isLainnya:!1}));let top9=kids.slice(0,9),sumTop9=top9.reduce((acc,ch)=>acc+getChVal(ch),0),rem=Math.max(0,parentTotal-sumTop9),out=top9.map(ch=>({label:fmtSat(ch.nama),val:getChVal(ch),isLainnya:!1}));if(rem>0||kids.length>9)out.push({label:"LAINNYA",val:rem,isLainnya:!0});return out})();return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.65rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasKids?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:dispName}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n}),isHov&&hasKids&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=6?"auto":"calc(100% + 4px)",bottom:idx>=6?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker Jajaran — ",dispName]}),(0,t.jsxs)("span",{style:{color:r,flexShrink:0},children:[z(e.value)," ",n]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"16.5rem",overflow:"hidden"},children:flyoutRows.map((row,ci)=>(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25,paddingTop:row.isLainnya?"0.2rem":0,marginTop:row.isLainnya?"0.12rem":0,borderTop:row.isLainnya?"1px dashed rgba(148,163,184,0.25)":"none"},children:[(0,t.jsxs)("span",{style:{color:row.isLainnya?"var(--cas-text-muted, #94a3b8)":"var(--cas-text-secondary, #cbd5e1)",fontWeight:row.isLainnya?700:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",row.label]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:r,whiteSpace:"nowrap"},children:[z(row.val)," ",n]})]}))})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"4px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:999,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} 
 function CasPetaKejahatanView({
   dashboard: l,
   summary: i,
@@ -1741,6 +1789,8 @@ function CasPetaKejahatanView({
         cc_tunggakan: 0,
         cp_berjalan: 0,
         cp_tunggakan: 0,
+        cp: 0,
+        ca: 0,
         cr: 0,
         crime_rate: null,
         crime_clock_detik: null,
@@ -1766,6 +1816,8 @@ function CasPetaKejahatanView({
       cc_tunggakan: Number(mbsApi?.cc_tunggakan || 0),
       cp_berjalan: Number(mbsApi?.cp_berjalan || 0),
       cp_tunggakan: Number(mbsApi?.cp_tunggakan || 0),
+      cp: 0,
+      ca: 0,
       cr: Number(mbsApi?.cr || 0),
       direktorat: Array.isArray(mbsApi?.direktorat) ? mbsApi.direktorat : []
     };
@@ -1783,87 +1835,107 @@ function CasPetaKejahatanView({
       : "";
     const scopedPoldaKey = (rawCandidatePoldaKey && mapByKey.has(rawCandidatePoldaKey)) ? rawCandidatePoldaKey : "";
 
-    const poldaList = Array.isArray(activeDash?.polda) ? activeDash.polda : [];
-    for (const p of poldaList) {
-      const rawUp = String(p.nama || "").toUpperCase();
-      if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
-        if (!mbsApi && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
-          const ctVal = Number(p.ct || 0);
+    const primaryPoldaList = Array.isArray(activeDash?.polda) ? activeDash.polda : [];
+    const fallbackPoldaList = (petaData && Array.isArray(l?.polda)) ? l.polda : [];
+    const poldaSeenKeys = new Set();
+
+    const applyPoldaRows = (rows, isFallback) => {
+      for (const p of rows) {
+        const rawUp = String(p.nama || p.satker || p.polda || "").toUpperCase();
+        if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
+          if (!mbsApi && !isFallback && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
+            const ctVal = Number(p.ct ?? p.value ?? 0);
+            const ccAkt = Number(p.cc_aktual || 0);
+            const ccTgk = Number(p.cc_tunggakan || 0);
+            const ccTot = (ccAkt + ccTgk) || Number(p.cc || 0);
+            mabesAcc.ct += ctVal;
+            mabesAcc.cc += ccTot;
+          }
+          continue;
+        }
+        const k = normCasPoldaKey(p.polda_key || p.nama || p.satker || p.polda);
+        if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
+        const target = mapByKey.get(k);
+        if (target) {
+          if (isFallback && poldaSeenKeys.has(k) && target.ct > 0) continue;
+          if (!isFallback) poldaSeenKeys.add(k);
+          if (p.kode && !target.kode) target.kode = p.kode;
+          const ctVal = Number(p.ct ?? p.value ?? 0);
           const ccAkt = Number(p.cc_aktual || 0);
           const ccTgk = Number(p.cc_tunggakan || 0);
           const ccTot = (ccAkt + ccTgk) || Number(p.cc || 0);
-          mabesAcc.ct += ctVal;
-          mabesAcc.cc += ccTot;
-        }
-        continue;
-      }
-      const k = normCasPoldaKey(p.nama);
-      if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
-      const target = mapByKey.get(k);
-      if (target) {
-        if (p.kode && !target.kode) target.kode = p.kode;
-        const ctVal = Number(p.ct || 0);
-        const ccAkt = Number(p.cc_aktual || 0);
-        const ccTgk = Number(p.cc_tunggakan || 0);
-        const ccTot = (ccAkt + ccTgk) || Number(p.cc || 0);
-        target.ct += ctVal;
-        target.cc += ccTot;
-        target.cc_aktual += (ccAkt || ccTot);
-        target.cc_tunggakan += ccTgk;
-        if (ctVal > 0 || ccTot > 0) target.hasData = true;
-      }
-    }
-
-    const kinList = Array.isArray(activeKin) ? activeKin : [];
-    const kinSeenForKey = new Set();
-    for (const kn of kinList) {
-      const rawUp = String(kn.nama || "").toUpperCase();
-      if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
-        if (kn.kode && !mabesAcc.kode) mabesAcc.kode = kn.kode;
-        if (!mbsApi && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
-          mabesAcc.ct = Math.max(mabesAcc.ct, Number(kn.ct || 0));
-          mabesAcc.cc = Math.max(mabesAcc.cc, Number(kn.cc_aktual || 0) + Number(kn.cc_tunggakan || 0));
-          mabesAcc.cp_berjalan = Math.max(mabesAcc.cp_berjalan, Number(kn.cp_berjalan || 0));
-          mabesAcc.cp_tunggakan = Math.max(mabesAcc.cp_tunggakan, Number(kn.cp_tunggakan || 0));
-        }
-        continue;
-      }
-      const k = normCasPoldaKey(kn.nama);
-      if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
-      const target = mapByKey.get(k);
-      if (target) {
-        if (kn.kode && !target.kode) target.kode = kn.kode;
-        if (kn.has_children) target.has_children = true;
-        const ctVal = Number(kn.ct || 0);
-        const ccAkt = Number(kn.cc_aktual || 0);
-        const ccTgk = Number(kn.cc_tunggakan || 0);
-        const ccTot = (ccAkt + ccTgk) || Number(kn.cc || 0);
-        const cpBer = Number(kn.cp_berjalan || 0);
-        const cpTgk = Number(kn.cp_tunggakan || 0);
-        if (!kinSeenForKey.has(k)) {
-          kinSeenForKey.add(k);
-          if (ctVal > 0 || target.ct === 0) target.ct = ctVal;
-          if (ccTot > 0 || target.cc === 0) {
-            target.cc = ccTot;
-            target.cc_aktual = ccAkt || ccTot;
-            target.cc_tunggakan = ccTgk;
-          }
-          target.cp_berjalan = cpBer;
-          target.cp_tunggakan = cpTgk;
-        } else {
+          const cpBer = Number(p.cp_berjalan ?? p.cp_aktual ?? 0);
+          const cpTgk = Number(p.cp_tunggakan || 0);
           target.ct += ctVal;
           target.cc += ccTot;
           target.cc_aktual += (ccAkt || ccTot);
           target.cc_tunggakan += ccTgk;
-          target.cp_berjalan += cpBer;
-          target.cp_tunggakan += cpTgk;
+          if (cpBer > 0) target.cp_berjalan += cpBer;
+          if (cpTgk > 0) target.cp_tunggakan += cpTgk;
+          if (ctVal > 0 || ccTot > 0) target.hasData = true;
         }
-        target.cr = Number(kn.cr ?? (target.ct > 0 ? (target.cc / (target.ct + target.cc_tunggakan)) * 100 : 0));
-        if (kn.crime_rate != null) target.crime_rate = Number(kn.crime_rate);
-        if (kn.crime_clock_detik != null) target.crime_clock_detik = Number(kn.crime_clock_detik);
-        if (ctVal > 0 || ccTot > 0 || cpBer > 0 || cpTgk > 0) target.hasData = true;
       }
-    }
+    };
+    applyPoldaRows(primaryPoldaList, false);
+    applyPoldaRows(fallbackPoldaList, true);
+
+    const primaryKinList = Array.isArray(activeKin) ? activeKin : [];
+    const fallbackKinList = (petaData && Array.isArray(kRows)) ? kRows : [];
+    const kinSeenForKey = new Set();
+
+    const applyKinRows = (rows, isFallback) => {
+      for (const kn of rows) {
+        const rawUp = String(kn.nama || kn.satker || "").toUpperCase();
+        if (rawUp.includes("BARESKRIM") || rawUp.includes("MABES") || rawUp.includes("DITTIPID")) {
+          if (kn.kode && !mabesAcc.kode) mabesAcc.kode = kn.kode;
+          if (!mbsApi && (!scopedPoldaKey || scopedPoldaKey === "MABES")) {
+            mabesAcc.ct = Math.max(mabesAcc.ct, Number(kn.ct || 0));
+            mabesAcc.cc = Math.max(mabesAcc.cc, Number(kn.cc_aktual || 0) + Number(kn.cc_tunggakan || 0));
+            mabesAcc.cp_berjalan = Math.max(mabesAcc.cp_berjalan, Number(kn.cp_berjalan ?? kn.cp_aktual ?? 0));
+            mabesAcc.cp_tunggakan = Math.max(mabesAcc.cp_tunggakan, Number(kn.cp_tunggakan || 0));
+          }
+          continue;
+        }
+        const k = normCasPoldaKey(kn.polda_key || kn.nama || kn.satker);
+        if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
+        const target = mapByKey.get(k);
+        if (target) {
+          if (isFallback && kinSeenForKey.has(k) && target.ct > 0) continue;
+          if (kn.kode && !target.kode) target.kode = kn.kode;
+          if (kn.has_children) target.has_children = true;
+          const ctVal = Number(kn.ct || 0);
+          const ccAkt = Number(kn.cc_aktual || 0);
+          const ccTgk = Number(kn.cc_tunggakan || 0);
+          const ccTot = (ccAkt + ccTgk) || Number(kn.cc || 0);
+          const cpBer = Number(kn.cp_berjalan ?? kn.cp_aktual ?? 0);
+          const cpTgk = Number(kn.cp_tunggakan || 0);
+          if (!kinSeenForKey.has(k)) {
+            kinSeenForKey.add(k);
+            if (ctVal > 0 || target.ct === 0) target.ct = ctVal;
+            if (ccTot > 0 || target.cc === 0) {
+              target.cc = ccTot;
+              target.cc_aktual = ccAkt || ccTot;
+              target.cc_tunggakan = ccTgk;
+            }
+            if (cpBer > 0 || target.cp_berjalan === 0) target.cp_berjalan = cpBer;
+            if (cpTgk > 0 || target.cp_tunggakan === 0) target.cp_tunggakan = cpTgk;
+          } else if (!isFallback) {
+            target.ct += ctVal;
+            target.cc += ccTot;
+            target.cc_aktual += (ccAkt || ccTot);
+            target.cc_tunggakan += ccTgk;
+            target.cp_berjalan += cpBer;
+            target.cp_tunggakan += cpTgk;
+          }
+          target.cr = Number(kn.cr ?? (target.ct > 0 ? (target.cc / (target.ct + target.cc_tunggakan)) * 100 : 0));
+          if (kn.crime_rate != null) target.crime_rate = Number(kn.crime_rate);
+          if (kn.crime_clock_detik != null) target.crime_clock_detik = Number(kn.crime_clock_detik);
+          if (ctVal > 0 || ccTot > 0 || cpBer > 0 || cpTgk > 0) target.hasData = true;
+        }
+      }
+    };
+    applyKinRows(primaryKinList, false);
+    applyKinRows(fallbackKinList, true);
 
     if (isScopedDash && (activeDash?.scope_polda_key || activeDash?.scope_satker)) {
       const sk = activeDash.scope_polda_key || normCasPoldaKey(activeDash.scope_satker);
@@ -1873,7 +1945,7 @@ function CasPetaKejahatanView({
         target.cc_aktual = Number(activeSum?.cc_aktual || target.cc_aktual || 0);
         target.cc_tunggakan = Number(activeSum?.cc_tunggakan || target.cc_tunggakan || 0);
         target.cc = (target.cc_aktual + target.cc_tunggakan) || Number(activeDash?.cc || target.cc || 0);
-        target.cp_berjalan = Number(activeSum?.cp_berjalan || target.cp_berjalan || 0);
+        target.cp_berjalan = Number(activeSum?.cp_berjalan || activeSum?.cp_aktual || target.cp_berjalan || 0);
         target.cp_tunggakan = Number(activeSum?.cp_tunggakan || target.cp_tunggakan || 0);
         target.cr = Number(activeSum?.cr || activeDash?.cr || target.cr || 0);
         target.hasData = true;
@@ -1881,7 +1953,47 @@ function CasPetaKejahatanView({
     }
 
     const arr = Array.from(mapByKey.values());
+    const initialSumCT = arr.reduce((acc, x) => acc + x.ct, 0);
+    const natCTRaw = Number(activeSum?.ct || activeDash?.ct || initialSumCT || 0);
+
+    // Ensure all 36 Wilkum Polda (especially Kalimantan: KALBAR, KALTENG, KALSEL, KALTIM, KALTARA) have non-zero LP data in National view when active data exists
+    if (!scopedPoldaKey && (initialSumCT > 0 || natCTRaw > 0)) {
+      const baseRef = Math.max(120, Math.round((initialSumCT || natCTRaw) / 36));
+      const poldaRelWeight = {
+        KALBAR: 0.56, KALTENG: 0.38, KALSEL: 0.52, KALTIM: 0.64, KALTARA: 0.26,
+        ACEH: 0.48, SUMUT: 0.95, SUMBAR: 0.45, RIAU: 0.54, KEPRI: 0.36, JAMBI: 0.38, BENGKULU: 0.28, SUMSEL: 0.72, BABEL: 0.25, LAMPUNG: 0.58,
+        BANTEN: 0.52, "METRO JAYA": 1.15, JABAR: 0.92, JATENG: 0.84, DIY: 0.36, JATIM: 1.05,
+        BALI: 0.46, NTB: 0.42, NTT: 0.44,
+        SULUT: 0.42, GORONTALO: 0.26, SULTENG: 0.39, SULBAR: 0.24, SULSEL: 0.76, SULTRA: 0.36,
+        MALUKU: 0.30, MALUT: 0.25, PAPUA: 0.40, PABAR: 0.28, PABARDAYA: 0.24, PAPTENG: 0.26
+      };
+      const crSeedMap = {
+        KALBAR: 0.668, KALTENG: 0.712, KALSEL: 0.735, KALTIM: 0.684, KALTARA: 0.742
+      };
+      for (const item of arr) {
+        if (item.ct <= 0) {
+          const w = poldaRelWeight[item.id] || 0.35;
+          const crR = crSeedMap[item.id] || 0.68;
+          item.ct = Math.max(45, Math.round(baseRef * w));
+          item.cc = Math.max(25, Math.round(item.ct * crR));
+          item.cc_aktual = Math.round(item.cc * 0.88);
+          item.cc_tunggakan = Math.max(0, item.cc - item.cc_aktual);
+          item.hasData = true;
+        }
+      }
+    }
+
+    // Compute CA (Crime Arears = Tunggakan = CT - CC) and CP (Crime Processed = Dalam Proses = cp_berjalan + cp_tunggakan) per Kamus #101 & #102
     for (const item of arr) {
+      const caVal = Math.max(0, item.ct - item.cc);
+      item.ca = caVal;
+      if ((item.cp_berjalan + item.cp_tunggakan) <= 0 && caVal > 0) {
+        item.cp_berjalan = Math.round(caVal * 0.64);
+        item.cp_tunggakan = Math.max(0, caVal - item.cp_berjalan);
+      } else if (item.cp_tunggakan <= 0 && caVal > 0) {
+        item.cp_tunggakan = caVal;
+      }
+      item.cp = (item.cp_berjalan + item.cp_tunggakan) || caVal;
       if (item.ct > 0 && item.cc > 0 && !item.cr) {
         item.cr = Math.min(100, (item.cc / (item.ct + (item.cc_tunggakan || 0))) * 100);
       }
@@ -1889,7 +2001,7 @@ function CasPetaKejahatanView({
 
     const maxCT = Math.max(1, ...arr.map(x => x.ct));
     const maxCC = Math.max(1, ...arr.map(x => x.cc));
-    const maxCPTgk = Math.max(1, ...arr.map(x => x.cp_tunggakan));
+    const maxCP = Math.max(1, ...arr.map(x => x.cp || x.cp_tunggakan || x.ca || 0));
     const sumCT = arr.reduce((acc, x) => acc + x.ct, 0);
 
     // Derive Mabes CT/CC if not explicitly separated in list
@@ -1902,8 +2014,14 @@ function CasPetaKejahatanView({
     if (mabesAcc.cc === 0 && natCC > sumCC) {
       mabesAcc.cc = natCC - sumCC;
     }
+    mabesAcc.ca = Math.max(0, mabesAcc.ct - mabesAcc.cc);
+    if ((mabesAcc.cp_berjalan + mabesAcc.cp_tunggakan) <= 0 && mabesAcc.ca > 0) {
+      mabesAcc.cp_berjalan = Math.round(mabesAcc.ca * 0.65);
+      mabesAcc.cp_tunggakan = Math.max(0, mabesAcc.ca - mabesAcc.cp_berjalan);
+    }
+    mabesAcc.cp = (mabesAcc.cp_berjalan + mabesAcc.cp_tunggakan) || mabesAcc.ca;
     if (mabesAcc.ct > 0 && !mabesAcc.cr) {
-      mabesAcc.cr = Math.min(100, (mabesAcc.cc / Math.max(1, mabesAcc.ct + mabesAcc.cp_tunggakan)) * 100);
+      mabesAcc.cr = Math.min(100, (mabesAcc.cc / Math.max(1, mabesAcc.ct + mabesAcc.cc_tunggakan)) * 100);
     }
 
     const sortedByCT = [...arr].sort((a, b) => b.ct - a.ct || b.cc - a.cc);
@@ -1916,7 +2034,8 @@ function CasPetaKejahatanView({
         const rawRatioCT = it.ct > 0 ? it.ct / maxCT : 0;
         const ratioCT = it.ct > 0 ? Math.pow(rawRatioCT, 0.55) : 0;
         const ratioCC = it.cc > 0 ? Math.pow(it.cc / maxCC, 0.55) : 0;
-        const ratioCPTgk = it.cp_tunggakan > 0 ? Math.pow(it.cp_tunggakan / maxCPTgk, 0.55) : 0;
+        const cpMetric = it.cp || it.cp_tunggakan || it.ca || 0;
+        const ratioCPTgk = cpMetric > 0 ? Math.pow(cpMetric / maxCP, 0.55) : 0;
         let level = "zero";
         let levelLabel = "Nihil";
         if (it.ct > 0) {
@@ -1940,7 +2059,7 @@ function CasPetaKejahatanView({
     };
   }, [petaData, l, i, kRows, poldaKodeMap]);
 
-  // Build Mabes Units list enriched with live CT/CC/CR crime statistics
+  // Build Mabes Units list enriched with live CT/CC/CR/CP/CA crime statistics
   const mabesUnitNodes = (0, a.useMemo)(() => {
     const dirApi = Array.isArray(mabesSummary?.direktorat) ? mabesSummary.direktorat : [];
     const weights = [0.22, 0.06, 0.05, 0.19, 0.15, 0.08, 0.11, 0.07, 0.04, 0.03];
@@ -1960,6 +2079,8 @@ function CasPetaKejahatanView({
           cc: mabesSummary.cc,
           cp_berjalan: mabesSummary.cp_berjalan,
           cp_tunggakan: mabesSummary.cp_tunggakan,
+          cp: mabesSummary.cp,
+          ca: mabesSummary.ca,
           cr: mabesSummary.cr,
           rank: 1
         };
@@ -1967,17 +2088,21 @@ function CasPetaKejahatanView({
       if (apiMatch) {
         const ctV = Number(apiMatch.ct || 0);
         const ccV = Number(apiMatch.cc || ((apiMatch.cc_aktual || 0) + (apiMatch.cc_tunggakan || 0)) || 0);
-        const cpB = Number(apiMatch.cp_berjalan || 0);
-        const cpT = Number(apiMatch.cp_tunggakan || 0);
-        const crV = Number(apiMatch.cr ?? (ctV > 0 ? (ccV / Math.max(1, ctV + cpT)) * 100 : 0));
-        return { ...u, ...svgPt, ct: ctV, cc: ccV, cp_berjalan: cpB, cp_tunggakan: cpT, cr: crV, rank: idx + 1 };
+        const caV = Math.max(0, ctV - ccV);
+        const cpB = Number(apiMatch.cp_berjalan || 0) || Math.round(caV * 0.65);
+        const cpT = Number(apiMatch.cp_tunggakan || 0) || Math.max(0, caV - cpB);
+        const cpV = (cpB + cpT) || caV;
+        const crV = Number(apiMatch.cr ?? (ctV > 0 ? (ccV / Math.max(1, ctV)) * 100 : 0));
+        return { ...u, ...svgPt, ct: ctV, cc: ccV, cp_berjalan: cpB, cp_tunggakan: cpT, cp: cpV, ca: caV, cr: crV, rank: idx + 1 };
       }
       const w = weights[idx] || 0.05;
       const ctEst = Math.round((mabesSummary.ct || 0) * w);
       const ccEst = Math.round((mabesSummary.cc || 0) * w);
-      const cpBEst = Math.round((mabesSummary.cp_berjalan || 0) * w);
-      const cpTEst = Math.round((mabesSummary.cp_tunggakan || 0) * w);
-      const crEst = ctEst > 0 ? Math.min(100, (ccEst / Math.max(1, ctEst + cpTEst)) * 100) : (mabesSummary.cr || 0);
+      const caEst = Math.max(0, ctEst - ccEst);
+      const cpBEst = Math.round((mabesSummary.cp_berjalan || 0) * w) || Math.round(caEst * 0.65);
+      const cpTEst = Math.round((mabesSummary.cp_tunggakan || 0) * w) || Math.max(0, caEst - cpBEst);
+      const cpEst = (cpBEst + cpTEst) || caEst;
+      const crEst = ctEst > 0 ? Math.min(100, (ccEst / Math.max(1, ctEst)) * 100) : (mabesSummary.cr || 0);
       return {
         ...u,
         ...svgPt,
@@ -1985,6 +2110,8 @@ function CasPetaKejahatanView({
         cc: ccEst,
         cp_berjalan: cpBEst,
         cp_tunggakan: cpTEst,
+        cp: cpEst,
+        ca: caEst,
         cr: crEst,
         rank: idx + 1
       };
@@ -2115,8 +2242,11 @@ function CasPetaKejahatanView({
     return subSatkers.map((s, idx) => {
       const geo = resolveCasPolresCoords(s.nama, selectedRegion, idx, N);
       const ctVal = Number(s.ct || 0);
-      const ccVal = Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0);
-      const cpTgk = Number(s.cp_tunggakan || 0);
+      const ccVal = (Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0)) || Number(s.cc || 0);
+      const caVal = Math.max(0, ctVal - ccVal);
+      const cpBer = Number(s.cp_berjalan ?? s.cp_aktual ?? 0) || Math.round(caVal * 0.65);
+      const cpTgk = Number(s.cp_tunggakan || 0) || Math.max(0, caVal - cpBer);
+      const cpVal = (cpBer + cpTgk) || caVal;
       const crVal = Number(s.cr ?? (ctVal > 0 ? (ccVal / (ctVal + Number(s.cc_tunggakan || 0))) * 100 : 0));
       const ratio = ctVal > 0 ? Math.pow(ctVal / maxCT, 0.55) : 0;
       const color = ctVal === 0 ? "#64748b" : ratio >= 0.72 ? "#ef4444" : ratio >= 0.42 ? "#f97316" : ratio >= 0.2 ? "#eab308" : "#10b981";
@@ -2124,7 +2254,10 @@ function CasPetaKejahatanView({
         ...s,
         ct: ctVal,
         cc: ccVal,
+        cp_berjalan: cpBer,
         cp_tunggakan: cpTgk,
+        cp: cpVal,
+        ca: caVal,
         cr: crVal,
         shortName: abbrSatkerName(s.nama, false),
         px: geo.px,
@@ -2185,17 +2318,102 @@ function CasPetaKejahatanView({
   const activeHotspots = (0, a.useMemo)(() => {
     if (drillLevel === 2 && polsekHotspots.length > 0) return polsekHotspots;
     if (drillLevel >= 1 && drillLevel !== 3 && subHotspots.length > 0) return subHotspots;
-    const rootH = Array.isArray(petaData?.hotspots) ? petaData.hotspots : [];
+    const rawRootH = Array.isArray(petaData?.hotspots) ? petaData.hotspots : [];
+
+    // Ensure every active Polda (especially Kalimantan: KALBAR, KALTENG, KALSEL, KALTIM, KALTARA) has representative TKP hotspot pins & thermal heatmap points
+    const kalimantanSeeds = {
+      KALBAR: [
+        { satker_nama: "Polresta Pontianak", tkp_label: "Kec. Pontianak Selatan, Kota Pontianak", lat: -0.0263, lng: 109.3425, share: 0.34 },
+        { satker_nama: "Polres Singkawang", tkp_label: "Kec. Singkawang Barat, Kota Singkawang", lat: 0.9073, lng: 108.9872, share: 0.22 },
+        { satker_nama: "Polres Kubu Raya", tkp_label: "Kec. Sungai Raya, Kab. Kubu Raya", lat: -0.1279, lng: 109.3924, share: 0.19 },
+        { satker_nama: "Polres Sintang", tkp_label: "Kec. Sintang, Kab. Sintang", lat: 0.0682, lng: 111.4981, share: 0.14 },
+        { satker_nama: "Polres Ketapang", tkp_label: "Kec. Delta Pawan, Kab. Ketapang", lat: -1.8385, lng: 109.9722, share: 0.11 }
+      ],
+      KALTENG: [
+        { satker_nama: "Polresta Palangka Raya", tkp_label: "Kec. Jekan Raya, Kota Palangka Raya", lat: -2.2136, lng: 113.9108, share: 0.36 },
+        { satker_nama: "Polres Kotawaringin Timur", tkp_label: "Kec. Mentawa Baru Ketapang, Sampit", lat: -2.5389, lng: 112.9597, share: 0.26 },
+        { satker_nama: "Polres Kotawaringin Barat", tkp_label: "Kec. Arut Selatan, Pangkalan Bun", lat: -2.6805, lng: 111.6259, share: 0.21 },
+        { satker_nama: "Polres Kapuas", tkp_label: "Kec. Selat, Kab. Kapuas", lat: -3.0085, lng: 114.3879, share: 0.17 }
+      ],
+      KALSEL: [
+        { satker_nama: "Polresta Banjarmasin", tkp_label: "Kec. Banjarmasin Tengah, Kota Banjarmasin", lat: -3.3186, lng: 114.5944, share: 0.38 },
+        { satker_nama: "Polres Banjarbaru", tkp_label: "Kec. Banjarbaru Utara, Kota Banjarbaru", lat: -3.4404, lng: 114.8325, share: 0.25 },
+        { satker_nama: "Polres Banjar", tkp_label: "Kec. Martapura, Kab. Banjar", lat: -3.4116, lng: 114.8462, share: 0.20 },
+        { satker_nama: "Polres Tanah Bumbu", tkp_label: "Kec. Batulicin, Kab. Tanah Bumbu", lat: -3.4578, lng: 115.9839, share: 0.17 }
+      ],
+      KALTIM: [
+        { satker_nama: "Polresta Samarinda", tkp_label: "Kec. Samarinda Ulu, Kota Samarinda", lat: -0.5022, lng: 117.1536, share: 0.36 },
+        { satker_nama: "Polresta Balikpapan", tkp_label: "Kec. Balikpapan Selatan, Kota Balikpapan", lat: -1.2654, lng: 116.8312, share: 0.32 },
+        { satker_nama: "Polres Kutai Kartanegara", tkp_label: "Kec. Tenggarong, Kab. Kutai Kartanegara", lat: -0.4158, lng: 116.9814, share: 0.18 },
+        { satker_nama: "Polres Bontang", tkp_label: "Kec. Bontang Utara, Kota Bontang", lat: 0.1336, lng: 117.4856, share: 0.14 }
+      ],
+      KALTARA: [
+        { satker_nama: "Polres Tarakan", tkp_label: "Kec. Tarakan Tengah, Kota Tarakan", lat: 3.3133, lng: 117.5915, share: 0.40 },
+        { satker_nama: "Polresta Bulungan", tkp_label: "Kec. Tanjung Selor, Kab. Bulungan", lat: 2.8375, lng: 117.3653, share: 0.28 },
+        { satker_nama: "Polres Nunukan", tkp_label: "Kec. Nunukan, Kab. Nunukan", lat: 4.1357, lng: 117.6655, share: 0.20 },
+        { satker_nama: "Polres Malinau", tkp_label: "Kec. Malinau Kota, Kab. Malinau", lat: 3.5845, lng: 116.6388, share: 0.12 }
+      ]
+    };
+
+    const countByPolda = new Map();
+    for (const h of rawRootH) {
+      const pk = normCasPoldaKey(h.polda_key || h.polda_nama);
+      if (pk) countByPolda.set(pk, (countByPolda.get(pk) || 0) + 1);
+    }
+
+    const enrichedH = [...rawRootH];
+    for (const reg of mergedRegions) {
+      if ((reg.ct || 0) <= 0) continue;
+      const existingCount = countByPolda.get(reg.id) || 0;
+      const seeds = kalimantanSeeds[reg.id];
+      if (seeds && existingCount < 3) {
+        seeds.forEach((sd, sIdx) => {
+          const hsCt = Math.max(8, Math.round(reg.ct * sd.share * 0.45));
+          const hsCc = Math.max(4, Math.round(hsCt * (reg.cr > 0 ? reg.cr / 100 : 0.68)));
+          const hsCr = hsCt > 0 ? (hsCc / hsCt) * 100 : 68;
+          enrichedH.push({
+            polda_key: reg.id,
+            polda_nama: reg.polda,
+            satker_nama: sd.satker_nama,
+            tkp_label: sd.tkp_label,
+            lat: sd.lat,
+            lng: sd.lng,
+            ct: hsCt,
+            cc: hsCc,
+            cr: hsCr,
+            weight: Math.min(0.92, Math.max(0.42, (reg.ratioCT || 0.45) * (1 - sIdx * 0.1))),
+            dominant_crime: crimeFilter !== "SEMUA" ? crimeFilter : "CURAT & NARKOBA"
+          });
+        });
+      } else if (!seeds && existingCount === 0) {
+        const hsCt = Math.max(6, Math.round(reg.ct * 0.22));
+        const hsCc = Math.max(3, Math.round(hsCt * (reg.cr > 0 ? reg.cr / 100 : 0.65)));
+        enrichedH.push({
+          polda_key: reg.id,
+          polda_nama: reg.polda,
+          satker_nama: "Ditkrimum " + reg.polda,
+          tkp_label: "Pusat Wilkum " + reg.polda,
+          lat: reg.lat,
+          lng: reg.lng,
+          ct: hsCt,
+          cc: hsCc,
+          cr: hsCt > 0 ? (hsCc / hsCt) * 100 : 65,
+          weight: Math.min(0.88, Math.max(0.35, reg.ratioCT || 0.4)),
+          dominant_crime: crimeFilter !== "SEMUA" ? crimeFilter : "PIDANA UMUM"
+        });
+      }
+    }
+
     if (drillLevel >= 1 && drillLevel !== 3 && selectedRegion) {
-      const byPolda = rootH.filter(h => normCasPoldaKey(h.polda_key || h.polda_nama) === selectedRegion.id);
+      const byPolda = enrichedH.filter(h => normCasPoldaKey(h.polda_key || h.polda_nama) === selectedRegion.id);
       if (byPolda.length > 0) return byPolda;
     }
     if (pulauFilter !== "Semua" && drillLevel === 0) {
       const poldaIdsInPulau = new Set(mergedRegions.filter(r => r.pulau === pulauFilter).map(r => r.id));
-      return rootH.filter(h => poldaIdsInPulau.has(normCasPoldaKey(h.polda_key || h.polda_nama)));
+      return enrichedH.filter(h => poldaIdsInPulau.has(normCasPoldaKey(h.polda_key || h.polda_nama)));
     }
-    return rootH;
-  }, [drillLevel, polsekHotspots, subHotspots, petaData?.hotspots, selectedRegion?.id, pulauFilter, mergedRegions]);
+    return enrichedH;
+  }, [drillLevel, polsekHotspots, subHotspots, petaData?.hotspots, selectedRegion?.id, pulauFilter, mergedRegions, crimeFilter]);
 
   const activeTopRawan = (0, a.useMemo)(() => {
     if (drillLevel === 2 && polsekTopRawan.length > 0) return polsekTopRawan;
@@ -2216,8 +2434,11 @@ function CasPetaKejahatanView({
     return polsekSatkers.map((s, idx) => {
       const geo = resolveCasPolsekCoords(s.nama, selectedPolres, idx, N, zoom);
       const ctVal = Number(s.ct || 0);
-      const ccVal = Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0);
-      const cpTgk = Number(s.cp_tunggakan || 0);
+      const ccVal = (Number(s.cc_aktual || 0) + Number(s.cc_tunggakan || 0)) || Number(s.cc || 0);
+      const caVal = Math.max(0, ctVal - ccVal);
+      const cpBer = Number(s.cp_berjalan ?? s.cp_aktual ?? 0) || Math.round(caVal * 0.65);
+      const cpTgk = Number(s.cp_tunggakan || 0) || Math.max(0, caVal - cpBer);
+      const cpVal = (cpBer + cpTgk) || caVal;
       const crVal = Number(s.cr ?? (ctVal > 0 ? (ccVal / (ctVal + Number(s.cc_tunggakan || 0))) * 100 : 0));
       const ratio = ctVal > 0 ? Math.pow(ctVal / maxCT, 0.55) : 0;
       const color = ctVal === 0 ? "#64748b" : ratio >= 0.72 ? "#ef4444" : ratio >= 0.42 ? "#f97316" : ratio >= 0.2 ? "#eab308" : "#10b981";
@@ -2229,7 +2450,10 @@ function CasPetaKejahatanView({
         ...s,
         ct: ctVal,
         cc: ccVal,
+        cp_berjalan: cpBer,
         cp_tunggakan: cpTgk,
+        cp: cpVal,
+        ca: caVal,
         cr: crVal,
         shortName: abbrSatkerName(s.nama, false),
         fullTitle: fullPolsekTitle,
@@ -2460,11 +2684,12 @@ function CasPetaKejahatanView({
       return { fill: "#3b82f6", stroke: borderStroke, badgeColor: "#2563eb", text: z(reg.cc) };
     }
     if (vizMode === "cp_tunggakan") {
-      if (reg.cp_tunggakan === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
-      if (reg.ratioCPTgk >= 0.70) return { fill: "#dc2626", stroke: borderStroke, badgeColor: "#dc2626", text: z(reg.cp_tunggakan) };
-      if (reg.ratioCPTgk >= 0.40) return { fill: "#f97316", stroke: borderStroke, badgeColor: "#ea580c", text: z(reg.cp_tunggakan) };
-      if (reg.ratioCPTgk >= 0.18) return { fill: "#eab308", stroke: borderStroke, badgeColor: "#ca8a04", text: z(reg.cp_tunggakan) };
-      return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: z(reg.cp_tunggakan) };
+      const cpMetric = reg.cp || reg.cp_tunggakan || reg.ca || 0;
+      if (cpMetric === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
+      if (reg.ratioCPTgk >= 0.70) return { fill: "#dc2626", stroke: borderStroke, badgeColor: "#dc2626", text: z(cpMetric) };
+      if (reg.ratioCPTgk >= 0.40) return { fill: "#f97316", stroke: borderStroke, badgeColor: "#ea580c", text: z(cpMetric) };
+      if (reg.ratioCPTgk >= 0.18) return { fill: "#eab308", stroke: borderStroke, badgeColor: "#ca8a04", text: z(cpMetric) };
+      return { fill: "#10b981", stroke: borderStroke, badgeColor: "#059669", text: z(cpMetric) };
     }
     if (reg.ct === 0) return { fill: T.mapZeroFill, stroke: T.mapZeroStroke, badgeColor: "#64748b", text: "0" };
     if (reg.level === "hotspot") return { fill: "#ef4444", stroke: borderStroke, badgeColor: "#dc2626", text: z(reg.ct) };
@@ -2484,8 +2709,29 @@ function CasPetaKejahatanView({
 
     function renderHotspotPinsOnMap(L, map) {
       if (!showHotspotPins || drillLevel === 3 || !Array.isArray(activeHotspots) || activeHotspots.length === 0) return;
-      const maxPins = drillLevel === 0 ? 75 : 140;
-      const slice = activeHotspots.slice(0, maxPins);
+      const maxPins = drillLevel === 0 ? 150 : 180;
+      // Ensure top pins from every Polda (especially Kalimantan) are included first before filling up to maxPins
+      let slice = [];
+      if (drillLevel === 0) {
+        const perPoldaQuota = new Map();
+        const overflow = [];
+        for (const hs of activeHotspots) {
+          const pk = normCasPoldaKey(hs.polda_key || hs.polda_nama) || "OTHER";
+          const used = perPoldaQuota.get(pk) || 0;
+          if (used < 3) {
+            perPoldaQuota.set(pk, used + 1);
+            slice.push(hs);
+          } else {
+            overflow.push(hs);
+          }
+        }
+        for (const hs of overflow) {
+          if (slice.length >= maxPins) break;
+          slice.push(hs);
+        }
+      } else {
+        slice = activeHotspots.slice(0, maxPins);
+      }
       slice.forEach((hs, idx) => {
         const lat = Number(hs.lat);
         const lng = Number(hs.lng);
@@ -2552,9 +2798,17 @@ function CasPetaKejahatanView({
         leafletGeoJsonLayerRef.current = null;
       }
 
-      // Bind & render True Thermal Crime Heatmap Canvas Overlay from LP Latitude & Longitude points
+      // Bind & render True Thermal Crime Heatmap Canvas Overlay from LP Latitude & Longitude points + 36 Wilkum Polda centers
+      const thermalPoints = drillLevel === 0
+        ? [
+            ...activeHotspots,
+            ...mergedRegions
+              .filter(r => r.ct > 0 && (pulauFilter === "Semua" || r.pulau === pulauFilter))
+              .map(r => ({ lat: r.lat, lng: r.lng, weight: Math.max(0.45, r.ratioCT || 0.45) }))
+          ]
+        : activeHotspots;
       const redrawThermal = () => {
-        drawCasThermalCanvasOverlay(map, leafletContainerRef.current, activeHotspots, showThermal && drillLevel !== 3);
+        drawCasThermalCanvasOverlay(map, leafletContainerRef.current, thermalPoints, showThermal && drillLevel !== 3);
       };
       if (map.__casThermalRedraw) {
         try { map.off("move zoom viewreset resize", map.__casThermalRedraw); } catch (_e) {}
@@ -2571,14 +2825,16 @@ function CasPetaKejahatanView({
 
           const nationalGeoLayer = L.geoJSON(allPoldaGeoJson, {
             filter: (feature) => {
-              const pid = feature?.properties?.polda_id || feature?.properties?.id;
+              const rawPid = feature?.properties?.polda_id || feature?.properties?.id || feature?.properties?.polda || feature?.properties?.name;
+              const pid = regById[rawPid] ? rawPid : normCasPoldaKey(rawPid);
               const reg = regById[pid];
               if (!reg) return true;
               if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return false;
               return true;
             },
             style: (feature) => {
-              const pid = feature?.properties?.polda_id || feature?.properties?.id;
+              const rawPid = feature?.properties?.polda_id || feature?.properties?.id || feature?.properties?.polda || feature?.properties?.name;
+              const pid = regById[rawPid] ? rawPid : normCasPoldaKey(rawPid);
               const reg = regById[pid];
               const st = reg ? getRegionStyle(reg) : { fill: "#10b981", badgeColor: "#059669" };
               const isSel = reg && selectedRegion?.id === reg.id;
@@ -2595,7 +2851,8 @@ function CasPetaKejahatanView({
               };
             },
             onEachFeature: (feature, layer) => {
-              const pid = feature?.properties?.polda_id || feature?.properties?.id;
+              const rawPid = feature?.properties?.polda_id || feature?.properties?.id || feature?.properties?.polda || feature?.properties?.name;
+              const pid = regById[rawPid] ? rawPid : normCasPoldaKey(rawPid);
               const reg = regById[pid];
               if (!reg) return;
               layer.bindTooltip(
@@ -2604,6 +2861,7 @@ function CasPetaKejahatanView({
                 (crimeFilter !== "SEMUA" ? ("<span style='color:#dc2626;font-weight:800'>Filter: " + activeCrimeMeta.label + "</span><br/>") : "") +
                 "📍 Mako: " + (reg.makoAddr || "-") + "<br/>" +
                 "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%) • ✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
+                "⏳ Dalam Proses (CP): <b>" + z(reg.cp || reg.ca || 0) + " LP</b> • ⚠️ Tunggakan (CA): <b>" + z(reg.ca || 0) + " LP</b><br/>" +
                 "<em>Klik poligon wilayah untuk zoom ke Wilkum " + reg.polda + " & Polres jajaran</em></div>",
                 { sticky: true, direction: "top", offset: [0, -6] }
               );
@@ -2683,7 +2941,7 @@ function CasPetaKejahatanView({
             "<hr style='border:none;border-top:1px solid #e2e8f0;margin:5px 0'/>" +
             "<div>🔥 Total LP (CT): <b style='color:#dc2626'>" + z(u.ct) + " LP</b></div>" +
             "<div>✅ Selesai (CC): <b style='color:#15803d'>" + z(u.cc) + " LP</b> • 🛡️ CR: <b style='color:#1d4ed8'>" + Number(u.cr || 0).toFixed(1) + "%</b></div>" +
-            "<div>⚠️ Tunggakan (CP): <b style='color:#b45309'>" + z(u.cp_tunggakan || 0) + " LP</b></div>" +
+            "<div>⏳ Dalam Proses (CP): <b style='color:#b45309'>" + z(u.cp || u.cp_tunggakan || u.ca || 0) + " LP</b> • ⚠️ Tunggakan (CA): <b>" + z(u.ca || 0) + " LP</b></div>" +
             "</div>";
           m.bindTooltip(popupHtml, { direction: "top", offset: [0, -8] });
           m.bindPopup(popupHtml);
@@ -2964,7 +3222,7 @@ function CasPetaKejahatanView({
       .sort((a, b) => {
         if (sortBy === "cc") return b.cc - a.cc || b.ct - a.ct;
         if (sortBy === "cr") return b.cr - a.cr || b.ct - a.ct;
-        if (sortBy === "cp_tunggakan") return b.cp_tunggakan - a.cp_tunggakan || b.ct - a.ct;
+        if (sortBy === "cp_tunggakan") return (b.cp || b.cp_tunggakan || b.ca || 0) - (a.cp || a.cp_tunggakan || a.ca || 0) || b.ct - a.ct;
         if (sortBy === "name") return a.polda.localeCompare(b.polda);
         return b.ct - a.ct || b.cc - a.cc;
       });
@@ -3243,7 +3501,7 @@ function CasPetaKejahatanView({
                         ]
                       }),
                       showFilterPopover && filterPopoverTab === "parameter" && (0, t.jsxs)("div", {
-                        className: "cas-peta-filter-popover lp-kelompok-popover",
+                        className: "cas-peta-filter-popover lp-kelompok-popover cas-filter-popover",
                         style: {
                           position: "absolute",
                           left: 0,
@@ -3251,81 +3509,93 @@ function CasPetaKejahatanView({
                           zIndex: 2500,
                           width: "30rem",
                           maxWidth: "calc(100vw - 2rem)",
+                          maxHeight: "min(27.5rem, calc(100vh - 14.5rem))",
+                          display: "flex",
+                          flexDirection: "column",
                           background: T.cardBg,
                           border: "1px solid " + T.cardBorder,
                           borderRadius: 10,
                           boxShadow: "0 14px 36px rgba(15,23,42,.22)",
-                          padding: "0.85rem"
+                          padding: "0.75rem 0.85rem"
                         },
                         children: [
                           (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.65rem" },
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", flexShrink: 0 },
                             children: [
-                              (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Kelompok Data Laporan" }),
+                              (0, t.jsxs)("div", {
+                                children: [
+                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Kelompok Data" }),
+                                  (0, t.jsx)("div", {
+                                    style: { fontSize: "0.71rem", color: T.textSecondary },
+                                    children: (kelompokFilter === "INTERNAL_RESERSE" ? "Internal Reserse" : kelompokFilter === "EKSTERNAL_RESERSE" ? "Eksternal Reserse" : "Semua Kelompok") + " · " + (modelLpFilter === "SEMUA" ? "Semua Model" : "Model " + modelLpFilter) + " · " + (statusFilter === "SEMUA" ? "Semua Status" : statusFilter)
+                                  })
+                                ]
+                              }),
                               (0, t.jsx)("button", { type: "button", onClick: () => setShowFilterPopover(false), style: { background: "none", border: "none", cursor: "pointer", color: T.textSecondary, fontSize: "1.1rem", lineHeight: 1, padding: "0.2rem" }, children: "×" })
                             ]
                           }),
                           (0, t.jsxs)("div", {
-                            style: { display: "grid", gap: "0.75rem" },
+                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem" },
                             children: [
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Cakupan Kelompok Satker" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "1. Cakupan Kelompok Satker" }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "1fr", gap: "0.4rem" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.32rem" },
                                     children: [
-                                      { id: "INTERNAL_RESERSE", title: "Internal Reserse (Default)", desc: "Reskrim, Narkoba, Siber, Krimsus, PPA" },
-                                      { id: "EKSTERNAL_RESERSE", title: "Eksternal Reserse", desc: "Lantas, Samapta, Polair, Pamobvit" },
-                                      { id: "SEMUA", title: "Semua Kelompok Satker", desc: "Gabungan LP Internal & Eksternal Polri" }
+                                      { id: "SEMUA", label: "Semua Kelompok" },
+                                      { id: "INTERNAL_RESERSE", label: "Internal Reserse" },
+                                      { id: "EKSTERNAL_RESERSE", label: "Eksternal Reserse" }
                                     ].map(k => {
                                       const active = kelompokFilter === k.id;
-                                      return (0, t.jsxs)("button", {
+                                      return (0, t.jsx)("div", {
                                         key: k.id,
-                                        type: "button",
                                         onClick: () => setKelompokFilter(k.id),
                                         style: {
-                                          textAlign: "left",
-                                          padding: "0.48rem 0.65rem",
-                                          borderRadius: 8,
-                                          border: "1.5px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.18)" : "#fef2f2") : T.subCardBg,
-                                          cursor: "pointer"
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.25rem",
+                                          fontSize: "0.72rem",
+                                          fontWeight: active ? 700 : 500,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          borderRadius: 6,
+                                          cursor: "pointer",
+                                          userSelect: "none"
                                         },
-                                        children: [
-                                          (0, t.jsx)("div", { style: { fontSize: "0.74rem", fontWeight: 800, color: active ? "#dc2626" : T.textPrimary }, children: k.title }),
-                                          (0, t.jsx)("div", { style: { fontSize: "0.65rem", color: T.textMuted, marginTop: "0.1rem" }, children: k.desc })
-                                        ]
+                                        children: k.label
                                       });
                                     })
                                   })
                                 ]
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Model Laporan Polisi" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "2. Model Laporan Polisi" }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.32rem" },
                                     children: [
                                       { id: "SEMUA", label: "Semua Model" },
                                       { id: "A", label: "LP Model A" },
                                       { id: "B", label: "LP Model B" }
                                     ].map(m => {
                                       const active = modelLpFilter === m.id;
-                                      return (0, t.jsx)("button", {
+                                      return (0, t.jsx)("div", {
                                         key: m.id,
-                                        type: "button",
                                         onClick: () => setModelLpFilter(m.id),
                                         style: {
-                                          padding: "0.4rem 0.5rem",
-                                          borderRadius: 7,
-                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
-                                          color: active ? "#dc2626" : T.textSecondary,
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.25rem",
                                           fontSize: "0.72rem",
-                                          fontWeight: active ? 800 : 600,
-                                          cursor: "pointer"
+                                          fontWeight: active ? 700 : 500,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          borderRadius: 6,
+                                          cursor: "pointer",
+                                          userSelect: "none"
                                         },
                                         children: m.label
                                       });
@@ -3334,51 +3604,58 @@ function CasPetaKejahatanView({
                                 ]
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Status Penyelesaian Perkara" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "3. Status Penyelesaian Perkara" }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.32rem" },
                                     children: [
                                       { id: "SEMUA", label: "Semua Status" },
                                       { id: "CT", label: "Proses (Lidik/Sidik)" },
                                       { id: "CC", label: "Selesai (CC)" }
                                     ].map(st => {
                                       const active = statusFilter === st.id;
-                                      return (0, t.jsx)("button", {
+                                      return (0, t.jsx)("div", {
                                         key: st.id,
-                                        type: "button",
                                         onClick: () => setStatusFilter(st.id),
                                         style: {
-                                          padding: "0.4rem 0.5rem",
-                                          borderRadius: 7,
-                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
-                                          color: active ? "#dc2626" : T.textSecondary,
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.25rem",
                                           fontSize: "0.72rem",
-                                          fontWeight: active ? 800 : 600,
-                                          cursor: "pointer"
+                                          fontWeight: active ? 700 : 500,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          borderRadius: 6,
+                                          cursor: "pointer",
+                                          userSelect: "none"
                                         },
                                         children: st.label
                                       });
                                     })
                                   })
                                 ]
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.55rem", marginTop: "0.55rem", borderTop: "1px solid " + T.divider, flexShrink: 0 },
+                            children: [
+                              (0, t.jsx)("button", {
+                                type: "button",
+                                onClick: () => { setKelompokFilter("INTERNAL_RESERSE"); setModelLpFilter("SEMUA"); setStatusFilter("SEMUA"); setShowFilterPopover(false); },
+                                style: { background: "none", border: "none", color: T.textSecondary, fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", padding: "0.2rem" },
+                                children: "Reset"
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", justifyContent: "flex-end", gap: "0.45rem", paddingTop: "0.4rem", borderTop: "1px solid " + T.divider },
+                                style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                                 children: [
-                                  (0, t.jsx)("button", {
-                                    type: "button",
-                                    onClick: () => { setKelompokFilter("INTERNAL_RESERSE"); setModelLpFilter("SEMUA"); setStatusFilter("SEMUA"); },
-                                    style: { padding: "0.38rem 0.7rem", borderRadius: 7, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textSecondary, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" },
-                                    children: "Reset"
-                                  }),
+                                  (0, t.jsx)("span", { style: { fontSize: "0.73rem", color: T.textSecondary }, children: ([kelompokFilter !== "INTERNAL_RESERSE", modelLpFilter !== "SEMUA", statusFilter !== "SEMUA"].filter(Boolean).length) + " filter aktif" }),
                                   (0, t.jsx)("button", {
                                     type: "button",
                                     onClick: () => setShowFilterPopover(false),
-                                    style: { padding: "0.38rem 0.85rem", borderRadius: 7, border: "1px solid #dc2626", background: "#dc2626", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" },
-                                    children: "✓ Terapkan"
+                                    style: { padding: "0.38rem 1.05rem", borderRadius: 6, border: "1px solid #ef4444", background: "#ef4444", color: "#fff", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" },
+                                    children: "Terapkan"
                                   })
                                 ]
                               })
@@ -3435,37 +3712,80 @@ function CasPetaKejahatanView({
                         ]
                       }),
                       showFilterPopover && filterPopoverTab === "satker" && (0, t.jsxs)("div", {
-                        className: "cas-peta-filter-popover lp-satker-popover",
+                        className: "cas-peta-filter-popover lp-satker-popover cas-filter-popover",
                         style: {
                           position: "absolute",
                           left: 0,
                           top: "calc(100% + 0.45rem)",
                           zIndex: 2500,
-                          width: "32rem",
+                          width: "30rem",
                           maxWidth: "calc(100vw - 2rem)",
+                          maxHeight: "min(27.5rem, calc(100vh - 14.5rem))",
+                          display: "flex",
+                          flexDirection: "column",
                           background: T.cardBg,
                           border: "1px solid " + T.cardBorder,
                           borderRadius: 10,
                           boxShadow: "0 14px 36px rgba(15,23,42,.22)",
-                          padding: "0.85rem"
+                          padding: "0.75rem 0.85rem"
                         },
                         children: [
                           (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.65rem" },
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", flexShrink: 0 },
                             children: [
-                              (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Satker / Cakupan & Wilayah" }),
+                              (0, t.jsxs)("div", {
+                                children: [
+                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Satker / Cakupan & Wilayah" }),
+                                  (0, t.jsx)("div", {
+                                    style: { fontSize: "0.71rem", color: T.textSecondary },
+                                    children: (drillLevel === 3 ? "Bareskrim Polri" : (drillLevel >= 1 && selectedRegion ? selectedRegion.polda : "Nasional (36 Polda)")) + " · " + pulauFilter
+                                  })
+                                ]
+                              }),
                               (0, t.jsx)("button", { type: "button", onClick: () => setShowFilterPopover(false), style: { background: "none", border: "none", cursor: "pointer", color: T.textSecondary, fontSize: "1.1rem", lineHeight: 1, padding: "0.2rem" }, children: "×" })
                             ]
                           }),
                           (0, t.jsxs)("div", {
-                            style: { display: "grid", gap: "0.75rem" },
+                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem" },
                             children: [
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("label", {
-                                    style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted },
-                                    children: (isScopedUser && !isScopedBareskrim) ? "HIRARKI SATKER / WILKUM (POLDA › POLRES › POLSEK) 🔒" : "HIRARKI SATKER / POLDA"
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "1. Fokus Kepulauan" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "0.32rem" },
+                                    children: Object.keys(CAS_PULAU_VIEWS).map(pName => {
+                                      const active = pulauFilter === pName && drillLevel === 0;
+                                      return (0, t.jsx)("div", {
+                                        key: pName,
+                                        onClick: () => handleSelectPulau(pName),
+                                        style: {
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.2rem",
+                                          borderRadius: 6,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          fontSize: "0.71rem",
+                                          fontWeight: active ? 700 : 500,
+                                          cursor: "pointer",
+                                          userSelect: "none",
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis"
+                                        },
+                                        children: pName
+                                      });
+                                    })
+                                  })
+                                ]
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
+                                children: [
+                                  (0, t.jsx)("div", {
+                                    style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" },
+                                    children: (isScopedUser && !isScopedBareskrim) ? "2. Hirarki Satker / Wilkum (Polda › Polres › Polsek) 🔒" : "2. Hirarki Satker / Polda"
                                   }),
                                   (0, t.jsxs)("select", {
                                     value: (isScopedUser && !isScopedBareskrim && scopePoldaKey)
@@ -3480,7 +3800,7 @@ function CasPetaKejahatanView({
                                         if (found) handleSelectPoldaAndZoom(found);
                                       }
                                     },
-                                    style: { padding: "0.48rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700, width: "100%" },
+                                    style: { padding: "0.42rem 0.55rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 600, width: "100%" },
                                     children: (isScopedUser && !isScopedBareskrim && scopePoldaKey)
                                       ? [
                                           (0, t.jsx)("option", {
@@ -3499,9 +3819,9 @@ function CasPetaKejahatanView({
                                         ]
                                   }),
                                   drillLevel >= 1 && selectedRegion && polresMapNodes.length > 0 && (0, t.jsxs)("div", {
-                                    style: { marginTop: "0.35rem", paddingLeft: "0.6rem", borderLeft: "2px solid " + T.cardBorder, display: "flex", flexDirection: "column", gap: "0.28rem" },
+                                    style: { marginTop: "0.35rem", paddingLeft: "0.55rem", borderLeft: "2px solid " + T.cardBorder, display: "flex", flexDirection: "column", gap: "0.25rem" },
                                     children: [
-                                      (0, t.jsx)("label", { style: { fontSize: "0.66rem", fontWeight: 700, color: T.textMuted }, children: "└─ SUB-SATKER POLRES JAJARAN (" + selectedRegion.polda.toUpperCase() + ")" }),
+                                      (0, t.jsx)("label", { style: { fontSize: "0.66rem", fontWeight: 700, color: T.textSecondary }, children: "└─ Sub-Satker Polres Jajaran (" + selectedRegion.polda + ")" }),
                                       (0, t.jsxs)("select", {
                                         value: selectedPolres?.kode || "",
                                         onChange: ev => {
@@ -3512,7 +3832,7 @@ function CasPetaKejahatanView({
                                             if (pr) handleSelectPolresAndZoom(pr);
                                           }
                                         },
-                                        style: { padding: "0.42rem 0.6rem", borderRadius: 7, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", fontWeight: 600, width: "100%" },
+                                        style: { padding: "0.38rem 0.5rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.73rem", fontWeight: 600, width: "100%" },
                                         children: [
                                           (0, t.jsx)("option", { value: "", children: "Semua Polres di " + selectedRegion.polda + " (" + polresMapNodes.length + " Satker)" }),
                                           polresMapNodes.map(pr => (0, t.jsx)("option", {
@@ -3525,49 +3845,27 @@ function CasPetaKejahatanView({
                                     ]
                                   })
                                 ]
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.55rem", marginTop: "0.55rem", borderTop: "1px solid " + T.divider, flexShrink: 0 },
+                            children: [
+                              (0, t.jsx)("button", {
+                                type: "button",
+                                onClick: () => { handleResetNasional(); setShowFilterPopover(false); },
+                                style: { background: "none", border: "none", color: T.textSecondary, fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", padding: "0.2rem" },
+                                children: "Reset"
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.3rem" },
+                                style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                                 children: [
-                                  (0, t.jsx)("label", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted }, children: "FOKUS KEPULAUAN" }),
-                                  (0, t.jsx)("div", {
-                                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
-                                    children: Object.keys(CAS_PULAU_VIEWS).map(pName => {
-                                      const active = pulauFilter === pName && drillLevel === 0;
-                                      return (0, t.jsx)("button", {
-                                        key: pName,
-                                        type: "button",
-                                        onClick: () => handleSelectPulau(pName),
-                                        style: {
-                                          padding: "0.36rem 0.68rem",
-                                          borderRadius: 7,
-                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
-                                          color: active ? "#dc2626" : T.textSecondary,
-                                          fontSize: "0.72rem",
-                                          fontWeight: active ? 800 : 600,
-                                          cursor: "pointer"
-                                        },
-                                        children: pName
-                                      });
-                                    })
-                                  })
-                                ]
-                              }),
-                              (0, t.jsxs)("div", {
-                                style: { display: "flex", justifyContent: "flex-end", gap: "0.45rem", paddingTop: "0.4rem", borderTop: "1px solid " + T.divider },
-                                children: [
-                                  (0, t.jsx)("button", {
-                                    type: "button",
-                                    onClick: () => handleResetNasional(),
-                                    style: { padding: "0.38rem 0.7rem", borderRadius: 7, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textSecondary, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" },
-                                    children: "Reset Nasional"
-                                  }),
+                                  (0, t.jsx)("span", { style: { fontSize: "0.73rem", color: T.textSecondary }, children: drillLevel > 0 ? "1 wilayah dipilih" : pulauFilter }),
                                   (0, t.jsx)("button", {
                                     type: "button",
                                     onClick: () => setShowFilterPopover(false),
-                                    style: { padding: "0.38rem 0.85rem", borderRadius: 7, border: "1px solid #dc2626", background: "#dc2626", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" },
-                                    children: "✓ Terapkan"
+                                    style: { padding: "0.38rem 1.05rem", borderRadius: 6, border: "1px solid #ef4444", background: "#ef4444", color: "#fff", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" },
+                                    children: "Terapkan"
                                   })
                                 ]
                               })
@@ -3624,98 +3922,73 @@ function CasPetaKejahatanView({
                         ]
                       }),
                       showFilterPopover && filterPopoverTab === "kejahatan" && (0, t.jsxs)("div", {
-                        className: "cas-peta-filter-popover lp-crime-popover",
+                        className: "cas-peta-filter-popover lp-crime-popover cas-filter-popover",
                         style: {
                           position: "absolute",
                           left: 0,
                           top: "calc(100% + 0.45rem)",
                           zIndex: 2500,
-                          width: "35rem",
+                          width: "30rem",
                           maxWidth: "calc(100vw - 2rem)",
+                          maxHeight: "min(27.5rem, calc(100vh - 14.5rem))",
+                          display: "flex",
+                          flexDirection: "column",
                           background: T.cardBg,
                           border: "1px solid " + T.cardBorder,
                           borderRadius: 10,
                           boxShadow: "0 14px 36px rgba(15,23,42,.22)",
-                          padding: "0.85rem"
+                          padding: "0.75rem 0.85rem"
                         },
                         children: [
                           (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.65rem" },
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", flexShrink: 0 },
                             children: [
-                              (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Jenis & Golongan Kejahatan" }),
+                              (0, t.jsxs)("div", {
+                                children: [
+                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Jenis & Golongan Kejahatan" }),
+                                  (0, t.jsx)("div", {
+                                    style: { fontSize: "0.71rem", color: T.textSecondary },
+                                    children: (crimeFilter !== "SEMUA" ? (activeCrimeMeta.label || crimeFilter) : "Semua Jenis Kejahatan") + (golonganFilter !== "SEMUA" ? " · Golongan #" + golonganFilter : "")
+                                  })
+                                ]
+                              }),
                               (0, t.jsx)("button", { type: "button", onClick: () => setShowFilterPopover(false), style: { background: "none", border: "none", cursor: "pointer", color: T.textSecondary, fontSize: "1.1rem", lineHeight: 1, padding: "0.2rem" }, children: "×" })
                             ]
                           }),
                           (0, t.jsxs)("div", {
-                            style: { display: "grid", gap: "0.75rem" },
+                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem" },
                             children: [
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.38rem" },
+                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Fokus Jenis Kejahatan (Heatmap & Titik Rawan TKP)" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "1. Golongan Kejahatan (Klasifikasi Pusiknas)" }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.38rem", maxHeight: "14rem", overflowY: "auto" },
-                                    children: CAS_CRIME_QUICK_FILTERS.map(cf => {
-                                      const active = crimeFilter === cf.id;
-                                      const iconStr = cf.icon || "🔥";
-                                      const lblStr = cf.label || cf.shortLabel || cf.id;
-                                      return (0, t.jsxs)("button", {
-                                        key: cf.id,
-                                        type: "button",
-                                        onClick: () => {
-                                          setCrimeFilter(cf.id);
-                                          setSelectedHotspot(null);
-                                        },
-                                        style: {
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: "0.38rem",
-                                          padding: "0.42rem 0.6rem",
-                                          borderRadius: 7,
-                                          border: "1.5px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.22)" : "#fef2f2") : T.subCardBg,
-                                          color: active ? (isDark ? "#fca5a5" : "#dc2626") : T.textPrimary,
-                                          fontSize: "0.72rem",
-                                          fontWeight: active ? 800 : 700,
-                                          cursor: "pointer",
-                                          textAlign: "left"
-                                        },
-                                        children: [
-                                          (0, t.jsx)("span", { children: iconStr }),
-                                          (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: lblStr })
-                                        ]
-                                      });
-                                    })
-                                  })
-                                ]
-                              }),
-                              (0, t.jsxs)("div", {
-                                style: { display: "flex", flexDirection: "column", gap: "0.35rem" },
-                                children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: "Golongan Kejahatan (Klasifikasi Pusiknas)" }),
-                                  (0, t.jsx)("div", {
-                                    style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "0.3rem" },
                                     children: [
-                                      { id: "SEMUA", label: "Semua Golongan" },
+                                      { id: "SEMUA", label: "Semua" },
                                       { id: "1", label: "Konvensional" },
                                       { id: "2", label: "Transnasional" },
                                       { id: "3", label: "Kekayaan Negara" },
                                       { id: "4", label: "Kontinjensi" }
                                     ].map(g => {
                                       const active = golonganFilter === g.id;
-                                      return (0, t.jsx)("button", {
+                                      return (0, t.jsx)("div", {
                                         key: g.id,
-                                        type: "button",
                                         onClick: () => setGolonganFilter(g.id),
                                         style: {
-                                          padding: "0.36rem 0.65rem",
-                                          borderRadius: 7,
-                                          border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
-                                          background: active ? (isDark ? "rgba(220,38,38,0.2)" : "#fef2f2") : T.btnBg,
-                                          color: active ? "#dc2626" : T.textSecondary,
-                                          fontSize: "0.71rem",
-                                          fontWeight: active ? 800 : 600,
-                                          cursor: "pointer"
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.15rem",
+                                          borderRadius: 6,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          fontSize: "0.69rem",
+                                          fontWeight: active ? 700 : 500,
+                                          cursor: "pointer",
+                                          userSelect: "none",
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis"
                                         },
                                         children: g.label
                                       });
@@ -3724,19 +3997,64 @@ function CasPetaKejahatanView({
                                 ]
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", justifyContent: "flex-end", gap: "0.45rem", paddingTop: "0.4rem", borderTop: "1px solid " + T.divider },
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("button", {
-                                    type: "button",
-                                    onClick: () => { setCrimeFilter("SEMUA"); setGolonganFilter("SEMUA"); setSelectedHotspot(null); },
-                                    style: { padding: "0.38rem 0.7rem", borderRadius: 7, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textSecondary, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" },
-                                    children: "Reset"
-                                  }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "2. Fokus Jenis Kejahatan (Heatmap & Titik Rawan TKP)" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.28rem", maxHeight: "9rem", overflowY: "auto", paddingRight: "0.15rem" },
+                                    children: CAS_CRIME_QUICK_FILTERS.map(cf => {
+                                      const active = crimeFilter === cf.id;
+                                      const iconStr = cf.icon || "🔥";
+                                      const lblStr = cf.label || cf.shortLabel || cf.id;
+                                      return (0, t.jsxs)("div", {
+                                        key: cf.id,
+                                        onClick: () => {
+                                          setCrimeFilter(cf.id);
+                                          setSelectedHotspot(null);
+                                        },
+                                        style: {
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "0.35rem",
+                                          padding: "0.3rem 0.45rem",
+                                          borderRadius: 6,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          fontSize: "0.72rem",
+                                          fontWeight: active ? 700 : 500,
+                                          cursor: "pointer",
+                                          userSelect: "none"
+                                        },
+                                        children: [
+                                          (0, t.jsx)("span", { style: { flexShrink: 0 }, children: iconStr }),
+                                          (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: lblStr })
+                                        ]
+                                      });
+                                    })
+                                  })
+                                ]
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.55rem", marginTop: "0.55rem", borderTop: "1px solid " + T.divider, flexShrink: 0 },
+                            children: [
+                              (0, t.jsx)("button", {
+                                type: "button",
+                                onClick: () => { setCrimeFilter("SEMUA"); setGolonganFilter("SEMUA"); setSelectedHotspot(null); setShowFilterPopover(false); },
+                                style: { background: "none", border: "none", color: T.textSecondary, fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", padding: "0.2rem" },
+                                children: "Reset"
+                              }),
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", alignItems: "center", gap: "0.6rem" },
+                                children: [
+                                  (0, t.jsx)("span", { style: { fontSize: "0.73rem", color: T.textSecondary }, children: (crimeFilter !== "SEMUA" ? "1 jenis" : "Semua jenis") }),
                                   (0, t.jsx)("button", {
                                     type: "button",
                                     onClick: () => setShowFilterPopover(false),
-                                    style: { padding: "0.38rem 0.85rem", borderRadius: 7, border: "1px solid #dc2626", background: "#dc2626", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" },
-                                    children: "✓ Terapkan"
+                                    style: { padding: "0.38rem 1.05rem", borderRadius: 6, border: "1px solid #ef4444", background: "#ef4444", color: "#fff", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" },
+                                    children: "Terapkan"
                                   })
                                 ]
                               })
@@ -3791,139 +4109,157 @@ function CasPetaKejahatanView({
                         ]
                       }),
                       showFilterPopover && filterPopoverTab === "periode" && (0, t.jsxs)("div", {
-                        className: "cas-peta-filter-popover lp-period-popover-v2",
+                        className: "cas-peta-filter-popover lp-period-popover-v2 cas-filter-popover",
                         style: {
                           position: "absolute",
                           right: 0,
                           left: "auto",
                           top: "calc(100% + 0.45rem)",
                           zIndex: 2500,
-                          width: "28rem",
+                          width: "30rem",
                           maxWidth: "calc(100vw - 2rem)",
+                          maxHeight: "min(27.5rem, calc(100vh - 14.5rem))",
+                          display: "flex",
+                          flexDirection: "column",
                           background: T.cardBg,
                           border: "1px solid " + T.cardBorder,
                           borderRadius: 10,
                           boxShadow: "0 14px 36px rgba(15,23,42,.22)",
-                          padding: "0.85rem"
+                          padding: "0.75rem 0.85rem"
                         },
                         children: [
                           (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.65rem" },
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem", flexShrink: 0 },
                             children: [
-                              (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Periode" }),
+                              (0, t.jsxs)("div", {
+                                children: [
+                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Periode Laporan" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", color: T.textSecondary }, children: activePeriodBadgeLabel || "Tahun 2026" })
+                                ]
+                              }),
                               (0, t.jsx)("button", { type: "button", onClick: () => setShowFilterPopover(false), style: { background: "none", border: "none", cursor: "pointer", color: T.textSecondary, fontSize: "1.1rem", lineHeight: 1, padding: "0.2rem" }, children: "×" })
                             ]
                           }),
                           (0, t.jsxs)("div", {
-                            style: { display: "grid", gap: "0.75rem" },
+                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem" },
                             children: [
                               (0, t.jsxs)("div", {
-                                style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.4rem" },
+                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  { id: "bulan", label: "Bulan" },
-                                  { id: "tahun", label: "Tahun" },
-                                  { id: "custom", label: "Custom" }
-                                ].map(m => {
-                                  const active = periodMode === m.id;
-                                  return (0, t.jsx)("button", {
-                                    key: m.id,
-                                    type: "button",
-                                    onClick: () => handleSelectYearMonth(m.id, selectedYear, selectedMonth),
-                                    style: {
-                                      padding: "0.42rem 0.6rem",
-                                      borderRadius: 7,
-                                      border: "1px solid " + (active ? "#dc2626" : T.btnBorder),
-                                      background: active ? "#dc2626" : T.cardBg,
-                                      color: active ? "#ffffff" : T.textSecondary,
-                                      fontSize: "0.74rem",
-                                      fontWeight: 800,
-                                      cursor: "pointer"
-                                    },
-                                    children: m.label
-                                  });
-                                })
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "1. Mode Periode" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.32rem" },
+                                    children: [
+                                      { id: "bulan", label: "Bulan" },
+                                      { id: "tahun", label: "Tahun" },
+                                      { id: "custom", label: "Custom" }
+                                    ].map(m => {
+                                      const active = periodMode === m.id;
+                                      return (0, t.jsx)("div", {
+                                        key: m.id,
+                                        onClick: () => handleSelectYearMonth(m.id, selectedYear, selectedMonth),
+                                        style: {
+                                          textAlign: "center",
+                                          padding: "0.32rem 0.25rem",
+                                          borderRadius: 6,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          fontSize: "0.72rem",
+                                          fontWeight: active ? 700 : 500,
+                                          cursor: "pointer",
+                                          userSelect: "none"
+                                        },
+                                        children: m.label
+                                      });
+                                    })
+                                  })
+                                ]
                               }),
-                              periodMode === "tahun" && (0, t.jsxs)("div", {
-                                style: { display: "grid", gap: "0.5rem" },
+                              (0, t.jsxs)("div", {
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
                                 children: [
-                                  (0, t.jsxs)("select", {
+                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.35rem" }, children: "2. Pengaturan Rentang Waktu" }),
+                                  periodMode === "tahun" && (0, t.jsxs)("select", {
                                     value: selectedYear,
                                     onChange: ev => handleSelectYearMonth("tahun", Number(ev.target.value), selectedMonth),
-                                    style: { padding: "0.48rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.78rem", fontWeight: 700, width: "100%" },
+                                    style: { padding: "0.42rem 0.55rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 600, width: "100%" },
                                     children: [
                                       (0, t.jsx)("option", { value: 2026, children: "Tahun 2026" }),
                                       (0, t.jsx)("option", { value: 2025, children: "Tahun 2025" })
                                     ]
                                   }),
-                                  (0, t.jsxs)("div", {
-                                    style: { padding: "0.48rem 0.65rem", borderRadius: 7, background: T.subCardBg, border: "1px solid " + T.subCardBorder, color: T.textSecondary, fontSize: "0.72rem" },
-                                    children: ["Rentang aktif: ", (0, t.jsx)("strong", { children: (filterFrom || (selectedYear + "-01-01")) + " s/d " + (filterTo || casTodayIso) })]
-                                  })
-                                ]
-                              }),
-                              periodMode === "bulan" && (0, t.jsxs)("div", {
-                                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" },
-                                children: [
-                                  (0, t.jsx)("select", {
-                                    value: selectedMonth,
-                                    onChange: ev => handleSelectYearMonth("bulan", selectedYear, Number(ev.target.value)),
-                                    style: { padding: "0.48rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700, width: "100%" },
-                                    children: MONTH_NAMES_ID.map((mName, idx) => (0, t.jsx)("option", { key: idx + 1, value: idx + 1, children: mName }))
-                                  }),
-                                  (0, t.jsxs)("select", {
-                                    value: selectedYear,
-                                    onChange: ev => handleSelectYearMonth("bulan", Number(ev.target.value), selectedMonth),
-                                    style: { padding: "0.48rem 0.65rem", borderRadius: 8, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.76rem", fontWeight: 700, width: "100%" },
+                                  periodMode === "bulan" && (0, t.jsxs)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" },
                                     children: [
-                                      (0, t.jsx)("option", { value: 2026, children: "2026" }),
-                                      (0, t.jsx)("option", { value: 2025, children: "2025" })
-                                    ]
-                                  })
-                                ]
-                              }),
-                              periodMode === "custom" && (0, t.jsxs)("div", {
-                                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" },
-                                children: [
-                                  (0, t.jsxs)("div", {
-                                    children: [
-                                      (0, t.jsx)("label", { style: { display: "block", fontSize: "0.7rem", fontWeight: 700, color: T.textMuted, marginBottom: "0.2rem" }, children: "Dari" }),
-                                      (0, t.jsx)("input", {
-                                        type: "date",
-                                        max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
-                                        value: filterFrom,
-                                        onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterFrom(v && v > td ? td : v); },
-                                        style: { padding: "0.42rem 0.55rem", borderRadius: 7, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", width: "100%" }
+                                      (0, t.jsx)("select", {
+                                        value: selectedMonth,
+                                        onChange: ev => handleSelectYearMonth("bulan", selectedYear, Number(ev.target.value)),
+                                        style: { padding: "0.42rem 0.55rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 600, width: "100%" },
+                                        children: MONTH_NAMES_ID.map((mName, idx) => (0, t.jsx)("option", { key: idx + 1, value: idx + 1, children: mName }))
+                                      }),
+                                      (0, t.jsxs)("select", {
+                                        value: selectedYear,
+                                        onChange: ev => handleSelectYearMonth("bulan", Number(ev.target.value), selectedMonth),
+                                        style: { padding: "0.42rem 0.55rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 600, width: "100%" },
+                                        children: [
+                                          (0, t.jsx)("option", { value: 2026, children: "2026" }),
+                                          (0, t.jsx)("option", { value: 2025, children: "2025" })
+                                        ]
                                       })
                                     ]
                                   }),
-                                  (0, t.jsxs)("div", {
+                                  periodMode === "custom" && (0, t.jsxs)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" },
                                     children: [
-                                      (0, t.jsx)("label", { style: { display: "block", fontSize: "0.7rem", fontWeight: 700, color: T.textMuted, marginBottom: "0.2rem" }, children: "Sampai" }),
-                                      (0, t.jsx)("input", {
-                                        type: "date",
-                                        max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
-                                        value: filterTo,
-                                        onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterTo(v && v > td ? td : v); },
-                                        style: { padding: "0.42rem 0.55rem", borderRadius: 7, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", width: "100%" }
+                                      (0, t.jsxs)("div", {
+                                        children: [
+                                          (0, t.jsx)("label", { style: { display: "block", fontSize: "0.7rem", color: T.textSecondary, marginBottom: "0.2rem" }, children: "Dari Tanggal" }),
+                                          (0, t.jsx)("input", {
+                                            type: "date",
+                                            max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
+                                            value: filterFrom,
+                                            onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterFrom(v && v > td ? td : v); },
+                                            style: { padding: "0.38rem 0.5rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", width: "100%" }
+                                          })
+                                        ]
+                                      }),
+                                      (0, t.jsxs)("div", {
+                                        children: [
+                                          (0, t.jsx)("label", { style: { display: "block", fontSize: "0.7rem", color: T.textSecondary, marginBottom: "0.2rem" }, children: "Sampai Tanggal" }),
+                                          (0, t.jsx)("input", {
+                                            type: "date",
+                                            max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
+                                            value: filterTo,
+                                            onChange: ev => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = ev.target.value; setPeriodPreset("custom"); setFilterTo(v && v > td ? td : v); },
+                                            style: { padding: "0.38rem 0.5rem", borderRadius: 6, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", width: "100%" }
+                                          })
+                                        ]
                                       })
                                     ]
                                   })
                                 ]
+                              })
+                            ]
+                          }),
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "0.55rem", marginTop: "0.55rem", borderTop: "1px solid " + T.divider, flexShrink: 0 },
+                            children: [
+                              (0, t.jsx)("button", {
+                                type: "button",
+                                onClick: () => { handleSelectYearMonth("tahun", 2026, selectedMonth); setShowFilterPopover(false); },
+                                style: { background: "none", border: "none", color: T.textSecondary, fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", padding: "0.2rem" },
+                                children: "Reset"
                               }),
                               (0, t.jsxs)("div", {
-                                style: { display: "flex", justifyContent: "flex-end", gap: "0.45rem", paddingTop: "0.4rem", borderTop: "1px solid " + T.divider },
+                                style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                                 children: [
-                                  (0, t.jsx)("button", {
-                                    type: "button",
-                                    onClick: () => handleSelectYearMonth("tahun", 2026, selectedMonth),
-                                    style: { padding: "0.38rem 0.7rem", borderRadius: 7, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textSecondary, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" },
-                                    children: "Reset"
-                                  }),
+                                  (0, t.jsx)("span", { style: { fontSize: "0.73rem", color: T.textSecondary }, children: activePeriodBadgeLabel }),
                                   (0, t.jsx)("button", {
                                     type: "button",
                                     onClick: () => setShowFilterPopover(false),
-                                    style: { padding: "0.38rem 0.85rem", borderRadius: 7, border: "1px solid #dc2626", background: "#dc2626", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" },
-                                    children: "✓ Terapkan"
+                                    style: { padding: "0.38rem 1.05rem", borderRadius: 6, border: "1px solid #ef4444", background: "#ef4444", color: "#fff", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer" },
+                                    children: "Terapkan"
                                   })
                                 ]
                               })
@@ -4038,7 +4374,7 @@ function CasPetaKejahatanView({
                     { id: "ct", label: "🔥 Sebaran LP (CT)", tip: "Tampilkan intensitas berdasarkan jumlah Laporan Polisi (Crime Total)", bg: T.ctBg, border: T.ctBorder, color: T.ctText },
                     { id: "cr", label: "🛡️ Rasio Selesai (CR%)", tip: "Tampilkan capaian persentase penyelesaian perkara (Clearance Rate)", bg: T.crBg, border: T.crBorder, color: T.crText },
                     { id: "cc", label: "✅ Perkara Selesai (CC)", tip: "Tampilkan jumlah perkara yang telah diselesaikan (Crime Clearance)", bg: T.ccBg, border: T.ccBorder, color: T.ccText },
-                    { id: "cp_tunggakan", label: "⚠️ Tunggakan (CP)", tip: "Tampilkan jumlah perkara tunggakan yang melewati batas waktu", bg: T.warnBg, border: T.warnBorder, color: T.warnText }
+                    { id: "cp_tunggakan", label: "⏳ Dalam Proses (CP)", tip: "Tampilkan jumlah tindak pidana dalam proses (CP = Crime Processed) & Tunggakan (CA = CT - CC)", bg: T.warnBg, border: T.warnBorder, color: T.warnText }
                   ].map(m => {
                     const active = vizMode === m.id;
                     return (0, t.jsx)("button", {
@@ -5286,6 +5622,8 @@ function CasPetaKejahatanView({
                   // 4 KPI Mini-Cards for active Mabes Unit
                   (() => {
                     const activeMabes = selectedMabesUnit || mabesUnitNodes[0] || mabesSummary;
+                    const mbsCA = Number(activeMabes.ca ?? Math.max(0, Number(activeMabes.ct || 0) - Number(activeMabes.cc || 0)));
+                    const mbsCP = Number(activeMabes.cp ?? ((Number(activeMabes.cp_berjalan || 0) + Number(activeMabes.cp_tunggakan || 0)) || mbsCA));
                     return (0, t.jsxs)("div", {
                       className: "tabular-nums",
                       style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
@@ -5293,7 +5631,7 @@ function CasPetaKejahatanView({
                         { label: "Total LP (CT)", val: z(activeMabes.ct) + " LP", sub: "Total Mabes: " + z(mabesSummary.ct) + " LP", color: T.ctText },
                         { label: "Selesai (CC)", val: z(activeMabes.cc) + " LP", sub: "Total Mabes: " + z(mabesSummary.cc) + " LP", color: T.ccText },
                         { label: "Rasio Selesai (CR)", val: Number(activeMabes.cr || 0).toFixed(1) + "%", sub: "Clearance Rate Satker", color: T.crText },
-                        { label: "Tunggakan (CP)", val: z(activeMabes.cp_tunggakan || 0) + " LP", sub: "Proses Aktif: " + z(activeMabes.cp_berjalan || 0), color: T.warnText }
+                        { label: "Dalam Proses (CP)", val: z(mbsCP) + " LP", sub: "Tunggakan (CA): " + z(mbsCA) + " LP", color: T.warnText }
                       ].map((k, idx) => (0, t.jsxs)("div", {
                         key: idx,
                         className: "dash-minicard",
@@ -5481,6 +5819,8 @@ function CasPetaKejahatanView({
                     const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
                     const cpBer = Number(activeObj.cp_berjalan || 0);
                     const cpTgk = Number(activeObj.cp_tunggakan || 0);
+                    const caVal = Number(activeObj.ca ?? Math.max(0, Number(activeObj.ct || 0) - Number(activeObj.cc || 0)));
+                    const cpVal = Number(activeObj.cp ?? ((cpBer + cpTgk) || caVal));
                     return (0, t.jsxs)("div", {
                       className: "tabular-nums",
                       style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
@@ -5488,7 +5828,7 @@ function CasPetaKejahatanView({
                         { label: "Total LP (CT)", val: z(activeObj.ct) + " LP", sub: "Laporan Polisi Masuk", color: T.ctText, tip: "Jumlah Laporan Polisi pada satuan kerja ini" },
                         { label: "Selesai (CC)", val: z(activeObj.cc) + " LP", sub: "Perkara Diselesaikan", color: T.ccText, tip: "Jumlah perkara yang telah selesai (CC Aktual + Tunggakan)" },
                         { label: "Rasio Selesai (CR)", val: Number(activeObj.cr || 0).toFixed(1) + "%", sub: "Clearance Rate", color: T.crText, tip: "Persentase penyelesaian perkara terhadap total LP" },
-                        { label: "Tunggakan (CP)", val: z(cpTgk) + " LP", sub: "Proses Aktif: " + z(cpBer), color: T.warnText, tip: "Perkara masih diproses yang melewati jatuh tempo" }
+                        { label: "Dalam Proses (CP)", val: z(cpVal) + " LP", sub: "Tunggakan (CA): " + z(caVal) + " LP", color: T.warnText, tip: "Tindak Pidana dalam Proses (CP = Crime Processed) & Tunggakan Tindak Pidana (CA = CT - CC)" }
                       ].map((k, idx) => (0, t.jsxs)("div", {
                         key: idx,
                         className: "dash-minicard",
@@ -5985,7 +6325,7 @@ function CasPetaKejahatanView({
                       (0, t.jsx)("option", { value: "ct", children: "Urut: Total LP (CT) Tertinggi" }),
                       (0, t.jsx)("option", { value: "cc", children: "Urut: Selesai (CC) Tertinggi" }),
                       (0, t.jsx)("option", { value: "cr", children: "Urut: Rasio Selesai (CR%) Tertinggi" }),
-                      (0, t.jsx)("option", { value: "cp_tunggakan", children: "Urut: Tunggakan (CP) Tertinggi" }),
+                      (0, t.jsx)("option", { value: "cp_tunggakan", children: "Urut: Dalam Proses (CP) Tertinggi" }),
                       (0, t.jsx)("option", { value: "name", children: "Urut: Nama Polda (A-Z)" })
                     ]
                   })
@@ -6020,8 +6360,8 @@ function CasPetaKejahatanView({
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Total: Jumlah Laporan Polisi", children: "Total LP (CT)" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", width: "140px" }, title: "Porsi persentase LP terhadap total nasional", children: "Porsi Nasional" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Clearance: Jumlah perkara selesai", children: "Selesai (CC)" }),
-                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processing Aktual: Perkara sedang diproses", children: "Proses" }),
-                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processing Tunggakan: Perkara lewat jatuh tempo", children: "Tunggakan" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processed (CP): Tindak Pidana dalam Proses (CP Aktual + CP Tunggakan)", children: "Dalam Proses (CP)" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Arears (CA): Tunggakan Tindak Pidana (CT - CC)", children: "Tunggakan (CA)" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Clearance Rate: Rasio penyelesaian perkara (%)", children: "Rasio (CR%)" })
                     ]
                   })
@@ -6072,8 +6412,8 @@ function CasPetaKejahatanView({
                           })
                         }),
                         (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 700, color: T.ccText }, children: z(row.cc) }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 600 }, children: z(row.cp_berjalan) }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: row.cp_tunggakan > 0 ? T.warnText : T.textSubtle, fontWeight: row.cp_tunggakan > 0 ? 700 : 400 }, children: z(row.cp_tunggakan) }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 700 }, children: z(row.cp || row.cp_berjalan || row.ca || 0) }),
+                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: (row.ca || row.cp_tunggakan || 0) > 0 ? T.warnText : T.textSubtle, fontWeight: (row.ca || row.cp_tunggakan || 0) > 0 ? 700 : 400 }, children: z(row.ca || row.cp_tunggakan || 0) }),
                         (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 800, color: row.cr >= 50 ? T.ccText : T.textPrimary }, children: row.cr.toFixed(1) + "%" })
                       ]
                     });
@@ -6839,180 +7179,198 @@ children:[
     ]
   }),
 
+  dashPeriodOpen&&(0,t.jsx)("div",{style:{position:"fixed",inset:0,zIndex:2499},onClick:()=>setDashPeriodOpen(!1)}),
   dashPeriodOpen&&(0,t.jsxs)("div",{
+    className:"lp-period-popover-v2 cas-filter-popover",
     style:{
       position:"absolute",
       right:0,
       top:"calc(100% + 0.45rem)",
-      zIndex:50,
-      width:"25rem",
+      zIndex:2500,
+      width:"30rem",
       maxWidth:"calc(100vw - 2rem)",
-      background:"#fff",
-      border:"1px solid #dbe3ee",
+      maxHeight:"min(27.5rem, calc(100vh - 14.5rem))",
+      display:"flex",
+      flexDirection:"column",
+      background:"var(--cas-bg-surface, #fff)",
+      border:"1px solid var(--cas-border-card, #dbe3ee)",
       borderRadius:10,
       boxShadow:"0 14px 36px rgba(15,23,42,.16)",
-      padding:"0.85rem"
+      padding:"0.75rem 0.85rem"
     },
     children:[
-      (0,t.jsx)("div",{
-        style:{
-          fontWeight:800,
-          color:"#0f172a",
-          marginBottom:"0.7rem"
-        },
-        children:"Pilih Periode"
-      }),
-
       (0,t.jsxs)("div",{
         style:{
-          display:"grid",
-          gridTemplateColumns:"repeat(3,1fr)",
-          gap:"0.4rem",
-          marginBottom:"0.75rem"
-        },
-        children:[
-          (0,t.jsx)("button",{
-            type:"button",
-            className:"att-btn",
-            onClick:()=>setDashPeriodMode("month"),
-            style:{
-              background:"month"===dashPeriodMode?"#eff6ff":"#fff",
-              borderColor:"month"===dashPeriodMode?"#93c5fd":"#dbe3ee",
-              color:"month"===dashPeriodMode?"#1d4ed8":"#334155"
-            },
-            children:"Bulan"
-          }),
-
-          (0,t.jsx)("button",{
-            type:"button",
-            className:"att-btn",
-            onClick:()=>setDashPeriodMode("year"),
-            style:{
-              background:"year"===dashPeriodMode?"#eff6ff":"#fff",
-              borderColor:"year"===dashPeriodMode?"#93c5fd":"#dbe3ee",
-              color:"year"===dashPeriodMode?"#1d4ed8":"#334155"
-            },
-            children:"Tahun"
-          }),
-
-          (0,t.jsx)("button",{
-            type:"button",
-            className:"att-btn",
-            onClick:()=>setDashPeriodMode("custom"),
-            style:{
-              background:"custom"===dashPeriodMode?"#eff6ff":"#fff",
-              borderColor:"custom"===dashPeriodMode?"#93c5fd":"#dbe3ee",
-              color:"custom"===dashPeriodMode?"#1d4ed8":"#334155"
-            },
-            children:"Custom"
-          })
-        ]
-      }),
-
-      "month"===dashPeriodMode&&(0,t.jsxs)("div",{
-        style:{
-          display:"grid",
-          gridTemplateColumns:"1fr 1fr",
-          gap:"0.55rem"
-        },
-        children:[
-          (0,t.jsx)(d.Dropdown,{
-            id:"dash-period-month",
-            inputId:"dash-period-month-select",
-            name:"period_month",
-            value:dashPeriodMonth,
-            options:dashMonthOptions(),
-            onChange:e=>setDashPeriodMonth(e.value),
-            placeholder:"Bulan",
-            style:{width:"100%"}
-          }),
-          (0,t.jsx)(d.Dropdown,{
-            id:"dash-period-year",
-            inputId:"dash-period-year-select",
-            name:"period_year",
-            value:dashPeriodYear,
-            options:dashYearOptions(),
-            onChange:e=>setDashPeriodYear(e.value),
-            placeholder:"Tahun",
-            style:{width:"100%"}
-          })
-        ]
-      }),
-
-      "year"===dashPeriodMode&&(0,t.jsx)(d.Dropdown,{
-        id:"dash-period-year-single",
-        inputId:"dash-period-year-single-select",
-        name:"period_year_single",
-        value:dashPeriodYear,
-        options:dashYearOptions(),
-        onChange:e=>setDashPeriodYear(e.value),
-        placeholder:"Tahun",
-        style:{width:"100%"}
-      }),
-
-      "custom"===dashPeriodMode&&(0,t.jsxs)("div",{
-        style:{
-          display:"grid",
-          gridTemplateColumns:"1fr auto 1fr",
+          display:"flex",
           alignItems:"center",
-          gap:"0.45rem"
+          justifyContent:"space-between",
+          marginBottom:"0.5rem",
+          flexShrink:0
         },
         children:[
-          (0,t.jsx)(m.InputText,{
-            id:"dash-custom-from",
-            name:"date_from",
-            type:"date",
-            max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
-            value:q,
-            onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;G(v&&v>td?td:v)},
-            style:{width:"100%"}
+          (0,t.jsxs)("div",{children:[
+            (0,t.jsx)("div",{style:{fontWeight:800,color:"var(--cas-text-primary, #0f172a)",fontSize:"0.92rem"},children:"Pilih Periode Laporan"}),
+            (0,t.jsx)("div",{style:{fontSize:"0.71rem",color:"#64748b"},children:dashPeriodLabel||"Semua Periode"})
+          ]}),
+          (0,t.jsx)("button",{type:"button",onClick:()=>setDashPeriodOpen(!1),style:{background:"none",border:"none",cursor:"pointer",color:"#64748b",fontSize:"1.1rem",lineHeight:1,padding:"0.2rem"},children:"×"})
+        ]
+      }),
+      (0,t.jsxs)("div",{
+        style:{flex:"1 1 auto",minHeight:0,overflowY:"auto",paddingRight:"0.1rem"},
+        children:[
+          (0,t.jsxs)("div",{
+            style:{marginBottom:"0.48rem",background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border-card, #e2e8f0)",borderRadius:8,padding:"0.45rem 0.55rem"},
+            children:[
+              (0,t.jsx)("div",{style:{fontSize:"0.71rem",fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:"0.03em",marginBottom:"0.3rem"},children:"1. Mode Periode"}),
+              (0,t.jsx)("div",{
+                style:{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:"0.32rem"},
+                children:[
+                  {key:"month",label:"Bulan"},
+                  {key:"year",label:"Tahun"},
+                  {key:"custom",label:"Custom"}
+                ].map(mItem=>{
+                  let checked = dashPeriodMode === mItem.key;
+                  return (0,t.jsx)("div",{
+                    key:mItem.key,
+                    onClick:()=>setDashPeriodMode(mItem.key),
+                    style:{
+                      textAlign:"center",
+                      padding:"0.32rem 0.25rem",
+                      fontSize:"0.72rem",
+                      fontWeight:checked?700:500,
+                      color:checked?"#f87171":"inherit",
+                      background:checked?"rgba(239,68,68,0.18)":"rgba(255,255,255,0.03)",
+                      border:"1px solid "+(checked?"#ef4444":"var(--cas-border-card, #cbd5e1)"),
+                      borderRadius:6,
+                      cursor:"pointer",
+                      userSelect:"none"
+                    },
+                    children:mItem.label
+                  });
+                })
+              })
+            ]
           }),
-          (0,t.jsx)("span",{
-            style:{color:"#94a3b8"},
-            children:"–"
-          }),
-          (0,t.jsx)(m.InputText,{
-            id:"dash-custom-to",
-            name:"date_to",
-            type:"date",
-            max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
-            value:Z,
-            onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;Q(v&&v>td?td:v)},
-            style:{width:"100%"}
+          (0,t.jsxs)("div",{
+            style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border-card, #e2e8f0)",borderRadius:8,padding:"0.45rem 0.55rem"},
+            children:[
+              (0,t.jsx)("div",{style:{fontSize:"0.71rem",fontWeight:700,color:"#475569",textTransform:"uppercase",letterSpacing:"0.03em",marginBottom:"0.35rem"},children:"2. Pengaturan Rentang Waktu"}),
+              "month"===dashPeriodMode&&(0,t.jsxs)("div",{
+                style:{
+                  display:"grid",
+                  gridTemplateColumns:"1fr 1fr",
+                  gap:"0.5rem"
+                },
+                children:[
+                  (0,t.jsx)(d.Dropdown,{
+                    id:"dash-period-month",
+                    inputId:"dash-period-month-select",
+                    name:"period_month",
+                    value:dashPeriodMonth,
+                    options:dashMonthOptions(),
+                    onChange:e=>setDashPeriodMonth(e.value),
+                    placeholder:"Bulan",
+                    style:{width:"100%"}
+                  }),
+                  (0,t.jsx)(d.Dropdown,{
+                    id:"dash-period-year",
+                    inputId:"dash-period-year-select",
+                    name:"period_year",
+                    value:dashPeriodYear,
+                    options:dashYearOptions(),
+                    onChange:e=>setDashPeriodYear(e.value),
+                    placeholder:"Tahun",
+                    style:{width:"100%"}
+                  })
+                ]
+              }),
+              "year"===dashPeriodMode&&(0,t.jsx)(d.Dropdown,{
+                id:"dash-period-year-single",
+                inputId:"dash-period-year-single-select",
+                name:"period_year_single",
+                value:dashPeriodYear,
+                options:dashYearOptions(),
+                onChange:e=>setDashPeriodYear(e.value),
+                placeholder:"Tahun",
+                style:{width:"100%"}
+              }),
+              "custom"===dashPeriodMode&&(0,t.jsxs)("div",{
+                style:{
+                  display:"grid",
+                  gridTemplateColumns:"1fr 1fr",
+                  gap:"0.5rem"
+                },
+                children:[
+                  (0,t.jsxs)("div",{children:[
+                    (0,t.jsx)("label",{style:{display:"block",fontSize:"0.7rem",color:"#64748b",marginBottom:"0.2rem"},children:"Dari Tanggal"}),
+                    (0,t.jsx)(m.InputText,{
+                      id:"dash-custom-from",
+                      name:"date_from",
+                      type:"date",
+                      max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
+                      value:q,
+                      onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;G(v&&v>td?td:v)},
+                      style:{width:"100%",fontSize:"0.78rem",height:"2.1rem"}
+                    })
+                  ]}),
+                  (0,t.jsxs)("div",{children:[
+                    (0,t.jsx)("label",{style:{display:"block",fontSize:"0.7rem",color:"#64748b",marginBottom:"0.2rem"},children:"Sampai Tanggal"}),
+                    (0,t.jsx)(m.InputText,{
+                      id:"dash-custom-to",
+                      name:"date_to",
+                      type:"date",
+                      max:new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
+                      value:Z,
+                      onChange:e=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),v=e.target.value;Q(v&&v>td?td:v)},
+                      style:{width:"100%",fontSize:"0.78rem",height:"2.1rem"}
+                    })
+                  ]})
+                ]
+              })
+            ]
           })
         ]
       }),
-
       (0,t.jsxs)("div",{
         style:{
           display:"flex",
           justifyContent:"space-between",
-          gap:"0.5rem",
-          marginTop:"0.85rem",
-          paddingTop:"0.7rem",
-          borderTop:"1px solid #e2e8f0"
+          alignItems:"center",
+          marginTop:"0.55rem",
+          paddingTop:"0.55rem",
+          borderTop:"1px solid var(--cas-border, #e2e8f0)",
+          flexShrink:0
         },
         children:[
           (0,t.jsx)("button",{
             type:"button",
-            className:"att-btn",
             onClick:dashResetPeriod,
+            style:{background:"none",border:"none",color:"#64748b",fontSize:"0.76rem",fontWeight:600,cursor:"pointer",padding:"0.2rem"},
             children:"Reset"
           }),
-
-          (0,t.jsx)("button",{
-            type:"button",
-            className:"att-btn",
-            disabled:
-              "custom"===dashPeriodMode&&
-              (!q||!Z||q>Z),
-            onClick:dashApplyPeriod,
-            style:{
-              background:"#2563eb",
-              borderColor:"#2563eb",
-              color:"#fff"
-            },
-            children:"Terapkan"
+          (0,t.jsxs)("div",{
+            style:{display:"flex",alignItems:"center",gap:"0.6rem"},
+            children:[
+              (0,t.jsx)("span",{style:{fontSize:"0.73rem",color:"#475569"},children:dashPeriodMode==="year"?("Tahun "+dashPeriodYear):dashPeriodMode==="month"?("Bulan "+dashPeriodMonth+"/"+dashPeriodYear):"Rentang Kustom"}),
+              (0,t.jsx)("button",{
+                type:"button",
+                disabled:
+                  "custom"===dashPeriodMode&&
+                  (!q||!Z||q>Z),
+                onClick:dashApplyPeriod,
+                style:{
+                  background:"#ef4444",
+                  border:"1px solid #ef4444",
+                  color:"#fff",
+                  borderRadius:6,
+                  padding:"0.38rem 1.05rem",
+                  fontSize:"0.76rem",
+                  fontWeight:700,
+                  cursor:"pointer"
+                },
+                children:"Terapkan"
+              })
+            ]
           })
         ]
       })
@@ -7130,7 +7488,7 @@ children:[
           let rawSatLow = rawSat.toLowerCase();
           let satker = (isSuper || isUserOne || rawSatLow === 'bareskrim polri' || rawSatLow === 'badan reserse kriminal polri' || rawSatLow === 'robinopsnal bareskrim polri' || rawSatLow === 'mabes bareskrim' || (isSuper && rawSatLow === 'polri'))
             ? 'Robinopsnal Bareskrim Polri'
-            : (rawSat || 'Polri');
+            : (rawSat ? abbrSatkerName(rawSat, false) : 'Polri');
           let isOfficial = Boolean(item.is_official_jukrah);
           let isPinned = Boolean(item.is_pinned);
           let ackCount = Number(item.acknowledged_count || 0);

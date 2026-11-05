@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@app_core/auth/auth.guard';
 import { CurrentUserInterceptor } from '@app_core/helper/interceptor/current-user.interceptor';
 import { BarangBuktiService } from './barang-bukti.service';
@@ -34,7 +34,32 @@ export class BarangBuktiController {
 
     @Patch('manual/:id')
     updateManual(@Req() req: any, @Param('id') id: string, @Body() body: any) {
-        return this.service.updateManual(req.user, Number(id), body || {});
+        return this.service.updateManual(req.user, id, body || {});
+    }
+
+    @Put('manual/:id')
+    putManual(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateManual(req.user, id, body || {});
+    }
+
+    @Patch('dors/:id')
+    updateDors(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateManual(req.user, `dors-${String(id).replace(/^dors-/i, '')}`, body || {});
+    }
+
+    @Put('dors/:id')
+    putDors(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateManual(req.user, `dors-${String(id).replace(/^dors-/i, '')}`, body || {});
+    }
+
+    @Patch(':id')
+    updateAny(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateManual(req.user, id, body || {});
+    }
+
+    @Put(':id')
+    putAny(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateManual(req.user, id, body || {});
     }
 
     @Delete(':id')

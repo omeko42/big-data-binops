@@ -118,9 +118,31 @@ function formatCallsign(rawCallsign, authorId, username) {
   return '@anggota.' + (idStr || '1');
 }
 
+function normalizeSatkerKam(str) {
+  if (!str) return '';
+  var s = String(str).trim();
+  var isAllUpper = (s === s.toUpperCase()) && /[A-Z]/.test(s);
+  s = s
+    .replace(/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+UMUM\b/gi, isAllUpper ? 'DITKRIMUM' : 'Ditkrimum')
+    .replace(/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+KHUSUS\b/gi, isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus')
+    .replace(/\bDIREKTORAT\s+RESERSE\s+NARKOBA\b/gi, isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba')
+    .replace(/\bDIREKTORAT\s+RESERSE\s+SIBER\b/gi, isAllUpper ? 'DITSIBER' : 'Ditsiber')
+    .replace(/\b(?:DIT\s*RES\s*KRIMUM|DITRESKRIMUM|DIT\s+KRIMUM|DITKRIMUM)\b/gi, isAllUpper ? 'DITKRIMUM' : 'Ditkrimum')
+    .replace(/\b(?:DIT\s*RES\s*KRIMSUS|DITRESKRIMSUS|DIT\s+KRIMSUS|DITKRIMSUS)\b/gi, isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus')
+    .replace(/\b(?:DIT\s*RES\s*NARKOBA|DITRESNARKOBA|DIT\s+NARKOBA|DITNARKOBA)\b/gi, isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba')
+    .replace(/\b(?:DIT\s*RES\s*SIBER|DITRESSIBER|DIT\s+SIBER|DITSIBER)\b/gi, isAllUpper ? 'DITSIBER' : 'Ditsiber')
+    .replace(/(^|\bPOLDA\s+|\s-\s)\bKRIMUM\b/gi, function(_, p1) { return (p1 || '') + (isAllUpper ? 'DITKRIMUM' : 'Ditkrimum'); })
+    .replace(/(^|\bPOLDA\s+|\s-\s)\bKRIMSUS\b/gi, function(_, p1) { return (p1 || '') + (isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus'); })
+    .replace(/\bKRIMUM\b/gi, isAllUpper ? 'DITKRIMUM' : 'Ditkrimum')
+    .replace(/\bKRIMSUS\b/gi, isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus')
+    .replace(/^NARKOBA(\s+)/i, function(_, sp) { return (isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba') + sp; })
+    .replace(/^SIBER(\s+)/i, function(_, sp) { return (isAllUpper ? 'DITSIBER' : 'Ditsiber') + sp; });
+  return s;
+}
+
 function toTitleCase(str) {
   if (!str) return '';
-  return String(str)
+  return normalizeSatkerKam(String(str))
     .replace(/\bPAPUA\s+BARAT\s+DAYA\b/gi, 'Pabardaya')
     .replace(/\bPABD\b/gi, 'Pabardaya')
     .replace(/\bPAPUA\s+TENGAH\b/gi, 'Papteng')
@@ -149,9 +171,19 @@ function toTitleCase(str) {
     .replace(/\bPolsek\b/gi, 'Sek')
     .replace(/\bSat\b/gi, 'Sat')
     .replace(/\bDit\b/gi, 'Dit')
+    .replace(/\bDitkrimum\b/gi, 'Ditkrimum')
+    .replace(/\bDitkrimsus\b/gi, 'Ditkrimsus')
+    .replace(/\bDitnarkoba\b/gi, 'Ditnarkoba')
+    .replace(/\bDitsiber\b/gi, 'Ditsiber')
     .replace(/\bRes\b/gi, 'Res')
     .replace(/\bReskrim\b/gi, 'Reskrim')
-    .replace(/\bNarkoba\b/gi, 'Narkoba');
+    .replace(/\bNarkoba\b/gi, 'Narkoba')
+    .replace(/\bNtb\b/gi, 'NTB')
+    .replace(/\bNtt\b/gi, 'NTT')
+    .replace(/\bDiy\b/gi, 'DIY')
+    .replace(/\bDki\b/gi, 'DKI')
+    .replace(/\bPpo\b/gi, 'PPO')
+    .replace(/\bPpa\b/gi, 'PPA');
 }
 
 function formatSatkerName(rawSatker, isSuper, fallback) {
@@ -160,7 +192,7 @@ function formatSatkerName(rawSatker, isSuper, fallback) {
   if (isSuper || sl === 'bareskrim polri' || sl === 'badan reserse kriminal polri' || sl === 'robinopsnal bareskrim polri' || sl === 'mabes bareskrim') {
     return 'Robinopsnal Bareskrim Polri';
   }
-  return s || fallback || 'Polri';
+  return normalizeSatkerKam(s) || fallback || 'Polri';
 }
 
 function isPolwanUser(u) {
@@ -367,10 +399,11 @@ e.s(["default",0,function() {
   var [currentUser, setCurrentUser] = (0,n.useState)(() => {
     try {
       var u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u.username === 'omeko42' || u.id === 1 || u.id === '1' || u.id === 'usr_superadmin') {
+      if (u.username === 'omeko42' || u.username === 'om.eko_42' || u.id === 1 || u.id === '1' || u.id === 'usr_superadmin') {
         /* keep dynamic username & callsign */
         u.name = 'EKO';
         u.role_bdb = 'superadmin';
+        if (!u.pangkat || String(u.pangkat).trim().toLowerCase() === 'kompol') u.pangkat = 'Briptu';
       }
       return u;
     } catch { return {}; }
@@ -389,9 +422,10 @@ e.s(["default",0,function() {
       try {
         var raw = JSON.parse(localStorage.getItem('user') || '{}');
         if (raw && (raw.id || raw.username)) {
-          if (raw.username === 'omeko42' || raw.id === 1 || raw.id === '1' || raw.id === 'usr_superadmin') {
+          if (raw.username === 'omeko42' || raw.username === 'om.eko_42' || raw.id === 1 || raw.id === '1' || raw.id === 'usr_superadmin') {
             raw.name = 'EKO';
             raw.role_bdb = 'superadmin';
+            if (!raw.pangkat || String(raw.pangkat).trim().toLowerCase() === 'kompol') raw.pangkat = 'Briptu';
           }
           setCurrentUser(prev => ({ ...prev, ...raw, photo_url: raw.photo_url || raw.foto || prev?.photo_url || prev?.foto }));
         }
@@ -411,13 +445,14 @@ e.s(["default",0,function() {
         if (d && (d.photo_url || d.foto || d.id)) {
           setCurrentUser(prev => {
             var next = { ...prev, ...d, photo_url: d.photo_url || d.foto || prev?.photo_url || prev?.foto };
-            if (next.username === 'omeko42' || next.id === 1 || next.id === '1' || next.id === 'usr_superadmin') {
+            if (next.username === 'omeko42' || next.username === 'om.eko_42' || next.id === 1 || next.id === '1' || next.id === 'usr_superadmin') {
               next.name = 'EKO';
               next.role_bdb = 'superadmin';
+              if (!next.pangkat || String(next.pangkat).trim().toLowerCase() === 'kompol') next.pangkat = 'Briptu';
             }
             try {
               var st = JSON.parse(localStorage.getItem('user') || '{}');
-              localStorage.setItem('user', JSON.stringify({ ...st, photo_url: next.photo_url, foto: next.photo_url, callsign: next.callsign || st.callsign }));
+              localStorage.setItem('user', JSON.stringify({ ...st, pangkat: next.pangkat || st.pangkat, photo_url: next.photo_url, foto: next.photo_url, callsign: next.callsign || st.callsign }));
             } catch (e) {}
             return next;
           });
@@ -3300,7 +3335,7 @@ e.s(["default",0,function() {
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginBottom:"0.3rem",flexWrap:"wrap"},children:[
               shareModalPost.is_official_jukrah && (0,t.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.1rem 0.45rem",borderRadius:"4px",background:"rgba(245,158,11,0.2)",color:"#d97706",border:"1px solid rgba(245,158,11,0.45)"},children:"📢 JUKRAH RESMI"}),
               (0,t.jsx)("span",{style:{fontWeight:800,color:"#0284c7",fontSize:"0.86rem"},children:handle}),
-              (0,t.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)"},children:"• " + (shareModalPost.author_satker || "Polri")})
+              (0,t.jsx)("span",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)"},children:"• " + formatSatkerName(shareModalPost.author_satker, isShareseSuperadmin(shareModalPost.author_id, shareModalPost.author_role, shareModalPost.author_username || shareModalPost.author_callsign), "Polri")})
             ]}),
             (0,t.jsx)("div",{style:{fontSize:"0.82rem",color:"var(--cas-text-primary)",lineHeight:1.45},children:String(shareModalPost.content || '').slice(0, 160) + (String(shareModalPost.content || '').length > 160 ? '...' : '')})
           ]}),

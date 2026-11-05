@@ -34,10 +34,41 @@ const DIMENSION_LABEL: Record<Dimension, string> = {
  */
 @Injectable()
 export class MasterDataGapService {
-    private statsCache: { exp: number; data: any } | null = null;
-    private static readonly STATS_CACHE_TTL_MS = 10 * 60 * 1000;
+    private static readonly CACHE_TTL_MS = 5 * 60 * 1000;
+    private statsCache: { expiresAt: number; payload: any } | null = null;
+    private readonly listCache = new Map<string, { expiresAt: number; payload: any }>();
+    private indexesEnsured = false;
 
     constructor(private readonly dataSource: DataSource) {}
+
+    private async ensureIndexesAndSnapshotTable() {
+        if (this.indexesEnsured) return;
+        this.indexesEnsured = true;
+        try {
+            await this.dataSource.query(`
+                CREATE TABLE IF NOT EXISTS bdb_master_data_gap_snapshot (
+                    cache_key text PRIMARY KEY,
+                    payload jsonb NOT NULL,
+                    updated_at timestamptz NOT NULL DEFAULT now()
+                );
+                CREATE INDEX IF NOT EXISTS idx_lp_master_gap_unlinked
+                ON bdb_laporan_polisi (id)
+                WHERE jenis_kejahatan_id IS NULL
+                   OR kategori_lokasi_id IS NULL
+                   OR motif_kejahatan_id IS NULL
+                   OR modus_operandi_id IS NULL
+                   OR tkp_provinsi_code IS NULL
+                   OR tkp_kabupaten_code IS NULL
+                   OR tkp_kecamatan_code IS NULL
+                   OR tkp_desa_code IS NULL;
+                CREATE INDEX IF NOT EXISTS idx_tp_dors_uu_null
+                ON bdb_lp_tindak_pidana_dors (laporan_polisi_id)
+                WHERE undang_undang_id IS NULL;
+            `);
+        } catch {
+            // ignore index creation errors if concurrent
+        }
+    }
 
     // dimensi skalar level bdb_laporan_polisi (bukan array tindak_pidana)
     private static readonly SCALAR_DIMENSIONS: Record<
@@ -86,22 +117,11 @@ export class MasterDataGapService {
         },
     };
 
-    private recentLpsCte(): string {
-        return `
-            select id, no_laporan, payload_json,
-                   jenis_kejahatan_id, kategori_lokasi_id, motif_kejahatan_id, modus_operandi_id,
-                   tkp_provinsi_code, tkp_kabupaten_code, tkp_kecamatan_code, tkp_desa_code
-            from bdb_laporan_polisi
-            order by id desc
-            limit 5000
-        `;
-    }
-
     private scalarCte(dim: Exclude<Dimension, 'undang_undang'>): string {
         const { rawIdExpr, namaExpr, fkCol } = MasterDataGapService.SCALAR_DIMENSIONS[dim];
         return `
             select '${dim}' as dimensi, ${rawIdExpr} as raw_id, ${namaExpr} as nama, no_laporan
-            from recent_lps
+            from bdb_laporan_polisi
             where ${fkCol} is null and ${rawIdExpr} ~ '^[0-9]+$'
         `;
     }
@@ -109,13 +129,13 @@ export class MasterDataGapService {
     private uuCte(): string {
         return `
             select 'undang_undang' as dimensi,
-                   nullif(elem->>'id_uu','') as raw_id,
-                   elem->>'nama_uu' as nama,
+                   coalesce(nullif(tp.dors_tp_id::text, ''), '0') as raw_id,
+                   tp.nama_uu as nama,
                    lp.no_laporan
-            from recent_lps lp
-            cross join lateral jsonb_array_elements(coalesce(lp.payload_json->'tindak_pidana', '[]'::jsonb)) elem
-            where nullif(elem->>'id_uu','') ~ '^[0-9]+$'
-              and not exists (select 1 from cm_undang_undang u where u.id = (elem->>'id_uu')::bigint)
+            from bdb_lp_tindak_pidana_dors tp
+            join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+            where tp.undang_undang_id is null
+              and nullif(btrim(coalesce(tp.nama_uu, '')), '') is not null
         `;
     }
 
@@ -124,29 +144,70 @@ export class MasterDataGapService {
         return [...dims.map((d) => this.scalarCte(d)), this.uuCte()].join('\nunion all\n');
     }
 
-    async stats() {
+    async stats(forceRefresh = false) {
         const now = Date.now();
-        if (this.statsCache && this.statsCache.exp > now) {
-            return this.statsCache.data;
+        if (!forceRefresh && this.statsCache && this.statsCache.expiresAt > now) {
+            return this.statsCache.payload;
+        }
+        await this.ensureIndexesAndSnapshotTable();
+        if (!forceRefresh) {
+            const snap = await this.dataSource.query(
+                `SELECT payload, (updated_at > now() - interval '5 minutes') AS is_fresh FROM bdb_master_data_gap_snapshot WHERE cache_key = 'stats' LIMIT 1`
+            ).catch(() => []);
+            if (snap.length && snap[0].payload) {
+                this.statsCache = { expiresAt: now + MasterDataGapService.CACHE_TTL_MS, payload: snap[0].payload };
+                if (!snap[0].is_fresh) {
+                    setImmediate(() => this.stats(true).catch(() => {}));
+                }
+                return snap[0].payload;
+            }
         }
         const rows = await this.dataSource.query(`
-            with recent_lps as materialized (${this.recentLpsCte()}),
-            base as (${this.allDimensionsUnion()})
+            with base as (${this.allDimensionsUnion()})
             select dimensi, count(distinct raw_id)::int as id_unik, count(*)::int as lp_terdampak
             from base group by dimensi order by dimensi
         `);
-        const res = {
+        const payload = {
             status: 1,
             data: rows.map((r: any) => ({ dimensi: r.dimensi, label: DIMENSION_LABEL[r.dimensi as Dimension], id_unik: r.id_unik, lp_terdampak: r.lp_terdampak })),
         };
-        this.statsCache = { exp: now + MasterDataGapService.STATS_CACHE_TTL_MS, data: res };
-        return res;
+        this.statsCache = { expiresAt: now + MasterDataGapService.CACHE_TTL_MS, payload };
+        await this.dataSource.query(
+            `INSERT INTO bdb_master_data_gap_snapshot (cache_key, payload, updated_at)
+             VALUES ('stats', $1::jsonb, now())
+             ON CONFLICT (cache_key) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()`,
+            [JSON.stringify(payload)]
+        ).catch(() => {});
+        return payload;
     }
 
-    async list(opts: { dimensi?: Dimension; search?: string; page?: number; row?: number }) {
+    async list(opts: { dimensi?: Dimension; search?: string; page?: number; row?: number; refresh?: boolean }) {
         const page = Math.max(opts.page || 1, 1);
         const row = Math.min(Math.max(opts.row || 25, 1), 1000);
         const offset = (page - 1) * row;
+        const cacheKey = `list:${opts.dimensi || 'ALL'}:${(opts.search || '').trim().toUpperCase()}:${page}:${row}`;
+        const now = Date.now();
+
+        if (!opts.refresh) {
+            const mem = this.listCache.get(cacheKey);
+            if (mem && mem.expiresAt > now) {
+                return mem.payload;
+            }
+            await this.ensureIndexesAndSnapshotTable();
+            const snap = await this.dataSource.query(
+                `SELECT payload, (updated_at > now() - interval '5 minutes') AS is_fresh FROM bdb_master_data_gap_snapshot WHERE cache_key = $1 LIMIT 1`,
+                [cacheKey]
+            ).catch(() => []);
+            if (snap.length && snap[0].payload) {
+                this.listCache.set(cacheKey, { expiresAt: now + MasterDataGapService.CACHE_TTL_MS, payload: snap[0].payload });
+                if (!snap[0].is_fresh) {
+                    setImmediate(() => this.list({ ...opts, refresh: true }).catch(() => {}));
+                }
+                return snap[0].payload;
+            }
+        } else {
+            await this.ensureIndexesAndSnapshotTable();
+        }
 
         const union = opts.dimensi
             ? opts.dimensi === 'undang_undang'
@@ -163,8 +224,7 @@ export class MasterDataGapService {
 
         const rows = await this.dataSource.query(
             `
-            with recent_lps as materialized (${this.recentLpsCte()}),
-            base as (${union}),
+            with base as (${union}),
             grouped as (
                 select dimensi, raw_id, max(nama) as nama, count(*)::int as lp_terdampak,
                        (array_agg(no_laporan order by no_laporan))[1:3] as contoh_no_laporan
@@ -180,14 +240,13 @@ export class MasterDataGapService {
         );
         const countRes = await this.dataSource.query(
             `
-            with recent_lps as materialized (${this.recentLpsCte()}),
-            base as (${union}),
+            with base as (${union}),
             grouped as (select dimensi, raw_id, max(nama) as nama from base group by dimensi, raw_id)
             select count(*)::int as c from grouped ${searchClause}
             `,
             params
         );
-        return {
+        const payload = {
             status: 1,
             data: rows.map((r: any) => ({
                 dimensi: r.dimensi,
@@ -201,5 +260,13 @@ export class MasterDataGapService {
             page,
             row,
         };
+        this.listCache.set(cacheKey, { expiresAt: now + MasterDataGapService.CACHE_TTL_MS, payload });
+        await this.dataSource.query(
+            `INSERT INTO bdb_master_data_gap_snapshot (cache_key, payload, updated_at)
+             VALUES ($1, $2::jsonb, now())
+             ON CONFLICT (cache_key) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()`,
+            [cacheKey, JSON.stringify(payload)]
+        ).catch(() => {});
+        return payload;
     }
 }

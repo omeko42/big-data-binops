@@ -430,9 +430,42 @@ const POLDA_BUSINESS_ORDER = [
     'POLDA PAPUA SELATAN'
 ] as const;
 
-const poldaBusinessRank = new Map<string, number>(
-    POLDA_BUSINESS_ORDER.map((name, index) => [normalizedSatkerWords(name), index + 1])
-);
+const POLDA_KAMUS_ALIASES: Record<string, string[]> = {
+    'POLDA SUMATERA UTARA': ['POLDA SUMUT'],
+    'POLDA KEPULAUAN RIAU': ['POLDA KEPRI', 'POLDA KEP RIAU'],
+    'POLDA SUMATERA BARAT': ['POLDA SUMBAR'],
+    'POLDA SUMATERA SELATAN': ['POLDA SUMSEL'],
+    'POLDA KEPULAUAN BANGKA BELITUNG': ['POLDA BABEL', 'POLDA KEP BABEL'],
+    'POLDA JAWA BARAT': ['POLDA JABAR'],
+    'POLDA JAWA TENGAH': ['POLDA JATENG'],
+    'POLDA DAERAH ISTIMEWA YOGYAKARTA': ['POLDA DIY', 'POLDA DI YOGYAKARTA'],
+    'POLDA JAWA TIMUR': ['POLDA JATIM'],
+    'POLDA NUSA TENGGARA BARAT': ['POLDA NTB'],
+    'POLDA NUSA TENGGARA TIMUR': ['POLDA NTT'],
+    'POLDA KALIMANTAN TIMUR': ['POLDA KALTIM'],
+    'POLDA KALIMANTAN BARAT': ['POLDA KALBAR'],
+    'POLDA KALIMANTAN TENGAH': ['POLDA KALTENG'],
+    'POLDA KALIMANTAN SELATAN': ['POLDA KALSEL'],
+    'POLDA KALIMANTAN UTARA': ['POLDA KALTARA'],
+    'POLDA SULAWESI SELATAN': ['POLDA SULSEL'],
+    'POLDA SULAWESI UTARA': ['POLDA SULUT'],
+    'POLDA SULAWESI TENGAH': ['POLDA SULTENG'],
+    'POLDA SULAWESI TENGGARA': ['POLDA SULTRA'],
+    'POLDA SULAWESI BARAT': ['POLDA SULBAR'],
+    'POLDA MALUKU UTARA': ['POLDA MALUT'],
+    'POLDA PAPUA BARAT': ['POLDA PABAR'],
+    'POLDA PAPUA BARAT DAYA': ['POLDA PABARDAYA'],
+    'POLDA PAPUA TENGAH': ['POLDA PAPTENG'],
+};
+
+const poldaBusinessRank = new Map<string, number>();
+POLDA_BUSINESS_ORDER.forEach((name, index) => {
+    const rank = index + 1;
+    poldaBusinessRank.set(normalizedSatkerWords(name), rank);
+    for (const alias of POLDA_KAMUS_ALIASES[name] || []) {
+        poldaBusinessRank.set(normalizedSatkerWords(alias), rank);
+    }
+});
 
 const polriChildRank = (childName: string): number => {
     if (startsWithSatkerTokens(childName, ['BARESKRIM'])) return 10;
@@ -457,9 +490,9 @@ const hasPpaPpoFunctionMarker = (value: unknown): boolean => {
 
 const hasSiberFunctionMarker = (value: unknown): boolean => {
     const tokens = satkerTokens(value);
-    if (tokens.includes('SIBER') || tokens.includes('TIPIDSIBER')) return true;
+    if (tokens.includes('SIBER') || tokens.includes('TIPIDSIBER') || tokens.includes('DITSIBER')) return true;
     const compact = tokens.join('');
-    return compact.startsWith('DITTIPIDSIBER') || compact.startsWith('DITRESSIBER');
+    return compact.startsWith('DITTIPIDSIBER') || compact.startsWith('DITRESSIBER') || compact.startsWith('DITSIBER');
 };
 
 const bareskrimChildRank = (childName: string): number => {
@@ -476,11 +509,13 @@ const bareskrimChildRank = (childName: string): number => {
 
 const poldaChildRank = (parentName: string, childName: string, childType: string): number => {
     if (!isPolresSatkerType(childType)) {
-        if (hasSatkerToken(childName, 'KRIMUM')) return 10;
-        if (hasSatkerToken(childName, 'KRIMSUS')) return 20;
-        if (hasSatkerToken(childName, 'NARKOBA') || hasSatkerToken(childName, 'TIPIDNARKOBA')) return 30;
+        const compact = compactSatkerName(childName);
+        if (hasSatkerToken(childName, 'KRIMUM') || compact.startsWith('DITKRIMUM') || compact.startsWith('DITRESKRIMUM')) return 10;
+        if (hasSatkerToken(childName, 'KRIMSUS') || compact.startsWith('DITKRIMSUS') || compact.startsWith('DITRESKRIMSUS')) return 20;
+        if (hasSatkerToken(childName, 'NARKOBA') || hasSatkerToken(childName, 'TIPIDNARKOBA') || compact.startsWith('DITNARKOBA') || compact.startsWith('DITRESNARKOBA')) return 30;
         if (hasSiberFunctionMarker(childName)) return 40;
         if (hasPpaPpoFunctionMarker(childName)) return 50;
+        if (compact.startsWith('DITPOLAIR')) return 52;
         return 55;
     }
     if (normalizedSatkerWords(parentName) === 'POLDA METRO JAYA' && startsWithSatkerTokens(childName, ['POLRES', 'METRO'])) return 60;
@@ -1086,7 +1121,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
                     lp.id as lp_id,
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
                     ${DATE_EXPR} as tanggal_mulai_penanganan,
-                    case when lp.tanggal_selesai > current_date then current_date else lp.tanggal_selesai end as tanggal_selesai,
+                    case when lp.tanggal_selesai > (now() + make_interval(hours => 9))::date then (now() + make_interval(hours => 9))::date else lp.tanggal_selesai end as tanggal_selesai,
                     lp.tingkat_kesulitan,
                     (lp.tingkat_kesulitan is null) as kesulitan_belum_dipilih,
                     case lp.tingkat_kesulitan
