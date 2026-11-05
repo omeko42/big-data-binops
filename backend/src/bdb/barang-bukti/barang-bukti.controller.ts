@@ -15,6 +15,12 @@ export class BarangBuktiController {
         return this.service.list(req.user, query);
     }
 
+    /** Daftar Master Jenis Barang Bukti DORS untuk dropdown input manual. */
+    @Get('master-jenis')
+    listMasterJenis(@Query('search') search?: string) {
+        return this.service.listMasterJenis(search);
+    }
+
     /** Gabungan DORS + MANUAL utk satu LP -- dipakai tab "Barang Bukti" di halaman detail LP. */
     @Get('lp/:lpId/all')
     listByLpAll(@Req() req: any, @Param('lpId') lpId: string) {

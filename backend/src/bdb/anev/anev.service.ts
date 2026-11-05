@@ -562,7 +562,7 @@ export class AnevService {
                     ? [targetTahun, targetBulan, scopeKey, functionDomain, organizationDomain]
                     : [targetTahun, scopeKey, functionDomain, organizationDomain];
                 const snapRows = await this.ds.query(snapSql, snapParams);
-                if (snapRows.length > 0 && snapRows[0].data) {
+                if (snapRows.length > 0 && snapRows[0].data && snapRows[0].data.rollup_v2 === true) {
                     const resData = snapRows[0].data;
                     resData.scoped = !scope.all;
                     if (!scope.all && scope.satkerId) {
@@ -599,33 +599,170 @@ export class AnevService {
 
         const { where, params } = this.buildWhereLp(f, allowed);
 
-        // Peringkat default memakai satker teritorial (lp.satker_id). Child fungsional
-        // (unit_satker_id) hanya layak dipakai jika dashboard sedang difilter jenis kejahatan;
-        // dashboard saat ini belum menyediakan filter tersebut.
-        const satkerField = (!scope.all && scope.satkerId) ? 'coalesce(lp.unit_satker_id, lp.satker_id)' : 'lp.satker_id';
+        const satkerRowsAll = await this.ds.query('select id, deskripsi, parent_id, tipe_satker from bdb_satker');
+        const satkerMap = new Map<number, { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }>();
+        for (const r of satkerRowsAll) {
+            satkerMap.set(Number(r.id), {
+                id: Number(r.id),
+                deskripsi: String(r.deskripsi || '').trim(),
+                parent_id: r.parent_id ? Number(r.parent_id) : null,
+                tipe_satker: String(r.tipe_satker || '').trim()
+            });
+        }
+
+        const normalizeUnitSatLabel = (rawUnit: string, fallback = 'SATRESKRIM'): string => {
+            const u = String(rawUnit || '').trim().toUpperCase();
+            if (!u || u === '-' || u === 'NULL' || u === 'SPKT') return fallback;
+            if (u.includes('NARKOBA')) return 'SATRESNARKOBA';
+            if (u.includes('PPA') || u.includes('PPO')) return 'SATRESPPAPPO';
+            if (u.includes('SIBER')) return 'SATRESSIBER';
+            if (u.includes('KRIMSUS') || u.includes('EKSUS') || u.includes('TIPIDTER') || u.includes('KORUPSI') || u.includes('TIPIDKOR')) return 'SATRESKRIM (KRIMSUS)';
+            if (u === 'RESKRIM' || u === 'SAT RESKRIM' || u === 'SATRESKRIM' || u.includes('KRIMUM')) return 'SATRESKRIM';
+            return u;
+        };
+
+        const resolvePusatBucketAndChild = (sidNum: number, usidNum: number, unitNamaRaw: string): { bucketId: number; bucketNama: string; childNama: string } | null => {
+            const startId = sidNum || usidNum;
+            const funcId = usidNum || sidNum;
+            if (!startId && !funcId) return null;
+
+            // Cari apakah LP berada di bawah jajaran POLDA
+            let cur: number | null = startId || funcId;
+            const chain: Array<{ id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }> = [];
+            const visited = new Set<number>();
+            while (cur && !visited.has(cur)) {
+                visited.add(cur);
+                const node = satkerMap.get(cur);
+                if (!node) break;
+                chain.push(node);
+                if (node.tipe_satker.toUpperCase() === 'POLDA' || /^POLDA\b/i.test(node.deskripsi)) {
+                    const poldaNode = node;
+                    // Child langsung di bawah Polda (DIT atau POLRES/POLRESTA/POLRESTABES)
+                    let directChild = chain.length >= 2 ? chain[chain.length - 2] : null;
+                    if (!directChild && funcId && funcId !== poldaNode.id) {
+                        let fCur: number | null = funcId;
+                        const fVisited = new Set<number>();
+                        while (fCur && !fVisited.has(fCur)) {
+                            fVisited.add(fCur);
+                            const fn = satkerMap.get(fCur);
+                            if (!fn) break;
+                            if (fn.parent_id === poldaNode.id) { directChild = fn; break; }
+                            fCur = fn.parent_id;
+                        }
+                    }
+                    let childNama = directChild ? directChild.deskripsi : '';
+                    if (!childNama || childNama.toUpperCase() === poldaNode.deskripsi.toUpperCase()) {
+                        const uUp = String(unitNamaRaw || '').trim().toUpperCase();
+                        if (uUp.includes('NARKOBA')) childNama = `DITRESNARKOBA ${poldaNode.deskripsi}`;
+                        else if (uUp.includes('KRIMSUS') || uUp.includes('EKSUS') || uUp.includes('TERTENTU')) childNama = `DITRESKRIMSUS ${poldaNode.deskripsi}`;
+                        else if (uUp.includes('SIBER')) childNama = `DITRESSIBER ${poldaNode.deskripsi}`;
+                        else if (uUp.includes('PPA')) childNama = `DITRESPPAPPO ${poldaNode.deskripsi}`;
+                        else childNama = `DITRESKRIMUM ${poldaNode.deskripsi}`;
+                    }
+                    return { bucketId: poldaNode.id, bucketNama: poldaNode.deskripsi, childNama };
+                }
+                cur = node.parent_id;
+            }
+
+            // Jika bukan di bawah Polda, maka jajaran Mabes / Bareskrim (DITTIPID)
+            let bCur: number | null = funcId || startId;
+            const bChain: Array<{ id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }> = [];
+            const bVisited = new Set<number>();
+            let dittipidNode: { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string } | null = null;
+            while (bCur && !bVisited.has(bCur)) {
+                bVisited.add(bCur);
+                const node = satkerMap.get(bCur);
+                if (!node) break;
+                bChain.push(node);
+                if (/^(DITTIPID|DIREKTORAT\s+TINDAK\s+PIDANA|KORTASTIPIDKOR)/i.test(node.deskripsi) || [18, 19, 20, 21, 22, 23, 20675].includes(node.id)) {
+                    dittipidNode = node;
+                    break;
+                }
+                bCur = node.parent_id;
+            }
+            if (dittipidNode) {
+                const subNode = bChain.length >= 2 ? bChain[bChain.length - 2] : null;
+                const childNama = subNode ? subNode.deskripsi : (String(unitNamaRaw || '').trim() || dittipidNode.deskripsi);
+                return { bucketId: dittipidNode.id, bucketNama: dittipidNode.deskripsi, childNama };
+            }
+            const topNode = bChain[0] || chain[0];
+            if (!topNode) return null;
+            return {
+                bucketId: topNode.id,
+                bucketNama: topNode.deskripsi,
+                childNama: String(unitNamaRaw || '').trim() || topNode.deskripsi
+            };
+        };
+
         const perSat = await this.ds.query(
-            `select ${satkerField} as sid, s.deskripsi as nama, coalesce(st.kategori,'CT') as kat, count(*)::int as jml
+            `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                    coalesce(lp.unit_satker_id, lp.satker_id) as usid,
+                    coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
+                    coalesce(st.kategori,'CT') as kat,
+                    count(*)::int as jml
              from bdb_laporan_polisi lp
-             join bdb_satker s on s.id=${satkerField}
              left join bdb_status_master st on st.id=lp.status_id
              ${where}
-             group by ${satkerField}, s.deskripsi, st.kategori`,
+               and coalesce(lp.satker_id, lp.unit_satker_id) is not null
+             group by coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), ''), st.kategori`,
             params
         );
-        const sat = new Map<number, { nama: string; ct: number; cc: number }>();
+
+        const sat = new Map<number, { nama: string; ct: number; cc: number; childMap: Map<string, { nama: string; ct: number; cc: number }> }>();
         let ct = 0, cc = 0;
         for (const r of perSat) {
-            let e = sat.get(r.sid);
-            if (!e) { e = { nama: r.nama, ct: 0, cc: 0 }; sat.set(r.sid, e); }
-            // CT pada Dashboard berarti Crime Total / seluruh LP dalam periode,
-            // bukan hanya LP yang status aktifnya masih berkategori CT.
-            e.ct += r.jml;
-            ct += r.jml;
-            if (r.kat === 'CC') { e.cc += r.jml; cc += r.jml; }
+            const jml = Number(r.jml || 0);
+            ct += jml;
+            if (r.kat === 'CC') cc += jml;
+
+            const resolved = resolvePusatBucketAndChild(Number(r.sid || 0), Number(r.usid || 0), String(r.unit_nama || ''));
+            if (!resolved) continue;
+            let e = sat.get(resolved.bucketId);
+            if (!e) {
+                e = { nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map() };
+                sat.set(resolved.bucketId, e);
+            }
+            e.ct += jml;
+            if (r.kat === 'CC') e.cc += jml;
+
+            const cKey = resolved.childNama.toUpperCase();
+            let ch = e.childMap.get(cKey);
+            if (!ch) {
+                ch = { nama: resolved.childNama, ct: 0, cc: 0 };
+                e.childMap.set(cKey, ch);
+            }
+            ch.ct += jml;
+            if (r.kat === 'CC') ch.cc += jml;
         }
         const arr = [...sat.values()];
-        let top_satker_ct = arr.filter((x) => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
-        let top_satker_cc = arr.filter((x) => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map((x) => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+        let top_satker_ct = arr
+            .filter((x) => x.ct > 0)
+            .sort((a, b) => b.ct - a.ct)
+            .slice(0, 10)
+            .map((x) => {
+                const allChildren = [...x.childMap.values()].filter(c => c.ct > 0).sort((a, b) => b.ct - a.ct);
+                return {
+                    nama: x.nama,
+                    ct: x.ct,
+                    cc: x.cc,
+                    total_children: allChildren.length,
+                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                };
+            });
+        let top_satker_cc = arr
+            .filter((x) => x.cc > 0)
+            .sort((a, b) => b.cc - a.cc)
+            .slice(0, 10)
+            .map((x) => {
+                const allChildren = [...x.childMap.values()].filter(c => c.cc > 0).sort((a, b) => b.cc - a.cc);
+                return {
+                    nama: x.nama,
+                    ct: x.ct,
+                    cc: x.cc,
+                    total_children: allChildren.length,
+                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                };
+            });
         let top_kejahatan_regional: { nama: string; jml: number }[] = [];
         let regional_nama: string | null = null;
         let regional_ct: number = 0;
@@ -722,18 +859,17 @@ export class AnevService {
 
         if (!scope.all && scope.satkerId) {
             try {
-                const satkerRows = await this.ds.query('select id, deskripsi, parent_id, tipe_satker from bdb_satker');
-                const satkerMap = new Map<number, { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }>();
-                for (const r of satkerRows) {
-                    satkerMap.set(Number(r.id), { id: Number(r.id), deskripsi: r.deskripsi, parent_id: r.parent_id ? Number(r.parent_id) : null, tipe_satker: r.tipe_satker });
-                }
-
                 let cur: number | null = scope.satkerId;
                 let regionalRoot: { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string } | null = null;
+                let polresRoot: { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string } | null = null;
                 while (cur) {
                     const s = satkerMap.get(cur);
                     if (!s) break;
-                    if ((s.tipe_satker && s.tipe_satker.toUpperCase() === 'POLDA') || /^POLDA\b/i.test(s.deskripsi)) {
+                    const tUp = (s.tipe_satker || '').toUpperCase();
+                    if (!polresRoot && (['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO'].includes(tUp) || /^(POLRES|POLRESTA|POLRESTABES)\b/i.test(s.deskripsi))) {
+                        polresRoot = s;
+                    }
+                    if (tUp === 'POLDA' || /^POLDA\b/i.test(s.deskripsi)) {
                         regionalRoot = s;
                         break;
                     }
@@ -741,12 +877,14 @@ export class AnevService {
                 }
 
                 if (regionalRoot) {
-                    regional_nama = regionalRoot.deskripsi;
+                    const activeRoot = polresRoot || regionalRoot;
+                    const isPolresLevel = Boolean(polresRoot);
+                    regional_nama = activeRoot.deskripsi;
                     const allRegIds: number[] = [];
                     for (const [id] of satkerMap.entries()) {
                         let p: number | null = id;
                         while (p) {
-                            if (p === regionalRoot.id) {
+                            if (p === activeRoot.id) {
                                 allRegIds.push(id);
                                 break;
                             }
@@ -759,46 +897,115 @@ export class AnevService {
                         const { where: regWhere, params: regParams } = this.buildWhereLp(f, allRegIds);
                         const regPerSat = await this.ds.query(
                             `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                                    coalesce(lp.unit_satker_id, lp.satker_id) as usid,
+                                    coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
                                     coalesce(st.kategori,'CT') as kat,
                                     count(*)::int as jml
                              from bdb_laporan_polisi lp
                              left join bdb_status_master st on st.id = lp.status_id
                              ${regWhere}
                                and coalesce(lp.satker_id, lp.unit_satker_id) is not null
-                             group by coalesce(lp.satker_id, lp.unit_satker_id), st.kategori`,
+                             group by coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), ''), st.kategori`,
                             regParams
                         );
 
-                        const getUnit = (sid: number) => {
-                            let p: number | null = sid;
-                            while (p && p !== regionalRoot!.id) {
+                        const resolveRegionalUnitAndChild = (sid: number, usid: number, unitNamaRaw: string) => {
+                            const effId = usid || sid;
+                            const chain: Array<{ id: number; deskripsi: string; parent_id: number | null; tipe_satker: string }> = [];
+                            let p: number | null = effId;
+                            const vis = new Set<number>();
+                            while (p && !vis.has(p)) {
+                                vis.add(p);
                                 const s = satkerMap.get(p);
                                 if (!s) break;
-                                if (s.parent_id === regionalRoot!.id) return s;
+                                chain.push(s);
+                                if (s.id === activeRoot.id) break;
                                 p = s.parent_id;
                             }
-                            return satkerMap.get(sid) || { id: sid, deskripsi: 'UNKNOWN' };
+                            const directUnit = chain.length >= 2 ? chain[chain.length - 2] : null;
+                            if (isPolresLevel) {
+                                if (directUnit && directUnit.id !== activeRoot.id) {
+                                    const subUnit = chain.length >= 3 ? chain[chain.length - 3].deskripsi : normalizeUnitSatLabel(unitNamaRaw, 'UNIT RESKRIM');
+                                    return {
+                                        bucketKey: `ID_${directUnit.id}`,
+                                        bucketNama: directUnit.deskripsi,
+                                        childNama: subUnit
+                                    };
+                                }
+                                const satLabel = `${normalizeUnitSatLabel(unitNamaRaw, 'SATRESKRIM')} ${activeRoot.deskripsi}`;
+                                return {
+                                    bucketKey: `SAT_${satLabel}`,
+                                    bucketNama: satLabel,
+                                    childNama: String(unitNamaRaw || '').trim() || 'UNIT RESKRIM'
+                                };
+                            } else {
+                                const unitNode = directUnit || satkerMap.get(sid) || { id: sid, deskripsi: activeRoot.deskripsi, parent_id: null, tipe_satker: '' };
+                                const subChild = chain.length >= 3 ? chain[chain.length - 3] : null;
+                                let childNama = '';
+                                if (subChild && subChild.id !== unitNode.id) {
+                                    childNama = subChild.deskripsi;
+                                } else {
+                                    childNama = `${normalizeUnitSatLabel(unitNamaRaw, 'SATRESKRIM')} ${unitNode.deskripsi}`;
+                                }
+                                return {
+                                    bucketKey: `ID_${unitNode.id}`,
+                                    bucketNama: unitNode.deskripsi,
+                                    childNama
+                                };
+                            }
                         };
 
-                        const unitMap = new Map<number, { id: number; nama: string; ct: number; cc: number }>();
+                        const unitMap = new Map<string, { nama: string; ct: number; cc: number; childMap: Map<string, { nama: string; ct: number; cc: number }> }>();
                         for (const r of regPerSat) {
-                            const u = getUnit(Number(r.sid));
-                            if (u.id === 0 || u.deskripsi === 'UNKNOWN') continue;
-                            let item = unitMap.get(u.id);
+                            const resolved = resolveRegionalUnitAndChild(Number(r.sid || 0), Number(r.usid || 0), String(r.unit_nama || ''));
+                            if (!resolved || !resolved.bucketNama || resolved.bucketNama === 'UNKNOWN') continue;
+                            let item = unitMap.get(resolved.bucketKey);
                             if (!item) {
-                                item = { id: u.id, nama: u.deskripsi, ct: 0, cc: 0 };
-                                unitMap.set(u.id, item);
+                                item = { nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map() };
+                                unitMap.set(resolved.bucketKey, item);
                             }
-                            item.ct += Number(r.jml);
-                            regional_ct += Number(r.jml);
-                            if (r.kat === 'CC') item.cc += Number(r.jml);
+                            const jml = Number(r.jml || 0);
+                            item.ct += jml;
+                            regional_ct += jml;
+                            if (r.kat === 'CC') item.cc += jml;
+
+                            const cKey = resolved.childNama.toUpperCase();
+                            let ch = item.childMap.get(cKey);
+                            if (!ch) {
+                                ch = { nama: resolved.childNama, ct: 0, cc: 0 };
+                                item.childMap.set(cKey, ch);
+                            }
+                            ch.ct += jml;
+                            if (r.kat === 'CC') ch.cc += jml;
                         }
 
                         const regTopCT = [...unitMap.values()].filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10);
                         const regTopCC = [...unitMap.values()].filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10);
 
-                        if (regTopCT.length > 0) top_satker_ct = regTopCT.map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
-                        if (regTopCC.length > 0) top_satker_cc = regTopCC.map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
+                        if (regTopCT.length > 0) {
+                            top_satker_ct = regTopCT.map(x => {
+                                const allChildren = [...x.childMap.values()].filter(c => c.ct > 0).sort((a, b) => b.ct - a.ct);
+                                return {
+                                    nama: x.nama,
+                                    ct: x.ct,
+                                    cc: x.cc,
+                                    total_children: allChildren.length,
+                                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                                };
+                            });
+                        }
+                        if (regTopCC.length > 0) {
+                            top_satker_cc = regTopCC.map(x => {
+                                const allChildren = [...x.childMap.values()].filter(c => c.cc > 0).sort((a, b) => b.cc - a.cc);
+                                return {
+                                    nama: x.nama,
+                                    ct: x.ct,
+                                    cc: x.cc,
+                                    total_children: allChildren.length,
+                                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                                };
+                            });
+                        }
 
                         // Jika user adalah fungsi spesifik di Polda (Krimum, Krimsus, Narkoba, dll.), ambil kejahatan murni domain fungsi tersebut
                         const userNode = satkerMap.get(scope.satkerId);
@@ -940,6 +1147,8 @@ export class AnevService {
 
                         const bPerSat = await this.ds.query(
                             `select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                                    coalesce(lp.unit_satker_id, lp.satker_id) as usid,
+                                    coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
                                     coalesce(st.kategori, 'CT') as kat,
                                     count(distinct lp.id)::int as jml
                              from bdb_lp_tindak_pidana_dors tp
@@ -948,41 +1157,57 @@ export class AnevService {
                              left join bdb_status_master st on st.id = lp.status_id
                              where ${bWhere.join(' and ')}
                                and coalesce(lp.satker_id, lp.unit_satker_id) is not null
-                             group by coalesce(lp.satker_id, lp.unit_satker_id), st.kategori`,
+                             group by coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), ''), st.kategori`,
                             bParams
                         );
 
-                        const getPolda = (sid: number) => {
-                            let p: number | null = sid;
-                            while (p) {
-                                const s = satkerMap.get(p);
-                                if (!s) break;
-                                if ((s.tipe_satker && s.tipe_satker.toUpperCase() === 'POLDA') || /^POLDA\b/i.test(s.deskripsi)) return s;
-                                p = s.parent_id;
-                            }
-                            return null;
-                        };
-
-                        const poldaMap = new Map<number, { id: number; nama: string; ct: number; cc: number }>();
+                        const poldaMap = new Map<number, { id: number; nama: string; ct: number; cc: number; childMap: Map<string, { nama: string; ct: number; cc: number }> }>();
                         for (const r of bPerSat) {
-                            const pol = getPolda(Number(r.sid));
-                            if (!pol) continue;
-                            let entry = poldaMap.get(pol.id);
+                            const resolved = resolvePusatBucketAndChild(Number(r.sid || 0), Number(r.usid || 0), String(r.unit_nama || ''));
+                            if (!resolved) continue;
+                            let entry = poldaMap.get(resolved.bucketId);
                             if (!entry) {
-                                entry = { id: pol.id, nama: pol.deskripsi, ct: 0, cc: 0 };
-                                poldaMap.set(pol.id, entry);
+                                entry = { id: resolved.bucketId, nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map() };
+                                poldaMap.set(resolved.bucketId, entry);
                             }
                             const count = Number(r.jml);
                             entry.ct += count;
                             regional_ct += count;
                             if (r.kat === 'CC') entry.cc += count;
+
+                            const cKey = resolved.childNama.toUpperCase();
+                            let ch = entry.childMap.get(cKey);
+                            if (!ch) {
+                                ch = { nama: resolved.childNama, ct: 0, cc: 0 };
+                                entry.childMap.set(cKey, ch);
+                            }
+                            ch.ct += count;
+                            if (r.kat === 'CC') ch.cc += count;
                         }
 
                         const poldaArr = [...poldaMap.values()];
                         if (poldaArr.length > 0) {
-                            top_satker_ct = poldaArr.filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
-                            top_satker_cc = poldaArr.filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map(x => ({ nama: x.nama, ct: x.ct, cc: x.cc }));
-                            polda = poldaArr.filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 20).map(x => ({ nama: x.nama.replace(/^POLDA\s+/i, ''), ct: x.ct, cc: x.cc }));
+                            top_satker_ct = poldaArr.filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10).map(x => {
+                                const allChildren = [...x.childMap.values()].filter(c => c.ct > 0).sort((a, b) => b.ct - a.ct);
+                                return {
+                                    nama: x.nama,
+                                    ct: x.ct,
+                                    cc: x.cc,
+                                    total_children: allChildren.length,
+                                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                                };
+                            });
+                            top_satker_cc = poldaArr.filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10).map(x => {
+                                const allChildren = [...x.childMap.values()].filter(c => c.cc > 0).sort((a, b) => b.cc - a.cc);
+                                return {
+                                    nama: x.nama,
+                                    ct: x.ct,
+                                    cc: x.cc,
+                                    total_children: allChildren.length,
+                                    children: allChildren.slice(0, 12).map(c => ({ nama: c.nama, ct: c.ct, cc: c.cc }))
+                                };
+                            });
+                            polda = poldaArr.filter(x => x.ct > 0 && /^POLDA\b/i.test(x.nama)).sort((a, b) => b.ct - a.ct).slice(0, 20).map(x => ({ nama: x.nama.replace(/^POLDA\s+/i, ''), ct: x.ct, cc: x.cc }));
                             regional_nama = `${scopeSatker || 'Direktorat'} (Nasional)`;
                         }
                     }
@@ -1011,6 +1236,7 @@ export class AnevService {
                 label_kejahatan: isBareskrimDirektorat ? '10 Kejahatan Nasional · Tertinggi' : (!scope.all ? '10 Kejahatan Regional · Tertinggi' : '10 Kejahatan Tertinggi'),
                 label_satker_ct: isBareskrimDirektorat ? '10 Satker · CT Tertinggi' : (!scope.all ? '10 Satker Regional · CT Tertinggi' : '10 Satker · CT Tertinggi'),
                 label_satker_cc: isBareskrimDirektorat ? '10 Satker · CC Tertinggi' : (!scope.all ? '10 Satker Regional · CC Tertinggi' : '10 Satker · CC Tertinggi'),
+                rollup_v2: true,
                 top_satker_ct, top_satker_cc, polda, integrasi,
                 scoped: !scope.all, scope_ada_data: arr.length > 0, scope_satker: scopeSatker
             }
