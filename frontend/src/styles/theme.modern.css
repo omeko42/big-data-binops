@@ -7718,6 +7718,7 @@ body:has(.p-dialog-mask) #cas-floating-tactical-messenger {
   min-width: 0 !important;
   max-width: 100% !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 .cms-content,
@@ -7726,7 +7727,16 @@ main.cms-content {
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+.cms-sticky-top,
+.sharese-sticky-header,
+.feed-right-col {
+  position: relative !important;
+  top: auto !important;
+  z-index: auto !important;
 }
 
 .cms-content > *:not(table),

@@ -1596,11 +1596,11 @@ e.s(["default",0,function() {
     (0,t.jsx)(m.ConfirmDialog,{}),
 
     sharedHighlightPost && (0,t.jsxs)("div",{
-      style:{marginBottom:"0.85rem",padding:"0.65rem 1rem",borderRadius:"10px",background:"linear-gradient(90deg, rgba(37,99,235,0.18), rgba(2,132,199,0.18))",border:"1px solid rgba(56,189,248,0.45)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"},
+      style:{marginBottom:"0.85rem",padding:"0.65rem 1rem",borderRadius:"10px",background:"linear-gradient(90deg, rgba(37,99,235,0.12), rgba(2,132,199,0.12))",border:"1px solid rgba(37,99,235,0.35)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"},
       children:[
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",fontSize:"0.82rem",color:"#e2e8f0",fontWeight:700},children:[
+        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem",fontSize:"0.82rem",color:"var(--cas-text-primary, #0f172a)",fontWeight:700},children:[
           (0,t.jsx)("span",{children:"🔗"}),
-          (0,t.jsxs)("span",{children:["Menampilkan Siaran Sharese dari Tautan Berhash (Postingan ",(0,t.jsx)("strong",{style:{color:"#38bdf8"},children:sharedHighlightPost.author_handle})," telah disorot di urutan teratas)"]})
+          (0,t.jsxs)("span",{children:["Menampilkan Siaran Sharese dari Tautan Berhash (Postingan ",(0,t.jsx)("strong",{style:{color:"#2563eb"},children:sharedHighlightPost.author_handle})," telah disorot di urutan teratas)"]})
         ]}),
         (0,t.jsx)("button",{
           type:"button",
@@ -1608,19 +1608,19 @@ e.s(["default",0,function() {
             setSharedHighlightPost(null);
             try { window.history.replaceState({}, '', '/cms/broadcaster'); } catch {}
           },
-          style:{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.2)",color:"#cbd5e1",borderRadius:"6px",padding:"0.2rem 0.6rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
+          style:{background:"rgba(37,99,235,0.1)",border:"1px solid rgba(37,99,235,0.3)",color:"#2563eb",borderRadius:"6px",padding:"0.2rem 0.6rem",fontSize:"0.74rem",fontWeight:700,cursor:"pointer"},
           children:"✕ Tutup Sorotan"
         })
       ]
     }),
 
-    // Unified Sticky Header: 1-Line "SHARESE" + Info Tooltip + Search Bar
+    // Unified Header: 1-Line "SHARESE" + Info Tooltip + Search Bar
     (0,t.jsxs)("div",{
       className:"cms-card sharese-sticky-header",
       style:{
-        position:"sticky",
-        top:"calc(var(--cms-header-h, 4.8rem) + 0.35rem)",
-        zIndex:30,
+        position:"relative",
+        top:"auto",
+        zIndex:1,
         background:"var(--cas-bg-surface, #ffffff)",
         backdropFilter:"blur(12px)",
         border:"1px solid var(--cas-border, #cbd5e1)",

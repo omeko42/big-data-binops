@@ -154,13 +154,20 @@ function initCasExpensivePcHpStandards() {
       "  min-width: 0 !important;",
       "  max-width: 100% !important;",
       "  overflow-x: hidden !important;",
+      "  overflow-y: auto !important;",
       "}",
       ".cms-content, main.cms-content {",
       "  width: 100% !important;",
       "  max-width: 100% !important;",
       "  min-width: 0 !important;",
       "  box-sizing: border-box !important;",
-      "  overflow-x: hidden !important;",
+      "  overflow-x: clip !important;",
+      "  overflow-y: visible !important;",
+      "}",
+      ".cms-sticky-top, .sharese-sticky-header, .feed-right-col {",
+      "  position: relative !important;",
+      "  top: auto !important;",
+      "  z-index: auto !important;",
       "}",
       ".cms-content > *:not(table), .cms-content [style*=\"display: grid\"]:not(table) > *:not(table), .cms-content [style*=\"display:grid\"]:not(table) > *:not(table) {",
       "  min-width: 0 !important;",
@@ -374,7 +381,8 @@ function initCasExpensivePcHpStandards() {
       "    padding-left: 0.45rem !important;",
       "    padding-right: 0.45rem !important;",
       "    padding-bottom: 5rem !important;",
-      "    overflow-x: hidden !important;",
+      "    overflow-x: clip !important;",
+      "    overflow-y: visible !important;",
       "  }",
       "  .cms-page-title {",
       "    font-size: 0.95rem !important;",
@@ -1158,6 +1166,32 @@ function renderCasMetaBadge(u, size = 14) {
   });
 }
 
+function renderCasDoubleCheckSvg(color = "#3b82f6", size = 14) {
+  return (0, a.jsxs)("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: 2.3,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    style: { display: "inline-block", verticalAlign: "middle", flexShrink: 0 },
+    children: [
+      (0, a.jsx)("path", { d: "M18 6 7 17l-5-5" }),
+      (0, a.jsx)("path", { d: "m22 10-7.5 7.5L13 16" })
+    ]
+  });
+}
+
+function formatCleanChatText(raw) {
+  if (!raw) return "";
+  return String(raw)
+    .replace(/^📋\s*/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .trim();
+}
+
 function casGetReadNotifIds() {
   if (typeof window === "undefined") return new Set();
   try {
@@ -1813,18 +1847,18 @@ function TacticalMessengerWidget() {
   const actionPillStyle = (colorHex) => ({
     display: "inline-flex",
     alignItems: "center",
-    gap: "0.22rem",
-    padding: "0.14rem 0.44rem",
-    minHeight: "22px",
-    height: "auto",
-    borderRadius: "999px",
-    border: "1px solid var(--cas-border, rgba(148,163,184,0.28))",
+    justifyContent: "center",
+    width: "24px",
+    height: "24px",
+    minWidth: "24px",
+    minHeight: "24px",
+    padding: 0,
+    borderRadius: "6px",
+    border: "1px solid var(--cas-border, rgba(148,163,184,0.24))",
     background: "var(--cas-card-bg, #ffffff)",
     color: colorHex || "var(--cas-text-secondary, #475569)",
-    fontSize: "0.65rem",
-    fontWeight: 700,
     cursor: "pointer",
-    lineHeight: 1.2,
+    lineHeight: 1,
     boxShadow: "0 1px 2px rgba(15,23,42,0.04)"
   });
 
@@ -2109,8 +2143,7 @@ function TacticalMessengerWidget() {
                             style: { display: "flex", alignItems: "center", gap: "0.28rem" },
                             children: [
                               (0, a.jsx)("span", { style: { fontWeight: 800, fontSize: "0.79rem", color: "var(--cas-text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: formatChatCallsign(defaultTarget) }),
-                              renderCasMetaBadge(defaultTarget, 14),
-                              (0, a.jsx)("span", { style: { fontSize: "0.58rem", background: "rgba(34,197,94,0.14)", color: "#16a34a", padding: "0.04rem 0.32rem", borderRadius: "999px", fontWeight: 800, flexShrink: 0 }, children: "Aktif" })
+                              renderCasMetaBadge(defaultTarget, 14)
                             ]
                           }),
                           (0, a.jsx)("div", {
@@ -2199,68 +2232,56 @@ function TacticalMessengerWidget() {
                                 (0, a.jsx)("div", { style: { opacity: 0.85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }, children: m.reply_to.content })
                               ]
                             }),
-                            (0, a.jsx)("div", { children: m.text }),
+                            (0, a.jsx)("div", { children: formatCleanChatText(m.text) }),
                             (0, a.jsxs)("div", {
                               style: { fontSize: "0.62rem", color: isMe ? "rgba(255,255,255,0.82)" : "var(--cas-text-muted, #64748b)", marginTop: "0.22rem", display: "flex", justifyContent: "flex-end", gap: "0.28rem", alignItems: "center" },
                               children: [
-                                m.is_pinned && (0, a.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "2px", fontWeight: 700, color: isMe ? "#fde047" : "#2563eb" }, children: [(0, a.jsxs)("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] }), "Disematkan"] }),
+                                m.is_pinned && (0, a.jsxs)("span", { style: { display: "inline-flex", alignItems: "center", gap: "2px", fontWeight: 700, color: isMe ? "#fde047" : "#2563eb" }, children: [(0, a.jsxs)("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] })] }),
                                 m.is_edited && (0, a.jsx)("span", { style: { fontStyle: "italic", opacity: 0.9 }, children: "(diedit)" }),
                                 m.time,
-                                isMe && (0, a.jsx)("span", { style: { color: "#93c5fd", fontWeight: 800 }, children: "✓✓" })
+                                isMe && renderCasDoubleCheckSvg("#93c5fd", 13)
                               ]
                             })
                           ]
                         }),
                         /* ACTION BAR DENGAN IKON SVG VEKTOR 12PX KONSISTEN PC & HP */
                         (0, a.jsxs)("div", {
-                          style: { display: "flex", alignItems: "center", gap: "0.22rem", marginTop: "0.22rem", flexWrap: "wrap" },
+                          style: { display: "flex", alignItems: "center", gap: "0.2rem", marginTop: "0.2rem", flexWrap: "wrap", opacity: 0.85 },
                           children: [
-                            (0, a.jsxs)("button", {
+                            (0, a.jsx)("button", {
                               type: "button",
                               title: "Balas pesan",
-                              onClick: () => setReplyTo({ id: m.id, sender_name: m.senderName || (isMe ? "Anda" : defaultTarget.name), content: m.text }),
+                              onClick: () => setReplyTo({ id: m.id, sender_name: m.senderName || (isMe ? "Anda" : defaultTarget.name), content: formatCleanChatText(m.text) }),
                               style: actionPillStyle("#2563eb"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "9 17 4 12 9 7" }), (0, a.jsx)("path", { d: "M20 18v-2a4 4 0 0 0-4-4H4" })] }),
-                                "Balas"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "9 17 4 12 9 7" }), (0, a.jsx)("path", { d: "M20 18v-2a4 4 0 0 0-4-4H4" })] })
                             }),
-                            (0, a.jsxs)("button", {
+                            (0, a.jsx)("button", {
                               type: "button",
                               title: "Teruskan pesan ke rekan",
-                              onClick: () => { setForwardMsg({ id: m.id, text: m.text }); setForwardSearch(""); },
+                              onClick: () => { setForwardMsg({ id: m.id, text: formatCleanChatText(m.text) }); setForwardSearch(""); },
                               style: actionPillStyle("#0284c7"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "15 17 20 12 15 7" }), (0, a.jsx)("path", { d: "M4 18v-2a4 4 0 0 1 4-4h12" })] }),
-                                "Teruskan"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "15 17 20 12 15 7" }), (0, a.jsx)("path", { d: "M4 18v-2a4 4 0 0 1 4-4h12" })] })
                             }),
-                            !String(m.id).startsWith('sys-') && !String(m.id).startsWith('temp-') && (0, a.jsxs)("button", {
+                            !String(m.id).startsWith('sys-') && !String(m.id).startsWith('temp-') && (0, a.jsx)("button", {
                               type: "button",
                               title: m.is_pinned ? "Lepas sematan pesan" : "Sematkan pesan",
                               onClick: () => handlePinQuickMsg(m),
                               style: actionPillStyle(m.is_pinned ? "#d97706" : "var(--cas-text-secondary, #475569)"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] }),
-                                m.is_pinned ? "Lepas" : "Sematkan"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("line", { x1: "12", y1: "17", x2: "12", y2: "22" }), (0, a.jsx)("path", { d: "M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" })] })
                             }),
-                            (0, a.jsxs)("button", {
+                            (0, a.jsx)("button", {
                               type: "button",
                               title: "Salin pesan",
                               onClick: () => {
-                                try { navigator?.clipboard?.writeText(String(m.text || "")); } catch {}
+                                try { navigator?.clipboard?.writeText(String(formatCleanChatText(m.text) || "")); } catch {}
                                 if (typeof window !== "undefined" && window.casShowCenterAlert) {
                                   window.casShowCenterAlert("Pesan disalin ke papan klip", "success");
                                 }
                               },
                               style: actionPillStyle("var(--cas-text-secondary, #475569)"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }), (0, a.jsx)("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" })] }),
-                                "Salin"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2", ry: "2" }), (0, a.jsx)("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" })] })
                             }),
-                            canModify && (0, a.jsxs)("button", {
+                            canModify && (0, a.jsx)("button", {
                               type: "button",
                               title: "Edit pesan",
                               onClick: () => {
@@ -2269,20 +2290,14 @@ function TacticalMessengerWidget() {
                                 setReplyTo(null);
                               },
                               style: actionPillStyle("#d97706"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("path", { d: "M12 20h9" }), (0, a.jsx)("path", { d: "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" })] }),
-                                "Edit"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("path", { d: "M12 20h9" }), (0, a.jsx)("path", { d: "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" })] })
                             }),
-                            (canModify || Number(defaultTarget.id) === -1) && !String(m.id).startsWith('sys-') && (0, a.jsxs)("button", {
+                            (canModify || Number(defaultTarget.id) === -1) && !String(m.id).startsWith('sys-') && (0, a.jsx)("button", {
                               type: "button",
                               title: "Hapus pesan",
                               onClick: () => setConfirmDeleteId(m.id),
                               style: actionPillStyle("#ef4444"),
-                              children: [
-                                (0, a.jsxs)("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "3 6 5 6 21 6" }), (0, a.jsx)("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" })] }),
-                                "Hapus"
-                              ]
+                              children: (0, a.jsxs)("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", children: [(0, a.jsx)("polyline", { points: "3 6 5 6 21 6" }), (0, a.jsx)("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" })] })
                             })
                           ]
                         })
@@ -2320,25 +2335,6 @@ function TacticalMessengerWidget() {
                 ]
               }),
 
-              (0, a.jsx)("div", {
-                style: { display: "flex", gap: "0.35rem", padding: "0.4rem 0.65rem", background: "var(--cas-card-bg)", overflowX: "auto", borderTop: "1px solid var(--cas-border)" },
-                children: (defaultTarget.id === -1 ? [
-                  { label: "KUHP Baru", text: "Jelaskan pemetaan pasal KUHP Baru (UU 1/2023) pada Laporan Polisi." },
-                  { label: "Panduan DORS", text: "Bagaimana tahapan sinkronisasi data LP dari DORS?" },
-                  { label: "Koordinasi Selra", text: "Mohon koordinasi progres penyelesaian perkara (Selra)." }
-                ] : [
-                  { label: "Siap, ditindaklanjuti", text: "Siap, segera kami tindaklanjuti." },
-                  { label: "Terima kasih infonya", text: "Terima kasih atas informasinya, Rekan." },
-                  { label: "Siap Komandan", text: "Siap Komandan, arahan dimonitor." }
-                ]).map((chip, idx) => (0, a.jsx)("button", {
-                  key: idx,
-                  type: "button",
-                  onClick: () => handleSend(chip.text),
-                  style: { background: "var(--cas-surface-subtle)", border: "1px solid var(--cas-border-strong)", borderRadius: "999px", color: "#2563eb", padding: "0.22rem 0.55rem", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" },
-                  children: chip.label
-                }))
-              }),
-
               (0, a.jsxs)("div", {
                 style: { padding: "0.55rem 0.75rem", background: "var(--cas-card-bg)", borderTop: "1px solid var(--cas-border)", display: "flex", gap: "0.45rem", alignItems: "center" },
                 children: [
@@ -2347,7 +2343,7 @@ function TacticalMessengerWidget() {
                     value: inputVal,
                     onChange: ev => setInputVal(ev.target.value),
                     onKeyDown: ev => { if (ev.key === 'Enter') handleSend(); },
-                    placeholder: editingMsg ? "Edit isi pesan... (Enter untuk simpan)" : "Tulis pesan... (Enter untuk kirim)",
+                    placeholder: editingMsg ? "Edit pesan..." : "Tulis pesan...",
                     style: { flex: 1, background: "var(--cas-surface-subtle)", border: editingMsg ? "1.5px solid #f59e0b" : "1px solid var(--cas-border-strong)", borderRadius: "10px", padding: "0.48rem 0.85rem", color: "var(--cas-text-primary)", fontSize: "0.82rem", outline: "none" }
                   }),
                   (0, a.jsx)("button", {
@@ -2800,17 +2796,17 @@ function CasObrolanFullPage({user:curUser,searchStr}){
   const fullActionPillStyle=(colorHex)=>({
     display:"inline-flex",
     alignItems:"center",
-    gap:"0.25rem",
-    padding:"0.16rem 0.48rem",
-    borderRadius:999,
+    justifyContent:"center",
+    width:26,
+    height:26,
+    padding:0,
+    borderRadius:7,
     border:"1px solid var(--cas-border)",
     background:"var(--cas-card-bg)",
     color:colorHex||"var(--cas-text-secondary)",
-    fontSize:"0.68rem",
-    fontWeight:700,
     cursor:"pointer",
-    lineHeight:1.2,
-    boxShadow:"0 1px 2px rgba(15,23,42,0.04)"
+    boxShadow:"0 1px 2px rgba(15,23,42,0.04)",
+    transition:"all 0.15s ease"
   });
 
   return(0,a.jsxs)("div",{style:{display:"grid",gap:"0.75rem",position:"relative"},children:[
@@ -2997,45 +2993,48 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             overflow:"hidden"
           },
           children:[
-            (0,a.jsxs)("div",{style:{padding:"0.9rem 1rem 0.65rem",borderBottom:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",gap:"0.65rem"},children:[
+            (0,a.jsxs)("div",{style:{padding:"0.85rem 1rem 0.65rem",borderBottom:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",gap:"0.55rem"},children:[
               (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem"},children:[
-                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                  (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.15rem",fontWeight:800,color:"var(--cas-text-primary)"},children:"Obrolan"}),
-                  (0,a.jsx)("span",{style:{fontSize:"0.68rem",fontWeight:700,padding:"0.15rem 0.5rem",borderRadius:999,background:"rgba(34,197,94,0.14)",color:"#16a34a",display:"inline-flex",alignItems:"center",gap:"0.25rem"},children:"🟢 Aktif"})
-                ]}),
-                (0,a.jsx)("button",{
+                (0,a.jsx)("h2",{style:{margin:0,fontSize:"1.1rem",fontWeight:800,color:"var(--cas-text-primary)",letterSpacing:"-0.01em"},children:"Obrolan"}),
+                (0,a.jsxs)("button",{
                   type:"button",
                   onClick:()=>setNewMsgModalOpen(!0),
-                  style:{padding:"0.38rem 0.75rem",borderRadius:10,border:"1px solid rgba(37,99,235,0.35)",background:"rgba(37,99,235,0.1)",color:"#2563eb",fontWeight:700,fontSize:"0.75rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
-                  children:"➕ Mulai Obrolan Baru"
+                  style:{padding:"0.34rem 0.7rem",borderRadius:8,border:"1px solid rgba(37,99,235,0.3)",background:"rgba(37,99,235,0.08)",color:"#2563eb",fontWeight:700,fontSize:"0.74rem",cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.32rem",whiteSpace:"nowrap",flexShrink:0},
+                  children:[
+                    (0,a.jsxs)("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M12 20h9"}),(0,a.jsx)("path",{d:"M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"})]}),
+                    "Obrolan Baru"
+                  ]
                 })
               ]}),
-              (0,a.jsx)("input",{
-                type:"text",
-                value:searchQ,
-                onChange:e=>setSearchQ(e.target.value),
-                placeholder:"🔍 Cari obrolan, nama rekan, atau @username...",
-                style:{width:"100%",padding:"0.5rem 0.9rem",borderRadius:10,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.8rem",outline:"none",boxSizing:"border-box"}
-              }),
-              (0,a.jsx)("div",{style:{display:"flex",gap:"0.32rem",flexWrap:"wrap",paddingBottom:"0.1rem"},children:[
+              (0,a.jsxs)("div",{style:{position:"relative",display:"flex",alignItems:"center"},children:[
+                (0,a.jsx)("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"var(--cas-text-muted)",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",style:{position:"absolute",left:"0.75rem",pointerEvents:"none"},children:[(0,a.jsx)("circle",{cx:"11",cy:"11",r:"8"}),(0,a.jsx)("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})]}),
+                (0,a.jsx)("input",{
+                  type:"text",
+                  value:searchQ,
+                  onChange:e=>setSearchQ(e.target.value),
+                  placeholder:"Cari @callsign atau Satker...",
+                  style:{width:"100%",padding:"0.45rem 0.85rem 0.45rem 2.15rem",borderRadius:9,border:"1px solid var(--cas-border-strong)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-primary)",fontSize:"0.78rem",outline:"none",boxSizing:"border-box"}
+                })
+              ]}),
+              (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, minmax(0, 1fr))",gap:"0.3rem",padding:"0.18rem",borderRadius:9,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
                 {id:"all",label:"Semua"},
                 {id:"unread",label:"Belum Dibaca"},
-                {id:"satker",label:"Rekan Satker"},
-                {id:"resmi",label:"Saluran Resmi"}
+                {id:"satker",label:"Satker"}
               ].map( pill => (0,a.jsx)("button",{
                 key:pill.id,
                 type:"button",
                 onClick:()=>setConvFilter(pill.id),
                 style:{
-                  padding:"0.28rem 0.65rem",
-                  borderRadius:8,
-                  border:convFilter===pill.id?"1px solid #2563eb":"1px solid var(--cas-border)",
-                  background:convFilter===pill.id?"#2563eb":"var(--cas-surface-subtle)",
+                  padding:"0.26rem 0.4rem",
+                  borderRadius:7,
+                  border:"none",
+                  background:convFilter===pill.id?"#2563eb":"transparent",
                   color:convFilter===pill.id?"#ffffff":"var(--cas-text-secondary)",
-                  fontSize:"0.72rem",
+                  fontSize:"0.71rem",
                   fontWeight:700,
                   cursor:"pointer",
                   whiteSpace:"nowrap",
+                  textAlign:"center",
                   transition:"all 0.15s ease"
                 },
                 children:pill.label
@@ -3043,7 +3042,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             ]}),
 
             (0,a.jsxs)("div",{style:{flex:1,overflowY:"auto",padding:"0.4rem",display:"flex",flexDirection:"column",gap:"0.2rem"},children:[
-              loadingConvs?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.length===0?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Belum ada percakapan aktif. Klik ✎ Pesan Baru untuk memulai obrolan."}):filteredConvs.map(c=>{
+              loadingConvs?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Memuat daftar obrolan…"}):filteredConvs.length===0?(0,a.jsx)("div",{style:{padding:"2rem 1rem",textAlign:"center",color:"var(--cas-text-muted)",fontSize:"0.8rem"},children:"Belum ada percakapan aktif."}):filteredConvs.map(c=>{
                 const isSel=Number(c.partner_id)===Number(selectedId);
                 const hasUnread=Number(c.unread_count||0)>0;
                 const cleanHandle=String(c.handle||"").startsWith("@")?c.handle:`@${c.handle||"personel"}`;
@@ -3065,20 +3064,20 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     transition:"all 0.15s ease"
                   },
                   children:[
-                    (0,a.jsxs)("div",{style:{position:"relative",width:48,height:48,borderRadius:"50%",flexShrink:0},children:[
+                    (0,a.jsxs)("div",{style:{position:"relative",width:44,height:44,borderRadius:"50%",flexShrink:0},children:[
                       (0,a.jsx)("img",{
                         src:c.photo_url||"/images/default-avatar-polki.png",
                         alt:c.name,
                         onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},
-                        style:{width:48,height:48,borderRadius:"50%",objectFit:"cover",border:c.is_ai?"2px solid #2563eb":"1px solid var(--cas-border)"}
+                        style:{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:c.is_ai?"2px solid #2563eb":"1px solid var(--cas-border)"}
                       }),
                       (c.online||c.is_online||c.is_ai)&&(0,a.jsx)("span",{
                         style:{
                           position:"absolute",
                           bottom:1,
                           right:1,
-                          width:12,
-                          height:12,
+                          width:11,
+                          height:11,
                           borderRadius:"50%",
                           background:"#22c55e",
                           border:"2px solid var(--cas-card-bg)"
@@ -3091,7 +3090,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                           (0,a.jsx)("span",{
                             style:{
                               fontWeight:hasUnread||isSel?800:700,
-                              fontSize:"0.88rem",
+                              fontSize:"0.86rem",
                               color:"var(--cas-text-primary)",
                               whiteSpace:"nowrap",
                               overflow:"hidden",
@@ -3111,20 +3110,23 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                           children:formatConvTimeShort(c.last_time)
                         })
                       ]}),
-                      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",marginTop:"0.2rem"},children:[
+                      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",marginTop:"0.18rem"},children:[
                         (0,a.jsxs)("div",{
                           style:{
-                            fontSize:"0.78rem",
+                            fontSize:"0.76rem",
                             color:hasUnread?"var(--cas-text-primary)":"var(--cas-text-muted)",
                             fontWeight:hasUnread?700:400,
                             whiteSpace:"nowrap",
                             overflow:"hidden",
                             textOverflow:"ellipsis",
-                            flex:1
+                            flex:1,
+                            display:"flex",
+                            alignItems:"center",
+                            gap:"0.25rem"
                           },
                           children:[
-                            c.last_is_mine&&(0,a.jsx)("span",{style:{color:"#2563eb",fontWeight:800,marginRight:"0.25rem"},children:"✓✓"}),
-                            c.last_message||"Mulai percakapan..."
+                            c.last_is_mine&&renderCasDoubleCheckSvg("#2563eb",13),
+                            (0,a.jsx)("span",{style:{overflow:"hidden",textOverflow:"ellipsis"},children:formatCleanChatText(c.last_message||"Mulai percakapan...")})
                           ]
                         }),
                         hasUnread&&(0,a.jsx)("span",{
@@ -3223,32 +3225,32 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                       renderCasMetaBadge(activePartner,15)
                     ]}),
                     (0,a.jsx)("div",{
-                      style:{fontSize:"0.74rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
-                      children:selectedId===-1||Number(selectedId)===0?`Saluran Koordinasi Resmi · ${activePartner.satker||"Robinopsnal Bareskrim Polri"}`:`🟢 Aktif · ${activePartner.satker||"Polri"}`
+                      style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
+                      children:activePartner.satker||"Robinopsnal Bareskrim Polri"
                     })
                   ]})
                 ]}),
-                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap",flexShrink:0},children:[
+                (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"nowrap",flexShrink:0},children:[
                   (0,a.jsx)("button",{
                     type:"button",
                     onClick:()=>setThreadSearchOpen(v=>!v),
                     title:"Cari di Obrolan",
-                    style:{padding:"0.38rem 0.65rem",borderRadius:8,border:threadSearchOpen?"1px solid #2563eb":"1px solid var(--cas-border)",background:threadSearchOpen?"rgba(37,99,235,0.1)":"var(--cas-surface-subtle)",color:threadSearchOpen?"#2563eb":"var(--cas-text-secondary)",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
-                    children:isMobileView?"🔍":"🔍 Cari di Obrolan"
+                    style:{width:32,height:32,padding:0,borderRadius:8,border:threadSearchOpen?"1px solid #2563eb":"1px solid var(--cas-border)",background:threadSearchOpen?"rgba(37,99,235,0.1)":"var(--cas-surface-subtle)",color:threadSearchOpen?"#2563eb":"var(--cas-text-secondary)",display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer"},
+                    children:(0,a.jsxs)("svg",{width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("circle",{cx:"11",cy:"11",r:"8"}),(0,a.jsx)("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})]})
                   }),
                   selectedId>0&&(0,a.jsx)("button",{
                     type:"button",
                     onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${selectedId}`),
                     title:"Lihat Profil Personel",
-                    style:{padding:"0.38rem 0.65rem",borderRadius:8,border:"1px solid var(--cas-border)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-secondary)",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
-                    children:isMobileView?"👤":"👤 Lihat Profil"
+                    style:{width:32,height:32,padding:0,borderRadius:8,border:"1px solid var(--cas-border)",background:"var(--cas-surface-subtle)",color:"var(--cas-text-secondary)",display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer"},
+                    children:(0,a.jsxs)("svg",{width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"}),(0,a.jsx)("circle",{cx:"12",cy:"7",r:"4"})]})
                   }),
                   (0,a.jsx)("button",{
                     type:"button",
                     onClick:()=>setInfoDrawerOpen(v=>!v),
                     title:"Info Percakapan",
-                    style:{padding:"0.38rem 0.65rem",borderRadius:8,border:infoDrawerOpen?"1px solid #2563eb":"1px solid var(--cas-border)",background:infoDrawerOpen?"rgba(37,99,235,0.1)":"var(--cas-surface-subtle)",color:infoDrawerOpen?"#2563eb":"var(--cas-text-secondary)",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
-                    children:isMobileView?"ℹ️":"ℹ️ Info Percakapan"
+                    style:{width:32,height:32,padding:0,borderRadius:8,border:infoDrawerOpen?"1px solid #2563eb":"1px solid var(--cas-border)",background:infoDrawerOpen?"rgba(37,99,235,0.1)":"var(--cas-surface-subtle)",color:infoDrawerOpen?"#2563eb":"var(--cas-text-secondary)",display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer"},
+                    children:(0,a.jsxs)("svg",{width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,a.jsx)("line",{x1:"12",y1:"16",x2:"12",y2:"12"}),(0,a.jsx)("line",{x1:"12",y1:"8",x2:"12.01",y2:"8"})]})
                   })
                 ]})
               ]
@@ -3271,18 +3273,18 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             }),
 
             pinnedThreadMsg&&(0,a.jsxs)("div",{
-              style:{padding:"0.48rem 1.1rem",background:"rgba(37,99,235,0.08)",borderBottom:"1px solid rgba(37,99,235,0.25)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.6rem",fontSize:"0.76rem"},
+              style:{padding:"0.45rem 1.1rem",background:"rgba(37,99,235,0.06)",borderBottom:"1px solid rgba(37,99,235,0.2)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.6rem",fontSize:"0.75rem"},
               children:[
                 (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,flex:1},children:[
                   (0,a.jsxs)("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"#2563eb",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0},children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),
-                  (0,a.jsx)("span",{style:{fontWeight:800,color:"#2563eb",flexShrink:0},children:"Pesan Disematkan:"}),
-                  (0,a.jsx)("span",{style:{color:"var(--cas-text-secondary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:pinnedThreadMsg.content})
+                  (0,a.jsx)("span",{style:{color:"var(--cas-text-secondary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatCleanChatText(pinnedThreadMsg.content)})
                 ]}),
                 (0,a.jsx)("button",{
                   type:"button",
                   onClick:()=>handleTogglePinMessage(pinnedThreadMsg),
-                  style:{padding:"0.2rem 0.55rem",borderRadius:8,border:"1px solid rgba(37,99,235,0.35)",background:"var(--cas-card-bg)",color:"#2563eb",fontSize:"0.7rem",fontWeight:800,cursor:"pointer",flexShrink:0},
-                  children:"Lepas Sematan"
+                  title:"Lepas Sematan",
+                  style:{padding:"0.18rem 0.5rem",borderRadius:7,border:"1px solid rgba(37,99,235,0.3)",background:"var(--cas-card-bg)",color:"#2563eb",fontSize:"0.68rem",fontWeight:700,cursor:"pointer",flexShrink:0},
+                  children:"Lepas"
                 })
               ]
             }),
@@ -3300,32 +3302,6 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   background:"var(--cas-surface-subtle)"
                 },
                 children:[
-                  (0,a.jsxs)("div",{
-                    style:{
-                      padding:"0.65rem 0.9rem",
-                      borderRadius:12,
-                      background:"var(--cas-card-bg)",
-                      border:"1px solid var(--cas-border)",
-                      display:"flex",
-                      alignItems:"center",
-                      justifyContent:"space-between",
-                      gap:"0.75rem",
-                      flexWrap:"wrap",
-                      fontSize:"0.75rem",
-                      color:"var(--cas-text-secondary)",
-                      boxShadow:"0 1px 3px rgba(15,23,42,0.03)"
-                    },
-                    children:[
-                      (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",minWidth:0},children:[
-                        (0,a.jsx)("span",{style:{fontSize:"0.95rem"},children:"🛡️"}),
-                        (0,a.jsxs)("span",{children:[
-                          (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary)"},children:"Saluran Terenkripsi CAS Bareskrim Polri: "}),
-                          selectedId===-1?"Asisten AI Taktis siap membantu analisis pasal KUHP Baru, SOP DORS, & Selra.":"Percakapan kedinasan 1-on-1 tercatat aman di jaringan internal Polri."
-                        ]})
-                      ]}),
-                      (0,a.jsx)("span",{style:{fontSize:"0.68rem",fontWeight:700,color:"#0284c7",padding:"0.15rem 0.5rem",borderRadius:999,background:"rgba(2,132,199,0.1)"},children:"End-to-End Internal"})
-                    ]
-                  }),
                   (0,a.jsxs)("div",{
                     style:{marginTop:"auto",display:"flex",flexDirection:"column",gap:"0.6rem"},
                     children:[
@@ -3422,7 +3398,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                       ?(0,a.jsx)("img",{src:m.attachment_url,alt:"Lampiran",style:{maxWidth:"100%",maxHeight:220,borderRadius:10,display:"block"}})
                                       :(0,a.jsx)("a",{href:m.attachment_url,target:"_blank",rel:"noreferrer",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.35rem 0.65rem",borderRadius:8,background:isMine?"rgba(255,255,255,0.16)":"var(--cas-surface-subtle)",color:isMine?"#fff":"#2563eb",fontSize:"0.76rem",fontWeight:700,textDecoration:"none"},children:"📎 Buka Dokumen Lampiran"})
                                   }),
-                                  (0,a.jsx)("div",{children:m.content}),
+                                  (0,a.jsx)("div",{children:formatCleanChatText(m.content)}),
                                   (0,a.jsxs)("div",{
                                     style:{
                                       display:"flex",
@@ -3437,7 +3413,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                       m.is_pinned&&(0,a.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"2px",fontWeight:700,color:isMine?"#fde047":"#2563eb"},children:[(0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),"Disematkan"]}),
                                       m.is_edited&&(0,a.jsx)("span",{style:{fontStyle:"italic",opacity:0.92},children:"(diedit)"}),
                                       (0,a.jsx)("span",{children:timeStr}),
-                                      isMine&&(0,a.jsx)("span",{style:{color:"#93c5fd",fontWeight:800},children:"✓✓"})
+                                      isMine&&renderCasDoubleCheckSvg("#93c5fd",14)
                                     ]
                                   })
                                 ]
@@ -3469,23 +3445,20 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                             style:{
                               display:"flex",
                               alignItems:"center",
-                              gap:"0.25rem",
-                              marginTop:"0.24rem",
+                              gap:"0.22rem",
+                              marginTop:"0.22rem",
                               marginLeft:isMine?0:"2.2rem",
                               flexWrap:"wrap"
                             },
                             children:[
-                              (0,a.jsxs)("button",{
+                              (0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>toggleBubbleReaction(m.id,"👍"),
                                 title:"Beri reaksi Suka",
                                 style:fullActionPillStyle("var(--cas-text-secondary)"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M7 10v12"}),(0,a.jsx)("path",{d:"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"})]}),
-                                  "Suka"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M7 10v12"}),(0,a.jsx)("path",{d:"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"})]})
                               }),
-                              (0,a.jsxs)("button",{
+                              (0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>{
                                   setReplyToMessage({
@@ -3498,42 +3471,30 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                 },
                                 title:"Balas pesan ini",
                                 style:fullActionPillStyle("#2563eb"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"9 17 4 12 9 7"}),(0,a.jsx)("path",{d:"M20 18v-2a4 4 0 0 0-4-4H4"})]}),
-                                  "Balas"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"9 17 4 12 9 7"}),(0,a.jsx)("path",{d:"M20 18v-2a4 4 0 0 0-4-4H4"})]})
                               }),
-                              (0,a.jsxs)("button",{
+                              (0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>{setForwardingMessage(m);setForwardSearch("");},
                                 title:"Teruskan pesan ke rekan",
                                 style:fullActionPillStyle("#0284c7"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"15 17 20 12 15 7"}),(0,a.jsx)("path",{d:"M4 18v-2a4 4 0 0 1 4-4h12"})]}),
-                                  "Teruskan"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"15 17 20 12 15 7"}),(0,a.jsx)("path",{d:"M4 18v-2a4 4 0 0 1 4-4h12"})]})
                               }),
-                              (0,a.jsxs)("button",{
+                              (0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>handleTogglePinMessage(m),
                                 title:m.is_pinned?"Lepas sematan pesan":"Sematkan pesan ini",
                                 style:fullActionPillStyle(m.is_pinned?"#d97706":"var(--cas-text-secondary)"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]}),
-                                  m.is_pinned?"Lepas":"Sematkan"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("line",{x1:"12",y1:"17",x2:"12",y2:"22"}),(0,a.jsx)("path",{d:"M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"})]})
                               }),
-                              (0,a.jsxs)("button",{
+                              (0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>handleCopyMessage(m.content),
                                 title:"Salin teks pesan",
                                 style:fullActionPillStyle("var(--cas-text-secondary)"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("rect",{x:"9",y:"9",width:"13",height:"13",rx:"2",ry:"2"}),(0,a.jsx)("path",{d:"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"})]}),
-                                  "Salin"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("rect",{x:"9",y:"9",width:"13",height:"13",rx:"2",ry:"2"}),(0,a.jsx)("path",{d:"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"})]})
                               }),
-                              isMine&&(0,a.jsxs)("button",{
+                              isMine&&(0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>{
                                   setEditingMessage(m);
@@ -3543,20 +3504,14 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                                 },
                                 title:"Edit pesan Anda",
                                 style:fullActionPillStyle("#d97706"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M12 20h9"}),(0,a.jsx)("path",{d:"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"})]}),
-                                  "Edit"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("path",{d:"M12 20h9"}),(0,a.jsx)("path",{d:"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"})]})
                               }),
-                              (isMine||selectedId===-1||m.is_ai||Number(m.sender_id)===-1)&&(0,a.jsxs)("button",{
+                              (isMine||selectedId===-1||m.is_ai||Number(m.sender_id)===-1)&&(0,a.jsx)("button",{
                                 type:"button",
                                 onClick:()=>setDeletingMessage(m),
                                 title:"Hapus pesan ini",
                                 style:fullActionPillStyle("#ef4444"),
-                                children:[
-                                  (0,a.jsxs)("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"3 6 5 6 21 6"}),(0,a.jsx)("path",{d:"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"})]}),
-                                  "Hapus"
-                                ]
+                                children:(0,a.jsxs)("svg",{width:12,height:12,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.2,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("polyline",{points:"3 6 5 6 21 6"}),(0,a.jsx)("path",{d:"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"})]})
                               })
                             ]
                           }),
@@ -3702,38 +3657,6 @@ function CasObrolanFullPage({user:curUser,searchStr}){
               ]
             }),
 
-            (0,a.jsx)("div",{
-              style:{
-                padding:"0.42rem 1rem",
-                background:"var(--cas-card-bg)",
-                borderTop:"1px solid var(--cas-border)",
-                display:"flex",
-                gap:"0.4rem",
-                overflowX:"auto",
-                maxWidth:"100%",
-                boxSizing:"border-box",
-                scrollbarWidth:"none"
-              },
-              children:smartQuickReplies.map((q,i)=>(0,a.jsx)("button",{
-                key:i,
-                type:"button",
-                onClick:()=>sendMessage(q.text),
-                style:{
-                  padding:"0.26rem 0.68rem",
-                  borderRadius:999,
-                  border:"1px solid var(--cas-border-strong)",
-                  background:"var(--cas-surface-subtle)",
-                  color:"var(--cas-text-secondary)",
-                  fontSize:"0.72rem",
-                  fontWeight:600,
-                  cursor:"pointer",
-                  whiteSpace:"nowrap",
-                  transition:"all 0.15s ease"
-                },
-                children:q.label
-              }))
-            }),
-
             showEmojiPicker&&(0,a.jsx)("div",{
               style:{
                 padding:"0.5rem 1rem",
@@ -3779,25 +3702,25 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     borderRadius:10,
                     background:"var(--cas-surface-subtle)",
                     border:"1px solid var(--cas-border-strong)",
-                    padding:"0.35rem 0.5rem 0.35rem 0.85rem",
+                    padding:"0.35rem 0.5rem 0.35rem 0.7rem",
                     display:"flex",
                     alignItems:"center",
-                    gap:"0.5rem"
+                    gap:"0.4rem"
                   },
                   children:[
                     (0,a.jsx)("button",{
                       type:"button",
                       onClick:()=>setShowEmojiPicker(v=>!v),
                       title:"Sisipkan Emoji",
-                      style:{background:"none",border:"none",cursor:"pointer",fontSize:"1.05rem",padding:"0.15rem",lineHeight:1},
-                      children:"😊"
+                      style:{background:"none",border:"none",cursor:"pointer",padding:"0.2rem",display:"inline-flex",alignItems:"center",justifyContent:"center",color:"var(--cas-text-muted)"},
+                      children:(0,a.jsxs)("svg",{width:17,height:17,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",children:[(0,a.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,a.jsx)("path",{d:"M8 14s1.5 2 4 2 4-2 4-2"}),(0,a.jsx)("line",{x1:"9",y1:"9",x2:"9.01",y2:"9"}),(0,a.jsx)("line",{x1:"15",y1:"9",x2:"15.01",y2:"9"})]})
                     }),
                     (0,a.jsx)("button",{
                       type:"button",
                       onClick:()=>fileInputRef.current?.click(),
                       title:"Lampirkan Dokumen atau Gambar",
-                      style:{background:"none",border:"none",cursor:"pointer",fontSize:"1rem",padding:"0.15rem",lineHeight:1},
-                      children:"📎"
+                      style:{background:"none",border:"none",cursor:"pointer",padding:"0.2rem",display:"inline-flex",alignItems:"center",justifyContent:"center",color:"var(--cas-text-muted)"},
+                      children:(0,a.jsx)("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",children:(0,a.jsx)("path",{d:"m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"})})
                     }),
                     (0,a.jsx)("input",{
                       ref:msgInputRef,
