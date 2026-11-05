@@ -18,6 +18,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
     private readonly summaryCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly listCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly satkerTreeCache = new Map<number, { expiresAt: number; ids: number[] }>();
+    private masterJenisCache: { expiresAt: number; items: Array<{ label: string; value: string; kelompok: string; satuan: string }> } | null = null;
 
     constructor(
         private readonly dataSource: DataSource,
@@ -40,9 +41,151 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                 ON bdb_laporan_polisi (coalesce(unit_satker_id, satker_id), id DESC)
                 WHERE deleted_at IS NULL;
             `);
+            await this.normalizeManualBarangBuktiToMasterDors();
         } catch (err: any) {
             this.logger.warn('BarangBuktiService index bootstrap warning: ' + (err?.message || err));
         }
+    }
+
+    /**
+     * Normalisasi data bdb_lp_barang_bukti_manual agar kolom `jenis` mengacu ke Master Jenis Barang DORS
+     * dan deskripsi bebas (seperti "karung pupuk NPK...", "Hp merk NOKIA 105...") tersimpan sebagai `keterangan` (Nama/Detail Barang).
+     */
+    private async normalizeManualBarangBuktiToMasterDors() {
+        try {
+            await this.dataSource.query(`
+                UPDATE bdb_lp_barang_bukti_manual m
+                SET
+                    keterangan = CASE
+                        WHEN COALESCE(TRIM(m.keterangan), '') = '' THEN TRIM(m.jenis)
+                        WHEN POSITION(LOWER(TRIM(m.jenis)) IN LOWER(TRIM(m.keterangan))) > 0 THEN TRIM(m.keterangan)
+                        ELSE TRIM(m.jenis) || ' · ' || TRIM(m.keterangan)
+                    END,
+                    jenis = CASE
+                        WHEN UPPER(m.jenis) ~ '(PUPUK|UREA|PHONSKA|NPK)' THEN 'PUPUK'
+                        WHEN UPPER(m.jenis) ~ '(HANDPHONE|HP |NOKIA|IPHONE|SAMSUNG|XIAOMI|OPPO|VIVO|REALME|INFINIX|TELEPON)' THEN 'HANDPHONE'
+                        WHEN UPPER(m.jenis) ~ '(AYAM|UNGGAS)' THEN 'AYAM'
+                        WHEN UPPER(m.jenis) ~ '(SAPI|KERBAU|KAMBING|DOMBA|BABI|TERNAK)' THEN 'HEWAN TERNAK'
+                        WHEN UPPER(m.jenis) ~ '(SABUK|IKAT PINGGANG)' THEN 'IKAT PINGGANG'
+                        WHEN UPPER(m.jenis) ~ '(KAIN|BATIK|SARUNG|SELENDANG|HANDUK)' THEN 'KAIN'
+                        WHEN UPPER(m.jenis) ~ '(SEPEDA MOTOR|MOTOR|HONDA|YAMAHA|SUZUKI|KAWASAKI|VESPA)' THEN 'SEPEDA MOTOR'
+                        WHEN UPPER(m.jenis) ~ '(MOBIL|TRUK|PICK UP|AVANZA|XENIA|INNOVA|PAJERO|FORTUNER)' THEN 'MOBIL'
+                        WHEN UPPER(m.jenis) ~ '(STNK)' THEN 'STNK'
+                        WHEN UPPER(m.jenis) ~ '(BPKB)' THEN 'BPKB'
+                        WHEN UPPER(m.jenis) ~ '(ANAK PANAH|BUSUR|PANAH|KETAPEL)' THEN 'SENJATA TAJAM'
+                        WHEN UPPER(m.jenis) ~ '(PARANG|GOLOK|CELURIT|BADIK|PEDANG|PISAU|BELATI|KERIS|TOMBAK| MANDAU|SABIT)' THEN 'SENJATA TAJAM'
+                        WHEN UPPER(m.jenis) ~ '(AMUNISI|PELURU|SELONGSONG|SENJATA API|SENPI|PISTOL|REVOLVER|AIRSOFT)' THEN 'SENJATA API / AMUNISI'
+                        WHEN UPPER(m.jenis) ~ '(ROKOK|TEMBAKAU|CERUTU)' THEN 'ROKOK'
+                        WHEN UPPER(m.jenis) ~ '(BAJU|KAOS|KEMEJA|CELANA|JAKET|SWEATER|PAKAIAN|GAMIS|JILBAB|KERUDUNG|TOPI|HELM|SEPATU|SANDAL)' THEN 'PAKAIAN'
+                        WHEN UPPER(m.jenis) ~ '(TAS |RANSEL|DOMPET|KOPER)' THEN 'TAS / DOMPET'
+                        WHEN UPPER(m.jenis) ~ '(UANG|RUPIAH|TUNAI|LOGAM|KERTAS)' THEN 'UANG TUNAI'
+                        WHEN UPPER(m.jenis) ~ '(BUKTI TRANSFER|REKENING|ATM|STRUK|KWITANSI|NOTA|CEK |GIRO|INVOICE)' THEN 'DOKUMEN KEUANGAN'
+                        WHEN UPPER(m.jenis) ~ '(AKTA|SERTIFIKAT|SURAT|DOKUMEN|IJAZAH|KTP|KK |KARTU KELUARGA|PASPOR|SIM |BERKAS)' THEN 'DOKUMEN / SURAT'
+                        WHEN UPPER(m.jenis) ~ '(SABU|GANJA|EKSTASI|NARKOTIKA|PSIKOTROPIKA|OBAT|PIL |TRAMADOL|HEXYMER)' THEN 'NARKOTIKA / OBAT TERLARANG'
+                        WHEN UPPER(m.jenis) ~ '(LAPTOP|KOMPUTER|FLASHDISK|HARDDISK|CCTV|REKAMAN|MEMORY|SIM CARD)' THEN 'PERANGKAT ELEKTRONIK'
+                        WHEN UPPER(m.jenis) ~ '(EMAS|CINCIN|KALUNG|GELANG|ANTING|PERHIASAN|JAM TANGAN)' THEN 'PERHIASAN'
+                        WHEN UPPER(m.jenis) ~ '(KAYU|BALOK|PAPAN|ROTAN)' THEN 'KAYU'
+                        WHEN UPPER(m.jenis) ~ '(BESI|BAJA|KABEL|TEMBAGA|ALUMINIUM|PLAT|LINGGIS|KUNCI|OBENG|PALU|TANG )' THEN 'ALAT / PERKAKAS'
+                        WHEN UPPER(m.jenis) ~ '(SOLAR|PERTALITE|PERTAMAX|BBM|BENSIN|MINYAK|GAS |LPG|TABUNG)' THEN 'BBM / MIGAS'
+                        ELSE UPPER(TRIM(m.jenis))
+                    END
+                WHERE m.deleted_at IS NULL
+                  AND (
+                      m.jenis <> UPPER(TRIM(m.jenis))
+                      OR LENGTH(TRIM(m.jenis)) > 26
+                      OR COALESCE(TRIM(m.keterangan), '') = ''
+                  );
+            `);
+            this.summaryCache.clear();
+            this.listCache.clear();
+        } catch (e: any) {
+            this.logger.warn('normalizeManualBarangBuktiToMasterDors warning: ' + (e?.message || e));
+        }
+    }
+
+    async listMasterJenis(search?: string) {
+        if (!this.masterJenisCache || this.masterJenisCache.expiresAt <= Date.now()) {
+            const rows = await this.dataSource.query(`
+                WITH master_src AS (
+                    SELECT
+                        UPPER(TRIM(jenis)) AS jenis,
+                        COALESCE(NULLIF(UPPER(TRIM(kelompok)), ''), 'MASTER DORS') AS kelompok,
+                        COALESCE(NULLIF(UPPER(TRIM(satuan)), ''), 'BUAH') AS satuan,
+                        1 AS prio
+                    FROM cm_jenis_barang_bukti
+                    WHERE COALESCE(TRIM(jenis), '') NOT IN ('', '-', 'NULL')
+                    UNION ALL
+                    SELECT
+                        UPPER(TRIM(jenis_bb)) AS jenis,
+                        'SINKRON DORS' AS kelompok,
+                        'BUAH' AS satuan,
+                        2 AS prio
+                    FROM (
+                        SELECT DISTINCT jenis_bb
+                        FROM bdb_dors_lp_barang_bukti
+                        WHERE COALESCE(TRIM(jenis_bb), '') NOT IN ('', '-', 'NULL', 'TIDAK DIKETAHUI')
+                        LIMIT 400
+                    ) d
+                ),
+                curated AS (
+                    SELECT * FROM (VALUES
+                        ('HANDPHONE', 'ELEKTRONIK', 'UNIT', 0),
+                        ('SEPEDA MOTOR', 'KENDARAAN BERMOTOR', 'UNIT', 0),
+                        ('MOBIL', 'KENDARAAN BERMOTOR', 'UNIT', 0),
+                        ('STNK', 'DOKUMEN KENDARAAN', 'LEMBAR', 0),
+                        ('BPKB', 'DOKUMEN KENDARAAN', 'BUKU', 0),
+                        ('UANG TUNAI', 'KEUANGAN', 'RUPIAH', 0),
+                        ('DOKUMEN KEUANGAN', 'KEUANGAN', 'LEMBAR', 0),
+                        ('DOKUMEN / SURAT', 'DOKUMEN', 'BERKAS', 0),
+                        ('AKTA KELAHIRAN', 'DOKUMEN', 'LEMBAR', 0),
+                        ('SERTIFIKAT TANAH', 'DOKUMEN', 'BUKU', 0),
+                        ('SENJATA TAJAM', 'SENJATA', 'BILAH', 0),
+                        ('SENJATA API / AMUNISI', 'SENJATA', 'BUTIR / PUCUK', 0),
+                        ('NARKOTIKA / OBAT TERLARANG', 'NARKOTIKA', 'GRAM / BUTIR', 0),
+                        ('PERANGKAT ELEKTRONIK', 'ELEKTRONIK', 'UNIT', 0),
+                        ('PAKAIAN', 'BARANG PRIBADI', 'POTONG', 0),
+                        ('IKAT PINGGANG', 'BARANG PRIBADI', 'BUAH', 0),
+                        ('KAIN', 'BARANG PRIBADI', 'HELAI', 0),
+                        ('TAS / DOMPET', 'BARANG PRIBADI', 'BUAH', 0),
+                        ('PERHIASAN', 'BARANG BERHARGA', 'GRAM / BUAH', 0),
+                        ('PUPUK', 'PERTANIAN / PERKEBUNAN', 'KARUNG', 0),
+                        ('AYAM', 'PETERNAKAN', 'EKOR', 0),
+                        ('HEWAN TERNAK', 'PETERNAKAN', 'EKOR', 0),
+                        ('ROKOK', 'BARANG KONSUMSI', 'BUNGKUS / SLOP', 0),
+                        ('KAYU', 'KEHUTANAN', 'BATANG / KUBIK', 0),
+                        ('BBM / MIGAS', 'ENERGI & MIGAS', 'LITER / TABUNG', 0),
+                        ('ALAT / PERKAKAS', 'PERKAKAS', 'BUAH', 0)
+                    ) AS t(jenis, kelompok, satuan, prio)
+                ),
+                dedup AS (
+                    SELECT DISTINCT ON (jenis)
+                        jenis, kelompok, satuan, prio
+                    FROM (
+                        SELECT * FROM curated
+                        UNION ALL
+                        SELECT * FROM master_src
+                    ) u
+                    WHERE LENGTH(jenis) >= 2
+                    ORDER BY jenis, prio ASC
+                )
+                SELECT jenis, kelompok, satuan
+                FROM dedup
+                ORDER BY prio ASC, jenis ASC
+            `);
+            const items = (rows || []).map((r: any) => ({
+                label: String(r.jenis),
+                value: String(r.jenis),
+                kelompok: String(r.kelompok || 'MASTER DORS'),
+                satuan: String(r.satuan || '')
+            }));
+            this.masterJenisCache = { expiresAt: Date.now() + 600000, items };
+        }
+
+        const q = String(search || '').trim().toUpperCase();
+        const filtered = q
+            ? this.masterJenisCache.items.filter(it => it.label.includes(q) || it.kelompok.includes(q))
+            : this.masterJenisCache.items;
+        return { data: filtered };
     }
 
     private async resolveSatkerTreeIds(targetSatkerId: number): Promise<number[]> {
@@ -598,7 +741,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                         select lp.*
                         from unnest($${satkerArrParamIdx}::bigint[]) as sid
                         cross join lateral (
-                            select lp.id, lp.synced_at, lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_nama
+                            select lp.id, lp.synced_at, lp.no_laporan, lp.satker_id, lp.satker_nama, lp.unit_satker_id, lp.unit_satker_nama, lp.unit_nama
                             from bdb_laporan_polisi lp
                             where lp.deleted_at is null
                               and coalesce(lp.unit_satker_id, lp.satker_id) = sid
@@ -625,6 +768,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                            lp.no_laporan,
                            lp.satker_id,
                            lp.satker_nama,
+                           lp.unit_satker_id,
+                           lp.unit_satker_nama,
                            lp.unit_nama
                     from matching_lps lp
                     join bdb_dors_lp_barang_bukti bb on bb.lp_id = lp.id
@@ -649,6 +794,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                            lp.no_laporan,
                            lp.satker_id,
                            lp.satker_nama,
+                           lp.unit_satker_id,
+                           lp.unit_satker_nama,
                            lp.unit_nama
                     from bdb_dors_lp_barang_bukti bb
                     join bdb_laporan_polisi lp on lp.id = bb.lp_id
@@ -676,6 +823,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                        lp.no_laporan,
                        lp.satker_id,
                        lp.satker_nama,
+                       lp.unit_satker_id,
+                       lp.unit_satker_nama,
                        lp.unit_nama
                 from bdb_lp_barang_bukti_manual m
                 join bdb_laporan_polisi lp on lp.id = m.lp_id
@@ -707,7 +856,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
              )
              select p.sumber, p.row_id, p.lp_id, p.nomor_register, p.jenis, p.jumlah, p.kepemilikan, p.tanggal_penyitaan,
                     p.status, p.keterangan, p.can_delete, p.created_at,
-                    p.no_laporan, p.satker_id, p.satker_nama, p.unit_nama,
+                    p.no_laporan, p.satker_id, p.satker_nama, p.unit_satker_id, p.unit_satker_nama, p.unit_nama,
                     (select string_agg(x.txt, '; ') from (
                         select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''),'(tanpa kategori)')
                             || case when coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) is not null

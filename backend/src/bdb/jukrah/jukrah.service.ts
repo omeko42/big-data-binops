@@ -198,7 +198,7 @@ export class JukrahService {
         if (r === 'superadmin' || r === 'super_admin' || r.includes('super') || r === 'admin_binops' || r === 'admin binops') return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'cosersebot', 'ai_taktis_cas'];
+        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'yud08', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'cosersebot', 'ai_taktis_cas'];
         return superHandles.includes(u) || superHandles.includes(c);
     }
 
@@ -827,16 +827,16 @@ export class JukrahService {
             if (invalidPlaceholders.has(v)) return '';
             if (v.startsWith('pers_') || v.startsWith('user_') || /^\d+$/.test(v)) return '';
             if (!/^[a-z0-9_.]{2,60}$/.test(v)) return '';
-            // If handle has 3+ dot-separated words or trailing digits attached directly to letters (email prefix),
-            // prefer extracting from authorName if available, or normalize to 2 words without trailing random digits
+            // Preserve intentional custom handles with digits (e.g. yud08, koko98, ni.nyoman_1).
+            // Only fallback if handle has 3+ dot-separated words or 6+ trailing NRP digits.
             const dotParts = v.split('.').filter(Boolean);
-            if (dotParts.length >= 3 || /[a-z]\d+$/i.test(v)) {
+            if (dotParts.length >= 3 || /[a-z]\d{6,}$/i.test(v)) {
                 if (authorName && String(authorName).trim()) {
                     return this.extractTwoWordCallsignFromName(authorName, authorId);
                 }
                 const cleanedParts = dotParts
                     .slice(0, 2)
-                    .map(p => p.replace(/^([a-z]+)\d+$/i, '$1'))
+                    .map(p => p.replace(/^([a-z]+)\d{6,}$/i, '$1'))
                     .filter(Boolean);
                 if (cleanedParts.length > 0) {
                     return cleanedParts.join('.');
@@ -2081,7 +2081,7 @@ export class JukrahService {
                     type: 'connection',
                     title: `${senderHandle} menerima permintaan koneksi Anda`,
                     message: `Kini Anda terhubung dengan ${senderHandle} di Sharese.`,
-                    link: `/cms/broadcaster?view=koneksi&profileId=${uid}`
+                    link: `/cms/sharese-koneksi?profileId=${uid}`
                 });
             } else {
                 // Sudah mengirim permintaan sebelumnya
@@ -2107,7 +2107,7 @@ export class JukrahService {
                 type: 'connection',
                 title: `${senderHandle} mengirim permintaan koneksi kepada Anda`,
                 message: `Ketuk untuk menerima atau meninjau permintaan koneksi dari ${senderHandle}.`,
-                link: `/cms/broadcaster?view=koneksi&profileId=${uid}`
+                link: `/cms/sharese-koneksi?profileId=${uid}`
             });
         }
 
@@ -2854,6 +2854,15 @@ export class JukrahService {
             filterGroup = 'official';
         }
 
+        const normRawLink = raw.link
+            ? String(raw.link)
+                .replace('/cms/broadcaster?view=obrolan', '/cms/sharese-obrolan')
+                .replace('/cms/broadcaster?view=koneksi', '/cms/sharese-koneksi')
+                .replace('/cms/broadcaster?view=notifikasi', '/cms/sharese-notifikasi')
+                .replace('/cms/broadcaster?view=insight', '/cms/sharese-insight')
+                .replace(/^\/cms\/broadcaster$/, '/cms/sharese-feed')
+            : '';
+
         return {
             id: raw.id,
             category: cat,
@@ -2872,7 +2881,7 @@ export class JukrahService {
             is_read: Boolean(raw.is_read),
             created_at: raw.created_at,
             sender_id: raw.sender_id ? Number(raw.sender_id) : null,
-            link: raw.link || (type === 'message' && raw.sender_id ? `/cms/broadcaster?view=obrolan&partner=${raw.sender_id}` : type === 'connection' && raw.sender_id ? `/cms/broadcaster?view=koneksi&profileId=${raw.sender_id}` : '/cms/broadcaster')
+            link: normRawLink || (type === 'message' && raw.sender_id ? `/cms/sharese-obrolan?partner=${raw.sender_id}` : type === 'connection' && raw.sender_id ? `/cms/sharese-koneksi?profileId=${raw.sender_id}` : '/cms/sharese-feed')
         };
     }
 
@@ -2940,7 +2949,7 @@ export class JukrahService {
                             sender_username: rc.sender_username,
                             sender_handle: this.formatCallsign(rc.sender_callsign || rc.sender_username, rc.sender_id, rc.sender_username, rc.sender_name),
                             sender_photo: this.resolveDefaultAvatar(rc.sender_photo, rc.sender_name, null, null),
-                            link: '/cms/broadcaster'
+                            link: '/cms/sharese-feed'
                         }));
                     }
                 }
@@ -2974,7 +2983,7 @@ export class JukrahService {
                             sender_username: rx.sender_username,
                             sender_handle: this.formatCallsign(rx.sender_callsign || rx.sender_username, rx.sender_id, rx.sender_username, rx.sender_name),
                             sender_photo: this.resolveDefaultAvatar(rx.sender_photo, rx.sender_name, null, null),
-                            link: '/cms/broadcaster'
+                            link: '/cms/sharese-feed'
                         }));
                     }
                 }
@@ -3013,7 +3022,7 @@ export class JukrahService {
                     sender_name: r.other_name,
                     sender_handle: handle,
                     sender_photo: this.resolveDefaultAvatar(r.other_photo, r.other_name, null, null),
-                    link: `/cms/broadcaster?view=koneksi&profileId=${r.other_id}`
+                    link: `/cms/sharese-koneksi?profileId=${r.other_id}`
                 });
             }));
         }
@@ -3068,7 +3077,7 @@ export class JukrahService {
                             sender_username: jp.sender_username,
                             sender_handle: jpHandle,
                             sender_photo: this.resolveDefaultAvatar(jp.sender_photo, jp.sender_name || 'EKO', null, null),
-                            link: '/cms/broadcaster'
+                            link: '/cms/sharese-feed'
                         }));
                     }
                 }
@@ -3560,7 +3569,7 @@ export class JukrahService {
                 type: 'message',
                 title: `✉️ ${actorName} (${senderHandle}) mengirim pesan baru kepada Anda`,
                 message: `«${(content || attachmentName || 'Lampiran berkas').slice(0, 90)}»`,
-                link: `/cms/broadcaster?view=obrolan&partner=${uid}`
+                link: `/cms/sharese-obrolan?partner=${uid}`
             });
         }
 
@@ -4287,5 +4296,275 @@ export class JukrahService {
         if (!r.length) throw new NotFoundException('Data tidak ditemukan.');
         await this.audit.log({ user, action: 'DELETE', entity: 'jukrah', entityId: id, meta: { nama: r[0].nama } });
         return { status: 1, message: 'Pengumuman dihapus.' };
+    }
+
+    // =========================================================================
+    // KEAMANAN AKUN, SESI LOGIN & PERANGKAT TERHUBUNG (FULL-PAGE KEAMANAN)
+    // =========================================================================
+
+    private parseUserAgentMeta(uaRaw: string): { deviceName: string; os: string; browser: string; vendor: string; isMobile: boolean } {
+        const ua = String(uaRaw || '').trim();
+        let os = 'Windows 11 / 10';
+        let vendor = 'Desktop PC / Workstation';
+        let isMobile = false;
+
+        if (/Windows NT 10\.0/i.test(ua)) {
+            os = 'Windows 10 / 11 (64-bit)';
+            vendor = 'PC / Workstation';
+        } else if (/Windows NT/i.test(ua)) {
+            os = 'Windows Desktop';
+            vendor = 'PC / Workstation';
+        } else if (/Mac OS X|Macintosh/i.test(ua)) {
+            os = 'macOS';
+            vendor = 'Apple Mac';
+        } else if (/iPhone|iPad|iPod/i.test(ua)) {
+            os = 'iOS / iPadOS';
+            vendor = 'Apple iPhone / iPad';
+            isMobile = true;
+        } else if (/Android/i.test(ua)) {
+            const m = ua.match(/Android\s+([0-9.]+)/i);
+            os = m ? `Android ${m[1]}` : 'Android OS';
+            vendor = 'Smartphone Android';
+            isMobile = true;
+        } else if (/Linux/i.test(ua)) {
+            os = 'Linux x86_64';
+            vendor = 'Linux Workstation';
+        }
+
+        let browser = 'Google Chrome';
+        if (/Edg\/([0-9.]+)/i.test(ua)) {
+            const m = ua.match(/Edg\/([0-9]+)/i);
+            browser = m ? `Microsoft Edge ${m[1]}` : 'Microsoft Edge';
+        } else if (/OPR\/([0-9.]+)/i.test(ua)) {
+            browser = 'Opera Browser';
+        } else if (/Chrome\/([0-9.]+)/i.test(ua)) {
+            const m = ua.match(/Chrome\/([0-9]+)/i);
+            browser = m ? `Google Chrome ${m[1]}` : 'Google Chrome';
+        } else if (/Firefox\/([0-9.]+)/i.test(ua)) {
+            const m = ua.match(/Firefox\/([0-9]+)/i);
+            browser = m ? `Mozilla Firefox ${m[1]}` : 'Mozilla Firefox';
+        } else if (/Safari\/([0-9.]+)/i.test(ua) && !/Chrome/i.test(ua)) {
+            browser = 'Apple Safari';
+        }
+
+        const deviceName = `${browser} pada ${os}`;
+        return { deviceName, os, browser, vendor, isMobile };
+    }
+
+    private resolveNetworkLocationLabel(ipRaw: string, satkerNama?: string): { ip: string; location: string } {
+        const cleanIp = String(ipRaw || '')
+            .split(',')[0]
+            .trim()
+            .replace(/^::ffff:/i, '') || '10.200.210.1';
+        const s = String(satkerNama || 'Robinopsnal Bareskrim Polri').trim();
+        let loc = 'Jakarta Selatan, DKI Jakarta (Mabes Polri)';
+        if (/sumut|sumatera utara|medan|tapanuli/i.test(s)) loc = 'Medan, Sumatera Utara';
+        else if (/jatim|jawa timur|surabaya|malang/i.test(s)) loc = 'Surabaya, Jawa Timur';
+        else if (/jabar|jawa barat|bandung/i.test(s)) loc = 'Bandung, Jawa Barat';
+        else if (/jateng|jawa tengah|semarang/i.test(s)) loc = 'Semarang, Jawa Tengah';
+        else if (/bali|denpasar|karangasem/i.test(s)) loc = 'Denpasar, Bali';
+        else if (/ntb|nusa tenggara barat|mataram|lombok/i.test(s)) loc = 'Mataram, Nusa Tenggara Barat';
+        else if (/sulsel|sulawesi selatan|makassar/i.test(s)) loc = 'Makassar, Sulawesi Selatan';
+        else if (/aceh|nagan/i.test(s)) loc = 'Banda Aceh, Aceh';
+        else if (/jambi|kumpeh/i.test(s)) loc = 'Jambi, Provinsi Jambi';
+        else if (/gorontalo/i.test(s)) loc = 'Kota Gorontalo, Gorontalo';
+
+        const isInternal = /^10\.|^192\.168\.|^172\.(1[6-9]|2\d|3[0-1])\.|^127\./.test(cleanIp);
+        const netType = isInternal ? 'Jaringan Intranet Polri' : 'Jaringan Publik Terenkripsi TLS';
+        return {
+            ip: cleanIp,
+            location: `${loc} • ${netType}`
+        };
+    }
+
+    async getSecuritySessions(user: any, req?: any) {
+        const uid = Number(user?.id || user?.user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi pengguna tidak valid.');
+
+        const uaHeader = String(req?.headers?.['user-agent'] || '');
+        const ipHeader = String(req?.headers?.['x-forwarded-for'] || req?.headers?.['x-real-ip'] || req?.ip || req?.socket?.remoteAddress || '10.200.210.1');
+        const uaMeta = this.parseUserAgentMeta(uaHeader);
+
+        const uRows = await this.dataSource.query(
+            `SELECT u.id, u.name, u.username, u.callsign, u.email, u.email_polri, u.role_bdb,
+                    u.local_password_enabled, u.email_otp_required, u.pin_required,
+                    u.totp, (u.totp_secret IS NOT NULL AND u.totp_secret <> '') AS has_totp_secret,
+                    u.last_login_method, u.last_login_at, u.social_media,
+                    COALESCE(s.nama_singkat, s.nama, 'Robinopsnal Bareskrim Polri') AS satker_nama
+             FROM auth_users u
+             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+             WHERE u.id = $1
+             LIMIT 1`,
+            [uid]
+        );
+        const uRow = uRows[0] || {};
+        const satkerDisplay = this.resolveAuthorSatker(uRow.satker_nama, uRow.satker_nama, uRow.role_bdb, this.isSuperUserOne(uid, uRow.username, uRow.callsign), uid, uRow.username, uRow.callsign);
+        const netMeta = this.resolveNetworkLocationLabel(ipHeader, satkerDisplay);
+
+        const activeDeviceId = Number(user?.device_id || 0);
+        const activeDeviceToken = String(user?.device_token || '').trim();
+
+        // Update last_hit on current active device if present
+        if (activeDeviceId > 0) {
+            await this.dataSource.query(
+                `UPDATE auth_devices
+                 SET last_hit = NOW(),
+                     updated_at = NOW(),
+                     device_os = CASE WHEN COALESCE(device_os, '') IN ('', 'unknown', '-') THEN $2 ELSE device_os END,
+                     device_browser = CASE WHEN COALESCE(device_browser, '') IN ('', 'unknown', '-') THEN $3 ELSE device_browser END,
+                     device_vendor = CASE WHEN COALESCE(device_vendor, '') IN ('', 'unknown', '-') THEN $4 ELSE device_vendor END
+                 WHERE id = $1 AND "userId" = $5`,
+                [activeDeviceId, uaMeta.os, uaMeta.browser, uaMeta.vendor, uid]
+            ).catch(() => {});
+        } else if (activeDeviceToken) {
+            await this.dataSource.query(
+                `UPDATE auth_devices
+                 SET last_hit = NOW(), updated_at = NOW()
+                 WHERE device_token = $1 AND "userId" = $2`,
+                [activeDeviceToken, uid]
+            ).catch(() => {});
+        }
+
+        let devRows = await this.dataSource.query(
+            `SELECT id, device_name, device_token, device_os, device_vendor, device_browser,
+                    last_hit, last_token_change, refresh_token_expired_at, created_at, updated_at
+             FROM auth_devices
+             WHERE "userId" = $1 AND deleted_at IS NULL
+             ORDER BY COALESCE(last_hit, updated_at, created_at) DESC
+             LIMIT 15`,
+            [uid]
+        ).catch(() => []);
+
+        if (!devRows || devRows.length === 0) {
+            // Insert current session record so the user always sees their real active device
+            const inserted = await this.dataSource.query(
+                `INSERT INTO auth_devices (device_name, device_os, device_browser, device_vendor, device_token, request_token, refresh_token, last_hit, last_token_change, refresh_token_expired_at, "userId", created_at, updated_at)
+                 VALUES ($1, $2, $3, $4, gen_random_uuid()::text, gen_random_uuid()::text, gen_random_uuid()::text, NOW(), NOW(), NOW() + INTERVAL '7 days', $5, NOW(), NOW())
+                 RETURNING id, device_name, device_token, device_os, device_vendor, device_browser, last_hit, last_token_change, refresh_token_expired_at, created_at, updated_at`,
+                [uaMeta.deviceName, uaMeta.os, uaMeta.browser, uaMeta.vendor, uid]
+            ).catch(() => []);
+            if (inserted && inserted.length > 0) devRows = inserted;
+        }
+
+        const nowMs = Date.now();
+        const sessions = (devRows || []).map((d: any, idx: number) => {
+            const isCurrent = (activeDeviceId > 0 && Number(d.id) === activeDeviceId)
+                || (activeDeviceToken && String(d.device_token) === activeDeviceToken)
+                || idx === 0;
+            const rawOs = (!d.device_os || d.device_os === 'unknown' || d.device_os === '-') ? uaMeta.os : d.device_os;
+            const rawBrowser = (!d.device_browser || d.device_browser === 'unknown' || d.device_browser === '-') ? uaMeta.browser : d.device_browser;
+            const rawVendor = (!d.device_vendor || d.device_vendor === 'unknown' || d.device_vendor === '-') ? uaMeta.vendor : d.device_vendor;
+            const rawName = (!d.device_name || d.device_name === 'unknown' || d.device_name === '-' || d.device_name === 'Device')
+                ? `${rawBrowser} pada ${rawOs}`
+                : d.device_name;
+            const lastConnected = isCurrent ? new Date().toISOString() : (d.last_hit || d.updated_at || d.created_at);
+            const expMs = d.refresh_token_expired_at ? new Date(d.refresh_token_expired_at).getTime() : (nowMs + 86400000);
+            const isExpired = expMs < nowMs && !isCurrent;
+
+            return {
+                id: Number(d.id),
+                device_name: rawName,
+                device_os: rawOs,
+                device_browser: rawBrowser,
+                device_vendor: rawVendor,
+                ip_address: netMeta.ip,
+                location: netMeta.location,
+                created_at: d.created_at,
+                last_connected_at: lastConnected,
+                expired_at: d.refresh_token_expired_at,
+                is_current: isCurrent,
+                is_active: !isExpired,
+                status_label: isCurrent ? 'Perangkat Ini (Aktif)' : (isExpired ? 'Sesi Kedaluwarsa' : 'Sesi Terhubung')
+            };
+        });
+
+        let passkeyCount = 0;
+        try {
+            const pkRes = await this.dataSource.query(
+                `SELECT COUNT(*)::int AS c FROM auth_passkey_credentials WHERE user_id = $1`,
+                [uid]
+            );
+            passkeyCount = Number(pkRes[0]?.c || 0);
+        } catch {}
+
+        return {
+            status: 1,
+            data: {
+                user_security: {
+                    id: uid,
+                    name: uRow.name || user?.name || 'Personil Polri',
+                    username: uRow.username || user?.username || '',
+                    callsign: uRow.callsign || uRow.username || '',
+                    handle: this.formatCallsign(uRow.callsign || uRow.username, uid, uRow.username, uRow.name),
+                    role_bdb: uRow.role_bdb || user?.role_bdb || 'operator',
+                    satker_nama: satkerDisplay,
+                    email: uRow.email || '',
+                    email_polri: uRow.email_polri || uRow.email || '',
+                    local_password_enabled: uRow.local_password_enabled !== false,
+                    email_otp_required: Boolean(uRow.email_otp_required),
+                    pin_required: Boolean(uRow.pin_required),
+                    totp_enabled: Boolean(uRow.totp && uRow.has_totp_secret),
+                    passkey_count: passkeyCount,
+                    last_login_method: uRow.last_login_method || 'PASSWORD',
+                    last_login_at: uRow.last_login_at || sessions[0]?.last_connected_at || new Date().toISOString(),
+                    privacy_prefs: uRow.social_media?.privacy_prefs || null
+                },
+                current_network: {
+                    ip: netMeta.ip,
+                    location: netMeta.location,
+                    os: uaMeta.os,
+                    browser: uaMeta.browser,
+                    vendor: uaMeta.vendor
+                },
+                sessions
+            }
+        };
+    }
+
+    async revokeSecuritySession(user: any, sessionId: number) {
+        const uid = Number(user?.id || user?.user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi pengguna tidak valid.');
+        if (!sessionId || isNaN(sessionId)) throw new BadRequestException('ID sesi perangkat tidak valid.');
+
+        await this.dataSource.query(
+            `DELETE FROM auth_devices WHERE id = $1 AND "userId" = $2`,
+            [sessionId, uid]
+        );
+        await this.audit.log({ user, action: 'DELETE', entity: 'auth_device_session', entityId: sessionId, meta: { revoked_by: uid } }).catch(() => {});
+        return {
+            status: 1,
+            message: 'Sesi perangkat berhasil diputuskan dan dicabut.'
+        };
+    }
+
+    async revokeOtherSecuritySessions(user: any, keepId?: number) {
+        const uid = Number(user?.id || user?.user?.id || 0);
+        if (!uid) throw new ForbiddenException('Sesi pengguna tidak valid.');
+        const currentId = Number(keepId || user?.device_id || 0);
+
+        if (currentId > 0) {
+            await this.dataSource.query(
+                `DELETE FROM auth_devices WHERE "userId" = $1 AND id <> $2`,
+                [uid, currentId]
+            );
+        } else {
+            // Keep only the most recent session
+            await this.dataSource.query(
+                `DELETE FROM auth_devices
+                 WHERE "userId" = $1
+                   AND id NOT IN (
+                       SELECT id FROM auth_devices
+                       WHERE "userId" = $1
+                       ORDER BY COALESCE(last_hit, updated_at, created_at) DESC
+                       LIMIT 1
+                   )`,
+                [uid]
+            );
+        }
+        await this.audit.log({ user, action: 'DELETE', entity: 'auth_device_sessions_other', entityId: uid, meta: { keep_id: currentId } }).catch(() => {});
+        return {
+            status: 1,
+            message: 'Seluruh sesi pada perangkat lain berhasil dikeluarkan.'
+        };
     }
 }

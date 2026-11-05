@@ -310,6 +310,24 @@ export class JukrahController {
     }
 
     // =========================================================================
+    // KEAMANAN AKUN, SESI LOGIN & PERANGKAT TERHUBUNG
+    // =========================================================================
+    @Get('security/sessions')
+    getSecuritySessions(@Req() req: any) {
+        return this.service.getSecuritySessions(req?.user, req);
+    }
+
+    @Post('security/sessions/:id/revoke')
+    revokeSecuritySession(@Req() req: any, @Param('id') id: string) {
+        return this.service.revokeSecuritySession(req?.user, parseInt(id, 10));
+    }
+
+    @Post('security/sessions/revoke-others')
+    revokeOtherSecuritySessions(@Req() req: any, @Body() body: any) {
+        return this.service.revokeOtherSecuritySessions(req?.user, body?.keep_id ? parseInt(String(body.keep_id), 10) : undefined);
+    }
+
+    // =========================================================================
     // LEGACY BULLETIN ENDPOINTS (Daftar kelola, list active, dll)
     // =========================================================================
     @Get()

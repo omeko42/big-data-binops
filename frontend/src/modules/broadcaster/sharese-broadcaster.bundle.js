@@ -1731,10 +1731,10 @@ e.s(["default",0,function() {
                   type:"button",
                   onClick:() => {
                     try {
-                      window.history.pushState({}, "", "/cms/broadcaster?view=obrolan");
+                      window.history.pushState({}, "", "/cms/sharese-obrolan");
                       window.dispatchEvent(new Event("cas-url-change"));
                     } catch {
-                      window.location.href = "/cms/broadcaster?view=obrolan";
+                      window.location.href = "/cms/sharese-obrolan";
                     }
                   },
                   title:"Buka Obrolan & Pesan Langsung",
@@ -1745,10 +1745,10 @@ e.s(["default",0,function() {
                   type:"button",
                   onClick:() => {
                     try {
-                      window.history.pushState({}, "", "/cms/broadcaster?view=notifikasi");
+                      window.history.pushState({}, "", "/cms/sharese-notifikasi");
                       window.dispatchEvent(new Event("cas-url-change"));
                     } catch {
-                      window.location.href = "/cms/broadcaster?view=notifikasi";
+                      window.location.href = "/cms/sharese-notifikasi";
                     }
                   },
                   title:"Buka Notifikasi",
@@ -3109,10 +3109,10 @@ e.s(["default",0,function() {
                   onClick:() => {
                     setReactionsPostId(null);
                     try {
-                      window.history.pushState({}, "", `/cms/broadcaster?view=obrolan&partner=${usr.id}`);
+                      window.history.pushState({}, "", `/cms/sharese-obrolan?partner=${usr.id}`);
                       window.dispatchEvent(new Event("cas-url-change"));
                     } catch {
-                      window.location.href = `/cms/broadcaster?view=obrolan&partner=${usr.id}`;
+                      window.location.href = `/cms/sharese-obrolan?partner=${usr.id}`;
                     }
                   },
                   style:{padding:"0.25rem 0.6rem",borderRadius:"999px",border:"1px solid rgba(37,99,235,0.35)",background:"transparent",color:"#2563eb",fontSize:"0.72rem",fontWeight:700,cursor:"pointer"},
@@ -3442,10 +3442,10 @@ e.s(["default",0,function() {
                   onClick:() => {
                     setProfileModalOpen(!1);
                     try {
-                      window.history.pushState({}, "", `/cms/broadcaster?view=obrolan&partner=${previewUser.id}`);
+                      window.history.pushState({}, "", `/cms/sharese-obrolan?partner=${previewUser.id}`);
                       window.dispatchEvent(new Event("cas-url-change"));
                     } catch {
-                      window.location.href = `/cms/broadcaster?view=obrolan&partner=${previewUser.id}`;
+                      window.location.href = `/cms/sharese-obrolan?partner=${previewUser.id}`;
                     }
                   },
                   style:{background:"rgba(37,99,235,0.12)",color:"#2563eb",border:"1px solid rgba(37,99,235,0.4)",borderRadius:"8px",padding:"0.45rem 1rem",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
