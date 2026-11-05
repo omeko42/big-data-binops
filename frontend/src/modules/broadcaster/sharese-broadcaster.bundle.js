@@ -1417,9 +1417,9 @@ e.s(["default",0,function() {
                     (0,t.jsx)("p",{style:{margin:"0.2rem 0 0",fontSize:"0.76rem",color:"#94a3b8",lineHeight:1.45},children:"Masukkan NRP/NIP Personel dan kode Captcha 6 karakter untuk membuka isi siaran & lampiran terproteksi."})
                   ]}),
 
-                  gateError && (0,t.jsx)("div",{style:{padding:"0.6rem 0.8rem",borderRadius:"8px",background:"rgba(239,68,68,0.16)",border:"1px solid rgba(239,68,68,0.45)",color:"#fca5a5",fontSize:"0.78rem",fontWeight:700},children:"⚠️ " + gateError}),
+                  gateError && (0,t.jsx)("div",{style:{padding:"0.6rem 0.8rem",borderRadius:"8px",background:"rgba(239,68,68,0.16)",border:"1px solid rgba(239,68,68,0.45)",color:"var(--cas-red-accent, #dc2626)",fontSize:"0.78rem",fontWeight:700},children:"⚠️ " + gateError}),
 
-                  nrpVerifiedProfile && (0,t.jsxs)("div",{style:{padding:"0.6rem 0.8rem",borderRadius:"8px",background:"rgba(16,185,129,0.14)",border:"1px solid rgba(16,185,129,0.4)",color:"#6ee7b7",fontSize:"0.78rem",fontWeight:700},children:[
+                  nrpVerifiedProfile && (0,t.jsxs)("div",{style:{padding:"0.6rem 0.8rem",borderRadius:"8px",background:"rgba(16,185,129,0.14)",border:"1px solid rgba(16,185,129,0.4)",color:"var(--cas-emerald-accent, #059669)",fontSize:"0.78rem",fontWeight:700},children:[
                     '✅ Terdeteksi Anggota ("Siapa Saya?"): ',
                     (0,t.jsx)("strong",{children:(nrpVerifiedProfile.pangkat ? nrpVerifiedProfile.pangkat + ' ' : '') + nrpVerifiedProfile.nama}),
                     " • ",
@@ -1521,7 +1521,7 @@ e.s(["default",0,function() {
               (0,t.jsxs)("div",{className:"cas-sharese-post-card",style:{position:"relative",display:"grid",gap:"0.95rem",padding:"0.35rem 0"},children:[
                 (0,t.jsx)("div",{style:{position:"absolute",top:`${extWmPos.top}%`,left:`${extWmPos.left}%`,transform:"rotate(-14deg)",pointerEvents:"none",zIndex:30,padding:"0.28rem 0.7rem",borderRadius:"6px",background:"rgba(15,23,42,0.45)",border:"1px solid rgba(248,250,252,0.16)",color:"rgba(248,250,252,0.5)",fontSize:"0.7rem",fontWeight:800,letterSpacing:"0.04em",whiteSpace:"nowrap",maxWidth:"90%",overflow:"hidden",textOverflow:"ellipsis",transition:"top 1.8s ease, left 1.8s ease"},children:extWmText}),
 
-                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem",padding:"0.55rem 0.8rem",borderRadius:"8px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.35)",fontSize:"0.75rem",color:"#6ee7b7"},children:[
+                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem",padding:"0.55rem 0.8rem",borderRadius:"8px",background:"rgba(16,185,129,0.12)",border:"1px solid rgba(16,185,129,0.35)",fontSize:"0.75rem",color:"var(--cas-emerald-accent, #059669)"},children:[
                   (0,t.jsxs)("span",{children:['✅ Terverifikasi Anggota ("Siapa Saya?"): ',(0,t.jsx)("strong",{children:extViewer?.nama})," (",extViewer?.nrp_nip," • ",extViewer?.satker,")"]}),
                   (0,t.jsx)("span",{style:{fontSize:"0.68rem",color:"#94a3b8"},children:"Dilindungi Watermark Kedinasan"})
                 ]}),
@@ -1832,7 +1832,7 @@ e.s(["default",0,function() {
       // Regional Target Satkers Selection Pill / Banner (When Regional selected)
       (audienceType === 'regional') && (0,t.jsxs)("div",{style:{marginTop:"0.75rem",marginLeft:"3.25rem",padding:"0.6rem 0.8rem",background:"rgba(59,130,246,0.08)",borderRadius:"8px",border:"1px solid rgba(59,130,246,0.25)",display:"flex",flexDirection:"column",gap:"0.45rem"},children:[
         (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"0.5rem"},children:[
-          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",fontSize:"0.78rem",color:"#93c5fd",fontWeight:600},children:[
+          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",fontSize:"0.78rem",color:"var(--cas-blue-accent, #1d4ed8)",fontWeight:600},children:[
             (0,t.jsx)(IconBuilding,{size:15}),
             "Target Satker Regional:",
             (0,t.jsx)("span",{style:{fontWeight:800,color:"#fff"},children:selectedSatkerIds.length > 0 ? (selectedSatkerIds.length + " Satker Dipilih") : "Seluruh Jajaran Satker"})
@@ -1853,7 +1853,7 @@ e.s(["default",0,function() {
             var label = stk?.nama_satker || stk?.name || ("Satker #" + sid);
             return (0,t.jsxs)("span",{
               key:sid,
-              style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",background:"rgba(59,130,246,0.22)",border:"1px solid rgba(59,130,246,0.4)",borderRadius:"4px",padding:"0.15rem 0.5rem",fontSize:"0.72rem",color:"#dbeafe"},
+              style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",background:"rgba(59,130,246,0.22)",border:"1px solid rgba(59,130,246,0.4)",borderRadius:"4px",padding:"0.15rem 0.5rem",fontSize:"0.72rem",color:"var(--cas-blue-accent, #1d4ed8)"},
               children:[
                 label,
                 (0,t.jsx)("button",{
@@ -2657,7 +2657,7 @@ e.s(["default",0,function() {
                               (0,t.jsx)("button",{
                                 type:"button",
                                 onClick:handleCancelEditComment,
-                                style:{background:"rgba(255,255,255,0.08)",color:"#cbd5e1",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
+                                style:{background:"var(--cas-surface-subtle, #f1f5f9)",color:"var(--cas-text-secondary, #334155)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
                                 children:"Batal"
                               })
                             ]})

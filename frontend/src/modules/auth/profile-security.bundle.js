@@ -3925,7 +3925,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                               (0,t.jsx)("button",{
                                 type:"button",
                                 onClick:handleCancelEditPersonalComment,
-                                style:{background:"rgba(255,255,255,0.08)",color:"#cbd5e1",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
+                                style:{background:"var(--cas-surface-subtle, #f1f5f9)",color:"var(--cas-text-secondary, #334155)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:"6px",padding:"0.3rem 0.6rem",fontSize:"0.74rem",fontWeight:600,cursor:"pointer"},
                                 children:"Batal"
                               })
                             ]})

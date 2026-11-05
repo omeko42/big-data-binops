@@ -119,7 +119,7 @@ function renderUserMiniCard(u) {
                     (0,a.jsxs)("div", {
                         style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" },
                         children: [
-                            (0,a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.95rem", color: "var(--cas-text, #f8fafc)" }, children: u.name }),
+                            (0,a.jsx)("span", { style: { fontWeight: 700, fontSize: "0.95rem", color: "var(--cas-text-primary, #0f172a)" }, children: u.name }),
                             "vendor_mitra"===u.role_bdb?(0,a.jsx)(t.Tag, { value: "Vendor / Mitra (Read-Only)", severity: "help", style: { fontSize: "0.7rem", padding: "0.1rem 0.45rem", background: "linear-gradient(135deg, #7c3aed 0%, #0891b2 100%)", color: "#ffffff" } }):(0,a.jsx)(t.Tag, { value: u.role_bdb || "viewer", severity: roleColor, style: { fontSize: "0.7rem", padding: "0.1rem 0.45rem" } })
                         ]
                     }),
@@ -666,7 +666,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                             fontStyle:"italic"
                         },
                         children:[
-                            (0,a.jsx)("span",{style:{fontWeight:600,fontStyle:"normal",color:"#93c5fd",marginRight:"0.35rem"},children:"Alasan/Catatan Operator:"}),
+                            (0,a.jsx)("span",{style:{fontWeight:600,fontStyle:"normal",color:"var(--cas-blue-accent, #1d4ed8)",marginRight:"0.35rem"},children:"Alasan/Catatan Operator:"}),
                             mutUser.deactivation_reason || mutHistory.find(m => m.status === 'PENDING')?.keterangan
                         ]
                     }) : null
@@ -711,7 +711,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         },
                         children:[
                             (0,a.jsxs)("div",{
-                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:!mutData.is_keluar_reserse?"#38bdf8":"var(--cas-text, #f8fafc)"},
+                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:!mutData.is_keluar_reserse?"#38bdf8":"var(--cas-text-primary, #0f172a)"},
                                 children:[
                                     (0,a.jsx)("i",{className:"pi pi-building",style:{fontSize:"0.9rem"}}),
                                     "Mutasi Internal Reskrim"
@@ -735,7 +735,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         },
                         children:[
                             (0,a.jsxs)("div",{
-                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:mutData.is_keluar_reserse?"#fbbf24":"var(--cas-text, #f8fafc)"},
+                                style:{display:"flex",alignItems:"center",gap:"0.45rem",fontWeight:700,fontSize:"0.84rem",color:mutData.is_keluar_reserse?"#fbbf24":"var(--cas-text-primary, #0f172a)"},
                                 children:[
                                     (0,a.jsx)("i",{className:"pi pi-sign-out",style:{fontSize:"0.9rem"}}),
                                     "Mutasi Keluar Reserse"
@@ -1096,7 +1096,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         children:[
                             (0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
                             (0,a.jsxs)("div",{
-                                style:{fontSize:"0.82rem",color:"#fca5a5",lineHeight:1.45},
+                                style:{fontSize:"0.82rem",color:"var(--cas-red-accent, #dc2626)",lineHeight:1.45},
                                 children:[
                                     "Sebagai Operator, tindakan ini akan mengajukan permohonan ke Superadmin untuk akun ",
                                     (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:eb.name}),
@@ -1175,7 +1175,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         children:[
                             (0,a.jsx)("i",{className:"pi pi-power-off",style:{fontSize:"1.1rem",color:"#f59e0b",flex:"0 0 auto",marginTop:"0.15rem"}}),
                             (0,a.jsxs)("div",{
-                                style:{fontSize:"0.82rem",color:"#fef3c7",lineHeight:1.45},
+                                style:{fontSize:"0.82rem",color:"var(--cas-amber-accent, #92400e)",lineHeight:1.45},
                                 children:[
                                     "Operator telah mengajukan permohonan ",
                                     (0,a.jsx)("strong",{style:{color:"#fbbf24"},children:"PENONAKTIFAN AKUN"}),
@@ -1204,8 +1204,8 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                             }),
                             (0,a.jsx)("div",{
                                 style:{
-                                    color:"var(--cas-text, #f8fafc)",
-                                    background:"rgba(0, 0, 0, 0.15)",
+                                    color:"var(--cas-text-primary, #0f172a)",
+                                    background:"var(--cas-surface-subtle, #f8fafc)",
                                     borderLeft:"3px solid #f59e0b",
                                     padding:"0.5rem 0.75rem",
                                     borderRadius:"0 6px 6px 0",
@@ -1265,7 +1265,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         children:[
                             (0,a.jsx)(A.ShieldAlert,{size:22,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
                             (0,a.jsxs)("div",{
-                                style:{fontSize:"0.82rem",color:"#fca5a5",lineHeight:1.45},
+                                style:{fontSize:"0.82rem",color:"var(--cas-red-accent, #dc2626)",lineHeight:1.45},
                                 children:[
                                     "Operator telah mengajukan ",
                                     (0,a.jsx)("strong",{style:{color:"#ef4444"},children:"PENGHAPUSAN PERMANEN"}),
@@ -1294,8 +1294,8 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                             }),
                             (0,a.jsx)("div",{
                                 style:{
-                                    color:"var(--cas-text, #f8fafc)",
-                                    background:"rgba(0, 0, 0, 0.15)",
+                                    color:"var(--cas-text-primary, #0f172a)",
+                                    background:"var(--cas-surface-subtle, #f8fafc)",
                                     borderLeft:"3px solid #ef4444",
                                     padding:"0.5rem 0.75rem",
                                     borderRadius:"0 6px 6px 0",
@@ -1355,7 +1355,7 @@ if(secMail&&secMail===polriMail)return void e.current?.show({severity:"warn",sum
                         children:[
                             (0,a.jsx)(A.ShieldAlert,{size:20,style:{color:"#ef4444",flex:"0 0 auto",marginTop:"0.1rem"}}),
                             (0,a.jsxs)("div",{
-                                style:{fontSize:"0.82rem",color:"#fca5a5"},
+                                style:{fontSize:"0.82rem",color:"var(--cas-red-accent, #dc2626)"},
                                 children:[
                                     "Akun ",
                                     (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:eb.name}),
