@@ -1093,8 +1093,40 @@ export class DorsService implements OnModuleInit {
         return this.syncRange(undefined, undefined, 'cron');
     }
 
-    /** Riwayat eksekusi sync terbaru. */
-    async recentLogs(authUser: any, limit = 20) {
+    private buildMitigationAdvice(row: any): string {
+        const st = String(row?.status || '').toLowerCase();
+        if (st === 'success' || st === 'running') return '';
+        const err = String(row?.error || row?.stopped_reason || '').toLowerCase();
+        const chunkInfo = row?.current_chunk_from && row?.current_chunk_to
+            ? ` (Chunk terakhir: ${String(row.current_chunk_from).slice(0, 10)} s/d ${String(row.current_chunk_to).slice(0, 10)}, Hal. ${row.current_page || 1}/${row.current_last_page || '?'})`
+            : '';
+        if (err.includes('timeout') || err.includes('etimedout') || err.includes('aborted')) {
+            return `Koneksi ke server sumber melebihi batas waktu (timeout)${chunkInfo}. Mitigasi: Naikkan Timeout (ms) di Konfigurasi Portal atau tarik ulang pada rentang tanggal chunk tersebut.`;
+        }
+        if (err.includes('econnreset') || err.includes('econnrefused') || err.includes('enotfound') || err.includes('socket') || err.includes('fetch failed')) {
+            return `Jaringan atau koneksi ke endpoint sumber terputus (${row?.current_source || 'API'})${chunkInfo}. Mitigasi: Pastikan jaringan/VPN ke server sumber stabil, lalu jalankan Tarik Data ulang mulai dari tanggal chunk terakhir.`;
+        }
+        if (err.includes('401') || err.includes('403') || err.includes('unauthorized') || err.includes('forbidden') || err.includes('client')) {
+            return `Autentikasi ditolak oleh server sumber (HTTP 401/403). Mitigasi: Periksa Header Auth & Client ID / Token pada Konfigurasi Portal Integrasi Masuk.`;
+        }
+        if (err.includes('500') || err.includes('502') || err.includes('503') || err.includes('504')) {
+            return `Server sumber mengalami gangguan internal / overload (HTTP 5xx)${chunkInfo}. Mitigasi: Tunggu beberapa saat hingga endpoint sumber pulih, lalu ulangi penarikan pada periode yang gagal.`;
+        }
+        if (st === 'cancelled' || err.includes('dibatalkan') || err.includes('manual')) {
+            return `Proses dihentikan secara manual oleh operator/admin${chunkInfo}. Data pada chunk sebelumnya telah tersimpan aman (checkpointed).`;
+        }
+        if (err.includes('latar belakang') || err.includes('terputus')) {
+            return `Worker sinkronisasi terhenti saat service restart${chunkInfo}. Mitigasi: Lanjutkan penarikan manual dari rentang tanggal chunk terakhir (${row?.current_chunk_from ? String(row.current_chunk_from).slice(0, 10) : (row?.from_date ? String(row.from_date).slice(0, 10) : 'terakhir')}).`;
+        }
+        return `Terjadi kendala saat eksekusi (${row?.error || row?.stopped_reason || 'Unknown Error'})${chunkInfo}. Mitigasi: Periksa status endpoint dan jalankan ulang penarikan pada rentang tanggal terkait.`;
+    }
+
+    /** Riwayat eksekusi sync (mendukung paginasi penuh & filter tanpa batas penghapusan log). */
+    async recentLogs(
+        authUser: any,
+        limit = 25,
+        opts?: { page?: number; row?: number; status?: string; trigger?: string; search?: string; from?: string; to?: string }
+    ) {
         this.assertAdmin(authUser);
         await this.ensureConfigTable();
         if (!this.syncing) {
@@ -1103,18 +1135,78 @@ export class DorsService implements OnModuleInit {
                  where status='running'`
             );
         }
+        const page = Math.max(1, Number(opts?.page) || 1);
+        const row = Math.max(1, Math.min(500, Number(opts?.row || limit) || 25));
+        const offset = (page - 1) * row;
+
+        const where: string[] = [];
+        const params: any[] = [];
+
+        if (opts?.status && opts.status !== 'all') {
+            params.push(String(opts.status).toLowerCase());
+            where.push(`lower(status) = $${params.length}`);
+        }
+        if (opts?.trigger && opts.trigger !== 'all') {
+            params.push(String(opts.trigger).toLowerCase());
+            where.push(`lower(trigger) = $${params.length}`);
+        }
+        if (opts?.from) {
+            params.push(opts.from);
+            where.push(`started_at >= $${params.length}::date`);
+        }
+        if (opts?.to) {
+            params.push(opts.to);
+            where.push(`started_at <= ($${params.length}::date + time '23:59:59')`);
+        }
+        if (opts?.search && String(opts.search).trim()) {
+            params.push(`%${String(opts.search).trim()}%`);
+            const pIdx = params.length;
+            where.push(`(coalesce(error,'') ilike $${pIdx} or coalesce(stopped_reason,'') ilike $${pIdx} or coalesce(current_source,'') ilike $${pIdx} or coalesce(trigger,'') ilike $${pIdx} or id::text ilike $${pIdx})`);
+        }
+
+        const whereSql = where.length ? `where ${where.join(' and ')}` : '';
+        const countRes = await this.syncLogs.query(`select count(*)::int as c from bdb_dors_sync_log ${whereSql}`, params);
+        const total = Number(countRes?.[0]?.c || 0);
+
+        const summaryRes = await this.syncLogs.query(
+            `select count(*)::int as total_all,
+                    count(*) filter (where status='success')::int as total_success,
+                    count(*) filter (where status='error')::int as total_error,
+                    count(*) filter (where status='cancelled')::int as total_cancelled,
+                    count(*) filter (where status='running')::int as total_running
+             from bdb_dors_sync_log`
+        );
+
+        params.push(row);
+        const pLimit = params.length;
+        params.push(offset);
+        const pOffset = params.length;
+
         const rows = await this.syncLogs.query(
             `select id, trigger, from_date, to_date, status, total_fetched, total_upserted, sources_json, error, stopped_reason,
                     attempt, max_attempts, current_source, current_page, current_last_page, current_chunk_from, current_chunk_to,
                     chunks_done, chunks_total, started_at, finished_at, duration_ms
-             from bdb_dors_sync_log order by started_at desc limit $1`,
-            [Math.max(1, Math.min(100, Number(limit) || 20))]
+             from bdb_dors_sync_log
+             ${whereSql}
+             order by started_at desc, id desc
+             limit $${pLimit} offset $${pOffset}`,
+            params
         );
+        const enrichedRows = rows.map((r: any) => ({
+            ...r,
+            mitigasi_saran: this.buildMitigationAdvice(r)
+        }));
         const cfg = await this.getConfig();
+        const isRunning = Boolean(this.syncing && (Number(summaryRes?.[0]?.total_running || 0) > 0 || enrichedRows?.[0]?.status === 'running'));
         return {
             status: 1,
-            data: rows,
-            running: Boolean(this.syncing && rows?.[0]?.status === 'running'),
+            data: enrichedRows,
+            total,
+            page,
+            row,
+            total_page: Math.max(1, Math.ceil(total / row)),
+            summary: summaryRes?.[0] || { total_all: total, total_success: 0, total_error: 0, total_cancelled: 0, total_running: 0 },
+            running: isRunning,
             schedule: {
                 enabled: cfg.sync_enabled,
                 mode: cfg.sync_mode,
@@ -1125,6 +1217,221 @@ export class DorsService implements OnModuleInit {
                 next_run: this.nextRun(cfg)
             }
         };
+    }
+
+    private inboundPortalSchemaReady = false;
+    private async ensureInboundPortalsTable() {
+        if (this.inboundPortalSchemaReady) return;
+        await this.dataSource.query(`
+            create table if not exists bdb_inbound_integration_portal (
+                id serial primary key,
+                nama_portal text not null,
+                kode_portal text not null unique,
+                instansi_sumber text not null default 'Internal Polri',
+                kategori_data text not null default 'Laporan Polisi & Penyidikan',
+                protokol text not null default 'REST API / JSON',
+                base_url text,
+                auth_header text default 'CLIENTID',
+                auth_token text,
+                jadwal_mode text default 'interval',
+                jadwal_nilai text default '30 menit',
+                fitur_kapabilitas jsonb not null default '[]'::jsonb,
+                deskripsi text,
+                is_engine_linked boolean not null default false,
+                status_aktif boolean not null default true,
+                created_at timestamp not null default now(),
+                updated_at timestamp not null default now()
+            );
+        `);
+        const cfg = await this.getConfig();
+        await this.dataSource.query(
+            `insert into bdb_inbound_integration_portal
+                (id, nama_portal, kode_portal, instansi_sumber, kategori_data, protokol, base_url, auth_header, auth_token, fitur_kapabilitas, deskripsi, is_engine_linked, status_aktif)
+             values (
+                1,
+                'Portal Sinkronisasi Laporan Polisi Terpadu',
+                'INBOUND_LP_PRIMARY',
+                'Sistem Operasional Pelaporan Polri',
+                'Laporan Polisi (Model A & B), Pihak, Barang Bukti, Riwayat Hapus',
+                'REST API / JSON (Chunked Checkpoint)',
+                $1,
+                $2,
+                $3,
+                $4::jsonb,
+                'Portal integrasi masuk utama untuk penarikan data Laporan Polisi, pemetaan Satker/Kejahatan otomatis, sinkronisasi riwayat hapus, dan rekonsiliasi data.',
+                true,
+                true
+             )
+             on conflict (kode_portal) do update set
+                base_url = coalesce(excluded.base_url, bdb_inbound_integration_portal.base_url),
+                auth_header = coalesce(excluded.auth_header, bdb_inbound_integration_portal.auth_header)`,
+            [
+                cfg.base_url,
+                cfg.client_header,
+                cfg.client_id ? '***TERKONFIGURASI***' : '',
+                JSON.stringify([
+                    'Tarik Data Manual & Backfill Terjadwal',
+                    'Penjadwalan Otomatis (Interval / Cron)',
+                    'Sinkronisasi Riwayat LP Dihapus',
+                    'Pemetaan Otomatis Satker & Jenis Kejahatan',
+                    'Audit Log Eksekusi Permanen & Mitigasi Error'
+                ])
+            ]
+        );
+        await this.dataSource.query(`select setval(pg_get_serial_sequence('bdb_inbound_integration_portal', 'id'), greatest((select coalesce(max(id), 1) from bdb_inbound_integration_portal), 1))`);
+        this.inboundPortalSchemaReady = true;
+    }
+
+    async listInboundPortals(authUser: any, opts?: { search?: string; status?: string }) {
+        this.assertAdmin(authUser);
+        await this.ensureInboundPortalsTable();
+        const cfg = await this.getConfig();
+        const where: string[] = [];
+        const params: any[] = [];
+        if (opts?.status === 'aktif') {
+            where.push(`status_aktif = true`);
+        } else if (opts?.status === 'nonaktif') {
+            where.push(`status_aktif = false`);
+        }
+        if (opts?.search && String(opts.search).trim()) {
+            params.push(`%${String(opts.search).trim()}%`);
+            const p = params.length;
+            where.push(`(nama_portal ilike $${p} or kode_portal ilike $${p} or instansi_sumber ilike $${p} or kategori_data ilike $${p} or coalesce(base_url,'') ilike $${p})`);
+        }
+        const whereSql = where.length ? `where ${where.join(' and ')}` : '';
+        const rows = await this.dataSource.query(
+            `select id, nama_portal, kode_portal, instansi_sumber, kategori_data, protokol, base_url, auth_header,
+                    case when coalesce(auth_token,'') <> '' then '***TERKONFIGURASI***' else '' end as auth_token_masked,
+                    fitur_kapabilitas, deskripsi, is_engine_linked, status_aktif, created_at, updated_at
+             from bdb_inbound_integration_portal
+             ${whereSql}
+             order by is_engine_linked desc, id asc`,
+            params
+        );
+        const lastLogRes = await this.syncLogs.query(
+            `select id, status, started_at, finished_at, total_fetched, total_upserted, error, stopped_reason
+             from bdb_dors_sync_log order by started_at desc limit 1`
+        );
+        const logStatsRes = await this.syncLogs.query(
+            `select count(*)::int as total_logs,
+                    count(*) filter (where status='success')::int as success_logs,
+                    count(*) filter (where status='error')::int as error_logs
+             from bdb_dors_sync_log`
+        );
+        const lastLog = lastLogRes?.[0] || null;
+        const logStats = logStatsRes?.[0] || { total_logs: 0, success_logs: 0, error_logs: 0 };
+
+        const data = rows.map((r: any) => {
+            if (r.is_engine_linked) {
+                return {
+                    ...r,
+                    base_url: cfg.base_url || r.base_url,
+                    auth_header: cfg.client_header || r.auth_header,
+                    sync_enabled: cfg.sync_enabled,
+                    sync_mode: cfg.sync_mode,
+                    sync_interval_minutes: cfg.sync_interval_minutes,
+                    sync_cron: cfg.sync_cron,
+                    last_sync_at: lastLog?.finished_at || lastLog?.started_at || null,
+                    last_sync_status: lastLog?.status || 'idle',
+                    last_sync_fetched: Number(lastLog?.total_fetched || 0),
+                    last_sync_upserted: Number(lastLog?.total_upserted || 0),
+                    total_logs: Number(logStats.total_logs || 0),
+                    success_logs: Number(logStats.success_logs || 0),
+                    error_logs: Number(logStats.error_logs || 0)
+                };
+            }
+            return {
+                ...r,
+                sync_enabled: false,
+                sync_mode: 'manual',
+                last_sync_at: null,
+                last_sync_status: r.status_aktif ? 'standby' : 'disabled',
+                last_sync_fetched: 0,
+                last_sync_upserted: 0,
+                total_logs: 0,
+                success_logs: 0,
+                error_logs: 0
+            };
+        });
+        return { status: 1, data, total: data.length };
+    }
+
+    async saveInboundPortal(authUser: any, id: number | null, body: any) {
+        this.assertAdmin(authUser);
+        await this.ensureInboundPortalsTable();
+        const nama = String(body?.nama_portal || '').trim();
+        if (!nama) throw new Error('Nama Portal Integrasi Masuk wajib diisi.');
+        const kode = String(body?.kode_portal || nama.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '')).slice(0, 64);
+        const instansi = String(body?.instansi_sumber || 'Internal Polri').trim();
+        const kategori = String(body?.kategori_data || 'Data Operasional').trim();
+        const protokol = String(body?.protokol || 'REST API / JSON').trim();
+        const baseUrl = String(body?.base_url || '').trim().replace(/\/+$/, '');
+        const authHeader = String(body?.auth_header || 'X-API-KEY').trim();
+        const authToken = body?.auth_token !== undefined ? String(body.auth_token).trim() : undefined;
+        const deskripsi = String(body?.deskripsi || '').trim();
+        const statusAktif = body?.status_aktif !== undefined ? Boolean(body.status_aktif) : true;
+        const kapabilitas = Array.isArray(body?.fitur_kapabilitas)
+            ? body.fitur_kapabilitas.map((x: any) => String(x).trim()).filter(Boolean)
+            : String(body?.fitur_kapabilitas || 'Tarik Data Manual, Penjadwalan Otomatis, Audit Log & Mitigasi')
+                  .split(',')
+                  .map((x) => x.trim())
+                  .filter(Boolean);
+
+        if (id) {
+            const existing = await this.dataSource.query(`select * from bdb_inbound_integration_portal where id = $1`, [id]);
+            if (!existing.length) throw new Error('Portal tidak ditemukan.');
+            const row = existing[0];
+            await this.dataSource.query(
+                `update bdb_inbound_integration_portal
+                 set nama_portal=$1, kode_portal=$2, instansi_sumber=$3, kategori_data=$4, protokol=$5,
+                     base_url=$6, auth_header=$7, auth_token=coalesce($8, auth_token),
+                     fitur_kapabilitas=$9::jsonb, deskripsi=$10, status_aktif=$11, updated_at=now()
+                 where id=$12`,
+                [nama, kode, instansi, kategori, protokol, baseUrl, authHeader, authToken && authToken !== '***TERKONFIGURASI***' ? authToken : null, JSON.stringify(kapabilitas), deskripsi, statusAktif, id]
+            );
+            if (row.is_engine_linked && baseUrl) {
+                await this.saveConfig(authUser, {
+                    base_url: baseUrl,
+                    client_header: authHeader,
+                    ...(authToken && authToken !== '***TERKONFIGURASI***' ? { client_id: authToken } : {})
+                });
+            }
+            return { status: 1, message: 'Portal Integrasi Masuk berhasil diperbarui.' };
+        } else {
+            const ins = await this.dataSource.query(
+                `insert into bdb_inbound_integration_portal
+                    (nama_portal, kode_portal, instansi_sumber, kategori_data, protokol, base_url, auth_header, auth_token, fitur_kapabilitas, deskripsi, is_engine_linked, status_aktif)
+                 values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,false,$11)
+                 returning id`,
+                [nama, kode, instansi, kategori, protokol, baseUrl, authHeader, authToken || '', JSON.stringify(kapabilitas), deskripsi, statusAktif]
+            );
+            return { status: 1, id: ins[0]?.id, message: 'Portal Integrasi Masuk baru berhasil ditambahkan.' };
+        }
+    }
+
+    async toggleInboundPortalStatus(authUser: any, id: number, statusAktif?: boolean) {
+        this.assertAdmin(authUser);
+        await this.ensureInboundPortalsTable();
+        const rows = await this.dataSource.query(`select id, status_aktif, is_engine_linked from bdb_inbound_integration_portal where id=$1`, [id]);
+        if (!rows.length) throw new Error('Portal tidak ditemukan.');
+        const nextStatus = statusAktif !== undefined ? Boolean(statusAktif) : !Boolean(rows[0].status_aktif);
+        await this.dataSource.query(`update bdb_inbound_integration_portal set status_aktif=$1, updated_at=now() where id=$2`, [nextStatus, id]);
+        if (rows[0].is_engine_linked && !nextStatus) {
+            await this.saveConfig(authUser, { sync_enabled: false });
+        }
+        return { status: 1, status_aktif: nextStatus, message: `Portal berhasil ${nextStatus ? 'diaktifkan' : 'dinonaktifkan'}.` };
+    }
+
+    async deleteInboundPortal(authUser: any, id: number) {
+        this.assertAdmin(authUser);
+        await this.ensureInboundPortalsTable();
+        const rows = await this.dataSource.query(`select id, is_engine_linked from bdb_inbound_integration_portal where id=$1`, [id]);
+        if (!rows.length) throw new Error('Portal tidak ditemukan.');
+        if (rows[0].is_engine_linked) {
+            throw new Error('Portal sinkronisasi utama yang sedang terhubung dengan engine utama tidak dapat dihapus (hanya dapat dikonfigurasi atau dinonaktifkan).');
+        }
+        await this.dataSource.query(`delete from bdb_inbound_integration_portal where id=$1`, [id]);
+        return { status: 1, message: 'Portal Integrasi Masuk berhasil dihapus.' };
     }
 
     // ============ DATA HASIL TARIKAN (menu terpisah) ============
