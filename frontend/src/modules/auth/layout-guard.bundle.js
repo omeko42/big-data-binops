@@ -46,12 +46,20 @@ function toTitleCase(str) {
     .replace(/\bPABD\b/gi, 'Pabardaya')
     .replace(/\bPAPUA\s+TENGAH\b/gi, 'Papteng')
     .replace(/\bPATENG\b/gi, 'Papteng')
+    .replace(/\bTANJUNG\s+JABUNG\s+BARAT\b/gi, 'Tanjabar')
+    .replace(/\bMUSI\s+RAWAS\s+UTARA\b/gi, 'Muratara')
+    .replace(/\bHULU\s+SUNGAI\s+SELATAN\b/gi, 'HSS')
+    .replace(/\bOGAN\s+KOMERING\s+ULU\s+TIMUR\b/gi, 'OKU Timur')
+    .replace(/\bOGAN\s+KOMERING\s+ULU\b/gi, 'OKU')
+    .replace(/\bMUSI\s+BANYUASIN\b/gi, 'Muba')
+    .replace(/\bJAKARTA\s+SELATAN\b/gi, 'Jaksel')
     .replace(/\bKAWASAN\s+PELABUHAN\b/gi, 'K.P.')
     .replace(/\bKP3\b/gi, 'K.P.')
     .replace(/\bKAWASAN\s+BANDARA\b/gi, 'K.B.')
     .replace(/\bTANJUNG\b/gi, 'Tj.')
     .replace(/\bKEPULAUAN\b/gi, 'Kep.')
     .replace(/\bPULAU\b/gi, 'P.')
+    .replace(/\bGUNUNG\b/gi, 'Gn.')
     .toLowerCase()
     .replace(/(?:^|\s|-|\/)[a-z]/g, function(c) {
       return c.toUpperCase();
@@ -64,15 +72,158 @@ function toTitleCase(str) {
     .replace(/\bTj\./gi, 'Tj.')
     .replace(/\bKep\./gi, 'Kep.')
     .replace(/\bP\./gi, 'P.')
+    .replace(/\bGn\./gi, 'Gn.')
+    .replace(/\bHss\b/gi, 'HSS')
+    .replace(/\bOku\b/gi, 'OKU')
     .replace(/\bPolri\b/gi, 'Polri')
     .replace(/\bPolda\b/gi, 'Polda')
+    .replace(/\bPolrestabes\b/gi, 'Restabes')
+    .replace(/\bPolresta\b/gi, 'Resta')
+    .replace(/\bPolrestro\b/gi, 'Restro')
     .replace(/\bPolres\b/gi, 'Res')
+    .replace(/\bPolsektro\b/gi, 'Sektro')
+    .replace(/\bPolsekta\b/gi, 'Sekta')
     .replace(/\bPolsek\b/gi, 'Sek')
     .replace(/\bSat\b/gi, 'Sat')
     .replace(/\bDit\b/gi, 'Dit')
     .replace(/\bRes\b/gi, 'Res')
     .replace(/\bReskrim\b/gi, 'Reskrim')
     .replace(/\bNarkoba\b/gi, 'Narkoba');
+}
+
+function casCompactSatkerGlobal(raw, stripPoldaPrefix) {
+  if (!raw) return '';
+  let s = String(raw).trim().toUpperCase().replace(/\s+/g, ' ');
+  if (stripPoldaPrefix) s = s.replace(/^POLDA\s+/i, '');
+  const rules = [
+    [/\bNANGGROE ACEH DARUSSALAM\b/g, 'ACEH'],
+    [/\bDAERAH ISTIMEWA YOGYAKARTA\b/g, 'DIY'],
+    [/\bD\.?\s*I\.?\s*YOGYAKARTA\b/g, 'DIY'],
+    [/\bKEPULAUAN BANGKA BELITUNG\b/g, 'BABEL'],
+    [/\bBANGKA BELITUNG\b/g, 'BABEL'],
+    [/\bKEPULAUAN RIAU\b/g, 'KEPRI'],
+    [/\bSUMATERA UTARA\b/g, 'SUMUT'],
+    [/\bSUMATERA BARAT\b/g, 'SUMBAR'],
+    [/\bSUMATERA SELATAN\b/g, 'SUMSEL'],
+    [/\bMETRO JAKARTA RAYA\b/g, 'METRO JAYA'],
+    [/\bMETROJAYA\b/g, 'METRO JAYA'],
+    [/\bDKI JAKARTA\b/g, 'METRO JAYA'],
+    [/\bPMJ\b/g, 'METRO JAYA'],
+    [/\bJAWA BARAT\b/g, 'JABAR'],
+    [/\bJAWA TENGAH\b/g, 'JATENG'],
+    [/\bJAWA TIMUR\b/g, 'JATIM'],
+    [/\bNUSA TENGGARA BARAT\b/g, 'NTB'],
+    [/\bNUSA TENGGARA TIMUR\b/g, 'NTT'],
+    [/\bKALIMANTAN BARAT\b/g, 'KALBAR'],
+    [/\bKALIMANTAN TENGAH\b/g, 'KALTENG'],
+    [/\bKALIMANTAN SELATAN\b/g, 'KALSEL'],
+    [/\bKALIMANTAN TIMUR\b/g, 'KALTIM'],
+    [/\bKALIMANTAN UTARA\b/g, 'KALTARA'],
+    [/\bSULAWESI UTARA\b/g, 'SULUT'],
+    [/\bSULAWESI TENGAH\b/g, 'SULTENG'],
+    [/\bSULAWESI SELATAN\b/g, 'SULSEL'],
+    [/\bSULAWESI TENGGARA\b/g, 'SULTRA'],
+    [/\bSULAWESI BARAT\b/g, 'SULBAR'],
+    [/\bMALUKU UTARA\b/g, 'MALUT'],
+    [/\bPAPUA BARAT DAYA\b/g, 'PABARDAYA'],
+    [/\bPABD\b/g, 'PABARDAYA'],
+    [/\bPAPUA BARAT\b/g, 'PABAR'],
+    [/\bPAPUA TENGAH\b/g, 'PAPTENG'],
+    [/\bPATENG\b/g, 'PAPTENG'],
+    [/\bTANJUNG\s+JABUNG\s+BARAT\b/g, 'TANJABAR'],
+    [/\bMUSI\s+RAWAS\s+UTARA\b/g, 'MURATARA'],
+    [/\bHULU\s+SUNGAI\s+SELATAN\b/g, 'HSS'],
+    [/\bOGAN\s+KOMERING\s+ULU\s+TIMUR\b/g, 'OKU TIMUR'],
+    [/\bOGAN\s+KOMERING\s+ULU\b/g, 'OKU'],
+    [/\bMUSI\s+BANYUASIN\b/g, 'MUBA'],
+    [/\bJAKARTA\s+SELATAN\b/g, 'JAKSEL'],
+    [/\bJAKARTA\s+BARAT\b/g, 'JAKBAR'],
+    [/\bJAKARTA\s+PUSAT\b/g, 'JAKPUS'],
+    [/\bJAKARTA\s+TIMUR\b/g, 'JAKTIM'],
+    [/\bJAKARTA\s+UTARA\b/g, 'JAKUT'],
+    [/\bKAWASAN\s+PELABUHAN\b/g, 'K.P.'],
+    [/\bKAWASAN\s+BANDARA\b/g, 'K.B.'],
+    [/\bTANJUNG\b/g, 'Tj.'],
+    [/\bKEPULAUAN\b/g, 'Kep.'],
+    [/\bPULAU\b/g, 'P.'],
+    [/\bGUNUNG\b/g, 'Gn.'],
+    [/\bPOLRESTABES\b/g, 'RESTABES'],
+    [/\bPOLRESTA\b/g, 'RESTA'],
+    [/\bPOLRESTRO\b/g, 'RESTRO'],
+    [/\bPOLRES\s+METRO\b/g, 'RESTRO'],
+    [/\bRES\s+METRO\b/g, 'RESTRO'],
+    [/\bPOLRES\b/g, 'RES'],
+    [/\bPOLSEKTRO\b/g, 'SEKTRO'],
+    [/\bPOLSEK\s+METRO\b/g, 'SEKTRO'],
+    [/\bSEK\s+METRO\b/g, 'SEKTRO'],
+    [/\bPOLSEKTA\b/g, 'SEKTA'],
+    [/\bPOLSEK\b/g, 'SEK'],
+    [/\bDIT\s*RESKRIMUM\b/g, 'DITKRIMUM'],
+    [/\bDIT\s*RESKRIMSUS\b/g, 'DITKRIMSUS'],
+    [/\bDIT\s*RESNARKOBA\b/g, 'DITNARKOBA'],
+    [/\bDIT\s*RESSIBER\b/g, 'DITSIBER'],
+    [/\bDIT\s*TIPIDKOR\b/g, 'KORTASTIPIDKOR POLRI'],
+    [/\bSAT\s*RESNARKOBA\b/g, 'SATNARKOBA'],
+    [/\bSAT\s*RESPPADANPPO\b/g, 'SATPPAPPO'],
+    [/\bSAT\s*RESPPAPPO\b/g, 'SATPPAPPO']
+  ];
+  for (const [re, rep] of rules) s = s.replace(re, rep);
+  return s;
+}
+if (typeof window !== 'undefined') {
+  window.__casAbbrSatker = window.__casAbbrSatker || casCompactSatkerGlobal;
+  window.casCompactSatker = casCompactSatkerGlobal;
+  window.casAbbrevDict = {
+    Sumut: 'Sumatera Utara', Kepri: 'Kepulauan Riau', Sumbar: 'Sumatera Barat', Sumsel: 'Sumatera Selatan',
+    Babel: 'Bangka Belitung', 'Metro Jaya': 'Metro Jakarta Raya', Metrojaya: 'Metro Jakarta Raya',
+    Jabar: 'Jawa Barat', Jateng: 'Jawa Tengah', DIY: 'Daerah Istimewa Yogyakarta', Jatim: 'Jawa Timur',
+    NTB: 'Nusa Tenggara Barat', NTT: 'Nusa Tenggara Timur', Kaltim: 'Kalimantan Timur', Kalbar: 'Kalimantan Barat',
+    Kalteng: 'Kalimantan Tengah', Kalsel: 'Kalimantan Selatan', Kaltara: 'Kalimantan Utara',
+    Sulsel: 'Sulawesi Selatan', Sulut: 'Sulawesi Utara', Sulteng: 'Sulawesi Tengah', Sultra: 'Sulawesi Tenggara',
+    Sulbar: 'Sulawesi Barat', Malut: 'Maluku Utara', Pabar: 'Papua Barat', Pabardaya: 'Papua Barat Daya',
+    Papteng: 'Papua Tengah', Krimum: 'Kriminal Umum (Tipidum + Tipidppappo)', Um: 'Kriminal Umum',
+    Krimsus: 'Kriminal Khusus (Tipideksus + Tipidkor + Tipidter + Tipidsiber)', Sus: 'Kriminal Khusus',
+    Narkoba: 'Kriminal Narkoba (Tipidnarkoba)', Nkb: 'Kriminal Narkoba',
+    Tipidum: 'Tindak Pidana Umum', Tipideksus: 'Tindak Pidana Ekonomi dan Khusus',
+    Tipidnarkoba: 'Tindak Pidana Narkoba', Tipidkor: 'Tindak Pidana Korupsi',
+    'Kortastipidkor Polri': 'Korps Pemberantasan Tindak Pidana Korupsi Polri',
+    Tipidter: 'Tindak Pidana Tertentu', Tipidsiber: 'Tindak Pidana Siber',
+    Tipidppappo: 'Tindak Pidana PPA dan PPO', Tipidteror: 'Tindak Pidana Terorisme',
+    Tipidlantas: 'Tindak Pidana Lalu Lintas', Tipidairud: 'Tindak Pidana Perairan dan Udara',
+    Tipiring: 'Tindak Pidana Ringan', Mabes: 'Markas Besar', Polri: 'Kepolisian Negara Republik Indonesia',
+    Kaba: 'Kepala Badan', 'Bareskrim Polri': 'Badan Reserse Kriminal Polri', Karo: 'Kepala Biro',
+    Karobinopsnal: 'Kepala Biro Pembinaan Operasional', KBO: 'Karobinopsnal / Kabagbinops / Kasubbagbinops / Kaurbinops',
+    Robinopsnal: 'Biro Pembinaan Operasional', Binops: 'Pembinaan Operasional',
+    Subdit: 'Sub Direktorat', Bag: 'Bagian', Subbag: 'Sub Bagian', Kanit: 'Kepala Unit', Kasubnit: 'Kepala Sub Unit',
+    Dir: 'Direktur', Dit: 'Direktorat', Dittipidum: 'Direktorat Tindak Pidana Umum',
+    Dittipideksus: 'Direktorat Tindak Pidana Ekonomi dan Khusus', Dittipidnarkoba: 'Direktorat Tindak Pidana Narkoba',
+    Dittipidkor: 'Direktorat Tindak Pidana Korupsi (Kortastipidkor Polri)', Dittipidter: 'Direktorat Tindak Pidana Tertentu',
+    Dittipidsiber: 'Direktorat Tindak Pidana Siber', Dittipidppadanppo: 'Direktorat Tindak Pidana PPA dan PPO',
+    Kasubbagbinops: 'Kepala Sub Bagian Pembinaan Operasional', Polda: 'Kepolisian Daerah',
+    Subbagbinops: 'Sub Bagian Pembinaan Operasional', Ditreskrimum: 'Direktorat Reserse Kriminal Umum',
+    Ditkrimum: 'Direktorat Reserse Kriminal Umum', Ditreskrimsus: 'Direktorat Reserse Kriminal Khusus',
+    Ditkrimsus: 'Direktorat Reserse Kriminal Khusus', Ditresnarkoba: 'Direktorat Reserse Narkoba',
+    Ditnarkoba: 'Direktorat Reserse Narkoba', Ditressiber: 'Direktorat Reserse Siber', Ditsiber: 'Direktorat Reserse Siber',
+    Kabagbinops: 'Kepala Bagian Pembinaan Operasional', Bagbinops: 'Bagian Pembinaan Operasional',
+    Polrestro: 'Polres Metro', Restro: 'Polres Metro', Polrestabes: 'Polres Kota Besar', Restabes: 'Polres Kota Besar',
+    Polresta: 'Polres Kota', Resta: 'Polres Kota', Polres: 'Kepolisian Resor', Res: 'Kepolisian Resor',
+    Sat: 'Satuan', Satresmob: 'Satuan Reserse Mobile', Satreskrim: 'Satuan Reserse Kriminal',
+    Satresnarkoba: 'Satuan Reserse Narkoba', Satnarkoba: 'Satuan Reserse Narkoba',
+    Satresppappo: 'Satuan Reserse PPA dan PPO', Satppappo: 'Satuan Reserse PPA dan PPO',
+    Kaurbinops: 'Kepala Urusan Pembinaan Operasional', Urbinops: 'Urusan Pembinaan Operasional',
+    Polsektro: 'Polsek Metro', Sektro: 'Polsek Metro', Polsekta: 'Polsek Kota', Sekta: 'Polsek Kota',
+    Polsek: 'Kepolisian Sektor', Sek: 'Kepolisian Sektor', 'Tj.': 'Tanjung', 'P.': 'Pulau', 'Kep.': 'Kepulauan',
+    'Gn.': 'Gunung', Tanjabar: 'Tanjung Jabung Barat', Muratara: 'Musi Rawas Utara', HSS: 'Hulu Sungai Selatan',
+    'K.P.': 'Kawasan Pelabuhan', 'K.B.': 'Kawasan Bandara', OKU: 'Ogan Komering Ulu', 'OKU Timur': 'Ogan Komering Ulu Timur',
+    Muba: 'Musi Banyuasin', CT: 'Crime Total (JTP)', JTP: 'Jumlah Tindak Pidana', CC: 'Crime Clearance (PTP)',
+    PTP: 'Penyelesaian Tindak Pidana', CR: 'Clearance Rate (%PTP)', '%PTP': 'Persentase Penyelesaian Tindak Pidana',
+    CA: 'Crime Arrears (TTP)', TTP: 'Tunggakan Tindak Pidana', CP: 'CrimeProceeding (TPP)',
+    TPP: 'Tindak Pidana dalam Proses', PR: 'Proceeding Rate (%TPP)', '%TPP': 'Persentase Tindak Pidana dalam Proses',
+    Gakkum: 'Penegakan Hukum', Kamtibmas: 'Keamanan dan Ketertiban Masyarakat', Ttl: 'Total', Jml: 'Jumlah',
+    'Sub Ttl': 'Sub Total', LE: 'Law Enforcement', Rms: 'Rumus', Br: 'Baru', Lm: 'Lama', Akt: 'Aktual',
+    Tgk: 'Tunggakan', Wkt: 'Waktu', Org: 'Orang', Jaksel: 'Jakarta Selatan',
+    ITE: 'Informasi dan Transaksi Elektronik', IKU: 'Indikator Kinerja Utama', Satker: 'Satuan Kerja', 'Lamp.': 'Lampiran'
+  };
 }
 
 function decodeCasShareHash(raw) {

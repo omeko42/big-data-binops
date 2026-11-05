@@ -102,8 +102,20 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             await this.ensurePinTable();
             await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta text;`);
             await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS pihak_terkait jsonb DEFAULT '[]'::jsonb;`);
+            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta_rank smallint;`);
+            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS last_seen_date date;`);
             await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_main ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, tipe_subjek, nasional_score DESC);`);
             await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_kasta ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dokumen_doctype_lpid_created ON bdb_dokumen (document_type_id, lp_id, created_at DESC, id DESC);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dokumen_lpid_doctype ON bdb_dokumen (lp_id, document_type_id);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_created_id ON bdb_dpo (status_dpo, created_at DESC, id DESC);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_satker_created ON bdb_dpo (status_dpo, satker_id, created_at DESC);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_lpid_nama ON bdb_dpo (status_dpo, lp_id, upper(trim(coalesce(nama_dpo, ''))));`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_pihak_pins_active_time ON bdb_pihak_terlibat_pins (pin_active, pin_time DESC) WHERE pin_active = true;`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_lookup_nik ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, nik);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_dash_fast ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta_rank ASC, last_seen_date DESC NULLS LAST, total_lp DESC, satker_tier ASC, last_seen DESC) WHERE (total_lp > 1 OR count_dpo > 0);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_master_fast ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta_rank ASC, total_lp DESC, satker_tier ASC, last_seen DESC) WHERE (total_lp > 1 OR count_dpo > 0);`);
+            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_pin_key ON bdb_pihak_terlibat_ranking_snapshot (coalesce(nullif(nik, ''), nama));`);
             const checkRes = await this.dataSource.query(
                 `SELECT count(*)::int as c FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND bulan IS NULL;`
             );
@@ -2480,70 +2492,68 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         return `AND (${conds.join(' OR ')})`;
     }
 
-    async ranking(authUser: any, query: any = {}) {
-        const isMaster = String(query.master || '') === '1';
-        const isDashboard = String(query.dashboard || '') === '1' || query.scope === 'national';
-        const isNational = isMaster || isDashboard || query.scope === 'national';
-
-        const scope = await resolveScope(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
-        const explicitSatkerId = Number(query.satker_id || 0);
-
-        const cacheKey = JSON.stringify({
-            isMaster,
-            isDashboard,
-            scopeKey: scope.all ? 'ALL' : (scope.satkerId || 0),
-            satkerId: explicitSatkerId > 0 ? explicitSatkerId : 0,
-            ket: (this.toText(query.keterlibatan || query.peran) || 'ALL').toUpperCase(),
-            subjek: String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase(),
-            search: (this.toText(query.search) || '').toLowerCase(),
-            from: String(query.from || query.date_from || query.startDate || '').trim(),
-            to: String(query.to || query.date_to || query.endDate || '').trim(),
-            tahun: String(query.tahun || query.year || ''),
-            bulan: String(query.bulan || query.month || ''),
-            periode: String(query.periode || query.all_time || ''),
-            page: Math.max(1, Number(query.page || 1)),
-            limit: Number(query.row || query.limit || (isMaster ? 25 : 5))
-        });
-
-        const cached = this.rankingCache.get(cacheKey);
-        if (cached && cached.expiresAt > Date.now()) {
-            return {
-                ...cached.data,
-                meta: { ...(cached.data.meta || {}), cached: true }
-            };
-        }
-
-        let scopeWhereClause = '';
-        if (explicitSatkerId > 0) {
-            scopeWhereClause = await this.resolveRankingSatkerWhere(explicitSatkerId);
-        } else if (!isNational && !scope.all && scope.satkerId) {
-            scopeWhereClause = await this.resolveRankingSatkerWhere(Number(scope.satkerId));
-        }
-
-        const allowed = [
-            'ALL',
-            'LINTAS_WILAYAH',
-            'KORBAN',
-            'SAKSI',
-            'PELAPOR',
-            'TERLAPOR',
-            'TERSANGKA',
-            'DPO'
-        ];
-    
-        const rawKet = (this.toText(query.keterlibatan || query.peran) || 'ALL').toUpperCase();
-        const keterlibatan = allowed.includes(rawKet) ? rawKet : 'ALL';
-
-        // Khusus DPO: langsung baca dari unified_active_dpo (bdb_dpo + PENETAPAN_DPO) agar selalu update di dashboard & pihak sering terlibat
-        if (keterlibatan === 'DPO') {
-            const page = Math.max(1, Number(query.page || 1));
-            const limit = isMaster ? Math.max(1, Math.min(Number(query.row || query.limit || 25), 100)) : Math.max(1, Math.min(Number(query.limit || 5), 10));
-            const offset = (page - 1) * limit;
-            const rSearch = this.toText(query.search);
-            const searchClause = rSearch ? `AND (lower(d.nama_dpo) LIKE '%${rSearch.toLowerCase().replace(/'/g, "''")}%' OR coalesce(d.nomor_identitas,'') LIKE '%${rSearch.replace(/'/g, "''")}%' OR lower(d.nomor_dpo) LIKE '%${rSearch.toLowerCase().replace(/'/g, "''")}%')` : '';
-            const satkerClause = explicitSatkerId > 0 ? `AND d.satker_id in (with recursive st as (select id from bdb_satker where id = ${explicitSatkerId} union all select s.id from bdb_satker s join st on s.parent_id = st.id) select id from st)` : '';
-            const dpoCte = `with ${this.documentPartiesCte()},
-            unified_active_dpo as (
+    private unifiedActiveDpoCte(): string {
+        return `with dpo_types as materialized (
+                    select id, code from bdb_document_type_master where code in ('PENETAPAN_DPO', 'CABUT_DPO')
+                ),
+                document_dpo_raw as materialized (
+                    select d.lp_id,
+                           d.id as dokumen_id,
+                           ordinality::int as urutan,
+                           nullif(trim(item->>'nama'),'') as nama,
+                           nullif(trim(item->>'nik'),'') as nik,
+                           nullif(trim(item->>'jenis_kelamin'),'') as jenis_kelamin,
+                           nullif(trim(item->>'tempat_lahir'),'') as tempat_lahir,
+                           nullif(trim(item->>'tgl_lahir'),'') as tgl_lahir,
+                           nullif(trim(item->>'pekerjaan'),'') as pekerjaan,
+                           nullif(trim(item->>'alamat'),'') as alamat,
+                           nullif(trim(item->>'no_hp'),'') as no_hp,
+                           coalesce(nullif(trim(d.nomor_dokumen),''),nullif(trim(d.data->>'nomor_dokumen'),'')) as nomor_dokumen,
+                           coalesce(d.tanggal_dokumen,nullif(trim(d.data->>'tanggal_dokumen'),'')::date) as tanggal_dokumen,
+                           d.created_at
+                    from bdb_dokumen d
+                    join dpo_types dt on dt.id=d.document_type_id and dt.code='PENETAPAN_DPO'
+                    cross join lateral jsonb_array_elements(
+                        case when jsonb_typeof(d.data->'tersangka')='array'
+                             then d.data->'tersangka' else '[]'::jsonb end
+                    ) with ordinality as party(item,ordinality)
+                    where nullif(trim(item->>'nama'),'') is not null
+                ),
+                document_dpo_active as materialized (
+                    select distinct on (
+                               r.lp_id,
+                               upper(trim(coalesce(r.nama,''))),
+                               trim(coalesce(r.nik,''))
+                           )
+                           r.lp_id,r.dokumen_id,r.urutan,r.nama,r.nik,r.jenis_kelamin,
+                           r.tempat_lahir,r.tgl_lahir,r.pekerjaan,r.alamat,r.no_hp,
+                           'DPO'::text as keterlibatan,r.nomor_dokumen,r.tanggal_dokumen,r.created_at
+                    from document_dpo_raw r
+                    where not exists (
+                        select 1
+                        from bdb_dokumen c
+                        join dpo_types ct on ct.id=c.document_type_id and ct.code='CABUT_DPO'
+                        where c.lp_id=r.lp_id
+                          and lower(regexp_replace(trim(coalesce(c.data->>'nomor_dpo','')),'\\s+','','g'))
+                              = lower(regexp_replace(trim(coalesce(r.nomor_dokumen,'')),'\\s+','','g'))
+                          and exists (
+                              select 1
+                              from jsonb_array_elements(
+                                  case when jsonb_typeof(c.data->'tersangka')='array'
+                                       then c.data->'tersangka' else '[]'::jsonb end
+                              ) revoked_person
+                              where (
+                                  nullif(regexp_replace(coalesce(revoked_person->>'nik',''),'\\D','','g'),'') is not null
+                                  and nullif(regexp_replace(coalesce(r.nik,''),'\\D','','g'),'') is not null
+                                  and regexp_replace(coalesce(revoked_person->>'nik',''),'\\D','','g')
+                                      = regexp_replace(coalesce(r.nik,''),'\\D','','g')
+                              ) or upper(regexp_replace(coalesce(revoked_person->>'nama',''),'[^A-Za-z0-9]+','','g'))
+                                  = upper(regexp_replace(coalesce(r.nama,''),'[^A-Za-z0-9]+','','g'))
+                          )
+                    )
+                    order by r.lp_id,upper(trim(coalesce(r.nama,''))),trim(coalesce(r.nik,'')),r.created_at desc,r.dokumen_id desc,r.urutan desc
+                ),
+                unified_active_dpo as materialized (
                 select
                     d.id::bigint as id,
                     d.id::bigint as dpo_id,
@@ -2592,15 +2602,85 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         ELSE 4
                     END as satker_tier
                 from document_dpo_active a
-                join bdb_laporan_polisi lp on lp.id = a.lp_id and lp.deleted_at is null
+                left join lateral (
+                    select l.id, l.unit_satker_id, l.satker_id, l.unit_satker_nama, l.satker_nama, l.jenis_kejahatan_id
+                    from bdb_laporan_polisi l
+                    where l.id = a.lp_id and l.deleted_at is null
+                    limit 1
+                ) lp on true
                 left join cm_jenis_kejahatan jk on jk.id = lp.jenis_kejahatan_id
-                where not exists (
+                where lp.id is not null and not exists (
                     select 1 from bdb_dpo dp2
                     where dp2.status_dpo = 'AKTIF'
                       and dp2.lp_id = a.lp_id
                       and upper(trim(coalesce(dp2.nama_dpo,''))) = upper(trim(coalesce(a.nama,'')))
                 )
             )`;
+    }
+
+    async ranking(authUser: any, query: any = {}) {
+        await this.ensurePinTable();
+        const isMaster = String(query.master || '') === '1';
+        const isDashboard = String(query.dashboard || '') === '1' || query.scope === 'national';
+        const isNational = isMaster || isDashboard || query.scope === 'national';
+
+        const scope = await resolveScope(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
+        const explicitSatkerId = Number(query.satker_id || 0);
+
+        const cacheKey = JSON.stringify({
+            isMaster,
+            isDashboard,
+            scopeKey: scope.all ? 'ALL' : (scope.satkerId || 0),
+            satkerId: explicitSatkerId > 0 ? explicitSatkerId : 0,
+            ket: (this.toText(query.keterlibatan || query.peran) || 'ALL').toUpperCase(),
+            subjek: String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase(),
+            search: (this.toText(query.search) || '').toLowerCase(),
+            from: String(query.from || query.date_from || query.startDate || '').trim(),
+            to: String(query.to || query.date_to || query.endDate || '').trim(),
+            tahun: String(query.tahun || query.year || ''),
+            bulan: String(query.bulan || query.month || ''),
+            periode: String(query.periode || query.all_time || ''),
+            page: Math.max(1, Number(query.page || 1)),
+            limit: Number(query.row || query.limit || (isMaster ? 25 : 5))
+        });
+
+        const cached = this.rankingCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now() && !query.refresh) {
+            return {
+                ...cached.data,
+                meta: { ...(cached.data.meta || {}), cached: true }
+            };
+        }
+
+        let scopeWhereClause = '';
+        if (explicitSatkerId > 0) {
+            scopeWhereClause = await this.resolveRankingSatkerWhere(explicitSatkerId);
+        } else if (!isNational && !scope.all && scope.satkerId) {
+            scopeWhereClause = await this.resolveRankingSatkerWhere(Number(scope.satkerId));
+        }
+
+        const allowed = [
+            'ALL',
+            'LINTAS_WILAYAH',
+            'KORBAN',
+            'SAKSI',
+            'PELAPOR',
+            'TERLAPOR',
+            'TERSANGKA',
+            'DPO'
+        ];
+    
+        const rawKet = (this.toText(query.keterlibatan || query.peran) || 'ALL').toUpperCase();
+        const keterlibatan = allowed.includes(rawKet) ? rawKet : 'ALL';
+
+        if (keterlibatan === 'DPO') {
+            const page = Math.max(1, Number(query.page || 1));
+            const limit = isMaster ? Math.max(1, Math.min(Number(query.row || query.limit || 25), 100)) : Math.max(1, Math.min(Number(query.limit || 5), 10));
+            const offset = (page - 1) * limit;
+            const rSearch = this.toText(query.search);
+            const searchClause = rSearch ? `AND (lower(d.nama_dpo) LIKE '%${rSearch.toLowerCase().replace(/'/g, "''")}%' OR coalesce(d.nomor_identitas,'') LIKE '%${rSearch.replace(/'/g, "''")}%' OR lower(d.nomor_dpo) LIKE '%${rSearch.toLowerCase().replace(/'/g, "''")}%')` : '';
+            const satkerClause = explicitSatkerId > 0 ? `AND d.satker_id in (with recursive st as (select id from bdb_satker where id = ${explicitSatkerId} union all select s.id from bdb_satker s join st on s.parent_id = st.id) select id from st)` : '';
+            const dpoCte = this.unifiedActiveDpoCte();
 
             const [dpoRows, countRes] = await Promise.all([
                 this.dataSource.query(`
@@ -2636,8 +2716,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         coalesce(pin.pin_active, false) as is_pinned,
                         pin.pin_time as pinned_at
                     FROM unified_active_dpo d
-                    LEFT JOIN bdb_pihak_terlibat_ranking_snapshot snap
-                        ON snap.tahun = 0 AND snap.bulan IS NULL AND snap.kategori_filter = 'ALL' AND snap.nik = d.nomor_identitas
+                    LEFT JOIN LATERAL (
+                        SELECT s.total_lp, s.count_dpo, s.count_tersangka, s.count_terlapor, s.count_saksi, s.count_korban, s.count_pelapor, s.jumlah_satker_unik, s.is_lintas_wilayah
+                        FROM bdb_pihak_terlibat_ranking_snapshot s
+                        WHERE s.tahun = 0 AND coalesce(s.bulan, 0) = 0 AND s.kategori_filter = 'ALL' AND s.nik = d.nomor_identitas
+                        LIMIT 1
+                    ) snap ON true
                     LEFT JOIN bdb_pihak_terlibat_pins pin
                         ON pin.pin_nik = coalesce(nullif(d.nomor_identitas, ''), d.nama_dpo) AND pin.pin_active = true
                     WHERE d.status_dpo = 'AKTIF'
@@ -2667,8 +2751,6 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             return dpoResult;
         }
 
-        // Detect target partition based on query params (from, to, tahun, bulan, date_from, date_to)
-        // Default: 0 (Full All-Time across all years where NIK matches continuously)
         let targetTahun: number = 0;
         let targetBulan: number | null = null;
         const curDynamicYear = new Date().getFullYear();
@@ -2679,7 +2761,6 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const qBulan = query.bulan || query.month;
 
         if (isDashboard && !isMaster) {
-            // Dashboard Sorotan selalu Full All-Time (tahun = 0) lintas seluruh tahun
             targetTahun = 0;
             targetBulan = null;
         } else if (query.tahun === '0' || query.tahun === 'all' || query.all_time === '1' || query.periode === 'all' || (!fromStr && !toStr && !qTahun)) {
@@ -2695,7 +2776,6 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const yFrom = Number(mFrom[1]);
                 const yTo = Number(mTo[1]);
                 if (yFrom !== yTo) {
-                    // Multi-year range (e.g. 2000-01-01 to 2026-10-26) -> Full All-Time
                     targetTahun = 0;
                     targetBulan = null;
                 } else if (yFrom === curDynamicYear) {
@@ -2708,14 +2788,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             }
         }
 
-        const partitionWhere = targetBulan !== null 
-            ? `tahun = ${targetTahun} AND bulan = ${targetBulan}` 
-            : `tahun = ${targetTahun} AND bulan IS NULL`;
+        const partitionWhere = `tahun = ${targetTahun} AND coalesce(bulan, 0) = ${targetBulan !== null ? Number(targetBulan) : 0}`;
 
         const rawSubjek = String(query.subjek || query.tipe_subjek || 'ALL').toUpperCase();
         const subjekWhere = rawSubjek === 'KORPORASI' ? "AND tipe_subjek = 'KORPORASI'" : (rawSubjek === 'PERORANGAN' ? "AND tipe_subjek = 'PERORANGAN'" : '');
 
-        const kastaCaseExpr = `
+        const kastaCaseExpr = `coalesce(kasta,
             CASE 
               WHEN count_dpo > 0 THEN 'DPO'
               WHEN count_tersangka > 0 THEN 'TERSANGKA'
@@ -2726,9 +2804,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
               WHEN count_saksi > 0 THEN 'SAKSI'
               WHEN count_korban > 0 THEN 'KORBAN'
               ELSE 'PIHAK'
-            END`;
+            END)`;
 
-        const kastaRankExpr = `
+        const kastaRankExpr = `coalesce(kasta_rank,
             CASE 
               WHEN count_dpo > 0 THEN 1
               WHEN count_tersangka > 0 THEN 2
@@ -2739,9 +2817,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
               WHEN count_saksi > 0 THEN 5
               WHEN count_korban > 0 THEN 6
               ELSE 7
-            END`;
+            END)`;
 
-        // 1. MASTER VIEW (Menu: Pihak Paling Sering Terlibat)
         if (isMaster) {
             try {
                 const page = Math.max(1, Number(query.page || 1));
@@ -2758,36 +2835,72 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     catFilter = keterlibatan;
                 }
 
-                const orderClauseMaster = catFilter === 'ALL'
+                const innerOrderMaster = catFilter === 'ALL'
                     ? (keterlibatan === 'LINTAS_WILAYAH' 
-                        ? `(${kastaRankExpr}) ASC, jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, last_seen DESC` 
-                        : `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`)
+                        ? `kasta_rank ASC, jumlah_polda_unik DESC, total_lp DESC, satker_tier ASC, last_seen DESC` 
+                        : `kasta_rank ASC, total_lp DESC, satker_tier ASC, last_seen DESC`)
                     : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
                        catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
                        catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
                        catFilter === 'SAKSI' ? 'count_saksi DESC,' :
                        catFilter === 'KORBAN' ? 'count_korban DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
+                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, kasta_rank ASC, total_lp DESC, last_seen DESC`;
+                const orderClauseMaster = 'is_pinned DESC, pinned_at DESC NULLS LAST, ' + innerOrderMaster;
 
-                const [snapRanking, countRes, summaryRes] = await Promise.all([
+                const [snapRanking, countRes, summaryRes, activeDpoTotal] = await Promise.all([
                     this.dataSource.query(`
-                        SELECT nama, nik,
-                               GREATEST(coalesce(total_lp, 0), coalesce(count_dpo, 0), coalesce(count_tersangka, 0), coalesce(count_terlapor, 0), coalesce(count_saksi, 0), coalesce(count_korban, 0), coalesce(count_pelapor, 0)) as total_lp,
-                               satker_tier, satker_nama_tertinggi, last_seen,
-                               count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                               jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                               tipe_subjek, tipe_identitas,
-                               coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
-                               ${kastaCaseExpr} as kasta,
-                               ${kastaRankExpr} as kasta_rank
-                        FROM bdb_pihak_terlibat_ranking_snapshot
-                        WHERE ${partitionWhere}
-                          AND kategori_filter = '${catFilter}'
-                          AND (total_lp > 1 OR count_dpo > 0)
-                          ${subjekWhere}
-                          ${searchClause}
-                          ${scopeWhereClause}
-                          ${extraWhere}
+                        SELECT * FROM (
+                            SELECT r.nama, r.nik,
+                                   GREATEST(coalesce(r.total_lp, 0), coalesce(r.count_dpo, 0), coalesce(r.count_tersangka, 0), coalesce(r.count_terlapor, 0), coalesce(r.count_saksi, 0), coalesce(r.count_korban, 0), coalesce(r.count_pelapor, 0)) as total_lp,
+                                   r.satker_tier, r.satker_nama_tertinggi, r.last_seen, r.last_seen_date,
+                                   r.count_dpo, r.count_tersangka, r.count_terlapor, r.count_saksi, r.count_korban, r.count_pelapor,
+                                   r.jumlah_satker_unik, r.jumlah_polda_unik, r.is_lintas_wilayah, r.daftar_satker, r.nasional_score,
+                                   r.tipe_subjek, r.tipe_identitas,
+                                   coalesce(r.pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                                   true as is_pinned,
+                                   pin.pin_time as pinned_at,
+                                   ${kastaCaseExpr} as kasta,
+                                   ${kastaRankExpr} as kasta_rank
+                            FROM bdb_pihak_terlibat_pins pin
+                            JOIN bdb_pihak_terlibat_ranking_snapshot r
+                                ON coalesce(nullif(r.nik, ''), r.nama) = pin.pin_nik
+                            WHERE pin.pin_active = true
+                              AND ${partitionWhere}
+                              AND r.kategori_filter = '${catFilter}'
+                              AND (r.total_lp > 1 OR r.count_dpo > 0)
+                              ${subjekWhere}
+                              ${searchClause}
+                              ${scopeWhereClause}
+                              ${extraWhere}
+                            UNION ALL
+                            (
+                                SELECT r.nama, r.nik,
+                                       GREATEST(coalesce(r.total_lp, 0), coalesce(r.count_dpo, 0), coalesce(r.count_tersangka, 0), coalesce(r.count_terlapor, 0), coalesce(r.count_saksi, 0), coalesce(r.count_korban, 0), coalesce(r.count_pelapor, 0)) as total_lp,
+                                       r.satker_tier, r.satker_nama_tertinggi, r.last_seen, r.last_seen_date,
+                                       r.count_dpo, r.count_tersangka, r.count_terlapor, r.count_saksi, r.count_korban, r.count_pelapor,
+                                       r.jumlah_satker_unik, r.jumlah_polda_unik, r.is_lintas_wilayah, r.daftar_satker, r.nasional_score,
+                                       r.tipe_subjek, r.tipe_identitas,
+                                       coalesce(r.pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                                       false as is_pinned,
+                                       null::timestamptz as pinned_at,
+                                       ${kastaCaseExpr} as kasta,
+                                       ${kastaRankExpr} as kasta_rank
+                                FROM bdb_pihak_terlibat_ranking_snapshot r
+                                WHERE ${partitionWhere}
+                                  AND r.kategori_filter = '${catFilter}'
+                                  AND (r.total_lp > 1 OR r.count_dpo > 0)
+                                  ${subjekWhere}
+                                  ${searchClause}
+                                  ${scopeWhereClause}
+                                  ${extraWhere}
+                                  AND NOT EXISTS (
+                                      SELECT 1 FROM bdb_pihak_terlibat_pins p2
+                                      WHERE p2.pin_active = true AND p2.pin_nik = coalesce(nullif(r.nik, ''), r.nama)
+                                  )
+                                ORDER BY ${innerOrderMaster}
+                                LIMIT ${offset + rowLimit}
+                            )
+                        ) combined
                         ORDER BY ${orderClauseMaster}
                         LIMIT ${rowLimit} OFFSET ${offset}
                     `),
@@ -2806,7 +2919,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         SELECT 
                             count(case when kategori_filter = 'ALL' then 1 end)::int as semua,
                             count(case when kategori_filter = 'ALL' and is_lintas_wilayah = true then 1 end)::int as lintas_wilayah,
-                            coalesce((select count(*)::int from bdb_dpo d where d.status_dpo = 'AKTIF' ${explicitSatkerId > 0 ? `and d.satker_id in (with recursive st as (select id from bdb_satker where id = ${explicitSatkerId} union all select s.id from bdb_satker s join st on s.parent_id = st.id) select id from st)` : ''}), 0) as dpo,
+                            count(case when kategori_filter = 'DPO' then 1 end)::int as dpo,
                             count(case when kategori_filter = 'TERSANGKA' then 1 end)::int as tersangka,
                             count(case when kategori_filter = 'TERLAPOR' then 1 end)::int as terlapor,
                             count(case when kategori_filter = 'SAKSI' then 1 end)::int as saksi,
@@ -2819,22 +2932,24 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             count(case when kategori_filter = 'ALL' and (${kastaCaseExpr}) = 'PELAPOR' then 1 end)::int as kasta_pelapor
                         FROM bdb_pihak_terlibat_ranking_snapshot
                         WHERE ${partitionWhere} AND (total_lp > 1 OR count_dpo > 0) ${subjekWhere} ${searchClause} ${scopeWhereClause};
-                    `)
+                    `),
+                    this.countActiveDpo(scope, query)
                 ]);
 
                 const total = Number(countRes[0]?.total || 0);
                 const rawSummary = summaryRes[0] || { semua: 0, lintas_wilayah: 0, tersangka: 0, terlapor: 0, korban: 0, saksi: 0, pelapor: 0, dpo: 0 };
+                const dpoSummaryCount = Math.max(Number(rawSummary.dpo || 0), Number(activeDpoTotal || 0));
                 const summary = {
                     semua: Number(rawSummary.semua || 0),
                     lintas_wilayah: Number(rawSummary.lintas_wilayah || 0),
-                    dpo: Number(rawSummary.dpo || 0),
+                    dpo: dpoSummaryCount,
                     tersangka: Number(rawSummary.tersangka || 0),
                     terlapor: Number(rawSummary.terlapor || 0),
                     saksi: Number(rawSummary.saksi || 0),
                     korban: Number(rawSummary.korban || 0),
                     pelapor: Number(rawSummary.pelapor || 0),
                     kasta_breakdown: {
-                        dpo: Number(rawSummary.dpo || 0),
+                        dpo: dpoSummaryCount,
                         tersangka: Number(rawSummary.kasta_tersangka || 0),
                         terlapor: Number(rawSummary.kasta_terlapor || 0),
                         saksi: Number(rawSummary.kasta_saksi || 0),
@@ -2870,6 +2985,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
                         tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
                         pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                        is_pinned: Boolean(r.is_pinned),
+                        pinned_at: r.pinned_at || null,
                         last_seen: r.last_seen
                     })),
                     pagination: {
@@ -2905,32 +3022,54 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const requestedLimit = Number(query.limit || 5);
                 const limit = Math.max(1, Math.min(requestedLimit, 10));
                 const catFilter = (keterlibatan && keterlibatan !== 'ALL' && keterlibatan !== 'LINTAS_WILAYAH') ? keterlibatan : 'ALL';
-
-                const orderClauseDash = catFilter === 'ALL'
-                    ? `(${kastaRankExpr}) ASC, total_lp DESC, satker_tier ASC, last_seen DESC`
-                    : (catFilter === 'TERSANGKA' ? 'count_tersangka DESC,' :
-                       catFilter === 'TERLAPOR' ? 'count_terlapor DESC,' :
-                       catFilter === 'PELAPOR' ? 'count_pelapor DESC,' :
-                       catFilter === 'SAKSI' ? 'count_saksi DESC,' :
-                       catFilter === 'KORBAN' ? 'count_korban DESC,' :
-                       catFilter === 'DPO' ? 'count_dpo DESC,' : '') + ` satker_tier ASC, (${kastaRankExpr}) ASC, total_lp DESC, last_seen DESC`;
+                const innerOrderDash = `kasta_rank ASC, last_seen_date DESC NULLS LAST, total_lp DESC, satker_tier ASC, last_seen DESC`;
+                const orderClauseDash = 'is_pinned DESC, pinned_at DESC NULLS LAST, ' + innerOrderDash;
 
                 const snapRanking = await this.dataSource.query(`
-                    SELECT nama, nik,
-                           GREATEST(coalesce(total_lp, 0), coalesce(count_dpo, 0), coalesce(count_tersangka, 0), coalesce(count_terlapor, 0), coalesce(count_saksi, 0), coalesce(count_korban, 0), coalesce(count_pelapor, 0)) as total_lp,
-                           satker_tier, satker_nama_tertinggi, last_seen,
-                           count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
-                           jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                           tipe_subjek, tipe_identitas,
-                           coalesce(pihak_terkait, '[]'::jsonb) as pihak_terkait,
-                           ${kastaCaseExpr} as kasta,
-                           ${kastaRankExpr} as kasta_rank
-                    FROM bdb_pihak_terlibat_ranking_snapshot
-                    WHERE ${partitionWhere}
-                      AND kategori_filter = '${catFilter}'
-                      AND total_lp > 1
-                      ${subjekWhere}
-                      ${scopeWhereClause}
+                    SELECT * FROM (
+                        SELECT r.nama, r.nik,
+                               GREATEST(coalesce(r.total_lp, 0), coalesce(r.count_dpo, 0), coalesce(r.count_tersangka, 0), coalesce(r.count_terlapor, 0), coalesce(r.count_saksi, 0), coalesce(r.count_korban, 0), coalesce(r.count_pelapor, 0)) as total_lp,
+                               r.satker_tier, r.satker_nama_tertinggi, r.last_seen, r.last_seen_date,
+                               r.count_dpo, r.count_tersangka, r.count_terlapor, r.count_saksi, r.count_korban, r.count_pelapor,
+                               r.jumlah_satker_unik, r.jumlah_polda_unik, r.is_lintas_wilayah, r.daftar_satker, r.nasional_score,
+                               r.tipe_subjek, r.tipe_identitas,
+                               coalesce(r.pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                               true as is_pinned,
+                               pin.pin_time as pinned_at,
+                               ${kastaCaseExpr} as kasta,
+                               ${kastaRankExpr} as kasta_rank
+                        FROM bdb_pihak_terlibat_pins pin
+                        JOIN bdb_pihak_terlibat_ranking_snapshot r
+                            ON coalesce(nullif(r.nik, ''), r.nama) = pin.pin_nik
+                        WHERE pin.pin_active = true
+                          AND ${partitionWhere}
+                          AND r.kategori_filter = '${catFilter}'
+                          AND (r.total_lp > 1 OR r.count_dpo > 0)
+                          ${subjekWhere}
+                          ${scopeWhereClause}
+                        UNION ALL
+                        (
+                            SELECT r.nama, r.nik,
+                                   GREATEST(coalesce(r.total_lp, 0), coalesce(r.count_dpo, 0), coalesce(r.count_tersangka, 0), coalesce(r.count_terlapor, 0), coalesce(r.count_saksi, 0), coalesce(r.count_korban, 0), coalesce(r.count_pelapor, 0)) as total_lp,
+                                   r.satker_tier, r.satker_nama_tertinggi, r.last_seen, r.last_seen_date,
+                                   r.count_dpo, r.count_tersangka, r.count_terlapor, r.count_saksi, r.count_korban, r.count_pelapor,
+                                   r.jumlah_satker_unik, r.jumlah_polda_unik, r.is_lintas_wilayah, r.daftar_satker, r.nasional_score,
+                                   r.tipe_subjek, r.tipe_identitas,
+                                   coalesce(r.pihak_terkait, '[]'::jsonb) as pihak_terkait,
+                                   false as is_pinned,
+                                   null::timestamptz as pinned_at,
+                                   ${kastaCaseExpr} as kasta,
+                                   ${kastaRankExpr} as kasta_rank
+                            FROM bdb_pihak_terlibat_ranking_snapshot r
+                            WHERE ${partitionWhere}
+                              AND r.kategori_filter = '${catFilter}'
+                              AND (r.total_lp > 1 OR r.count_dpo > 0)
+                              ${subjekWhere}
+                              ${scopeWhereClause}
+                            ORDER BY ${innerOrderDash}
+                            LIMIT ${limit * 3}
+                        )
+                    ) combined
                     ORDER BY ${orderClauseDash}
                     LIMIT ${limit * 3}
                 `);
@@ -2983,6 +3122,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
                             tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
                             pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                            is_pinned: Boolean(r.is_pinned),
+                            pinned_at: r.pinned_at || null,
                             last_seen: r.last_seen
                         };
                     }),
@@ -3839,8 +3980,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 dpoWhere.push(`(lower(d.nama_dpo) like $${p} or lower(coalesce(d.nomor_identitas,'')) like $${p} or lower(d.nomor_dpo) like $${p})`);
             }
 
+            const dpoCte = this.unifiedActiveDpoCte();
             const res = await this.dataSource.query(
-                `SELECT count(*)::int as c FROM bdb_dpo d WHERE ${dpoWhere.join(' and ')}`,
+                `${dpoCte} SELECT count(*)::int as c FROM unified_active_dpo d WHERE ${dpoWhere.join(' and ')}`,
                 dpoParams
             );
             return Number(res?.[0]?.c || 0);

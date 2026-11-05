@@ -1195,12 +1195,71 @@ export class SatkerService implements OnModuleInit {
                     const pClean = params.length;
 
                     let abbrCondition = '';
-                    const lowerT = t.toLowerCase();
-                    if (lowerT === 'jakbar') abbrCondition = " or lower(s.deskripsi) like '%jakarta barat%'";
-                    else if (lowerT === 'jakpus') abbrCondition = " or lower(s.deskripsi) like '%jakarta pusat%'";
-                    else if (lowerT === 'jaksel') abbrCondition = " or lower(s.deskripsi) like '%jakarta selatan%'";
-                    else if (lowerT === 'jaktim') abbrCondition = " or lower(s.deskripsi) like '%jakarta timur%'";
-                    else if (lowerT === 'jakut') abbrCondition = " or lower(s.deskripsi) like '%jakarta utara%'";
+                    const lowerT = t.toLowerCase().replace(/\.$/, '');
+                    const abbrMap: Record<string, string[]> = {
+                        jakbar: ['jakarta barat'],
+                        jakpus: ['jakarta pusat'],
+                        jaksel: ['jakarta selatan'],
+                        jaktim: ['jakarta timur'],
+                        jakut: ['jakarta utara'],
+                        sumut: ['sumatera utara'],
+                        kepri: ['kepulauan riau'],
+                        sumbar: ['sumatera barat'],
+                        sumsel: ['sumatera selatan'],
+                        babel: ['bangka belitung'],
+                        metrojaya: ['metro jaya', 'metro jakarta raya'],
+                        jabar: ['jawa barat'],
+                        jateng: ['jawa tengah'],
+                        diy: ['yogyakarta'],
+                        jatim: ['jawa timur'],
+                        ntb: ['nusa tenggara barat'],
+                        ntt: ['nusa tenggara timur'],
+                        kaltim: ['kalimantan timur'],
+                        kalbar: ['kalimantan barat'],
+                        kalteng: ['kalimantan tengah'],
+                        kalsel: ['kalimantan selatan'],
+                        kaltara: ['kalimantan utara'],
+                        sulsel: ['sulawesi selatan'],
+                        sulut: ['sulawesi utara'],
+                        sulteng: ['sulawesi tengah'],
+                        sultra: ['sulawesi tenggara'],
+                        sulbar: ['sulawesi barat'],
+                        malut: ['maluku utara'],
+                        pabar: ['papua barat'],
+                        pabardaya: ['papua barat daya'],
+                        papteng: ['papua tengah'],
+                        tanjabar: ['tanjung jabung barat'],
+                        muratara: ['musi rawas utara'],
+                        hss: ['hulu sungai selatan'],
+                        oku: ['ogan komering ulu'],
+                        muba: ['musi banyuasin'],
+                        kp: ['kawasan pelabuhan', 'pelabuhan'],
+                        kb: ['kawasan bandara', 'bandara'],
+                        tj: ['tanjung'],
+                        kep: ['kepulauan'],
+                        gn: ['gunung'],
+                        restro: ['polres metro', 'polrestro'],
+                        restabes: ['polrestabes'],
+                        resta: ['polresta'],
+                        res: ['polres'],
+                        sektro: ['polsek metro', 'polsektro'],
+                        sekta: ['polsekta'],
+                        sek: ['polsek'],
+                        krimum: ['reskrimum', 'kriminal umum', 'tipidum'],
+                        ditkrimum: ['ditreskrimum', 'dit krimum'],
+                        krimsus: ['reskrimsus', 'kriminal khusus', 'tipideksus'],
+                        ditkrimsus: ['ditreskrimsus', 'dit krimsus'],
+                        ditnarkoba: ['ditresnarkoba', 'dit narkoba'],
+                        ditsiber: ['ditressiber', 'dit siber'],
+                        satnarkoba: ['satresnarkoba', 'sat narkoba'],
+                        satppappo: ['satresppappo', 'satresppadanppo', 'ppa dan ppo'],
+                        kortastipidkor: ['dittipidkor', 'kortastipidkor', 'korupsi'],
+                    };
+                    if (abbrMap[lowerT]) {
+                        abbrCondition = ' or ' + abbrMap[lowerT]
+                            .map((expansion) => `lower(s.deskripsi) like '%${expansion.replace(/'/g, "''")}%'`)
+                            .join(' or ');
+                    }
 
                     tokenConds.push(
                         '(' +

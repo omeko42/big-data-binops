@@ -791,8 +791,7 @@ e.s(["default", 0, function() {
                                                             position: "fixed",
                                                             inset: 0,
                                                             zIndex: 2490,
-                                                            background: "rgba(15, 23, 42, 0.4)",
-                                                            backdropFilter: "blur(2px)"
+                                                            background: "transparent"
                                                         },
                                                         onClick: () => setUnifiedFilterOpen(false)
                                                     }),
@@ -800,13 +799,7 @@ e.s(["default", 0, function() {
                                                     // Modal Popover Card (Matching Kinerja Perkara 100%)
                                                     unifiedFilterOpen && (0, t.jsx)("div", {
                                                         style: {
-                                                            position: "fixed",
-                                                            top: "50%",
-                                                            left: "50%",
-                                                            transform: "translate(-50%, -50%)",
-                                                            zIndex: 2500,
-                                                            width: "95%",
-                                                            maxWidth: "38rem",
+                                                            position: "absolute", top: "calc(100% + 0.45rem)", left: 0, zIndex: 2500, width: "38rem", maxWidth: "calc(100vw - 2rem)",
                                                             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
                                                             borderRadius: "14px",
                                                             overflow: "hidden",
