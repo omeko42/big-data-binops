@@ -505,7 +505,7 @@ let UserService = class UserService {
             const rows = await this.dataSource.query('select deskripsi from bdb_satker where id=$1', [existing.scope_satker_id]);
             satkerNama = rows[0]?.deskripsi;
         }
-        return { available: false, satker_nama: satkerNama || (existing.role_bdb === 'superadmin' ? 'Superadmin' : undefined) };
+        return { available: false, satker_nama: satkerNama || (existing.role_bdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : undefined) };
     }
     async create(createUserDto, authUser) {
         const { password, password_confirmation, email, ...rest } = createUserDto;
@@ -1080,10 +1080,10 @@ let UserService = class UserService {
             policeProfile = policeRows?.[0] || null;
         }
         catch { }
-        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
+        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'].includes(String(user.id));
         let satkerNama = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSingkat = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
-        let satkerSatuan = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
+        let satkerSatuan = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         if (!satkerNama && user.scope_satker_id) {
             try {
                 const sRows = await this.dataSource.query('select deskripsi, nama_singkat from bdb_satker where id=$1', [user.scope_satker_id]);
@@ -1576,9 +1576,11 @@ let UserService = class UserService {
         const pkById = new Map(pkRows.map((row) => [Number(row.id), row]));
         const pkByKey = new Map(pkRows.map((row) => [row.satker_key, row]));
         users.forEach((user) => {
-            if (this.normalizeBdbRole(user.role_bdb) === 'superadmin') {
-                user.scope_satker_name = '-';
-                user.scope_satker_display = '-';
+            if (this.normalizeBdbRole(user.role_bdb) === 'superadmin' || [1, 320, 15403, 15404, 16568, 16576, 16594, 17360].includes(Number(user.id))) {
+                user.scope_satker_name = 'Robinopsnal Bareskrim Polri';
+                user.scope_satker_display = 'Robinopsnal Bareskrim Polri';
+                user.satker = 'Robinopsnal Bareskrim Polri';
+                user.satker_nama = 'Robinopsnal Bareskrim Polri';
                 user.scope_access_display = 'Nasional';
                 return;
             }
@@ -1699,12 +1701,19 @@ let UserService = class UserService {
             `, [emails]);
         const byEmail = new Map(rows.map((row) => [row.email_key, row]));
         users.forEach((user) => {
+            const isSuper = this.normalizeBdbRole(user.role_bdb) === 'superadmin' || [1, 320, 15403, 15404, 16568, 16576, 16594, 17360].includes(Number(user.id));
             const profile = byEmail.get(this.normalizeEmail(user?.email)) || byEmail.get(this.normalizeEmail(user?.email_polri));
-            if (!profile)
+            if (!profile) {
+                if (isSuper) {
+                    user.satuan = 'Robinopsnal Bareskrim Polri';
+                    user.satker = 'Robinopsnal Bareskrim Polri';
+                    user.satker_nama = 'Robinopsnal Bareskrim Polri';
+                }
                 return;
+            }
             user.nrp = profile.nrp;
             user.no_hp = profile.no_hp;
-            user.satuan = profile.satuan;
+            user.satuan = isSuper ? 'Robinopsnal Bareskrim Polri' : profile.satuan;
             user.pangkat = profile.pangkat;
             user.jabatan = profile.jabatan;
             user.is_pns = Boolean(user.is_pns || profile.is_pns);

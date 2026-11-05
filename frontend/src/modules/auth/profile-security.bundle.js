@@ -242,12 +242,18 @@ function timeAgo(dateStr) {
   return d + ' hari lalu';
 }
 
-function getVerificationBadge(role, isUserOne, userId, username) {
-  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+function isProfileSuperadmin(userId, role, username) {
+  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'];
+  var SUPER_HANDLES = ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma'];
   var uNorm = String(username || '').toLowerCase().trim().replace(/^@/, '');
   var r = String(role || '').toLowerCase().trim();
+  return SUPER_IDS.includes(String(userId)) || SUPER_HANDLES.includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super');
+}
+
+function getVerificationBadge(role, isUserOne, userId, username) {
+  var r = String(role || '').toLowerCase().trim();
   if (r === 'vendor_mitra' || r === 'vendor' || r === 'mitra') return null;
-  if (isUserOne || SUPER_IDS.includes(String(userId)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super')) {
+  if (isUserOne || isProfileSuperadmin(userId, role, username)) {
     return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   }
   if (r === 'admin_binops' || r === 'admin binops' || r === 'binops' || r === 'admin') {
@@ -1916,10 +1922,10 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     (0,t.jsxs)("div",{style:{background:"var(--cas-bg-subtle, #f8fafc)",padding:"0.85rem",borderRadius:"10px",border:"1px solid var(--cas-border, #e2e8f0)"},children:[
       (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",fontWeight:700,letterSpacing:"0.05em"},children:"SATUAN KERJA (SATKER)"}),
       (0,t.jsx)("div",{style:{fontSize:"0.9rem",color:"var(--cas-text-primary, #0f172a)",marginTop:"0.2rem",fontWeight:600},children:(function(){
-        var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
-        if (isSuper) return "Badan Reserse Kriminal Polri (Bareskrim)";
+        var isSuper = isProfileSuperadmin(a?.id, a?.role_bdb || a?.role, a?.username || a?.callsign);
+        if (isSuper) return "Robinopsnal Bareskrim Polri";
         var s = [a?.scope_satker_name, a?.satker_nama, a?.satker, a?.satuan, a?.scope_access_display].find(function(x){ return x && !['bdb superadmin', 'superadmin', '-', 'null', 'undefined'].includes(String(x).trim().toLowerCase()); });
-        if (!s) return "Badan Reserse Kriminal Polri (Bareskrim)";
+        if (!s) return "Robinopsnal Bareskrim Polri";
         var sClean = String(s).trim().replace(/^operator\s*[-–—:]\s*/i, '');
         sClean = sClean.replace(/\bJAWA TIMUR\b/gi, 'Polda Jatim').replace(/\bJATIM\b/gi, 'Polda Jatim');
         sClean = sClean.replace(/\bRES\s+/gi, 'Polres ');
@@ -2737,7 +2743,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       (0,t.jsx)("div",{
         style:eNetworkMaximized?{display:"grid",gridTemplateColumns:"repeat(" + eNetworkGridSpec.cols + ", minmax(0, 1fr))",gridTemplateRows:eNetworkUsers.length >= eNetworkGridSpec.limit ? ("repeat(" + eNetworkGridSpec.rows + ", minmax(0, 1fr))") : ("repeat(" + eNetworkGridSpec.rows + ", minmax(140px, 1fr))"),gap:"0.85rem",flex:"1 1 auto",height:"calc(100vh - 195px)",maxHeight:"calc(100vh - 195px)",overflowY:"auto",paddingRight:"0.25rem",alignContent:"stretch"}:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:"0.85rem",maxHeight:"60vh",overflowY:"auto",paddingRight:"0.25rem",alignContent:"start"},
         children:eNetworkUsers.map(user => {
-          var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id)) || user.username === 'omeko42' || String(user.role_bdb || user.role || '').toLowerCase() === 'superadmin';
+          var isUserSuper = isProfileSuperadmin(user.id, user.role_bdb || user.role, user.username || user.callsign);
           var isTargetSelf = mySelf ? (String(user.id) === String(mySelf.id)) : (String(user.id) === String(a?.id));
           var userCallsign = formatCallsign(user.callsign, user.id, user.username);
           var userPhoto = user.photo_url || user.foto || user.photo || (isTargetSelf ? (mySelf?.photo_url || mySelf?.foto || mySelf?.photo) : null);
@@ -2980,14 +2986,14 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       ]}),
       (0,t.jsxs)("div",{style:{fontSize:"0.84rem",color:"#38bdf8",fontWeight:700,marginTop:"0.2rem",display:"inline-flex",alignItems:"center",gap:"5px"},children:[
         formatCallsign(ePreviewUser.callsign, ePreviewUser.id, ePreviewUser.username),
-        renderMetaVerifiedBadge(getVerificationBadge(ePreviewUser.role_bdb || ePreviewUser.role, ['1','320','15403','15404','16568','16576','16594'].includes(String(ePreviewUser.id))||String(ePreviewUser.role_bdb||ePreviewUser.role||'').toLowerCase()==='superadmin', ePreviewUser.id, ePreviewUser.username), 15)
+        renderMetaVerifiedBadge(getVerificationBadge(ePreviewUser.role_bdb || ePreviewUser.role, isProfileSuperadmin(ePreviewUser.id, ePreviewUser.role_bdb || ePreviewUser.role, ePreviewUser.username || ePreviewUser.callsign), ePreviewUser.id, ePreviewUser.username), 15)
       ]}),
       (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"var(--cas-text-secondary, #334155)",marginTop:"0.25rem",fontWeight:600},children:[
         ePreviewUser.pangkat ? ePreviewUser.pangkat + " • " : "",
         ePreviewUser.jabatan || ePreviewUser.role || "Penyidik Reserse Polri"
       ]}),
       (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:
-        ePreviewUser.satker_nama || ePreviewUser.satker || ePreviewUser.satuan || "Badan Reserse Kriminal Polri"
+        isProfileSuperadmin(ePreviewUser.id, ePreviewUser.role_bdb || ePreviewUser.role, ePreviewUser.username || ePreviewUser.callsign) ? "Robinopsnal Bareskrim Polri" : (ePreviewUser.satker_nama || ePreviewUser.satker || ePreviewUser.satuan || "Robinopsnal Bareskrim Polri")
       })
     ]}),
 
@@ -3124,7 +3130,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
         }),
         // [Meta-Style Scalloped Verified Seal right next to @username]
         (function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(a?.username || '').toLowerCase()) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11'].includes(String(a?.callsign || '').toLowerCase().replace(/^@/, '')) || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
+          var isSuper = isProfileSuperadmin(a?.id, a?.role_bdb || a?.role, a?.username || a?.callsign);
           var badgeObj = getVerificationBadge(a?.role_bdb || a?.role, isSuper, a?.id, a?.username || a?.callsign);
           return renderMetaVerifiedBadge(badgeObj, 22);
         })(),
@@ -3138,7 +3144,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       // Subline: Nasional • Info kontak • 4.120+ koneksi
       (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",flexWrap:"wrap",marginTop:"0.65rem",fontSize:"0.84rem",fontWeight:600,color:"var(--cas-text-secondary, #334155)"},children:[
         (0,t.jsx)("span",{children:(function(){
-          var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || a?.callsign === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase().includes('super');
+          var isSuper = isProfileSuperadmin(a?.id, a?.role_bdb || a?.role, a?.username || a?.callsign);
           if (isSuper) return "Robinopsnal Bareskrim Polri";
           var s = [a?.scope_satker_name, a?.satker_nama, a?.satker, a?.satuan].find(function(x){ return x && !['bdb superadmin', 'superadmin', '-', 'null', 'undefined'].includes(String(x).trim().toLowerCase()); });
           if (!s) s = "Polri";
@@ -3173,7 +3179,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           children:[
             (function(){
               var cCount = typeof a?.connections_count === 'number' ? a.connections_count : (parseInt(a?.connections_count, 10) || 0);
-              var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(a?.id)) || a?.username === 'omeko42' || String(a?.role_bdb || a?.role || '').toLowerCase() === 'superadmin';
+              var isSuper = isProfileSuperadmin(a?.id, a?.role_bdb || a?.role, a?.username || a?.callsign);
               if (isSuper) {
                 var dispCount = cCount > 0 ? cCount : (eNetworkTotal || 3349);
                 return dispCount.toLocaleString('id-ID') + " personil";
@@ -3848,7 +3854,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                     (ePostComments[p.id] || []).map(cm => {
                       var cmAuthorId = cm.author_id || cm.user_id;
                       var isCmAuthor = String(cmAuthorId) === String(mySelf?.id || a?.id);
-                      var isCmSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cmAuthorId)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
+                      var isCmSuper = isProfileSuperadmin(cmAuthorId, cm.author_role || cm.role_bdb, cm.author_username || cm.author_callsign);
                       var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cmAuthorId, cm.author_username);
                       var cmHandle = formatCallsign(cm.author_callsign, cmAuthorId, cm.author_username);
                       var cmInitials = String(cmHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
@@ -4123,9 +4129,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
               children:[
                 (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.3rem",minWidth:0,overflow:"hidden"},children:[
                   (0,t.jsx)("span",{style:{fontWeight:800,fontSize:"0.82rem",color:"#38bdf8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatCallsign(pers.callsign, pers.id, pers.username)}),
-                  renderMetaVerifiedBadge(getVerificationBadge(pers.role_bdb || pers.role, ['1','320','15403','15404','16568','16576','16594'].includes(String(pers.id))||String(pers.role_bdb||pers.role||'').toLowerCase()==='superadmin', pers.id, pers.username), 14)
+                  renderMetaVerifiedBadge(getVerificationBadge(pers.role_bdb || pers.role, isProfileSuperadmin(pers.id, pers.role_bdb || pers.role, pers.username || pers.callsign), pers.id, pers.username), 14)
                 ]}),
-                (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"1px"},children:toTitleCase(pers.satker_singkat || pers.satker_nama || pers.satker || 'Mabes Polri')})
+                (0,t.jsx)("div",{style:{fontSize:"0.72rem",color:"#94a3b8",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"1px"},children:isProfileSuperadmin(pers.id, pers.role_bdb || pers.role, pers.username || pers.callsign) ? 'Robinopsnal Bareskrim Polri' : toTitleCase(pers.satker_singkat || pers.satker_nama || pers.satker || 'Mabes Polri')})
               ]
             }),
             (0,t.jsx)("button",{
@@ -4396,7 +4402,7 @@ children:1===eOtpStep?(0,t.jsxs)("div",{style:{display:"grid",gap:"1rem",textAli
         (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{display:"grid",gap:"0.6rem",padding:"0.5rem 0",maxHeight:"24rem",overflowY:"auto"},children:
           ePersonalLikesList.map(rx => {
             var usr = rx.user || {};
-            var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
+            var isUsrSuper = isProfileSuperadmin(usr.id, usr.role_bdb || usr.role, usr.username || usr.callsign);
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
             var initials = String(usrHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
