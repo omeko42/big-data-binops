@@ -554,7 +554,10 @@ function bulkOptionGroups(field,row,curVal){
       return!1;
     }
     return!0;
-  }).map(g=>({label:g.label,items:(g.items||[]).map(v=>({label:String(v),value:v}))}));
+  }).map(g=>{
+    let preSet=Array.isArray(g.pre_2026_items)&&yr&&yr>=2026?new Set(g.pre_2026_items):null,items=(g.items||[]).filter(v=>!preSet||!preSet.has(v)||curVal===v);
+    return{label:g.label,items:items.map(v=>({label:String(v),value:v}))};
+  });
 }
 function bulkOptions(field,row,curVal){
   if(Array.isArray(field?.option_groups)){

@@ -2857,12 +2857,11 @@ let LaporanPolisiService = class LaporanPolisiService {
             'Amnesti atau abolisi',
             'Maksimum denda dibayar sukarela',
             'Diversi',
-            'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
-            'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
-            'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
-            'Daya paksa / Keadaan darurat / Overmacht (Pasal 48 KUHP Lama)',
-            'Melaksanakan perintah UU atau perintah jabatan yang sah (Pasal 50-51 KUHP Lama)',
-            'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)'
+            'Tersangka gila / gangguan jiwa',
+            'Tersangka anak di bawah umur (< 12 tahun)',
+            'Bela paksa',
+            'Daya paksa / keadaan darurat',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah'
         ];
         const PERMA_OPTIONS = ['Tipiring', 'LHA PPATK'];
         STATUS_OPTIONS.forEach((v, i) => { refSheet.getCell(`F${i + 2}`).value = v; });
@@ -2891,7 +2890,7 @@ let LaporanPolisiService = class LaporanPolisiService {
             sheet.getCell(`J${i}`).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: ["'Petunjuk & Referensi'!$G$2:$G$17"],
+                formulae: ["'Petunjuk & Referensi'!$G$2:$G$16"],
                 showErrorMessage: true,
                 errorTitle: 'Alasan Tidak Valid',
                 error: 'Pilih alasan penghentian dari daftar dropdown.'
@@ -3106,7 +3105,10 @@ let LaporanPolisiService = class LaporanPolisiService {
         });
         const ALASAN_OPTIONS = [
             'Tidak terdapat cukup alat bukti',
+            'Tidak terdapat cukup bukti',
             'Peristiwa bukan merupakan tindak pidana',
+            'Peristiwa tersebut ternyata bukan merupakan tindak pidana',
+            'Terdapat alasan penghentian menurut hukum',
             'Penyelesaian luar proses peradilan / Restorative Justice',
             'Ditariknya pengaduan',
             'Putusan tetap / Ne Bis in Idem',
@@ -3117,6 +3119,11 @@ let LaporanPolisiService = class LaporanPolisiService {
             'Maksimum pidana denda dibayar sukarela',
             'Maksimum denda dibayar sukarela',
             'Diversi',
+            'Tersangka gila / gangguan jiwa',
+            'Tersangka anak di bawah umur (< 12 tahun)',
+            'Bela paksa',
+            'Daya paksa / keadaan darurat',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah',
             'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
             'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
             'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
@@ -3125,6 +3132,11 @@ let LaporanPolisiService = class LaporanPolisiService {
             'Bayar denda maksimum pelanggaran / Afdoening buiten proces (Pasal 82 KUHP Lama)'
         ];
         const PRE_2026_ALASAN = new Set([
+            'Tersangka gila / gangguan jiwa',
+            'Tersangka anak di bawah umur (< 12 tahun)',
+            'Bela paksa',
+            'Daya paksa / keadaan darurat',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah',
             'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
             'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
             'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',

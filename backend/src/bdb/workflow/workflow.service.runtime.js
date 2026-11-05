@@ -149,7 +149,50 @@ let WorkflowService = class WorkflowService {
              on conflict (lower(nomor_pasal), lower(coalesce(uu_referensi,''))) do update set deskripsi=excluded.deskripsi returning id, nomor_pasal, deskripsi, uu_referensi`, [body.nomor_pasal.trim(), body.deskripsi ?? null, body.uu_referensi ?? null]);
         return { status: 1, data: r[0], message: 'Pasal disimpan.' };
     }
-    async documentTypes(includeInactive = false) {
+    async resolveLpYear(lpId) {
+        if (!lpId || !Number.isInteger(lpId) || lpId <= 0)
+            return null;
+        const rows = await this.dataSource.query(`select to_char(parse_tgl_laporan(tgl_laporan), 'YYYY') as yr, no_laporan from bdb_laporan_polisi where id=$1 limit 1`, [lpId]);
+        if (!rows.length)
+            return null;
+        if (rows[0].yr) {
+            const y = parseInt(String(rows[0].yr), 10);
+            if (!isNaN(y))
+                return y;
+        }
+        const m = String(rows[0].no_laporan || '').match(/\/(20\d{2}|19\d{2})\//);
+        return m ? parseInt(m[1], 10) : null;
+    }
+    filterSchemaForLpYear(formSchema, lpYear) {
+        if (!formSchema || !Array.isArray(formSchema.fields))
+            return formSchema;
+        return {
+            ...formSchema,
+            fields: formSchema.fields.map((f) => {
+                if (!f || !Array.isArray(f.option_groups))
+                    return f;
+                const grps = f.option_groups
+                    .filter((g) => {
+                        if (!g || !Array.isArray(g.items))
+                            return false;
+                        if (g.max_lp_year && lpYear && lpYear > Number(g.max_lp_year))
+                            return false;
+                        return true;
+                    })
+                    .map((g) => {
+                        const preSet = Array.isArray(g.pre_2026_items) && lpYear && lpYear >= 2026 ? new Set(g.pre_2026_items) : null;
+                        return preSet ? { ...g, items: (g.items || []).filter((v) => !preSet.has(v)) } : g;
+                    });
+                return {
+                    ...f,
+                    option_groups: grps,
+                    options: grps.flatMap((g) => g.items || []),
+                };
+            }),
+        };
+    }
+    async documentTypes(includeInactive = false, lpId) {
+        const lpYear = await this.resolveLpYear(lpId);
         const rows = await this.dataSource.query(`select d.id, d.code, d.nama, d.status_prasyarat_id, d.dokumen_prasyarat_id, d.status_target_id, d.urutan_tahap, d.form_schema, d.aktif,
                     sp.code as status_prasyarat_code, st.code as status_target_code, dp.code as dokumen_prasyarat_code, st.kategori as kategori
              from bdb_document_type_master d
@@ -158,9 +201,14 @@ let WorkflowService = class WorkflowService {
              left join bdb_document_type_master dp on dp.id=d.dokumen_prasyarat_id
              ${includeInactive ? '' : 'where d.aktif=true'}
              order by d.urutan_tahap, d.code`);
+        if (lpYear) {
+            for (const r of rows) {
+                r.form_schema = this.filterSchemaForLpYear(r.form_schema, lpYear);
+            }
+        }
         return { status: 1, data: rows };
     }
-    async schemaByCode(code) {
+    async schemaByCode(code, lpId) {
         const rows = await this.dataSource.query('select code, nama, form_schema from bdb_document_type_master where code=$1', [code]);
         if (!rows.length)
             throw new common_1.NotFoundException('Jenis surat tidak ditemukan.');
@@ -178,6 +226,10 @@ let WorkflowService = class WorkflowService {
                     }
                     : field)
             };
+        }
+        const lpYear = await this.resolveLpYear(lpId);
+        if (lpYear) {
+            rows[0].form_schema = this.filterSchemaForLpYear(rows[0].form_schema, lpYear);
         }
         return { status: 1, data: rows[0] };
     }
@@ -616,6 +668,11 @@ let WorkflowService = class WorkflowService {
             }
         }
         const PRE_2026_ALASAN = new Set([
+            'Tersangka gila / gangguan jiwa',
+            'Tersangka anak di bawah umur (< 12 tahun)',
+            'Bela paksa',
+            'Daya paksa / keadaan darurat',
+            'Melaksanakan perintah UU atau perintah jabatan yang sah',
             'Tersangka gila / gangguan jiwa / psikotik akut (Pasal 44 KUHP Lama)',
             'Tersangka anak di bawah umur / < 12 tahun (UU SPPA)',
             'Bela paksa / Noodweer / Noodweer Exces (Pasal 49 KUHP Lama)',
@@ -625,7 +682,7 @@ let WorkflowService = class WorkflowService {
         ]);
         if (data.alasan_penghentian && PRE_2026_ALASAN.has(String(data.alasan_penghentian).trim())) {
             if (tglLp && String(tglLp).slice(0, 4) >= '2026') {
-                throw new common_1.BadRequestException(`Alasan penghentian "${data.alasan_penghentian}" merupakan ketentuan sebelum KUHP & KUHAP baru yang hanya melekat untuk LP sebelum tahun 2026 (Tanggal LP ini: ${tglLp}).`);
+                throw new common_1.BadRequestException(`Alasan penghentian "${data.alasan_penghentian}" hanya berlaku untuk LP sebelum tahun 2026 (Tanggal LP ini: ${tglLp}).`);
             }
         }
         const pihakArrays = ['tersangka', 'saksi', 'korban', 'terlapor', 'personel'];

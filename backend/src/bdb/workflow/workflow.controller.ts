@@ -33,16 +33,16 @@ export class WorkflowController {
 
     // ---- master jenis surat ----
     @Get('document-types')
-    documentTypes(@Query('all') all?: string) {
-        return this.service.documentTypes(all === '1' || all === 'true');
+    documentTypes(@Query('all') all?: string, @Query('lp_id') lpId?: string) {
+        return this.service.documentTypes(all === '1' || all === 'true', lpId ? parseInt(lpId, 10) : undefined);
     }
     @Post('document-types')
     saveDocumentType(@Body() body: any) {
         return this.service.saveDocumentType(body || {});
     }
     @Get('document-types/:code/schema')
-    schema(@Param('code') code: string) {
-        return this.service.schemaByCode(code);
+    schema(@Param('code') code: string, @Query('lp_id') lpId?: string) {
+        return this.service.schemaByCode(code, lpId ? parseInt(lpId, 10) : undefined);
     }
 
     // ---- alur per LP ----
