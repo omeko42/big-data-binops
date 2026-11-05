@@ -90,14 +90,14 @@ e.s(["default", 0, function() {
 
   let resolveAuthorSatker = (item) => {
     if (!item) return 'Robinopsnal Bareskrim Polri';
-    var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+    var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'];
     var uNorm = String(item?.author_username || item?.author_callsign || item?.author_handle || '').toLowerCase().trim().replace(/^@/, '');
     var rNorm = String(item?.author_role || '').toLowerCase().trim();
-    var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'mat.doang7'].includes(uNorm) || rNorm.includes('super') || rNorm.includes('binops');
-    let rawSat = String(item?.author_satker || item?.satker_name || item?.satker || '').trim();
-    if (isSuper && (!rawSat || /^polri$/i.test(rawSat) || /^mabes/i.test(rawSat) || /robinops/i.test(rawSat) || /bareskrim/i.test(rawSat))) {
+    var isSuper = SUPER_IDS.includes(String(item?.author_id)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'mat.doang7'].includes(uNorm) || rNorm.includes('super') || rNorm.includes('binops');
+    if (isSuper) {
       return 'Robinopsnal Bareskrim Polri';
     }
+    let rawSat = String(item?.author_satker || item?.satker_name || item?.satker || '').trim();
     return formatSatkerName(rawSat || 'Robinopsnal Bareskrim Polri');
   };
 

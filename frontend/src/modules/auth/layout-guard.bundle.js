@@ -1079,10 +1079,37 @@ function casCapitalizeEachWordSatker(rawSatker) {
     .join(" ");
 }
 
-function casFormatPangkatSatkerLine(rawPangkat, rawSatker, isUserOne) {
-  const satkerCap = casCapitalizeEachWordSatker(isUserOne ? "Robinopsnal Bareskrim Polri" : (rawSatker || "Polri")) || "Polri";
+function isCasSuperadmin(u) {
+  if (!u || typeof u !== "object") return false;
+  const uidStr = String(u.id ?? u.partner_id ?? u.user_id ?? "");
+  if (["1", "320", "15403", "15404", "16568", "16576", "16594", "17360"].includes(uidStr)) return true;
+  const uname = String(u.callsign || u.handle || u.username || "").trim().toLowerCase().replace(/^@+/, "");
+  if (["om.eko_42", "omeko42", "yudi", "nyomannnn", "henry", "idris.ganteng", "rachmat", "renciaa", "kusuma", "ai_taktis_cas"].includes(uname)) return true;
+  const roleStr = String(u.role_bdb || u.role?.role_name || u.role || "").trim().toLowerCase();
+  return roleStr.includes("super") || roleStr === "admin_binops" || roleStr === "admin binops";
+}
+
+function formatCasUserSatker(u, fallback = "Polri") {
+  if (isCasSuperadmin(u) || Number(u?.id ?? u?.partner_id) === -1 || u?.is_ai) {
+    return "Robinopsnal Bareskrim Polri";
+  }
+  const raw = u?.satker_singkat || u?.satker_nama || u?.satker || u?.scope_satker_name || u?.satuan || fallback;
+  const s = String(raw || "").trim();
+  const low = s.toLowerCase();
+  if (!s || low === "-" || low === "null" || low === "undefined" || low === "superadmin" || low === "bdb superadmin") {
+    return fallback;
+  }
+  if (low === "robinopsnal" || low === "robinopsnal bareskrim" || low === "robinopsnal bareskrim polri" || low.includes("robinops")) {
+    return "Robinopsnal Bareskrim Polri";
+  }
+  return casCapitalizeEachWordSatker(s) || fallback;
+}
+
+function casFormatPangkatSatkerLine(rawPangkat, rawSatker, isUserOne, userObj) {
+  const isSuper = Boolean(isUserOne || isCasSuperadmin(userObj));
+  if (isSuper) return "Robinopsnal Bareskrim Polri";
+  const satkerCap = casCapitalizeEachWordSatker(rawSatker || "Polri") || "Polri";
   let p = String(rawPangkat || "").replace(/^[\s\-·—]+|[\s\-·—]+$/g, "").trim();
-  if (isUserOne) p = "Kompol";
   if (
     !p ||
     p === "-" ||
@@ -1090,7 +1117,10 @@ function casFormatPangkatSatkerLine(rawPangkat, rawSatker, isUserOne) {
     p.toLowerCase() === "null" ||
     p.toLowerCase() === "undefined" ||
     p.toLowerCase() === "personil" ||
-    p.toLowerCase() === "personil polri"
+    p.toLowerCase() === "personil polri" ||
+    p.toLowerCase() === "superadmin" ||
+    p.toLowerCase() === "admin" ||
+    p.toLowerCase() === "operator"
   ) {
     return satkerCap;
   }
@@ -1117,7 +1147,7 @@ function renderCasMetaBadge(u, size = 14) {
   const roleStr = String(u?.role_bdb || u?.role?.role_name || u?.role || "").toLowerCase();
   if (roleStr.includes("vendor") || roleStr.includes("mitra")) return null;
   const isAi = uidStr === "-1" || Boolean(u?.is_ai) || uname.includes("ai_taktis");
-  const isSuper = !isAi && (uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super") || ["1", "320", "15403", "15404", "16568", "16576", "16594"].includes(uidStr));
+  const isSuper = !isAi && (uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super") || ["1", "320", "15403", "15404", "16568", "16576", "16594", "17360"].includes(uidStr) || ["yudi", "nyomannnn", "henry", "idris.ganteng", "rachmat", "renciaa", "kusuma"].includes(uname.replace(/^@+/, "")));
   const isBinops = !isAi && !isSuper && roleStr.includes("binops");
   const isVerifiedBlue = isAi || !roleStr || roleStr.includes("operator") || roleStr.includes("penyidik") || roleStr.includes("viewer") || roleStr.includes("pimpinan") || roleStr.includes("admin_satker") || roleStr.includes("pejabat");
   if (!isSuper && !isBinops && !isVerifiedBlue) return null;
@@ -1409,7 +1439,7 @@ function L({user:e,roleLabel:n,onToggleSidebar:l,onToggleCollapse:i}){let o=(0,r
 function switchNotifTab(t){
   setNotifTab(t);
 }(0,t.useEffect)(()=>{el()},[el]),(0,t.useEffect)(()=>{function uEv(ev){try{let u=ev?.detail||JSON.parse(localStorage.getItem("user")||"{}");let p=u?.photo_url||u?.foto||null;if(p)setLivePhoto(p);if(u&&u.id)setLiveUser(u)}catch{}}window.addEventListener("user-updated",uEv);window.addEventListener("storage",uEv);try{M.apiAuth.get("/user/me/profile").then(res=>{let d=res.data?.data;if(d&&!Array.isArray(d)&&(d.id||d.username)){setLiveUser(d);let p=d?.photo_url||d?.foto||null;if(p)setLivePhoto(p);try{let u=JSON.parse(localStorage.getItem("user")||"{}");if(p){u.photo_url=p;u.foto=p;}if(d.username){u.username=d.username;u.callsign=d.username;}else if(d.callsign)u.callsign=d.callsign;if(d.satker_nama){u.satker_nama=d.satker_nama;u.scope_satker_name=d.satker_nama;if(!u.satker||String(u.satker).toLowerCase().includes("superadmin"))u.satker=d.satker_nama;}if(d.role_bdb)u.role_bdb=d.role_bdb;localStorage.setItem("user",JSON.stringify(u))}catch(e){}}}).catch(()=>{})}catch(e){}return()=>{window.removeEventListener("user-updated",uEv);window.removeEventListener("storage",uEv)}},[]);let curUser=(liveUser&&liveUser.id)?liveUser:(e&&e.id?e:(function(){try{var lu=JSON.parse(localStorage.getItem("user")||"null");return (lu&&lu.id)?lu:null;}catch(e){return null;}})());
-let isSuper=Boolean(curUser&&(String(curUser?.id)==='1'||String(curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'||String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase().includes('super')||['1','320','15403','15404','16568','16576','16594'].includes(String(curUser?.id||curUser?.user_id))));
+let isSuper=Boolean(curUser&&(String(curUser?.id)==='1'||String(curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'||String(curUser?.role_bdb||curUser?.role?.role_name||curUser?.role||'').toLowerCase().includes('super')||['1','320','15403','15404','16568','16576','16594','17360'].includes(String(curUser?.id||curUser?.user_id))));
 let eo=(function(){if(!curUser)return"Pengguna";return formatUserCallsign(curUser)||curUser.name||"Pengguna";})();
 let isVendorRole=Boolean(curUser&&["vendor_mitra","vendor","mitra"].includes(String(curUser?.role_bdb||curUser?.requested_role_bdb||curUser?.role?.role_name||"").toLowerCase()));let _rawSat=[curUser?.satker_singkat,curUser?.satker_nama,curUser?.scope_satker_name,curUser?.satker,curUser?.satuan].find(x=>x&&!['bdb superadmin','superadmin','-','null','undefined'].includes(String(x).trim().toLowerCase()));let userSatkerDisp=isVendorRole?'Vendor / Mitra (Read-Only)':isSuper?'Robinopsnal Bareskrim Polri':(curUser?toTitleCase(_rawSat||'Polri'):'-');
 let isOkoTop=Boolean(curUser&&(String(curUser?.id||curUser?.user_id)==='1'||curUser?.username==='omeko42'||curUser?.callsign==='omeko42'));let hasTopV2=Boolean(isOkoTop||curUser?.social_media?.avatar_v2||(curUser?.id&&typeof localStorage!=='undefined'&&localStorage.getItem('cas_avatar_v2_'+curUser.id)==='1'));let isPolwanTop=(function(u){if(!u||typeof u!=='object')return false;var expG=String(u.social_media?.jenis_kelamin||u.social_media?.gender||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(expG))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(expG))return false;var g=String(u.gender||u.jenis_kelamin||'').trim().toLowerCase();if(['p','perempuan','wanita','female','f','polwan'].includes(g))return true;if(['l','laki-laki','laki','pria','male','m','polki'].includes(g))return false;var nm=String(u.name||u.username||'').trim();if(/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(nm))return false;return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid)\b/i.test(nm);})(curUser);let defTopAvatar=isPolwanTop?'/images/default-avatar-polwan.jpg':'/images/default-avatar-polki.png';let rawTopPhoto=livePhoto||curUser?.photo_url||curUser?.foto||'';let topAvatarSrc=(typeof rawTopPhoto==='string'&&rawTopPhoto.trim().length>5&&rawTopPhoto!=='null'&&rawTopPhoto!=='undefined'&&!rawTopPhoto.includes('default-avatar'))?rawTopPhoto.trim():defTopAvatar;let ec=(0,a.jsx)("img",{src:topAvatarSrc,alt:eo,onError:ev=>{ev.currentTarget.onerror=null;ev.currentTarget.src="/images/default-avatar-polki.png";},style:{width:"100%",height:"100%",borderRadius:"999px",objectFit:"cover"}}),eu=w?null==T?"offline":T<150?"excellent":T<400?"good":T<900?"weak":"poor":"offline";return(0,a.jsxs)("header",{className:"cms-topbar",children:[(0,a.jsx)("button",{type:"button",className:"cms-hamburger","aria-label":"Menu",onClick:l,children:(0,a.jsx)(c,{id:"fld-0-gigr76s0g8t-3",name:"field_0_gigr76s0g8t_3",size:20})}),(0,a.jsx)("button",{type:"button",className:"cms-collapse-btn","aria-label":"Sembunyikan/tampilkan menu",title:"Sembunyikan/tampilkan menu",onClick:i,children:(0,a.jsx)(g,{id:"fld-0-gigr76s0g8t-4",name:"field_0_gigr76s0g8t_4",size:19})}),(0,a.jsx)("div",{className:"cms-topbar-spacer"}),ea&&(0,a.jsxs)(s.default,{href:"/cms/integrasi/dors",title:er?`Sync DORS ${er.from_date} s/d ${er.to_date} sedang berjalan (percobaan ${er.attempt??1}/${er.max_attempts??5}, ${er.total_upserted} data baru sejauh ini). Jangan restart backend dulu.`:"Sync DORS sedang berjalan. Jangan restart backend dulu.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync DORS berjalan"]}),(("offline"===eu||!w||(typeof window!=="undefined"&&window.__bdbIsSyncing))&&(0,a.jsxs)("div",{title:"Mode Offline Aktif - Sync data cache lokal & antrean pekerjaan berjalan otomatis.",style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",padding:"0.3rem 0.7rem",borderRadius:999,background:"#fef3c7",color:"#92400e",fontSize:"0.78rem",fontWeight:700,textDecoration:"none",border:"1px solid #fde68a",cursor:"default"},children:[(0,a.jsx)(x.RefreshCw,{size:13,className:"cms-spin"}),"Sync Offline berjalan"]})),(0,a.jsxs)("div",{ref:U,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:`cms-status cms-status-btn q-${eu}`,onClick:()=>B(e=>!e),title:"Klik untuk lihat detail koneksi","aria-label":"Status jaringan",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-5",name:"field_0_gigr76s0g8t_5",size:15}):"weak"===eu||"poor"===eu?(0,a.jsx)(f,{id:"fld-0-gigr76s0g8t-6",name:"field_0_gigr76s0g8t_6",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-7",name:"field_0_gigr76s0g8t_7",size:15}),(0,a.jsx)("span",{children:P[eu]})]}),D&&(0,a.jsxs)("div",{className:"cms-status-pop",children:[(0,a.jsxs)("div",{className:"cms-status-pop-title",children:["offline"===eu?(0,a.jsx)(m,{id:"fld-0-gigr76s0g8t-8",name:"field_0_gigr76s0g8t_8",size:15}):(0,a.jsx)(p,{id:"fld-0-gigr76s0g8t-9",name:"field_0_gigr76s0g8t_9",size:15})," Status Jaringan — ",P[eu]]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(y.Gauge,{size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Ping"]}),(0,a.jsx)("span",{className:"v",children:null!=T?`${T} ms`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(k,{id:"fld-0-gigr76s0g8t-10",name:"field_0_gigr76s0g8t_10",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unduh"]}),(0,a.jsx)("span",{className:"v",children:null!=E?`${E} Mbps`:"—"})]}),(0,a.jsxs)("div",{className:"cms-status-pop-row",children:[(0,a.jsxs)("span",{className:"k",children:[(0,a.jsx)(b,{id:"fld-0-gigr76s0g8t-11",name:"field_0_gigr76s0g8t_11",size:12,style:{verticalAlign:"-1px",marginRight:"0.3rem"}}),"Unggah"]}),(0,a.jsx)("span",{className:"v",children:null!=K?`${K} Mbps`:"—"})]}),(0,a.jsx)("div",{className:"cms-status-pop-note",children:"Ping diperbarui tiap 15 detik, unduh/unggah tiap 45 detik. Estimasi kasar dari server BDB, bukan speedtest presisi."})]})]}),(0,a.jsxs)("div",{ref:Z,style:{position:"relative"},children:[(0,a.jsxs)("button",{type:"button",className:"cms-icon-btn",onClick:ei,title:"Notifikasi","aria-label":"Notifikasi",style:{position:"relative"},children:[(0,a.jsx)(j,{id:"fld-0-gigr76s0g8t-12",name:"field_0_gigr76s0g8t_12",size:18}),W.total>0&&(0,a.jsx)("span",{className:"tabular-nums",style:{position:"absolute",top:1,right:1,minWidth:16,height:16,borderRadius:999,background:"#dc2626",color:"#fff",fontSize:"0.6rem",fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 4px",lineHeight:1,whiteSpace:"nowrap"},children:W.total>99?"99+":W.total})]}),q&&(0,a.jsxs)("div",{className:"cms-status-pop",style:{width:"25.5rem",maxWidth:"94vw",right:0,padding:"0.85rem",borderRadius:"14px"},children:[
@@ -1579,7 +1609,8 @@ function TacticalMessengerWidget() {
           id: res.data.partner.id,
           name: res.data.partner.name,
           callsign: res.data.partner.handle,
-          satker: res.data.partner.satker,
+          role_bdb: res.data.partner.role_bdb,
+          satker: formatCasUserSatker(res.data.partner),
           photo: res.data.partner.photo_url
         });
       }
@@ -1807,14 +1838,15 @@ function TacticalMessengerWidget() {
       if (!seenIds.has(pid)) {
         seenIds.add(pid);
         const cs = formatChatCallsign(c);
+        const cSat = formatCasUserSatker(c);
         combined.push({
           id: pid,
           name: cs,
           callsign: cs,
           role_bdb: c.role_bdb || "operator",
-          satker: c.satker || "Polri",
+          satker: cSat,
           photo: c.photo_url,
-          sub: c.last_message || c.satker || "Polri",
+          sub: c.last_message || cSat,
           unread: Number(c.unread_count || 0),
           is_ai: Boolean(c.is_ai || pid === -1)
         });
@@ -1825,14 +1857,15 @@ function TacticalMessengerWidget() {
       if (!seenIds.has(uid)) {
         seenIds.add(uid);
         const cs = formatChatCallsign(u);
+        const uSat = formatCasUserSatker(u);
         combined.push({
           id: uid,
           name: cs,
           callsign: cs,
           role_bdb: u.role_bdb || "operator",
-          satker: u.satker || "Polri",
+          satker: uSat,
           photo: u.photo_url,
-          sub: u.satker || "Polri",
+          sub: uSat,
           unread: 0,
           is_ai: false
         });
@@ -2148,7 +2181,7 @@ function TacticalMessengerWidget() {
                           }),
                           (0, a.jsx)("div", {
                             style: { fontSize: "0.66rem", color: "var(--cas-text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-                            children: defaultTarget.satker || "Robinopsnal Bareskrim Polri"
+                            children: formatCasUserSatker(defaultTarget, "Robinopsnal Bareskrim Polri")
                           })
                         ]
                       })
@@ -2843,7 +2876,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
               if(!seen.has(pid)){
                 seen.add(pid);
                 const cs=formatChatCallsign(c);
-                list.push({id:pid,is_ai:Boolean(c.is_ai||pid===-1),role_bdb:c.role_bdb||"operator",name:cs,handle:cs,satker:c.satker||"Polri",photo_url:c.photo_url});
+                list.push({id:pid,is_ai:Boolean(c.is_ai||pid===-1),role_bdb:c.role_bdb||"operator",name:cs,handle:cs,satker:formatCasUserSatker(c),photo_url:c.photo_url});
               }
             });
             forwardUsers.forEach(u=>{
@@ -2851,7 +2884,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
               if(!seen.has(uid)){
                 seen.add(uid);
                 const cs=formatChatCallsign(u);
-                list.push({id:uid,is_ai:!1,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:u.satker||"Polri",photo_url:u.photo_url});
+                list.push({id:uid,is_ai:!1,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:formatCasUserSatker(u),photo_url:u.photo_url});
               }
             });
             const q=forwardSearch.trim().toLowerCase();
@@ -2941,7 +2974,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
             key:"newdm_"+u.id,
             onClick:()=>{
               setSelectedId(Number(u.id));
-              setPartner({id:u.id,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:u.satker||"Polri",photo_url:u.photo_url,online:!0});
+              setPartner({id:u.id,role_bdb:u.role_bdb||"operator",name:cs,handle:cs,satker:formatCasUserSatker(u),photo_url:u.photo_url,online:!0});
               setNewMsgModalOpen(!1);
               setMobileShowThread(!0);
             },
@@ -2956,7 +2989,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                   (0,a.jsx)("span",{style:{fontWeight:800,fontSize:"0.85rem",color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:cs}),
                   renderCasMetaBadge(u,14)
                 ]}),
-                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",fontWeight:500},children:u.satker||"Polri"})
+                (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",fontWeight:500},children:formatCasUserSatker(u)})
               ]}),
               (0,a.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,color:"#2563eb",padding:"0.25rem 0.6rem",borderRadius:999,background:"rgba(37,99,235,0.1)"},children:"Chat ➔"})
             ]
@@ -3170,7 +3203,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                         (0,a.jsx)("span",{style:{fontSize:"0.82rem",fontWeight:800,color:"var(--cas-text-primary)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatChatCallsign(u)}),
                         renderCasMetaBadge(u,14)
                       ]}),
-                      (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:u.satker||"Polri"})
+                      (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:formatCasUserSatker(u)})
                     ]})
                   ]
                 }))
@@ -3226,7 +3259,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                     ]}),
                     (0,a.jsx)("div",{
                       style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},
-                      children:activePartner.satker||"Robinopsnal Bareskrim Polri"
+                      children:formatCasUserSatker(activePartner,"Robinopsnal Bareskrim Polri")
                     })
                   ]})
                 ]}),
@@ -3574,7 +3607,7 @@ function CasObrolanFullPage({user:curUser,searchStr}){
                       (0,a.jsx)("span",{children:formatChatCallsign(activePartner)}),
                       renderCasMetaBadge(activePartner,15)
                     ]}),
-                    (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",marginTop:"0.25rem"},children:activePartner.satker||"Robinopsnal Bareskrim Polri"})
+                    (0,a.jsx)("div",{style:{fontSize:"0.73rem",color:"var(--cas-text-muted)",marginTop:"0.25rem"},children:formatCasUserSatker(activePartner,"Robinopsnal Bareskrim Polri")})
                   ]}),
                   (0,a.jsxs)("div",{style:{padding:"0.65rem",borderRadius:10,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)",fontSize:"0.74rem",color:"var(--cas-text-secondary)",lineHeight:1.45},children:[
                     (0,a.jsx)("div",{style:{fontWeight:700,color:"var(--cas-text-primary)",marginBottom:"0.2rem"},children:"🔒 Keamanan Obrolan"}),
@@ -3914,7 +3947,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
 
   if(profileIdParam){
     const profHandle=String(profData?.callsign||profData?.username||"personil").replace(/^@/,"").toLowerCase();
-    const profPangkatSatker=casFormatPangkatSatkerLine(profData?.pangkat,profData?.satker_nama||profData?.satker,Number(profData?.id)===1);
+    const profPangkatSatker=casFormatPangkatSatkerLine(profData?.pangkat,profData?.satker_nama||profData?.satker,Number(profData?.id)===1,profData);
     const profStatus=profData?.connection_status||(profData?.is_connected?"connected":"none");
     return(0,a.jsxs)("div",{style:{display:"grid",gap:"1rem"},children:[
       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap"},children:[
@@ -3951,7 +3984,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
             (0,a.jsx)("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:"0.75rem"},children:[
               {label:"Postingan Sharese",val:profData.posts_count??profPosts.length,color:"#0284c7"},
               {label:"Jejaring Terhubung",val:profData.connections_count||0,color:"#059669"},
-              {label:"Satuan Kerja",val:casCapitalizeEachWordSatker(profData.satker||"Polri"),color:"#7c3aed"},
+              {label:"Satuan Kerja",val:formatCasUserSatker(profData),color:"#7c3aed"},
               {label:"Pangkat / Peran",val:casCapitalizeEachWordSatker(profData.pangkat&&profData.pangkat!=="-"?profData.pangkat:profData.role_bdb||"Personil Polri"),color:"#d97706"}
             ].map((st,i)=>(0,a.jsxs)("div",{key:i,style:{padding:"0.75rem 0.95rem",borderRadius:12,background:"var(--cas-surface-subtle)",border:"1px solid var(--cas-border)"},children:[
               (0,a.jsx)("div",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted)",fontWeight:700},children:st.label}),
@@ -3966,7 +3999,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
         ].map(tb=>(0,a.jsx)("button",{key:tb.id,type:"button",onClick:()=>setProfTab(tb.id),style:{flex:"1 1 140px",textAlign:"center",padding:"0.5rem 0.75rem",borderRadius:10,border:profTab===tb.id?"1px solid #38bdf8":"1px solid var(--cas-border)",background:profTab===tb.id?"rgba(2,132,199,0.16)":"var(--cas-card-bg)",color:profTab===tb.id?"#0284c7":"var(--cas-text-secondary)",fontWeight:800,fontSize:"0.8rem",cursor:"pointer"},children:tb.label}))}),
         profTab==="posts"&&(0,a.jsx)("div",{style:{display:"grid",gap:"0.75rem"},children:profPosts.length===0?(0,a.jsx)("div",{style:{padding:"2rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Personil ini belum memiliki postingan publik di linimasa Sharese."}):profPosts.map(p=>(0,a.jsxs)("div",{key:p.id,style:{padding:"1rem 1.2rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
           (0,a.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",fontSize:"0.74rem",color:"var(--cas-text-muted)",marginBottom:"0.45rem"},children:[
-            (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`@${profHandle} · ${casCapitalizeEachWordSatker(profData.satker)}`}),
+            (0,a.jsx)("span",{style:{color:"#0284c7",fontWeight:700},children:`@${profHandle} · ${formatCasUserSatker(profData)}`}),
             (0,a.jsx)("span",{children:p.created_at?new Date(p.created_at).toLocaleString("id-ID"):""})
           ]}),
           (0,a.jsx)("div",{style:{fontSize:"0.88rem",color:"var(--cas-text-primary)",whiteSpace:"pre-wrap",lineHeight:1.55},children:p.content}),
@@ -3985,7 +4018,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
                 (0,a.jsx)("span",{children:`@${cHandle}`}),
                 renderCasMetaBadge(c,14)
               ]}),
-              (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:casFormatPangkatSatkerLine(c.pangkat,c.satker,Number(c.id)===1)})
+              (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",marginTop:"0.12rem"},children:casFormatPangkatSatkerLine(c.pangkat,c.satker,Number(c.id)===1,c)})
             ]})
           ]});
         })}),
@@ -3993,7 +4026,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
           {k:"Username Sharese",v:"@"+profHandle},
           {k:"Pangkat / Golongan",v:casCapitalizeEachWordSatker(profData.pangkat&&profData.pangkat!=="-"?profData.pangkat:"Personil Polri")},
           {k:"Jabatan",v:casCapitalizeEachWordSatker(profData.jabatan&&profData.jabatan!=="-"?profData.jabatan:"Pejabat Kedinasan")},
-          {k:"Satuan Kerja (Satker)",v:casCapitalizeEachWordSatker(profData.satker_nama||profData.satker||"Polri")},
+          {k:"Satuan Kerja (Satker)",v:formatCasUserSatker(profData)},
           {k:"Email Kedinasan",v:profData.email_polri||profData.email||"-"}
         ].map((row,idx)=>(0,a.jsxs)("div",{key:idx,children:[
           (0,a.jsx)("div",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted)",fontWeight:700},children:row.k}),
@@ -4035,7 +4068,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
           style:{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))",gap:"0.75rem"},
           children:incomingReqs.slice(0,6).map(req=>{
             const reqHandle=String(req.callsign||req.username||"personil").replace(/^@/,"").toLowerCase();
-            const reqSub=casFormatPangkatSatkerLine(req.pangkat,req.satker,Number(req.id)===1);
+            const reqSub=casFormatPangkatSatkerLine(req.pangkat,req.satker,Number(req.id)===1,req);
             return(0,a.jsxs)("div",{
               key:"inc_"+req.id,
               style:{
@@ -4103,7 +4136,7 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
     loading?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",color:"var(--cas-text-muted)"},children:"⏳ Memuat direktori jejaring personil…"}):users.length===0?(0,a.jsx)("div",{style:{padding:"3rem",textAlign:"center",background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",borderRadius:14,color:"var(--cas-text-muted)"},children:"Tidak ada personil pada kategori ini."}):(0,a.jsx)("div",{className:"cas-koneksi-bento-grid",children:users.map(u=>{
       const isMe=Number(u.id)===Number(curUser?.id);
       const uHandle=String(u.callsign||u.username||"personil").replace(/^@/,"").toLowerCase();
-      const uPangkatSatker=casFormatPangkatSatkerLine(u.pangkat,u.satker,Number(u.id)===1);
+      const uPangkatSatker=casFormatPangkatSatkerLine(u.pangkat,u.satker,Number(u.id)===1,u);
       const cStatus=u.connection_status||(u.is_connected?"connected":u.is_following?"outgoing":"none");
       return(0,a.jsxs)("div",{key:u.id,style:{padding:"1rem",borderRadius:14,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)",display:"flex",flexDirection:"column",justifyContent:"space-between",gap:"0.85rem",boxShadow:"0 4px 14px rgba(15,23,42,0.06)"},children:[
         (0,a.jsxs)("div",{onClick:()=>casNav(router,`/cms/broadcaster?view=koneksi&profileId=${u.id}`),style:{display:"flex",alignItems:"center",gap:"0.8rem",cursor:"pointer"},title:"Klik untuk membuka profil personil ini",children:[

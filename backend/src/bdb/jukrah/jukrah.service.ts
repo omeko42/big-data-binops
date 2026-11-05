@@ -191,6 +191,17 @@ export class JukrahService {
         return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
     }
 
+    private isSuperadminUser(id: any, roleBdb?: any, username?: any, callsign?: any): boolean {
+        const idNum = Number(id || 0);
+        if ([1, 320, 15403, 15404, 16568, 16576, 16594, 17360].includes(idNum)) return true;
+        const r = String(roleBdb || '').trim().toLowerCase();
+        if (r === 'superadmin' || r === 'super_admin' || r.includes('super') || r === 'admin_binops' || r === 'admin binops') return true;
+        const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
+        const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
+        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'ai_taktis_cas'];
+        return superHandles.includes(u) || superHandles.includes(c);
+    }
+
     private isVerifiedRole(role: any, isUserOne?: boolean): boolean {
         if (isUserOne) return true;
         const r = String(role || '').toLowerCase().trim();
@@ -219,11 +230,11 @@ export class JukrahService {
         return actorRank >= 3 && actorRank > targetRank;
     }
 
-    private resolveAuthorSatker(satkerSingkat: any, satkerNama: any, roleBdb: any, isUserOne: boolean): string {
-        if (isUserOne) return 'Robinopsnal Bareskrim Polri';
+    private resolveAuthorSatker(satkerSingkat: any, satkerNama: any, roleBdb: any, isUserOne: boolean, authorId?: any, username?: any, callsign?: any): string {
+        if (isUserOne || this.isSuperadminUser(authorId, roleBdb, username, callsign)) return 'Robinopsnal Bareskrim Polri';
         const raw = String(satkerSingkat || satkerNama || '').trim();
         const role = String(roleBdb || '').toLowerCase();
-        const isGlobal = role === 'superadmin' || role === 'admin_binops';
+        const isGlobal = role === 'superadmin' || role === 'admin_binops' || role.includes('super');
         const low = raw.toLowerCase();
         if (!raw || low === 'polri' || low === 'mabes polri' || low === 'bareskrim' || low === 'bareskrim polri' || low === 'robinopsnal' || low === 'robinopsnal bareskrim polri') {
             return isGlobal ? 'Robinopsnal Bareskrim Polri' : (raw || 'Bareskrim Polri');
@@ -1620,7 +1631,7 @@ export class JukrahService {
             params.push('%' + search + '%');
             const sIdx = params.length;
             whereClauses.push(
-                `(u.name ILIKE $${sIdx} OR u.username ILIKE $${sIdx} OR u.email_polri ILIKE $${sIdx} OR u.scope_satker_id IN (SELECT id FROM bdb_satker WHERE deskripsi ILIKE $${sIdx} OR nama_singkat ILIKE $${sIdx}))`
+                `(u.name ILIKE $${sIdx} OR u.username ILIKE $${sIdx} OR u.email_polri ILIKE $${sIdx} OR (u.role_bdb = 'superadmin' AND 'Robinopsnal Bareskrim Polri' ILIKE $${sIdx}) OR u.scope_satker_id IN (SELECT id FROM bdb_satker WHERE deskripsi ILIKE $${sIdx} OR nama_singkat ILIKE $${sIdx}))`
             );
         }
         if (satkerId) {
@@ -1726,10 +1737,11 @@ export class JukrahService {
         const mapUserRow = (r: any) => {
             const rowId = Number(r.id);
             const isUserOne = this.isSuperUserOne(rowId, r.username, r.callsign);
+            const isSuper = isUserOne || this.isSuperadminUser(rowId, r.role_bdb, r.username, r.callsign);
             const nrpFallback = r.email && r.email.match(/^(\d{7,10})@/) ? r.email.match(/^(\d{7,10})@/)[1] : (r.email_polri && r.email_polri.match(/^(\d{7,10})@/) ? r.email_polri.match(/^(\d{7,10})@/)[1] : null);
-            const rawSatker = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
-            const satkerCap = this.casCapitalizeEachWordSatker(rawSatker);
-            const satkerNamaCap = this.casCapitalizeEachWordSatker(isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_nama || r.satker_singkat || r.satuan || 'Polri'));
+            const rawSatker = isSuper ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
+            const satkerCap = isSuper ? 'Robinopsnal Bareskrim Polri' : this.casCapitalizeEachWordSatker(rawSatker);
+            const satkerNamaCap = isSuper ? 'Robinopsnal Bareskrim Polri' : this.casCapitalizeEachWordSatker(r.satker_nama || r.satker_singkat || r.satuan || 'Polri');
             const pangkatCap = this.casCleanPangkat(r.pangkat, isUserOne, r.role_bdb);
             const isFemale = this.isFemalePersonnel(r.name, r.jenis_kelamin, r.social_media);
             const resolvedPhoto = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
@@ -1969,8 +1981,9 @@ export class JukrahService {
                 created_at: pr.created_at
             }));
         } catch {}
-        const satkerSpecific = this.casCapitalizeEachWordSatker(isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri'));
-        const satkerNamaCap = this.casCapitalizeEachWordSatker(isUserOne ? 'Robinopsnal Bareskrim Polri' : (target.satker_nama || target.satker_singkat || policeProfile?.satuan || 'Polri'));
+        const isTargetSuper = isUserOne || this.isSuperadminUser(target.id, target.role_bdb, target.username, target.callsign);
+        const satkerSpecific = isTargetSuper ? 'Robinopsnal Bareskrim Polri' : this.casCapitalizeEachWordSatker(target.satker_singkat || target.satker_nama || policeProfile?.satuan || 'Polri');
+        const satkerNamaCap = isTargetSuper ? 'Robinopsnal Bareskrim Polri' : this.casCapitalizeEachWordSatker(target.satker_nama || target.satker_singkat || policeProfile?.satuan || 'Polri');
         const pangkatCap = this.casCleanPangkat(policeProfile?.pangkat, isUserOne, target.role_bdb);
         const pSoc = (policeProfile?.social_media && typeof policeProfile.social_media === 'object') ? policeProfile.social_media : {};
         const uSoc = (target.social_media && typeof target.social_media === 'object') ? target.social_media : {};
@@ -3254,7 +3267,7 @@ export class JukrahService {
             )
             SELECT u.id, u.name, u.username, u.username as callsign, u.email, u.email_polri, u.role_bdb, u.photo_url, u.social_media, u.last_login_at, u.scope_satker_id,
                    s.deskripsi as satker_nama, s.nama_singkat as satker_singkat,
-                   tp.pangkat, tp.jabatan, tp.jenis_kelamin, tp.foto as police_foto,
+                   tp.pangkat, tp.jabatan, tp.satuan, tp.jenis_kelamin, tp.foto as police_foto,
                    lm.content as last_message, lm.created_at as last_time, lm.channel_type as last_channel, lm.sender_id as last_sender_id,
                    COALESCE(ur.unread_count, 0)::int as unread_count,
                    EXISTS(SELECT 1 FROM user_connections uc WHERE ((uc.requester_id = $1 AND uc.addressee_id = u.id) OR (uc.requester_id = u.id AND uc.addressee_id = $1)) AND uc.status = 'ACCEPTED') as is_connected
@@ -3262,7 +3275,7 @@ export class JukrahService {
             JOIN auth_users u ON u.id = pid.peer_id
             LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
             LEFT JOIN LATERAL (
-                SELECT pangkat, jabatan, jenis_kelamin, foto
+                SELECT pangkat, jabatan, satuan, jenis_kelamin, foto
                 FROM trb_police tp
                 WHERE lower(tp.email) = lower(u.email) OR (u.email_polri IS NOT NULL AND lower(tp.email) = lower(u.email_polri))
                 LIMIT 1
@@ -3287,7 +3300,8 @@ export class JukrahService {
         const formatPeer = (r: any, defaultChannel = 'direct') => {
             const pid = Number(r.id);
             const isUserOne = this.isSuperUserOne(pid, r.username, r.callsign);
-            const satkerName = isUserOne ? 'Robinopsnal Bareskrim Polri' : (r.satker_singkat || r.satker_nama || 'Polri');
+            const isSuper = isUserOne || this.isSuperadminUser(pid, r.role_bdb, r.username, r.callsign);
+            const satkerName = isSuper ? 'Robinopsnal Bareskrim Polri' : this.casCapitalizeEachWordSatker(r.satker_singkat || r.satker_nama || r.satuan || 'Polri');
             const handle = this.formatCallsign(r.callsign || r.username, pid, r.username, r.name);
             const photo = this.resolveDefaultAvatar(r.photo_url || r.police_foto, r.name, r.jenis_kelamin, r.social_media);
             const roleBdb = isUserOne ? 'superadmin' : String(r.role_bdb || 'operator').toLowerCase();

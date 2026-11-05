@@ -56,12 +56,18 @@ function timeAgo(dateStr) {
   return d + ' hari lalu';
 }
 
-function getVerificationBadge(role, isUserOne, userId, username) {
-  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594'];
+function isShareseSuperadmin(userId, role, username) {
+  var SUPER_IDS = ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'];
+  var SUPER_HANDLES = ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma'];
   var uNorm = String(username || '').toLowerCase().trim().replace(/^@/, '');
   var r = String(role || '').toLowerCase().trim();
+  return SUPER_IDS.includes(String(userId)) || SUPER_HANDLES.includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super');
+}
+
+function getVerificationBadge(role, isUserOne, userId, username) {
+  var r = String(role || '').toLowerCase().trim();
   if (r === 'vendor_mitra' || r === 'vendor' || r === 'mitra') return null;
-  if (isUserOne || SUPER_IDS.includes(String(userId)) || ['omeko42', 'omeko11', 'om.eko_42', 'om.eko_11', 'yud08'].includes(uNorm) || r === 'superadmin' || r === 'super_admin' || r.includes('super')) {
+  if (isUserOne || isShareseSuperadmin(userId, role, username)) {
     return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   }
   if (r === 'admin_binops' || r === 'admin binops' || r === 'binops' || r === 'admin') {
@@ -801,7 +807,7 @@ e.s(["default",0,function() {
     if (!post) return '';
     var link = buildShareLinkForPost(post);
     var handle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
-    var isSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
+    var isSuper = isShareseSuperadmin(post.author_id, post.author_role, post.author_username || post.author_callsign);
     var satker = formatSatkerName(post.author_satker || post.satker_name || post.satker, isSuper, 'Robinopsnal Bareskrim Polri');
     var header = post.is_official_jukrah ? '📢 *JUKRAH RESMI KEDINASAN — SHARESE CAS BARESKRIM POLRI*' : '🛡️ *SIARAN TAKTIS SHARESE — CAS BARESKRIM POLRI*';
     var snippet = String(post.content || '').replace(/\*\*/g, '').slice(0, 220);
@@ -1355,7 +1361,7 @@ e.s(["default",0,function() {
   var endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
   var paginatedPosts = filteredPosts.slice(startIndex, endIndex);
 
-  var isSuperadmin = currentUser?.username === 'omeko42' || currentUser?.id === 1 || currentUser?.id === '1' || currentUser?.id === 'usr_superadmin' || currentUser?.role_bdb === 'superadmin';
+  var isSuperadmin = isShareseSuperadmin(currentUser?.id, currentUser?.role_bdb, currentUser?.username || currentUser?.callsign);
   var myBadge = getVerificationBadge(currentUser?.role_bdb, isSuperadmin, currentUser?.id, currentUser?.username);
   var myPostAvatar = posts.find(p => String(p.author_id) === String(currentUser?.id || currentUser?.user_id) && (p.author_photo_url || p.author_photo))?.author_photo_url;
   var userAvatar = currentUser?.photo_url || currentUser?.foto || currentUser?.avatar_url || myPostAvatar || null;
@@ -1975,7 +1981,7 @@ e.s(["default",0,function() {
           var isAuthor = String(post.author_id) === String(currentUser?.id || currentUser?.user_id);
           var canEdit = isAuthor && Boolean(post.can_edit !== false); var canDeletePost = isAuthor || Boolean(post.can_delete);
           var authorAvatar = isAuthor ? (currentUser?.photo_url || currentUser?.foto || post.author_photo_url || post.author_photo || null) : (post.author_photo_url || post.author_photo || null);
-          var isUserSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(post.author_id)) || String(post.author_role || '').toLowerCase() === 'superadmin';
+          var isUserSuper = isShareseSuperadmin(post.author_id, post.author_role, post.author_username || post.author_callsign);
           var authorHandle = formatCallsign(post.author_callsign, post.author_id, post.author_username);
           var authorBadge = getVerificationBadge(post.author_role, isUserSuper, post.author_id, post.author_username);
           var authorNameDisplay = isAuthor ? (currentUser?.name || post.author_name || authorHandle) : (post.author_name || authorHandle);
@@ -2569,7 +2575,7 @@ e.s(["default",0,function() {
                   (0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem"},children:
                     (postComments[post.id] || []).map(cm => {
                       var isCmAuthor = String(cm.user_id || cm.author_id) === String(currentUser?.id || currentUser?.user_id);
-                      var isCmSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(cm.author_id || cm.user_id)) || String(cm.author_role || cm.role_bdb || '').toLowerCase() === 'superadmin';
+                      var isCmSuper = isShareseSuperadmin(cm.author_id || cm.user_id, cm.author_role || cm.role_bdb, cm.author_username || cm.author_callsign);
                       var cmBadge = getVerificationBadge(cm.author_role || cm.role_bdb, isCmSuper, cm.author_id || cm.user_id, cm.author_username);
                       var cmHandle = formatCallsign(cm.author_callsign, cm.author_id || cm.user_id, cm.author_username);
                       var cmInitials = String(cmHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
@@ -3063,7 +3069,7 @@ e.s(["default",0,function() {
           reactionsList.map(rx => {
             var usr = rx.user || {};
             var isThisUserMe = String(usr.id) === String(currentUser?.id || currentUser?.user_id);
-            var isUsrSuper = ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(usr.id)) || String(usr.role_bdb || usr.role || '').toLowerCase() === 'superadmin';
+            var isUsrSuper = isShareseSuperadmin(usr.id, usr.role_bdb || usr.role, usr.username || usr.callsign);
             var usrBadge = getVerificationBadge(usr.role_bdb || usr.role, isUsrSuper, usr.id, usr.username);
             var usrHandle = formatCallsign(usr.callsign, usr.id, usr.username);
             var initials = String(usrHandle || '@P').replace(/^@/, '').charAt(0).toUpperCase();
@@ -3377,7 +3383,7 @@ e.s(["default",0,function() {
           (0,t.jsxs)("div",{style:{marginTop:"1.8rem",padding:"0 0.5rem"},children:[
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
               (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#38bdf8"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
-              renderMetaVerifiedBadge(getVerificationBadge(previewUser.role_bdb, String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb).toLowerCase() === 'superadmin', previewUser.id, previewUser.username), 18),
+              renderMetaVerifiedBadge(getVerificationBadge(previewUser.role_bdb, isShareseSuperadmin(previewUser.id, previewUser.role_bdb, previewUser.username || previewUser.callsign), previewUser.id, previewUser.username), 18),
               (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
             ]}),
             previewUser.name ? (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8",fontWeight:600,marginTop:"0.2rem"},children:previewUser.name}) : null,
@@ -3386,7 +3392,7 @@ e.s(["default",0,function() {
               previewUser.jabatan || previewUser.role || "Penyidik Reserse Polri"
             ]}),
             (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:(function(){
-  var isSuper = String(previewUser.id) === '1' || previewUser.username === 'omeko42' || String(previewUser.role_bdb || '').toLowerCase() === 'superadmin';
+  var isSuper = isShareseSuperadmin(previewUser.id, previewUser.role_bdb, previewUser.username || previewUser.callsign);
   if (isSuper) return "Robinopsnal Bareskrim Polri";
   return toTitleCase(previewUser.satker_nama || previewUser.satker || previewUser.satuan || "Badan Reserse Kriminal Polri");
 })()})
