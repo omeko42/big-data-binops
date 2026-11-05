@@ -1419,13 +1419,15 @@ function CasPetaKejahatanView({
     });
   }
 
-  // Operational Filter State (Defaulting 1:1 with Kinerja Perkara & Daftar LP: Internal Reserse + Tahun 2026 = 383.642 CT)
+  // Operational Filter State (Defaulting 1:1 with Kinerja Perkara & Daftar LP: Internal Reserse + Tahun 2026)
+  const casTodayIso = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date());
+  const casCapDate = (iso) => (iso && iso > casTodayIso ? casTodayIso : iso);
   const [kelompokFilter, setKelompokFilter] = (0, a.useState)("INTERNAL_RESERSE");
   const [periodMode, setPeriodMode] = (0, a.useState)("tahun"); // "bulan" | "tahun" | "custom"
   const [selectedYear, setSelectedYear] = (0, a.useState)(2026);
   const [selectedMonth, setSelectedMonth] = (0, a.useState)(10);
   const [filterFrom, setFilterFrom] = (0, a.useState)(() => ee || "2026-01-01");
-  const [filterTo, setFilterTo] = (0, a.useState)(() => et || "2026-12-31");
+  const [filterTo, setFilterTo] = (0, a.useState)(() => casCapDate(et || "2026-12-31"));
   const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
   const [crimeFilter, setCrimeFilter] = (0, a.useState)("SEMUA");
   const [golonganFilter, setGolonganFilter] = (0, a.useState)("SEMUA");
@@ -1445,7 +1447,7 @@ function CasPetaKejahatanView({
       setPeriodMode("tahun");
       setSelectedYear(2026);
       setFilterFrom("2026-01-01");
-      setFilterTo("2026-12-31");
+      setFilterTo(casCapDate("2026-12-31"));
     } else if (preset === "tahun_lalu" || preset === "tahun_2025") {
       setPeriodMode("tahun");
       setSelectedYear(2025);
@@ -1475,14 +1477,14 @@ function CasPetaKejahatanView({
     if (mode === "tahun") {
       setPeriodPreset(y === 2026 ? "tahun_ini" : "tahun_lalu");
       setFilterFrom(y + "-01-01");
-      setFilterTo(y + "-12-31");
+      setFilterTo(casCapDate(y + "-12-31"));
     } else if (mode === "bulan") {
       setPeriodPreset("custom_bulan");
       const lastDay = new Date(y, m, 0).getDate();
       const mm = String(m).padStart(2, "0");
       const dd = String(lastDay).padStart(2, "0");
       setFilterFrom(y + "-" + mm + "-01");
-      setFilterTo(y + "-" + mm + "-" + dd);
+      setFilterTo(casCapDate(y + "-" + mm + "-" + dd));
     }
   };
 
@@ -1493,7 +1495,7 @@ function CasPetaKejahatanView({
     setSelectedMonth(10);
     setPeriodPreset("tahun_ini");
     setFilterFrom("2026-01-01");
-    setFilterTo("2026-12-31");
+    setFilterTo(casCapDate("2026-12-31"));
     setCrimeFilter("SEMUA");
     setGolonganFilter("SEMUA");
     setModelLpFilter("SEMUA");
@@ -1507,8 +1509,8 @@ function CasPetaKejahatanView({
   const activePeriodBadgeLabel = (0, a.useMemo)(() => {
     if (periodMode === "tahun") return "Tahun " + selectedYear;
     if (periodMode === "bulan") return (MONTH_NAMES_ID[selectedMonth - 1] || "Bulan") + " " + selectedYear;
-    return (filterFrom || "2026-01-01") + " s/d " + (filterTo || "2026-12-31");
-  }, [periodMode, selectedYear, selectedMonth, filterFrom, filterTo]);
+    return (filterFrom || "2026-01-01") + " s/d " + (filterTo || casTodayIso);
+  }, [periodMode, selectedYear, selectedMonth, filterFrom, filterTo, casTodayIso]);
 
   const activeKelompokLabel = (0, a.useMemo)(() => {
     if (kelompokFilter === "EKSTERNAL_RESERSE") return "Eksternal Reserse";
@@ -1529,7 +1531,7 @@ function CasPetaKejahatanView({
   const activeFilterParams = (0, a.useMemo)(() => {
     const p = {
       from: filterFrom || "2026-01-01",
-      to: filterTo || "2026-12-31",
+      to: casCapDate(filterTo || "2026-12-31"),
       kelompok: kelompokFilter || "INTERNAL_RESERSE",
       functionDomain: kelompokFilter || "INTERNAL_RESERSE",
       organizationDomain: "INTERNAL_POLRI"
@@ -3463,7 +3465,7 @@ function CasPetaKejahatanView({
                                 children: [
                                   (0, t.jsx)("label", {
                                     style: { fontSize: "0.68rem", fontWeight: 800, color: T.textMuted },
-                                    children: (isScopedUser && !isScopedBareskrim) ? "CAKUPAN RBAC SATKER / WILKUM 🔒" : "PILIH SATKER / POLDA"
+                                    children: (isScopedUser && !isScopedBareskrim) ? "HIRARKI SATKER / WILKUM (POLDA › POLRES › POLSEK) 🔒" : "HIRARKI SATKER / POLDA"
                                   }),
                                   (0, t.jsxs)("select", {
                                     value: (isScopedUser && !isScopedBareskrim && scopePoldaKey)
@@ -3483,18 +3485,44 @@ function CasPetaKejahatanView({
                                       ? [
                                           (0, t.jsx)("option", {
                                             value: scopePoldaKey,
-                                            children: "🔒 " + scopeSatkerShort + " — " + scopePoldaNama + " (" + z(stats.totalCT) + " LP)"
+                                            children: "🏛️ " + scopePoldaNama + " (Induk Regional — " + z(stats.totalCT) + " LP)"
                                           })
                                         ]
                                       : [
                                           (0, t.jsx)("option", { value: "SEMUA", children: "🏛️ Mabes Polri (Nasional - 36 Polda)" }),
-                                          (0, t.jsx)("option", { value: "MABES", children: "⭐ Kantor Bareskrim / Mabes Polri" }),
+                                          (0, t.jsx)("option", { value: "MABES", children: "└─ ⭐ Kantor Bareskrim / Mabes Polri" }),
                                           mergedRegions.map(r => (0, t.jsx)("option", {
                                             key: r.id,
                                             value: r.id,
-                                            children: r.polda + " (" + z(r.ct) + " LP)"
+                                            children: "└─ " + r.polda + " (" + z(r.ct) + " LP)"
                                           }))
                                         ]
+                                  }),
+                                  drillLevel >= 1 && selectedRegion && polresMapNodes.length > 0 && (0, t.jsxs)("div", {
+                                    style: { marginTop: "0.35rem", paddingLeft: "0.6rem", borderLeft: "2px solid " + T.cardBorder, display: "flex", flexDirection: "column", gap: "0.28rem" },
+                                    children: [
+                                      (0, t.jsx)("label", { style: { fontSize: "0.66rem", fontWeight: 700, color: T.textMuted }, children: "└─ SUB-SATKER POLRES JAJARAN (" + selectedRegion.polda.toUpperCase() + ")" }),
+                                      (0, t.jsxs)("select", {
+                                        value: selectedPolres?.kode || "",
+                                        onChange: ev => {
+                                          const kd = ev.target.value;
+                                          if (!kd) handleSelectPoldaAndZoom(selectedRegion);
+                                          else {
+                                            const pr = polresMapNodes.find(p => String(p.kode) === String(kd));
+                                            if (pr) handleSelectPolresAndZoom(pr);
+                                          }
+                                        },
+                                        style: { padding: "0.42rem 0.6rem", borderRadius: 7, border: "1px solid " + T.inputBorder, background: T.inputBg, color: T.textPrimary, fontSize: "0.74rem", fontWeight: 600, width: "100%" },
+                                        children: [
+                                          (0, t.jsx)("option", { value: "", children: "Semua Polres di " + selectedRegion.polda + " (" + polresMapNodes.length + " Satker)" }),
+                                          polresMapNodes.map(pr => (0, t.jsx)("option", {
+                                            key: pr.kode,
+                                            value: pr.kode,
+                                            children: "   └─ " + ((typeof window !== "undefined" && window.casCompactSatker) ? window.casCompactSatker(pr.nama) : pr.nama) + " (" + z(pr.ct) + " LP)"
+                                          }))
+                                        ]
+                                      })
+                                    ]
                                   })
                                 ]
                               }),
@@ -3829,7 +3857,7 @@ function CasPetaKejahatanView({
                                   }),
                                   (0, t.jsxs)("div", {
                                     style: { padding: "0.48rem 0.65rem", borderRadius: 7, background: T.subCardBg, border: "1px solid " + T.subCardBorder, color: T.textSecondary, fontSize: "0.72rem" },
-                                    children: ["Rentang aktif: ", (0, t.jsx)("strong", { children: "1 Jan " + selectedYear + " s/d 31 Des " + selectedYear })]
+                                    children: ["Rentang aktif: ", (0, t.jsx)("strong", { children: (filterFrom || (selectedYear + "-01-01")) + " s/d " + (filterTo || casTodayIso) })]
                                   })
                                 ]
                               }),
@@ -6059,7 +6087,7 @@ function CasPetaKejahatanView({
     ]
   });
 }
-e.s(["default",0,function(){let e=(0,v.useRouter)(),[r,n]=(0,a.useState)(null),[l,s]=(0,a.useState)(null),[i,o]=(0,a.useState)(null),[u,x]=(0,a.useState)([]),[k,W]=(0,a.useState)([]),[B,H]=(0,a.useState)([]),[dpoRows,setDpoRows]=(0,a.useState)([]),[casFeed,setCasFeed]=(0,a.useState)([]),[casFeedLoading,setCasFeedLoading]=(0,a.useState)(!0),[pihakJenis,setPihakJenis]=(0,a.useState)("ALL"),[pihakLoading,setPihakLoading]=(0,a.useState)(!1),[$,U]=(0,a.useState)([]),[F,K]=(0,a.useState)("ct_cc"),[J,V]=(0,a.useState)(!0),[Y,X]=(0,a.useState)("custom"),[q,G]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),0,1))}),[Z,Q]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),11,31))}),[appliedCustomFrom,setAppliedCustomFrom]=(0,a.useState)(q),[appliedCustomTo,setAppliedCustomTo]=(0,a.useState)(Z),[kejTab,setKejTab]=(0,a.useState)("semua"),[dashWelcomeOpen,setDashWelcomeOpen]=(0,a.useState)(!1),[dashKinerjaCompact,setDashKinerjaCompact]=(0,a.useState)(!1),[dashShowAllStatNums,setDashShowAllStatNums]=(0,a.useState)(!0),[dashStatTip,setDashStatTip]=(0,a.useState)(null),{from:ee,to:et}=(0,a.useMemo)(()=>(function(e,t,a){let r=new Date,n=N(r),l=r.getFullYear();if("semua"===e)return{from:"2000-01-01",to:n};if("custom"===e)return{from:t||n,to:a||n};if("hari"===e)return{from:n,to:n};if("minggu"===e){let e=r.getDay()||7,t=new Date(l,r.getMonth(),r.getDate()-(e-1)),a=new Date(l,r.getMonth(),r.getDate()-(e-1)+6);return{from:N(t),to:N(a)}}if("bulan"===e){let e=new Date(l,r.getMonth(),1),t=new Date(l,r.getMonth()+1,0);return{from:N(e),to:N(t)}}if("triwulan"===e){let e=3*Math.floor(r.getMonth()/3),t=new Date(l,e,1),a=new Date(l,e+3,0);return{from:N(t),to:N(a)}}if("semester"===e){let e=6>r.getMonth()?0:6,t=new Date(l,e,1),a=new Date(l,e+6,0);return{from:N(t),to:N(a)}}return{from:`${l}-01-01`,to:`${l}-12-31`}})(Y,appliedCustomFrom,appliedCustomTo),[Y,appliedCustomFrom,appliedCustomTo]),[dashPeriodOpen,setDashPeriodOpen]=(0,a.useState)(!1),
+e.s(["default",0,function(){let e=(0,v.useRouter)(),[r,n]=(0,a.useState)(null),[l,s]=(0,a.useState)(null),[i,o]=(0,a.useState)(null),[u,x]=(0,a.useState)([]),[k,W]=(0,a.useState)([]),[B,H]=(0,a.useState)([]),[dpoRows,setDpoRows]=(0,a.useState)([]),[casFeed,setCasFeed]=(0,a.useState)([]),[casFeedLoading,setCasFeedLoading]=(0,a.useState)(!0),[pihakJenis,setPihakJenis]=(0,a.useState)("ALL"),[pihakLoading,setPihakLoading]=(0,a.useState)(!1),[$,U]=(0,a.useState)([]),[F,K]=(0,a.useState)("ct_cc"),[J,V]=(0,a.useState)(!0),[Y,X]=(0,a.useState)("custom"),[q,G]=(0,a.useState)(()=>{let e=new Date;return N(new Date(e.getFullYear(),0,1))}),[Z,Q]=(0,a.useState)(()=>{let e=new Date,td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(e),eoy=N(new Date(e.getFullYear(),11,31));return td<eoy?td:eoy}),[appliedCustomFrom,setAppliedCustomFrom]=(0,a.useState)(q),[appliedCustomTo,setAppliedCustomTo]=(0,a.useState)(Z),[kejTab,setKejTab]=(0,a.useState)("semua"),[dashWelcomeOpen,setDashWelcomeOpen]=(0,a.useState)(!1),[dashKinerjaCompact,setDashKinerjaCompact]=(0,a.useState)(!1),[dashShowAllStatNums,setDashShowAllStatNums]=(0,a.useState)(!0),[dashStatTip,setDashStatTip]=(0,a.useState)(null),{from:ee,to:et}=(0,a.useMemo)(()=>(function(e,t,a){let r=new Date,n=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(r),l=r.getFullYear();if("semua"===e)return{from:"2000-01-01",to:n};if("custom"===e){let f=t||n,toVal=a||n;return{from:f,to:toVal>n?n:toVal}}if("hari"===e)return{from:n,to:n};if("minggu"===e){let e=r.getDay()||7,t=new Date(l,r.getMonth(),r.getDate()-(e-1)),a=new Date(l,r.getMonth(),r.getDate()-(e-1)+6),na=N(a);return{from:N(t),to:na>n?n:na}}if("bulan"===e){let e=new Date(l,r.getMonth(),1),t=new Date(l,r.getMonth()+1,0),nt=N(t);return{from:N(e),to:nt>n?n:nt}}if("triwulan"===e){let e=3*Math.floor(r.getMonth()/3),t=new Date(l,e,1),a=new Date(l,e+3,0),na=N(a);return{from:N(t),to:na>n?n:na}}if("semester"===e){let e=6>r.getMonth()?0:6,t=new Date(l,e,1),a=new Date(l,e+6,0),na=N(a);return{from:N(t),to:na>n?n:na}}let eoy=`${l}-12-31`;return{from:`${l}-01-01`,to:eoy>n?n:eoy}})(Y,appliedCustomFrom,appliedCustomTo),[Y,appliedCustomFrom,appliedCustomTo]),[dashPeriodOpen,setDashPeriodOpen]=(0,a.useState)(!1),
 [dashPeriodMode,setDashPeriodMode]=(0,a.useState)("year"),
 [dashPeriodMonth,setDashPeriodMonth]=(0,a.useState)(()=>{
   let e=new Date,
@@ -6126,9 +6154,12 @@ function dashYearRange(year){
 
   if(!Number.isInteger(y))return null;
 
+  let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
+      eoy=String(y)+"-12-31";
+
   return{
     from:String(y)+"-01-01",
-    to:String(y)+"-12-31",
+    to:eoy>td?td:eoy,
     label:String(y)
   }
 }
@@ -6181,8 +6212,10 @@ function dashApplyPeriod(){
 
 function dashResetPeriod(){
   let cy=String((new Date).getFullYear()),
+      td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),
       from=cy+"-01-01",
-      to=cy+"-12-31",
+      eoy=cy+"-12-31",
+      to=eoy>td?td:eoy,
       label="Tahun "+cy;
   setDashPeriodMode("year");
   setDashPeriodYear(cy);
@@ -7029,7 +7062,7 @@ children:[
           type:"button",
           onClick:()=>e.push("/cms/broadcaster"),
           style:{background:"transparent",border:"none",color:"#38bdf8",fontSize:"0.8rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.3rem"},
-          children:["Buka Sharese ➔"]
+          children:["Buka Feed ➔"]
         })
       ]
     }),
@@ -7220,7 +7253,7 @@ children:[
       })
     )
   ]
-}),eh?(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"1rem",display:"flex",alignItems:"flex-start",gap:"0.7rem"},children:[(0,t.jsx)("i",{className:"pi pi-info-circle",style:{color:"#f59e0b",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{style:{color:"#64748b"},children:["Akun Anda ",(0,t.jsx)("strong",{children:"belum ditetapkan ke satker"}),". Hubungi admin untuk menetapkan lingkup satker agar data Ringkasan & Anev CT/CC muncul."]})]}):(0,t.jsxs)(t.Fragment,{children:[ef&&(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"1rem",display:"flex",alignItems:"flex-start",gap:"0.7rem",borderLeft:"4px solid #f59e0b"},children:[(0,t.jsx)("i",{className:"pi pi-info-circle",style:{color:"#f59e0b",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{style:{color:"#64748b"},children:["Belum ada Laporan Polisi pada satker ",(0,t.jsx)("strong",{children:l?.scope_satker}),". Struktur data di bawah ditampilkan sebagai acuan — angka akan terisi begitu ada LP."]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)("style",{children:"@media (max-width: 640px) { .dash-hero-grid { grid-template-columns: 1fr !important; gap: 0.45rem !important; } .dash-hero-card { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 0.65rem 0.85rem !important; } .dash-hero-card .dash-hero-value { font-size: 1.3rem !important; position: static !important; } }"}),(0,t.jsxs)("div",{className:"dash-hero-grid",children:[(0,t.jsx)(D,{id:"fld-dashboard-perma-31-1",name:"field_dashboard_perma_31_1",label:"CT — Crime Total",value:J?"…":z(i?.ct??0),color:"#ef4444",bg:"#fef2f2",icon:"pi-file",note:"Sesuai Kinerja Perkara"}),(0,t.jsx)(D,{id:"fld-dashboard-perma-31-2",name:"field_dashboard_perma_31_2",label:"CC — Crime Clearance",value:J?"…":z((i?.cc_aktual??0)+(i?.cc_tunggakan??0)),color:"#16a34a",bg:"#f0fdf4",icon:"pi-check-circle",note:"CC Aktual + CC Tunggakan"}),(0,t.jsx)(D,{id:"fld-dashboard-perma-31-3",name:"field_dashboard_perma_31_3",label:"CR - Clearance Rate",value:J?"…":`${(i?.cr??0).toFixed(2)}%`,color:"#2563eb",bg:"#eff6ff",icon:"pi-percentage",note:"Rumus baru Kinerja Perkara"})]})]}),i&&(0,t.jsxs)("div",{className:"dash-section cms-card dash-panel-clickable",onClick:()=>e.push("/cms/report/kinerja-perkara"),children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem"},children:[(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#f5f3ff"},children:(0,t.jsx)(y.Gauge,{size:17,style:{color:"#7c3aed"}})}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsxs)("div",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.4rem",flexWrap:"wrap"},children:["Kinerja Perkara",(0,t.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.1rem 0.5rem",borderRadius:999,background:i.scoped?"#eff6ff":"#f0fdf4",color:i.scoped?"#1d4ed8":"#15803d",border:`1px solid ${i.scoped?"#bfdbfe":"#bbf7d0"}`},title:i.scoped?"Data dibatasi hanya untuk satker Anda.":"Data mencakup seluruh satker (akses lihat-semua).",children:i.scoped?`Satker: ${abbrSatkerName(l?.scope_satker||"Anda",!1)}`:"Nasional"})]}),(0,t.jsxs)("div",{className:"dash-panel-sub",children:["Periode ",i.from," s/d ",i.to]})]})]})]}),(0,t.jsxs)("div",{className:"dash-integrasi-grid",children:[(0,t.jsx)(A,{id:"fld-dashboard-perma-31-4",name:"field_dashboard_perma_31_4",label:"CP Aktual",value:z(i.cp_berjalan),title:"Perkara masih diproses, belum lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-5",name:"field_dashboard_perma_31_5",label:"CP Tunggakan",value:z(i.cp_tunggakan),title:"Perkara masih diproses, sudah lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-6",name:"field_dashboard_perma_31_6",label:"PR (Rms Lama)",value:`${(i.pr_lama??0).toFixed(2)}%`,title:"PR (Rumus Lama) = (CP Aktual + CP Tunggakan) / CT × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-7",name:"field_dashboard_perma_31_7",label:"PR (Rms Baru)",value:`${(i.pr??0).toFixed(2)}%`,title:"PR (Rumus Baru) = (CP Aktual + CP Tunggakan) / (CT + CP Tunggakan) × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-8",name:"field_dashboard_perma_31_8",label:"CC Aktual",value:z(i.cc_aktual),title:"Perkara selesai sebelum/tepat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-9",name:"field_dashboard_perma_31_9",label:"CC Tunggakan",value:z(i.cc_tunggakan),title:"Perkara selesai setelah lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-10",name:"field_dashboard_perma_31_10",label:"CR (Rms Lama)",value:`${(i.cr_lama??0).toFixed(2)}%`,title:"CR (Rumus Lama) = CC / (CT + CC) × 100% -- formula modul Anev CT/CC."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-11",name:"field_dashboard_perma_31_11",label:"CR (Rms Baru)",value:`${(i.cr??0).toFixed(2)}%`,title:"CR (Rumus Baru) = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-12",name:"field_dashboard_perma_31_12",label:"Indeks Kinerja",value:(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.45rem",whiteSpace:"nowrap"},children:[(0,t.jsx)("strong",{style:{fontSize:"1.25rem",lineHeight:1,fontWeight:850,color:"var(--cas-text-primary, #f1f5f9)"},children:(i.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2})}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",padding:"0.24rem 0.48rem",borderRadius:"0.55rem",background:["#ef4444","#f97316","#eab308","#22c55e","#15803d"][Math.max(0,Math.min(4,(i.level??1)-1))],color:"#fff",fontSize:"0.66rem",lineHeight:1,fontWeight:800},children:["Lv.",i.level??"-"]})]}),title:"Indeks Kinerja dan Level 1–5 dihitung dari CR (Rumus Baru)."})]})]}),(0,t.jsxs)("div",{className:"dash-section",style:{display:"flex",flexWrap:"wrap",gap:"1rem",alignItems:"stretch"},children:[(0,t.jsxs)("div",{className:"cms-card",style:{flex:"3 1 32rem",minWidth:0,margin:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-13",name:"field_dashboard_perma_31_13",icon:(0,t.jsx)("i",{className:"pi pi-chart-line"}),title:"Profil Risiko Kejahatan",iconBg:"#f5f3ff",iconColor:"#7c3aed"}),(0,t.jsxs)("div",{
+}),eh?(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"1rem",display:"flex",alignItems:"flex-start",gap:"0.7rem"},children:[(0,t.jsx)("i",{className:"pi pi-info-circle",style:{color:"#f59e0b",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{style:{color:"#64748b"},children:["Akun Anda ",(0,t.jsx)("strong",{children:"belum ditetapkan ke satker"}),". Hubungi admin untuk menetapkan lingkup satker agar data Ringkasan & Anev CT/CC muncul."]})]}):(0,t.jsxs)(t.Fragment,{children:[ef&&(0,t.jsxs)("div",{className:"cms-card",style:{marginTop:"1rem",display:"flex",alignItems:"flex-start",gap:"0.7rem",borderLeft:"4px solid #f59e0b"},children:[(0,t.jsx)("i",{className:"pi pi-info-circle",style:{color:"#f59e0b",marginTop:"0.15rem"}}),(0,t.jsxs)("div",{style:{color:"#64748b"},children:["Belum ada Laporan Polisi pada satker ",(0,t.jsx)("strong",{children:l?.scope_satker}),". Struktur data di bawah ditampilkan sebagai acuan — angka akan terisi begitu ada LP."]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)("style",{children:"@media (max-width: 640px) { .dash-hero-grid { grid-template-columns: 1fr !important; gap: 0.45rem !important; } .dash-hero-card { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 0.65rem 0.85rem !important; } .dash-hero-card .dash-hero-value { font-size: 1.3rem !important; position: static !important; } }"}),(0,t.jsxs)("div",{className:"dash-hero-grid",children:[(0,t.jsx)(D,{id:"fld-dashboard-perma-31-1",name:"field_dashboard_perma_31_1",label:"CT — Crime Total",value:J?"…":z(i?.ct??0),color:"#ef4444",bg:"#fef2f2",icon:"pi-file",note:"Sesuai Kinerja Perkara"}),(0,t.jsx)(D,{id:"fld-dashboard-perma-31-2",name:"field_dashboard_perma_31_2",label:"CC — Crime Clearance",value:J?"…":z((i?.cc_aktual??0)+(i?.cc_tunggakan??0)),color:"#16a34a",bg:"#f0fdf4",icon:"pi-check-circle",note:"CC Aktual + CC Tunggakan"}),(0,t.jsx)(D,{id:"fld-dashboard-perma-31-3",name:"field_dashboard_perma_31_3",label:"CR - Clearance Rate",value:J?"…":`${(i?.cr??0).toFixed(2)}%`,color:"#2563eb",bg:"#eff6ff",icon:"pi-percentage",note:"Rumus baru Kinerja Perkara"})]})]}),i&&(0,t.jsxs)("div",{className:"dash-section cms-card dash-panel-clickable",onClick:()=>e.push("/cms/report/kinerja-perkara"),children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem"},children:[(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#f5f3ff"},children:(0,t.jsx)(y.Gauge,{size:17,style:{color:"#7c3aed"}})}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsxs)("div",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.4rem",flexWrap:"wrap"},children:["Kinerja Perkara",(0,t.jsx)("span",{style:{fontSize:"0.66rem",fontWeight:800,padding:"0.1rem 0.5rem",borderRadius:999,background:i.scoped?"#eff6ff":"#f0fdf4",color:i.scoped?"#1d4ed8":"#15803d",border:`1px solid ${i.scoped?"#bfdbfe":"#bbf7d0"}`},title:i.scoped?"Data dibatasi hanya untuk satker Anda.":"Data mencakup seluruh satker (akses lihat-semua).",children:i.scoped?`Satker: ${abbrSatkerName(l?.scope_satker||"Anda",!1)}`:"Nasional"})]}),(0,t.jsxs)("div",{className:"dash-panel-sub",children:["Periode ",i.from||ee," s/d ",(()=>{let td=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()),tv=i.to||et||td;return tv>td?td:tv})()]})]})]})]}),(0,t.jsxs)("div",{className:"dash-integrasi-grid",children:[(0,t.jsx)(A,{id:"fld-dashboard-perma-31-4",name:"field_dashboard_perma_31_4",label:"CP Aktual",value:z(i.cp_berjalan),title:"Perkara masih diproses, belum lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-5",name:"field_dashboard_perma_31_5",label:"CP Tunggakan",value:z(i.cp_tunggakan),title:"Perkara masih diproses, sudah lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-6",name:"field_dashboard_perma_31_6",label:"PR (Rms Lama)",value:`${(i.pr_lama??0).toFixed(2)}%`,title:"PR (Rumus Lama) = (CP Aktual + CP Tunggakan) / CT × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-7",name:"field_dashboard_perma_31_7",label:"PR (Rms Baru)",value:`${(i.pr??0).toFixed(2)}%`,title:"PR (Rumus Baru) = (CP Aktual + CP Tunggakan) / (CT + CP Tunggakan) × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-8",name:"field_dashboard_perma_31_8",label:"CC Aktual",value:z(i.cc_aktual),title:"Perkara selesai sebelum/tepat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-9",name:"field_dashboard_perma_31_9",label:"CC Tunggakan",value:z(i.cc_tunggakan),title:"Perkara selesai setelah lewat jatuh tempo."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-10",name:"field_dashboard_perma_31_10",label:"CR (Rms Lama)",value:`${(i.cr_lama??0).toFixed(2)}%`,title:"CR (Rumus Lama) = CC / (CT + CC) × 100% -- formula modul Anev CT/CC."}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-11",name:"field_dashboard_perma_31_11",label:"CR (Rms Baru)",value:`${(i.cr??0).toFixed(2)}%`,title:"CR (Rumus Baru) = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%"}),(0,t.jsx)(A,{id:"fld-dashboard-perma-31-12",name:"field_dashboard_perma_31_12",label:"Indeks Kinerja",value:(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.45rem",whiteSpace:"nowrap"},children:[(0,t.jsx)("strong",{style:{fontSize:"1.25rem",lineHeight:1,fontWeight:850,color:"var(--cas-text-primary, #f1f5f9)"},children:(i.indeks??0).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2})}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",padding:"0.24rem 0.48rem",borderRadius:"0.55rem",background:["#ef4444","#f97316","#eab308","#22c55e","#15803d"][Math.max(0,Math.min(4,(i.level??1)-1))],color:"#fff",fontSize:"0.66rem",lineHeight:1,fontWeight:800},children:["Lv.",i.level??"-"]})]}),title:"Indeks Kinerja dan Level 1–5 dihitung dari CR (Rumus Baru)."})]})]}),(0,t.jsxs)("div",{className:"dash-section",style:{display:"flex",flexWrap:"wrap",gap:"1rem",alignItems:"stretch"},children:[(0,t.jsxs)("div",{className:"cms-card",style:{flex:"3 1 32rem",minWidth:0,margin:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-13",name:"field_dashboard_perma_31_13",icon:(0,t.jsx)("i",{className:"pi pi-chart-line"}),title:"Profil Risiko Kejahatan",iconBg:"#f5f3ff",iconColor:"#7c3aed"}),(0,t.jsxs)("div",{
 className:"dash-integrasi-grid",
 style:{gridTemplateColumns:"repeat(auto-fit, minmax(145px, 1fr))"},
 children:[

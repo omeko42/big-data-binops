@@ -214,9 +214,9 @@ export class LpMonitoringAccessService {
         for (const node of nodes) {
             const d = this.satkerDomain(node.deskripsi);
             const tipe = String(node.tipe_satker || '').toUpperCase();
-            if (tipe === 'POLSEK') {
+            if (tipe === 'POLSEK' || tipe === 'POLRES' || tipe === 'POLDA') {
                 allowedOwnerIds.add(Number(node.id));
-                continue;
+                if (!d) continue;
             }
             if (!d) continue;
             if (domains.includes(d as any)) {
@@ -253,7 +253,7 @@ export class LpMonitoringAccessService {
             };
         }
 
-        // Akses satker lain (subordinate monitoring)
+        // Akses satker lain (subordinate monitoring / regional root tree)
         const ctx = await this.actorContext(scope.satkerId);
         const domains = this.responsibilities(ctx);
         const target = await this.satker(Number(targetSatkerId));
@@ -261,34 +261,40 @@ export class LpMonitoringAccessService {
             throw new ForbiddenException('Satker tujuan tidak ditemukan atau fungsi akun Anda tidak memiliki wewenang monitoring.');
         }
 
+        // Unit fungsional (mis. Ditreskrimum Polda Aceh atau Satreskrim Polres X) boleh memilih induk teritorialnya sendiri
+        // (mis. Polda Aceh atau Polres X) untuk melihat keseluruhan tree wilayah tersebut khusus Tipid wewenangnya.
+        const isOwnTerritoryRoot = target.id === ctx.territory.id && ctx.actor.id !== ctx.territory.id;
+
         // Strict top-down hierarchy verification (Zero bottom-up, Zero lateral):
-        // 1. Target tidak boleh ancestor dari akun aktor (Zero bottom-up)
-        const ancestorIds = ctx.ancestors.slice(1).map((x) => x.id);
-        if (ancestorIds.includes(target.id) || target.id === ctx.territory.id) {
+        // 1. Target tidak boleh ancestor di atas wilayah teritorial aktor (Zero bottom-up)
+        const strictAboveTerritoryIds = ctx.ancestors.slice(1).map((x) => x.id).filter((id) => id !== ctx.territory.id);
+        if (strictAboveTerritoryIds.includes(target.id) || (target.id === ctx.territory.id && !isOwnTerritoryRoot)) {
             throw new ForbiddenException('Satker tujuan tidak dapat diakses (satker induk/ancestor tidak boleh diakses oleh bawahan).');
         }
 
-        // 2. Target wajib berada di bawah wilayah teritorial aktor
-        const isTargetUnderTerritory = await this.isStrictDescendant(target.id, ctx.territory.id);
+        // 2. Target wajib berada di bawah wilayah teritorial aktor (atau merupakan root teritorial aktor)
+        const isTargetUnderTerritory = isOwnTerritoryRoot || (await this.isStrictDescendant(target.id, ctx.territory.id));
         if (!isTargetUnderTerritory) {
             throw new ForbiddenException('Satker tujuan tidak termasuk wilayah regional akun Anda.');
         }
 
-        // 3. Tingkat teritorial target harus strictly subordinat (Zero lateral!)
-        const targetTerrRows = await this.ds.query(
-            `with recursive p as (
-                select id, parent_id, tipe_satker, depth from bdb_satker where id = $1
-                union all
-                select s.id, s.parent_id, s.tipe_satker, s.depth from bdb_satker s join p on p.parent_id = s.id
-             ) select upper(tipe_satker) as tipe from p
-               where upper(tipe_satker) in ('POLSEK', 'POLRES', 'POLDA', 'MABES')
-               order by depth desc nulls last limit 1`,
-            [target.id]
-        );
-        const targetTerrLevel = targetTerrRows[0]?.tipe;
-        const allowedLevels = this.allowedSubordinateLevels(ctx.territory.tipe_satker);
-        if (!targetTerrLevel || !allowedLevels.includes(targetTerrLevel)) {
-            throw new ForbiddenException('Satker tujuan tidak termasuk kewenangan monitoring (tidak boleh mengakses satker sejajar/lateral).');
+        // 3. Tingkat teritorial target harus strictly subordinat (Zero lateral!), kecuali root teritorial sendiri bagi unit fungsi
+        if (!isOwnTerritoryRoot) {
+            const targetTerrRows = await this.ds.query(
+                `with recursive p as (
+                    select id, parent_id, tipe_satker, depth from bdb_satker where id = $1
+                    union all
+                    select s.id, s.parent_id, s.tipe_satker, s.depth from bdb_satker s join p on p.parent_id = s.id
+                 ) select upper(tipe_satker) as tipe from p
+                   where upper(tipe_satker) in ('POLSEK', 'POLRES', 'POLDA', 'MABES')
+                   order by depth desc nulls last limit 1`,
+                [target.id]
+            );
+            const targetTerrLevel = targetTerrRows[0]?.tipe;
+            const allowedLevels = this.allowedSubordinateLevels(ctx.territory.tipe_satker);
+            if (!targetTerrLevel || !allowedLevels.includes(targetTerrLevel)) {
+                throw new ForbiddenException('Satker tujuan tidak termasuk kewenangan monitoring (tidak boleh mengakses satker sejajar/lateral).');
+            }
         }
 
         const crimeRows = await this.crimes();
@@ -420,6 +426,15 @@ export class LpMonitoringAccessService {
             select id, deskripsi, parent_id, tipe_satker, depth
             from all_targets
             order by depth, kode_canonical`, [ctx.territory.id, allowedLevels]) : [];
+        if (ctx.actor.id !== ctx.territory.id && domains.length > 0 && !targets.some((t) => Number(t.id) === Number(ctx.territory.id))) {
+            targets.unshift({
+                id: Number(ctx.territory.id),
+                deskripsi: ctx.territory.deskripsi,
+                parent_id: ctx.territory.parent_id ? Number(ctx.territory.parent_id) : null,
+                tipe_satker: ctx.territory.tipe_satker,
+                depth: Number(ctx.territory.depth || 1)
+            });
+        }
         const crimes = crimeRows.map((x) => ({
             id: x.id,
             nama: x.keterangan,

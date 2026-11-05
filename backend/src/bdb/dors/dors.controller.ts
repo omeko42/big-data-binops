@@ -71,10 +71,58 @@ export class DorsController {
         return this.service.getSyncJobStatus(req.user, parseInt(logId, 10));
     }
 
-    /** Riwayat eksekusi sinkronisasi + info jadwal. */
+    /** Riwayat eksekusi sinkronisasi + info jadwal (mendukung paginasi penuh & filter tanpa batas penghapusan log). */
     @Get('sync/logs')
-    logs(@Req() req: any, @Query('limit') limit?: string) {
-        return this.service.recentLogs(req.user, limit ? parseInt(limit, 10) : 20);
+    logs(
+        @Req() req: any,
+        @Query('limit') limit?: string,
+        @Query('page') page?: string,
+        @Query('row') row?: string,
+        @Query('status') status?: string,
+        @Query('trigger') trigger?: string,
+        @Query('search') search?: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string
+    ) {
+        return this.service.recentLogs(req.user, limit ? parseInt(limit, 10) : 25, {
+            page: page ? parseInt(page, 10) : 1,
+            row: row ? parseInt(row, 10) : (limit ? parseInt(limit, 10) : 25),
+            status,
+            trigger,
+            search,
+            from,
+            to
+        });
+    }
+
+    /** Daftar Portal Integrasi Masuk (dinamis + kapabilitas + status). */
+    @Get('portals')
+    listPortals(@Req() req: any, @Query('search') search?: string, @Query('status') status?: string) {
+        return this.service.listInboundPortals(req.user, { search, status });
+    }
+
+    /** Tambah Portal Integrasi Masuk baru. */
+    @Post('portals')
+    createPortal(@Req() req: any, @Body() body: any) {
+        return this.service.saveInboundPortal(req.user, null, body || {});
+    }
+
+    /** Ubah Portal Integrasi Masuk. */
+    @Put('portals/:id')
+    updatePortal(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.saveInboundPortal(req.user, parseInt(id, 10), body || {});
+    }
+
+    /** Aktifkan / Nonaktifkan Portal Integrasi Masuk. */
+    @Post('portals/:id/status')
+    togglePortalStatus(@Req() req: any, @Param('id') id: string, @Body() body: { status_aktif?: boolean }) {
+        return this.service.toggleInboundPortalStatus(req.user, parseInt(id, 10), body?.status_aktif);
+    }
+
+    /** Hapus Portal Integrasi Masuk. */
+    @Post('portals/:id/delete')
+    deletePortal(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteInboundPortal(req.user, parseInt(id, 10));
     }
 
     /** Batalkan / hentikan proses sinkronisasi DORS yang sedang berjalan. */

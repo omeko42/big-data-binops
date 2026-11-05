@@ -198,7 +198,7 @@ export class JukrahService {
         if (r === 'superadmin' || r === 'super_admin' || r.includes('super') || r === 'admin_binops' || r === 'admin binops') return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'ai_taktis_cas'];
+        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'cosersebot', 'ai_taktis_cas'];
         return superHandles.includes(u) || superHandles.includes(c);
     }
 
@@ -3238,12 +3238,12 @@ export class JukrahService {
             is_ai: true,
             is_official: true,
             is_same_satker: true,
-            name: 'AI Agen Taktis CAS',
-            handle: '@ai_taktis_cas',
-            username: '@ai_taktis_cas',
-            callsign: 'ai_taktis_cas',
+            name: 'Cosersebot',
+            handle: '@cosersebot',
+            username: '@cosersebot',
+            callsign: 'cosersebot',
             pangkat: 'Asisten Cerdas 24/7',
-            jabatan: 'Asisten Taktis Penyidik & Analis',
+            jabatan: 'Asisten Cerdas Coserse & Analis',
             satker_nama: 'Robinopsnal Bareskrim Polri',
             satker: 'Robinopsnal Bareskrim Polri',
             role_bdb: 'ai_agent',
@@ -3252,7 +3252,7 @@ export class JukrahService {
             is_online: true,
             is_pinned: true,
             channel_type: 'ai_agent',
-            last_message: aiMsgRows[0]?.content || 'Siap Komandan! Tanyakan analisis LP, KUHP Baru (UU 1/2023), DORS, Selra, atau panduan CAS.',
+            last_message: aiMsgRows[0]?.content || 'Siap Komandan! Tanyakan analisis LP, KUHP Baru (UU 1/2023), Portal Integrasi, Selra, atau panduan CAS.',
             last_sender_id: aiMsgRows[0]?.sender_id ? Number(aiMsgRows[0].sender_id) : -1,
             last_is_mine: Boolean(aiMsgRows[0]?.sender_id && Number(aiMsgRows[0].sender_id) === uid),
             last_time: aiMsgRows[0]?.created_at || new Date().toISOString(),
@@ -3385,7 +3385,7 @@ export class JukrahService {
         );
 
         if (tid === -1 && rows.length === 0) {
-            const welcomeText = '⚡ Salam Presisi! Saya AI Agen Taktis CAS Robinopsnal Bareskrim Polri. Silakan tanyakan bantuan terkait Laporan Polisi (LP), analisis Kinerja Perkara (CT/CC/CR), pasal KUHP Baru (UU No. 1 Tahun 2023), rekonsiliasi DORS, Susopsgas, atau kendala teknis aplikasi.';
+            const welcomeText = '⚡ Salam Presisi! Saya Cosersebot (@cosersebot) Robinopsnal Bareskrim Polri. Silakan tanyakan bantuan terkait Laporan Polisi (LP), analisis Kinerja Perkara (CT/CC/CR), pasal KUHP Baru (UU No. 1 Tahun 2023), Portal Integrasi, Susopsgas, atau kendala teknis aplikasi.';
             const ins = await this.dataSource.query(
                 `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
                  VALUES (-1, $1, 'ai_agent', $2, true, NOW())
@@ -3402,12 +3402,12 @@ export class JukrahService {
                 partner_id: -1,
                 is_ai: true,
                 is_official: true,
-                name: 'AI Agen Taktis CAS',
-                handle: '@ai_taktis_cas',
-                username: '@ai_taktis_cas',
-                callsign: 'ai_taktis_cas',
+                name: 'Cosersebot',
+                handle: '@cosersebot',
+                username: '@cosersebot',
+                callsign: 'cosersebot',
                 pangkat: 'Asisten Cerdas 24/7',
-                jabatan: 'Asisten Taktis Penyidik & Analis',
+                jabatan: 'Asisten Cerdas Coserse & Analis',
                 satker: 'Robinopsnal Bareskrim Polri',
                 satker_nama: 'Robinopsnal Bareskrim Polri',
                 role_bdb: 'ai_agent',
@@ -3493,7 +3493,7 @@ export class JukrahService {
         if (q.includes('lp') || q.includes('laporan polisi') || q.includes('limpah')) {
             return `📄 **[Pengelolaan Laporan Polisi (LP)]**\nSiap ${callsign}! Gunakan **Laporan → Laporan Polisi → Daftar LP** untuk pencarian, filter satker/kejahatan, dan rincian perkembangan penyidikan. Untuk perkara yang dilimpahkan, buka **Arsip Pelimpahan** (\`/cms/laporan-polisi/arsip-pelimpahan\`).`;
         }
-        return `🛡️ **[AI Agen Taktis CAS — Robinopsnal Bareskrim Polri]**\nSiap ${callsign}! Pesan Anda: *"${content.slice(0, 90)}"* telah dicatat oleh asisten taktis.\n\nSaya siap membantu analisis data **LP & Selra (CT/CC/CR)**, **Pasal KUHP Baru (UU 1/2023)**, **Sinkronisasi DORS**, **Lampiran Anev Periodik**, maupun **Susopsgas**.`;
+        return `🛡️ **[Cosersebot (@cosersebot) — Robinopsnal Bareskrim Polri]**\nSiap ${callsign}! Pesan Anda: *"${content.slice(0, 90)}"* telah dicatat oleh asisten cerdas Cosersebot.\n\nSaya siap membantu analisis data **LP & Selra (CT/CC/CR)**, **Pasal KUHP Baru (UU 1/2023)**, **Portal Integrasi**, **Lampiran Anev Periodik**, maupun **Susopsgas**.`;
     }
 
     async sendSocialMessage(user: any, body: any) {
