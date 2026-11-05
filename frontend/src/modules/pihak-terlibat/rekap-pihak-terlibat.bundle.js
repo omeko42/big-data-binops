@@ -256,8 +256,8 @@ let K=()=>{if("undefined"!==typeof window&&window.location.pathname.startsWith("
       ]})
     ]}),
     (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
-      (0,a.jsxs)("button",{type:"button",onClick:()=>setSatkerModalMax(!satkerModalMax),title:satkerModalMax?"Perkecil Tampilan":"Perbesar / Layar Penuh",className:"att-btn",style:{fontSize:"0.78rem",fontWeight:700,padding:"0.38rem 0.7rem",borderRadius:"8px",display:"inline-flex",alignItems:"center",gap:"0.35rem",cursor:"pointer"},children:[(0,a.jsx)("i",{className:satkerModalMax?"pi pi-window-minimize":"pi pi-window-maximize",style:{fontSize:"0.8rem"}}),(0,a.jsx)("span",{children:satkerModalMax?"Perkecil":"Layar Penuh"})]}),
-      (0,a.jsx)("button",{type:"button",onClick:()=>{setSatkerModalParty(null);setSatkerModalMax(!1);},className:"att-btn",title:"Tutup",style:{fontSize:"0.95rem",fontWeight:700,padding:"0.35rem 0.65rem",borderRadius:"8px",cursor:"pointer"},children:"✕"})
+      (0,a.jsx)("button",{type:"button",onClick:()=>setSatkerModalMax(!satkerModalMax),title:satkerModalMax?"Perkecil Tampilan":"Perbesar / Layar Penuh",className:"p-dialog-header-icon p-dialog-header-maximize p-link",children:(0,a.jsx)("i",{className:satkerModalMax?"pi pi-window-minimize":"pi pi-window-maximize"})}),
+      (0,a.jsx)("button",{type:"button",onClick:()=>{setSatkerModalParty(null);setSatkerModalMax(!1);},className:"p-dialog-header-icon p-dialog-header-close p-link",title:"Tutup",children:(0,a.jsx)("i",{className:"pi pi-times"})})
     ]})
   ]}),
   (()=>{
@@ -415,8 +415,8 @@ let K=()=>{if("undefined"!==typeof window&&window.location.pathname.startsWith("
         ]})
       ]}),
       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem"},children:[
-        (0,a.jsxs)("button",{type:"button",onClick:()=>setLpModalMax(!lpModalMax),title:lpModalMax?"Perkecil Tampilan":"Perbesar / Layar Penuh",className:"att-btn",style:{fontSize:"0.78rem",fontWeight:700,padding:"0.38rem 0.7rem",borderRadius:"8px",display:"inline-flex",alignItems:"center",gap:"0.35rem",cursor:"pointer"},children:[(0,a.jsx)("i",{className:lpModalMax?"pi pi-window-minimize":"pi pi-window-maximize",style:{fontSize:"0.8rem"}}),(0,a.jsx)("span",{children:lpModalMax?"Perkecil":"Layar Penuh"})]}),
-        (0,a.jsx)("button",{type:"button",onClick:()=>{setLpModalParty(null);setLpModalMax(!1);},className:"att-btn",style:{fontSize:"0.95rem",fontWeight:700,padding:"0.35rem 0.65rem",borderRadius:"8px",cursor:"pointer"},children:"✕"})
+        (0,a.jsx)("button",{type:"button",onClick:()=>setLpModalMax(!lpModalMax),title:lpModalMax?"Perkecil Tampilan":"Perbesar / Layar Penuh",className:"p-dialog-header-icon p-dialog-header-maximize p-link",children:(0,a.jsx)("i",{className:lpModalMax?"pi pi-window-minimize":"pi pi-window-maximize"})}),
+        (0,a.jsx)("button",{type:"button",onClick:()=>{setLpModalParty(null);setLpModalMax(!1);},className:"p-dialog-header-icon p-dialog-header-close p-link",title:"Tutup",children:(0,a.jsx)("i",{className:"pi pi-times"})})
       ]})
     ]}),
     (0,a.jsxs)("div",{style:{padding:"0.75rem 1rem",overflowY:"auto",flex:"1 1 auto",maxHeight:lpModalMax?"calc(100vh - 145px)":"68vh",background:"var(--cas-bg-surface, #ffffff)",display:"flex",flexDirection:"column",gap:"0.75rem"},children:[

@@ -26,6 +26,11 @@ export class PihakTerlibatController {
         return this.service.ranking(req.user, query);
     }
 
+    @Post('pin')
+    togglePin(@Req() req: any, @Body() body: any) {
+        return this.service.togglePin(req.user, body || {});
+    }
+
     @Get('laporan-by-nik/:nik')
     getLaporanByNik(@Req() req: any, @Param('nik') nik: string, @Query() query: any) {
         return this.service.getLaporanByNik(req.user, nik, query);

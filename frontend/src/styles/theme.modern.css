@@ -4162,22 +4162,32 @@ body:not([data-theme=dark]) .kp-toolbar-row {
 
 .kp-modal-header {
   flex-shrink: 0 !important;
-  padding: 0.75rem 1.25rem !important;
+  padding: 0.85rem 1.25rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  background: #1e293b !important;
-  border-bottom: 1px solid #334155 !important;
+  background: var(--cas-card-bg, #ffffff) !important;
+  border-bottom: 1px solid var(--cas-border, #e2e8f0) !important;
+}
+:root[data-theme="dark"] .kp-modal-header {
+  background: #0f172a !important;
+  border-bottom: 1px solid #1e293b !important;
 }
 .kp-modal-title {
   font-size: 1rem !important;
   font-weight: 800 !important;
+  color: var(--cas-text-primary, #0f172a) !important;
+}
+:root[data-theme="dark"] .kp-modal-title {
   color: #f8fafc !important;
 }
 .kp-modal-sub {
   font-size: 0.75rem !important;
-  color: #94a3b8 !important;
+  color: var(--cas-text-muted, #64748b) !important;
   margin-top: 2px !important;
+}
+:root[data-theme="dark"] .kp-modal-sub {
+  color: #94a3b8 !important;
 }
 
 .kp-pdf-sidebar {
@@ -8082,5 +8092,212 @@ main.cms-content {
 :root[data-theme="dark"] .p-dialog [style*="color: rgb(109, 40, 217)"] {
   color: #c4b5fd !important;
 }
+
+/* ==========================================================================
+   ROUND 15: SYSTEM-WIDE UNIFIED MODAL / POP-UP STANDARDIZER
+   - Single container with Neutral Header, Content Area, and Footer
+   - Top-right Maximize/Minimize + Close (×) buttons in Header
+   - Uniform Landscape Rectangle on PC (>768px) & Portrait on Mobile (<=768px)
+   - Fullpage expansion when Maximized (.p-dialog-maximized)
+   ========================================================================== */
+.p-dialog:not(.p-confirm-dialog),
+.cas-std-modal {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  transition: width 0.18s ease, height 0.18s ease, max-width 0.18s ease, max-height 0.18s ease !important;
+}
+
+:root:not([data-theme="dark"]) .p-dialog:not(.p-confirm-dialog),
+:root:not([data-theme="dark"]) .cas-std-modal {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.34) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="dark"] .p-dialog:not(.p-confirm-dialog),
+:root[data-theme="dark"] .cas-std-modal {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.72) !important;
+  color: #f8fafc !important;
+}
+
+/* 1. Modal Header (Always Neutral, Never Dark Blue in Light Mode) */
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header,
+.cas-std-modal > .p-dialog-header,
+.cas-std-modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  padding: 0.9rem 1.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+:root:not([data-theme="dark"]) .p-dialog:not(.p-confirm-dialog) > .p-dialog-header,
+:root:not([data-theme="dark"]) .cas-std-modal > .p-dialog-header,
+:root:not([data-theme="dark"]) .cas-std-modal-header {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="dark"] .p-dialog:not(.p-confirm-dialog) > .p-dialog-header,
+:root[data-theme="dark"] .cas-std-modal > .p-dialog-header,
+:root[data-theme="dark"] .cas-std-modal-header {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-title,
+.cas-std-modal-header .p-dialog-title {
+  font-weight: 800 !important;
+  font-size: 1.02rem !important;
+  color: inherit !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* 2. Top-Right Header Controls (Maximize/Minimize + Close ×) */
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icons,
+.cas-std-modal-header .p-dialog-header-icons {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.38rem !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+}
+
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icon,
+.cas-std-modal-header .p-dialog-header-icon {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  padding: 0 !important;
+}
+
+:root:not([data-theme="dark"]) .p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icon,
+:root:not([data-theme="dark"]) .cas-std-modal-header .p-dialog-header-icon {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root[data-theme="dark"] .p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icon,
+:root[data-theme="dark"] .cas-std-modal-header .p-dialog-header-icon {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #cbd5e1 !important;
+}
+
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icon:hover,
+.cas-std-modal-header .p-dialog-header-icon:hover {
+  background: rgba(59, 130, 246, 0.14) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+  color: #2563eb !important;
+}
+
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-header .p-dialog-header-icon.p-dialog-header-close:hover,
+.cas-std-modal-header .p-dialog-header-icon.p-dialog-header-close:hover {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #dc2626 !important;
+}
+
+/* 3. Modal Content Area */
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-content,
+.cas-std-modal > .p-dialog-content,
+.cas-std-modal-body {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  padding: 1.15rem 1.25rem !important;
+}
+
+:root:not([data-theme="dark"]) .p-dialog:not(.p-confirm-dialog) > .p-dialog-content:not(.kp-dialog-canvas),
+:root:not([data-theme="dark"]) .cas-std-modal-body {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="dark"] .p-dialog:not(.p-confirm-dialog) > .p-dialog-content:not(.kp-dialog-canvas),
+:root[data-theme="dark"] .cas-std-modal-body {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* 4. Modal Footer */
+.p-dialog:not(.p-confirm-dialog) > .p-dialog-footer,
+.cas-std-modal > .p-dialog-footer,
+.cas-std-modal-footer {
+  padding: 0.8rem 1.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+:root:not([data-theme="dark"]) .p-dialog:not(.p-confirm-dialog) > .p-dialog-footer,
+:root:not([data-theme="dark"]) .cas-std-modal-footer {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="dark"] .p-dialog:not(.p-confirm-dialog) > .p-dialog-footer,
+:root[data-theme="dark"] .cas-std-modal-footer {
+  background: #0b1324 !important;
+  color: #f8fafc !important;
+  border-top: 1px solid #1e293b !important;
+}
+
+/* 5. Uniform Landscape Shape on PC (> 768px) & Portrait on Mobile (<= 768px) */
+@media (min-width: 769px) {
+  .p-dialog:not(.p-confirm-dialog):not(.p-dialog-maximized),
+  .cas-std-modal:not(.p-dialog-maximized):not(.cas-modal-maximized) {
+    width: min(92vw, 60rem) !important;
+    max-width: min(92vw, 60rem) !important;
+    min-width: min(92vw, 54rem) !important;
+    max-height: 82vh !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .p-dialog:not(.p-confirm-dialog):not(.p-dialog-maximized),
+  .cas-std-modal:not(.p-dialog-maximized):not(.cas-modal-maximized) {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    min-width: 0 !important;
+    max-height: 90vh !important;
+    margin: 0.5rem auto !important;
+  }
+}
+
+/* 6. Full-Page Maximized State */
+.p-dialog.p-dialog-maximized,
+.cas-std-modal.p-dialog-maximized,
+.cas-std-modal.cas-modal-maximized {
+  width: 98vw !important;
+  max-width: 98vw !important;
+  min-width: 98vw !important;
+  height: 96vh !important;
+  max-height: 96vh !important;
+  margin: 2vh auto !important;
+  border-radius: 12px !important;
+}
+
+.p-dialog.p-dialog-maximized > .p-dialog-content,
+.cas-std-modal.p-dialog-maximized > .p-dialog-content {
+  flex: 1 1 auto !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
 
 
