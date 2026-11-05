@@ -3191,16 +3191,18 @@ export class LaporanPolisiService {
 
         const STATUS_OPTIONS = ['LIDIK', 'SIDIK', 'SPDP', 'TAHAP_I', 'P19', 'P21', 'TAHAP_II', 'SP3', 'SP2_LID', 'PERMA'];
         const ALASAN_OPTIONS = [
+            // 10 Alasan Standar (KUHP Baru UU 1/2023 & KUHAP Baru UU 20/2025 — Berlaku Semua LP, G2:G11)
             'Tidak terdapat cukup alat bukti',
             'Peristiwa bukan merupakan tindak pidana',
             'Penyelesaian luar proses peradilan / Restorative Justice',
             'Ditariknya pengaduan',
             'Putusan tetap / Ne Bis in Idem',
-            'Tersangka meninggal dunia',
+            'Tersangka atau terdakwa meninggal dunia',
             'Kedaluwarsa',
             'Amnesti atau abolisi',
-            'Maksimum denda dibayar sukarela',
+            'Maksimum pidana denda dibayar sukarela',
             'Diversi',
+            // 5 Alasan Tambahan Khusus LP Lama Sebelum 2026 (< 2026, G12:G16)
             'Tersangka gila / gangguan jiwa',
             'Tersangka anak di bawah umur (< 12 tahun)',
             'Bela paksa',
@@ -3213,9 +3215,32 @@ export class LaporanPolisiService {
         ALASAN_OPTIONS.forEach((v, i) => { refSheet.getCell(`G${i + 2}`).value = v; });
         PERMA_OPTIONS.forEach((v, i) => { refSheet.getCell(`H${i + 2}`).value = v; });
 
+        const extractTemplateLpYear = (rowObj: any): number | null => {
+            if (!rowObj) return null;
+            if (rowObj.tanggal_laporan) {
+                const d = new Date(rowObj.tanggal_laporan);
+                if (!isNaN(d.getTime())) {
+                    const y = d.getFullYear();
+                    if (y >= 1990 && y <= 2100) return y;
+                }
+            }
+            const noLap = String(rowObj.no_laporan || '');
+            const m = noLap.match(/\/(19\d{2}|20\d{2})\//);
+            if (m) return parseInt(m[1], 10);
+            const mEnd = noLap.match(/\b(19\d{2}|20\d{2})\b/);
+            return mEnd ? parseInt(mEnd[1], 10) : null;
+        };
+
         // Set Data Validation pada Sheet Utama
         const totalRows = Math.max(lpRows.length + 1, 100);
         for (let i = 2; i <= totalRows; i++) {
+            const rowLp = lpRows[i - 2] || null;
+            const rowLpYear = extractTemplateLpYear(rowLp);
+            const isPre2026Row = rowLpYear === null || rowLpYear < 2026;
+            const alasanFormulaRange = isPre2026Row
+                ? "'Petunjuk & Referensi'!$G$2:$G$16"
+                : "'Petunjuk & Referensi'!$G$2:$G$11";
+
             // Dropdown Status Baru (Col G)
             sheet.getCell(`G${i}`).dataValidation = {
                 type: 'list',
@@ -3233,7 +3258,7 @@ export class LaporanPolisiService {
                 operator: 'between',
                 formulae: ['1970-01-01', new Date().toISOString().slice(0, 10)],
                 promptTitle: 'Format Tanggal Dokumen',
-                prompt: 'Contoh: 12-Sep-2026 atau 12/09/2026. Tanggal tidak boleh mendahului tanggal LP dan tidak boleh melebihi hari ini.',
+                prompt: 'Contoh: 12-Sep-2026 atau 12/09/2026. Tanggal tidak boleh melebihi hari ini (khusus LIDIK boleh sebelum tanggal LP).',
                 showInputMessage: true,
                 allowBlank: true
             };
@@ -3242,10 +3267,12 @@ export class LaporanPolisiService {
             sheet.getCell(`J${i}`).dataValidation = {
                 type: 'list',
                 allowBlank: true,
-                formulae: ["'Petunjuk & Referensi'!$G$2:$G$16"],
+                formulae: [alasanFormulaRange],
                 showErrorMessage: true,
                 errorTitle: 'Alasan Tidak Valid',
-                error: 'Pilih alasan penghentian dari daftar dropdown.'
+                error: isPre2026Row
+                    ? 'Pilih alasan penghentian dari daftar dropdown (15 opsi untuk LP sebelum 2026).'
+                    : 'Pilih alasan penghentian dari daftar dropdown (10 opsi KUHP/KUHAP Baru untuk LP >= 2026).'
             };
 
             // Dropdown Kategori Perma (Col K)
