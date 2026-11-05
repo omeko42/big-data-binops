@@ -117,13 +117,35 @@
       return { tgl_mulai: tMulai, tgl_berakhir: tAkhir, catatan: cleanCat };
     }
 
+    function normalizeSatkerKamus(val) {
+      var s = String(val || "").trim();
+      if (!s || s === "-" || s === "—") return "";
+      s = s
+        .replace(/\bDIT\s*TIPIDEKSUS\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDEKSUS BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDNARKOBA\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDNARKOBA BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDUM\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDUM BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDKOR\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDKOR BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDTER\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDTER BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDSIBER\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDSIBER BARESKRIM POLRI")
+        .replace(/\bDIT\s*TIPIDPPAPPO\s+BARESKRIM(?:\s+POLRI)?\b/gi, "DITTIPIDPPAPPO BARESKRIM POLRI")
+        .replace(/\b(?:DIT\s*RES\s*KRIMSUS|DITRESKRIMSUS|DIT\s+KRIMSUS)\b/gi, "DITKRIMSUS")
+        .replace(/\b(?:DIT\s*RES\s*KRIMUM|DITRESKRIMUM|DIT\s+KRIMUM)\b/gi, "DITKRIMUM")
+        .replace(/\b(?:DIT\s*RES\s*NARKOBA|DITRESNARKOBA|DIT\s+NARKOBA)\b/gi, "DITNARKOBA")
+        .replace(/\b(?:DIT\s*RES\s*SIBER|DITRESSIBER|DIT\s+SIBER)\b/gi, "DITSIBER")
+        .replace(/^KRIMSUS\s+(.+)$/i, "DITKRIMSUS $1")
+        .replace(/^KRIMUM\s+(.+)$/i, "DITKRIMUM $1")
+        .replace(/(^|\bPOLDA\s+|\s-\s|,\s*)KRIMSUS\b/gi, "$1DITKRIMSUS")
+        .replace(/(^|\bPOLDA\s+|\s-\s|,\s*)KRIMUM\b/gi, "$1DITKRIMUM");
+      return s;
+    }
+
     function inferSatker(row) {
-      var st = String(row?.satker_penyelenggara || row?.satker_nama || row?.satker_terkait || row?.unit_nama || "").trim();
+      var st = normalizeSatkerKamus(row?.satker_penyelenggara || row?.satker_nama || row?.satker_terkait || row?.unit_nama || "");
       if (st && st !== "-" && st !== "—") return st;
       var lp = String(row?.first_no_laporan || "").toUpperCase();
       if (lp.includes("BARESKRIM")) return "Bareskrim Polri";
       var mPolda = lp.match(/POLDA\s+[A-Z.\s]+?(?=\/|$)/i) || lp.match(/SPKT\/([A-Z0-9.\s]+?)(?=\/|$)/i);
-      if (mPolda) return mPolda[0].replace(/^SPKT\//i, "").trim();
+      if (mPolda) return normalizeSatkerKamus(mPolda[0].replace(/^SPKT\//i, "").trim());
       return "Satker Jajaran Polri";
     }
 
@@ -402,51 +424,39 @@
     // Clickable LP & Satker yg menangani Cell
     function renderClickableLpBadge(row) {
       var lpCount = Number(row.jumlah_lp || 0);
-      var satkers = String(row.satker_terkait || "").split(",").map(function(s) { return s.trim(); }).filter(Boolean);
-      var satkerCount = Number(row.jumlah_satker || satkers.length || 0);
-      var satkerSummary = satkers.length > 0
-        ? satkers.slice(0, 2).join(", ") + (satkers.length > 2 ? " (+" + (satkers.length - 2) + " satker)" : "")
-        : inferSatker(row);
-      return jsxs("div", {
-        style: { display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "0.22rem" },
+      var satkers = String(row.satker_terkait || "").split(",").map(function(s) { return normalizeSatkerKamus(s.trim()); }).filter(Boolean);
+      var satkerCount = Number(row.jumlah_satker || satkers.length || (lpCount > 0 ? 1 : 0));
+      var satkerTooltip = satkers.length > 0 ? satkers.join(", ") : inferSatker(row);
+      return jsx("button", {
+        type: "button",
+        onClick: function(ev) { ev.stopPropagation(); openDrilldownModal(row, "LP"); },
+        title: "Klik untuk membuka Daftar Laporan Polisi (LP), Status Penyidikan & Detail Lampiran" + (satkerTooltip ? " (" + satkerTooltip + ")" : ""),
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "0.38rem",
+          padding: "0.28rem 0.65rem",
+          borderRadius: "6px",
+          border: lpCount > 0 ? "1px solid rgba(2,132,199,0.4)" : "1px solid #cbd5e1",
+          background: lpCount > 0 ? "linear-gradient(135deg, rgba(2,132,199,0.14), rgba(37,99,235,0.1))" : "#f1f5f9",
+          color: lpCount > 0 ? "#0369a1" : "#64748b",
+          fontWeight: 800,
+          fontSize: "0.75rem",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+          boxShadow: lpCount > 0 ? "0 1px 2px rgba(2,132,199,0.12)" : "none"
+        },
         children: [
-          jsxs("button", {
-            type: "button",
-            onClick: function(ev) { ev.stopPropagation(); openDrilldownModal(row, "LP"); },
-            title: "Klik untuk membuka Daftar Laporan Polisi (LP), Status Penyidikan & Detail Lampiran",
+          jsx("i", { className: "pi pi-folder-open", style: { fontSize: "0.73rem" } }),
+          jsxs("span", { children: [lpCount.toLocaleString("id-ID"), " LP"] }),
+          satkerCount > 0 && jsxs("span", {
             style: {
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.38rem",
-              padding: "0.28rem 0.65rem",
-              borderRadius: "999px",
-              border: lpCount > 0 ? "1px solid rgba(2,132,199,0.4)" : "1px solid #cbd5e1",
-              background: lpCount > 0 ? "linear-gradient(135deg, rgba(2,132,199,0.14), rgba(37,99,235,0.1))" : "#f1f5f9",
-              color: lpCount > 0 ? "#0369a1" : "#64748b",
-              fontWeight: 800,
-              fontSize: "0.75rem",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              boxShadow: lpCount > 0 ? "0 1px 2px rgba(2,132,199,0.12)" : "none"
+              paddingLeft: "0.3rem",
+              borderLeft: "1px solid rgba(2,132,199,0.3)",
+              fontSize: "0.7rem",
+              color: "#0284c7"
             },
-            children: [
-              jsx("i", { className: "pi pi-folder-open", style: { fontSize: "0.73rem" } }),
-              jsxs("span", { children: [lpCount.toLocaleString("id-ID"), " LP"] }),
-              satkerCount > 0 && jsxs("span", {
-                style: {
-                  paddingLeft: "0.3rem",
-                  borderLeft: "1px solid rgba(2,132,199,0.3)",
-                  fontSize: "0.7rem",
-                  color: "#0284c7"
-                },
-                children: [satkerCount, " Satker"]
-              })
-            ]
-          }),
-          satkerSummary && jsx("div", {
-            style: { fontSize: "0.69rem", color: "#475569", fontWeight: 600, maxWidth: "12rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-            title: satkers.length > 0 ? satkers.join(", ") : satkerSummary,
-            children: satkerSummary
+            children: [satkerCount, " Satker"]
           })
         ]
       });
@@ -686,18 +696,20 @@
                         })
                       }),
                       jsxs("td", {
-                        style: { padding: "0.7rem 0.85rem" },
+                        style: { padding: "0.7rem 0.85rem", maxWidth: "24rem" },
                         children: [
                           jsxs("div", {
                             onClick: function() { openDrilldownModal(row, "LP"); },
-                            style: { fontWeight: 800, color: "#0f172a", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", lineHeight: 1.35 },
+                            title: row.judul || row.nama || "—",
+                            style: { fontWeight: 800, color: "#0f172a", cursor: "pointer", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", lineHeight: 1.35 },
                             children: [
-                              row.is_pinned && jsx(Tag, { icon: "pi pi-bookmark-fill", value: "Disematkan", severity: "warning" }),
+                              row.is_pinned && jsx("span", { style: { display: "inline-flex", alignItems: "center", gap: "0.2rem", padding: "0.08rem 0.38rem", borderRadius: "4px", background: "rgba(245,158,11,0.16)", color: "#b45309", fontSize: "0.66rem", fontWeight: 800, marginRight: "0.38rem", verticalAlign: "middle" }, children: [jsx("i", { className: "pi pi-bookmark-fill", style: { fontSize: "0.62rem" } }), "Disematkan"] }),
                               jsx("span", { children: row.judul || row.nama || "—" })
                             ]
                           }),
                           (row.keterangan || row.deskripsi) && jsx("div", {
-                            style: { fontSize: "0.74rem", color: "#64748b", marginTop: "0.2rem", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" },
+                            title: row.keterangan || row.deskripsi,
+                            style: { fontSize: "0.74rem", color: "#64748b", marginTop: "0.18rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" },
                             children: row.keterangan || row.deskripsi
                           })
                         ]
@@ -731,10 +743,10 @@
                         ]
                       }),
                       jsxs("td", {
-                        style: { padding: "0.7rem 0.85rem" },
+                        style: { padding: "0.7rem 0.85rem", maxWidth: "14rem" },
                         children: [
-                          jsx("div", { style: { fontWeight: 700, fontSize: "0.76rem", color: "#0f172a" }, children: satkerStr }),
-                          jsx("div", { style: { fontSize: "0.72rem", color: "#64748b", marginTop: "0.1rem" }, children: row.first_no_laporan || (row.pimpinan ? ("Pimpinan: " + row.pimpinan) : "—") })
+                          jsx("div", { title: satkerStr, style: { fontWeight: 700, fontSize: "0.76rem", color: "#0f172a", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "13rem" }, children: satkerStr }),
+                          jsx("div", { title: row.first_no_laporan || (row.pimpinan ? ("Pimpinan: " + row.pimpinan) : "—"), style: { fontSize: "0.72rem", color: "#64748b", marginTop: "0.1rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "13rem" }, children: row.first_no_laporan || (row.pimpinan ? ("Pimpinan: " + row.pimpinan) : "—") })
                         ]
                       }),
                       jsxs("td", {
