@@ -1473,22 +1473,35 @@ e.s(["default", 0, function() {
                     padding: "1rem"
                 },
                 children: (0, t.jsxs)("div", {
+                    className: "p-dialog p-component cas-std-modal",
                     style: {
                         background: "var(--cas-card-bg, #ffffff)",
-                        borderRadius: "12px",
-                        maxWidth: "500px",
+                        borderRadius: "14px",
                         width: "100%",
-                        padding: "1.5rem",
-                        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)"
+                        padding: 0,
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column"
                     },
                     children: [
-                        (0, t.jsx)("h3", { style: { margin: "0 0 1rem", fontSize: "1.15rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" }, children: "Buat Draf Laporan Anev Baru" }),
                         (0, t.jsxs)("div", {
-                            style: { display: "grid", gap: "0.8rem" },
+                            className: "p-dialog-header cas-std-modal-header",
+                            style: { padding: "0.95rem 1.25rem", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between" },
                             children: [
+                                (0, t.jsx)("span", { className: "p-dialog-title", style: { fontSize: "1.05rem", fontWeight: 800, color: "var(--cas-text-primary, #0f172a)" }, children: "Buat Draf Laporan Anev Baru" }),
                                 (0, t.jsxs)("div", {
+                                    className: "p-dialog-header-icons",
+                                    style: { display: "flex", alignItems: "center", gap: "0.35rem" },
                                     children: [
-                                        (0, t.jsx)("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem" }, children: "Judul Laporan:" }),
+                                        (0, t.jsx)("button", { type: "button", className: "p-dialog-header-icon p-dialog-header-maximize p-link", title: "Perbesar / Kembalikan Ukuran", onClick: (ev) => { let dlg = ev.currentTarget.closest(".p-dialog"); if (dlg) { let isMax = dlg.classList.toggle("p-dialog-maximized"), ic = ev.currentTarget.querySelector("i"); if (ic) ic.className = isMax ? "pi pi-window-minimize" : "pi pi-window-maximize"; } }, children: (0, t.jsx)("i", { className: "pi pi-window-maximize" }) }),
+                                        (0, t.jsx)("button", { type: "button", className: "p-dialog-header-icon p-dialog-header-close p-link", title: "Tutup", onClick: () => setShowNewModal(false), children: (0, t.jsx)("i", { className: "pi pi-times" }) })
+                                    ]
+                                })
+                            ]
+                        }),
+                        (0, t.jsxs)("div", {
+                            className: "p-dialog-content cas-std-modal-body", style: { display: "grid", gap: "0.85rem", padding: "1.2rem 1.25rem" }, children: [ (0, t.jsxs)("div", { children: [ (0, t.jsx)("label", { style: { display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "0.25rem" }, children: "Judul Laporan:" }),
                                         (0, t.jsx)(s.InputText, {
                                             value: newTitle,
                                             onChange: (e) => setNewTitle(e.target.value),
@@ -1542,7 +1555,7 @@ e.s(["default", 0, function() {
                             ]
                         }),
                         (0, t.jsxs)("div", {
-                            style: { display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.25rem" },
+                            className: "p-dialog-footer cas-std-modal-footer", style: { display: "flex", justifyContent: "flex-end", gap: "0.5rem", padding: "0.8rem 1.25rem", borderTop: "1px solid var(--cas-border, #e2e8f0)", background: "var(--cas-bg-subtle, #f8fafc)" },
                             children: [
                                 (0, t.jsx)(c.Button, {
                                     label: "Batal",

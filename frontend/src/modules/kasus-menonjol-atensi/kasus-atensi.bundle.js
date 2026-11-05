@@ -963,20 +963,50 @@
           style: { position: "fixed", inset: 0, zIndex: 9985, background: "rgba(15,23,42,0.72)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
           children: jsxs("div", {
             onClick: function(ev) { ev.stopPropagation(); },
-            style: { width: "62rem", maxWidth: "96vw", maxHeight: "92vh", background: "#ffffff", borderRadius: "14px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.38)", display: "flex", flexDirection: "column", overflow: "hidden" },
+            className: "p-dialog p-component cas-std-modal",
+            style: { width: "62rem", maxWidth: "96vw", maxHeight: "88vh", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderRadius: "14px", border: "1px solid var(--cas-border-strong, #cbd5e1)", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.38)", display: "flex", flexDirection: "column", overflow: "hidden" },
             children: [
               jsxs("div", {
-                style: { padding: "0.95rem 1.3rem", background: "linear-gradient(135deg, #0f172a, #1e3a5f)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" },
+                className: "p-dialog-header cas-std-modal-header",
+                style: { padding: "0.95rem 1.3rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between" },
                 children: [
                   jsx("div", {
-                    style: { fontWeight: 800, fontSize: "0.98rem" },
+                    className: "p-dialog-title",
+                    style: { fontWeight: 800, fontSize: "1.02rem", color: "var(--cas-text-primary, #0f172a)" },
                     children: (formMode === "create" ? "➕ Tambah " : formMode === "edit" ? "✏️ Edit " : "👁️ Detail ") +
                       (formTargetTab === "SUSJOL" ? "Kasus Menonjol (Susjol)" : formTargetTab === "SUSATENSI" ? "Kasus Atensi (Susatensi)" : "Operasi / Satgas")
                   }),
-                  jsx("button", { type: "button", onClick: function() { setFormOpen(false); }, style: { background: "rgba(239,68,68,0.85)", border: "none", color: "#fff", borderRadius: "6px", padding: "0.3rem 0.7rem", cursor: "pointer", fontWeight: 800 }, children: "✕ Tutup" })
+                  jsxs("div", {
+                    className: "p-dialog-header-icons",
+                    style: { display: "flex", alignItems: "center", gap: "0.35rem" },
+                    children: [
+                      jsx("button", {
+                        type: "button",
+                        className: "p-dialog-header-icon p-dialog-header-maximize p-link",
+                        title: "Perbesar / Kembalikan Ukuran",
+                        onClick: function(ev) {
+                          var dlg = ev.currentTarget.closest(".p-dialog");
+                          if (dlg) {
+                            var isMax = dlg.classList.toggle("p-dialog-maximized");
+                            var ic = ev.currentTarget.querySelector("i");
+                            if (ic) ic.className = isMax ? "pi pi-window-minimize" : "pi pi-window-maximize";
+                          }
+                        },
+                        children: jsx("i", { className: "pi pi-window-maximize" })
+                      }),
+                      jsx("button", {
+                        type: "button",
+                        className: "p-dialog-header-icon p-dialog-header-close p-link",
+                        title: "Tutup",
+                        onClick: function() { setFormOpen(false); },
+                        children: jsx("i", { className: "pi pi-times" })
+                      })
+                    ]
+                  })
                 ]
               }),
               jsxs("div", {
+                className: "p-dialog-content cas-std-modal-body",
                 style: { padding: "1.1rem 1.3rem", overflowY: "auto", flex: 1, display: "grid", gap: "1rem" },
                 children: [
                   // 1. Informasi Utama Judul Kasus / Kegiatan
@@ -1280,7 +1310,7 @@
                 ]
               }),
               jsxs("div", {
-                style: { padding: "0.85rem 1.3rem", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "0.5rem" },
+                className: "p-dialog-footer cas-std-modal-footer", style: { padding: "0.85rem 1.3rem", background: "var(--cas-bg-subtle, #f8fafc)", borderTop: "1px solid var(--cas-border, #e2e8f0)", display: "flex", justifyContent: "flex-end", gap: "0.5rem" },
                 children: [
                   jsx("button", { type: "button", onClick: function() { setFormOpen(false); }, className: "att-btn", style: { padding: "0.45rem 1rem", cursor: "pointer", fontWeight: 700 }, children: isViewOnly ? "Tutup" : "Batal" }),
                   !isViewOnly && jsx("button", {
@@ -1320,6 +1350,7 @@
             padding: drillFull ? "0.4rem" : "1.25rem"
           },
           children: jsxs("div", {
+            className: "p-dialog p-component cas-std-modal" + (drillFull ? " p-dialog-maximized" : ""),
             onClick: function(ev) { ev.stopPropagation(); },
             style: {
               width: drillFull ? "99vw" : "92vw",
@@ -1337,15 +1368,7 @@
             children: [
               // Modal Header
               jsxs("div", {
-                style: {
-                  padding: "0.95rem 1.35rem",
-                  background: "linear-gradient(135deg, #0f172a, #1e3a5f)",
-                  color: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "1rem"
-                },
+                className: "p-dialog-header cas-std-modal-header", style: { padding: "0.95rem 1.35rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" },
                 children: [
                   jsxs("div", {
                     style: { display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" },
@@ -1359,19 +1382,22 @@
                     ]
                   }),
                   jsxs("div", {
-                    style: { display: "flex", alignItems: "center", gap: "0.45rem" },
+                    className: "p-dialog-header-icons",
+                    style: { display: "flex", alignItems: "center", gap: "0.35rem" },
                     children: [
                       jsx("button", {
                         type: "button",
+                        className: "p-dialog-header-icon p-dialog-header-maximize p-link",
+                        title: drillFull ? "Kembalikan Ukuran" : "Perbesar / Layar Penuh",
                         onClick: function() { setDrillFull(!drillFull); },
-                        style: { background: "rgba(255,255,255,0.14)", border: "none", color: "#fff", borderRadius: "7px", padding: "0.35rem 0.65rem", cursor: "pointer", fontSize: "0.76rem", fontWeight: 700 },
-                        children: drillFull ? "🗗 Ukuran Normal" : "🗖 Layar Penuh"
+                        children: jsx("i", { className: drillFull ? "pi pi-window-minimize" : "pi pi-window-maximize" })
                       }),
                       jsx("button", {
                         type: "button",
+                        className: "p-dialog-header-icon p-dialog-header-close p-link",
+                        title: "Tutup",
                         onClick: function() { setDrillRow(null); },
-                        style: { background: "rgba(239,68,68,0.85)", border: "none", color: "#fff", borderRadius: "7px", padding: "0.35rem 0.75rem", cursor: "pointer", fontSize: "0.78rem", fontWeight: 800 },
-                        children: "✕ Tutup"
+                        children: jsx("i", { className: "pi pi-times" })
                       })
                     ]
                   })
@@ -1380,6 +1406,7 @@
 
               // Modal Scrollable Content
               jsxs("div", {
+                className: "p-dialog-content cas-std-modal-body",
                 style: { padding: "1.1rem 1.35rem", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "0.95rem" },
                 children: [
                   // 1. Top Summary Strip + Mini Status Cards (Kinerja-Perkara-Style)
@@ -1839,6 +1866,11 @@
                     })
                   )
                 ]
+              }),
+              jsx("div", {
+                className: "p-dialog-footer cas-std-modal-footer",
+                style: { padding: "0.8rem 1.35rem", background: "var(--cas-bg-subtle, #f8fafc)", borderTop: "1px solid var(--cas-border, #e2e8f0)", display: "flex", justifyContent: "flex-end" },
+                children: jsx("button", { type: "button", onClick: function() { setDrillRow(null); }, className: "att-btn primary", style: { padding: "0.42rem 1.1rem", fontWeight: 700, cursor: "pointer" }, children: "Tutup" })
               })
             ]
           })
@@ -1953,31 +1985,56 @@
         // INLINE FILE PREVIEW MODAL
         previewFile && jsx("div", {
           onClick: function() { setPreviewFile(null); },
-          style: { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.8)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
+          style: { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(15,23,42,0.72)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" },
           children: jsxs("div", {
+            className: "p-dialog p-component cas-std-modal",
             onClick: function(ev) { ev.stopPropagation(); },
-            style: { width: "74rem", maxWidth: "96vw", background: "#ffffff", borderRadius: "12px", overflow: "hidden", display: "flex", flexDirection: "column" },
+            style: { width: "64rem", maxWidth: "96vw", maxHeight: "88vh", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderRadius: "14px", border: "1px solid var(--cas-border-strong, #cbd5e1)", overflow: "hidden", display: "flex", flexDirection: "column" },
             children: [
               jsxs("div", {
-                style: { padding: "0.75rem 1.1rem", background: "#0f172a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" },
+                className: "p-dialog-header cas-std-modal-header",
+                style: { padding: "0.9rem 1.25rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between" },
                 children: [
-                  jsx("span", { style: { fontWeight: 800, fontSize: "0.88rem" }, children: "📎 " + (previewFile.name || "Pratinjau Berkas") }),
+                  jsx("span", { className: "p-dialog-title", style: { fontWeight: 800, fontSize: "0.98rem", color: "var(--cas-text-primary, #0f172a)" }, children: "📎 " + (previewFile.name || "Pratinjau Berkas") }),
                   jsxs("div", {
-                    style: { display: "flex", gap: "0.5rem", alignItems: "center" },
+                    className: "p-dialog-header-icons",
+                    style: { display: "flex", gap: "0.35rem", alignItems: "center" },
                     children: [
-                      previewFile.url && jsx("a", { href: previewFile.url, target: "_blank", rel: "noreferrer", style: { color: "#38bdf8", fontSize: "0.78rem", fontWeight: 700, textDecoration: "none" }, children: "⬇️ Buka / Unduh Tab Baru" }),
-                      jsx("button", { type: "button", onClick: function() { setPreviewFile(null); }, style: { background: "#ef4444", border: "none", color: "#fff", borderRadius: "6px", padding: "0.25rem 0.6rem", cursor: "pointer", fontWeight: 800 }, children: "✕" })
+                      jsx("button", {
+                        type: "button",
+                        className: "p-dialog-header-icon p-dialog-header-maximize p-link",
+                        title: "Perbesar / Kembalikan Ukuran",
+                        onClick: function(ev) {
+                          var dlg = ev.currentTarget.closest(".p-dialog");
+                          if (dlg) {
+                            var isMax = dlg.classList.toggle("p-dialog-maximized");
+                            var ic = ev.currentTarget.querySelector("i");
+                            if (ic) ic.className = isMax ? "pi pi-window-minimize" : "pi pi-window-maximize";
+                          }
+                        },
+                        children: jsx("i", { className: "pi pi-window-maximize" })
+                      }),
+                      jsx("button", { type: "button", className: "p-dialog-header-icon p-dialog-header-close p-link", title: "Tutup", onClick: function() { setPreviewFile(null); }, children: jsx("i", { className: "pi pi-times" }) })
                     ]
                   })
                 ]
               }),
               jsx("div", {
-                style: { padding: "0.75rem", height: "80vh", background: "#f1f5f9" },
+                className: "p-dialog-content cas-std-modal-body",
+                style: { padding: "0.75rem", height: "72vh", flex: 1, background: "var(--cas-bg-subtle, #f1f5f9)" },
                 children: previewFile.url ? (
                   /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(previewFile.name || previewFile.url) ?
                     jsx("img", { src: previewFile.url, alt: previewFile.name, style: { maxWidth: "100%", maxHeight: "100%", display: "block", margin: "0 auto", borderRadius: "8px" } }) :
                     jsx("iframe", { src: previewFile.url + "#toolbar=1", title: previewFile.name, style: { width: "100%", height: "100%", border: "none", borderRadius: "8px", background: "#fff" } })
                 ) : jsx("div", { style: { padding: "2rem", textAlign: "center", color: "#64748b" }, children: "URL pratinjau berkas tidak tersedia." })
+              }),
+              jsxs("div", {
+                className: "p-dialog-footer cas-std-modal-footer",
+                style: { padding: "0.75rem 1.25rem", background: "var(--cas-bg-subtle, #f8fafc)", borderTop: "1px solid var(--cas-border, #e2e8f0)", display: "flex", justifyContent: "space-between", alignItems: "center" },
+                children: [
+                  previewFile.url ? jsx("a", { href: previewFile.url, target: "_blank", rel: "noreferrer", className: "att-btn", style: { fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", padding: "0.4rem 0.85rem" }, children: "⬇️ Buka / Unduh di Tab Baru" }) : jsx("span", {}),
+                  jsx("button", { type: "button", onClick: function() { setPreviewFile(null); }, className: "att-btn primary", style: { padding: "0.4rem 1rem", fontWeight: 700, cursor: "pointer" }, children: "Tutup" })
+                ]
               })
             ]
           })
