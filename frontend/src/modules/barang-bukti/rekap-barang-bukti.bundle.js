@@ -2,6 +2,51 @@
 
 const BB_LIST_CACHE_PREFIX="bdb-bb-list-v5:",BB_LIST_TTL=24e4,BB_SUMMARY_CACHE_PREFIX="bdb-bb-summary-v5:",BB_SUMMARY_TTL=24e4,BB_LOCAL_OVERRIDES_KEY="cas_rekap_bb_overrides_v1";
 
+function SafeLandmark({size=12,style={}}){
+  return(0,a.jsxs)("svg",{
+    xmlns:"http://www.w3.org/2000/svg",
+    width:size,
+    height:size,
+    viewBox:"0 0 24 24",
+    fill:"none",
+    stroke:"currentColor",
+    strokeWidth:"2",
+    strokeLinecap:"round",
+    strokeLinejoin:"round",
+    style,
+    children:[
+      (0,a.jsx)("path",{d:"M10 18v-7"}),
+      (0,a.jsx)("path",{d:"M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"}),
+      (0,a.jsx)("path",{d:"M14 18v-7"}),
+      (0,a.jsx)("path",{d:"M18 18v-7"}),
+      (0,a.jsx)("path",{d:"M3 22h18"}),
+      (0,a.jsx)("path",{d:"M6 18v-7"})
+    ]
+  });
+}
+
+function SafeGavel({size=12,style={}}){
+  return(0,a.jsxs)("svg",{
+    xmlns:"http://www.w3.org/2000/svg",
+    width:size,
+    height:size,
+    viewBox:"0 0 24 24",
+    fill:"none",
+    stroke:"currentColor",
+    strokeWidth:"2",
+    strokeLinecap:"round",
+    strokeLinejoin:"round",
+    style,
+    children:[
+      (0,a.jsx)("path",{d:"m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381"}),
+      (0,a.jsx)("path",{d:"m16 16 6-6"}),
+      (0,a.jsx)("path",{d:"m21.5 10.5-8-8"}),
+      (0,a.jsx)("path",{d:"m8 8 6-6"}),
+      (0,a.jsx)("path",{d:"m8.5 7.5 8 8"})
+    ]
+  });
+}
+
 /**
  * Standar Master Kategori Jenis Barang Indonesia (Kemendag / BPS / Bareskrim Polri)
  */
@@ -153,14 +198,15 @@ function classifyJenisBarang(rawJenisInput,rawNamaInput){
   }
 
   let isGenericRaw=!rawJ||GENERIC_RAW_JENIS_SET.has(rawJ.toUpperCase());
+  let cleanRawJ=rawJ.replace(/^\d+(?:[.,]\d+)?\s*(?:buah|bh|pcs|biji|unit|butir|btr|batang|btg|bilah|pucuk|lembar|lbr|helai|potong|ptg|berkas|bundel|bundle|pasang|psg|set|paket|keping|kotak|box|dus|kardus|bungkus|bks|slop|pak|pack|sachet|klip|botol|btl|kaleng|klg|tabung|tbg|jerigen|jrgn|jergen|galon|karung|krg|sak|zak|roll|gulung|ekor|gram|gr|g|kilogram|kg|kilo|kuintal|kwintal|ton|mililiter|ml|liter|ltr|l|meter|mtr|m|sentimeter|cm|hektare|hektar|ha)\b\s*/i,"").trim()||rawJ;
   let detail="";
   if(!isGenericRaw){
     if(!rawN){
-      detail=rawJ;
-    }else if(rawN.toLowerCase().includes(rawJ.toLowerCase())){
+      detail=cleanRawJ;
+    }else if(rawN.toLowerCase().includes(cleanRawJ.toLowerCase())||rawN.toLowerCase().includes(rawJ.toLowerCase())){
       detail=rawN;
     }else{
-      detail=rawJ+" — "+rawN;
+      detail=cleanRawJ+" — "+rawN;
     }
   }else{
     detail=rawN||"—";
@@ -482,7 +528,7 @@ function renderSatkerCell(e){
       minWidth:0
     },
     children:[
-      (0,a.jsx)(d.Landmark,{size:12,style:{color:"#f87171",flex:"0 0 auto",marginTop:"0.12rem"}}),
+      (0,a.jsx)(SafeLandmark,{size:12,style:{color:"#f87171",flex:"0 0 auto",marginTop:"0.12rem"}}),
       (0,a.jsx)("span",{
         style:{
           display:"-webkit-box",
@@ -540,7 +586,7 @@ function renderTindakPidanaCell(e){
       (0,a.jsxs)("div",{
         style:{display:"flex",alignItems:"center",gap:"0.28rem",minWidth:0,width:"100%"},
         children:[
-          (0,a.jsx)(d.Gavel,{size:12,style:{color:"#b45309",flex:"0 0 auto"}}),
+          (0,a.jsx)(SafeGavel,{size:12,style:{color:"#b45309",flex:"0 0 auto"}}),
           (0,a.jsx)("span",{
             style:{
               fontWeight:600,
@@ -644,6 +690,7 @@ function RekapBarangBuktiInner(){
       [masterJenisOptions,setMasterJenisOptions]=(0,l.useState)(()=>MASTER_JENIS_BARANG_INDONESIA.map(k=>({label:k,value:k}))),
       [overridesMap,setOverridesMap]=(0,l.useState)(()=>loadBbOverrides()),
       [editModalOpen,setEditModalOpen]=(0,l.useState)(!1),
+      [editModalMax,setEditModalMax]=(0,l.useState)(!1),
       [editSaving,setEditSaving]=(0,l.useState)(!1),
       [editError,setEditError]=(0,l.useState)(""),
       [editToast,setEditToast]=(0,l.useState)(""),
@@ -978,6 +1025,7 @@ function RekapBarangBuktiInner(){
       kepemilikan:String(ov.kepemilikan??row.kepemilikan??""),
       status:String(ov.status??row.status??"MASUK").toUpperCase()==="KELUAR"?"KELUAR":"MASUK"
     });
+    setEditModalMax(!1);
     setEditModalOpen(!0);
   }
 
@@ -1115,6 +1163,7 @@ function RekapBarangBuktiInner(){
             padding: 0.48rem 0.5rem !important;
           }
           .cas-bb-modal-backdrop .p-dropdown-panel { z-index: 4500 !important; }
+          .cas-rekap-bb-table .p-tag, .p-tag { border-radius: 6px !important; }
         `
       }),
       (0,a.jsx)("h1",{className:"cms-page-title",children:"Rekap Barang Bukti"}),
@@ -1691,7 +1740,7 @@ function RekapBarangBuktiInner(){
                   return(0,a.jsx)(n.Tag,{
                     value:isDors?"DORS":"Manual",
                     severity:isDors?void 0:"success",
-                    style:{fontSize:"0.68rem",padding:"0.12rem 0.42rem",fontWeight:700}
+                    style:{fontSize:"0.68rem",padding:"0.12rem 0.42rem",fontWeight:700,borderRadius:"6px"}
                   });
                 }
               }),
@@ -1731,7 +1780,7 @@ function RekapBarangBuktiInner(){
       }),
       editModalOpen&&(0,a.jsx)("div",{
         className:"cas-bb-modal-backdrop",
-        onClick:()=>!editSaving&&setEditModalOpen(!1),
+        onClick:()=>{if(!editSaving){setEditModalOpen(!1);setEditModalMax(!1)}},
         style:{
           position:"fixed",
           inset:0,
@@ -1746,12 +1795,16 @@ function RekapBarangBuktiInner(){
           onClick:ev=>ev.stopPropagation(),
           style:{
             width:"100%",
-            maxWidth:"34rem",
+            maxWidth:editModalMax?"min(92vw, 68rem)":"34rem",
+            maxHeight:editModalMax?"calc(100vh - 3rem)":"90vh",
+            display:"flex",
+            flexDirection:"column",
             background:"var(--cas-bg-surface, #ffffff)",
             border:"1px solid var(--cas-border-card, #dbe3ee)",
             borderRadius:12,
             boxShadow:"0 20px 48px rgba(15, 23, 42, 0.28)",
-            overflow:"visible"
+            overflow:"visible",
+            transition:"max-width 0.18s ease, max-height 0.18s ease"
           },
           children:[
             (0,a.jsxs)("div",{
@@ -1759,11 +1812,14 @@ function RekapBarangBuktiInner(){
                 display:"flex",
                 alignItems:"center",
                 justifyContent:"space-between",
+                gap:"0.75rem",
                 padding:"0.9rem 1.15rem",
-                borderBottom:"1px solid var(--cas-border, #e2e8f0)"
+                borderBottom:"1px solid var(--cas-border, #e2e8f0)",
+                flexShrink:0
               },
               children:[
                 (0,a.jsxs)("div",{
+                  style:{minWidth:0,flex:"1 1 auto"},
                   children:[
                     (0,a.jsx)("div",{
                       style:{fontWeight:800,fontSize:"0.96rem",color:"var(--cas-text-primary, #0f172a)"},
@@ -1777,17 +1833,57 @@ function RekapBarangBuktiInner(){
                     })
                   ]
                 }),
-                (0,a.jsx)("button",{
-                  type:"button",
-                  onClick:()=>!editSaving&&setEditModalOpen(!1),
-                  style:{background:"none",border:"none",fontSize:"1.25rem",color:"var(--cas-text-secondary, #64748b)",cursor:"pointer",lineHeight:1},
-                  children:"×"
+                (0,a.jsxs)("div",{
+                  style:{display:"flex",alignItems:"center",gap:"0.4rem",flexShrink:0},
+                  children:[
+                    (0,a.jsx)("button",{
+                      type:"button",
+                      onClick:()=>setEditModalMax(m=>!m),
+                      title:editModalMax?"Perkecil Ukuran Modal":"Perbesar Ukuran Modal",
+                      className:"p-dialog-header-icon p-dialog-header-maximize p-link",
+                      style:{
+                        background:"var(--cas-bg-subtle, #f1f5f9)",
+                        border:"1px solid var(--cas-border, #cbd5e1)",
+                        borderRadius:6,
+                        width:"30px",
+                        height:"30px",
+                        display:"inline-flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        color:"var(--cas-text-secondary, #475569)",
+                        cursor:"pointer",
+                        padding:0
+                      },
+                      children:(0,a.jsx)("i",{className:editModalMax?"pi pi-window-minimize":"pi pi-window-maximize",style:{fontSize:"0.78rem"}})
+                    }),
+                    (0,a.jsx)("button",{
+                      type:"button",
+                      onClick:()=>{if(!editSaving){setEditModalOpen(!1);setEditModalMax(!1)}},
+                      title:"Tutup",
+                      style:{
+                        background:"var(--cas-bg-subtle, #f1f5f9)",
+                        border:"1px solid var(--cas-border, #cbd5e1)",
+                        borderRadius:6,
+                        width:"30px",
+                        height:"30px",
+                        display:"inline-flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        fontSize:"1.15rem",
+                        color:"var(--cas-text-secondary, #475569)",
+                        cursor:"pointer",
+                        lineHeight:1,
+                        padding:0
+                      },
+                      children:"×"
+                    })
+                  ]
                 })
               ]
             }),
             (0,a.jsxs)("form",{
               onSubmit:handleSaveEdit,
-              style:{padding:"1rem 1.15rem",display:"flex",flexDirection:"column",gap:"0.75rem"},
+              style:{padding:"1rem 1.15rem",display:"flex",flexDirection:"column",gap:"0.75rem",overflowY:"auto",flex:"1 1 auto"},
               children:[
                 editForm.isDorsRow&&(0,a.jsxs)("div",{
                   style:{
@@ -2006,6 +2102,86 @@ function RekapBarangBuktiInner(){
   });
 }
 
+function RekapBarangBuktiFallbackView(){
+  let[rows,setRows]=(0,l.useState)([]),
+     [loading,setLoading]=(0,l.useState)(!0),
+     [overrides,setOverrides]=(0,l.useState)(()=>loadBbOverrides());
+  (0,l.useEffect)(()=>{
+    let active=!0;
+    o.apiAuth.get("/bdb/barang-bukti",{params:{page:1,row:25}}).then(res=>{
+      if(!active)return;
+      let d=res?.data?.data||[];
+      setRows(Array.isArray(d)?d.filter(Boolean):[]);
+      setLoading(!1);
+      setOverrides(loadBbOverrides());
+    }).catch(()=>{
+      if(active){setRows([]);setLoading(!1)}
+    });
+    return()=>{active=!1};
+  },[]);
+  return(0,a.jsxs)("div",{
+    style:{width:"100%",maxWidth:"100%",boxSizing:"border-box"},
+    children:[
+      (0,a.jsx)("h1",{className:"cms-page-title",children:"Rekap Barang Bukti"}),
+      (0,a.jsx)("p",{className:"cms-page-sub",children:"Gabungan data barang bukti hasil sinkronisasi DORS dan entri manual pada detail Laporan Polisi di seluruh Satker dalam cakupan Anda."}),
+      (0,a.jsx)("div",{
+        className:"cms-card",
+        style:{padding:"0.75rem",overflowX:"hidden"},
+        children:(0,a.jsxs)("table",{
+          style:{width:"100%",tableLayout:"fixed",borderCollapse:"collapse",fontSize:"0.76rem"},
+          children:[
+            (0,a.jsx)("thead",{
+              children:(0,a.jsxs)("tr",{
+                style:{borderBottom:"2px solid var(--cas-border, #e2e8f0)",textAlign:"left"},
+                children:[
+                  (0,a.jsx)("th",{style:{width:"4%",padding:"0.5rem"},children:"NO"}),
+                  (0,a.jsx)("th",{style:{width:"25%",padding:"0.5rem"},children:"JENIS & NAMA / DETAIL BARANG"}),
+                  (0,a.jsx)("th",{style:{width:"13%",padding:"0.5rem"},children:"JUMLAH & SATUAN"}),
+                  (0,a.jsx)("th",{style:{width:"18%",padding:"0.5rem"},children:"NO. LAPORAN"}),
+                  (0,a.jsx)("th",{style:{width:"20%",padding:"0.5rem"},children:"SATKER PENANGANAN"}),
+                  (0,a.jsx)("th",{style:{width:"12%",padding:"0.5rem"},children:"TINDAK PIDANA"}),
+                  (0,a.jsx)("th",{style:{width:"8%",padding:"0.5rem",textAlign:"center"},children:"SUMBER"})
+                ]
+              })
+            }),
+            (0,a.jsx)("tbody",{
+              children:loading
+                ?(0,a.jsx)("tr",{children:(0,a.jsx)("td",{colSpan:7,style:{padding:"1.5rem",textAlign:"center"},children:"Memuat data barang bukti…"})})
+                :rows.length===0
+                ?(0,a.jsx)("tr",{children:(0,a.jsx)("td",{colSpan:7,style:{padding:"1.5rem",textAlign:"center"},children:"Tidak ada data barang bukti."})})
+                :rows.map((r,idx)=>{
+                  let key=getRowOverrideKey(r),
+                      ov=overrides?.[key]||{},
+                      cls=classifyJenisBarang(ov.jenis??r.jenis_barang??r.jenis,ov.keterangan??r.nama_barang??r.keterangan),
+                      js=parseJumlahSatuan(r,overrides),
+                      isDors="DORS"===String(r.sumber||"").toUpperCase();
+                  return(0,a.jsxs)("tr",{
+                    style:{borderBottom:"1px solid var(--cas-border, #e2e8f0)"},
+                    children:[
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem"},children:idx+1}),
+                      (0,a.jsxs)("td",{
+                        style:{padding:"0.45rem 0.5rem",overflow:"hidden"},
+                        children:[
+                          (0,a.jsx)("div",{style:{fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:cls.jenis}),
+                          (0,a.jsx)("div",{style:{color:"#64748b",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:cls.detail})
+                        ]
+                      }),
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem"},children:`${js.jumlah||""} ${js.satuan||""}`.trim()||"—"}),
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:r.no_laporan||"—"}),
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem"},children:renderSatkerCell(r)}),
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem"},children:renderTindakPidanaCell(r)}),
+                      (0,a.jsx)("td",{style:{padding:"0.45rem 0.5rem",textAlign:"center"},children:isDors?"DORS":"Manual"})
+                    ]
+                  },key||idx);
+                })
+            })
+          ]
+        })
+      })
+    ]
+  });
+}
+
 class RekapBarangBuktiSafeBoundary extends (l.Component||class{}){
   constructor(props){
     super(props);
@@ -2014,7 +2190,8 @@ class RekapBarangBuktiSafeBoundary extends (l.Component||class{}){
   static getDerivedStateFromError(){
     return{hasError:!0};
   }
-  componentDidCatch(){
+  componentDidCatch(err,info){
+    try{console.error("[RekapBarangBukti] Caught error:",err,info)}catch{}
     clearBbSessionCaches();
     if(this.state.retryKey<2){
       setTimeout(()=>{
@@ -2024,19 +2201,7 @@ class RekapBarangBuktiSafeBoundary extends (l.Component||class{}){
   }
   render(){
     if(this.state.hasError&&this.state.retryKey>=2){
-      return(0,a.jsxs)("div",{
-        className:"cms-card",
-        style:{padding:"1.5rem",textAlign:"center"},
-        children:[
-          (0,a.jsx)("div",{style:{fontWeight:700,marginBottom:"0.5rem"},children:"Memuat Ulang Komponen Rekap Barang Bukti…"}),
-          (0,a.jsx)("button",{
-            type:"button",
-            className:"att-btn primary",
-            onClick:()=>{clearBbSessionCaches();this.setState({hasError:!1,retryKey:0})},
-            children:"Muat Ulang"
-          })
-        ]
-      });
+      return(0,a.jsx)(RekapBarangBuktiFallbackView,{});
     }
     return(0,a.jsx)(RekapBarangBuktiInner,{},String(this.state.retryKey));
   }

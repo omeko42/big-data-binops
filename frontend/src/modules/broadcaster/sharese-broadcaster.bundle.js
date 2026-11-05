@@ -522,6 +522,312 @@ e.s(["default",0,function() {
   var [profileModalOpen, setProfileModalOpen] = (0,n.useState)(!1);
   var [loadingProfile, setLoadingProfile] = (0,n.useState)(!1);
 
+  // Live @mention autocomplete states & network user directory
+  var composerTextareaRef = (0,n.useRef)(null);
+  var commentInputRefs = (0,n.useRef)({});
+  var [mentionUsers, setMentionUsers] = (0,n.useState)(() => {
+    try {
+      var cached = JSON.parse(sessionStorage.getItem('cas_sharese_mention_users_v1') || '[]');
+      return Array.isArray(cached) ? cached : [];
+    } catch (_e) { return []; }
+  });
+  var [mentionState, setMentionState] = (0,n.useState)(null);
+
+  var normalizeMentionUserObj = (0,n.useCallback)((u) => {
+    if (!u || typeof u !== 'object') return null;
+    var uid = u.id || u.user_id || u.author_id || '';
+    var rawUn = String(u.username || u.author_username || u.callsign || u.author_callsign || '').trim().replace(/^@/, '');
+    var computedHandle = formatCallsign(u.callsign || u.author_callsign, uid, rawUn || u.name || u.nama || u.author_name).replace(/^@/, '');
+    var cleanUsername = (rawUn && !/\s/.test(rawUn) && rawUn.toLowerCase() !== 'null' && rawUn.toLowerCase() !== 'undefined') ? rawUn.toLowerCase() : computedHandle;
+    if (!cleanUsername) return null;
+    var rawName = String(u.name || u.nama || u.author_name || cleanUsername).trim();
+    var roleVal = u.role_bdb || u.role || u.author_role || 'viewer';
+    var isSup = isShareseSuperadmin(uid, roleVal, cleanUsername);
+    var satkerVal = formatSatkerName(u.satker_nama || u.satker || u.scope_satker_name || u.author_satker || u.satker_name, isSup, 'Polri');
+    var avatarVal = resolveUserAvatar(u.photo_url || u.foto || u.author_photo_url || u.author_photo, u);
+    var badgeVal = getVerificationBadge(roleVal, isSup, uid, cleanUsername);
+    return {
+      id: String(uid || cleanUsername),
+      username: cleanUsername,
+      nama: rawName,
+      satker: satkerVal,
+      avatar: avatarVal,
+      badge: badgeVal
+    };
+  }, []);
+
+  var mergeMentionUsers = (0,n.useCallback)((rawList) => {
+    if (!Array.isArray(rawList) || !rawList.length) return;
+    setMentionUsers(prev => {
+      var map = new Map();
+      prev.forEach(item => {
+        if (item && item.username) map.set(item.username.toLowerCase(), item);
+      });
+      rawList.forEach(raw => {
+        var norm = normalizeMentionUserObj(raw);
+        if (norm && norm.username) {
+          var key = norm.username.toLowerCase();
+          var existing = map.get(key);
+          map.set(key, existing ? { ...existing, ...norm } : norm);
+        }
+      });
+      var merged = Array.from(map.values());
+      try { sessionStorage.setItem('cas_sharese_mention_users_v1', JSON.stringify(merged.slice(0, 250))); } catch (_e) {}
+      return merged;
+    });
+  }, [normalizeMentionUserObj]);
+
+  (0,n.useEffect)(() => {
+    var tok = getSafeAccessToken();
+    if (!tok || tok.length <= 15) return;
+    k.apiAuth.get('/bdb/jukrah/network/users', { params: { limit: 200 } }).then(res => {
+      var list = res?.data?.data?.users || res?.data?.data || res?.data?.users || [];
+      if (Array.isArray(list)) mergeMentionUsers(list);
+    }).catch(() => {});
+  }, [mergeMentionUsers]);
+
+  (0,n.useEffect)(() => {
+    var extracted = [];
+    if (currentUser && (currentUser.id || currentUser.username)) extracted.push(currentUser);
+    if (Array.isArray(posts)) {
+      posts.forEach(p => {
+        if (p) extracted.push({
+          id: p.author_id,
+          username: p.author_username || p.author_callsign,
+          callsign: p.author_callsign,
+          name: p.author_name,
+          satker: p.author_satker || p.satker_name || p.satker,
+          photo_url: p.author_photo_url || p.author_photo,
+          role_bdb: p.author_role
+        });
+      });
+    }
+    Object.values(postComments || {}).forEach(cmList => {
+      if (Array.isArray(cmList)) {
+        cmList.forEach(cm => {
+          if (cm) extracted.push({
+            id: cm.author_id || cm.user_id,
+            username: cm.author_username || cm.author_callsign,
+            callsign: cm.author_callsign,
+            name: cm.author_name,
+            satker: cm.author_satker || cm.satker,
+            photo_url: cm.author_photo_url || cm.author_photo,
+            role_bdb: cm.author_role || cm.role_bdb
+          });
+        });
+      }
+    });
+    if (extracted.length > 0) mergeMentionUsers(extracted);
+  }, [posts, postComments, currentUser, mergeMentionUsers]);
+
+  (0,n.useEffect)(() => {
+    var q = mentionState?.query ? String(mentionState.query).trim() : '';
+    if (!q || q.length < 1) return;
+    var timer = setTimeout(() => {
+      k.apiAuth.get('/bdb/jukrah/network/users', { params: { search: q, q: q, limit: 30 } }).then(res => {
+        var list = res?.data?.data?.users || res?.data?.data || res?.data?.users || [];
+        if (Array.isArray(list) && list.length > 0) mergeMentionUsers(list);
+      }).catch(() => {});
+    }, 180);
+    return () => clearTimeout(timer);
+  }, [mentionState?.query, mergeMentionUsers]);
+
+  var detectMentionInput = (0,n.useCallback)((textVal, cursorPos, targetKey) => {
+    var val = String(textVal ?? '');
+    var pos = typeof cursorPos === 'number' ? cursorPos : val.length;
+    var sub = val.slice(0, pos);
+    var m = sub.match(/(?:^|[\s(])@([a-zA-Z0-9._-]*)$/);
+    if (m) {
+      var q = m[1] || '';
+      var atIdx = sub.lastIndexOf('@');
+      setMentionState(prev => ({
+        target: targetKey,
+        query: q,
+        tokenStart: atIdx,
+        tokenEnd: pos,
+        activeIndex: (prev && prev.target === targetKey && prev.query === q) ? prev.activeIndex : 0
+      }));
+    } else {
+      setMentionState(prev => (prev && prev.target === targetKey ? null : prev));
+    }
+  }, []);
+
+  var mentionSuggestions = (0,n.useMemo)(() => {
+    if (!mentionState) return [];
+    var q = String(mentionState.query || '').toLowerCase().trim();
+    var list = mentionUsers.filter(u => {
+      if (!u || !u.username) return false;
+      if (!q) return true;
+      return u.username.toLowerCase().includes(q) ||
+             String(u.nama || '').toLowerCase().includes(q) ||
+             String(u.satker || '').toLowerCase().includes(q);
+    });
+    list.sort((a, b) => {
+      var aStarts = q && a.username.toLowerCase().startsWith(q) ? 0 : 1;
+      var bStarts = q && b.username.toLowerCase().startsWith(q) ? 0 : 1;
+      if (aStarts !== bStarts) return aStarts - bStarts;
+      return a.username.localeCompare(b.username);
+    });
+    return list.slice(0, 8);
+  }, [mentionState, mentionUsers]);
+
+  var applyMentionSelection = (0,n.useCallback)((userItem, inputDom) => {
+    if (!mentionState || !userItem) return;
+    var targetKey = mentionState.target;
+    var start = mentionState.tokenStart;
+    var end = mentionState.tokenEnd;
+    var insertion = '@' + userItem.username + ' ';
+    if (targetKey === 'composer') {
+      setContent(prev => {
+        var s = String(prev || '');
+        return s.slice(0, start) + insertion + s.slice(end);
+      });
+    } else if (targetKey && targetKey.startsWith('comment:')) {
+      var pid = targetKey.slice('comment:'.length);
+      setCommentInputs(prev => {
+        var s = String(prev[pid] || '');
+        return { ...prev, [pid]: s.slice(0, start) + insertion + s.slice(end) };
+      });
+    } else if (targetKey === 'edit') {
+      setEditContent(prev => {
+        var s = String(prev || '');
+        return s.slice(0, start) + insertion + s.slice(end);
+      });
+    }
+    var nextCursor = start + insertion.length;
+    setMentionState(null);
+    setTimeout(() => {
+      try {
+        var el = inputDom || (targetKey === 'composer' ? document.querySelector('.sharese-composer-textarea') : null);
+        if (el && typeof el.focus === 'function') {
+          el.focus();
+          if (typeof el.setSelectionRange === 'function') {
+            el.setSelectionRange(nextCursor, nextCursor);
+          }
+        }
+      } catch (_e) {}
+    }, 0);
+  }, [mentionState]);
+
+  var handleMentionKeyDown = (0,n.useCallback)((ev, targetKey, fallbackEnterFn) => {
+    if (mentionState && mentionState.target === targetKey && mentionSuggestions.length > 0) {
+      if (ev.key === 'ArrowDown') {
+        ev.preventDefault();
+        setMentionState(prev => prev ? ({ ...prev, activeIndex: (prev.activeIndex + 1) % mentionSuggestions.length }) : null);
+        return !0;
+      }
+      if (ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        setMentionState(prev => prev ? ({ ...prev, activeIndex: (prev.activeIndex - 1 + mentionSuggestions.length) % mentionSuggestions.length }) : null);
+        return !0;
+      }
+      if (ev.key === 'Enter' || ev.key === 'Tab') {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var chosen = mentionSuggestions[mentionState.activeIndex] || mentionSuggestions[0];
+        if (chosen) applyMentionSelection(chosen, ev.currentTarget);
+        return !0;
+      }
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        setMentionState(null);
+        return !0;
+      }
+    }
+    if (ev.key === 'Enter' && typeof fallbackEnterFn === 'function') {
+      fallbackEnterFn(ev);
+    }
+    return !1;
+  }, [mentionState, mentionSuggestions, applyMentionSelection]);
+
+  var renderMentionAutocompleteDropdown = (targetKey, getInputDom) => {
+    if (!mentionState || mentionState.target !== targetKey || mentionSuggestions.length === 0) return null;
+    return (0,t.jsxs)("div",{
+      className:"sharese-mention-dropdown",
+      style:{
+        position:"absolute",
+        left:0,
+        right:0,
+        top:"calc(100% + 4px)",
+        zIndex:150,
+        background:"var(--cas-bg-card, #0f172a)",
+        border:"1px solid rgba(56,189,248,0.45)",
+        borderRadius:"10px",
+        boxShadow:"0 14px 34px rgba(0,0,0,0.45)",
+        maxHeight:"16rem",
+        overflowY:"auto",
+        padding:"0.35rem"
+      },
+      children:[
+        (0,t.jsxs)("div",{
+          style:{padding:"0.25rem 0.55rem",fontSize:"0.68rem",fontWeight:800,color:"#38bdf8",letterSpacing:"0.03em",textTransform:"uppercase",borderBottom:"1px solid rgba(148,163,184,0.15)",marginBottom:"0.2rem",display:"flex",justifyContent:"space-between",alignItems:"center"},
+          children:[
+            (0,t.jsx)("span",{children:"Mention Personel (@username)"}),
+            (0,t.jsx)("span",{style:{fontSize:"0.64rem",color:"#94a3b8",fontWeight:600},children:"↵ Pilih • Esc Tutup"})
+          ]
+        }),
+        mentionSuggestions.map((uItem, idx) => {
+          var isAct = idx === (mentionState.activeIndex || 0);
+          return (0,t.jsxs)("div",{
+            key:uItem.username + "-" + idx,
+            onMouseDown:(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              applyMentionSelection(uItem, typeof getInputDom === 'function' ? getInputDom() : null);
+            },
+            onMouseEnter:() => setMentionState(prev => prev ? ({ ...prev, activeIndex: idx }) : null),
+            style:{
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"space-between",
+              gap:"0.6rem",
+              padding:"0.42rem 0.6rem",
+              borderRadius:"8px",
+              cursor:"pointer",
+              background:isAct ? "rgba(56,189,248,0.16)" : "transparent",
+              border:isAct ? "1px solid rgba(56,189,248,0.35)" : "1px solid transparent",
+              transition:"background 0.12s ease"
+            },
+            children:[
+              (0,t.jsxs)("div",{
+                style:{display:"flex",alignItems:"center",gap:"0.55rem",minWidth:0,flex:1},
+                children:[
+                  (0,t.jsx)("img",{
+                    src:uItem.avatar || "/images/default-avatar-polki.png",
+                    alt:uItem.username,
+                    onError:ev => { ev.currentTarget.onerror = null; ev.currentTarget.src = "/images/default-avatar-polki.png"; },
+                    style:{width:"28px",height:"28px",borderRadius:"50%",objectFit:"cover",border:"1px solid rgba(56,189,248,0.4)",flexShrink:0}
+                  }),
+                  (0,t.jsxs)("div",{
+                    style:{minWidth:0,flex:1,display:"flex",flexDirection:"column"},
+                    children:[
+                      (0,t.jsxs)("div",{
+                        style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},
+                        children:[
+                          (0,t.jsx)("strong",{style:{fontSize:"0.8rem",fontWeight:800,color:"#38bdf8"},children:"@" + uItem.username}),
+                          renderMetaVerifiedBadge(uItem.badge, 13),
+                          (0,t.jsx)("span",{style:{fontSize:"0.76rem",fontWeight:600,color:"var(--cas-text-primary, #f8fafc)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:uItem.nama})
+                        ]
+                      }),
+                      (0,t.jsx)("span",{
+                        style:{fontSize:"0.69rem",color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},
+                        children:uItem.satker
+                      })
+                    ]
+                  })
+                ]
+              }),
+              (0,t.jsx)("span",{
+                style:{fontSize:"0.66rem",fontWeight:700,color:"#38bdf8",background:"rgba(56,189,248,0.1)",padding:"0.12rem 0.42rem",borderRadius:"6px",flexShrink:0},
+                children:"@ Mention"
+              })
+            ]
+          });
+        })
+      ]
+    });
+  };
+
   // Share Link Berhash Modal & External Verification Gate ("Siapa Saya?") states
   var decodeShareseHash = (raw) => {
     if (typeof window !== 'undefined' && typeof window.__decodeCasShareHash === 'function') {
@@ -1817,24 +2123,33 @@ e.s(["default",0,function() {
           children:renderCornerAvatar(userAvatar, userInitials, myBadge, 2.5, 15, 8.5, currentUser)
         }),
         (0,t.jsxs)("div",{style:{flex:1,minWidth:0},children:[
-          (0,t.jsx)(l.InputTextarea,{
-            className:"sharese-composer-textarea",
-            value:content,
-            onChange:e=>{
-              setContent(e.target.value);
-              let el=e.target;
-              if(el){
-                el.style.height="auto";
-                let sh=el.scrollHeight||44;
-                el.style.height=Math.min(Math.max(sh,44),160)+"px";
-                el.style.overflowY=sh>160?"auto":"hidden";
-              }
-            },
-            placeholder:"Bagikan pengalaman lapangan, koordinasi taktis, atau cerita penanganan perkara...",
-            rows:2,
-            maxLength:3000,
-            style:{width:"100%",borderRadius:"8px",resize:"none",minHeight:"44px",maxHeight:"160px",height:content?void 0:"44px",overflowY:"auto",fontSize:"0.85rem",lineHeight:"1.45",padding:"0.5rem 0.75rem"}
-          }),
+          (0,t.jsxs)("div",{style:{position:"relative"},children:[
+            (0,t.jsx)(l.InputTextarea,{
+              ref:composerTextareaRef,
+              className:"sharese-composer-textarea",
+              value:content,
+              onChange:e=>{
+                let val=e.target.value;
+                setContent(val);
+                let el=e.target;
+                detectMentionInput(val, el ? el.selectionStart : val.length, 'composer');
+                if(el){
+                  el.style.height="auto";
+                  let sh=el.scrollHeight||44;
+                  el.style.height=Math.min(Math.max(sh,44),160)+"px";
+                  el.style.overflowY=sh>160?"auto":"hidden";
+                }
+              },
+              onKeyDown:e => handleMentionKeyDown(e, 'composer'),
+              onClick:e => detectMentionInput(e.currentTarget.value, e.currentTarget.selectionStart, 'composer'),
+              onBlur:() => setTimeout(() => setMentionState(prev => (prev && prev.target === 'composer' ? null : prev)), 180),
+              placeholder:"Bagikan pengalaman lapangan, koordinasi taktis, atau cerita penanganan perkara... (ketik @ untuk mention personel)",
+              rows:2,
+              maxLength:3000,
+              style:{width:"100%",borderRadius:"8px",resize:"none",minHeight:"44px",maxHeight:"160px",height:content?void 0:"44px",overflowY:"auto",fontSize:"0.85rem",lineHeight:"1.45",padding:"0.5rem 0.75rem"}
+            }),
+            renderMentionAutocompleteDropdown('composer', () => document.querySelector('.sharese-composer-textarea'))
+          ]}),
           // Live character count & 1-line horizontal scrollable shortcut hashtags
           (0,t.jsxs)("div",{className:"sharese-hashtag-row",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:"0.38rem",flexWrap:"wrap",gap:"0.35rem",minWidth:0},children:[
             (0,t.jsxs)("div",{className:"sharese-hashtag-strip",style:{display:"flex",gap:"0.3rem",flexWrap:"nowrap",overflowX:"auto",whiteSpace:"nowrap",minWidth:0,flex:"1 1 auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"},children:
@@ -2583,16 +2898,25 @@ e.s(["default",0,function() {
 
               // Expandable Comment Thread Section
               activeCommentsPostId === post.id && (0,t.jsxs)("div",{style:{marginTop:"0.85rem",paddingTop:"0.85rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))"},children:[
-                // Comment input with 1,000 char limit
-                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",marginBottom:"0.85rem"},children:[
-                  (0,t.jsx)(i.InputText,{
-                    value:commentInputs[post.id] || '',
-                    onChange:e => setCommentInputs({ ...commentInputs, [post.id]: e.target.value }),
-                    onKeyDown:e => e.key === 'Enter' && handleAddComment(post.id),
-                    placeholder:"Tulis tanggapan taktis... (maks 1.000 karakter)",
-                    maxLength:1000,
-                    style:{flex:1,fontSize:"0.82rem"}
-                  }),
+                // Comment input with 1,000 char limit + live @mention autocomplete
+                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",marginBottom:"0.85rem",position:"relative"},children:[
+                  (0,t.jsxs)("div",{style:{flex:1,position:"relative",display:"flex"},children:[
+                    (0,t.jsx)(i.InputText,{
+                      value:commentInputs[post.id] || '',
+                      onChange:e => {
+                        var val = e.target.value;
+                        setCommentInputs({ ...commentInputs, [post.id]: val });
+                        detectMentionInput(val, e.target.selectionStart, 'comment:' + post.id);
+                      },
+                      onKeyDown:e => handleMentionKeyDown(e, 'comment:' + post.id, () => handleAddComment(post.id)),
+                      onClick:e => detectMentionInput(e.currentTarget.value, e.currentTarget.selectionStart, 'comment:' + post.id),
+                      onBlur:() => setTimeout(() => setMentionState(prev => (prev && prev.target === ('comment:' + post.id) ? null : prev)), 180),
+                      placeholder:"Tulis tanggapan taktis... ketik @ untuk mention personel (maks 1.000 karakter)",
+                      maxLength:1000,
+                      style:{width:"100%",fontSize:"0.82rem"}
+                    }),
+                    renderMentionAutocompleteDropdown('comment:' + post.id, () => commentInputRefs.current[post.id])
+                  ]}),
                   (0,t.jsx)(c.Button,{
                     icon:"pi pi-send",
                     size:"small",
@@ -3424,7 +3748,7 @@ e.s(["default",0,function() {
             previewUser.name ? (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8",fontWeight:600,marginTop:"0.2rem"},children:previewUser.name}) : null,
             (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"var(--cas-text-secondary, #334155)",marginTop:"0.25rem",fontWeight:600},children:[
               previewUser.pangkat && previewUser.pangkat !== '-' ? previewUser.pangkat + " • " : "",
-              previewUser.jabatan || previewUser.role || "Penyidik Reserse Polri"
+              previewUser.jabatan || "Penyidik Reserse Polri"
             ]}),
             (0,t.jsx)("div",{style:{fontSize:"0.78rem",color:"#94a3b8",marginTop:"0.15rem"},children:(function(){
   var isSuper = isShareseSuperadmin(previewUser.id, previewUser.role_bdb, previewUser.username || previewUser.callsign);

@@ -463,53 +463,75 @@ EMAIL_FAILOVER_MODE=${secondaryCfg.failover_mode}`;
         ]
       }),
 
-      /* DUAL SMTP GRID: LEFT = PRIMARY POLRI, RIGHT = SECONDARY MULTI-PROVIDER */
+      /* DUAL SMTP GRID: LEFT = PRIMARY POLRI + ENV PREVIEW, RIGHT = SECONDARY MULTI-PROVIDER */
       (0,t.jsxs)("div",{
         style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(min(100%, 28rem), 1fr))",gap:"1.15rem",alignItems:"start"},
         children:[
-          /* CARD 1: SMTP PRIMER (EMAIL KEDINASAN POLRI) */
+          /* LEFT COLUMN: CARD 1 (SMTP PRIMER POLRI) + ENV PREVIEW BLOCK */
           (0,t.jsxs)("div",{
-            className:"cms-card",
-            style:{borderRadius:12,borderTop:"4px solid #2563eb",display:"grid",gap:"0.85rem"},
+            style:{display:"grid",gap:"1.15rem",alignContent:"start",minWidth:0},
             children:[
-              (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",paddingBottom:"0.65rem",borderBottom:"1px solid var(--cas-border, #e2e8f0)"},children:[
-                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem"},children:[
-                  (0,t.jsx)("span",{style:{width:"2.2rem",height:"2.2rem",borderRadius:9,background:"rgba(37,99,235,0.12)",color:"#2563eb",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:(0,t.jsx)("i",{className:"pi pi-server",style:{fontSize:"1rem"}})}),
-                  (0,t.jsxs)("div",{children:[
-                    (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary)"},children:"1. SMTP Primer (Email Kedinasan Polri)"}),
-                    (0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)"},children:"Server relay resmi @polri.go.id (mail.polri.go.id)"})
+              /* CARD 1: SMTP PRIMER (EMAIL KEDINASAN POLRI) */
+              (0,t.jsxs)("div",{
+                className:"cms-card",
+                style:{borderRadius:12,borderTop:"4px solid #2563eb",display:"grid",gap:"0.85rem"},
+                children:[
+                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.75rem",flexWrap:"wrap",paddingBottom:"0.65rem",borderBottom:"1px solid var(--cas-border, #e2e8f0)"},children:[
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem"},children:[
+                      (0,t.jsx)("span",{style:{width:"2.2rem",height:"2.2rem",borderRadius:9,background:"rgba(37,99,235,0.12)",color:"#2563eb",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:(0,t.jsx)("i",{className:"pi pi-server",style:{fontSize:"1rem"}})}),
+                      (0,t.jsxs)("div",{children:[
+                        (0,t.jsx)("div",{style:{fontWeight:800,fontSize:"0.95rem",color:"var(--cas-text-primary)"},children:"1. SMTP Primer (Email Kedinasan Polri)"}),
+                        (0,t.jsx)("div",{style:{fontSize:"0.74rem",color:"var(--cas-text-muted)"},children:"Server relay resmi @polri.go.id (mail.polri.go.id)"})
+                      ]})
+                    ]}),
+                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
+                      (0,t.jsx)("span",{style:{fontSize:"0.76rem",fontWeight:700,color:primaryCfg.enabled?"#16a34a":"var(--cas-text-muted)"},children:primaryCfg.enabled?"Aktif":"Nonaktif"}),
+                      (0,t.jsx)(i.InputSwitch,{checked:primaryCfg.enabled,onChange:e=>updatePrimary("enabled",!!e.value),disabled:loading})
+                    ]})
+                  ]}),
+
+                  (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem"},children:[
+                    (0,t.jsx)(FieldWrap,{label:"SMTP Host Polri",children:(0,t.jsx)(r.InputText,{value:primaryCfg.host,onChange:e=>updatePrimary("host",e.target.value),placeholder:"mail.polri.go.id",disabled:loading,style:{width:"100%"}})}),
+                    (0,t.jsx)(FieldWrap,{label:"Port SMTP",children:(0,t.jsx)(r.InputText,{value:primaryCfg.port,onChange:e=>updatePrimary("port",e.target.value),placeholder:"465 / 587",disabled:loading,style:{width:"100%"}})}),
+                    (0,t.jsx)(FieldWrap,{label:"Keamanan / SSL",children:(0,t.jsx)(o.Dropdown,{value:primaryCfg.ssl,options:PRIMARY_SSL_OPTS,onChange:e=>updatePrimary("ssl",e.value),disabled:loading,style:{width:"100%"}})}),
+                    (0,t.jsx)(FieldWrap,{label:"From / Nama & Alamat Pengirim",children:(0,t.jsx)(r.InputText,{value:primaryCfg.from,onChange:e=>updatePrimary("from",e.target.value),placeholder:"noreply@polri.go.id",disabled:loading,style:{width:"100%"}})}),
+                    (0,t.jsx)(FieldWrap,{label:"Username Akun Polri",children:(0,t.jsx)(r.InputText,{value:primaryCfg.user,onChange:e=>updatePrimary("user",e.target.value),placeholder:"akun@polri.go.id",disabled:loading,style:{width:"100%"}})}),
+                    (0,t.jsx)(FieldWrap,{label:"Password SMTP Polri",children:(0,t.jsx)(a.Password,{value:primaryCfg.password,onChange:e=>updatePrimary("password",e.target.value),feedback:!1,toggleMask:!0,disabled:loading,placeholder:hasPrimaryPwd?"(Tersimpan — kosongkan jika tidak diubah)":"Masukkan sandi SMTP Polri",inputStyle:{width:"100%"},style:{width:"100%"}})})
+                  ]}),
+
+                  (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap",paddingTop:"0.25rem"},children:[
+                    (0,t.jsx)(l.Button,{label:"Simpan SMTP Primer",icon:"pi pi-save",onClick:()=>handleSaveAll(!1),loading:savingPrimary,disabled:loading}),
+                    (0,t.jsx)(l.Button,{label:"Preset Polri (mail.polri.go.id)",icon:"pi pi-building",outlined:!0,onClick:()=>setPrimaryCfg(prev=>({...DEFAULT_PRIMARY,enabled:!0,password:prev.password})),disabled:loading}),
+                    (0,t.jsx)(l.Button,{label:"Preset MailHog (Dev)",icon:"pi pi-inbox",text:!0,onClick:()=>setPrimaryCfg(prev=>({...PRESET_MAILHOG,password:prev.password})),disabled:loading})
+                  ]}),
+
+                  (0,t.jsxs)("div",{style:{padding:"0.8rem 0.9rem",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.35)",borderRadius:8,display:"grid",gap:"0.45rem"},children:[
+                    (0,t.jsxs)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#b45309",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
+                      (0,t.jsx)("i",{className:"pi pi-send",style:{fontSize:"0.75rem"}}),"Uji Kirim Email Primer (Polri)"
+                    ]}),
+                    (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
+                      (0,t.jsx)(r.InputText,{value:testToPrimary,onChange:e=>setTestToPrimary(e.target.value),placeholder:"Alamat tujuan tes (mis. personel@polri.go.id)",style:{flex:"1 1 13rem",minWidth:"11rem"}}),
+                      (0,t.jsx)(l.Button,{label:"Uji Kirim Primer",icon:"pi pi-send",severity:"warning",onClick:handleTestPrimary,loading:testingPrimary,disabled:loading})
+                    ]})
                   ]})
-                ]}),
-                (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem"},children:[
-                  (0,t.jsx)("span",{style:{fontSize:"0.76rem",fontWeight:700,color:primaryCfg.enabled?"#16a34a":"var(--cas-text-muted)"},children:primaryCfg.enabled?"Aktif":"Nonaktif"}),
-                  (0,t.jsx)(i.InputSwitch,{checked:primaryCfg.enabled,onChange:e=>updatePrimary("enabled",!!e.value),disabled:loading})
-                ]})
-              ]}),
+                ]
+              }),
 
-              (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0.75rem"},children:[
-                (0,t.jsx)(FieldWrap,{label:"SMTP Host Polri",children:(0,t.jsx)(r.InputText,{value:primaryCfg.host,onChange:e=>updatePrimary("host",e.target.value),placeholder:"mail.polri.go.id",disabled:loading,style:{width:"100%"}})}),
-                (0,t.jsx)(FieldWrap,{label:"Port SMTP",children:(0,t.jsx)(r.InputText,{value:primaryCfg.port,onChange:e=>updatePrimary("port",e.target.value),placeholder:"465 / 587",disabled:loading,style:{width:"100%"}})}),
-                (0,t.jsx)(FieldWrap,{label:"Keamanan / SSL",children:(0,t.jsx)(o.Dropdown,{value:primaryCfg.ssl,options:PRIMARY_SSL_OPTS,onChange:e=>updatePrimary("ssl",e.value),disabled:loading,style:{width:"100%"}})}),
-                (0,t.jsx)(FieldWrap,{label:"From / Nama & Alamat Pengirim",children:(0,t.jsx)(r.InputText,{value:primaryCfg.from,onChange:e=>updatePrimary("from",e.target.value),placeholder:"noreply@polri.go.id",disabled:loading,style:{width:"100%"}})}),
-                (0,t.jsx)(FieldWrap,{label:"Username Akun Polri",children:(0,t.jsx)(r.InputText,{value:primaryCfg.user,onChange:e=>updatePrimary("user",e.target.value),placeholder:"akun@polri.go.id",disabled:loading,style:{width:"100%"}})}),
-                (0,t.jsx)(FieldWrap,{label:"Password SMTP Polri",children:(0,t.jsx)(a.Password,{value:primaryCfg.password,onChange:e=>updatePrimary("password",e.target.value),feedback:!1,toggleMask:!0,disabled:loading,placeholder:hasPrimaryPwd?"(Tersimpan — kosongkan jika tidak diubah)":"Masukkan sandi SMTP Polri",inputStyle:{width:"100%"},style:{width:"100%"}})})
-              ]}),
-
-              (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap",paddingTop:"0.25rem"},children:[
-                (0,t.jsx)(l.Button,{label:"Simpan SMTP Primer",icon:"pi pi-save",onClick:()=>handleSaveAll(!1),loading:savingPrimary,disabled:loading}),
-                (0,t.jsx)(l.Button,{label:"Preset Polri (mail.polri.go.id)",icon:"pi pi-building",outlined:!0,onClick:()=>setPrimaryCfg(prev=>({...DEFAULT_PRIMARY,enabled:!0,password:prev.password})),disabled:loading}),
-                (0,t.jsx)(l.Button,{label:"Preset MailHog (Dev)",icon:"pi pi-inbox",text:!0,onClick:()=>setPrimaryCfg(prev=>({...PRESET_MAILHOG,password:prev.password})),disabled:loading})
-              ]}),
-
-              (0,t.jsxs)("div",{style:{padding:"0.8rem 0.9rem",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.35)",borderRadius:8,display:"grid",gap:"0.45rem"},children:[
-                (0,t.jsxs)("div",{style:{fontSize:"0.78rem",fontWeight:800,color:"#b45309",display:"flex",alignItems:"center",gap:"0.35rem"},children:[
-                  (0,t.jsx)("i",{className:"pi pi-send",style:{fontSize:"0.75rem"}}),"Uji Kirim Email Primer (Polri)"
-                ]}),
-                (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
-                  (0,t.jsx)(r.InputText,{value:testToPrimary,onChange:e=>setTestToPrimary(e.target.value),placeholder:"Alamat tujuan tes (mis. personel@polri.go.id)",style:{flex:"1 1 13rem",minWidth:"11rem"}}),
-                  (0,t.jsx)(l.Button,{label:"Uji Kirim Primer",icon:"pi pi-send",severity:"warning",onClick:handleTestPrimary,loading:testingPrimary,disabled:loading})
-                ]})
-              ]})
+              /* ENV PREVIEW BLOCK DIRECTLY BELOW SMTP PRIMER POLRI */
+              (0,t.jsxs)("div",{
+                className:"cms-card",
+                style:{borderRadius:12,borderTop:"4px solid #3b82f6",margin:0},
+                children:[
+                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"wrap",marginBottom:"0.5rem"},children:[
+                    (0,t.jsxs)("label",{style:{fontSize:"0.82rem",fontWeight:800,color:"var(--cas-text-primary)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[
+                      (0,t.jsx)("i",{className:"pi pi-code",style:{color:"#2563eb"}}),
+                      "Pratinjau Variabel .env (Konfigurasi Multi-SMTP)"
+                    ]}),
+                    (0,t.jsx)(l.Button,{label:"Salin Blok .env",icon:"pi pi-copy",size:"small",outlined:!0,onClick:handleCopyEnv})
+                  ]}),
+                  (0,t.jsx)("pre",{style:{background:"#0f172a",color:"#e2e8f0",padding:"0.85rem 1rem",borderRadius:8,fontSize:"0.76rem",overflowX:"auto",margin:0,lineHeight:1.48},children:buildEnvBlock()})
+                ]
+              })
             ]
           }),
 
@@ -633,22 +655,6 @@ EMAIL_FAILOVER_MODE=${secondaryCfg.failover_mode}`;
               ]})
             ]
           })
-        ]
-      }),
-
-      /* ENV PREVIEW BLOCK */
-      (0,t.jsxs)("div",{
-        className:"cms-card",
-        style:{marginTop:"1.15rem",borderRadius:12},
-        children:[
-          (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",flexWrap:"wrap",marginBottom:"0.5rem"},children:[
-            (0,t.jsxs)("label",{style:{fontSize:"0.82rem",fontWeight:800,color:"var(--cas-text-primary)",display:"inline-flex",alignItems:"center",gap:"0.4rem"},children:[
-              (0,t.jsx)("i",{className:"pi pi-code",style:{color:"#2563eb"}}),
-              "Blok Variabel Lingkungan .env (SMTP Primer Polri & SMTP Sekunder Multi-Provider)"
-            ]}),
-            (0,t.jsx)(l.Button,{label:"Salin Blok .env",icon:"pi pi-copy",size:"small",outlined:!0,onClick:handleCopyEnv})
-          ]}),
-          (0,t.jsx)("pre",{style:{background:"#0f172a",color:"#e2e8f0",padding:"0.9rem 1rem",borderRadius:8,fontSize:"0.78rem",overflowX:"auto",margin:0,lineHeight:1.5},children:buildEnvBlock()})
         ]
       })
     ]
