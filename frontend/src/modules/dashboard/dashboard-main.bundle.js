@@ -795,6 +795,7 @@ function normCasPoldaKey(raw) {
     .replace(/^PROPINSI\s+/i, "")
     .replace(/^PROVINSI\s+/i, "")
     .trim();
+  if (/BARESKRIM|MABES|ROBINOPS|PUSIKNAS|DITTIPID|^POLRI$/i.test(s)) return "MABES";
   if (s === "KEP. RIAU" || s === "KEPULAUAN RIAU" || s.includes("KEPRI")) return "KEPRI";
   if (s === "KEP. BANGKA BELITUNG" || s === "KEP. BABEL" || s.includes("BANGKA BELITUNG") || s === "BABEL") return "BABEL";
   if (s === "METRO JAYA" || s === "DKI JAKARTA" || s === "JAKARTA" || s === "PMJ") return "METRO JAYA";
@@ -1374,7 +1375,7 @@ function CasPetaKejahatanView({
   const [selectedYear, setSelectedYear] = (0, a.useState)(2026);
   const [selectedMonth, setSelectedMonth] = (0, a.useState)(10);
   const [filterFrom, setFilterFrom] = (0, a.useState)(() => ee || "2026-01-01");
-  const [filterTo, setFilterTo] = (0, a.useState)(() => { let td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = et || td; return v > td ? td : v; });
+  const [filterTo, setFilterTo] = (0, a.useState)(() => et || "2026-12-31");
   const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
   const [crimeFilter, setCrimeFilter] = (0, a.useState)("SEMUA");
   const [golonganFilter, setGolonganFilter] = (0, a.useState)("SEMUA");
@@ -1717,11 +1718,18 @@ function CasPetaKejahatanView({
       direktorat: Array.isArray(mbsApi?.direktorat) ? mbsApi.direktorat : []
     };
 
-    const isScopedDash = Boolean(activeDash?.scoped);
-    const isScopedBares = Boolean(activeDash?.is_bareskrim || activeDash?.is_nasional);
-    const scopedPoldaKey = (isScopedDash && !isScopedBares)
+    const curUserRoles = (0, h.deriveRoles)((0, h.getUser)());
+    const isGlobalRole = Boolean(
+      curUserRoles?.isSuperadmin ||
+      curUserRoles?.isAdminBinops ||
+      /BARESKRIM|MABES|ROBINOPS|PUSIKNAS|DITTIPID/i.test(String(activeDash?.scope_satker || ""))
+    );
+    const isScopedDash = Boolean(activeDash?.scoped) && !isGlobalRole;
+    const isScopedBares = Boolean(activeDash?.is_bareskrim || activeDash?.is_nasional || isGlobalRole);
+    const rawCandidatePoldaKey = (isScopedDash && !isScopedBares)
       ? String(activeDash?.scope_polda_key || (activeDash?.scope_satker ? normCasPoldaKey(activeDash.scope_satker) : "")).trim()
       : "";
+    const scopedPoldaKey = (rawCandidatePoldaKey && mapByKey.has(rawCandidatePoldaKey)) ? rawCandidatePoldaKey : "";
 
     const poldaList = Array.isArray(activeDash?.polda) ? activeDash.polda : [];
     for (const p of poldaList) {
@@ -1952,8 +1960,14 @@ function CasPetaKejahatanView({
     };
   }, [mergedRegions, petaData, i, l]);
 
-  const isScopedUser = Boolean(petaData ? petaData.scoped : l?.scoped);
-  const isScopedBareskrim = Boolean(petaData?.is_bareskrim || l?.is_nasional);
+  const curUserRolesOuter = (0, h.deriveRoles)((0, h.getUser)());
+  const isGlobalRoleOuter = Boolean(
+    curUserRolesOuter?.isSuperadmin ||
+    curUserRolesOuter?.isAdminBinops ||
+    /BARESKRIM|MABES|ROBINOPS|PUSIKNAS|DITTIPID/i.test(String(petaData?.scope_satker || l?.scope_satker || ""))
+  );
+  const isScopedUser = Boolean(petaData ? petaData.scoped : l?.scoped) && !isGlobalRoleOuter;
+  const isScopedBareskrim = Boolean(petaData?.is_bareskrim || l?.is_nasional || isGlobalRoleOuter);
   const scopeSatkerRaw = String(petaData?.scope_satker || l?.scope_satker || "").trim();
   const scopeSatkerShort = String(
     petaData?.scope_satker_nama ||
@@ -2935,6 +2949,14 @@ function CasPetaKejahatanView({
       (0, t.jsx)("style", {
         children: [
           "@keyframes casHotspotPulse { 0% { r: 5px; opacity: 0.9; } 70% { r: 18px; opacity: 0; } 100% { r: 18px; opacity: 0; } }",
+          ".cas-peta-kejahatan-root { position: relative; isolation: isolate; z-index: 1; }",
+          ".cas-peta-kejahatan-root .leaflet-container { z-index: 1 !important; }",
+          ".cas-peta-kejahatan-root .leaflet-pane { z-index: 2 !important; }",
+          ".cas-peta-kejahatan-root .leaflet-tile-pane { z-index: 1 !important; }",
+          ".cas-peta-kejahatan-root .leaflet-overlay-pane { z-index: 3 !important; }",
+          ".cas-peta-kejahatan-root .leaflet-marker-pane, .cas-peta-kejahatan-root .leaflet-tooltip-pane, .cas-peta-kejahatan-root .leaflet-popup-pane { z-index: 4 !important; }",
+          ".cas-peta-kejahatan-root .leaflet-top, .cas-peta-kejahatan-root .leaflet-bottom { z-index: 5 !important; }",
+          ".cas-peta-kejahatan-root .cas-peta-filter-popover { z-index: 50 !important; }",
           ".cas-map-prov-path { transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease, filter 160ms ease; cursor: pointer; }",
           ".cas-map-prov-path:hover { filter: brightness(1.08); stroke: #2563eb !important; }",
           ".cas-peta-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }",
@@ -4091,7 +4113,7 @@ function CasPetaKejahatanView({
                     onClick: () => setMapEngine("vector"),
                     title: "Mode Peta Wilkum Polri (36 Wilkum Polda + Heatmap Titik Koordinat LP)",
                     style: {
-                      padding: "0.34rem 0.62rem",
+                      padding: "0.32rem 0.58rem",
                       borderRadius: 8,
                       border: "1px solid " + (mapEngine === "vector" ? T.accentBorder : T.btnBorder),
                       background: mapEngine === "vector" ? T.accentBg : T.btnBg,
@@ -4108,7 +4130,7 @@ function CasPetaKejahatanView({
                     onClick: () => setMapEngine("gmaps_street"),
                     title: "Mode Peta Jalan & Irisan Batas Wilkum (Poligon GeoJSON Merah Google Maps untuk Polda, Polres, & Polsek)",
                     style: {
-                      padding: "0.34rem 0.62rem",
+                      padding: "0.32rem 0.58rem",
                       borderRadius: 8,
                       border: "1px solid " + (mapEngine === "gmaps_street" ? T.accentBorder : T.btnBorder),
                       background: mapEngine === "gmaps_street" ? T.accentBg : T.btnBg,
@@ -4118,14 +4140,14 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: "🌐 Peta Jalan & Irisan Wilkum"
+                    children: "🌐 Peta Jalan"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
                     onClick: () => setMapEngine("gmaps_sat"),
                     title: "Mode Peta Satelit Google Maps + Irisan Poligon Batas Wilayah Hukum",
                     style: {
-                      padding: "0.34rem 0.62rem",
+                      padding: "0.32rem 0.58rem",
                       borderRadius: 8,
                       border: "1px solid " + (mapEngine === "gmaps_sat" ? T.accentBorder : T.btnBorder),
                       background: mapEngine === "gmaps_sat" ? T.accentBg : T.btnBg,
@@ -4135,14 +4157,14 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: "🛰️ Peta Satelit"
+                    children: "🛰️ Satelit"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
                     onClick: () => setMapEngine("gmaps_embed"),
                     title: "Simulasi Pencarian Google Maps Native (Menampilkan Poligon Asli Google Maps untuk Kecamatan/Kabupaten atau Titik Kantor Mabes)",
                     style: {
-                      padding: "0.34rem 0.62rem",
+                      padding: "0.32rem 0.58rem",
                       borderRadius: 8,
                       border: "1px solid " + (mapEngine === "gmaps_embed" ? T.warnBorder : T.btnBorder),
                       background: mapEngine === "gmaps_embed" ? T.warnBg : T.btnBg,
@@ -4152,14 +4174,14 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: "📍 Google Maps Native"
+                    children: "📍 Google Maps"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
                     onClick: toggleFullPage,
                     title: isFullPage ? "Keluar dari tampilan layar penuh (Esc)" : "Perbesar Peta Kejahatan ke tampilan layar penuh (Fullpage)",
                     style: {
-                      padding: "0.34rem 0.65rem",
+                      padding: "0.32rem 0.6rem",
                       borderRadius: 8,
                       border: "1px solid " + (isFullPage ? T.ctBorder : T.btnBorder),
                       background: isFullPage ? T.ctBg : T.btnBg,
@@ -4176,7 +4198,7 @@ function CasPetaKejahatanView({
             ]
           }),
 
-          // Row 2: Kepulauan Filter + Mabes Polri Quick Button + Visual Toggles & Zoom Controls
+          // Row 2: Kepulauan Filter + Mabes Polri Quick Button + Visual Toggles
           (0, t.jsxs)("div", {
             style: {
               display: "flex",
@@ -4232,7 +4254,7 @@ function CasPetaKejahatanView({
                       whiteSpace: "nowrap",
                       flexShrink: 0
                     },
-                    children: "🏛️ Mabes / Bareskrim Polri"
+                    children: "🏛️ Mabes Polri"
                   })
                 ]
               }),
@@ -4255,7 +4277,7 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: showThermal ? "🔥 Heatmap: Aktif" : "🔥 Heatmap: Nonaktif"
+                    children: showThermal ? "🔥 Heatmap" : "🔥 Heatmap (Off)"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
@@ -4272,7 +4294,7 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: showHotspotPins ? "📍 Titik TKP: Aktif" : "📍 Titik TKP: Nonaktif"
+                    children: showHotspotPins ? "📍 Titik TKP" : "📍 Titik TKP (Off)"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
@@ -4289,41 +4311,7 @@ function CasPetaKejahatanView({
                       cursor: "pointer",
                       whiteSpace: "nowrap"
                     },
-                    children: showLabels ? "🏷️ Label: Aktif" : "🏷️ Label: Nonaktif"
-                  }),
-                  (0, t.jsx)("button", {
-                    type: "button",
-                    onClick: () => {
-                      if (isGoogleTileMode && leafletMapRef.current) {
-                        try { leafletMapRef.current.zoomIn(); } catch (_e) {}
-                        return;
-                      }
-                      const cx = (600 - pan.x) / zoom;
-                      const cy = (235 - pan.y) / zoom;
-                      focusCameraOn(cx, cy, zoom * 1.35);
-                    },
-                    title: "Perbesar Peta (Zoom In)",
-                    style: { padding: "0.22rem 0.52rem", borderRadius: 6, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" },
-                    children: "＋"
-                  }),
-                  (0, t.jsx)("button", {
-                    type: "button",
-                    onClick: () => {
-                      if (isGoogleTileMode && leafletMapRef.current) {
-                        try { leafletMapRef.current.zoomOut(); } catch (_e) {}
-                        return;
-                      }
-                      const nextZ = zoom / 1.35;
-                      if (nextZ <= 1.05) handleResetNasional();
-                      else {
-                        const cx = (600 - pan.x) / zoom;
-                        const cy = (235 - pan.y) / zoom;
-                        focusCameraOn(cx, cy, nextZ);
-                      }
-                    },
-                    title: "Perkecil Peta (Zoom Out)",
-                    style: { padding: "0.22rem 0.52rem", borderRadius: 6, border: "1px solid " + T.btnBorder, background: T.btnBg, color: T.textPrimary, fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" },
-                    children: "－"
+                    children: showLabels ? "🏷️ Label" : "🏷️ Label (Off)"
                   }),
                   (0, t.jsx)("button", {
                     type: "button",
@@ -4637,7 +4625,7 @@ function CasPetaKejahatanView({
                         top: 10,
                         right: 10,
                         maxWidth: "calc(100% - 62px)",
-                        zIndex: 500,
+                        zIndex: 6,
                         background: T.tooltipBg,
                         backdropFilter: "blur(8px)",
                         border: "1px solid " + (drillLevel === 3 ? "#f59e0b" : "#ea4335"),
@@ -6775,14 +6763,19 @@ function dashForceRefresh(){
 let [dashView, setDashView] = (0, a.useState)(() => {
   if (typeof window === "undefined") return "ringkasan";
   let sp = new URLSearchParams(window.location.search || "");
-  return (sp.get("view") === "peta-kejahatan" || window.location.pathname.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
+  let pn = window.location.pathname || "";
+  return (pn.includes("/peta-kejahatan") || sp.get("view") === "peta-kejahatan" || pn.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
 });
 (0, a.useEffect)(() => {
   if (typeof window === "undefined") return;
   let syncView = () => {
     try {
       let sp = new URLSearchParams(window.location.search || "");
-      let next = (sp.get("view") === "peta-kejahatan" || window.location.pathname.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
+      let pn = window.location.pathname || "";
+      if (sp.get("view") === "peta-kejahatan" && window.history && window.history.replaceState) {
+        try { window.history.replaceState(window.history.state, "", "/cms/dashboard/peta-kejahatan"); pn = "/cms/dashboard/peta-kejahatan"; } catch (_err) {}
+      }
+      let next = (pn.includes("/peta-kejahatan") || sp.get("view") === "peta-kejahatan" || pn.includes("/heatmap")) ? "peta-kejahatan" : "ringkasan";
       setDashView(prev => prev === next ? prev : next);
     } catch (_e) {}
   };
@@ -6791,7 +6784,10 @@ let [dashView, setDashView] = (0, a.useState)(() => {
       let aEl = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
       if (aEl) {
         let href = aEl.getAttribute("href") || "";
-        if (href.includes("view=peta-kejahatan") || href.includes("/heatmap")) {
+        if (href.includes("/peta-kejahatan") || href.includes("view=peta-kejahatan") || href.includes("/heatmap")) {
+          if (window.history && window.history.replaceState) {
+            try { window.history.replaceState(window.history.state, "", "/cms/dashboard/peta-kejahatan"); } catch (_err) {}
+          }
           setDashView("peta-kejahatan");
         } else if (href === "/cms/dashboard/main" || href === "/cms/dashboard" || (href.startsWith("/cms/dashboard/main") && !href.includes("view=peta-kejahatan"))) {
           if (window.history && window.history.replaceState) {
@@ -6827,7 +6823,7 @@ let [dashView, setDashView] = (0, a.useState)(() => {
   }
 }, [dashView]);
 function switchDashView(targetView) {
-  let nextUrl = targetView === "peta-kejahatan" ? "/cms/dashboard/main?view=peta-kejahatan" : "/cms/dashboard/main";
+  let nextUrl = targetView === "peta-kejahatan" ? "/cms/dashboard/peta-kejahatan" : "/cms/dashboard/main";
   try {
     if (typeof window !== "undefined" && window.history && window.history.replaceState) {
       window.history.replaceState(window.history.state, "", nextUrl);
