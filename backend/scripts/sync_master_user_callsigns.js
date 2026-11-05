@@ -6,8 +6,8 @@
  * 1. User ID = 1 is always preserved as `om.eko_42` (`@om.eko_42`).
  * 2. All other users derive their base handle from `auth_users.name` (first 2 words after
  *    stripping academic degrees after comma `,` and stripping police/military/civilian ranks & titles).
- *    Example: "Briptu Eko Agung Krisdianto, S.Kom." -> "eko.agung"
- *    Example: "Cantya Diana Rismarini, S.H." -> "cantya.diana"
+ *    Example: "Briptu Budi Santoso, S.Kom." -> "budi.santoso"
+ *    Example: "Siti Aminah Putri, S.H." -> "siti.aminah"
  *    Example: "Budi" -> "budi"
  * 3. Disambiguation numbers (`_1`, `_2`, ...) are appended ONLY when 2 or more users share the
  *    exact same `baseUsername` (ordered by `id ASC`). Unique `baseUsername`s never get numbers.
@@ -97,11 +97,11 @@ function isAutoOrUnstandardizedHandle(handle, email, emailPolri) {
     if (emailLocal && h === emailLocal) return true;
     if (polriLocal && h === polriLocal) return true;
 
-    // 3 or more dot-separated words (e.g. cantya.diana.rismarini)
+    // 3 or more dot-separated words (e.g. siti.aminah.putri)
     const dotParts = h.split(".");
     if (dotParts.length >= 3) return true;
 
-    // Trailing digits attached directly to letters without underscore (e.g. mat.doang7, inggrid12)
+    // Trailing digits attached directly to letters without underscore (e.g. personel01, operator12)
     if (/[a-z]\d+$/i.test(h)) return true;
 
     return false;

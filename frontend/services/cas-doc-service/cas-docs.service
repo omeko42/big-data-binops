@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=clouduser
-WorkingDirectory=/var/www/cas_docs
-ExecStart=/usr/bin/python3 /var/www/cas_docs/cas_doc_service.py
+User=appuser
+WorkingDirectory=/opt/bdb-docs
+ExecStart=/usr/bin/python3 /opt/bdb-docs/cas_doc_service.py
 Restart=always
 RestartSec=3
 

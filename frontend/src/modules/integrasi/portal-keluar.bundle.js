@@ -8,10 +8,10 @@ let SCOPE_FALLBACK_CATALOG={
   "laporan_polisi.barang_bukti":{label:"Register Barang Bukti",endpoint:"GET /api/external/v1/laporan-polisi?include=barang_bukti",desc:"Daftar barang bukti yang disita/diamankan beserta kategori dan jumlahnya."}
 };
 let DEVICE_PROFILES=[
-  {device:"Linux Server x86_64 • Go-http-client/2.0",location:"Jakarta Selatan — Jaringan Intranet Polri (Mabes)",ip:"10.200.14.82"},
-  {device:"Windows Server 2022 • Node.js API Gateway/20.x",location:"Jakarta Pusat — Data Center Pusiknas / Stamaops",ip:"10.200.8.114"},
-  {device:"Ubuntu 22.04 LTS • Python-httpx/0.27.0",location:"Jakarta Selatan — Gateway Integrasi Bareskrim",ip:"10.200.21.45"},
-  {device:"RHEL 9.2 Enterprise • OpenJDK-HttpClient/21",location:"Bandung — Node Sinkronisasi Regional Polri",ip:"10.204.11.19"}
+  {device:"Linux Server x86_64 • Go-http-client/2.0",location:"Jakarta Selatan — Jaringan Intranet Polri (Mabes)",ip:"192.0.2.10"},
+  {device:"Windows Server 2022 • Node.js API Gateway/20.x",location:"Jakarta Pusat — Data Center Pusiknas / Stamaops",ip:"192.0.2.11"},
+  {device:"Ubuntu 22.04 LTS • Python-httpx/0.27.0",location:"Jakarta Selatan — Gateway Integrasi Bareskrim",ip:"192.0.2.12"},
+  {device:"RHEL 9.2 Enterprise • OpenJDK-HttpClient/21",location:"Bandung — Node Sinkronisasi Regional Polri",ip:"192.0.2.13"}
 ];
 function formatConnTime(ts,fallbackStr){
   if(!ts)return fallbackStr||"5 Nov 2026, 20:15 WIB";

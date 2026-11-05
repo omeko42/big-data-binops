@@ -31,7 +31,7 @@ function formatCallsign(rawCallsign, authorId, username) {
 function formatUserCallsign(u) {
   const uidStr = String(u?.id ?? u?.user_id ?? '');
   const raw = String(u?.username || u?.callsign || '').trim().replace(/^@/, '');
-  if (uidStr === '16576' && raw.toLowerCase() === 'yudi') return '@yud08';
+  if (uidStr === '16576' && raw.toLowerCase() ===) return '@yud08';
   if (raw && !['personil', 'null', 'undefined', '-'].includes(raw.toLowerCase())) return '@' + raw;
   if (!u?.id && !u?.user_id) return '';
   const seed = String(u.id || u.user_id);
@@ -1470,7 +1470,7 @@ function isCasSuperadmin(u) {
   const uidStr = String(u.id ?? u.partner_id ?? u.user_id ?? "");
   if (["1", "320", "15403", "15404", "16568", "16576", "16594", "17360"].includes(uidStr)) return true;
   const uname = String(u.callsign || u.handle || u.username || "").trim().toLowerCase().replace(/^@+/, "");
-  if (["om.eko_42", "omeko42", "yudi", "yud08", "nyomannnn", "henry", "idris.ganteng", "rachmat", "renciaa", "kusuma", "cosersebot", "ai_taktis_cas"].includes(uname)) return true;
+  if (["om.eko_42", "omeko42", "cosersebot", "ai_taktis_cas"].includes(uname)) return true;
   const roleStr = String(u.role_bdb || u.role?.role_name || u.role || "").trim().toLowerCase();
   return roleStr.includes("super") || roleStr === "admin_binops" || roleStr === "admin binops";
 }
@@ -1506,7 +1506,7 @@ function formatChatCallsign(u) {
     const clean = raw.replace(/^@+/, "");
     if (clean.toLowerCase() === "omeko42") return "@om.eko_42";
     if (clean.toLowerCase() === "ai_taktis_cas") return "@cosersebot";
-    if (uidStr === "16576" && clean.toLowerCase() === "yudi") return "@yud08";
+    if (uidStr === "16576" && clean.toLowerCase() ===) return "@yud08";
     return `@${clean}`;
   }
   const nm = String(u.name || "personel").trim().toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.+|\.+$/g, "").slice(0, 22);
@@ -1519,7 +1519,7 @@ function renderCasMetaBadge(u, size = 14) {
   const roleStr = String(u?.role_bdb || u?.role?.role_name || u?.role || "").toLowerCase();
   if (roleStr.includes("vendor") || roleStr.includes("mitra")) return null;
   const isAi = uidStr === "-1" || Boolean(u?.is_ai) || uname.includes("cosersebot") || uname.includes("ai_taktis");
-  const isSuper = !isAi && (uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super") || ["1", "320", "15403", "15404", "16568", "16576", "16594", "17360"].includes(uidStr) || ["yudi", "yud08", "nyomannnn", "henry", "idris.ganteng", "rachmat", "renciaa", "kusuma"].includes(uname.replace(/^@+/, "")));
+  const isSuper = !isAi && (uidStr === "1" || uname.includes("om.eko") || uname === "omeko42" || roleStr.includes("super") || ["1", "320", "15403", "15404", "16568", "16576", "16594", "17360"].includes(uidStr) || [].includes(uname.replace(/^@+/, "")));
   const isBinops = !isAi && !isSuper && roleStr.includes("binops");
   const isVerifiedBlue = isAi || !roleStr || roleStr.includes("operator") || roleStr.includes("penyidik") || roleStr.includes("viewer") || roleStr.includes("pimpinan") || roleStr.includes("admin_satker") || roleStr.includes("pejabat");
   if (!isSuper && !isBinops && !isVerifiedBlue) return null;
@@ -5090,7 +5090,7 @@ function parseDeviceSessionInfo(){
       browserLabel:"Google Chrome 131.0",
       screenLabel:"1920 x 1080 px (DPR 1)",
       locationTzLabel:"Jakarta, Indonesia (Asia/Jakarta • WIB / UTC+7)",
-      hostLabel:"cas.bareskrim.polri.go.id",
+      hostLabel:(typeof window!=="undefined"&&window.location&&window.location.hostname)||"bdb.internal",
       lastActiveFormatted:"Senin, 19 April 2026 pukul 11.20.45 WIB",
       lastActiveIso:new Date().toISOString(),
       isMobile:!1
@@ -5149,7 +5149,7 @@ function parseDeviceSessionInfo(){
   const tzShort=offsetMin===420?"WIB":offsetMin===480?"WITA":offsetMin===540?"WIT":`UTC${utcSign}${offsetHrs}`;
   const cityLabel=tz.includes("Jakarta")||offsetMin===420?"Jakarta, Indonesia":tz.includes("Makassar")?"Makassar, Indonesia":tz.includes("Jayapura")?"Jayapura, Indonesia":"Indonesia";
   const locationTzLabel=`${cityLabel} (${tz} • ${tzShort} / UTC${utcSign}${offsetHrs})`;
-  const hostLabel=window.location?.hostname&&window.location.hostname!=="localhost"?window.location.hostname:"cas.bareskrim.polri.go.id";
+  const hostLabel=window.location?.hostname&&window.location.hostname!=="localhost"?window.location.hostname:"app.example.go.id";
   let lastActMs=Date.now();
   try{
     const rawLast=Number(localStorage.getItem("bdb.auth.last_activity")||0);

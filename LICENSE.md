@@ -13,7 +13,7 @@
 ---
 
 ### 1. Hak Cipta Rekayasa & Kepemilikan Arsitektur
-Kode sumber, rancangan skema basis data (*171 tabel produksi*), algoritma rekonsiliasi 4 tingkat kewilayahan, mesin *snapshot* analitik berkecepatan tinggi, layanan mikro otomatisasi dokumen Jukminu Polri, serta seluruh dokumentasi teknis pada repositori **`Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)`** ini dirancang dan dibangun oleh **Eko Agung (`@omeko42`)** dalam rangka modernisasi dan kedaulatan tata kelola data operasional di lingkungan **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
+Kode sumber, rancangan skema basis data relasional, algoritma rekonsiliasi 4 tingkat kewilayahan, mesin *snapshot* analitik berkecepatan tinggi, layanan mikro otomatisasi dokumen Jukminu Polri, serta seluruh dokumentasi teknis pada repositori **`Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)`** ini dirancang dan dibangun oleh **Eko Agung (`@omeko42`)** dalam rangka modernisasi dan kedaulatan tata kelola data operasional di lingkungan **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
 ### 2. Hak Penggunaan Kedinasan Resmi (Polri)
 **Kepolisian Negara Republik Indonesia (Polri)** — khususnya **Badan Reserse Kriminal (Bareskrim Polri)** beserta seluruh jajaran Direktorat Reserse Polda, Satuan Reserse Polres, dan Unit Reskrim Polsek yang tergabung dalam ekosistem **CAS (*Community Anggota Serse*)** — memiliki hak penuh dan tidak terbatas untuk menggunakan, mengoperasikan, mengaudit, dan mengembangkan sistem ini bagi kepentingan resmi penegakan hukum, pembinaan operasional, dan pelayanan masyarakat.
@@ -24,7 +24,7 @@ Seluruh pengelolaan sistem produksi maupun publikasi referensi arsitektur pada r
 | Kategori Objek | Status Kerahasiaan (NDA) | Ketentuan Hukum & Teknis |
 | :--- | :--- | :--- |
 | **Data Operasional & Perkara Nyata** (*Isi Laporan Polisi, BAP, Identitas NIK/NRP Pelapor, Saksi, & Tersangka*) | 🔒 **RAHASIA PENUH (*Strictly Confidential under NDA*)** | **Dilarang keras** disalin, dibocorkan, atau dipublikasikan ke luar jaringan internal Polri. Repositori GitHub ini **0% memuat data perkara atau PII masyarakat**. |
-| **Kredensial, Kunci Kriptografi & Topologi Jaringan** (*Password DB, JWT Secret, API Key, Alamat IP Privat `10.200.x.x`*) | 🔒 **RAHASIA INFRASTRUKTUR (*Strictly Confidential under NDA*)** | Dilindungi oleh kebijakan *Zero-Secret Commit*. Seluruh kredensial produksi disuntikkan melalui *Environment Variables* terisolasi di server internal. |
+| **Kredensial, Kunci Kriptografi & Topologi Jaringan** (*Password DB, JWT Secret, API Key, Domain & IP Internal*) | 🔒 **RAHASIA INFRASTRUKTUR (*Strictly Confidential under NDA*)** | Dilindungi oleh kebijakan *Zero-Secret Commit*. Seluruh kredensial produksi disuntikkan melalui *Environment Variables* terisolasi di server internal. |
 | **Akses Mitra Integrasi Eksternal (`/api/external/v1/*`)** | 🛡️ **TERIKAT NDA & PKS RESMI** | Kementerian/Lembaga atau mitra yang mengakses API Keluar wajib menandatangani Perjanjian Kerja Sama (PKS) dan NDA resmi serta menggunakan kunci `X-API-Key` ber-kuota dan ber-audit. |
 | **Kerangka Arsitektur, Skema DDL Kosong & Dokumentasi Rekayasa** *(Isi Repositori Ini)* | 📖 **PUBLIKASI PORTOFOLIO TERBATAS (*Sanitized Portfolio Reference*)** | Diizinkan untuk ditinjau secara terbuka sebagai bukti portofolio rekayasa perangkat lunak (*Full-Stack Engineering & System Architecture*) dengan tetap menghormati hak cipta. |
 
@@ -33,18 +33,18 @@ Dalam operasional produksi di lingkungan klaster server internal (**Dual-Node Pr
 
 | Parameter Layanan (SLA) | Target Metrik Produksi | Mekanisme Rekayasa Pendukung |
 | :--- | :--- | :--- |
-| **Ketersediaan Layanan (*System Uptime SLA*)** | **`99,9%` (*High Availability*)** | Arsitektur **32 Worker PM2 Cluster (`bdb-api`)** tanpa henti (*zero-downtime reload*) di server 32-core dengan isolasi beban antara Node 1 (Web/Docs) dan Node 2 (API/DB). |
-| **Kecepatan Analitik Nasional (*Analytical Latency SLA*)** | **`< 100 milidetik`** | Mesin tabel *Pre-Computed Snapshot* (`bdb_kinerja_perkara_snapshot` — 2,11+ juta baris) dengan sinkronisasi *trigger* PL/pgSQL dan *PostgreSQL Advisory Locks*. |
-| **Kecepatan Pencarian Lintas Jutaan LP (*Search Latency SLA*)** | **`< 500 milidetik`** | Indeks komposit `B-Tree` dan indeks *trigram* `GIN (pg_trgm)` pada **433 indeks aktif** di PostgreSQL. |
+| **Ketersediaan Layanan (*System Uptime SLA*)** | **`99,9%` (*High Availability*)** | Arsitektur **32 Worker PM2 Cluster (`bdb-api`)** tanpa henti (*zero-downtime reload*) di server multi-core dengan isolasi beban antara Node 1 (Web/Docs) dan Node 2 (API/DB). |
+| **Kecepatan Analitik Nasional (*Analytical Latency SLA*)** | **`< 20–100 milidetik`** | Mesin tabel *Pre-Computed Snapshot & Fast Cache* (`bdb_kinerja_perkara_snapshot`, `bdb_pihak_terlibat_fast_cache`) dengan sinkronisasi *trigger* PL/pgSQL dan *PostgreSQL Advisory Locks*. |
+| **Kecepatan Pencarian Lintas Jutaan LP (*Search Latency SLA*)** | **`< 500 milidetik`** | Indeks komposit `B-Tree` dan indeks *trigram* `GIN (pg_trgm)` pada ratusan indeks aktif di PostgreSQL. |
 | **Pemulihan & Ketahanan Data (*RPO & RTO SLA*)** | **RPO ≈ `0 detik` \| RTO `< 15 menit`** | Penyimpanan *staging* JSONB *immutable* (`bdb_dors_raw_lp`) yang menjamin *Zero Data Loss*, ditambah *cron* rekonsiliasi otomatis harian (`00:05 WIB`). |
-| **Respons Insiden & Dukungan Komunitas CAS (*Support SLA*)** | **Kritis `< 1 Jam` \| Taktis `< 24 Jam`** | Pemantauan langsung melalui lingkar komunikasi taktis **CAS (*Community Anggota Serse* — 1.024+ anggota)** dan kanal internal **SHARESE**. |
+| **Respons Insiden & Dukungan Komunitas CAS (*Support SLA*)** | **Kritis `< 1 Jam` \| Taktis `< 24 Jam`** | Pemantauan langsung melalui lingkar komunikasi taktis **CAS (*Community Anggota Serse*)**, kanal internal **SHARESE**, dan modul **Lapor Bug & Kendala Sistem**. |
 
 ### 5. Arsitektur Keamanan Zero-Trust & Kriptografi Produksi
 Platform **Big Data Binops (BDB)** menerapkan pertahanan berlapis (*Defense-in-Depth*) yang mencakup:
 1. **Autentikasi Biometrik Perangkat Keras (FIDO2 / WebAuthn Passkey)**: Mengimplementasikan `@simplewebauthn/server` dengan kunci publik kriptografis asimetris (`COSE Public Key`), pelacakan penghitung tanda tangan (*signature counter anti-cloning*), serta tantangan (*challenge*) 32-byte sekali pakai dengan masa berlaku 5 menit.
-2. **Autentikasi Multi-Faktor (MFA) Berlapis**: Mendukung **TOTP 2FA (RFC 6238)** terenkripsi, **PIN Keamanan 6 Digit** (`bcrypt`), **OTP Email Kedinasan**, serta **Captcha Hybrid (Proof-of-Work + SVG)**.
+2. **Autentikasi Multi-Faktor (MFA) Berlapis**: Mendukung **TOTP 2FA (RFC 6238)** terenkripsi, **PIN Keamanan 6 Digit** (`bcrypt`), **OTP Email Kedinasan** dengan failover Multi-SMTP, serta **Captcha Hybrid (Proof-of-Work + SVG)**.
 3. **Otorisasi Bertingkat untuk Cabut Akses Gawai (*Step-Up MFA Device Revocation*)**: Pencabutan sesi atau penghapusan kunci biometrik gawai wajib melewati verifikasi ulang kredensial sekunder secara langsung.
-4. **Enkripsi ID Buram (*Opaque ID Cipher*) & Jejak Audit *Immutable***: Seluruh ID primer pada URL eksternal disandikan dengan **AES-GCM (`id-cipher.util.ts`)**, dan setiap tindakan personel terekam secara permanen di dalam **5,46+ juta baris `bdb_audit_log`**.
+4. **Enkripsi ID Buram (*Opaque ID Cipher*) & Jejak Audit *Immutable***: Seluruh ID primer pada URL eksternal disandikan dengan **AES-GCM (`id-cipher.util.ts`)**, dan setiap tindakan personel terekam secara permanen di dalam tabel `bdb_audit_log`.
 
 ### 6. Pembatasan & Larangan Keras (*Strict Prohibitions*)
 Perangkat lunak ini **BUKAN** perangkat lunak bebas komersial (*bukan MIT / Apache Open-Source*). Tanpa izin tertulis dari Pemegang Hak Cipta dan/atau otoritas resmi Bareskrim Polri, pihak mana pun di luar ketentuan Pasal 2 **DILARANG KERAS**:
@@ -63,7 +63,7 @@ Perangkat lunak ini **BUKAN** perangkat lunak bebas komersial (*bukan MIT / Apac
 ---
 
 ### 1. Engineering Copyright & Architectural Ownership
-The source code, relational database DDL schema (*171 active production tables*), 4-tier territorial reconciliation algorithms, high-speed analytical snapshot engine, Python Jukminu document automation microservice, and technical documentation contained in this **`Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)`** repository were architected and engineered by **Eko Agung (`@omeko42`)** to establish sovereign operational data governance within **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
+The source code, relational database DDL schema, 4-tier territorial reconciliation algorithms, high-speed analytical snapshot engine, Python Jukminu document automation microservice, and technical documentation contained in this **`Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)`** repository were architected and engineered by **Eko Agung (`@omeko42`)** to establish sovereign operational data governance within **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
 ### 2. Official Institutional Usage Rights (Polri)
 The **Indonesian National Police (Polri)** — specifically the **Criminal Investigation Agency (Bareskrim Polri)** and all Regional (`Polda`), Municipal (`Polres`), and Sectoral (`Polsek`) criminal investigation units operating within the **CAS (*Community Anggota Serse*)** ecosystem — holds full, unrestricted rights to deploy, operate, audit, and extend this platform for official law enforcement, operational supervision, and public service missions.
@@ -74,7 +74,7 @@ Both production operations and the publication of sanitized architectural artifa
 | Asset Category | Confidentiality Classification (NDA) | Legal & Technical Enforcement |
 | :--- | :--- | :--- |
 | **Live Operational & Case Records** (*Police Reports, Investigation Dossiers, Citizen NIK/NRP, Suspects & Witnesses*) | 🔒 **STRICTLY CONFIDENTIAL (*Protected under NDA*)** | **Strictly prohibited** from unauthorized extraction or public disclosure. This GitHub repository contains **0% live case data or citizen PII**. |
-| **Credentials, Cryptographic Keys & Network Topology** (*DB Passwords, JWT Secrets, API Keys, Private IPs `10.200.x.x`*) | 🔒 **INFRASTRUCTURE SECRET (*Protected under NDA*)** | Enforced via our *Zero-Secret Commit Policy*. All live credentials are injected exclusively via isolated environment variables on internal servers. |
+| **Credentials, Cryptographic Keys & Network Topology** (*DB Passwords, JWT Secrets, API Keys, Internal Domains & IPs*) | 🔒 **INFRASTRUCTURE SECRET (*Protected under NDA*)** | Enforced via our *Zero-Secret Commit Policy*. All live credentials are injected exclusively via isolated environment variables on internal servers. |
 | **External Partner API Access (`/api/external/v1/*`)** | 🛡️ **GOVERNED BY FORMAL NDA & MoU** | External ministries, agencies, or integration partners must execute a formal MoU and NDA prior to receiving rate-limited, audited `X-API-Key` credentials. |
 | **Sanitized System Architecture, Empty DDL Schema & Engineering Docs** *(This Repository)* | 📖 **AUTHORIZED PORTFOLIO REFERENCE** | Publicly viewable strictly for software engineering portfolio evaluation, architectural peer review, and academic citation with proper attribution. |
 
@@ -83,18 +83,18 @@ In live production across the internal **Dual-Node Production Cluster**, the **B
 
 | SLA Dimension | Production Target | Underlying Architectural Guarantee |
 | :--- | :--- | :--- |
-| **System Availability (*Uptime SLA*)** | **`99.9%` High Availability** | **32 PM2 Cluster Workers (`bdb-api`)** on a 32-core server with zero-downtime reload and strict workload isolation between Node 1 (Edge/Docs) and Node 2 (Core API/DB). |
-| **National Analytical Latency (*Query SLA*)** | **`< 100 ms`** | Pre-computed snapshot tables (`bdb_kinerja_perkara_snapshot` — 2.11M+ rows) maintained via real-time PL/pgSQL triggers and PostgreSQL Advisory Locks. |
-| **Multi-Million Row Search Latency** | **`< 500 ms`** | Composite `B-Tree` and trigram `GIN (pg_trgm)` indexing across **433 active PostgreSQL indexes**. |
+| **System Availability (*Uptime SLA*)** | **`99.9%` High Availability** | **32 PM2 Cluster Workers (`bdb-api`)** on a multi-core server with zero-downtime reload and strict workload isolation between Node 1 (Edge/Docs) and Node 2 (Core API/DB). |
+| **National Analytical Latency (*Query SLA*)** | **`< 20–100 ms`** | Pre-computed snapshot and fast-cache tables (`bdb_kinerja_perkara_snapshot`, `bdb_pihak_terlibat_fast_cache`) maintained via real-time PL/pgSQL triggers and PostgreSQL Advisory Locks. |
+| **Multi-Million Row Search Latency** | **`< 500 ms`** | Composite `B-Tree` and trigram `GIN (pg_trgm)` indexing across active PostgreSQL indexes. |
 | **Data Durability & Recovery (*RPO & RTO SLA*)** | **RPO ≈ `0s` \| RTO `< 15 min`** | Immutable JSONB raw staging (`bdb_dors_raw_lp`) guaranteeing *Zero Data Loss*, paired with automated daily reconciliation crons (`00:05 WIB`). |
-| **Incident Response & CAS Field Support SLA** | **Critical `< 1 hr` \| Tactical `< 24 hrs`** | Direct real-time reporting and triage through the **1,024+ member CAS (*Community Anggota Serse*)** operational loop and in-app **SHARESE** channel. |
+| **Incident Response & CAS Field Support SLA** | **Critical `< 1 hr` \| Tactical `< 24 hrs`** | Direct real-time reporting and triage through the **CAS (*Community Anggota Serse*)** operational loop, in-app **SHARESE** channel, and **Bug Report** system. |
 
 ### 5. Zero-Trust Security & Cryptographic Architecture
 The **Big Data Binops (BDB)** platform enforces a multi-layered *Defense-in-Depth* security model:
 1. **FIDO2 / WebAuthn Hardware Passkey Authentication**: Implements `@simplewebauthn/server` with asymmetric `COSE` public keys, signature counter cloning detection, and single-use 32-byte cryptographic challenges (5-minute TTL).
-2. **Multi-Factor Authentication (MFA) Matrix**: Supports encrypted **RFC 6238 TOTP 2FA**, **6-Digit Security PIN** (`bcrypt`), **Official Email OTP**, and **Hybrid Proof-of-Work + SVG Captcha**.
+2. **Multi-Factor Authentication (MFA) Matrix**: Supports encrypted **RFC 6238 TOTP 2FA**, **6-Digit Security PIN** (`bcrypt`), **Official Email OTP** with Multi-SMTP failover, and **Hybrid Proof-of-Work + SVG Captcha**.
 3. **Step-Up MFA for Trusted Device Revocation**: Revoking an active device session or deleting a registered hardware passkey requires real-time secondary MFA verification.
-4. **Opaque ID Ciphers & Immutable Forensic Audit**: Primary database IDs are obfuscated via **AES-GCM (`id-cipher.util.ts`)**, and all user mutations are permanently recorded across **5.46+ million rows in `bdb_audit_log`**.
+4. **Opaque ID Ciphers & Immutable Forensic Audit**: Primary database IDs are obfuscated via **AES-GCM (`id-cipher.util.ts`)**, and all user mutations are permanently recorded in `bdb_audit_log`.
 
 ### 6. Strict Prohibitions & Disclaimer
 This software is **NOT** licensed under a permissive commercial open-source license (*not MIT / Apache*). Without prior written authorization from the Copyright Holder and/or official **Bareskrim Polri** leadership, any party outside Article 2 is **STRICTLY PROHIBITED** from:

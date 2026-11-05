@@ -1,5 +1,5 @@
 # ==============================================================================
-# CAS Backend Server Crontab Blueprint (`/var/spool/cron/crontabs/clouduser`)
+# CAS Backend Server Crontab Blueprint (`/var/spool/cron/crontabs/appuser`)
 # ==============================================================================
 # Menjalankan sinkronisasi harian cache keaktifan personel (Master User Activity)
 # setiap pukul 00:05 dini hari di dalam container `bdb-api`.

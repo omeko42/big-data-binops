@@ -6,7 +6,7 @@ version: "3.8"
 # 1. bdb-web (Next.js 16.2.10 Standalone Server di port 3000)
 # 2. onlyoffice-ds (ONLYOFFICE Document Server di port 127.0.0.1:8088 -> 80)
 # 3. cas-docs.service (Microservice Python Jukminu Polri & ONLYOFFICE Callback
-#    berjalan di port 3860 sebagai systemd service di host /var/www/cas_docs,
+#    berjalan di port 3860 sebagai systemd service di host /opt/bdb-docs,
 #    atau dapat dijalankan sebagai container pendamping seperti di bawah ini).
 # ==============================================================================
 
@@ -40,8 +40,8 @@ services:
   cas-doc-service:
     image: python:3.11-slim
     container_name: cas-doc-service
-    working_dir: /var/www/cas_docs
-    command: ["python3", "/var/www/cas_docs/cas_doc_service.py"]
+    working_dir: /opt/bdb-docs
+    command: ["python3", "/opt/bdb-docs/cas_doc_service.py"]
     restart: always
     ports:
       - "127.0.0.1:3860:3860"
@@ -50,4 +50,4 @@ services:
       CAS_BE_JWT_SECRET: ${CAS_BE_JWT_SECRET:-CHANGE_ME_JWT_SECRET}
       CAS_STORAGE_SECRET: ${CAS_STORAGE_SECRET:-CHANGE_ME_STORAGE_SECRET}
     volumes:
-      - /var/www/cas_docs:/var/www/cas_docs
+      - /opt/bdb-docs:/opt/bdb-docs

@@ -3,8 +3,8 @@
 
 > **Klasifikasi Dokumen**: Teknis / Terbatas (Untuk Tim Pengembang Mitra Resmi & Lembaga Eksternal)  
 > **Sistem Sumber**: **Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse)** &mdash; Bareskrim Polri  
-> **Versi Dokumen**: 1.2 (BDB 2026 Enhanced Spec)  
-> **Tanggal Efektif**: 21 September 2026  
+> **Versi Dokumen**: 2.6 (BDB 2026 Enhanced Spec)  
+> **Tanggal Efektif**: November 2026  
 > **Protokol**: RESTful JSON over HTTPS  
 
 ---
@@ -18,7 +18,7 @@ API ini bertindak sebagai gerbang terkelola (*Managed API Gateway*) yang mendist
 ### Spesifikasi Dasar Koneksi
 | Parameter | Nilai / Spesifikasi |
 |---|---|
-| **Base URL Produksi** | `https://cas.bareskrim.polri.go.id/api/external/v1` |
+| **Base URL Produksi** | `https://api.example.go.id/api/external/v1` |
 | **Format Pertukaran Data** | `application/json; charset=utf-8` |
 | **Metode Autentikasi** | HTTP Basic Authentication (`Authorization: Basic base64(username:password)`) |
 | **Scope Data** | **Hanya data berstatus `OPERASIONAL`** yang diekspos. Data simulasi/testing terisolasi secara ketat. |
@@ -29,8 +29,8 @@ API ini bertindak sebagai gerbang terkelola (*Managed API Gateway*) yang mendist
 > Seluruh data Laporan Polisi (LP) yang dialirkan melalui antarmuka CAS/BDB ini **bersumber langsung dan terintegrasi dengan sistem DORS (Daily Operation Report System) Mabes Polri** sebagai sistem sumber primer pelaporan harian kepolisian di seluruh Indonesia (Mabes, Polda, Polres, hingga Polsek).
 
 Melalui sistem Big Data Binops (BDB) — Powered by CAS (Community Anggota Serse), data mentah dari DORS telah melalui proses pengolahan dan standardisasi:
-1. **Pembersihan & Validasi**: Standardisasi penomoran LP, penyeragaman pasal/klasifikasi kejahatan, dan validasi data ganda.
-2. **Pemetaan Hierarki Satker**: Penataan relasi satuan kerja dari Polda, Polres, hingga Polsek jajaran.
+1. **Pembersihan & Validasi**: Standardisasi penomoran LP, penyeragaman pasal/klasifikasi kejahatan (`Kelompok Kejahatan` & `Sub-Kelompok Tipid`), dan validasi data ganda.
+2. **Pemetaan Hierarki Satker**: Penataan relasi satuan kerja dari Polda, Polres, hingga Polsek jajaran dengan nomenklatur singkatan standar (`DITKRIMUM`, `DITKRIMSUS`, `DITSIBER`, `SATRESKRIM`, dll.).
 3. **Pelacakan Crime Clearance (CC)**: Menghubungkan pelaporan awal DORS dengan dokumen ketetapan akhir (Tahap II, SP3, Restorative Justice, Diversi, dan putusan Tipiring PERMA).
 4. **Interoperabilitas `dors_lp_id`**: Setiap baris data tetap mempertahankan field `dors_lp_id` (ID unik pelaporan di DORS) agar mitra dapat melakukan rekonsiliasi dan *cross-referencing* data dengan mudah.
 
@@ -75,7 +75,7 @@ Tersedia **9 kategori Scope data**:
 | 6 | `laporan_polisi.kronologi` | Naratif / Modus | Deskripsi peristiwa: `uraian_kejadian`, `apa_terjadi`, `bagaimana_terjadi` *(Uraian lengkap fakta & kronologi modus operandi)*. |
 | 7 | `laporan_polisi.kerugian` | Kerugian | Nilai materiil: `kerugian` (nominal estimasi dampak kerugian korban). |
 | 8 | `laporan_polisi.pihak_terlibat` | Subjek Hukum | Daftar pihak: `pihak_terlibat` (nama, NIK, peran keterlibatan: SAKSI / KORBAN / TERLAPOR). |
-| 9 | `laporan_polisi.barang_bukti` | Barang Bukti | Bukti fisik: `barang_bukti` (jenis, jumlah, status barang bukti, keterangan sita/aman). |
+| 9 | `laporan_polisi.barang_bukti` | Barang Bukti | Bukti fisik: `barang_bukti` (jenis kategori, nama/detail barang, jumlah numerik, satuan, status barang bukti, keterangan sita/aman). |
 
 ---
 
@@ -93,7 +93,7 @@ Tersedia **9 kategori Scope data**:
 | `no_laporan` | String | - | Pencarian nomor LP spesifik (parsial, case-insensitive). Contoh: `LP/B/241/IX/2026`. |
 | `status` | String | - | Filter tahapan perkara riil (`PENYELIDIKAN`, `PENYIDIKAN`, `SPDP`, `TAHAP_I`, `P21`, `TAHAP_II`, `SP3`, `SP2_LIDIK`, `PERMA`). |
 | `status_kategori` | String | - | Filter Crime Clearance: `CC` (Tuntas/Clearance) atau `CT` (Masih Berproses). |
-| `satker` | String | - | Filter nama Satker kewilayahan atau unit penanganan (contoh: `POLDA METRO JAYA`, `POLRES KAMPAR`, `DITRESKRIMUM`). |
+| `satker` | String | - | Filter nama Satker kewilayahan atau unit penanganan (contoh: `POLDA METRO JAYA`, `POLRES KAMPAR`, `DITKRIMUM`). |
 | `updated_from` | String | - | Format `YYYY-MM-DD`. Hanya data yang diperbarui pada atau setelah tanggal ini. *(Kunci sinkronisasi incremental)*. |
 | `updated_to` | String | - | Format `YYYY-MM-DD`. Hanya data yang diperbarui sebelum atau pada tanggal ini. |
 
@@ -125,15 +125,14 @@ Tersedia **9 kategori Scope data**:
       "tanggal_selesai": null,
       "status_pelimpahan": "TIDAK",
       "keterangan_penghentian": null,
-      "satker_penanganan": "DITRESKRIMUM POLDA METRO JAYA",
+      "satker_penanganan": "DITKRIMUM METRO JAYA",
       "unit_penanganan": "Unit 3 Subdit Resmob",
       "personel_penanganan": [
-        { "peran": "Pembuat", "nama": "AIPDA BUDI SANTOSO", "nrp": "84050123", "pangkat": "AIPDA" },
-        { "peran": "Penerima", "nama": "KOMPOL ARIS WIJAYA", "nrp": "78100456", "pangkat": "KOMPOL" },
-        { "peran": "Mengetahui", "nama": "KOMBES POL HENDRO", "nrp": "72030789", "pangkat": "KOMBES POL" }
+        { "peran": "Pembuat", "nama": "PETUGAS SPKT", "nrp": "00000001", "pangkat": "AIPDA" },
+        { "peran": "Penerima", "nama": "PERWIRA PENGAWAS", "nrp": "00000002", "pangkat": "KOMPOL" }
       ],
       "waktu_kejadian": "2026-09-14 02:30:00",
-      "tempat_kejadian": "JL. GATOT SUBROTO KAV. 52, JAKARTA SELATAN",
+      "tempat_kejadian": "JL. CONTOH RAYA NO. 10, JAKARTA SELATAN",
       "kategori_lokasi": "Perkantoran / Ruko",
       "tkp_provinsi": "DKI JAKARTA",
       "tkp_kabupaten": "KOTA ADM. JAKARTA SELATAN",
@@ -141,24 +140,24 @@ Tersedia **9 kategori Scope data**:
       "tkp_desa": "KUNINGAN BARAT",
       "lat": "-6.238450",
       "lon": "106.822310",
-      "uraian_kejadian": "Telah terjadi tindak pidana pencurian dengan pemberatan di kantor PT Teknologi Maju Bersama. Pelaku membobol pintu belakang gedung...",
-      "apa_terjadi": "Pencurian 12 Unit Komputer Server dan Dokumen Keuangan",
-      "bagaimana_terjadi": "Pelaku merusak gembok pintu belakang menggunakan linggis kemudian memutus kabel CCTV lokal...",
+      "uraian_kejadian": "Telah terjadi tindak pidana pencurian dengan pemberatan di lokasi kejadian...",
+      "apa_terjadi": "Pencurian Perangkat Elektronik dan Dokumen",
+      "bagaimana_terjadi": "Pelaku merusak akses masuk gedung menggunakan alat bantu...",
       "kerugian": "Rp 450.000.000,-",
       "pihak_terlibat": [
-        { "nama": "RUDI HERMAWAN", "nik": null, "keterlibatan": "PELAPOR / SAKSI" },
+        { "nama": "PELAPOR CONTOH", "nik": null, "keterlibatan": "PELAPOR / SAKSI" },
         { "nama": "DALAM PENYELIDIKAN (LIDIK)", "nik": null, "keterlibatan": "TERLAPOR" }
       ],
       "barang_bukti": [
-        { "jenis": "1 Buah Linggis Besi 60cm", "jumlah": "1", "status": "DISITA", "keterangan": "Ditemukan di dekat pintu darurat" },
-        { "jenis": "Rekaman DVR Eksternal Cloud", "jumlah": "1", "status": "DIAMANKAN", "keterangan": "Bukti digital aktivitas pelaku" }
+        { "jenis": "Peralatan & Mesin", "nama_barang": "Linggis Besi 60cm", "jumlah": 1, "satuan": "Buah", "status": "DISITA" },
+        { "jenis": "Bukti Elektronik & Digital", "nama_barang": "Rekaman DVR CCTV", "jumlah": 1, "satuan": "Unit", "status": "DIAMANKAN" }
       ]
     }
   ],
   "meta": {
     "page": 1,
     "limit": 20,
-    "total": 14205
+    "total": 100
   }
 }
 ```
@@ -171,28 +170,6 @@ Tersedia **9 kategori Scope data**:
 
 Mengambil 1 objek Laporan Polisi secara utuh menggunakan token `id` yang didapat dari query daftar.
 
-#### Contoh Respon (HTTP 200 OK)
-```json
-{
-  "status": 1,
-  "data": {
-    "id": "e3b0c44298fc1c149afbf4c8996fb924",
-    "dors_lp_id": "7849201",
-    "no_laporan": "LP/B/241/IX/2026/SPKT/POLDA METRO JAYA",
-    "tgl_laporan": "15-09-2026 14:30:00",
-    "model_lp": "lp_model_a",
-    "status": "PROSES",
-    "updated_at": "2026-09-20T10:15:30.000Z",
-    "golongan_kejahatan": "Kejahatan Konvensional",
-    "jenis_kejahatan": "Pencurian Dengan Pemberatan",
-    "status_code": "PENYIDIKAN",
-    "status_nama": "Penyidikan (Sidik)",
-    "status_kategori": "CT",
-    "is_selesai": false
-  }
-}
-```
-
 ---
 
 ## 5. Standar Data Crime Clearance (CC) & Penghentian Perkara
@@ -202,7 +179,6 @@ Untuk kebutuhan pelaporan kinerja maupun analitik rasio penyelesaian perkara (*C
 2. `status_kategori = "CC"`: Perkara dinyatakan tuntas diselesaikan oleh Polri (`is_selesai = true`).
 
 ### Contoh Format Dokumen Penghentian Perkara (Restorative Justice / SP3):
-Jika perkara diselesaikan melalui mekanisme keadilan restoratif atau SP3:
 ```json
 {
   "status_code": "SP3",
@@ -217,27 +193,7 @@ Jika perkara diselesaikan melalui mekanisme keadilan restoratif atau SP3:
     "tanggal_dokumen": "2026-09-18",
     "alasan_penghentian": "Penyelesaian luar proses peradilan / Restorative Justice",
     "alasan_demi_hukum": null,
-    "keterangan": "Perkara diselesaikan melalui mekanisme keadilan restoratif berdasarkan perdamaian para pihak dan ganti rugi."
-  }
-}
-```
-
-### Contoh Format Tindak Pidana Ringan (PERMA Tipiring):
-```json
-{
-  "status_code": "PERMA",
-  "status_nama": "Perma (Tipiring)",
-  "status_kategori": "CC",
-  "is_selesai": true,
-  "tanggal_selesai": "2026-09-19",
-  "status_pelimpahan": "TIDAK",
-  "keterangan_penghentian": {
-    "jenis_dokumen": "PERMA",
-    "nomor_dokumen": "14/Pid.C/2026/PN Jkt.Sel",
-    "tanggal_dokumen": "2026-09-19",
-    "kategori_perma": "Tipiring",
-    "pengadilan": "PENGADILAN NEGERI JAKARTA SELATAN",
-    "amar_ringkas": "Menyatakan Terdakwa terbukti secara sah dan meyakinkan bersalah melakukan tipiring dan dijatuhi denda pidana."
+    "keterangan": "Perkara diselesaikan melalui mekanisme keadilan restoratif."
   }
 }
 ```
@@ -246,8 +202,6 @@ Jika perkara diselesaikan melalui mekanisme keadilan restoratif atau SP3:
 
 ## 6. Kode Status & Format Penanganan Error
 
-API mengembalikan kode HTTP standar dengan struktur JSON error yang konsisten:
-
 | Kode HTTP | Arti | Skenario Penyebab | Contoh Format Respons |
 |:--:|---|---|---|
 | **200** | OK | Request berhasil diproses. | `{"status": 1, "data": ...}` |
@@ -255,61 +209,33 @@ API mengembalikan kode HTTP standar dengan struktur JSON error yang konsisten:
 | **401** | Unauthorized | Header Basic Auth kosong atau password salah. | `{"status": 0, "statusCode": 401, "message": "Kredensial tidak dikenali."}` |
 | **403** | Forbidden | IP belum di-whitelist atau akun dinonaktifkan. | `{"status": 0, "statusCode": 403, "message": "Akses ditolak: IP Anda tidak terdaftar dalam IP whitelist klien ini."}` |
 | **404** | Not Found | Token ID Laporan Polisi tidak ditemukan. | `{"status": 0, "statusCode": 404, "message": "Laporan Polisi tidak ditemukan."}` |
-| **429** | Too Many Requests | Melebihi kuota 120 req/menit. | `{"status": 0, "statusCode": 429, "message": "Terlalu banyak permintaan (rate limit terlampaui). Batas maksimal 120 request per menit."}` |
+| **429** | Too Many Requests | Melebihi kuota 120 req/menit. | `{"status": 0, "statusCode": 429, "message": "Terlalu banyak permintaan (rate limit terlampaui)."}` |
 
 ---
 
-## 7. Praktik Terbaik Integrasi (Best Practices)
+## 7. Contoh Kode Pemanggilan
 
-### 7.1 Pola Sinkronisasi Bertahap (Incremental Sync)
-Untuk membangun pipeline penyerapan data yang selalu mutakhir tanpa membebani server:
-1. **Penarikan Data Awal (Initial Load)**:
-   - Ambil data secara bertahap menggunakan paginasi (`limit=50` atau `100`, iterasi `page=1..N`).
-   - Berikan jeda minimum `500 ms` antar-request agar aman dari limit 120 req/menit.
-2. **Sinkronisasi Berkala (Incremental Worker)**:
-   - Simpan timestamp penarikan data sukses terakhir (misal: `2026-09-21`).
-   - Jalankan worker berkala (misal tiap 15–30 menit) dengan query:
-     `GET /laporan-polisi?updated_from=2026-09-21`
-   - Simpan data secara *upsert* pada database lokal mitra. Perkara yang mengalami peningkatan tahapan (misal dari Sidik ke P21 atau SP3) akan terbarui secara otomatis.
-
-### 7.2 Pemanfaatan Lanjutan Data LP
-- **Dashboard Analitik Eksekutif**: Mengagregasi persebaran tindak pidana, rasio penyelesaian perkara, dan tren mingguan/bulanan.
-- **Analisis Geospasial**: Memetakan titik rawan kejahatan memanfaatkan atribut `lat`, `lon`, dan hirarki lokasi TKP.
-- **Sistem Pengolahan Cerdas (AI / Machine Learning)**: Memanfaatkan teks bebas pada `uraian_kejadian`, `apa_terjadi`, dan `bagaimana_terjadi` untuk clustering modus operandi, pencarian kemiripan peristiwa (*semantic similarity*), maupun klasifikasi pasal otomatis.
-
-### 7.3 Kepatuhan Privasi Data & UU PDP
-- Seluruh data Laporan Polisi memuat identitas subjek hukum yang dilindungi oleh **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**.
-- Mitra wajib menjaga kerahasiaan data dan menerapkan protokol keamanan informasi yang ketat.
-- Apabila data diintegrasikan dengan platform cloud pihak ketiga, terapkan modul sanitasi data (*Data Masking / Redaction*) untuk menyamarkan NIK dan identitas personal.
-
----
-
-## 8. Contoh Kode Pemanggilan
-
-### 8.1 cURL
+### 7.1 cURL
 ```bash
-curl -X GET "https://cas.bareskrim.polri.go.id/api/external/v1/laporan-polisi?limit=50&page=1&status_kategori=CC&updated_from=2026-09-01" \
+curl -X GET "https://api.example.go.id/api/external/v1/laporan-polisi?limit=50&page=1&status_kategori=CC&updated_from=2026-09-01" \
   -u "<CLIENT_ID>:<CLIENT_SECRET>" \
   -H "Accept: application/json"
 ```
 
-### 8.2 Python
+### 7.2 Python
 ```python
 import requests
 import time
 from requests.auth import HTTPBasicAuth
 
-BASE_URL = "https://cas.bareskrim.polri.go.id/api/external/v1"
-CLIENT_ID = "<CLIENT_ID>"          # Diterbitkan resmi oleh Bareskrim
-CLIENT_SECRET = "<CLIENT_SECRET>"  # Diterbitkan resmi oleh Bareskrim
+BASE_URL = "https://api.example.go.id/api/external/v1"
+CLIENT_ID = "<CLIENT_ID>"
+CLIENT_SECRET = "<CLIENT_SECRET>"
 
 auth = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
 def fetch_laporan_polisi(updated_from=None, page=1, limit=50):
-    params = {
-        "page": page,
-        "limit": limit
-    }
+    params = {"page": page, "limit": limit}
     if updated_from:
         params["updated_from"] = updated_from
 
@@ -324,47 +250,27 @@ def fetch_laporan_polisi(updated_from=None, page=1, limit=50):
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 429:
-        print("Rate limit 120 req/menit terlampaui. Menunggu jeda 5 detik...")
         time.sleep(5)
         return fetch_laporan_polisi(updated_from, page, limit)
     else:
         raise Exception(f"HTTP Error {response.status_code}: {response.text}")
-
-if __name__ == "__main__":
-    res = fetch_laporan_polisi(updated_from="2026-09-01")
-    print(f"Total data ditemukan: {res['meta']['total']}")
-    for lp in res["data"]:
-        print(f"[{lp['no_laporan']}] {lp.get('status_nama')} - {lp.get('jenis_kejahatan')}")
 ```
 
-### 8.3 Node.js / TypeScript
+### 7.3 Node.js / TypeScript
 ```typescript
 import axios from 'axios';
 
-const BASE_URL = 'https://cas.bareskrim.polri.go.id/api/external/v1';
+const BASE_URL = 'https://api.example.go.id/api/external/v1';
 const CLIENT_ID = '<CLIENT_ID>';
 const CLIENT_SECRET = '<CLIENT_SECRET>';
 
 async function syncLaporanPolisi(page = 1, limit = 50, updatedFrom?: string) {
   const authHeader = 'Basic ' + Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-  
   const response = await axios.get(`${BASE_URL}/laporan-polisi`, {
     params: { page, limit, updated_from: updatedFrom },
-    headers: {
-      'Authorization': authHeader,
-      'Accept': 'application/json'
-    },
+    headers: { 'Authorization': authHeader, 'Accept': 'application/json' },
     timeout: 10000
   });
-
   return response.data;
 }
 ```
-
----
-
-## 9. Prosedur Permohonan & Koordinasi Teknis
-
-1. **Pendaftaran IP Whitelist**: Tim teknis mitra menginventarisasi dan mengajukan daftar IP publik statis (*Static Public IP*) server yang akan digunakan kepada tim teknis Bareskrim Polri.
-2. **Penetapan Hak Akses (Scope)**: Scope data ditetapkan sesuai dengan perjanjian kerjasama kedinasan yang berlaku.
-3. **Pemberian Kredensial Produksi**: Pasangan Client ID & API Secret Password diserahkan melalui mekanisme resmi kedinasan.

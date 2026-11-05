@@ -6,7 +6,6 @@ version: "3.8"
 # - bdb-api (NestJS Backend API di port 3850)
 # - bdb-redis (Redis Cache di port 6379, maxmemory 1500mb allkeys-lru)
 # - bdb-minio (MinIO Object Storage di port 9100 -> 9000 & Console 9101)
-# - adminer (Database Management UI di port 7775 -> 8080)
 # Catatan: PostgreSQL 16 berjalan secara native (systemd) di host Backend (port 5432).
 # ==============================================================================
 
@@ -24,7 +23,7 @@ services:
       PORT: 3850
       GLOBAL_PREFIX: api
       TZ: Asia/Jakarta
-      FRONTEND: https://cas.bareskrim.polri.go.id
+      FRONTEND: ${FRONTEND_URL:-https://app.example.go.id}
       # PostgreSQL 16 (Host Native)
       DB_TYPE: postgres
       DB_HOST: ${DB_HOST:-host.docker.internal}
@@ -62,7 +61,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-CHANGE_ME_MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET_KEY}
       MINIO_BUCKET: bdb-attachments
-      MINIO_PUBLIC_ENDPOINT: https://api-cas.bareskrim.polri.go.id
+      MINIO_PUBLIC_ENDPOINT: ${API_PUBLIC_URL:-https://api.example.go.id}
       MINIO_PUBLIC_PORT: 443
       MINIO_PUBLIC_USE_SSL: "true"
       # Puppeteer / Headless Chromium
@@ -98,21 +97,9 @@ services:
     networks:
       - bdb-net
 
-  adminer:
-    image: adminer
-    container_name: adminer-adminer-1
-    working_dir: /var/www/html
-    command: ["php", "-S", "[::]:8080", "-t", "/var/www/html"]
-    restart: always
-    ports:
-      - "0.0.0.0:7775:8080"
-    networks:
-      - adminer_default
 
 networks:
   bdb-net:
-    driver: bridge
-  adminer_default:
     driver: bridge
 
 volumes:

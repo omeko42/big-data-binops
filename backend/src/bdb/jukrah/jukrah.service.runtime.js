@@ -199,7 +199,7 @@ let JukrahService = class JukrahService {
             return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'yudi', 'nyomannnn', 'henry', 'idris.ganteng', 'rachmat', 'renciaa', 'kusuma', 'ai_taktis_cas'];
+        const superHandles = ['om.eko_42', 'omeko42', 'cosersebot', 'ai_taktis_cas'];
         return superHandles.includes(u) || superHandles.includes(c);
     }
     isVerifiedRole(role, isUserOne) {

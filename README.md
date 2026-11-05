@@ -2,205 +2,183 @@
 
 > 🌐 **Language / Pilihan Bahasa:** [**🇬🇧 English (Active)**](README.md) &nbsp;|&nbsp; [**🇮🇩 Bahasa Indonesia (Edisi Resmi)**](README.id.md)
 
-[![Platform](https://img.shields.io/badge/platform-Big%20Data%20Binops%20(BDB)%20v2.5-1E40AF.svg?style=flat-square)](#)
-[![Community](https://img.shields.io/badge/CAS-Community%20Anggota%20Serse%20(1,024%2B%20Members)-25D366.svg?style=flat-square&logo=whatsapp&logoColor=white)](#-the-evolution-story-from-data-analyst-to-full-stack-system-architect)
+[![Platform](https://img.shields.io/badge/platform-Big%20Data%20Binops%20(BDB)%20v2.6-1E40AF.svg?style=flat-square)](#)
+[![Community](https://img.shields.io/badge/CAS-Community%20Anggota%20Serse-25D366.svg?style=flat-square)](#-overview--transformation-journey)
 [![Language](https://img.shields.io/badge/language-TypeScript%20%7C%20Node.js%2022%20%7C%20Python%203-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Backend](https://img.shields.io/badge/backend-NestJS%2011%20%7C%20PM2%2032--Worker%20Cluster-E0234E.svg?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![Backend](https://img.shields.io/badge/backend-NestJS%2011%20%7C%20PM2%20Cluster-E0234E.svg?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
 [![Frontend](https://img.shields.io/badge/frontend-Next.js%2016.2%20%7C%20React%2019.2-000000.svg?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Database](https://img.shields.io/badge/database-PostgreSQL%20(171%20Tables%20%7C%2068.8M%2B%20Rows)%20%7C%20Redis-336791.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Docs](https://img.shields.io/badge/docs-ONLYOFFICE%20DS%20%7C%20Jukminu%20Polri%20Engine-FF6F3D.svg?style=flat-square)](#3-13-sheet-official-perkap--jukminu-polri-document-engine--onlyoffice-integration)
-[![Security](https://img.shields.io/badge/security-FIDO2%20Passkey%20%7C%20Zero--Secret%20%7C%20UU%20PDP-10B981.svg?style=flat-square)](#4-fido2--webauthn-hardware-passkey--zero-trust-security-suite)
-[![License](https://img.shields.io/badge/license-Institutional%20(Polri)%20%7C%20NDA%20%7C%20SLA-B91C1C.svg?style=flat-square)](LICENSE.md)
+[![Database](https://img.shields.io/badge/database-PostgreSQL%20%7C%20Redis%20%7C%20MinIO%20S3-336791.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docs](https://img.shields.io/badge/docs-ONLYOFFICE%20DS%20%7C%20Jukminu%20Document%20Engine-FF6F3D.svg?style=flat-square)](#4-official-document-automation--onlyoffice-integration)
+[![Security](https://img.shields.io/badge/security-FIDO2%20Passkey%20%7C%20Zero--Secret%20%7C%20UU%20PDP-10B981.svg?style=flat-square)](#5-zero-trust-security--access-governance)
+[![License](https://img.shields.io/badge/license-Institutional%20%7C%20NDA%20%7C%20SLA-B91C1C.svg?style=flat-square)](LICENSE.md)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Eko%20Agung%20(%40omeko42)-0A66C2.svg?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/omeko42/)
 
-**Big Data Binops (BDB)** is an enterprise-grade operational data governance, multi-source case lifecycle management, and law enforcement analytics platform engineered for **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
+**Big Data Binops (BDB)** is an enterprise operational data governance, case lifecycle management, and law enforcement analytics platform engineered for **Biro Pembinaan dan Operasional (Robinopsnal) Bareskrim Polri**.
 
-Born out of **CAS (*Community Anggota Serse*)** — a grassroots operational community of **1,024+ active criminal investigation personnel, operators, Kanit Reskrim, and Kaur Binops (KBO)** across Indonesia — **Big Data Binops (BDB)** unifies **~68.89 million live production records** (**2.84+ million Police Reports / LP**, **11.16+ million involved parties**, **5.84+ million evidence items**, and **5.46+ million forensic audit logs**) across all 4 territorial tiers (**Mabes Polri → 36 Polda → 508+ Polres → 4,900+ Polsek**).
+Supported by **CAS (*Community Anggota Serse*)** — an active operational community of criminal investigation personnel, operators, and supervisory officers across Indonesia — **Big Data Binops (BDB)** consolidates multi-domain operational records across all four organizational tiers (**Mabes → Polda → Polres → Polsek**) into a unified, high-speed analytical ecosystem.
 
 ---
 
-## 💡 The Evolution Story: From Data Analyst to Full-Stack System Architect
+## 💡 Overview & Transformation Journey
 
-This platform was not built from abstract theoretical specifications — it was engineered from the ground up by a **Data Analyst turned Full-Stack Engineer** who lived through every stage of operational data fragility at Robinopsnal Bareskrim Polri:
+**Big Data Binops (BDB)** evolved through four progressive stages of operational data management, transitioning from manual file exchanges to a modern, self-hosted enterprise platform:
 
 ```mermaid
 flowchart LR
-    subgraph T1["STAGE 1 (Pre-2023)\nLocal Excel via Email"]
-        T1D["• Excel templates emailed to 34 Polda\n• Columns altered unilaterally, breaking formulas\n• Polres & Polsek Satres data uncollected\n• Weeks required for national consolidation"]
+    subgraph T1["STAGE 1\nManual File Exchange"]
+        T1D["• Periodic spreadsheet reports via email\n• Inconsistent regional column formats\n• Delayed national consolidation"]
     end
 
-    subgraph T2["STAGE 2 (2023–2025)\nShared Cloud Spreadsheets"]
-        T2D["• 15 GB Quota Trap: Public Drive locked 34 days at 15.02 GB\n• Forced creation of multiple Gmail accounts & Chrome profiles\n• 153+ exploding tabs (Sheet150–153) & formula collisions\n• Dozens of executive Nota Dinas compiled via bit.ly links"]
+    subgraph T2["STAGE 2\nShared Cloud Spreadsheets"]
+        T2D["• Multi-tab collaborative workbooks\n• Storage & concurrency limitations\n• Manual formula reconciliation"]
     end
 
-    subgraph T3["STAGE 3 (2024–2026)\nLegacy Static Platform"]
-        T3D["• Narrow static focus (CT & CC numbers only)\n• Rigid 2D relational schema unable to handle complex data\n• Managed by external third party without isolated DRP\n• Suffered fatal operational database loss incident"]
+    subgraph T3["STAGE 3\nInitial Static Reporting"]
+        T3D["• Basic Crime Total (CT) & Clearance (CC) summary\n• Limited support for multi-domain records\n• Minimal cross-unit workflow integration"]
     end
 
-    subgraph T4["STAGE 4 (2026–Present)\nBig Data Binops (BDB) — Powered by CAS"]
-        T4D["• Complex Multi-Domain Data: LP, Satgas, Kerma, Dumas, Tahti, DPO\n• Zero Double-Input: Automated DORS/EMP pull + KBO Quick Count\n• Sovereign Internal Server Cluster (FE, BE, DB) & Zero Data Loss\n• Driven by 1,024+ members of Community Anggota Serse (CAS)"]
+    subgraph T4["STAGE 4 (Current)\nBig Data Binops (BDB)"]
+        T4D["• Multi-Domain Governance: LP, Satgas, Kerma, Pihak, BB\n• Automated Upstream Sync & Sub-20ms Snapshot Engine\n• Self-Hosted Multi-Node Cluster (FE, BE, DB, S3)\n• Active Field Feedback Loop via CAS & SHARESE"]
     end
 
     T1 --> T2 --> T3 --> T4
 ```
 
-### Why **CAS (*Community Anggota Serse*)** → **Big Data Binops (BDB)** Matters
-1. **Bottom-Up Operational Adoption (`CAS — Community Anggota Serse`)**: Rather than forcing a top-down tool that burdens field investigators with double data entry (*beban dobel input*), **CAS** connected **1,024+ active Reserse personnel** in a direct real-time community loop (WhatsApp & internal **SHARESE** tactical forum). Field operators report jurisdiction edge cases, *pemekaran satker* anomalies, and workflow bottlenecks directly, which are resolved in real time within **BDB**.
-2. **Full SOTK Alignment (`Perkap 6/2017 jo. Perpol 4/2025`)**: Unifies the core workflows of all **4 Bagian of Robinopsnal Bareskrim Polri**:
-   - **Bagrenopsnal (*Perencanaan & Pelatihan Operasi*)**: Active Police Operations & Task Forces (`bdb_operasi_satgas` — 12 active Satgas), LP operation tagging (`operasi_satgas_id`), MinIO S3 *Sprin & Renops* PDF repository, and encrypted operational *Jukrah*.
-   - **Bagkerma (*Kerja Sama Dalam & Luar Negeri*)**: Domestic & international cooperation repository (`bdb_kerma_master` MoU/PKS with Ministries, BUMN, Banking, and foreign agencies) with automated **H-180 to H-30** expiration alarms.
-   - **Baganev (*Penyajian Data & Pengendalian Perkara*)**: Sub-100ms CT/CP/CC/CR & Performance Index engine, **Perkap 6/2019 SLA Engine** (*Mudah 30d* to *Sangat Sulit 120d*), *Radar Kasus Menonjol (Susjol)* & *Kasus Atensi*, and **Cross-Province Syndicate Intelligence** (`is_lintas_wilayah` — **5,828 multi-Polda subjects**).
-   - **Bagyanmas (*Pelayanan Pengaduan Masyarakat*)**: Public non-LP complaint (*Dumas*) intake with official **NIK verification**, self-tracking QR-Code, and transparent **SP2HP-Dumas** (*Quick Win Presisi*).
-3. **Proven High-Speed Mathematical Reconciliation (2026 Operational Benchmarks)**:
-   - **Zero-Discrepancy Multi-Source Audit**: Resolved an urgent `8 LP` cross-source delta (`1,728` raw DORS vs `1,720` Directorate recap) in minutes during executive diplomatic preparation by isolating regional files in physical transit.
-   - **100% Verified 36-Polda Mathematical Audit**: Verified `270,059 CT` nationally (`269,436 CT` across 36 Polda + `623 CT` Bareskrim, including exact consolidation of `Ditreskrimum = Tipidum 199,121 + Tipid PPA-PPO 21,024 = 220,145`).
+### Core Design Principles
+1. **Single Source of Truth & Zero Double-Entry**: Automates upstream synchronization with **DORS (*Daily Operation Report System*)** while preserving source data integrity (upstream records can be enriched and updated operationally without destructive deletion).
+2. **Full Organizational Alignment (`Perkap 6/2017 jo. Perpol 4/2025`)**: Supports the four core functional divisions of **Robinopsnal**:
+   - **Bagrenopsnal**: Police operations & task forces (*Operasi & Satgas*), operation case tagging, *Sprin/Renops* document repository, and leadership directives (*Jukrah*).
+   - **Bagkerma**: Domestic and international cooperation agreements (*MoU/PKS*) with automated expiration monitoring.
+   - **Baganev**: Sub-20ms **CT / CP / CC / CR & Performance Index** engine, prominent & attention case monitoring (*Susopsgas*), and cross-jurisdiction subject analytics.
+   - **Bagyanmas & Support**: Public service reporting integration, user guidance media hub (*Panduan*), and in-app issue tracking (*Bug Report*).
+3. **Standardized National Nomenclature**: Enforces official abbreviated nomenclature across all views, filters, and reports for regional jurisdictions (`Sumut`, `Sumsel`, `Kepri`, `Metro Jaya`, `Jabar`, `Jateng`, `DIY`, `Jatim`, etc.), crime groups (`KRIMUM`, `KRIMSUS`, `NARKOBA`), sub-groups (`TIPIDUM`, `TIPIDEKSUS`, `TIPIDKOR`, `TIPIDTER`, `TIPIDSIBER`, `TIPIDPPAPPO`, `TIPIDNARKOBA`), and organizational units (`DITKRIMUM`, `DITKRIMSUS`, `DITNARKOBA`, `DITSIBER`, `DITPPAPPO`, `SATRESKRIM`, `UNIT RESKRIM`).
 
 ---
 
-## 🏛️ Real Multi-Node Production Architecture
+## 🏛️ Multi-Node System Architecture
 
 ```mermaid
 flowchart TB
-    subgraph Upstream["Upstream Law Enforcement Sources & Community"]
-        DORS["DORS Stamaops Polri (Staf Utama Kapolri Bidang Operasi)<br/>(Daily Operation Report System)"]
-        CAS["CAS (Community Anggota Serse)<br/>(1,024+ Active Reserse Operators & KBOs • Mabes to Polsek)"]
+    subgraph Upstream["Upstream Sources & Operational Community"]
+        DORS["DORS Upstream Feed<br/>(Daily Operation Report System)"]
+        CAS["CAS (Community Anggota Serse)<br/>(Operators, Investigators & Supervisors • Mabes to Polsek)"]
     end
 
     subgraph EdgeNode["Node 1: Frontend, Document & Reverse Proxy Server (Edge Node)"]
-        Nginx["Nginx Reverse Proxy (TLS 1.2/1.3 • HSTS)<br/>• cas.bareskrim.polri.go.id (cms.cas)<br/>• api-cas.bareskrim.polri.go.id (api.cas)"]
-        BdbWeb["Docker: bdb-web (Port 3000)<br/>Next.js 16.2.10 + React 19.2.4 Standalone<br/>(73 App Router Pages • 21 Feature Bundles • IndexedDB Cache)"]
-        CasDocs["Systemd: cas-docs.service (Port 3860)<br/>Python 3 Jukminu Polri Document Engine (cas_doc_service.py)<br/>(Dynamic Kop Polri • NRP/NIP Watermark • CT/CC Sync)"]
-        OnlyOffice["Docker: onlyoffice-ds (Port 8088)<br/>ONLYOFFICE Document Server<br/>(Live Collaborative DOCX / PDF Editor)"]
+        Nginx["Nginx Reverse Proxy (TLS 1.2/1.3 • HSTS)"]
+        BdbWeb["Docker: bdb-web (Port 3000)<br/>Next.js 16.2 + React 19.2 Standalone<br/>(App Router Pages • 28 Feature Bundles • Client Cache)"]
+        CasDocs["Systemd: cas-docs.service (Port 3860)<br/>Python 3 Jukminu Document Engine<br/>(Dynamic Letterhead • Personnel Watermark • CT/CC Sync)"]
+        OnlyOffice["Docker: onlyoffice-ds (Port 8088)<br/>ONLYOFFICE Document Server<br/>(Collaborative DOCX / PDF Editor)"]
     end
 
     subgraph CoreNode["Node 2: Backend API, Object Storage & Database Server (Core Node)"]
-        BdbApi["Docker: bdb-api (Port 3850)<br/>NestJS 11.1.6 (Node 22.14.0-alpine)<br/>PM2 Cluster Mode (32 Worker Instances)<br/>+ Chromium & qpdf (Puppeteer PDF Engine)"]
-        BdbRedis["Docker: bdb-redis (Port 6379)<br/>Redis Alpine (1.5GB Allkeys-LRU Cache & Session Store)"]
-        BdbMinio["Docker: bdb-minio (Port 9100 API / 9101 Console)<br/>MinIO Object Storage (Bucket: bdb-attachments)"]
-        Postgres[("PostgreSQL Production Database (Port 5432)<br/>171 Active Tables • 1 View • 7 Custom PL/pgSQL Functions<br/>~68.89M Total Rows (2.84M LP • 11.16M Pihak • 5.84M BB)")]
-        CronBe["Host Crontab (00:05 WIB)<br/>cron_activity_cache.js → auth_users_activity_cache"]
+        BdbApi["Docker: bdb-api (Port 3850)<br/>NestJS 11 (Node 22 Alpine)<br/>PM2 Cluster Mode (32 Workers)<br/>+ Headless Chromium & qpdf"]
+        BdbRedis["Docker: bdb-redis (Port 6379)<br/>Redis Alpine (In-Memory Cache & Session Store)"]
+        BdbMinio["Docker: bdb-minio (Port 9100 / 9101)<br/>MinIO S3 Object Storage (Attachments Bucket)"]
+        Postgres[("PostgreSQL Production Database (Port 5432)<br/>Normalized Core Schema • Materialized Snapshots<br/>PL/pgSQL Functions • Real-Time Triggers")]
+        CronBe["Scheduled Background Workers<br/>Activity Scoring & Snapshot Orchestrator"]
     end
 
     DORS --> BdbApi
     CAS --> Nginx
-    Nginx -->|"/ , /cms , /login"| BdbWeb
-    Nginx -->|"/doc-api/* , /documents/*"| CasDocs
-    Nginx -->|"/onlyoffice/*"| OnlyOffice
-    Nginx -->|"/api/* & api-cas/*"| BdbApi
-    Nginx -->|"/bdb-attachments/*"| BdbMinio
+    Nginx --> BdbWeb
+    Nginx --> CasDocs
+    Nginx --> OnlyOffice
+    Nginx --> BdbApi
+    Nginx --> BdbMinio
     CasDocs <--> OnlyOffice
-    CasDocs -->|"/api/bdb/kinerja-perkara/*"| BdbApi
+    CasDocs --> BdbApi
     BdbApi <--> Postgres
     BdbApi <--> BdbRedis
     BdbApi <--> BdbMinio
     CronBe --> BdbApi
 ```
 
-> 📖 **Deep-Dive Documentation & Blueprints**:
-> - [**`docs/STRATEGIC_GOVERNANCE_AND_EVOLUTION.md`**](docs/STRATEGIC_GOVERNANCE_AND_EVOLUTION.md) — Executive Strategic Brief, 4-Stage Evolution, SOTK Perpol 4/2025 Matrix & 6-Pillar Target Blueprint
-> - [**`ARCHITECTURE.md`**](ARCHITECTURE.md) — System Architecture & Engineering Decision Records (ADRs 001–005)
-> - [**`docs/SERVER_ARCHITECTURE_AND_INVENTORY.md`**](docs/SERVER_ARCHITECTURE_AND_INVENTORY.md) — Real Dual-Node Server Topology, Containers, Ports & 26 NestJS Submodules
-> - [**`database/schema/DATABASE_INVENTORY.md`**](database/schema/DATABASE_INVENTORY.md) — 171 Active Production Tables & ~68.89M Row Inventory Across 12 Domains
-> - [**`frontend/FRONTEND_ROUTES_AND_MODULES.md`**](frontend/FRONTEND_ROUTES_AND_MODULES.md) — Complete 73 Next.js App Router Pages & 21 Feature Bundles Mapping
-> - [**`CHANGELOG.md`**](CHANGELOG.md) — Platform Release History (Phase 1–3 to BDB v2.5)
+> 📖 **Technical Documentation & Reference Guides**:
+> - [**`docs/STRATEGIC_GOVERNANCE_AND_EVOLUTION.md`**](docs/STRATEGIC_GOVERNANCE_AND_EVOLUTION.md) — Strategic Governance Overview, SOTK Matrix & 6-Pillar Architecture Roadmap
+> - [**`ARCHITECTURE.md`**](ARCHITECTURE.md) — System Architecture & Engineering Decision Records (ADRs 001–006)
+> - [**`docs/SERVER_ARCHITECTURE_AND_INVENTORY.md`**](docs/SERVER_ARCHITECTURE_AND_INVENTORY.md) — Dual-Node Topology, Service Inventory & Backend Submodules
+> - [**`database/schema/DATABASE_INVENTORY.md`**](database/schema/DATABASE_INVENTORY.md) — Relational Schema Catalog Across 12 Functional Domains
+> - [**`frontend/FRONTEND_ROUTES_AND_MODULES.md`**](frontend/FRONTEND_ROUTES_AND_MODULES.md) — Next.js App Router Pages & 28 Feature Bundles Mapping
+> - [**`docs/API_INTEGRATION_GUIDE.md`**](docs/API_INTEGRATION_GUIDE.md) & [**`docs/GENAI_INTEGRATION_SPEC.md`**](docs/GENAI_INTEGRATION_SPEC.md) — External API & AI/RAG Integration Specifications
+> - [**`CHANGELOG.md`**](CHANGELOG.md) — Platform Release History (up to v2.6)
 
 ---
 
-## 🗄️ 4 High-Availability Database Clusters (PostgreSQL Production)
+## 🚀 Key Platform Modules & Capabilities
 
-| Functional Cluster | Core Tables & Scale | Key Engineering Implementation |
-| :--- | :--- | :--- |
-| **Cluster 1: DORS Ingestion & Core LP** | `bdb_dors_raw_lp` (**2.85M**), `bdb_laporan_polisi` (**2.84M**), `bdb_satker` (**14,217**), `bdb_dors_lp_terlibat` (**11.16M**), `bdb_dors_lp_barang_bukti` (**5.84M**) | Decoupled JSONB staging via `raw_lp_id`; `REGEXP_REPLACE` sanitization of invisible NBSP (`chr(160)`) on `kode_pusiknas`; 11 KUHAP lifecycle statuses (strict doctrine: **P-21 remains CT workload until physical Tahap II handover**). |
-| **Cluster 2: Tactical Operations & MinIO S3** | `bdb_kasus_menonjol` (**699+**), `bdb_kasus_atensi`, `bdb_operasi_satgas` (**12 Satgas**), `bdb_kerma_master`, `bdb_lp_pelimpahan` (**2,590+**) | Multi-LP bridge for prominent/attention cases; MinIO S3 **Dual-Client Pattern** (Port `9100`/`9101`) eliminating PostgreSQL blob bloat; **Placement Guard** locking 1-level transfer mutations. |
-| **Cluster 3: Performance Analytics, SLA & Syndicate Engine** | `bdb_kinerja_perkara_snapshot` (**2.11M**), `bdb_anev_rekap_snapshot` (**508K**), `bdb_pihak_terlibat_ranking_snapshot` (**151K**) | Pre-computed materialized snapshots cutting national aggregation queries from **$>10\text{ s}$ to $<100\text{ ms}$**; **Perkap 6/2019 SLA Engine** (`30d`–`120d`); cross-province syndicate scoring (**5,828 multi-Polda subjects**). |
-| **Cluster 4: SHARESE Tactical Forum & Forensic Audit** | `bdb_social_posts`, `bdb_jukrah`, `bdb_jukrah_view`, `bdb_audit_log` (**5.46M+ live logs**) | Case-linked tactical forum (`case_lp_ids`, `#ModusOperandi`, `#DPO`, `#Sindikat`), pinned leadership *Jukrah*, and immutable JSONB forensic audit logging (`User ID, IP, Action, Entity, Meta`). |
+### 1. Executive Dashboard (`Ringkasan`) & Geospatial Crime Map (`Peta Kejahatan`)
+- **Sub-20ms Executive Telemetry (`/cms/dashboard/main`)**: Pre-warmed snapshot cache (`bdb_anev_dashboard_snapshot`) delivering instant **Crime Total (CT)**, **Crime Clearance (CC)**, **Clearance Rate (CR)**, and regional breakdown charts.
+- **Interactive Top-10 Hover Flyouts**: Both **10 Kejahatan Tertinggi** (*Top 10 Crimes*) and **10 Satker CT/CC Tertinggi** (*Top 10 Units*) feature interactive hover flyouts detailing the Top 9 contributing Polda/Satker plus a 10th `LAINNYA` (*Others*) row summing to 100%.
+- **Geospatial Crime Map (`/cms/dashboard/peta-kejahatan`)**: Interactive jurisdiction map (*Peta Wilkum*, *Peta Jalan*, *Satelit*, *Google Maps*, *Heatmap*, *Titik TKP*) with hierarchical **Satker + Jajaran di Bawahnya** filtering so regional directorates and resorts can inspect their entire subordinate jurisdiction tree.
+- **Coserse AI Placeholder**: Dedicated sidebar entry reserved for future on-premise conversational AI integration (*Cosersebot*).
+
+### 2. Case Lifecycle Management (`Daftar LP`, `Detail LP`, `Arsip Limpah`) & `Kinerja Perkara`
+- **Unified Filter Popovers & Concise 2-Line Tables (`/cms/laporan-polisi`)**: Anchored filter modals (*Kelompok*, *Satker*, *Kejahatan*, *Periode*), 2-line clamped cells with clean ellipsis, bulk status updates, and hierarchical supervision mode.
+- **Upstream DORS Integrity Protection (`/cms/laporan-polisi/[id]`)**: Clearly labels upstream records with a `DORS` badge, allowing investigators to edit and enrich details (such as evidence units or workflow documents) while disabling destructive deletion on upstream records.
+- **Kinerja Perkara (`/cms/report/kinerja-perkara`)**: Computes **CT**, **CP (Aktual & Tunggakan)**, **CC (Aktual & Tunggakan)**, **PR/CR (Rumus Lama & Baru)**, **PERMA Tipiring**, and **Performance Index** across all 4 organizational tiers.
+
+### 3. National Registries (`Pihak Terlibat`, `Pihak Sering Terlibat`, `Barang Bukti`) & `Susopsgas`
+- **Involved Parties & Repeat Subjects (`/cms/laporan/rekap-pihak-terlibat`, `/cms/laporan/pihak-sering-terlibat`)**: Sub-20ms role switching (`Semua`, `Tersangka`, `DPO`, `Terlapor`, `Korban`, `Saksi`, `Pelapor`) backed by `bdb_pihak_terlibat_fast_cache` and client pre-fetching, including corporate subject tracking (*Direktur Utama*) and cross-jurisdiction detection.
+- **Standardized Evidence Registry (`/cms/laporan/rekap-barang-bukti`)**: Unified **`JENIS & NAMA / DETAIL BARANG`** column classifying items into **16 Canonical Indonesian Evidence Categories** (*Dokumen & Surat Berharga*, *Perangkat Elektronik & Komunikasi*, *Kendaraan & Alat Angkut*, *Narkotika, Psikotropika & Obat*, *Alat Penerangan & Kelistrikan*, *Hewan & Ternak*, *Pakaian, Tekstil & Aksesoris*, etc.) paired with separated numeric quantities and standardized Indonesian measurement units (`Unit`, `Buah`, `Lembar`, `Helai`, `Ekor`, `Gram (g)`, `Kg`, `Liter (L)`, `Meter (m)`, etc.).
+- **Susopsgas (`/cms/laporan/kasus-menonjol`, `/cms/laporan/kasus-atensi`, `/cms/laporan/rekap-operasi-satgas`)**: Unified management and executive recapitulation of prominent cases (*Susjol*), attention cases (*Susatensi*), and active police task forces (*Operasi & Satgas*).
+
+### 4. Official Document Automation & ONLYOFFICE Integration
+- **13-Sheet Periodic Evaluation Suite (`/cms/report/anev-ctcc`)**: Built-in WYSIWYG generator for the 13 official periodic evaluation sheets bound to live database telemetry.
+- **Jukminu Document Microservice & ONLYOFFICE (`cas_doc_service.py` + `onlyoffice-ds`)**: Generates standardized `.docx` and `.pdf` official reports with dynamic unit letterheads (*Kop Surat*), signature blocks, and personnel watermarks.
+- **Cooperation Repository (`Kerma`) & Guidance Media Hub (`Panduan`)**: Manages institutional MoU/PKS documents (`/cms/kerma`) and provides an in-app PDF & adaptive video streaming hub (`/cms/panduan`).
+
+### 5. Zero-Trust Security, SHARESE Collaboration & System Governance
+- **SHARESE Internal Network (`/cms/broadcaster`, `/cms/sharese-koneksi`)**: Case-linked tactical feed with live **`@username` autocomplete**, real-time direct messaging (*Obrolan*) with fixed-width bubble containers and rich actions, streamlined 3-card personnel profiles, and full-page security settings (`/cms/profile-keamanan`).
+- **FIDO2 / WebAuthn Hardware Passkey & Multi-Factor Security**: Supports biometric/hardware passkeys, TOTP 2FA, 6-Digit PIN, Email OTP, and trusted device management.
+- **Combined Activity Scoring & Role Governance (`/cms/master/user`, `/cms/master/menu`)**:
+  - **Combined Activity Score**: Evaluates 30-day personnel engagement by combining **50% login day frequency** + **50% active session duration**.
+  - **Role `sharese` for Passive Accounts**: Automatically assigns zero-activity accounts to the `sharese` role until reactivated by a supervisor or administrator.
+  - **Role `testing` (Read-Only Vendor/Partner Mode)**: Grants visibility across all application menus for inspection while strictly blocking write/update/delete operations (`HTTP 403`).
+- **Inbound & Outbound Integration Portals, Master Reference & Multi-SMTP Failover**:
+  - **Inbound & Outbound Portals (`/cms/integrasi/*`)**: Configurable integration endpoints with persistent audit logs, simultaneous DORS staging metrics (`/cms/integrasi/dors-data`), and 100% reconciled master data mappings (`/cms/integrasi/master-data-gap`).
+  - **Master Reference Hub (`/cms/master-ref`)**: Includes dedicated CRUD catalogs for **Kelompok Kejahatan (`KRIMUM`, `KRIMSUS`, `NARKOBA`)** and **Sub-Kelompok Tindak Pidana (`TIPID...`)**.
+  - **Multi-SMTP Email Failover (`/cms/pengaturan/email`)**: Supports primary official SMTP with secondary fallback and inline `.env` configuration preview.
 
 ---
 
-## 🚀 Key Production Capabilities
-
-### 1. 4-Tier DORS Ingestion & Strict Reserse Command-Chain Isolation
-- **Sentralitas Binops Reserse (`Mabes → Polda → Polres → Polsek`)**: Strictly separates the Reserse command chain (`INTERNAL_RESERSE`: Bareskrim 6 Directorates + *Satresmob*, 5 Polda Ditres led by *Kabagbinopsnal*, Polres *Satreskrim / Satresnarkoba / Satres PPA-PPO* led by *KBO*, and *Unit Reskrim Polsek*) from non-Reserse functions (`EKSTERNAL_RESERSE`: *Baharkam, Polairud, Sabhara/Samapta, Lantas, Intelkam, Kortastipidkor, Densus 88 AT*).
-- **Role-Scoped Monitoring Plan (`LpMonitoringAccessService`)**: Dynamically computes hierarchical read/write/transfer permissions across territorial parent-child trees (including unified `Polsek` ↔ `Unit Reskrim Polsek` scopes and `Polda Directorate` → `Polres Satreskrim/Satresnarkoba/Satresppa` oversight).
-
-### 2. Crime Clearance (CT / CP / CC / CR) & Multi-Directorate Taxonomy Engine
-- **End-to-End Case Lifecycle Tracking**: Tracks criminal cases from initial report (**LP / Belum Update**) through **Penyelidikan (Lidik)**, **Penyidikan (Sidik)**, **SPDP**, **Tahap I**, **P19**, **P21**, to final resolution via **Tahap II**, **Henti Lidik (SP2Lid)**, **Henti Sidik (SP3 / Restorative Justice)**, and **PERMA Tipiring**.
-- **Versioned Crime Group Taxonomy**: Maps 780+ statutory crime classifications (`cm_jenis_kejahatan` & `bdb_kinerja_crime_group_mapping`) into specialized investigation domains (**Tipidum, Tipideksus, Tipidkor, Tipidter, Tipidsiber, PPA-PPO, and Narkoba**) while isolating non-criminal/traffic offenses (**Korlantas / Satlantas**).
-
-### 3. 13-Sheet Official Perkap & Jukminu Polri Document Engine + ONLYOFFICE Integration
-- **Built-in 13-Sheet Official Perkap Polri WYSIWYG Suite (`anev-ctcc-onlyoffice.bundle.js` + `anev.service.ts`)**: Generates all **13 Official Perkap Polri Periodic Evaluation Sheets (*Lembar Anev Periodik*)** with live telemetry binding.
-- **Dedicated Python Jukminu Polri & ONLYOFFICE Microservice (`cas_doc_service.py` on Port `3860` + `onlyoffice-ds` on Port `8088`)**: Generates standardized `.docx` and `.pdf` executive reports (`CAS-{hash_8}-{DDMMYYYY}.docx`) featuring dynamic Satker/Fungsi **Kop Surat**, dynamic `a.n. Pimpinan` signature blocks, per-user **NRP/NIP watermarks**, centered page numbering from Page 2, and Jukminu *Catchwords* (*Kata Penghubung*).
-
-### 4. FIDO2 / WebAuthn Hardware Passkey & Zero-Trust Security Suite
-- **Hardware-Bound Biometric Passkeys (`FIDO2 / WebAuthn`)**: Passwordless cryptographic authentication (`@simplewebauthn/server` + `auth_passkeys` / `auth_passkey_challenges`) bound to device hardware (`Windows Hello TPM`, `Apple Touch ID / Face ID Secure Enclave`, `Android Keystore`) with mandatory user verification (`userVerification: 'required'`).
-- **Multi-Factor Verification & Device Governance**: Supports **TOTP 2FA (Google Authenticator)**, **6-Digit Security PIN**, **Proof-of-Work (PoW) + SVG Captcha**, and **Email OTP**, paired with self-service **Trusted Device Audit & Revocation (`Otorisasi Cabut Akses Gawai` on `auth_devices`)**.
-
-### 5. Offline-First IndexedDB & Managed External API Gateway
-- **Zero-Latency Period Switching**: Preloads **13 temporal snapshot partitions (Full Year + 12 Monthly Partitions)** into local IndexedDB (`bdb_offline_db`) with automatic form-draft persistence and offline mutation outbox resync.
-- **Managed External API & GenAI RAG Gateway**: 9 granular authorization scopes (`laporan_polisi.read`, `klasifikasi`, `status`, `penanganan`, `tkp`, `kronologi`, `kerugian`, `pihak_terlibat`, `barang_bukti`), sliding-window rate limiting, IP whitelisting, Puppeteer + `qpdf` encrypted API documentation generator, and AES-GCM opaque ID ciphers (`id-cipher.util.ts`).
-
----
-
-## 📂 Complete Repository Structure (Real Server Mirror — 497 Tracked Files)
+## 📂 Repository Structure
 
 ```text
-├── backend/                                    # NestJS 11 Backend Server (bdb-api :3850, PM2 32-Worker Cluster)
-│   ├── Dockerfile.bdb & ecosystem.config.js    # Alpine Node 22.14 + Chromium + qpdf + PM2 32-instance cluster config
-│   ├── cron_activity_cache.js                  # Daily 00:05 WIB personnel activity scoring worker
-│   ├── package.json & tsconfig.json            # NestJS 11 dependencies & TypeScript build config
+├── backend/                                    # NestJS 11 Backend API (PM2 Cluster Mode)
+│   ├── Dockerfile.bdb & ecosystem.config.js    # Container build & PM2 cluster configuration
+│   ├── cron_activity_cache.js                  # Scheduled personnel activity scoring worker
 │   └── src/
-│       ├── main.ts & app.module.ts             # Application bootstrap & root module orchestration
-│       ├── app_core/                           # Core Framework Layer (Auth, Passkey, RBAC, TypeORM, Redis, Swagger)
-│       ├── bdb/                                # Big Data Binops Core Engine (All 26 Operational Submodules)
-│       │   ├── anev/                           # ANEV LP, ANEV CT/CC & 13-Sheet Perkap Polri Lampiran Engine
-│       │   ├── audit/                          # Global audit trail interceptor & query service (5.46M+ logs)
-│       │   ├── barang-bukti/                   # National evidence registry & summary snapshot service
-│       │   ├── common/                         # Scope plan, PostgreSQL advisory job queue & Snapshot Orchestrator
-│       │   ├── dors/                           # DORS Stamaops Polri bidirectional sync scheduler & raw mirror store
-│       │   ├── dpo/                            # Daftar Pencarian Orang (DPO) lifecycle & archive service
-│       │   ├── integration-client/             # External API client management & encrypted PDF doc generator
-│       │   ├── jukrah/                         # Leadership directives (Jukrah & Atensi) & read-receipt tracking
-│       │   ├── kasus-atensi/ & kasus-menonjol/ # High-priority attention & prominent cases (Susjol/Susatensi)
-│       │   ├── kerma/                          # Domestic/International cooperation (MoU/PKS) & MinIO S3 service
-│       │   ├── kinerja-perkara/                # CT/CP/CC/CR/Indeks Snapshot Engine & PDF/XLSX Worker Threads
-│       │   ├── laporan-polisi/                 # Core LP CRUD, 4-Tier placement, AES ID cipher & Master Data Gap
-│       │   ├── load-test/                      # Internal Autocannon stress & load testing controller
-│       │   ├── lp-pelimpahan/                  # Internal, External & Cross-Polda case transfer workflow
-│       │   ├── master/ & menu-access/          # BDB Master reference & dynamic role-based menu matrix
-│       │   ├── notifications/                  # SHARESE social feed, posts, comments, reactions & notifications
-│       │   ├── operasi-satgas/ & panduan/      # Police operations (Satgas) & interactive user guide management
-│       │   ├── pihak-terlibat/ & rekap-lp/     # National NIK/NRP/Corporate syndicate search & LP recapitulation
-│       │   ├── satker/ & satker-eksternal/     # 4-Tier Satker tree (14,217 nodes) & external agencies (6,666 nodes)
-│       │   └── system-setting/ & workflow/     # Runtime settings & investigation document workflow (Mindik–Tahap II)
-│       ├── external/                           # Managed External REST API Gateway (/api/external/*)
-│       └── bareskrim/, dashboard/, orgaisasi/  # Foundational entities, summary views & organizational hierarchy
-├── frontend/                                   # Next.js 16.2.10 Portal & Document Microservice (Edge Node)
-│   ├── package.json & server.js                # Next.js 16.2.10 standalone server (:3000) with Cache-Control guard
-│   ├── FRONTEND_ROUTES_AND_MODULES.md          # Complete mapping of all 73 App Router pages & 21 feature bundles
-│   ├── services/cas-doc-service/               # Python 3 Jukminu Polri & ONLYOFFICE Service (:3860)
+│       ├── app_core/                           # Auth, Passkey, RBAC, TypeORM, Redis & Mail
+│       ├── bdb/                                # 26 Core Operational Submodules
+│       └── external/                           # Managed External REST API Gateway
+├── frontend/                                   # Next.js 16.2 Standalone Portal & Document Service
+│   ├── server.js                               # Standalone HTTP server with Cache-Control guard
+│   ├── FRONTEND_ROUTES_AND_MODULES.md          # Complete route & feature bundle documentation
+│   ├── services/cas-doc-service/               # Python 3 Jukminu & ONLYOFFICE integration service
 │   └── src/
-│       ├── app-routes-manifest.json            # Official Next.js App Router path manifest (73 routes)
-│       ├── modules/                            # 21 Active Production Client Feature Bundles
-│       └── styles/theme.modern.css             # Adaptive Light & Dark Mode Design System (--cas-* tokens)
-├── database/                                   # PostgreSQL Production Schema & Migrations
+│       ├── app-routes-manifest.json            # App Router path manifest
+│       ├── modules/                            # 28 Production Client Feature Bundles
+│       └── styles/theme.modern.css             # Adaptive Light & Dark Mode Design System
+├── database/                                   # PostgreSQL Schema & Sequential Migrations
 │   ├── schema/
-│   │   ├── 000_live_production_schema.sql      # Complete Live DDL (171 Tables, 7 PL/pgSQL Functions, 433 Indexes, 5 Triggers)
-│   │   └── DATABASE_INVENTORY.md               # Domain-by-domain inventory of all 172 relations (~68.89M live rows)
-│   └── migrations/                             # 90 Sequential SQL Migrations (000 through 089_passkey_webauthn.sql)
-├── docs/                                       # Strategic Governance, Server Inventory & Sanitized Infra Blueprints
-│   ├── STRATEGIC_GOVERNANCE_AND_EVOLUTION.md   # 4-Stage Evolution, SOTK Perpol 4/2025, 4 DB Clusters & 6-Pillar Blueprint
-│   ├── SERVER_ARCHITECTURE_AND_INVENTORY.md    # Real Dual-Node Production Server Forensic Architecture
-│   ├── API_INTEGRATION_GUIDE.md                # Managed External REST API Reference & Security Spec
-│   ├── GENAI_INTEGRATION_SPEC.md               # LLM / RAG Downstream Ingestion Specification
-│   └── infrastructure/                         # Sanitized Nginx, Docker Compose & Crontab production blueprints
-├── README.md                                   # Main Documentation (English Edition)
-├── README.id.md                                # Main Documentation (Bahasa Indonesia Official Edition)
-├── ARCHITECTURE.md                             # Engineering Decision Records (ADRs 001–005 — Bilingual)
-├── CHANGELOG.md                                # Platform Evolution & Release History
-├── CONTRIBUTING.md                             # Governance & Contribution Guidelines (Pokja Bareskrim & CAS)
-├── CITATION.cff                                # Official Academic & Technical Citation Metadata
-├── LICENSE.md                                  # Unified Institutional License (Polri), NDA, SLA & Security Policy (Bilingual)
-└── .env.example                                # Sanitized Root Environment Variable Template
+│   │   ├── 000_live_production_schema.sql      # Complete Relational DDL Schema
+│   │   └── DATABASE_INVENTORY.md               # Domain-by-domain relational schema catalog
+│   └── migrations/                             # Sequential SQL Migrations (000 through 089)
+├── docs/                                       # Architecture, Governance & Integration Guides
+│   ├── STRATEGIC_GOVERNANCE_AND_EVOLUTION.md   # Strategic Governance & 6-Pillar Blueprint
+│   ├── SERVER_ARCHITECTURE_AND_INVENTORY.md    # Multi-Node Server & Module Inventory
+│   ├── API_INTEGRATION_GUIDE.md                # External REST API Integration Reference
+│   ├── GENAI_INTEGRATION_SPEC.md               # AI / RAG Downstream Ingestion Specification
+│   └── infrastructure/                         # Sanitized Nginx, Docker Compose & Cron templates
+├── README.md                                   # Main Documentation (English)
+├── README.id.md                                # Main Documentation (Bahasa Indonesia)
+├── ARCHITECTURE.md                             # Architecture Decision Records (Bilingual)
+├── CHANGELOG.md                                # Platform Release History (Bilingual)
+├── CONTRIBUTING.md                             # Contribution & Engineering Standards (Bilingual)
+├── CITATION.cff                                # Technical Citation Metadata
+├── LICENSE.md                                  # Institutional License, NDA, SLA & Security Policy
+└── .env.example                                # Sanitized Environment Variable Template
 ```
 
 ---
@@ -209,24 +187,24 @@ flowchart TB
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Backend API (`bdb-api`)** | NestJS 11.1.6, TypeScript 5.7, TypeORM 0.3.24, Node.js 22.14 (Alpine), PM2 Cluster (32 instances), `@simplewebauthn/server` (FIDO2), Puppeteer + `qpdf`, ExcelJS, `pdfmake` |
-| **Frontend Portal (`bdb-web`)** | Next.js 16.2.10 (App Router, Standalone), React 19.2.4, PrimeReact 10.9.8, Chart.js 4.5.1, Lucide React 1.24.0, Axios 1.18.1, IndexedDB |
-| **Document Engine (`cas-docs`)** | Python 3 `ThreadingHTTPServer` (`cas_doc_service.py`), ONLYOFFICE Document Server (`onlyoffice-ds`), SQLite metadata store |
-| **Database & Cache** | PostgreSQL (171 active tables, 7 PL/pgSQL functions, 433 indexes, Advisory Locks), Redis (`redis:alpine`, `ioredis` / `@keyv/redis`) |
-| **Object Storage & Infra** | MinIO S3 Object Storage (`bdb-attachments`), Nginx Reverse Proxy (TLS 1.2/1.3, HSTS), Docker Engine |
+| **Backend API (`bdb-api`)** | NestJS 11, TypeScript 5.7, TypeORM 0.3, Node.js 22 (Alpine), PM2 Cluster, `@simplewebauthn/server` (FIDO2), Puppeteer + `qpdf`, ExcelJS, `pdfmake` |
+| **Frontend Portal (`bdb-web`)** | Next.js 16.2 (App Router, Standalone), React 19.2, PrimeReact 10.9, Chart.js 4.5, Lucide React, Axios, IndexedDB |
+| **Document Engine (`cas-docs`)** | Python 3 `ThreadingHTTPServer`, ONLYOFFICE Document Server (`onlyoffice-ds`), SQLite metadata store |
+| **Database & Cache** | PostgreSQL (Materialized Snapshots, PL/pgSQL Triggers, GIN Trigram Indexes, Advisory Locks), Redis (`redis:alpine`) |
+| **Object Storage & Infra** | MinIO S3 Object Storage, Nginx Reverse Proxy (TLS 1.2/1.3, HSTS), Docker Engine |
 
 ---
 
-## 🔒 Security, Licensing, NDA & SLA Governance
+## 🔒 Security, Licensing & Zero-Secret Governance
 
-- **Unified Institutional License, NDA, SLA & Security Policy ([`LICENSE.md`](LICENSE.md))**: Engineered by **Eko Agung (`@omeko42`)** for official operational governance across **Robinopsnal Bareskrim Polri** and **CAS (*Community Anggota Serse*)**. Consolidates intellectual property rights, strict **Non-Disclosure Agreement (NDA)** boundaries, **99.9% Uptime & <100ms Analytical SLA** commitments, and **Zero-Trust Cryptographic Security** (**All Rights Reserved — Commercial redistribution and institutional impersonation are strictly prohibited**).
-- **Regulatory Compliance**: Engineered in strict accordance with **UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, and **Perkap 6/2019**.
-- **Zero-Secret Version Control**: Every tracked file in this repository has been audited and sanitized to guarantee zero leaked JWT secrets, database passwords, MinIO keys, TLS private keys, or internal private IP addresses. See [`.env.example`](.env.example), [`backend/.env.bdb.example`](backend/.env.bdb.example), and [`LICENSE.md`](LICENSE.md) for deployment configuration and security guidelines.
+- **Institutional License, NDA & SLA ([`LICENSE.md`](LICENSE.md))**: Engineered by **Eko Agung (`@omeko42`)** for official operational governance within **Robinopsnal Bareskrim Polri** and **CAS (*Community Anggota Serse*)**.
+- **Regulatory Compliance**: Designed in accordance with **UU No. 27 Tahun 2022 (UU PDP)**, **Perkap 6/2017 jo. Perpol 4/2025**, and **Perkap 6/2019**.
+- **Zero-Secret Repository**: All files in this repository are strictly sanitized. No production passwords, cryptographic secrets, private IP addresses, internal domains, or personal identifiable information (PII) are stored in version control.
 
 ---
 
-## 👨‍💻 Creator & Full-Stack System Architect
+## 👨‍💻 Creator & System Architect
 
 - **Eko Agung** — [GitHub (`@omeko42`)](https://github.com/omeko42) &nbsp;|&nbsp; [LinkedIn (`in/omeko42`)](https://www.linkedin.com/in/omeko42/)  
-  *Full-Stack Engineer & System Architect (Former Operational Data Analyst — Robinopsnal Bareskrim Polri)*  
+  *Full-Stack Engineer & System Architect — Robinopsnal Bareskrim Polri*  
   *Founder of **CAS (Community Anggota Serse)** & Lead Engineer of **Big Data Binops (BDB)***
