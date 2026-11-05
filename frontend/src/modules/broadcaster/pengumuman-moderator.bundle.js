@@ -79,8 +79,20 @@ e.s(["default", 0, function() {
     if (!raw) return 'Robinopsnal Bareskrim Polri';
     let s = String(raw).trim();
     if (!s || /^polri$/i.test(s) || /^mabes(\s+polri)?$/i.test(s) || /^bareskrim(\s+polri)?$/i.test(s)) return 'Robinopsnal Bareskrim Polri';
+    let isAllUpper = (s === s.toUpperCase()) && /[A-Z]/.test(s);
+    s = s
+      .replace(/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+UMUM\b/gi, isAllUpper ? 'DITKRIMUM' : 'Ditkrimum')
+      .replace(/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+KHUSUS\b/gi, isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus')
+      .replace(/\bDIREKTORAT\s+RESERSE\s+NARKOBA\b/gi, isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba')
+      .replace(/\bDIREKTORAT\s+RESERSE\s+SIBER\b/gi, isAllUpper ? 'DITSIBER' : 'Ditsiber')
+      .replace(/\b(?:DIT\s*RES\s*KRIMUM|DITRESKRIMUM|DIT\s+KRIMUM|DITKRIMUM|KRIMUM)\b/gi, isAllUpper ? 'DITKRIMUM' : 'Ditkrimum')
+      .replace(/\b(?:DIT\s*RES\s*KRIMSUS|DITRESKRIMSUS|DIT\s+KRIMSUS|DITKRIMSUS|KRIMSUS)\b/gi, isAllUpper ? 'DITKRIMSUS' : 'Ditkrimsus')
+      .replace(/\b(?:DIT\s*RES\s*NARKOBA|DITRESNARKOBA|DIT\s+NARKOBA|DITNARKOBA)\b/gi, isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba')
+      .replace(/\b(?:DIT\s*RES\s*SIBER|DITRESSIBER|DIT\s+SIBER|DITSIBER)\b/gi, isAllUpper ? 'DITSIBER' : 'Ditsiber')
+      .replace(/^NARKOBA(\s+)/i, (_, sp) => (isAllUpper ? 'DITNARKOBA' : 'Ditnarkoba') + sp)
+      .replace(/^SIBER(\s+)/i, (_, sp) => (isAllUpper ? 'DITSIBER' : 'Ditsiber') + sp);
     if (s === s.toUpperCase() && s.length <= 28) return s;
-    let upperWords = ['POLRI', 'BARESKRIM', 'ROBINOPSNAL', 'POLDA', 'POLRES', 'POLRESTA', 'POLRESTABES', 'POLSEK', 'DITRESKRIMUM', 'DITRESKRIMSUS', 'DITRESNARKOBA', 'DITRESSIBER', 'DITPPA', 'PPA-PPO', 'KRIMUM', 'KRIMSUS', 'NARKOBA', 'SIBER', 'METRO', 'JAYA', 'SUMUT', 'SUMBAR', 'SUMSEL', 'RIAU', 'KEPRI', 'JAMBI', 'BENGKULU', 'LAMPUNG', 'BABEL', 'BANTEN', 'JABAR', 'JATENG', 'JATIM', 'DIY', 'BALI', 'NTB', 'NTT', 'KALBAR', 'KALTENG', 'KALSEL', 'KALTIM', 'KALTARA', 'SULUT', 'SULTENG', 'SULSEL', 'SULTRA', 'SULBAR', 'GORONTALO', 'MALUKU', 'MALUT', 'PAPUA', 'PABAR', 'ACEH'];
+    let upperWords = ['POLRI', 'BARESKRIM', 'ROBINOPSNAL', 'POLDA', 'POLRES', 'POLRESTA', 'POLRESTABES', 'POLSEK', 'DITKRIMUM', 'DITKRIMSUS', 'DITNARKOBA', 'DITSIBER', 'DITPPA', 'PPA-PPO', 'NARKOBA', 'SIBER', 'METRO', 'JAYA', 'SUMUT', 'SUMBAR', 'SUMSEL', 'RIAU', 'KEPRI', 'JAMBI', 'BENGKULU', 'LAMPUNG', 'BABEL', 'BANTEN', 'JABAR', 'JATENG', 'JATIM', 'DIY', 'BALI', 'NTB', 'NTT', 'KALBAR', 'KALTENG', 'KALSEL', 'KALTIM', 'KALTARA', 'SULUT', 'SULTENG', 'SULSEL', 'SULTRA', 'SULBAR', 'GORONTALO', 'MALUKU', 'MALUT', 'PAPUA', 'PABAR', 'ACEH'];
     return s.replace(/\w+/g, (w) => {
       let up = w.toUpperCase();
       if (upperWords.includes(up)) return up;

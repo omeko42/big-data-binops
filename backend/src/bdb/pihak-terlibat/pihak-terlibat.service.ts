@@ -245,7 +245,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 where.push(`(lower(coalesce(c.nama,'')) like $${p} or lower(coalesce(c.nik,'')) like $${p} or lower(coalesce(lp.no_laporan,'')) like $${p})`);
             }
         }
-        const sumber = this.toText(query.sumber);
+        const sumberRaw = this.toText(query.sumber);
+        const sumber = sumberRaw && sumberRaw.toUpperCase() === 'TERPUSAT' ? 'DORS' : sumberRaw;
         if (sumber && sumber.toUpperCase() !== 'ALL') {
             params.push(sumber.toUpperCase());
             where.push(`c.sumber=$${params.length}`);
@@ -316,7 +317,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     ) {
         const params: any[] = [];
         const where: string[] = ['lp.deleted_at is null', this.scopeClause(scope, params, query)];
-        const selectedSource = (this.toText(query.sumber) || 'ALL').toUpperCase();
+        const rawSource = (this.toText(query.sumber) || 'ALL').toUpperCase();
+        const selectedSource = rawSource === 'TERPUSAT' ? 'DORS' : rawSource;
         if (selectedSource !== 'ALL' && selectedSource !== source) {
             return { params, where: ['1=0'], skip: true };
         }
@@ -1086,7 +1088,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     SELECT nik FROM dir_from_tsk_uraian
                 )
                 UPDATE bdb_pihak_terlibat_ranking_snapshot r
-                SET tipe_identitas = 'DIREKTUR KORPORASI'
+                SET tipe_identitas = 'DIREKTUR UTAMA'
                 FROM all_dir_niks d
                 WHERE r.nik = d.nik AND r.tipe_subjek = 'PERORANGAN';
             `);
@@ -2237,7 +2239,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     for (const pr of (partyRows || [])) {
                         const lid = Number(pr.lp_id);
                         const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
-                        const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                        const jabatan = isDir ? 'DIREKTUR UTAMA' : (pr.pekerjaan || pr.peran || 'PIHAK');
                         const lpArr = byLp.get(lid) || [];
                         if (!lpArr.some(x => (x.nik && pr.nik && x.nik === pr.nik) || x.nama === pr.nama)) {
                             lpArr.push({ nama: pr.nama, nik: pr.nik || '', peran: pr.peran, jabatan });
@@ -2256,8 +2258,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                 existing.peran = pr.peran;
                                 existing.peranRank = rRank;
                             }
-                            if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
-                                existing.jabatan = 'DIREKTUR / PENGURUS';
+                            if (isDir && existing.jabatan !== 'DIREKTUR UTAMA') {
+                                existing.jabatan = 'DIREKTUR UTAMA';
                             }
                             if (!existing.nik && pr.nik) existing.nik = pr.nik;
                         }
@@ -2277,8 +2279,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             total_lp: p.lpSet.size
                         }))
                         .sort((a, b) => {
-                            const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
-                            const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                            const dirA = a.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
+                            const dirB = b.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
                             if (dirA !== dirB) return dirA - dirB;
                             const rk = roleRank(a.peran) - roleRank(b.peran);
                             if (rk !== 0) return rk;
@@ -2404,7 +2406,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 const byPerson = new Map<string, { nama: string; nik: string; peran: string; peranRank: number; jabatan: string; lpSet: Set<number> }>();
                 for (const pr of (partyRows || [])) {
                     const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
-                    const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                    const jabatan = isDir ? 'DIREKTUR UTAMA' : (pr.pekerjaan || pr.peran || 'PIHAK');
                     const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
                     const rRank = roleRank(pr.peran);
                     const existing = byPerson.get(pKey);
@@ -2418,8 +2420,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             existing.peran = pr.peran;
                             existing.peranRank = rRank;
                         }
-                        if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
-                            existing.jabatan = 'DIREKTUR / PENGURUS';
+                        if (isDir && existing.jabatan !== 'DIREKTUR UTAMA') {
+                            existing.jabatan = 'DIREKTUR UTAMA';
                         }
                         if (!existing.nik && pr.nik) existing.nik = pr.nik;
                     }
@@ -2434,8 +2436,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         total_lp: p.lpSet.size
                     }))
                     .sort((a, b) => {
-                        const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
-                        const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        const dirA = a.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
+                        const dirB = b.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
                         if (dirA !== dirB) return dirA - dirB;
                         const rk = roleRank(a.peran) - roleRank(b.peran);
                         if (rk !== 0) return rk;
@@ -2983,8 +2985,15 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
                         nasional_score: Number(r.nasional_score || 0),
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
-                        tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
-                        pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                        tipe_identitas: ['DIREKTUR KORPORASI', 'DIREKTUR / PENGURUS'].includes(String(r.tipe_identitas || '').toUpperCase())
+                            ? 'DIREKTUR UTAMA'
+                            : (r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK')),
+                        pihak_terkait: Array.isArray(r.pihak_terkait)
+                            ? r.pihak_terkait.map((pt: any) => ({
+                                ...pt,
+                                jabatan: ['DIREKTUR / PENGURUS', 'DIREKTUR KORPORASI'].includes(String(pt?.jabatan || '').toUpperCase()) ? 'DIREKTUR UTAMA' : pt?.jabatan
+                            }))
+                            : [],
                         is_pinned: Boolean(r.is_pinned),
                         pinned_at: r.pinned_at || null,
                         last_seen: r.last_seen
@@ -3120,8 +3129,15 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
                             nasional_score: Number(r.nasional_score || 0),
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
-                            tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
-                            pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                            tipe_identitas: ['DIREKTUR KORPORASI', 'DIREKTUR / PENGURUS'].includes(String(r.tipe_identitas || '').toUpperCase())
+                                ? 'DIREKTUR UTAMA'
+                                : (r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK')),
+                            pihak_terkait: Array.isArray(r.pihak_terkait)
+                                ? r.pihak_terkait.map((pt: any) => ({
+                                    ...pt,
+                                    jabatan: ['DIREKTUR / PENGURUS', 'DIREKTUR KORPORASI'].includes(String(pt?.jabatan || '').toUpperCase()) ? 'DIREKTUR UTAMA' : pt?.jabatan
+                                }))
+                                : [],
                             is_pinned: Boolean(r.is_pinned),
                             pinned_at: r.pinned_at || null,
                             last_seen: r.last_seen

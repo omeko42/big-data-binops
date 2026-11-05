@@ -312,7 +312,13 @@ export class SatkerService implements OnModuleInit {
             ['060.01.24.07.07', '060.01.24.18'], // POLSEK LOURA
             ['060.01.24.07.11', '060.01.24.18'], // POLSEK WEWEWA BARAT
             ['060.01.24.07.12', '060.01.24.18'], // POLSEK WEWEWA SELATAN
-            ['060.01.24.07.13', '060.01.24.18']  // POLSEK WEWEWA TIMUR
+            ['060.01.24.07.13', '060.01.24.18'], // POLSEK WEWEWA TIMUR
+
+            // POLSEK KATIKUTANA (060.01.24.07.04) -> POLRES SUMBA TENGAH (060.01.24.22)
+            ['060.01.24.07.04', '060.01.24.22'],
+
+            // POLSEK WAWORETE (060.01.26.01.15) -> POLRES KONAWE KEPULAUAN (060.01.26.15)
+            ['060.01.26.01.15', '060.01.26.15']
         ]);
         for (const r of all) {
             let pk = this.parentKey(r.kode_canonical.split('.'));

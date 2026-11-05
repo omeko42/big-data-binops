@@ -1,9 +1,24 @@
 (globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,38644,e=>{"use strict";var t=e.i(71645),n=e.i(48264),r=e.i(43456),i=e.i(29168),s=e.i(40623),o=e.i(73193),a=e.i(64952);function l(){return(l=Object.assign.bind()).apply(null,arguments)}function u(e,t){(null==t||t>e.length)&&(t=e.length);for(var n=0,r=Array(t);n<t;n++)r[n]=e[n];return r}function c(e,t){if(e){if("string"==typeof e)return u(e,t);var n=({}).toString.call(e).slice(8,-1);return"Object"===n&&e.constructor&&(n=e.constructor.name),"Map"===n||"Set"===n?Array.from(e):"Arguments"===n||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)?u(e,t):void 0}}function d(e){return function(e){if(Array.isArray(e))return u(e)}(e)||function(e){if("u">typeof Symbol&&null!=e[Symbol.iterator]||null!=e["@@iterator"])return Array.from(e)}(e)||c(e)||function(){throw TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var n=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=n){var r,i,s,o,a=[],l=!0,u=!1;try{if(s=(n=n.call(e)).next,0===t){if(Object(n)!==n)return;l=!1}else for(;!(l=(r=s.call(n)).done)&&(a.push(r.value),a.length!==t);l=!0);}catch(e){u=!0,i=e}finally{try{if(!l&&null!=n.return&&(o=n.return(),Object(o)!==o))return}finally{if(u)throw i}}return a}}(e,t)||c(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=r.ComponentBase.extend({defaultProps:{__TYPE:"SelectButton",id:null,value:null,options:null,optionLabel:null,optionValue:null,optionDisabled:null,tabIndex:null,multiple:!1,invalid:!1,unselectable:!0,allowEmpty:!0,disabled:!1,style:null,className:null,dataKey:null,tooltip:null,tooltipOptions:null,itemTemplate:null,onChange:null,children:void 0},css:{classes:{root:function(e){var t=e.props;return(0,o.classNames)("p-selectbutton p-button-group p-component",{"p-invalid":t.invalid})},button:function(e){var t=e.itemProps,n=e.focusedState;return(0,o.classNames)("p-button p-component",{"p-highlight":t.selected,"p-disabled":t.disabled,"p-focus":n})},label:"p-button-label p-c"}}}),f=t.memo(function(e){var n,r=p(t.useState(!1),2),s=r[0],l=r[1],u=(0,i.useMergeProps)(),c=e.ptm,d=e.cx,h=function(t){return c(t,{hostName:e.hostName,context:{selected:e.selected,disabled:e.disabled,option:e.option}})},f=function(t,n){e.setFocusedIndex(n),e.onClick&&e.onClick({originalEvent:t,option:e.option})},m=function(e,t){switch(e.code){case"Space":f(e,t),e.preventDefault();break;case"ArrowDown":case"ArrowRight":v(e,"next"),e.preventDefault();break;case"ArrowUp":case"ArrowLeft":v(e,"prev"),e.preventDefault()}},v=function(t,n){for(var r,i,s=0;s<=e.elementRef.current.children.length-1;s++)"0"===e.elementRef.current.children[s].getAttribute("tabindex")&&(r={elem:e.elementRef.current.children[s],index:s});i="prev"===n?0===r.index?e.elementRef.current.children.length-1:r.index-1:r.index===e.elementRef.current.children.length-1?0:r.index+1,e.setFocusedIndex(i),e.elementRef.current.children[i].focus()},y=(n=u({className:d("label")},h("label")),e.template?o.ObjectUtils.getJSXElement(e.template,e.option):t.createElement("span",n,e.label)),b=u({className:(0,o.classNames)(e.className,d("button",{itemProps:e,focusedState:s})),role:"button","aria-label":e.label,"aria-pressed":e.selected,onClick:function(t){return f(t,e.index)},onKeyDown:function(t){return m(t,e.index)},tabIndex:e.tabIndex,"aria-disabled":e.disabled,onFocus:function(){l(!0)},onBlur:function(){l(!1)}},h("button"));return t.createElement("div",b,y,!e.disabled&&t.createElement(a.Ripple,null))});f.displayName="SelectButtonItem";var m=t.memo(t.forwardRef(function(e,a){var u=(0,i.useMergeProps)(),c=t.useContext(n.PrimeReactContext),m=h.getProps(e,c),v=p(t.useState(0),2),y=v[0],b=v[1],S=t.useRef(null),g=h.setMetaData({props:m}),_=g.ptm,x=g.cx,j=g.isUnstyled;(0,r.useHandleStyle)(h.css.styles,j,{name:"selectbutton",styled:!0});var w=function(e){if(!(m.disabled||C(e.option))){var t,n=A(e.option);if(!n||m.unselectable&&m.allowEmpty){var r=R(e.option);if(m.multiple){var i=m.value?d(m.value):[];t=n?i.filter(function(e){return!o.ObjectUtils.equals(e,r,m.dataKey)}):[].concat(d(i),[r])}else t=n?null:r;m.onChange&&m.onChange({originalEvent:e.originalEvent,value:t,stopPropagation:function(){e.originalEvent.stopPropagation()},preventDefault:function(){e.originalEvent.preventDefault()},target:{name:m.name,id:m.id,value:t}})}}},R=function(e){return m.optionValue?o.ObjectUtils.resolveFieldData(e,m.optionValue):e&&void 0!==e.value?e.value:e},C=function(e){return m.optionDisabled?o.ObjectUtils.isFunction(m.optionDisabled)?m.optionDisabled(e):o.ObjectUtils.resolveFieldData(e,m.optionDisabled):!!e&&void 0!==e.disabled&&e.disabled},A=function(e){var t=R(e);return m.multiple?!!m.value&&!!m.value.length&&m.value.some(function(e){return o.ObjectUtils.equals(e,t,m.dataKey)}):o.ObjectUtils.equals(m.value,t,m.dataKey)};t.useImperativeHandle(a,function(){return{props:m,focus:function(){return o.DomHandler.focusFirstElement(S.current)},getElement:function(){return S.current}}});var F=o.ObjectUtils.isNotEmpty(m.tooltip),k=m.options&&m.options.length?m.options.map(function(e,n){var r=m.disabled||C(e),i=m.optionLabel?o.ObjectUtils.resolveFieldData(e,m.optionLabel):e&&void 0!==e.label?e.label:e,s=m.disabled||n!==y?"-1":"0",a=A(e);return t.createElement(f,{hostName:"SelectButton",key:i+"_"+n,label:i,className:e.className,option:e,setFocusedIndex:b,onClick:w,template:m.itemTemplate,selected:a,tabIndex:s,index:n,disabled:r,ptm:_,cx:x,elementRef:S})}):null,O=u({ref:S,id:m.id,className:(0,o.classNames)(m.className,x("root")),style:m.style,role:"group"},h.getOtherProps(m),_("root"));return t.createElement(t.Fragment,null,t.createElement("div",O,k,m.children),F&&t.createElement(s.Tooltip,l({target:S,content:m.tooltip,pt:_("tooltip")},m.tooltipOptions)))}));m.displayName="SelectButton",e.s(["SelectButton",0,m])},16015,(e,t,n)=>{},98547,(e,t,n)=>{var r=e.i(47167);e.r(16015);var i=e.r(71645),s=i&&"object"==typeof i&&"default"in i?i:{default:i},o=void 0!==r.default&&r.default.env&&!0,a=function(e){return"[object String]"===Object.prototype.toString.call(e)},l=function(){function e(e){var t=void 0===e?{}:e,n=t.name,r=void 0===n?"stylesheet":n,i=t.optimizeForSpeed,s=void 0===i?o:i;u(a(r),"`name` must be a string"),this._name=r,this._deletedRulePlaceholder="#"+r+"-deleted-rule____{}",u("boolean"==typeof s,"`optimizeForSpeed` must be a boolean"),this._optimizeForSpeed=s,this._serverSheet=void 0,this._tags=[],this._injected=!1,this._rulesCount=0;var l="u">typeof window&&document.querySelector('meta[property="csp-nonce"]');this._nonce=l?l.getAttribute("content"):null}var t,n=e.prototype;return n.setOptimizeForSpeed=function(e){u("boolean"==typeof e,"`setOptimizeForSpeed` accepts a boolean"),u(0===this._rulesCount,"optimizeForSpeed cannot be when rules have already been inserted"),this.flush(),this._optimizeForSpeed=e,this.inject()},n.isOptimizeForSpeed=function(){return this._optimizeForSpeed},n.inject=function(){var e=this;if(u(!this._injected,"sheet already injected"),this._injected=!0,"u">typeof window&&this._optimizeForSpeed){this._tags[0]=this.makeStyleTag(this._name),this._optimizeForSpeed="insertRule"in this.getSheet(),this._optimizeForSpeed||(o||console.warn("StyleSheet: optimizeForSpeed mode not supported falling back to standard mode."),this.flush(),this._injected=!0);return}this._serverSheet={cssRules:[],insertRule:function(t,n){return"number"==typeof n?e._serverSheet.cssRules[n]={cssText:t}:e._serverSheet.cssRules.push({cssText:t}),n},deleteRule:function(t){e._serverSheet.cssRules[t]=null}}},n.getSheetForTag=function(e){if(e.sheet)return e.sheet;for(var t=0;t<document.styleSheets.length;t++)if(document.styleSheets[t].ownerNode===e)return document.styleSheets[t]},n.getSheet=function(){return this.getSheetForTag(this._tags[this._tags.length-1])},n.insertRule=function(e,t){if(u(a(e),"`insertRule` accepts only strings"),"u"<typeof window)return"number"!=typeof t&&(t=this._serverSheet.cssRules.length),this._serverSheet.insertRule(e,t),this._rulesCount++;if(this._optimizeForSpeed){var n=this.getSheet();"number"!=typeof t&&(t=n.cssRules.length);try{n.insertRule(e,t)}catch(t){return o||console.warn("StyleSheet: illegal rule: \n\n"+e+"\n\nSee https://stackoverflow.com/q/20007992 for more info"),-1}}else{var r=this._tags[t];this._tags.push(this.makeStyleTag(this._name,e,r))}return this._rulesCount++},n.replaceRule=function(e,t){if(this._optimizeForSpeed||"u"<typeof window){var n="u">typeof window?this.getSheet():this._serverSheet;if(t.trim()||(t=this._deletedRulePlaceholder),!n.cssRules[e])return e;n.deleteRule(e);try{n.insertRule(t,e)}catch(r){o||console.warn("StyleSheet: illegal rule: \n\n"+t+"\n\nSee https://stackoverflow.com/q/20007992 for more info"),n.insertRule(this._deletedRulePlaceholder,e)}}else{var r=this._tags[e];u(r,"old rule at index `"+e+"` not found"),r.textContent=t}return e},n.deleteRule=function(e){if("u"<typeof window)return void this._serverSheet.deleteRule(e);if(this._optimizeForSpeed)this.replaceRule(e,"");else{var t=this._tags[e];u(t,"rule at index `"+e+"` not found"),t.parentNode.removeChild(t),this._tags[e]=null}},n.flush=function(){this._injected=!1,this._rulesCount=0,"u">typeof window?(this._tags.forEach(function(e){return e&&e.parentNode.removeChild(e)}),this._tags=[]):this._serverSheet.cssRules=[]},n.cssRules=function(){var e=this;return"u"<typeof window?this._serverSheet.cssRules:this._tags.reduce(function(t,n){return n?t=t.concat(Array.prototype.map.call(e.getSheetForTag(n).cssRules,function(t){return t.cssText===e._deletedRulePlaceholder?null:t})):t.push(null),t},[])},n.makeStyleTag=function(e,t,n){t&&u(a(t),"makeStyleTag accepts only strings as second parameter");var r=document.createElement("style");this._nonce&&r.setAttribute("nonce",this._nonce),r.type="text/css",r.setAttribute("data-"+e,""),t&&r.appendChild(document.createTextNode(t));var i=document.head||document.getElementsByTagName("head")[0];return n?i.insertBefore(r,n):i.appendChild(r),r},t=[{key:"length",get:function(){return this._rulesCount}}],function(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}(e.prototype,t),e}();function u(e,t){if(!e)throw Error("StyleSheet: "+t+".")}var c=function(e){for(var t=5381,n=e.length;n;)t=33*t^e.charCodeAt(--n);return t>>>0},d={};function p(e,t){if(!t)return"jsx-"+e;var n=String(t),r=e+n;return d[r]||(d[r]="jsx-"+c(e+"-"+n)),d[r]}function h(e,t){"u"<typeof window&&(t=t.replace(/\/style/gi,"\\/style"));var n=e+t;return d[n]||(d[n]=t.replace(/__jsx-style-dynamic-selector/g,e)),d[n]}var f=function(){function e(e){var t=void 0===e?{}:e,n=t.styleSheet,r=void 0===n?null:n,i=t.optimizeForSpeed,s=void 0!==i&&i;this._sheet=r||new l({name:"styled-jsx",optimizeForSpeed:s}),this._sheet.inject(),r&&"boolean"==typeof s&&(this._sheet.setOptimizeForSpeed(s),this._optimizeForSpeed=this._sheet.isOptimizeForSpeed()),this._fromServer=void 0,this._indices={},this._instancesCounts={}}var t=e.prototype;return t.add=function(e){var t=this;void 0===this._optimizeForSpeed&&(this._optimizeForSpeed=Array.isArray(e.children),this._sheet.setOptimizeForSpeed(this._optimizeForSpeed),this._optimizeForSpeed=this._sheet.isOptimizeForSpeed()),"u">typeof window&&!this._fromServer&&(this._fromServer=this.selectFromServer(),this._instancesCounts=Object.keys(this._fromServer).reduce(function(e,t){return e[t]=0,e},{}));var n=this.getIdAndRules(e),r=n.styleId,i=n.rules;if(r in this._instancesCounts){this._instancesCounts[r]+=1;return}var s=i.map(function(e){return t._sheet.insertRule(e)}).filter(function(e){return -1!==e});this._indices[r]=s,this._instancesCounts[r]=1},t.remove=function(e){var t=this,n=this.getIdAndRules(e).styleId;if(function(e,t){if(!e)throw Error("StyleSheetRegistry: "+t+".")}(n in this._instancesCounts,"styleId: `"+n+"` not found"),this._instancesCounts[n]-=1,this._instancesCounts[n]<1){var r=this._fromServer&&this._fromServer[n];r?(r.parentNode.removeChild(r),delete this._fromServer[n]):(this._indices[n].forEach(function(e){return t._sheet.deleteRule(e)}),delete this._indices[n]),delete this._instancesCounts[n]}},t.update=function(e,t){this.add(t),this.remove(e)},t.flush=function(){this._sheet.flush(),this._sheet.inject(),this._fromServer=void 0,this._indices={},this._instancesCounts={}},t.cssRules=function(){var e=this,t=this._fromServer?Object.keys(this._fromServer).map(function(t){return[t,e._fromServer[t]]}):[],n=this._sheet.cssRules();return t.concat(Object.keys(this._indices).map(function(t){return[t,e._indices[t].map(function(e){return n[e].cssText}).join(e._optimizeForSpeed?"":"\n")]}).filter(function(e){return!!e[1]}))},t.styles=function(e){var t,n;return t=this.cssRules(),void 0===(n=e)&&(n={}),t.map(function(e){var t=e[0],r=e[1];return s.default.createElement("style",{id:"__"+t,key:"__"+t,nonce:n.nonce?n.nonce:void 0,dangerouslySetInnerHTML:{__html:r}})})},t.getIdAndRules=function(e){var t=e.children,n=e.dynamic,r=e.id;if(n){var i=p(r,n);return{styleId:i,rules:Array.isArray(t)?t.map(function(e){return h(i,e)}):[h(i,t)]}}return{styleId:p(r),rules:Array.isArray(t)?t:[t]}},t.selectFromServer=function(){return Array.prototype.slice.call(document.querySelectorAll('[id^="__jsx-"]')).reduce(function(e,t){return e[t.id.slice(2)]=t,e},{})},e}(),m=i.createContext(null);function v(){return new f}function y(){return i.useContext(m)}m.displayName="StyleSheetContext";var b=s.default.useInsertionEffect||s.default.useLayoutEffect,S="u">typeof window?v():void 0;function g(e){var t=S||y();return t&&("u"<typeof window?t.add(e):b(function(){return t.add(e),function(){t.remove(e)}},[e.id,String(e.dynamic)])),null}g.dynamic=function(e){return e.map(function(e){return p(e[0],e[1])}).join(" ")},n.StyleRegistry=function(e){var t=e.registry,n=e.children,r=i.useContext(m),o=i.useState(function(){return r||t||v()})[0];return s.default.createElement(m.Provider,{value:o},n)},n.createStyleRegistry=v,n.style=g,n.useStyleRegistry=y},37902,(e,t,n)=>{t.exports=e.r(98547).style},32115,e=>{"use strict";var a=e.i(43476),i=e.i(71645),t=e.i(44080),l=e.i(53729),m=e.i(54858);e.s(["default",0,function SusopsgasRekapUnifiedPage() {
+
     var jsx = a.jsx, jsxs = a.jsxs, Fragment = a.Fragment;
     var useState = i.useState, useEffect = i.useEffect, useCallback = i.useCallback, useMemo = i.useMemo;
     var InputText = t.InputText;
     var Tag = l.Tag;
     var apiAuth = m.apiAuth;
+
+    var KAMUS_SATKER_PENYELENGGARA = [
+      { value: "Tipidum", label: "Tipidum (Dittipidum / Ditkrimum / Satreskrim)" },
+      { value: "Tipideksus", label: "Tipideksus (Dittipideksus / Ditkrimsus)" },
+      { value: "Tipidnarkoba", label: "Tipidnarkoba (Dittipidnarkoba / Ditnarkoba / Satnarkoba)" },
+      { value: "Tipidkor", label: "Tipidkor (Kortastipidkor / Ditkrimsus)" },
+      { value: "Tipidter", label: "Tipidter (Dittipidter / Ditkrimsus)" },
+      { value: "Tipidsiber", label: "Tipidsiber (Dittipidsiber / Ditsiber)" },
+      { value: "Tipidppappo", label: "Tipidppappo (Dittipidppappo / Ditppappo / Satppappo)" },
+      { value: "Krimum", label: "Krimum (Gabungan Tipidum & Tipidppappo)" },
+      { value: "Krimsus", label: "Krimsus (Gabungan Tipideksus, Tipidkor, Tipidter & Tipidsiber)" },
+      { value: "Robinopsnal Bareskrim Polri", label: "Robinopsnal Bareskrim Polri" },
+      { value: "Satresmob", label: "Satresmob Bareskrim Polri" }
+    ];
 
     var initTab = (function() {
       try {
@@ -71,6 +86,7 @@
     var _sprinQuickRow = useState(null), sprinQuickRow = _sprinQuickRow[0], setSprinQuickRow = _sprinQuickRow[1];
     var _sprinNomor = useState(""), sprinNomor = _sprinNomor[0], setSprinNomor = _sprinNomor[1];
     var _sprinTgl = useState(""), sprinTgl = _sprinTgl[0], setSprinTgl = _sprinTgl[1];
+    var _sprinTglAkhir = useState(""), sprinTglAkhir = _sprinTglAkhir[0], setSprinTglAkhir = _sprinTglAkhir[1];
     var _sprinCatatan = useState(""), sprinCatatan = _sprinCatatan[0], setSprinCatatan = _sprinCatatan[1];
     var _sprinFiles = useState([]), sprinFiles = _sprinFiles[0], setSprinFiles = _sprinFiles[1];
     var _sprinSaving = useState(false), sprinSaving = _sprinSaving[0], setSprinSaving = _sprinSaving[1];
@@ -87,8 +103,22 @@
       return isNaN(dt.getTime()) ? s : dt.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
     }
 
+    function parseSprinAttMeta(att) {
+      var rawCat = String(att?.catatan_perubahan || "").trim();
+      var tMulai = String(att?.tanggal_mulai || att?.tanggal_sprin || "").slice(0, 10);
+      var tAkhir = String(att?.tanggal_selesai || "").slice(0, 10);
+      var cleanCat = rawCat;
+      var m = rawCat.match(/^\[Periode:\s*([0-9-]+)\s*s\/d\s*([0-9-]+)\]\s*(.*)$/i);
+      if (m) {
+        if (!tMulai && m[1] !== "-") tMulai = m[1];
+        if (!tAkhir && m[2] !== "-") tAkhir = m[2];
+        cleanCat = m[3] || "";
+      }
+      return { tgl_mulai: tMulai, tgl_berakhir: tAkhir, catatan: cleanCat };
+    }
+
     function inferSatker(row) {
-      var st = String(row?.satker_nama || row?.satker_penyelenggara || row?.satker_terkait || row?.unit_nama || "").trim();
+      var st = String(row?.satker_penyelenggara || row?.satker_nama || row?.satker_terkait || row?.unit_nama || "").trim();
       if (st && st !== "-" && st !== "—") return st;
       var lp = String(row?.first_no_laporan || "").toUpperCase();
       if (lp.includes("BARESKRIM")) return "Bareskrim Polri";
@@ -338,13 +368,18 @@
         fd.append("kategori_lampiran", "SPRIN");
         if (sprinNomor.trim()) fd.append("nomor_sprin", sprinNomor.trim());
         if (sprinTgl) fd.append("tanggal_sprin", sprinTgl);
-        if (sprinCatatan.trim()) fd.append("catatan_perubahan", sprinCatatan.trim());
+        if (sprinTgl) fd.append("tanggal_mulai", sprinTgl);
+        if (sprinTglAkhir) fd.append("tanggal_selesai", sprinTglAkhir);
+        var periodPrefix = (sprinTgl || sprinTglAkhir) ? ("[Periode: " + (sprinTgl || "-") + " s/d " + (sprinTglAkhir || "-") + "] ") : "";
+        var fullCat = (periodPrefix + sprinCatatan.trim()).trim();
+        if (fullCat) fd.append("catatan_perubahan", fullCat);
         sprinFiles.forEach(function(f) { fd.append("files", f); });
         await apiAuth.post(baseEp + "/" + sprinQuickRow.id + "/lampiran", fd, {
           headers: { "Content-Type": "multipart/form-data" }
         });
         setSprinNomor("");
         setSprinTgl("");
+        setSprinTglAkhir("");
         setSprinCatatan("");
         setSprinFiles([]);
         var targetRow = sprinQuickRow;
@@ -364,41 +399,54 @@
       }
     }
 
-    // Clickable LP & Lampiran Badges for any row
+    // Clickable LP & Satker yg menangani Cell
     function renderClickableLpBadge(row) {
       var lpCount = Number(row.jumlah_lp || 0);
       var satkers = String(row.satker_terkait || "").split(",").map(function(s) { return s.trim(); }).filter(Boolean);
       var satkerCount = Number(row.jumlah_satker || satkers.length || 0);
-      return jsxs("button", {
-        type: "button",
-        onClick: function(ev) { ev.stopPropagation(); openDrilldownModal(row, "LP"); },
-        title: "Klik untuk membuka Daftar Laporan Polisi (LP), Status Penyidikan & Detail Lampiran",
-        style: {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "0.38rem",
-          padding: "0.28rem 0.65rem",
-          borderRadius: "999px",
-          border: lpCount > 0 ? "1px solid rgba(2,132,199,0.4)" : "1px solid #cbd5e1",
-          background: lpCount > 0 ? "linear-gradient(135deg, rgba(2,132,199,0.14), rgba(37,99,235,0.1))" : "#f1f5f9",
-          color: lpCount > 0 ? "#0369a1" : "#64748b",
-          fontWeight: 800,
-          fontSize: "0.75rem",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-          boxShadow: lpCount > 0 ? "0 1px 2px rgba(2,132,199,0.12)" : "none"
-        },
+      var satkerSummary = satkers.length > 0
+        ? satkers.slice(0, 2).join(", ") + (satkers.length > 2 ? " (+" + (satkers.length - 2) + " satker)" : "")
+        : inferSatker(row);
+      return jsxs("div", {
+        style: { display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "0.22rem" },
         children: [
-          jsx("i", { className: "pi pi-folder-open", style: { fontSize: "0.73rem" } }),
-          jsxs("span", { children: [lpCount.toLocaleString("id-ID"), " LP"] }),
-          satkerCount > 0 && jsxs("span", {
+          jsxs("button", {
+            type: "button",
+            onClick: function(ev) { ev.stopPropagation(); openDrilldownModal(row, "LP"); },
+            title: "Klik untuk membuka Daftar Laporan Polisi (LP), Status Penyidikan & Detail Lampiran",
             style: {
-              paddingLeft: "0.3rem",
-              borderLeft: "1px solid rgba(2,132,199,0.3)",
-              fontSize: "0.7rem",
-              color: "#0284c7"
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.38rem",
+              padding: "0.28rem 0.65rem",
+              borderRadius: "999px",
+              border: lpCount > 0 ? "1px solid rgba(2,132,199,0.4)" : "1px solid #cbd5e1",
+              background: lpCount > 0 ? "linear-gradient(135deg, rgba(2,132,199,0.14), rgba(37,99,235,0.1))" : "#f1f5f9",
+              color: lpCount > 0 ? "#0369a1" : "#64748b",
+              fontWeight: 800,
+              fontSize: "0.75rem",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              boxShadow: lpCount > 0 ? "0 1px 2px rgba(2,132,199,0.12)" : "none"
             },
-            children: [satkerCount, " Satker"]
+            children: [
+              jsx("i", { className: "pi pi-folder-open", style: { fontSize: "0.73rem" } }),
+              jsxs("span", { children: [lpCount.toLocaleString("id-ID"), " LP"] }),
+              satkerCount > 0 && jsxs("span", {
+                style: {
+                  paddingLeft: "0.3rem",
+                  borderLeft: "1px solid rgba(2,132,199,0.3)",
+                  fontSize: "0.7rem",
+                  color: "#0284c7"
+                },
+                children: [satkerCount, " Satker"]
+              })
+            ]
+          }),
+          satkerSummary && jsx("div", {
+            style: { fontSize: "0.69rem", color: "#475569", fontWeight: 600, maxWidth: "12rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+            title: satkers.length > 0 ? satkers.join(", ") : satkerSummary,
+            children: satkerSummary
           })
         ]
       });
@@ -419,7 +467,7 @@
             style: {
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.25rem",
+              gap: "0.28rem",
               padding: "0.2rem 0.5rem",
               borderRadius: "6px",
               border: sprinCnt > 0 ? "1px solid rgba(217,119,6,0.4)" : "1px dashed #cbd5e1",
@@ -430,7 +478,11 @@
               cursor: "pointer",
               whiteSpace: "nowrap"
             },
-            children: ["📜 ", sprinCnt, " Sprin"]
+            children: [
+              jsx("i", { className: "pi pi-file-pdf", style: { fontSize: "0.7rem" } }),
+              sprinCnt,
+              " Sprin"
+            ]
           }),
           jsxs("button", {
             type: "button",
@@ -439,7 +491,7 @@
             style: {
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.25rem",
+              gap: "0.28rem",
               padding: "0.2rem 0.5rem",
               borderRadius: "6px",
               border: dokCnt > 0 ? "1px solid rgba(16,185,129,0.4)" : "1px dashed #cbd5e1",
@@ -450,7 +502,11 @@
               cursor: "pointer",
               whiteSpace: "nowrap"
             },
-            children: ["📸 ", dokCnt, " Dok"]
+            children: [
+              jsx("i", { className: "pi pi-image", style: { fontSize: "0.7rem" } }),
+              dokCnt,
+              " Dok"
+            ]
           })
         ]
       });
@@ -501,10 +557,10 @@
 
     // Render Unified 4-Tab Switcher Bar
     var moduleTabs = [
-      { key: "SUSJOL", icon: "🔥", label: "Susjol (Kasus Menonjol)", count: susjolTotal, color: "#0284c7", bgActive: "linear-gradient(135deg, #0284c7, #0369a1)" },
-      { key: "SUSATENSI", icon: "🚨", label: "Susatensi (Kasus Atensi)", count: atensiTotal, color: "#7c3aed", bgActive: "linear-gradient(135deg, #7c3aed, #6d28d9)" },
-      { key: "OPS_SATGAS", icon: "🚩", label: "Rekap LP Ops & Satgas", count: opsTotal, color: "#d97706", bgActive: "linear-gradient(135deg, #d97706, #b45309)" },
-      { key: "GABUNGAN", icon: "📊", label: "Semua Gabungan (Susopsgas)", count: (susjolTotal + atensiTotal + opsTotal), color: "#059669", bgActive: "linear-gradient(135deg, #059669, #047857)" }
+      { key: "SUSJOL", icon: "pi pi-bolt", label: "Susjol (Kasus Menonjol)", count: susjolTotal, color: "#0284c7", bgActive: "linear-gradient(135deg, #0284c7, #0369a1)" },
+      { key: "SUSATENSI", icon: "pi pi-exclamation-circle", label: "Susatensi (Kasus Atensi)", count: atensiTotal, color: "#7c3aed", bgActive: "linear-gradient(135deg, #7c3aed, #6d28d9)" },
+      { key: "OPS_SATGAS", icon: "pi pi-flag", label: "Rekap LP Ops & Satgas", count: opsTotal, color: "#d97706", bgActive: "linear-gradient(135deg, #d97706, #b45309)" },
+      { key: "GABUNGAN", icon: "pi pi-chart-bar", label: "Semua Gabungan (Susopsgas)", count: (susjolTotal + atensiTotal + opsTotal), color: "#059669", bgActive: "linear-gradient(135deg, #059669, #047857)" }
     ];
 
     function renderTableRows(rows, tabMode) {
@@ -535,9 +591,9 @@
                     jsxs("div", {
                       style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
                       children: [
-                        row.is_pinned && jsx(Tag, { value: "📌 Disematkan", severity: "warning" }),
+                        row.is_pinned && jsx(Tag, { icon: "pi pi-bookmark-fill", value: "Disematkan", severity: "warning" }),
                         jsx(Tag, {
-                          value: isAtensi ? "🚨 SUSATENSI" : isOps ? ("🚩 " + (row.jenis || "OPERASI")) : "🔥 SUSJOL",
+                          value: isAtensi ? "SUSATENSI" : isOps ? (row.jenis || "OPERASI") : "SUSJOL",
                           severity: isAtensi ? "danger" : isOps ? "warning" : "info"
                         }),
                         row.skala_viral && jsx(Tag, { value: "Skala " + row.skala_viral, severity: row.skala_viral === "nasional" ? "danger" : "warning" }),
@@ -588,16 +644,25 @@
             children: [
               jsx("thead", {
                 children: jsxs("tr", {
-                  style: { background: "#16324f", color: "#ffffff", textAlign: "left", fontSize: "0.73rem", textTransform: "uppercase", letterSpacing: "0.04em" },
+                  style: {
+                    background: "var(--cas-bg-subtle, #f8fafc)",
+                    color: "var(--cas-text-secondary, #475569)",
+                    borderBottom: "1px solid var(--cas-border, #e2e8f0)",
+                    textAlign: "left",
+                    fontSize: "0.73rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    fontWeight: 700
+                  },
                   children: [
                     jsx("th", { style: { padding: "0.75rem 0.85rem", width: "3.2rem" }, children: "No" }),
                     tabMode === "GABUNGAN" && jsx("th", { style: { padding: "0.75rem 0.85rem", width: "8.5rem" }, children: "Kategori" }),
                     jsx("th", { style: { padding: "0.75rem 0.85rem" }, children: tabMode === "OPS_SATGAS" ? "Nama Operasi / Satgas & Dasar Sprin" : "Judul Kasus / Kegiatan" }),
                     jsx("th", { style: { padding: "0.75rem 0.85rem", width: "11rem" }, children: tabMode === "SUSJOL" ? "Skala & Rilis" : tabMode === "SUSATENSI" ? "Level & Sumber" : "Klasifikasi & Sprin" }),
-                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "13rem" }, children: "Satker & LP Utama" }),
+                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "13rem" }, children: "Satker Penyelenggara" }),
                     jsx("th", { style: { padding: "0.75rem 0.85rem", width: "9rem" }, children: "Tanggal / Periode" }),
-                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "9.5rem", textAlign: "center" }, children: "Jumlah LP (Drilldown)" }),
-                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "10.5rem", textAlign: "center" }, children: "Lampiran (Sprin vs Dok)" }),
+                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "11.5rem", textAlign: "center" }, children: "LP & Satker yg menangani" }),
+                    jsx("th", { style: { padding: "0.75rem 0.85rem", width: "10.5rem", textAlign: "center" }, children: "Lampiran Dokumentasi" }),
                     jsx("th", { style: { padding: "0.75rem 0.85rem", width: "6.5rem", textAlign: "center" }, children: "Detail" })
                   ]
                 })
@@ -616,7 +681,7 @@
                       tabMode === "GABUNGAN" && jsx("td", {
                         style: { padding: "0.7rem 0.85rem" },
                         children: jsx(Tag, {
-                          value: isAtensi ? "🚨 SUSATENSI" : isOps ? ("🚩 " + (row.jenis || "OPERASI")) : "🔥 SUSJOL",
+                          value: isAtensi ? "SUSATENSI" : isOps ? (row.jenis || "OPERASI") : "SUSJOL",
                           severity: isAtensi ? "danger" : isOps ? "warning" : "info"
                         })
                       }),
@@ -627,7 +692,7 @@
                             onClick: function() { openDrilldownModal(row, "LP"); },
                             style: { fontWeight: 800, color: "#0f172a", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", lineHeight: 1.35 },
                             children: [
-                              row.is_pinned && jsx(Tag, { value: "📌 Disematkan", severity: "warning" }),
+                              row.is_pinned && jsx(Tag, { icon: "pi pi-bookmark-fill", value: "Disematkan", severity: "warning" }),
                               jsx("span", { children: row.judul || row.nama || "—" })
                             ]
                           }),
@@ -653,7 +718,13 @@
                           }) : jsxs(Fragment, {
                             children: [
                               row.skala_viral && jsx(Tag, { value: String(row.skala_viral).toUpperCase(), severity: row.skala_viral === "nasional" ? "danger" : row.skala_viral === "regional" ? "warning" : "info" }),
-                              jsx("div", { style: { fontSize: "0.72rem", color: "#64748b", marginTop: "0.2rem", fontWeight: 600 }, children: row.rilis ? "✅ Sudah Rilis" : "🔒 Internal" })
+                              jsxs("div", {
+                                style: { fontSize: "0.72rem", color: "#64748b", marginTop: "0.2rem", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                                children: [
+                                  jsx("i", { className: row.rilis ? "pi pi-check-circle" : "pi pi-lock", style: { fontSize: "0.7rem", color: row.rilis ? "#059669" : "#64748b" } }),
+                                  row.rilis ? "Sudah Rilis" : "Internal"
+                                ]
+                              })
                             ]
                           }),
                           !isOps && row.latest_nomor_sprin && jsx("div", { style: { fontSize: "0.7rem", color: "#b45309", marginTop: "0.15rem", fontWeight: 700 }, children: "Sprin: " + row.latest_nomor_sprin })
@@ -670,7 +741,7 @@
                         style: { padding: "0.7rem 0.85rem", fontSize: "0.75rem", color: "#475569", fontWeight: 600 },
                         children: [
                           jsx("div", { children: dateStr }),
-                          isOps && row.tanggal_selesai && jsx("div", { style: { fontSize: "0.7rem", color: "#64748b" }, children: "s.d. " + fmtDateId(row.tanggal_selesai) })
+                          row.tanggal_selesai && jsx("div", { style: { fontSize: "0.7rem", color: "#64748b" }, children: "s.d. " + fmtDateId(row.tanggal_selesai) })
                         ]
                       }),
                       jsx("td", {
@@ -737,11 +808,11 @@
       var gabSprinTotal = gabRows.reduce(function(acc, r) { return acc + Number(r.jumlah_lampiran_sprin || 0); }, 0);
       return [
         { key: "semua", label: "Total Judul Susopsgas", val: susjolTotal + atensiTotal + opsTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "ALL", kpi: "semua" }); } },
-        { key: "SUSJOL", label: "🔥 Susjol (Menonjol)", val: susjolTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "SUSJOL", kpi: "SUSJOL" }); } },
-        { key: "SUSATENSI", label: "🚨 Susatensi (Atensi)", val: atensiTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "SUSATENSI", kpi: "SUSATENSI" }); } },
-        { key: "OPS_SATGAS", label: "🚩 Operasi & Satgas", val: opsTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "OPS_SATGAS", kpi: "OPS_SATGAS" }); } },
-        { key: "lp", label: "📋 Total LP Terkait", val: gabLpTotal, onClick: function() { updateFilter("GABUNGAN", { kpi: "lp" }); } },
-        { key: "sprin", label: "📜 Total Revisi Sprin", val: gabSprinTotal, onClick: function() { updateFilter("GABUNGAN", { kpi: "sprin" }); } }
+        { key: "SUSJOL", label: "Susjol (Menonjol)", val: susjolTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "SUSJOL", kpi: "SUSJOL" }); } },
+        { key: "SUSATENSI", label: "Susatensi (Atensi)", val: atensiTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "SUSATENSI", kpi: "SUSATENSI" }); } },
+        { key: "OPS_SATGAS", label: "Operasi & Satgas", val: opsTotal, onClick: function() { updateFilter("GABUNGAN", { kategori: "OPS_SATGAS", kpi: "OPS_SATGAS" }); } },
+        { key: "lp", label: "Total LP Terkait", val: gabLpTotal, onClick: function() { updateFilter("GABUNGAN", { kpi: "lp" }); } },
+        { key: "sprin", label: "Total Revisi Sprin", val: gabSprinTotal, onClick: function() { updateFilter("GABUNGAN", { kpi: "sprin" }); } }
       ];
     }, [activeTab, susjolSummary, susjolTotal, susjolData, atensiSummary, atensiTotal, atensiData, opsTotal, opsData, opsLpTotal, gabRows]);
 
@@ -797,7 +868,7 @@
                   jsxs("span", {
                     style: { display: "inline-flex", alignItems: "center", gap: "0.45rem", textAlign: "left" },
                     children: [
-                      jsx("span", { style: { fontSize: "1.05rem" }, children: tab.icon }),
+                      jsx("i", { className: tab.icon, style: { fontSize: "0.92rem" } }),
                       jsx("span", { children: tab.label })
                     ]
                   }),
@@ -836,7 +907,7 @@
           })
         }),
 
-        // Per-Tab Unified Filter Bar (Preserves Periode, Satker, Pencarian, Mode Tabel/Kartu)
+        // Per-Tab Unified Filter Bar
         jsx("div", {
           className: "cms-card",
           style: { padding: "0.75rem 1rem", marginBottom: "0.9rem" },
@@ -850,11 +921,17 @@
                 placeholder: "Cari judul kasus, nama operasi/satgas, nomor sprin, atau nomor LP…",
                 style: { flex: "1.4 1 14rem", minWidth: "13rem", height: "38px", boxSizing: "border-box" }
               }),
-              jsx(InputText, {
+              jsxs("select", {
                 value: curFilter.satker || "",
                 onChange: function(ev) { updateFilter(activeTab, { satker: ev.target.value, page: 1 }); },
-                placeholder: "Filter Satker (mis. Polda Jatim)…",
-                style: { flex: "0.8 1 10rem", minWidth: "9.5rem", height: "38px", boxSizing: "border-box" }
+                className: "p-inputtext p-component",
+                style: { flex: "0.9 1 12rem", minWidth: "11rem", height: "38px", padding: "0 0.7rem", borderRadius: "8px", fontSize: "0.82rem", boxSizing: "border-box" },
+                children: [
+                  jsx("option", { value: "", children: "Semua Satker Penyelenggara" }),
+                  KAMUS_SATKER_PENYELENGGARA.map(function(opt) {
+                    return jsx("option", { value: opt.value, children: opt.label }, opt.value);
+                  })
+                ]
               }),
               jsx("input", {
                 type: "date",
@@ -916,9 +993,9 @@
                 style: { height: "38px", padding: "0 0.7rem", borderRadius: "8px", fontSize: "0.82rem", fontWeight: 600 },
                 children: [
                   jsx("option", { value: "ALL", children: "Semua Kategori Susopsgas" }),
-                  jsx("option", { value: "SUSJOL", children: "🔥 Susjol (Kasus Menonjol)" }),
-                  jsx("option", { value: "SUSATENSI", children: "🚨 Susatensi (Kasus Atensi)" }),
-                  jsx("option", { value: "OPS_SATGAS", children: "🚩 Operasi & Satgas" })
+                  jsx("option", { value: "SUSJOL", children: "Susjol (Kasus Menonjol)" }),
+                  jsx("option", { value: "SUSATENSI", children: "Susatensi (Kasus Atensi)" }),
+                  jsx("option", { value: "OPS_SATGAS", children: "Operasi & Satgas" })
                 ]
               }),
               jsxs("div", {
@@ -992,12 +1069,13 @@
             children: [
               // Modal Header
               jsxs("div", {
-                className: "p-dialog-header cas-std-modal-header", style: { padding: "0.95rem 1.35rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" },
+                className: "p-dialog-header cas-std-modal-header",
+                style: { padding: "0.95rem 1.35rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" },
                 children: [
                   jsxs("div", {
                     style: { display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap" },
                     children: [
-                      jsx("span", { style: { fontSize: "1.15rem" }, children: "📋" }),
+                      jsx("i", { className: "pi pi-folder-open", style: { fontSize: "1.05rem", color: "#0284c7" } }),
                       jsx("span", { style: { fontWeight: 800, fontSize: "1rem", letterSpacing: "0.01em" }, children: "Daftar Laporan Polisi (LP) & Detail Lampiran — Susopsgas" }),
                       jsx(Tag, {
                         value: String(drillRow._source_type || drillRow.kategori || "SUSJOL").toUpperCase().replace("OPS_SATGAS", "OPERASI & SATGAS").replace("SUSATENSI", "KASUS ATENSI").replace("SUSJOL", "KASUS MENONJOL"),
@@ -1033,7 +1111,7 @@
                 className: "p-dialog-content cas-std-modal-body",
                 style: { padding: "1.1rem 1.35rem", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "0.95rem" },
                 children: [
-                  // 1. Top Summary Strip + Mini Status Cards (Kinerja-Perkara-Style)
+                  // 1. Top Summary Strip + Mini Status Cards
                   jsxs("div", {
                     style: { padding: "0.9rem 1.1rem", borderRadius: "10px", background: "#f8fafc", border: "1px solid #e2e8f0", display: "grid", gap: "0.75rem" },
                     children: [
@@ -1046,9 +1124,9 @@
                               jsxs("div", {
                                 style: { fontSize: "0.78rem", color: "#475569", marginTop: "0.25rem", display: "flex", gap: "0.9rem", flexWrap: "wrap" },
                                 children: [
-                                  jsxs("span", { children: ["🏢 Satker: ", jsx("strong", { children: inferSatker(drillRow) })] }),
-                                  (drillRow.latest_nomor_sprin || drillRow.nomor_dasar) && jsxs("span", { children: ["📜 No. Sprin: ", jsx("strong", { style: { color: "#b45309" }, children: drillRow.latest_nomor_sprin || drillRow.nomor_dasar })] }),
-                                  jsxs("span", { children: ["📊 Total LP: ", jsx("strong", { style: { color: "#0284c7" }, children: drillLps.length + " LP" }), " pada ", jsx("strong", { children: drillSatkerList.length + " Satker" })] })
+                                  jsxs("span", { children: [jsx("i", { className: "pi pi-building", style: { fontSize: "0.74rem", marginRight: "0.25rem" } }), "Satker: ", jsx("strong", { children: inferSatker(drillRow) })] }),
+                                  (drillRow.latest_nomor_sprin || drillRow.nomor_dasar) && jsxs("span", { children: [jsx("i", { className: "pi pi-file-pdf", style: { fontSize: "0.74rem", marginRight: "0.25rem" } }), "No. Sprin: ", jsx("strong", { style: { color: "#b45309" }, children: drillRow.latest_nomor_sprin || drillRow.nomor_dasar })] }),
+                                  jsxs("span", { children: [jsx("i", { className: "pi pi-chart-bar", style: { fontSize: "0.74rem", marginRight: "0.25rem" } }), "Total LP: ", jsx("strong", { style: { color: "#0284c7" }, children: drillLps.length + " LP" }), " pada ", jsx("strong", { children: drillSatkerList.length + " Satker" })] })
                                 ]
                               })
                             ]
@@ -1059,6 +1137,7 @@
                               setSprinQuickRow(drillRow);
                               setSprinNomor(drillRow.latest_nomor_sprin || drillRow.nomor_dasar || "");
                               setSprinTgl("");
+                              setSprinTglAkhir("");
                               setSprinCatatan("");
                               setSprinFiles([]);
                             },
@@ -1070,14 +1149,17 @@
                               color: "#b45309",
                               fontWeight: 800,
                               fontSize: "0.76rem",
-                              cursor: "pointer"
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.35rem"
                             },
-                            children: ["📜 + Update / Revisi Sprin Baru"]
+                            children: [jsx("i", { className: "pi pi-plus", style: { fontSize: "0.72rem" } }), "Update / Revisi Sprin Baru"]
                           })
                         ]
                       }),
 
-                      // Mini Status Cards (Kinerja Perkara Style)
+                      // Mini Status Cards
                       jsx("div", {
                         style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(6.8rem, 1fr))", gap: "0.45rem" },
                         children: [
@@ -1181,12 +1263,12 @@
                   jsxs("div", {
                     style: { display: "flex", gap: "0.5rem", borderBottom: "2px solid #e2e8f0", paddingBottom: "0.4rem", flexWrap: "wrap" },
                     children: [
-                      { key: "LP", label: "📋 Daftar LP & Lampiran Penyidikan LP (" + filteredDrillLps.length + " LP)" },
-                      { key: "SPRIN", label: "📜 Riwayat Lampiran Sprin (Multi-Revisi) (" + drillSprinList.length + ")" },
-                      { key: "DOKUMENTASI", label: "📸 Lampiran Dokumentasi Judul Kasus (" + drillDokList.length + ")" }
+                      { key: "LP", icon: "pi pi-list", label: "Daftar LP & Lampiran Penyidikan LP (" + filteredDrillLps.length + " LP)" },
+                      { key: "SPRIN", icon: "pi pi-file-pdf", label: "Riwayat Lampiran Sprin (Multi-Revisi) (" + drillSprinList.length + ")" },
+                      { key: "DOKUMENTASI", icon: "pi pi-image", label: "Lampiran Dokumentasi Judul Kasus (" + drillDokList.length + ")" }
                     ].map(function(tItem) {
                       var isAct = drillTab === tItem.key;
-                      return jsx("button", {
+                      return jsxs("button", {
                         type: "button",
                         onClick: function() { setDrillTab(tItem.key); },
                         style: {
@@ -1197,9 +1279,12 @@
                           color: isAct ? "#ffffff" : "#334155",
                           fontWeight: 800,
                           fontSize: "0.78rem",
-                          cursor: "pointer"
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.4rem"
                         },
-                        children: tItem.label
+                        children: [jsx("i", { className: tItem.icon, style: { fontSize: "0.76rem" } }), tItem.label]
                       }, tItem.key);
                     })
                   }),
@@ -1215,12 +1300,21 @@
                         children: [
                           jsx("thead", {
                             children: jsxs("tr", {
-                              style: { background: "#f1f5f9", color: "#1e293b", textAlign: "left", fontSize: "0.72rem", textTransform: "uppercase" },
+                              style: {
+                                background: "var(--cas-bg-subtle, #f8fafc)",
+                                color: "var(--cas-text-secondary, #475569)",
+                                borderBottom: "1px solid var(--cas-border, #e2e8f0)",
+                                textAlign: "left",
+                                fontSize: "0.72rem",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.03em",
+                                fontWeight: 700
+                              },
                               children: [
                                 jsx("th", { style: { padding: "0.65rem 0.75rem", width: "2.8rem" }, children: "No" }),
                                 jsx("th", { style: { padding: "0.65rem 0.75rem", width: "13rem" }, children: "Nomor LP" }),
                                 jsx("th", { style: { padding: "0.65rem 0.75rem", width: "7.5rem" }, children: "Tgl LP" }),
-                                jsx("th", { style: { padding: "0.65rem 0.75rem", width: "12rem" }, children: "Satker" }),
+                                jsx("th", { style: { padding: "0.65rem 0.75rem", width: "12rem" }, children: "Satker yg menangani" }),
                                 jsx("th", { style: { padding: "0.65rem 0.75rem", width: "13rem" }, children: "Tindak Pidana / Pasal" }),
                                 jsx("th", { style: { padding: "0.65rem 0.75rem", width: "8.5rem", textAlign: "center" }, children: "Status LP" }),
                                 jsx("th", { style: { padding: "0.65rem 0.75rem" }, children: "Detail Dokumen & Lampiran Penyidikan LP" })
@@ -1240,12 +1334,12 @@
                                     style: { padding: "0.6rem 0.75rem" },
                                     children: [
                                       jsx("div", { style: { fontWeight: 800, color: "#0f172a" }, children: lp.no_laporan || "—" }),
-                                      lp.pid && jsx("a", {
+                                      lp.pid && jsxs("a", {
                                         href: "/cms/laporan-polisi/" + lp.pid,
                                         target: "_blank",
                                         rel: "noreferrer",
-                                        style: { fontSize: "0.7rem", color: "#0284c7", fontWeight: 700, textDecoration: "none" },
-                                        children: "🔗 Buka Halaman Detail LP ↗"
+                                        style: { fontSize: "0.7rem", color: "#0284c7", fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.25rem", marginTop: "0.15rem" },
+                                        children: [jsx("i", { className: "pi pi-external-link", style: { fontSize: "0.65rem" } }), "Buka Halaman Detail LP"]
                                       })
                                     ]
                                   }),
@@ -1277,7 +1371,7 @@
                                         alignItems: "center",
                                         gap: "0.28rem"
                                       },
-                                      children: [lp.status_nama || lp.status_code || "Lidik", " 🔍"]
+                                      children: [lp.status_nama || lp.status_code || "Lidik", jsx("i", { className: "pi pi-search", style: { fontSize: "0.66rem" } })]
                                     })
                                   }),
                                   jsxs("td", {
@@ -1287,12 +1381,12 @@
                                         style: { display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" },
                                         children: [
                                           jsx("span", { style: { fontSize: "0.74rem", color: "#94a3b8" }, children: "Belum ada surat penyidikan diunggah." }),
-                                          jsx("button", {
+                                          jsxs("button", {
                                             type: "button",
                                             onClick: function() { openLpTimelineModal(lp); },
                                             className: "att-btn",
-                                            style: { padding: "0.18rem 0.5rem", fontSize: "0.7rem", cursor: "pointer" },
-                                            children: "🔄 Cek Alur LP"
+                                            style: { padding: "0.18rem 0.5rem", fontSize: "0.7rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                                            children: [jsx("i", { className: "pi pi-refresh", style: { fontSize: "0.66rem" } }), "Cek Alur LP"]
                                           })
                                         ]
                                       }) : jsxs("div", {
@@ -1323,7 +1417,7 @@
                                               jsxs("div", {
                                                 style: { display: "flex", gap: "0.3rem", flexWrap: "wrap" },
                                                 children: files.map(function(fl, fIdx) {
-                                                  return jsx("button", {
+                                                  return jsxs("button", {
                                                     type: "button",
                                                     onClick: function() { setPreviewFile({ name: fl.name || (doc.type_nama + ".pdf"), url: fl.url }); },
                                                     style: {
@@ -1334,9 +1428,12 @@
                                                       color: "#0284c7",
                                                       fontSize: "0.69rem",
                                                       fontWeight: 700,
-                                                      cursor: "pointer"
+                                                      cursor: "pointer",
+                                                      display: "inline-flex",
+                                                      alignItems: "center",
+                                                      gap: "0.25rem"
                                                     },
-                                                    children: "📄 Lihat / Unduh PDF"
+                                                    children: [jsx("i", { className: "pi pi-file-pdf", style: { fontSize: "0.66rem" } }), "Lihat / Unduh PDF"]
                                                   }, fIdx);
                                                 })
                                               })
@@ -1362,21 +1459,22 @@
                           children: [
                             jsxs("div", {
                               children: [
-                                jsx("div", { style: { fontWeight: 800, fontSize: "0.84rem", color: "#92400e" }, children: "📜 Riwayat Lampiran Surat Perintah (Sprin) — Multi-Revisi" }),
-                                jsx("div", { style: { fontSize: "0.75rem", color: "#b45309" }, children: "Setiap perubahan / perpanjangan Sprin tercatat berurutan lengkap dengan Nomor Sprin, Tanggal Sprin, dan Catatan Perubahan." })
+                                jsxs("div", { style: { fontWeight: 800, fontSize: "0.84rem", color: "#92400e", display: "flex", alignItems: "center", gap: "0.35rem" }, children: [jsx("i", { className: "pi pi-file-pdf" }), "Riwayat Lampiran Surat Perintah (Sprin) — Multi-Revisi"] }),
+                                jsx("div", { style: { fontSize: "0.75rem", color: "#b45309" }, children: "Setiap perubahan / perpanjangan Sprin tercatat berurutan lengkap dengan Nomor Sprin, Periode Berlaku, dan Catatan Perubahan." })
                               ]
                             }),
-                            jsx("button", {
+                            jsxs("button", {
                               type: "button",
                               onClick: function() {
                                 setSprinQuickRow(drillRow);
                                 setSprinNomor("");
                                 setSprinTgl("");
+                                setSprinTglAkhir("");
                                 setSprinCatatan("");
                                 setSprinFiles([]);
                               },
-                              style: { padding: "0.4rem 0.85rem", borderRadius: "8px", border: "none", background: "#d97706", color: "#fff", fontWeight: 800, fontSize: "0.76rem", cursor: "pointer" },
-                              children: "📜 + Tambah Revisi Sprin Baru"
+                              style: { padding: "0.4rem 0.85rem", borderRadius: "8px", border: "none", background: "#d97706", color: "#fff", fontWeight: 800, fontSize: "0.76rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.35rem" },
+                              children: [jsx("i", { className: "pi pi-plus", style: { fontSize: "0.72rem" } }), "Tambah Revisi Sprin Baru"]
                             })
                           ]
                         }),
@@ -1387,6 +1485,7 @@
                           style: { display: "grid", gap: "0.55rem" },
                           children: drillSprinList.map(function(att, idx) {
                             var revNo = att.revisi_ke || (drillSprinList.length - idx);
+                            var meta = parseSprinAttMeta(att);
                             return jsxs("div", {
                               style: { padding: "0.8rem 1rem", borderRadius: "10px", background: "#fffbeb", border: "1px solid #fde68a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.8rem", flexWrap: "wrap" },
                               children: [
@@ -1398,30 +1497,30 @@
                                       children: [
                                         jsx("span", { style: { padding: "0.14rem 0.5rem", borderRadius: "999px", background: "#d97706", color: "#fff", fontSize: "0.7rem", fontWeight: 800 }, children: "Revisi #" + revNo + (revNo === 1 ? " (Sprin Awal)" : " (Pembaruan)") }),
                                         jsx("strong", { style: { fontSize: "0.85rem", color: "#0f172a" }, children: att.nomor_sprin || att.file_name || "—" }),
-                                        att.tanggal_sprin && jsx("span", { style: { fontSize: "0.75rem", color: "#475569", fontWeight: 600 }, children: "• Tgl Sprin: " + fmtDateId(att.tanggal_sprin) })
+                                        meta.tgl_mulai && jsx("span", { style: { fontSize: "0.75rem", color: "#475569", fontWeight: 600 }, children: "• Periode: " + fmtDateId(meta.tgl_mulai) + (meta.tgl_berakhir ? (" s/d " + fmtDateId(meta.tgl_berakhir)) : "") })
                                       ]
                                     }),
-                                    att.catatan_perubahan && jsx("div", { style: { fontSize: "0.77rem", color: "#78350f" }, children: "Catatan: " + att.catatan_perubahan }),
+                                    meta.catatan && jsx("div", { style: { fontSize: "0.77rem", color: "#78350f" }, children: "Catatan: " + meta.catatan }),
                                     jsxs("div", { style: { fontSize: "0.71rem", color: "#64748b" }, children: ["Berkas: ", att.file_name, " • Diunggah: ", fmtDateId(att.created_at)] })
                                   ]
                                 }),
                                 jsxs("div", {
                                   style: { display: "flex", gap: "0.4rem" },
                                   children: [
-                                    att.url && jsx("button", {
+                                    att.url && jsxs("button", {
                                       type: "button",
                                       onClick: function() { setPreviewFile({ name: att.file_name, url: att.url }); },
                                       className: "att-btn primary",
-                                      style: { padding: "0.3rem 0.65rem", fontSize: "0.74rem", cursor: "pointer" },
-                                      children: "📄 Pratinjau PDF"
+                                      style: { padding: "0.3rem 0.65rem", fontSize: "0.74rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.28rem" },
+                                      children: [jsx("i", { className: "pi pi-file-pdf", style: { fontSize: "0.72rem" } }), "Pratinjau PDF"]
                                     }),
-                                    att.url && jsx("a", {
+                                    att.url && jsxs("a", {
                                       href: att.url,
                                       target: "_blank",
                                       rel: "noreferrer",
                                       className: "att-btn",
-                                      style: { padding: "0.3rem 0.65rem", fontSize: "0.74rem", textDecoration: "none" },
-                                      children: "⬇️ Unduh"
+                                      style: { padding: "0.3rem 0.65rem", fontSize: "0.74rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.28rem" },
+                                      children: [jsx("i", { className: "pi pi-download", style: { fontSize: "0.72rem" } }), "Unduh"]
                                     })
                                   ]
                                 })
@@ -1440,7 +1539,7 @@
                           children: [
                             jsxs("div", {
                               children: [
-                                jsx("div", { style: { fontWeight: 800, fontSize: "0.84rem", color: "#065f46" }, children: "📸 Lampiran Dokumentasi Judul Kasus / Kegiatan" }),
+                                jsxs("div", { style: { fontWeight: 800, fontSize: "0.84rem", color: "#065f46", display: "flex", alignItems: "center", gap: "0.35rem" }, children: [jsx("i", { className: "pi pi-image" }), "Lampiran Dokumentasi Judul Kasus / Kegiatan"] }),
                                 jsx("div", { style: { fontSize: "0.75rem", color: "#047857" }, children: "Dokumentasi foto kegiatan, rilis pers, barang bukti, atau paparan yang melekat pada judul ini." })
                               ]
                             })
@@ -1458,27 +1557,28 @@
                                 jsxs("div", {
                                   children: [
                                     jsx("div", { style: { fontWeight: 800, fontSize: "0.82rem", color: "#0f172a" }, children: att.judul_dokumentasi || att.file_name }),
+                                    att.catatan_perubahan && jsx("div", { style: { fontSize: "0.74rem", color: "#475569", marginTop: "0.12rem" }, children: att.catatan_perubahan }),
                                     jsx("div", { style: { fontSize: "0.72rem", color: "#64748b", marginTop: "0.15rem" }, children: att.file_name + (att.size ? (" (" + Math.round(Number(att.size) / 1024) + " KB)") : "") }),
-                                    jsx("div", { style: { fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.1rem" }, children: "Diunggah: " + fmtDateId(att.created_at) })
+                                    jsx("div", { style: { fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.1rem" }, children: "Tanggal Giat: " + fmtDateId(att.tanggal_sprin || att.created_at) })
                                   ]
                                 }),
                                 jsxs("div", {
                                   style: { display: "flex", gap: "0.4rem" },
                                   children: [
-                                    att.url && jsx("button", {
+                                    att.url && jsxs("button", {
                                       type: "button",
                                       onClick: function() { setPreviewFile({ name: att.file_name, url: att.url }); },
                                       className: "att-btn primary",
-                                      style: { padding: "0.28rem 0.6rem", fontSize: "0.73rem", cursor: "pointer" },
-                                      children: "👁️ Pratinjau"
+                                      style: { padding: "0.28rem 0.6rem", fontSize: "0.73rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                                      children: [jsx("i", { className: "pi pi-eye", style: { fontSize: "0.7rem" } }), "Pratinjau"]
                                     }),
-                                    att.url && jsx("a", {
+                                    att.url && jsxs("a", {
                                       href: att.url,
                                       target: "_blank",
                                       rel: "noreferrer",
                                       className: "att-btn",
-                                      style: { padding: "0.28rem 0.6rem", fontSize: "0.73rem", textDecoration: "none" },
-                                      children: "⬇️ Unduh"
+                                      style: { padding: "0.28rem 0.6rem", fontSize: "0.73rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                                      children: [jsx("i", { className: "pi pi-download", style: { fontSize: "0.7rem" } }), "Unduh"]
                                     })
                                   ]
                                 })
@@ -1509,18 +1609,18 @@
           children: jsxs("div", {
             className: "cas-modal",
             onClick: function(ev) { ev.stopPropagation(); },
-            style: { width: "36rem", maxWidth: "min(94vw, 680px)", background: "var(--cas-bg-surface, #ffffff)", color: "var(--cas-text-primary, #0f172a)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "14px", padding: "1.25rem 1.35rem", boxShadow: "0 20px 50px rgba(2,6,23,0.35)", display: "grid", gap: "0.85rem" },
+            style: { width: "40rem", maxWidth: "min(94vw, 680px)", background: "var(--cas-bg-surface, #ffffff)", color: "var(--cas-text-primary, #0f172a)", border: "1px solid var(--cas-border, #cbd5e1)", borderRadius: "14px", padding: "1.25rem 1.35rem", boxShadow: "0 20px 50px rgba(2,6,23,0.35)", display: "grid", gap: "0.85rem" },
             children: [
               jsxs("div", {
                 style: { display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "0.65rem", borderBottom: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
-                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "#d97706" }, children: "📜 Tambah / Update Revisi Lampiran Sprin" }),
-                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
+                  jsxs("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "#d97706", display: "flex", alignItems: "center", gap: "0.4rem" }, children: [jsx("i", { className: "pi pi-file-pdf" }), "Tambah / Update Revisi Lampiran Sprin"] }),
+                  jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: jsx("i", { className: "pi pi-times" }) })
                 ]
               }),
               jsx("div", { style: { fontSize: "0.8rem", fontWeight: 700, color: "var(--cas-text-secondary, #334155)" }, children: sprinQuickRow.judul || sprinQuickRow.nama }),
               jsxs("div", {
-                style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(14rem, 1fr))", gap: "0.65rem" },
+                style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(11rem, 1fr))", gap: "0.65rem" },
                 children: [
                   jsxs("div", {
                     children: [
@@ -1530,8 +1630,14 @@
                   }),
                   jsxs("div", {
                     children: [
-                      jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Tanggal Sprin" }),
+                      jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Periode Mulai Sprin" }),
                       jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), value: sprinTgl, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setSprinTgl(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box", padding: "0 0.5rem" } })
+                    ]
+                  }),
+                  jsxs("div", {
+                    children: [
+                      jsx("label", { style: { display: "block", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.25rem" }, children: "Periode Berakhir Sprin" }),
+                      jsx("input", { type: "date", max: new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), min: sprinTgl || undefined, value: sprinTglAkhir, onChange: function(e) { var td = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta"}).format(new Date()), v = e.target.value; setSprinTglAkhir(v && v > td ? td : v); }, className: "p-inputtext p-component", style: { width: "100%", height: "38px", boxSizing: "border-box", padding: "0 0.5rem" } })
                     ]
                   })
                 ]
@@ -1552,7 +1658,7 @@
                 style: { display: "flex", justifyContent: "flex-end", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", paddingTop: "0.75rem", borderTop: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
                   jsx("button", { type: "button", onClick: function() { setSprinQuickRow(null); }, className: "att-btn", style: { padding: "0.45rem 0.9rem", cursor: "pointer" }, children: "Batal" }),
-                  jsx("button", { type: "button", disabled: sprinSaving, onClick: handleQuickSprinUpload, className: "att-btn primary", style: { padding: "0.45rem 1rem", cursor: "pointer", fontWeight: 800 }, children: sprinSaving ? "Menyimpan…" : "☁️ Simpan Revisi Sprin" })
+                  jsxs("button", { type: "button", disabled: sprinSaving, onClick: handleQuickSprinUpload, className: "att-btn primary", style: { padding: "0.45rem 1rem", cursor: "pointer", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [jsx("i", { className: "pi pi-upload", style: { fontSize: "0.76rem" } }), sprinSaving ? "Menyimpan…" : "Simpan Revisi Sprin"] })
                 ]
               })
             ]
@@ -1573,8 +1679,8 @@
               jsxs("div", {
                 style: { display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "0.65rem", borderBottom: "1px solid var(--cas-border, #e2e8f0)" },
                 children: [
-                  jsx("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "var(--cas-text-primary, #0f172a)" }, children: "🔍 Rincian Alur & Dokumen Penyidikan LP: " + (lpTimelineModal.no_laporan || "") }),
-                  jsx("button", { type: "button", onClick: function() { setLpTimelineModal(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: "✕" })
+                  jsxs("div", { style: { fontWeight: 800, fontSize: "0.95rem", color: "var(--cas-text-primary, #0f172a)", display: "flex", alignItems: "center", gap: "0.4rem" }, children: [jsx("i", { className: "pi pi-search" }), "Rincian Alur & Dokumen Penyidikan LP: " + (lpTimelineModal.no_laporan || "")] }),
+                  jsx("button", { type: "button", onClick: function() { setLpTimelineModal(null); }, style: { border: "none", background: "transparent", color: "var(--cas-text-secondary, #475569)", fontSize: "1rem", cursor: "pointer" }, children: jsx("i", { className: "pi pi-times" }) })
                 ]
               }),
               lpTimelineLoading ? jsx("div", { style: { padding: "1.5rem", textAlign: "center", color: "#64748b" }, children: "Memuat timeline dokumen LP…" }) :
@@ -1595,12 +1701,12 @@
                       jsxs("div", {
                         style: { display: "flex", gap: "0.35rem" },
                         children: (d.lampiran || []).map(function(att, k) {
-                          return jsx("button", {
+                          return jsxs("button", {
                             type: "button",
                             onClick: function() { setPreviewFile({ name: att.name || "Dokumen.pdf", url: att.url }); },
                             className: "att-btn primary",
-                            style: { padding: "0.25rem 0.55rem", fontSize: "0.72rem", cursor: "pointer" },
-                            children: "📄 Lihat PDF"
+                            style: { padding: "0.25rem 0.55rem", fontSize: "0.72rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                            children: [jsx("i", { className: "pi pi-file-pdf", style: { fontSize: "0.7rem" } }), "Lihat PDF"]
                           }, k);
                         })
                       })
@@ -1625,7 +1731,7 @@
                 className: "p-dialog-header cas-std-modal-header",
                 style: { padding: "0.9rem 1.25rem", background: "var(--cas-card-bg, #ffffff)", color: "var(--cas-text-primary, #0f172a)", borderBottom: "1px solid var(--cas-border, #e2e8f0)", display: "flex", alignItems: "center", justifyContent: "space-between" },
                 children: [
-                  jsx("span", { className: "p-dialog-title", style: { fontWeight: 800, fontSize: "0.98rem", color: "var(--cas-text-primary, #0f172a)" }, children: "📎 " + (previewFile.name || "Pratinjau Berkas") }),
+                  jsxs("span", { className: "p-dialog-title", style: { fontWeight: 800, fontSize: "0.98rem", color: "var(--cas-text-primary, #0f172a)", display: "inline-flex", alignItems: "center", gap: "0.4rem" }, children: [jsx("i", { className: "pi pi-paperclip" }), previewFile.name || "Pratinjau Berkas"] }),
                   jsxs("div", {
                     className: "p-dialog-header-icons",
                     style: { display: "flex", gap: "0.35rem", alignItems: "center" },
@@ -1662,7 +1768,7 @@
                 className: "p-dialog-footer cas-std-modal-footer",
                 style: { padding: "0.75rem 1.25rem", background: "var(--cas-bg-subtle, #f8fafc)", borderTop: "1px solid var(--cas-border, #e2e8f0)", display: "flex", justifyContent: "space-between", alignItems: "center" },
                 children: [
-                  previewFile.url ? jsx("a", { href: previewFile.url, target: "_blank", rel: "noreferrer", className: "att-btn", style: { fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", padding: "0.4rem 0.85rem" }, children: "⬇️ Buka / Unduh di Tab Baru" }) : jsx("span", {}),
+                  previewFile.url ? jsxs("a", { href: previewFile.url, target: "_blank", rel: "noreferrer", className: "att-btn", style: { fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", padding: "0.4rem 0.85rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }, children: [jsx("i", { className: "pi pi-download", style: { fontSize: "0.74rem" } }), "Buka / Unduh di Tab Baru"] }) : jsx("span", {}),
                   jsx("button", { type: "button", onClick: function() { setPreviewFile(null); }, className: "att-btn primary", style: { padding: "0.4rem 1rem", fontWeight: 700, cursor: "pointer" }, children: "Tutup" })
                 ]
               })

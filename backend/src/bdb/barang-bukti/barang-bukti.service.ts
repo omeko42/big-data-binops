@@ -54,47 +54,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
     private async normalizeManualBarangBuktiToMasterDors() {
         try {
             await this.dataSource.query(`
-                UPDATE bdb_lp_barang_bukti_manual m
-                SET
-                    keterangan = CASE
-                        WHEN COALESCE(TRIM(m.keterangan), '') = '' THEN TRIM(m.jenis)
-                        WHEN POSITION(LOWER(TRIM(m.jenis)) IN LOWER(TRIM(m.keterangan))) > 0 THEN TRIM(m.keterangan)
-                        ELSE TRIM(m.jenis) || ' · ' || TRIM(m.keterangan)
-                    END,
-                    jenis = CASE
-                        WHEN UPPER(m.jenis) ~ '(PUPUK|UREA|PHONSKA|NPK)' THEN 'PUPUK'
-                        WHEN UPPER(m.jenis) ~ '(HANDPHONE|HP |NOKIA|IPHONE|SAMSUNG|XIAOMI|OPPO|VIVO|REALME|INFINIX|TELEPON)' THEN 'HANDPHONE'
-                        WHEN UPPER(m.jenis) ~ '(AYAM|UNGGAS)' THEN 'AYAM'
-                        WHEN UPPER(m.jenis) ~ '(SAPI|KERBAU|KAMBING|DOMBA|BABI|TERNAK)' THEN 'HEWAN TERNAK'
-                        WHEN UPPER(m.jenis) ~ '(SABUK|IKAT PINGGANG)' THEN 'IKAT PINGGANG'
-                        WHEN UPPER(m.jenis) ~ '(KAIN|BATIK|SARUNG|SELENDANG|HANDUK)' THEN 'KAIN'
-                        WHEN UPPER(m.jenis) ~ '(SEPEDA MOTOR|MOTOR|HONDA|YAMAHA|SUZUKI|KAWASAKI|VESPA)' THEN 'SEPEDA MOTOR'
-                        WHEN UPPER(m.jenis) ~ '(MOBIL|TRUK|PICK UP|AVANZA|XENIA|INNOVA|PAJERO|FORTUNER)' THEN 'MOBIL'
-                        WHEN UPPER(m.jenis) ~ '(STNK)' THEN 'STNK'
-                        WHEN UPPER(m.jenis) ~ '(BPKB)' THEN 'BPKB'
-                        WHEN UPPER(m.jenis) ~ '(ANAK PANAH|BUSUR|PANAH|KETAPEL)' THEN 'SENJATA TAJAM'
-                        WHEN UPPER(m.jenis) ~ '(PARANG|GOLOK|CELURIT|BADIK|PEDANG|PISAU|BELATI|KERIS|TOMBAK| MANDAU|SABIT)' THEN 'SENJATA TAJAM'
-                        WHEN UPPER(m.jenis) ~ '(AMUNISI|PELURU|SELONGSONG|SENJATA API|SENPI|PISTOL|REVOLVER|AIRSOFT)' THEN 'SENJATA API / AMUNISI'
-                        WHEN UPPER(m.jenis) ~ '(ROKOK|TEMBAKAU|CERUTU)' THEN 'ROKOK'
-                        WHEN UPPER(m.jenis) ~ '(BAJU|KAOS|KEMEJA|CELANA|JAKET|SWEATER|PAKAIAN|GAMIS|JILBAB|KERUDUNG|TOPI|HELM|SEPATU|SANDAL)' THEN 'PAKAIAN'
-                        WHEN UPPER(m.jenis) ~ '(TAS |RANSEL|DOMPET|KOPER)' THEN 'TAS / DOMPET'
-                        WHEN UPPER(m.jenis) ~ '(UANG|RUPIAH|TUNAI|LOGAM|KERTAS)' THEN 'UANG TUNAI'
-                        WHEN UPPER(m.jenis) ~ '(BUKTI TRANSFER|REKENING|ATM|STRUK|KWITANSI|NOTA|CEK |GIRO|INVOICE)' THEN 'DOKUMEN KEUANGAN'
-                        WHEN UPPER(m.jenis) ~ '(AKTA|SERTIFIKAT|SURAT|DOKUMEN|IJAZAH|KTP|KK |KARTU KELUARGA|PASPOR|SIM |BERKAS)' THEN 'DOKUMEN / SURAT'
-                        WHEN UPPER(m.jenis) ~ '(SABU|GANJA|EKSTASI|NARKOTIKA|PSIKOTROPIKA|OBAT|PIL |TRAMADOL|HEXYMER)' THEN 'NARKOTIKA / OBAT TERLARANG'
-                        WHEN UPPER(m.jenis) ~ '(LAPTOP|KOMPUTER|FLASHDISK|HARDDISK|CCTV|REKAMAN|MEMORY|SIM CARD)' THEN 'PERANGKAT ELEKTRONIK'
-                        WHEN UPPER(m.jenis) ~ '(EMAS|CINCIN|KALUNG|GELANG|ANTING|PERHIASAN|JAM TANGAN)' THEN 'PERHIASAN'
-                        WHEN UPPER(m.jenis) ~ '(KAYU|BALOK|PAPAN|ROTAN)' THEN 'KAYU'
-                        WHEN UPPER(m.jenis) ~ '(BESI|BAJA|KABEL|TEMBAGA|ALUMINIUM|PLAT|LINGGIS|KUNCI|OBENG|PALU|TANG )' THEN 'ALAT / PERKAKAS'
-                        WHEN UPPER(m.jenis) ~ '(SOLAR|PERTALITE|PERTAMAX|BBM|BENSIN|MINYAK|GAS |LPG|TABUNG)' THEN 'BBM / MIGAS'
-                        ELSE UPPER(TRIM(m.jenis))
-                    END
-                WHERE m.deleted_at IS NULL
-                  AND (
-                      m.jenis <> UPPER(TRIM(m.jenis))
-                      OR LENGTH(TRIM(m.jenis)) > 26
-                      OR COALESCE(TRIM(m.keterangan), '') = ''
-                  );
+                ALTER TABLE bdb_lp_barang_bukti_manual ADD COLUMN IF NOT EXISTS satuan text;
+                ALTER TABLE bdb_dors_lp_barang_bukti ADD COLUMN IF NOT EXISTS satuan text;
             `);
             this.summaryCache.clear();
             this.listCache.clear();
@@ -105,85 +66,30 @@ export class BarangBuktiService implements OnApplicationBootstrap {
 
     async listMasterJenis(search?: string) {
         if (!this.masterJenisCache || this.masterJenisCache.expiresAt <= Date.now()) {
-            const rows = await this.dataSource.query(`
-                WITH master_src AS (
-                    SELECT
-                        UPPER(TRIM(jenis)) AS jenis,
-                        COALESCE(NULLIF(UPPER(TRIM(kelompok)), ''), 'MASTER DORS') AS kelompok,
-                        COALESCE(NULLIF(UPPER(TRIM(satuan)), ''), 'BUAH') AS satuan,
-                        1 AS prio
-                    FROM cm_jenis_barang_bukti
-                    WHERE COALESCE(TRIM(jenis), '') NOT IN ('', '-', 'NULL')
-                    UNION ALL
-                    SELECT
-                        UPPER(TRIM(jenis_bb)) AS jenis,
-                        'SINKRON DORS' AS kelompok,
-                        'BUAH' AS satuan,
-                        2 AS prio
-                    FROM (
-                        SELECT DISTINCT jenis_bb
-                        FROM bdb_dors_lp_barang_bukti
-                        WHERE COALESCE(TRIM(jenis_bb), '') NOT IN ('', '-', 'NULL', 'TIDAK DIKETAHUI')
-                        LIMIT 400
-                    ) d
-                ),
-                curated AS (
-                    SELECT * FROM (VALUES
-                        ('HANDPHONE', 'ELEKTRONIK', 'UNIT', 0),
-                        ('SEPEDA MOTOR', 'KENDARAAN BERMOTOR', 'UNIT', 0),
-                        ('MOBIL', 'KENDARAAN BERMOTOR', 'UNIT', 0),
-                        ('STNK', 'DOKUMEN KENDARAAN', 'LEMBAR', 0),
-                        ('BPKB', 'DOKUMEN KENDARAAN', 'BUKU', 0),
-                        ('UANG TUNAI', 'KEUANGAN', 'RUPIAH', 0),
-                        ('DOKUMEN KEUANGAN', 'KEUANGAN', 'LEMBAR', 0),
-                        ('DOKUMEN / SURAT', 'DOKUMEN', 'BERKAS', 0),
-                        ('AKTA KELAHIRAN', 'DOKUMEN', 'LEMBAR', 0),
-                        ('SERTIFIKAT TANAH', 'DOKUMEN', 'BUKU', 0),
-                        ('SENJATA TAJAM', 'SENJATA', 'BILAH', 0),
-                        ('SENJATA API / AMUNISI', 'SENJATA', 'BUTIR / PUCUK', 0),
-                        ('NARKOTIKA / OBAT TERLARANG', 'NARKOTIKA', 'GRAM / BUTIR', 0),
-                        ('PERANGKAT ELEKTRONIK', 'ELEKTRONIK', 'UNIT', 0),
-                        ('PAKAIAN', 'BARANG PRIBADI', 'POTONG', 0),
-                        ('IKAT PINGGANG', 'BARANG PRIBADI', 'BUAH', 0),
-                        ('KAIN', 'BARANG PRIBADI', 'HELAI', 0),
-                        ('TAS / DOMPET', 'BARANG PRIBADI', 'BUAH', 0),
-                        ('PERHIASAN', 'BARANG BERHARGA', 'GRAM / BUAH', 0),
-                        ('PUPUK', 'PERTANIAN / PERKEBUNAN', 'KARUNG', 0),
-                        ('AYAM', 'PETERNAKAN', 'EKOR', 0),
-                        ('HEWAN TERNAK', 'PETERNAKAN', 'EKOR', 0),
-                        ('ROKOK', 'BARANG KONSUMSI', 'BUNGKUS / SLOP', 0),
-                        ('KAYU', 'KEHUTANAN', 'BATANG / KUBIK', 0),
-                        ('BBM / MIGAS', 'ENERGI & MIGAS', 'LITER / TABUNG', 0),
-                        ('ALAT / PERKAKAS', 'PERKAKAS', 'BUAH', 0)
-                    ) AS t(jenis, kelompok, satuan, prio)
-                ),
-                dedup AS (
-                    SELECT DISTINCT ON (jenis)
-                        jenis, kelompok, satuan, prio
-                    FROM (
-                        SELECT * FROM curated
-                        UNION ALL
-                        SELECT * FROM master_src
-                    ) u
-                    WHERE LENGTH(jenis) >= 2
-                    ORDER BY jenis, prio ASC
-                )
-                SELECT jenis, kelompok, satuan
-                FROM dedup
-                ORDER BY prio ASC, jenis ASC
-            `);
-            const items = (rows || []).map((r: any) => ({
-                label: String(r.jenis),
-                value: String(r.jenis),
-                kelompok: String(r.kelompok || 'MASTER DORS'),
-                satuan: String(r.satuan || '')
-            }));
+            const items = [
+                { label: 'Kendaraan Bermotor', value: 'Kendaraan Bermotor', kelompok: 'KENDARAAN', satuan: 'Unit' },
+                { label: 'Perangkat Elektronik & Komunikasi', value: 'Perangkat Elektronik & Komunikasi', kelompok: 'ELEKTRONIK', satuan: 'Unit' },
+                { label: 'Alat Penerangan & Kelistrikan', value: 'Alat Penerangan & Kelistrikan', kelompok: 'KELISTRIKAN', satuan: 'Unit' },
+                { label: 'Hewan & Ternak', value: 'Hewan & Ternak', kelompok: 'PETERNAKAN & SATWA', satuan: 'Ekor' },
+                { label: 'Dokumen & Surat Berharga', value: 'Dokumen & Surat Berharga', kelompok: 'DOKUMEN', satuan: 'Lembar' },
+                { label: 'Uang Tunai & Logam Mulia', value: 'Uang Tunai & Logam Mulia', kelompok: 'KEUANGAN & PERHIASAN', satuan: 'Rupiah' },
+                { label: 'Narkotika, Psikotropika & Obat', value: 'Narkotika, Psikotropika & Obat', kelompok: 'NARKOTIKA & OBAT', satuan: 'Gram' },
+                { label: 'Senjata Tajam', value: 'Senjata Tajam', kelompok: 'SENJATA', satuan: 'Bilah' },
+                { label: 'Senjata Api & Bahan Peledak', value: 'Senjata Api & Bahan Peledak', kelompok: 'SENJATA', satuan: 'Pucuk' },
+                { label: 'Pakaian, Tekstil & Aksesoris', value: 'Pakaian, Tekstil & Aksesoris', kelompok: 'SANDANG & PRIBADI', satuan: 'Potong' },
+                { label: 'Perkakas, Mesin & Alat Berat', value: 'Perkakas, Mesin & Alat Berat', kelompok: 'PERKAKAS & MESIN', satuan: 'Unit' },
+                { label: 'Bahan Bakar, Kimia & Material', value: 'Bahan Bakar, Kimia & Material', kelompok: 'ENERGI & MATERIAL', satuan: 'Liter' },
+                { label: 'Pangan, Pertanian & Perkebunan', value: 'Pangan, Pertanian & Perkebunan', kelompok: 'PERTANIAN & KONSUMSI', satuan: 'Kg' },
+                { label: 'Perabotan & Alat Rumah Tangga', value: 'Perabotan & Alat Rumah Tangga', kelompok: 'RUMAH TANGGA', satuan: 'Buah' },
+                { label: 'Alat Perjudian & Permainan', value: 'Alat Perjudian & Permainan', kelompok: 'PERJUDIAN', satuan: 'Set' },
+                { label: 'Barang Bukti Lainnya', value: 'Barang Bukti Lainnya', kelompok: 'UMUM', satuan: 'Buah' },
+            ];
             this.masterJenisCache = { expiresAt: Date.now() + 600000, items };
         }
 
         const q = String(search || '').trim().toUpperCase();
         const filtered = q
-            ? this.masterJenisCache.items.filter(it => it.label.includes(q) || it.kelompok.includes(q))
+            ? this.masterJenisCache.items.filter(it => it.label.toUpperCase().includes(q) || it.kelompok.toUpperCase().includes(q))
             : this.masterJenisCache.items;
         return { data: filtered };
     }
@@ -287,27 +193,74 @@ export class BarangBuktiService implements OnApplicationBootstrap {
     }
 
     private normalizedJenisSql(alias = 'bb'): string {
+        const src = `concat_ws(' ', ${alias}.jenis_bb, ${alias}.keterangan, ${alias}.ran_jenis, ${alias}.ran_merk)`;
         return `case
-            when upper(trim(coalesce(${alias}.jenis_bb, ''))) not in ('', '-', 'TIDAK DIKETAHUI', 'LAIN-LAIN', 'LAINNYA', 'NIHIL', 'NULL')
-                then trim(${alias}.jenis_bb)
-            when nullif(trim(coalesce(${alias}.ran_jenis, '')), '') is not null
-                 or nullif(trim(coalesce(${alias}.ran_merk, '')), '') is not null
-                 or upper(coalesce(${alias}.keterangan, '')) ~ '(SEPEDA MOTOR|MOBIL|KENDARAAN|STNK|BPKB|NOPOL|PLAT NOMOR|HONDA|YAMAHA|SUZUKI|TOYOTA|DAIHATSU|MITSUBISHI|KAWASAKI|TRUK|PICK UP)'
-                then 'Kendaraan / Ranmor'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(HANDPHONE|HP |IPHONE|SAMSUNG|XIAOMI|OPPO|VIVO|REALME|INFINIX|LAPTOP|KOMPUTER|FLASHDISK|REKAMAN|CCTV|SIM CARD|SCREENSHOT|TANGKAPAN LAYAR|ELEKTRONIK)'
-                then 'Elektronik / Digital'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(UANG|RUPIAH|RP\\.|RP |REKENING|BUKTI TRANSFER|MUTASI|ATM|CEK |GIRO|TUNAI|STRUK|KWITANSI)'
-                then 'Uang / Bukti Keuangan'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(SURAT|DOKUMEN|AKTA|SERTIFIKAT|IJAZAH|KTP|KARTU KELUARGA|PERJANJIAN|KONTRAK|BERKAS|NOTA|FAKTUR|INVOICE)'
-                then 'Dokumen / Surat'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(SABU|GANJA|EKSTASI|NARKOBA|NARKOTIKA|OBAT|PIL |TRAMADOL|HEXYMER|TEMBAKAU|BONG |PIPET|TIMBANGAN)'
-                then 'Narkotika / Obat'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(SENJATA|PISAU|PARANG|CELURIT|GOLOK|BADIK|PEDANG|SENPI|PELURU|AMUNISI|AIRSOFT|TAJAM|BESI|KAYU|BATU)'
-                then 'Senjata / Tajam'
-            when upper(coalesce(${alias}.keterangan, '')) ~ '(BAJU|KAOS|CELANA|JAKET|PAKAIAN|SEPATU|SANDAL|TAS |DOMPET|HELM|TOPI|JAM TANGAN|EMAS|PERHIASAN|CINCIN|KALUNG)'
-                then 'Pakaian / Barang Pribadi'
-            else coalesce(nullif(trim(${alias}.kode_bb), ''), 'Barang Bukti Umum')
+            when trim(coalesce(${alias}.jenis_bb, '')) in (
+                'Kendaraan Bermotor','Perangkat Elektronik & Komunikasi','Alat Penerangan & Kelistrikan',
+                'Hewan & Ternak','Dokumen & Surat Berharga','Uang Tunai & Logam Mulia',
+                'Narkotika, Psikotropika & Obat','Senjata Tajam','Senjata Api & Bahan Peledak',
+                'Pakaian, Tekstil & Aksesoris','Perkakas, Mesin & Alat Berat','Bahan Bakar, Kimia & Material',
+                'Pangan, Pertanian & Perkebunan','Perabotan & Alat Rumah Tangga','Alat Perjudian & Permainan',
+                'Barang Bukti Lainnya'
+            ) then trim(${alias}.jenis_bb)
+            when (nullif(trim(coalesce(${alias}.ran_jenis, '')), '') is not null
+                  or nullif(trim(coalesce(${alias}.ran_merk, '')), '') is not null
+                  or ${src} ~* '(sepeda\\s*motor|motor|mobil|truk|truck|pickup|pick\\s*up|bus|ambulans|kendaraan|nopol|plat\\s*nomor|helm|ban\\s*luar|velg|knalpot|honda|yamaha|suzuki|kawasaki|toyota|daihatsu|mitsubishi)')
+                 and coalesce(${alias}.jenis_bb, '') !~* '^(stnk|bpkb|dokumen|surat)'
+                then 'Kendaraan Bermotor'
+            when ${src} ~* '(handphone|\\bhp\\b|ponsel|iphone|samsung|xiaomi|oppo|vivo|realme|infinix|redmi|nokia|laptop|komputer|pc\\b|tablet|ipad|modem|router|flashdisk|harddisk|memory|sim\\s*card|kartu\\s*sim|cctv|kamera|recorder|ht\\b|walkie|elektronik|telepon|tv\\b|televisi|monitor|printer|speaker|headset|charger|powerbank)'
+                then 'Perangkat Elektronik & Komunikasi'
+            when ${src} ~* '(senter|lampu|bohlam|kabel|listrik|aki\\b|baterai|battery|genset|inverter|trav?o|saklar|stop\\s*kontak|meteran\\s*listrik|solder)'
+                then 'Alat Penerangan & Kelistrikan'
+            when ${src} ~* '(ayam|sapi|kerbau|kambing|domba|babi|anjing|kucing|burung|ikan|udang|benur|bibit\\s*lobster|ternak|hewan|satwa|unggas|itik|bebek|kuda)'
+                then 'Hewan & Ternak'
+            when ${src} ~* '(dokumen|surat|akta|sertifikat|ijazah|ktp|kk\\b|kartu\\s*keluarga|sim\\b|paspor|stnk|bpkb|kwitansi|kuitansi|nota|faktur|invoice|rekening|buku\\s*tabungan|atm|cek\\b|bilyet|giro|perjanjian|kontrak|berkas|arsip|stempel|materai|bukti\\s*transfer|struk|laporan|formulir|sk\\b|sppkp)'
+                then 'Dokumen & Surat Berharga'
+            when ${src} ~* '(uang|rupiah|\\brp\\b|tunai|logam\\s*mulia|emas|perak|cincin|kalung|gelang|anting|perhiasan|berlian|dollar|ringgit|valas)'
+                then 'Uang Tunai & Logam Mulia'
+            when ${src} ~* '(sabu|shabu|ganja|ekstasi|inex|heroin|kokain|morfin|narkotika|psikotropika|obat|pil\\b|tablet|kapsul|tramadol|hexymer|trihex|dextro|double\\s*l|bong\\b|pipet|pirek|timbangan\\s*digital.*sabu|alat\\s*hisap|tembakau\\s*gorila|sinte)'
+                then 'Narkotika, Psikotropika & Obat'
+            when ${src} ~* '(pisau|parang|golok|celurit|clurit|pedang|badik|keris|rencong|belati|mandau|tombak|panah|busur|sajam|senjata\\s*tajam|sabit|arit|kampak|kapak|kujang|sangkur|cutter|silet|gunting)'
+                then 'Senjata Tajam'
+            when ${src} ~* '(senpi|senjata\\s*api|pistol|revolver|senapan|laras|amunisi|peluru|selongsong|proyektil|granat|bom|bahan\\s*peledak|petasan|mercon|airsoft|air\\s*gun)'
+                then 'Senjata Api & Bahan Peledak'
+            when ${src} ~* '(baju|kaos|kemeja|celana|jaket|sweater|hoodie|rok\\b|gamis|daster|jilbab|kerudung|hijab|cadar|zebo|sebo|topi|kupluk|sepatu|sandal|sendal|tas\\b|dompet|ransel|ikat\\s*pinggang|sabuk|kain|sarung|handuk|selimut|sprei|pakaian|celana\\s*dalam|bra\\b|kacamata|jam\\s*tangan)'
+                then 'Pakaian, Tekstil & Aksesoris'
+            when ${src} ~* '(gergaji|chainsaw|tojok|egrek|dodos|cangkul|sekop|linggis|palu|martil|obeng|kunci\\s*t\\b|kunci\\s*pas|kunci\\s*inggris|tang\\b|bor\\b|gerinda|las\\b|mesin|pompa|alkon|kompresor|excavator|ekskavator|buldoser|alat\\s*berat|traktor|timbangan|katrol|dongkrak|pahat|rantai)'
+                then 'Perkakas, Mesin & Alat Berat'
+            when ${src} ~* '(bbm|bensin|pertalite|pertamax|solar|biosolar|minyak\\s*tanah|oli\\b|pelumas|gas\\b|lpg|elpiji|tabung\\s*gas|pupuk|pestisida|herbisida|racun|kimia|asam|air\\s*keras|sianida|merkuri|batu\\s*bara|pasir|semen|besi|tembaga|aluminium|timah|bauksit|nikel|aspal|kayu|balok|papan)'
+                then 'Bahan Bakar, Kimia & Material'
+            when ${src} ~* '(sawit|tbs|tandan\\s*buah\\s*segar|brondolan|karet|getah|kopi|kakao|coklat|cengkeh|lada|kelapa|beras|padi|gabah|jagung|gula|tepung|minyak\\s*goreng|sembako|makanan|minuman|miras|minuman\\s*keras|tuak|ciu|arak|bir\\b|anggur|rokok|tembakau|buah|sayur|bawang|cabai)'
+                then 'Pangan, Pertanian & Perkebunan'
+            when ${src} ~* '(keranjang|ember|galon|jerigen|jiregen|botol|gelas|piring|mangkok|panci|wajan|kompor|kasur|lemari|meja|kursi|sofa|tempat\\s*tidur|karpet|tikar|terpal|karung|goni|kardus|kotak|box|tali|tambang|plastik|kantong|klip)'
+                then 'Perabotan & Alat Rumah Tangga'
+            when ${src} ~* '(judi|kartu\\s*remi|kartu\\s*domino|gaple|dadu|togel|kupon|rekapan|rolet|mesin\\s*slot|koin|chip|bola\\s*bilyar|arena\\s*sabung|gebyok)'
+                then 'Alat Perjudian & Permainan'
+            else 'Barang Bukti Lainnya'
         end`;
+    }
+
+    private normalizedSatuanSql(alias = 'bb', jenisExpr?: string): string {
+        const jExpr = jenisExpr || this.normalizedJenisSql(alias);
+        return `coalesce(
+            nullif(btrim(${alias}.satuan), ''),
+            case
+                when coalesce(${alias}.jumlah::text, '') ~* '\\b(unit|buah|pcs|lembar|berkas|ekor|gram|kg|kilogram|liter|ml|botol|butir|paket|bungkus|karung|batang|bilah|pucuk|pasang|potong|helai|set|kotak|dus|roll|meter|rupiah|tabung|jerigen|keping)\\b'
+                    then initcap((regexp_match(${alias}.jumlah::text, '\\b(unit|buah|pcs|lembar|berkas|ekor|gram|kg|kilogram|liter|ml|botol|butir|paket|bungkus|karung|batang|bilah|pucuk|pasang|potong|helai|set|kotak|dus|roll|meter|rupiah|tabung|jerigen|keping)\\b', 'i'))[1])
+                when (${jExpr}) in ('Kendaraan Bermotor', 'Perangkat Elektronik & Komunikasi', 'Alat Penerangan & Kelistrikan', 'Perkakas, Mesin & Alat Berat') then 'Unit'
+                when (${jExpr}) = 'Hewan & Ternak' then 'Ekor'
+                when (${jExpr}) = 'Dokumen & Surat Berharga' then 'Lembar'
+                when (${jExpr}) = 'Uang Tunai & Logam Mulia' then 'Rupiah'
+                when (${jExpr}) = 'Narkotika, Psikotropika & Obat' then 'Gram'
+                when (${jExpr}) = 'Senjata Tajam' then 'Bilah'
+                when (${jExpr}) = 'Senjata Api & Bahan Peledak' then 'Pucuk'
+                when (${jExpr}) = 'Pakaian, Tekstil & Aksesoris' then 'Potong'
+                when (${jExpr}) = 'Bahan Bakar, Kimia & Material' then 'Liter'
+                when (${jExpr}) = 'Pangan, Pertanian & Perkebunan' then 'Kg'
+                when (${jExpr}) = 'Alat Perjudian & Permainan' then 'Set'
+                else 'Buah'
+            end
+        )`;
     }
 
     private applyPeriodFilter(query: any, params: any[], where: string[]): void {
@@ -548,48 +501,34 @@ export class BarangBuktiService implements OnApplicationBootstrap {
         return result;
     }
 
-    /** Subquery gabungan DORS (dari JSON payload) + MANUAL, dipakai listByLpAll(). */
+    /** Subquery gabungan DORS + MANUAL, dipakai listByLpAll(). */
     private unionSql(): string {
         return `
-            select 'DORS' as sumber, concat('dors-', lp.id, '-', elem.ord)::text as row_id, lp.id as lp_id,
+            select 'DORS' as sumber, concat('dors-', bb.id)::text as row_id, bb.lp_id as lp_id,
                    null::text as nomor_register,
-                   case
-                       when upper(trim(coalesce(elem.item->>'jenis_bb', ''))) not in ('', '-', 'TIDAK DIKETAHUI', 'LAIN-LAIN', 'LAINNYA', 'NIHIL', 'NULL')
-                           then trim(elem.item->>'jenis_bb')
-                       when nullif(trim(coalesce(elem.item->>'ran_jenis', '')), '') is not null
-                            or nullif(trim(coalesce(elem.item->>'ran_merk', '')), '') is not null
-                            or upper(coalesce(elem.item->>'keterangan', '')) ~ '(SEPEDA MOTOR|MOBIL|KENDARAAN|STNK|BPKB|NOPOL|PLAT NOMOR|HONDA|YAMAHA|SUZUKI|TOYOTA|DAIHATSU|MITSUBISHI|KAWASAKI|TRUK|PICK UP)'
-                           then 'Kendaraan / Ranmor'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(HANDPHONE|HP |IPHONE|SAMSUNG|XIAOMI|OPPO|VIVO|REALME|INFINIX|LAPTOP|KOMPUTER|FLASHDISK|REKAMAN|CCTV|SIM CARD|SCREENSHOT|TANGKAPAN LAYAR|ELEKTRONIK)'
-                           then 'Elektronik / Digital'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(UANG|RUPIAH|RP\\.|RP |REKENING|BUKTI TRANSFER|MUTASI|ATM|CEK |GIRO|TUNAI|STRUK|KWITANSI)'
-                           then 'Uang / Bukti Keuangan'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(SURAT|DOKUMEN|AKTA|SERTIFIKAT|IJAZAH|KTP|KARTU KELUARGA|PERJANJIAN|KONTRAK|BERKAS|NOTA|FAKTUR|INVOICE)'
-                           then 'Dokumen / Surat'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(SABU|GANJA|EKSTASI|NARKOBA|NARKOTIKA|OBAT|PIL |TRAMADOL|HEXYMER|TEMBAKAU|BONG |PIPET|TIMBANGAN)'
-                           then 'Narkotika / Obat'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(SENJATA|PISAU|PARANG|CELURIT|GOLOK|BADIK|PEDANG|SENPI|PELURU|AMUNISI|AIRSOFT|TAJAM|BESI|KAYU|BATU)'
-                           then 'Senjata / Tajam'
-                       when upper(coalesce(elem.item->>'keterangan', '')) ~ '(BAJU|KAOS|CELANA|JAKET|PAKAIAN|SEPATU|SANDAL|TAS |DOMPET|HELM|TOPI|JAM TANGAN|EMAS|PERHIASAN|CINCIN|KALUNG)'
-                           then 'Pakaian / Barang Pribadi'
-                       else coalesce(nullif(trim(elem.item->>'kode_bb'), ''), 'Barang Bukti Umum')
-                   end as jenis,
-                   elem.item->>'jumlah' as jumlah,
+                   ${this.normalizedJenisSql('bb')} as jenis,
+                   bb.jumlah as jumlah,
+                   ${this.normalizedSatuanSql('bb')} as satuan,
                    null::text as kepemilikan,
                    null::date as tanggal_penyitaan,
                    'MASUK'::text as status,
-                   nullif(trim(concat_ws(' · ', elem.item->>'keterangan',
-                       nullif(concat_ws(' ', elem.item->>'ran_jenis', elem.item->>'ran_merk', elem.item->>'ran_type', elem.item->>'ran_no_registrasi'), ''))), '') as keterangan,
+                   nullif(trim(concat_ws(' · ', bb.keterangan,
+                       nullif(concat_ws(' ', bb.ran_jenis, bb.ran_merk, bb.ran_type, bb.ran_no_registrasi), ''))), '') as keterangan,
+                   nullif(trim(concat_ws(' · ', bb.keterangan,
+                       nullif(concat_ws(' ', bb.ran_jenis, bb.ran_merk, bb.ran_type, bb.ran_no_registrasi), ''))), '') as nama_barang,
                    false as can_delete,
                    lp.synced_at as created_at
-            from bdb_laporan_polisi lp
-            cross join lateral jsonb_array_elements(coalesce(lp.payload_json->'barang_bukti', '[]'::jsonb)) with ordinality as elem(item, ord)
+            from bdb_dors_lp_barang_bukti bb
+            join bdb_laporan_polisi lp on lp.id = bb.lp_id
             where lp.deleted_at is null
 
             union all
 
             select 'MANUAL' as sumber, m.id::text as row_id, m.lp_id,
-                   m.nomor_register, m.jenis, m.jumlah, m.kepemilikan, m.tanggal_penyitaan, m.status, m.keterangan,
+                   m.nomor_register, m.jenis, m.jumlah,
+                   coalesce(nullif(btrim(m.satuan), ''), 'Buah') as satuan,
+                   m.kepemilikan, m.tanggal_penyitaan, m.status, m.keterangan,
+                   m.keterangan as nama_barang,
                    true as can_delete, m.created_at
             from bdb_lp_barang_bukti_manual m
             where m.deleted_at is null
@@ -616,11 +555,14 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                    null::text as nomor_register,
                    ${this.normalizedJenisSql('bb')} as jenis,
                    bb.jumlah,
+                   ${this.normalizedSatuanSql('bb')} as satuan,
                    null::text as kepemilikan,
                    null::date as tanggal_penyitaan,
                    'MASUK'::text as status,
                    nullif(trim(concat_ws(' · ', bb.keterangan,
                        nullif(concat_ws(' ', bb.ran_jenis, bb.ran_merk, bb.ran_type, bb.ran_no_registrasi), ''))), '') as keterangan,
+                   nullif(trim(concat_ws(' · ', bb.keterangan,
+                       nullif(concat_ws(' ', bb.ran_jenis, bb.ran_merk, bb.ran_type, bb.ran_no_registrasi), ''))), '') as nama_barang,
                    false as can_delete,
                    lp.synced_at as created_at,
                    lp.no_laporan,
@@ -635,7 +577,10 @@ export class BarangBuktiService implements OnApplicationBootstrap {
             union all
 
             select 'MANUAL' as sumber, m.id::text as row_id, m.lp_id,
-                   m.nomor_register, m.jenis, m.jumlah, m.kepemilikan, m.tanggal_penyitaan, m.status, m.keterangan,
+                   m.nomor_register, m.jenis, m.jumlah,
+                   coalesce(nullif(btrim(m.satuan), ''), 'Buah') as satuan,
+                   m.kepemilikan, m.tanggal_penyitaan, m.status, m.keterangan,
+                   m.keterangan as nama_barang,
                    true as can_delete,
                    m.created_at,
                    lp.no_laporan,
@@ -758,6 +703,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                            null::text as nomor_register,
                            ${this.normalizedJenisSql('bb')} as jenis,
                            bb.jumlah,
+                           ${this.normalizedSatuanSql('bb')} as satuan,
                            null::text as kepemilikan,
                            null::date as tanggal_penyitaan,
                            'MASUK'::text as status,
@@ -784,6 +730,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                            null::text as nomor_register,
                            ${this.normalizedJenisSql('bb')} as jenis,
                            bb.jumlah,
+                           ${this.normalizedSatuanSql('bb')} as satuan,
                            null::text as kepemilikan,
                            null::date as tanggal_penyitaan,
                            'MASUK'::text as status,
@@ -814,6 +761,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                        m.nomor_register,
                        m.jenis,
                        m.jumlah,
+                       coalesce(nullif(btrim(m.satuan), ''), 'Buah') as satuan,
                        m.kepemilikan,
                        m.tanggal_penyitaan,
                        m.status,
@@ -854,8 +802,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
                 order by c.created_at desc nulls last, c.lp_id desc
                 limit $${limitParam} offset $${offsetParam}
              )
-             select p.sumber, p.row_id, p.lp_id, p.nomor_register, p.jenis, p.jumlah, p.kepemilikan, p.tanggal_penyitaan,
-                    p.status, p.keterangan, p.can_delete, p.created_at,
+             select p.sumber, p.row_id, p.lp_id, p.nomor_register, p.jenis, p.jumlah, p.satuan, p.kepemilikan, p.tanggal_penyitaan,
+                    p.status, p.keterangan, p.keterangan as nama_barang, p.can_delete, p.created_at,
                     p.no_laporan, p.satker_id, p.satker_nama, p.unit_satker_id, p.unit_satker_nama, p.unit_nama,
                     (select string_agg(x.txt, '; ') from (
                         select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''),'(tanpa kategori)')
@@ -886,8 +834,8 @@ export class BarangBuktiService implements OnApplicationBootstrap {
     async listByLpAll(authUser: any, lpId: number) {
         await this.assertLpAccess(authUser, lpId);
         const rows = await this.dataSource.query(
-            `select c.sumber, c.row_id, c.lp_id, c.nomor_register, c.jenis, c.jumlah, c.kepemilikan, c.tanggal_penyitaan,
-                    c.status, c.keterangan, c.can_delete, c.created_at
+            `select c.sumber, c.row_id, c.lp_id, c.nomor_register, c.jenis, c.jumlah, c.satuan, c.kepemilikan, c.tanggal_penyitaan,
+                    c.status, c.keterangan, c.nama_barang, c.can_delete, c.created_at
              from (${this.unionSql()}) c
              where c.lp_id = $1
              order by c.created_at desc`,
@@ -920,20 +868,22 @@ export class BarangBuktiService implements OnApplicationBootstrap {
         if (!jenis) throw new BadRequestException('Jenis barang bukti wajib diisi.');
         const status = String(dto?.status || 'MASUK').trim().toUpperCase();
         if (!STATUS_MANUAL.includes(status)) throw new BadRequestException(`Status harus salah satu dari: ${STATUS_MANUAL.join(', ')}.`);
+        const satuan = this.toText(dto?.satuan) || 'Buah';
 
         const rows = await this.dataSource.query(
-            `insert into bdb_lp_barang_bukti_manual (lp_id, nomor_register, jenis, jumlah, kepemilikan, tanggal_penyitaan, status, keterangan, created_by)
-             values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            `insert into bdb_lp_barang_bukti_manual (lp_id, nomor_register, jenis, jumlah, satuan, kepemilikan, tanggal_penyitaan, status, keterangan, created_by)
+             values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
              returning id`,
             [
                 lpId,
                 this.toText(dto?.nomor_register),
                 jenis,
                 this.toText(dto?.jumlah),
+                satuan,
                 this.toText(dto?.kepemilikan),
                 this.toDate(dto?.tanggal_penyitaan),
                 status,
-                this.toText(dto?.keterangan),
+                this.toText(dto?.keterangan ?? dto?.nama_barang),
                 authUser?.id ? Number(authUser.id) : null
             ]
         );
@@ -941,7 +891,7 @@ export class BarangBuktiService implements OnApplicationBootstrap {
         this.summaryCache.clear();
         this.listCache.clear();
 
-        await this.audit.log({ user: authUser, action: 'CREATE', entity: 'barang_bukti_manual', entityId: rows[0].id, meta: { lp_id: lpId, no_laporan: lp.no_laporan, jenis, status } });
+        await this.audit.log({ user: authUser, action: 'CREATE', entity: 'barang_bukti_manual', entityId: rows[0].id, meta: { lp_id: lpId, no_laporan: lp.no_laporan, jenis, satuan, status } });
 
         return this.detail(rows[0].id);
     }
@@ -949,40 +899,103 @@ export class BarangBuktiService implements OnApplicationBootstrap {
     async detail(id: number) {
         const rows = await this.dataSource.query('select * from bdb_lp_barang_bukti_manual where id=$1 and deleted_at is null', [id]);
         if (!rows.length) throw new NotFoundException('Data tidak ditemukan.');
-        return { sumber: 'MANUAL', row_id: rows[0].id, can_delete: true, ...rows[0] };
+        return { sumber: 'MANUAL', row_id: rows[0].id, can_delete: true, nama_barang: rows[0].keterangan, ...rows[0] };
     }
 
-    async updateManual(authUser: any, rowId: number, dto: any) {
+    async updateManual(authUser: any, rowIdRaw: string | number, dto: any) {
+        const rawStr = String(rowIdRaw ?? '').trim();
+        const isDors = /^dors-/i.test(rawStr) || String(dto?.sumber || '').toUpperCase() === 'DORS';
+
+        if (isDors) {
+            const cleaned = rawStr.replace(/^dors-/i, '');
+            const parts = cleaned.split('-').map((x) => Number(x));
+            let dorsRow: any = null;
+            if (parts.length === 1 && Number.isSafeInteger(parts[0]) && parts[0] > 0) {
+                const r = await this.dataSource.query('select * from bdb_dors_lp_barang_bukti where id=$1', [parts[0]]);
+                dorsRow = r[0] || null;
+            } else if (parts.length >= 2 && Number.isSafeInteger(parts[0]) && parts[0] > 0) {
+                const ord = Math.max(1, parts[1] || 1);
+                const r = await this.dataSource.query('select * from bdb_dors_lp_barang_bukti where lp_id=$1 order by id asc offset $2 limit 1', [parts[0], ord - 1]);
+                dorsRow = r[0] || null;
+            }
+            if (!dorsRow) throw new NotFoundException('Data barang bukti DORS tidak ditemukan.');
+            const lp = await this.assertLpAccess(authUser, Number(dorsRow.lp_id));
+
+            const satuan = this.toText(dto?.satuan) ?? dorsRow.satuan ?? 'Buah';
+            const jenis = this.toText(dto?.jenis) ?? dorsRow.jenis_bb;
+            const jumlah = this.toText(dto?.jumlah) ?? dorsRow.jumlah;
+            const keterangan = this.toText(dto?.keterangan ?? dto?.nama_barang) ?? dorsRow.keterangan;
+
+            await this.dataSource.query(
+                `update bdb_dors_lp_barang_bukti
+                 set satuan = $2, jenis_bb = $3, jumlah = $4, keterangan = $5
+                 where id = $1`,
+                [dorsRow.id, satuan, jenis, jumlah, keterangan]
+            );
+
+            this.summaryCache.clear();
+            this.listCache.clear();
+
+            await this.audit.log({ user: authUser, action: 'UPDATE', entity: 'barang_bukti_dors', entityId: dorsRow.id, meta: { lp_id: dorsRow.lp_id, no_laporan: lp.no_laporan, jenis, satuan } });
+
+            const updated = await this.dataSource.query('select * from bdb_dors_lp_barang_bukti where id=$1', [dorsRow.id]);
+            const u = updated[0] || dorsRow;
+            return {
+                sumber: 'DORS',
+                row_id: `dors-${u.id}`,
+                lp_id: u.lp_id,
+                jenis: u.jenis_bb,
+                jumlah: u.jumlah,
+                satuan: u.satuan || satuan,
+                status: 'MASUK',
+                keterangan: u.keterangan,
+                nama_barang: u.keterangan,
+                can_delete: false,
+            };
+        }
+
+        const rowId = Number(rawStr);
+        if (!Number.isSafeInteger(rowId) || rowId <= 0) throw new BadRequestException('ID barang bukti tidak valid.');
+
         const existingRows = await this.dataSource.query('select * from bdb_lp_barang_bukti_manual where id=$1 and deleted_at is null', [rowId]);
-        if (!existingRows.length) throw new NotFoundException('Data tidak ditemukan.');
+        if (!existingRows.length) {
+            // Fallback: jika ID numerik ternyata milik bdb_dors_lp_barang_bukti
+            const dorsFallback = await this.dataSource.query('select id from bdb_dors_lp_barang_bukti where id=$1', [rowId]);
+            if (dorsFallback.length) {
+                return this.updateManual(authUser, `dors-${rowId}`, dto);
+            }
+            throw new NotFoundException('Data tidak ditemukan.');
+        }
         const existing = existingRows[0];
         const lp = await this.assertLpAccess(authUser, Number(existing.lp_id));
 
-        const jenis = this.toText(dto?.jenis);
+        const jenis = this.toText(dto?.jenis) ?? existing.jenis;
         if (!jenis) throw new BadRequestException('Jenis barang bukti wajib diisi.');
         const status = String(dto?.status || existing.status || 'MASUK').trim().toUpperCase();
         if (!STATUS_MANUAL.includes(status)) throw new BadRequestException(`Status harus salah satu dari: ${STATUS_MANUAL.join(', ')}.`);
+        const satuan = this.toText(dto?.satuan) ?? existing.satuan ?? 'Buah';
 
         await this.dataSource.query(
             `update bdb_lp_barang_bukti_manual set
-                nomor_register=$2, jenis=$3, jumlah=$4, kepemilikan=$5, tanggal_penyitaan=$6, status=$7, keterangan=$8, updated_at=now()
+                nomor_register=$2, jenis=$3, jumlah=$4, satuan=$5, kepemilikan=$6, tanggal_penyitaan=$7, status=$8, keterangan=$9, updated_at=now()
              where id=$1`,
             [
                 rowId,
-                this.toText(dto?.nomor_register),
+                this.toText(dto?.nomor_register) ?? existing.nomor_register,
                 jenis,
-                this.toText(dto?.jumlah),
-                this.toText(dto?.kepemilikan),
+                this.toText(dto?.jumlah) ?? existing.jumlah,
+                satuan,
+                this.toText(dto?.kepemilikan) ?? existing.kepemilikan,
                 this.toDate(dto?.tanggal_penyitaan) ?? existing.tanggal_penyitaan,
                 status,
-                this.toText(dto?.keterangan)
+                this.toText(dto?.keterangan ?? dto?.nama_barang) ?? existing.keterangan
             ]
         );
 
         this.summaryCache.clear();
         this.listCache.clear();
 
-        await this.audit.log({ user: authUser, action: 'UPDATE', entity: 'barang_bukti_manual', entityId: rowId, meta: { lp_id: existing.lp_id, no_laporan: lp.no_laporan, jenis, status } });
+        await this.audit.log({ user: authUser, action: 'UPDATE', entity: 'barang_bukti_manual', entityId: rowId, meta: { lp_id: existing.lp_id, no_laporan: lp.no_laporan, jenis, satuan, status } });
 
         return this.detail(rowId);
     }

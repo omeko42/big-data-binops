@@ -52,8 +52,7 @@ export class AuthService {
 
     private normalizeBdbRole(role?: string): string {
         const value = String(role || '').trim().toLowerCase();
-        if (value === 'vendor' || value === 'mitra' || value === 'vendor_mitra') return 'vendor_mitra';
-        return ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'vendor_mitra'].includes(value) ? value : 'viewer';
+        return ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'].includes(value) ? value : 'viewer';
     }
 
     private cleanOptionalText(value: any): string | null {
@@ -751,25 +750,17 @@ export class AuthService {
         }
         const policeProfile = policeRows[0];
         const roleBdb = this.normalizeBdbRole(user.role_bdb);
-        const isNationalRole = roleBdb === 'superadmin' || roleBdb === 'vendor_mitra';
-        if (scopeRow?.nama_satker_canonical && !isNationalRole) {
+        if (scopeRow?.nama_satker_canonical && roleBdb !== 'superadmin') {
             satker = scopeRow.nama_satker_canonical;
-        } else if (!isNationalRole && satker && String(satker).toLowerCase().includes('superadmin')) {
-            satker = policeProfile?.satuan || 'Polri';
         }
         const scopeAccessDisplay = roleBdb === 'superadmin'
             ? 'Nasional'
-            : roleBdb === 'vendor_mitra'
-                ? 'Nasional (Read-Only)'
-                : scopeRow?.nama_satker_canonical
-                    ? `${scopeRow.nama_satker_canonical} dan bawahannya`
-                    : satker || 'Belum pilih';
+            : scopeRow?.nama_satker_canonical
+                ? `${scopeRow.nama_satker_canonical} dan bawahannya`
+                : satker || 'Belum pilih';
 
         // Step 7: Transform Result
         console.time('Step 7: Transform Final Object');
-        const unifiedHandle = Number(user.id) === 1
-            ? 'om.eko_42'
-            : (String(user.callsign || user.username || '').trim().replace(/^@+/, '').toLowerCase() || user.username || null);
         const transformUser = {
             id: user.id,
             user_name: user.name,
@@ -777,8 +768,8 @@ export class AuthService {
             email: user.email,
             email_google: user.email_google,
             email_polri: user.email_polri,
-            username: unifiedHandle,
-            callsign: unifiedHandle,
+            username: user.username,
+            callsign: user.username,
             login_method: user.login_method,
             local_password_enabled: user.local_password_enabled,
             role_bdb: user.role_bdb,
@@ -787,14 +778,15 @@ export class AuthService {
             status: user.status,
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
-            scope_satker_name: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : isNationalRole ? '-' : scopeRow?.nama_satker_canonical || null,
-            satker_nama: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : roleBdb === 'vendor_mitra' ? 'Vendor / Mitra Bareskrim Polri' : scopeRow?.nama_satker_canonical || satker || null,
-            scope_satker_level: isNationalRole ? null : scopeRow?.level || null,
+            scope_satker_name: roleBdb === 'superadmin' ? '-' : scopeRow?.nama_satker_canonical || null,
+            scope_satker_level: roleBdb === 'superadmin' ? null : scopeRow?.level || null,
             scope_access_display: scopeAccessDisplay,
-            nrp: policeProfile?.nrp || null,
+            nrp: policeProfile?.nrp || (Number(user.id) === 1 ? '98010710' : null),
             no_hp: policeProfile?.no_hp || null,
-            satuan: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : (policeProfile?.satuan || null),
-            pangkat: policeProfile?.pangkat || null,
+            satuan: policeProfile?.satuan || null,
+            pangkat: (Number(user.id) === 1 || String(user.username || '').replace(/^@/, '') === 'om.eko_42')
+                ? ((!policeProfile?.pangkat || String(policeProfile.pangkat).toUpperCase() === 'KOMPOL') ? 'Briptu' : policeProfile.pangkat)
+                : (policeProfile?.pangkat || null),
             jabatan: policeProfile?.jabatan || null,
             foto: user.photo_url || policeProfile?.foto || null,
             photo_url: user.photo_url || policeProfile?.foto || null,
@@ -804,7 +796,7 @@ export class AuthService {
             email_otp_required: await this.systemSetting.isLoginOtpRequired(),
             totp_enabled: Boolean(user.totp_secret || user.totp),
             pin_required: Boolean(user.pin_required),
-            satker: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : satker,
+            satker: satker,
             Organisasi: user.Organisasi,
             role: {
                 role_name: user.OrganisasiRole.role_name,
@@ -1961,7 +1953,7 @@ export class AuthService {
         if (username) {
             const cleanUser = String(username).trim().toLowerCase();
             const uRows = await this.dataSource.query(
-                `SELECT id FROM auth_users WHERE LOWER(username) = $1 OR LOWER(email) = $1 OR LOWER(callsign) = $1`,
+                `SELECT id FROM auth_users WHERE LOWER(username) = $1 OR LOWER(email) = $1`,
                 [cleanUser]
             );
             if (uRows.length) {

@@ -938,12 +938,48 @@ export class WorkflowService {
         await this.assertLpAccess(lpId, userId);
         const lp = await this.dataSource.query(
             `select l.id, l.no_laporan, l.satker_nama, l.status_id, l.tgl_laporan,
+                    l.kategori, l.tempat_kejadian, l.uraian_singkat, l.payload_json,
                     to_char(parse_tgl_laporan(l.tgl_laporan), 'YYYY-MM-DD') as tgl_lp,
                     s.code as status_code, s.nama as status_nama
              from bdb_laporan_polisi l left join bdb_status_master s on s.id=l.status_id where l.id=$1`,
             [lpId]
         );
         if (!lp.length) throw new NotFoundException('LP tidak ditemukan.');
+        const lpRow = lp[0];
+        const p = (lpRow.payload_json && typeof lpRow.payload_json === 'object') ? lpRow.payload_json : {};
+        const tpFirst = Array.isArray(p.tindak_pidana) && p.tindak_pidana.length > 0 ? p.tindak_pidana[0] : null;
+        const tpKat = String(tpFirst?.nama_kategori_kejahatan || tpFirst?.pasal || '').trim();
+        const tempat = String(lpRow.tempat_kejadian || p.tempat_kejadian || '').trim();
+        const waktuFaktual = String(p.waktu_kejadian_faktual || lpRow.tgl_laporan || p.tgl_laporan || '').trim();
+        const fallbackUraian = String(
+            lpRow.uraian_singkat ||
+            p.uraian_singkat_kejadian ||
+            p.uraian_kejadian ||
+            p.bagaimana_terjadi ||
+            p.kronologi ||
+            p.apa_terjadi ||
+            (tpKat ? `Dugaan tindak pidana ${tpKat}${tempat ? ` di ${tempat}` : ''}${waktuFaktual ? ` pada ${waktuFaktual}` : ''}` : '') ||
+            (lpRow.no_laporan ? `Laporan Polisi Nomor ${lpRow.no_laporan}${tempat ? ` di ${tempat}` : ''}` : '-')
+        ).trim();
+        lpRow.uraian_singkat = fallbackUraian || '-';
+        lpRow.uraian_singkat_kejadian = fallbackUraian || '-';
+        lpRow.no_sttlp = lpRow.no_sttlp ?? p.no_sttlp ?? null;
+        lpRow.waktu_kejadian_faktual = lpRow.waktu_kejadian_faktual ?? p.waktu_kejadian_faktual ?? p.waktu_kejadian ?? lpRow.tgl_laporan ?? null;
+        lpRow.tempat_kejadian = lpRow.tempat_kejadian ?? p.tempat_kejadian ?? null;
+        lpRow.zona_waktu = lpRow.zona_waktu ?? p.zona_waktu ?? null;
+        lpRow.kerugian = lpRow.kerugian ?? p.kerugian ?? null;
+        lpRow.petugas_penerima = lpRow.petugas_penerima ?? p.petugas_penerima ?? null;
+        lpRow.nama_mengetahui = lpRow.nama_mengetahui ?? p.nama_mengetahui ?? null;
+        lpRow.pangkat_mengetahui = lpRow.pangkat_mengetahui ?? p.pangkat_mengetahui ?? null;
+        lpRow.nrp_mengetahui = lpRow.nrp_mengetahui ?? p.nrp_mengetahui ?? null;
+        lpRow.redaksional_mengetahui_spkt = lpRow.redaksional_mengetahui_spkt ?? p.redaksional_mengetahui_spkt ?? null;
+        lpRow.tkp_provinsi = lpRow.tkp_provinsi ?? p.tkp_provinsi ?? null;
+        lpRow.tkp_kota = lpRow.tkp_kota ?? p.tkp_kota ?? null;
+        lpRow.tkp_kecamatan = lpRow.tkp_kecamatan ?? p.tkp_kecamatan ?? null;
+        lpRow.tkp_desa = lpRow.tkp_desa ?? p.tkp_desa ?? null;
+        lpRow.tindak_pidana = lpRow.tindak_pidana ?? p.tindak_pidana ?? [];
+        lpRow.apa_terjadi = lpRow.apa_terjadi ?? p.apa_terjadi ?? null;
+        lpRow.bagaimana_terjadi = lpRow.bagaimana_terjadi ?? p.bagaimana_terjadi ?? null;
         const docs = await this.dataSource.query(
             `select d.id, d.nomor_dokumen, d.tanggal_dokumen, d.tanggal_mulai, d.tanggal_berakhir, d.data, d.lampiran, d.created_at, d.created_by,
                     u.name as created_by_nama,
