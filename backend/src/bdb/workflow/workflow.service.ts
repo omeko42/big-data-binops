@@ -51,8 +51,7 @@ export class WorkflowService {
     }
 
     private async assertCanMutateLp(lpId: number, userId?: number) {
-        await this.monitoring.assertNotViewer(userId);
-        return this.monitoring.assertCanAccessLp(userId, lpId);
+        return this.monitoring.assertCanMutateLp(userId, lpId);
     }
 
     private async permaCourtOptions(): Promise<{ id: number; nama: string }[]> {

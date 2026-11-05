@@ -466,14 +466,40 @@ export class LpMonitoringAccessService {
         if (!target) return { allowed: true, monitoring: true, canEdit: false, plan: null };
         try {
             const plan = await this.plan(userId, target.id);
-            const allowed = plan.ownerIds.includes(ownerId) && !!lp.jenis_kejahatan_id && plan.crimeIds.includes(Number(lp.jenis_kejahatan_id));
-            return { allowed: true, monitoring: true, canEdit: false, plan: allowed ? plan : null };
+            const allowed = plan.ownerIds.includes(ownerId) && (!lp.jenis_kejahatan_id || plan.crimeIds.includes(Number(lp.jenis_kejahatan_id)));
+            return { allowed: true, monitoring: true, canEdit: allowed, plan: allowed ? plan : null };
         } catch {
             return { allowed: true, monitoring: true, canEdit: false, plan: null };
         }
     }
 
-        async assertNotViewer(userId: number | undefined, authUser?: any) {
+    async resolveEditableScope(userId?: number): Promise<{ all: boolean; ownSatkerId: number | null; supervisoryOwnerIds: Set<number>; supervisoryCrimeIds: Set<number> }> {
+        const scope = await resolveScope(this.ds, userId);
+        if (scope.all) return { all: true, ownSatkerId: null, supervisoryOwnerIds: new Set(), supervisoryCrimeIds: new Set() };
+        if (!scope.satkerId) return { all: false, ownSatkerId: null, supervisoryOwnerIds: new Set(), supervisoryCrimeIds: new Set() };
+        try {
+            const ctx = await this.actorContext(scope.satkerId);
+            const domains = this.responsibilities(ctx);
+            if (!domains.length) {
+                return { all: false, ownSatkerId: scope.satkerId, supervisoryOwnerIds: new Set([scope.satkerId]), supervisoryCrimeIds: new Set() };
+            }
+            const [ownerIds, crimeRows] = await Promise.all([
+                this.targetOwners(ctx.territory, domains),
+                this.crimes()
+            ]);
+            const crimeIds = crimeRows.filter((x) => x.domain && domains.includes(x.domain)).map((x) => x.id);
+            return {
+                all: false,
+                ownSatkerId: scope.satkerId,
+                supervisoryOwnerIds: new Set([scope.satkerId, ...ownerIds]),
+                supervisoryCrimeIds: new Set(crimeIds)
+            };
+        } catch {
+            return { all: false, ownSatkerId: scope.satkerId, supervisoryOwnerIds: new Set([scope.satkerId]), supervisoryCrimeIds: new Set() };
+        }
+    }
+
+    async assertNotViewer(userId: number | undefined, authUser?: any) {
         let role = String(authUser?.role_bdb || authUser?.role_name || '').trim().toLowerCase();
         if (!role && userId) {
             const uRows = await this.ds.query('select role_bdb, role_name from auth_users where id=$1 and deleted_at is null', [userId]);
@@ -490,8 +516,10 @@ export class LpMonitoringAccessService {
         const scope = await resolveScope(this.ds, userId);
         if (!scope.all) {
             const ownerId = Number(access.lp?.unit_satker_id ?? access.lp?.satker_id ?? 0);
-            if (!scope.satkerId || ownerId !== Number(scope.satkerId)) {
-                throw new ForbiddenException('Mode Baca Saja: Akun operator hanya dapat memperbarui LP milik satkernya sendiri.');
+            const isOwnSatker = Boolean(scope.satkerId && ownerId === Number(scope.satkerId));
+            const isAuthorizedSupervisor = Boolean(access.monitoring && access.canEdit && access.plan);
+            if (!isOwnSatker && !isAuthorizedSupervisor) {
+                throw new ForbiddenException('Mode Baca Saja: Akun operator hanya dapat memperbarui LP milik satkernya sendiri atau satker bawahan dalam kewenangan supervisinya.');
             }
         }
         return access;

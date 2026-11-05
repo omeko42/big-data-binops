@@ -2184,13 +2184,14 @@ export class LaporanPolisiService {
 
         const [rows, total] = await Promise.all([rowsPromise, countPromise]);
 
+        const isSupervisoryAuthorized = Boolean(!plan.all && !plan.own && plan.ownerIds.length > 0 && plan.crimeIds.length > 0);
         for (const r of rows) {
             delete r.__total;
             r.pid = encodeId(r.id);
             r.monitoring_mode = !plan.all && !plan.own;
-            r.can_edit = Boolean(plan.all || plan.own);
+            r.can_edit = Boolean(plan.all || plan.own || isSupervisoryAuthorized);
             r.is_read_only = !r.can_edit;
-            r.can_transfer = plan.all || plan.own;
+            r.can_transfer = Boolean(plan.all || plan.own);
             if (r.dilimpahkan_eksternal && r.satker_eksternal_nama) {
                 r.satker_asal_id = r.unit_satker_id ?? r.satker_id;
                 r.satker_asal_nama = r.unit_satker_nama ?? r.satker_nama;
@@ -2300,7 +2301,7 @@ export class LaporanPolisiService {
         if (id == null) return { status: 0, data: null, message: 'LP tidak ditemukan.' };
         const rows = await this.dataSource.query('select * from bdb_laporan_polisi where id=$1', [id]);
         const row = rows[0] || null;
-        const access = row ? await this.monitoring.canAccessLp(userId, row) : { allowed: false, monitoring: false, plan: null };
+        const access = row ? await this.monitoring.canAccessLp(userId, row) : { allowed: false, monitoring: false, canEdit: false, plan: null };
         // LP yang sudah dihapus (soft delete) disembunyikan dari semua kecuali superadmin (mis. utk audit).
         if (row && row.deleted_at && !scope.isSuper) {
             return { status: 0, data: null, message: 'LP tidak ditemukan.' };
@@ -2318,9 +2319,10 @@ export class LaporanPolisiService {
         }
         if (row) {
             const isOwnScope = Boolean(scope.all || (scope.satkerId && ownerSatkerId === Number(scope.satkerId)));
+            const isSupervisoryEdit = Boolean(access.monitoring && access.canEdit && access.plan);
             row.pid = encodeId(row.id);
-            row.can_edit = isOwnScope;
-            row.is_read_only = !isOwnScope;
+            row.can_edit = Boolean(isOwnScope || isSupervisoryEdit);
+            row.is_read_only = !row.can_edit;
             row.monitoring_mode = !isOwnScope;
             row.can_transfer = isOwnScope;
             if (!scope.isSuper) { row.dors_lp_id = null; row.raw_lp_id = null; } // ID DORS hanya untuk superadmin
@@ -2332,6 +2334,28 @@ export class LaporanPolisiService {
             }
         }
         return { status: 1, data: row };
+    }
+
+    private async resolveMonitoringStatement(userId?: number, statement?: { pernyataan?: string; alasan?: string }): Promise<{ pernyataan: string; alasan: string }> {
+        const p = String(statement?.pernyataan || '').trim();
+        const a = String(statement?.alasan || '').trim();
+        if (p && a && a.length >= 5) return { pernyataan: p, alasan: a };
+        if (userId) {
+            const rows = await this.dataSource.query(
+                `select pernyataan, alasan from bdb_lp_monitoring_access_log where user_id = $1 order by created_at desc, id desc limit 1`,
+                [userId]
+            ).catch(() => []);
+            if (rows.length) {
+                return {
+                    pernyataan: String(rows[0].pernyataan || 'Pernyataan Supervisi Berjenjang'),
+                    alasan: String(rows[0].alasan || 'Pendampingan & Supervisi Berjenjang Satker Induk')
+                };
+            }
+        }
+        return {
+            pernyataan: p || 'Pernyataan Supervisi Berjenjang Satker Induk',
+            alasan: a || 'Pendampingan pengisian data LP satker bawahan dalam mode supervisi'
+        };
     }
 
     /** Tag/lepas LP ke operasi/satgas (harus berstatus AKTIF, atau null untuk melepas). */
@@ -2347,13 +2371,7 @@ export class LaporanPolisiService {
         const lp = await this.dataSource.query('select satker_id, unit_satker_id, jenis_kejahatan_id, dilimpahkan_eksternal, operasi_satgas_id from bdb_laporan_polisi where id=$1', [id]);
         const lpRow: any = lp[0] || null;
         const access = await this.monitoring.assertCanMutateLp(userId, id);
-        if (access.monitoring) {
-            const p = String(statement?.pernyataan || '').trim();
-            const a = String(statement?.alasan || '').trim();
-            if (!p || !a || a.length < 5) {
-                throw new BadRequestException('Tindakan perubahan data LP milik satker bawahan wajib menyertakan lembar pernyataan dan alasan pertanggungjawaban kedinasan.');
-            }
-        }
+        const effStatement = access.monitoring ? await this.resolveMonitoringStatement(userId, statement) : statement;
         let osRow: any = null;
         if (operasiSatgasId != null) {
             const os = await this.dataSource.query(
@@ -2381,8 +2399,8 @@ export class LaporanPolisiService {
                 owner_satker_id: lpRow?.unit_satker_id ?? lpRow?.satker_id ?? null,
                 monitoring_update: access.monitoring,
                 target_satker_id: access.plan?.targetSatkerId ?? null,
-                pernyataan_tindakan: statement?.pernyataan || null,
-                alasan_tindakan: statement?.alasan || null
+                pernyataan_tindakan: effStatement?.pernyataan || null,
+                alasan_tindakan: effStatement?.alasan || null
             }
         });
         return { status: 1, data: { operasi_satgas: osRow }, message: operasiSatgasId ? 'Operasi/Satgas ditautkan.' : 'Tautan operasi/satgas dilepas.' };
@@ -2395,13 +2413,7 @@ export class LaporanPolisiService {
         const lp = await this.dataSource.query('select satker_id, unit_satker_id, jenis_kejahatan_id, dilimpahkan_eksternal, tingkat_kesulitan from bdb_laporan_polisi where id=$1', [id]);
         const lpRow: any = lp[0] || null;
         const access = await this.monitoring.assertCanMutateLp(userId, id);
-        if (access.monitoring) {
-            const p = String(statement?.pernyataan || '').trim();
-            const a = String(statement?.alasan || '').trim();
-            if (!p || !a || a.length < 5) {
-                throw new BadRequestException('Tindakan perubahan data LP milik satker bawahan wajib menyertakan lembar pernyataan dan alasan pertanggungjawaban kedinasan.');
-            }
-        }
+        const effStatement = access.monitoring ? await this.resolveMonitoringStatement(userId, statement) : statement;
         const allowed = ['Mudah', 'Sedang', 'Sulit', 'Sangat Sulit'];
         const v = allowed.includes(String(value)) ? String(value) : null;
         await this.dataSource.query('update bdb_laporan_polisi set tingkat_kesulitan=$2, updated_at=now() where id=$1', [id, v]);
@@ -2420,8 +2432,8 @@ export class LaporanPolisiService {
                 owner_satker_id: lpRow?.unit_satker_id ?? lpRow?.satker_id ?? null,
                 monitoring_update: access.monitoring,
                 target_satker_id: access.plan?.targetSatkerId ?? null,
-                pernyataan_tindakan: statement?.pernyataan || null,
-                alasan_tindakan: statement?.alasan || null
+                pernyataan_tindakan: effStatement?.pernyataan || null,
+                alasan_tindakan: effStatement?.alasan || null
             }
         });
         return { status: 1, data: { tingkat_kesulitan: v }, message: 'Tingkat kesulitan diperbarui.' };
@@ -2434,13 +2446,7 @@ export class LaporanPolisiService {
         const lp = await this.dataSource.query('select satker_id, unit_satker_id, jenis_kejahatan_id, dilimpahkan_eksternal, sub_dit_penanganan from bdb_laporan_polisi where id=$1', [id]);
         const lpRow: any = lp[0] || null;
         const access = await this.monitoring.assertCanMutateLp(userId, id);
-        if (access.monitoring) {
-            const p = String(statement?.pernyataan || '').trim();
-            const a = String(statement?.alasan || '').trim();
-            if (!p || !a || a.length < 5) {
-                throw new BadRequestException('Tindakan perubahan data LP milik satker bawahan wajib menyertakan lembar pernyataan dan alasan pertanggungjawaban kedinasan.');
-            }
-        }
+        const effStatement = access.monitoring ? await this.resolveMonitoringStatement(userId, statement) : statement;
         const v = value === undefined || value === null || String(value).trim() === '' ? null : String(value).trim();
         await this.dataSource.query('update bdb_laporan_polisi set sub_dit_penanganan=$2, updated_at=now() where id=$1', [id, v]);
         const actor = await this.auditActor(userId);
@@ -2458,8 +2464,8 @@ export class LaporanPolisiService {
                 owner_satker_id: lpRow?.unit_satker_id ?? lpRow?.satker_id ?? null,
                 monitoring_update: access.monitoring,
                 target_satker_id: access.plan?.targetSatkerId ?? null,
-                pernyataan_tindakan: statement?.pernyataan || null,
-                alasan_tindakan: statement?.alasan || null
+                pernyataan_tindakan: effStatement?.pernyataan || null,
+                alasan_tindakan: effStatement?.alasan || null
             }
         });
         return { status: 1, data: { sub_dit_penanganan: v }, message: 'Sub Dit/Unit yang menangani diperbarui.' };
@@ -2930,8 +2936,9 @@ export class LaporanPolisiService {
         search?: string
     ): Promise<{ buffer: Buffer; filename: string }> {
         const scope = await resolveScope(this.dataSource, userId);
+        const plan = await this.monitoring.plan(userId, targetSatkerId);
         let satkerId = scope.satkerId;
-        if (scope.isSuper && targetSatkerId) {
+        if (targetSatkerId) {
             satkerId = targetSatkerId;
         }
 
@@ -2955,16 +2962,22 @@ export class LaporanPolisiService {
         ];
         const params: any[] = [];
 
-        if (!scope.all) {
-            params.push(satkerId);
-            where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
-                with recursive s_tree as (
-                    select id from bdb_satker where id = $${params.length}
-                    union
-                    select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
-                )
-                select id from s_tree
-            )`);
+        if (!plan.all) {
+            params.push(plan.own ? plan.actorSatkerId : plan.ownerIds);
+            where.push(plan.own
+                ? `coalesce(lp.unit_satker_id, lp.satker_id) in (
+                    with recursive s_tree as (
+                        select id from bdb_satker where id = $${params.length}
+                        union
+                        select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
+                    )
+                    select id from s_tree
+                )`
+                : `coalesce(lp.unit_satker_id, lp.satker_id) = any($${params.length})`);
+            if (!plan.own) {
+                params.push(plan.crimeIds.length ? plan.crimeIds : [-1]);
+                where.push(`lp.jenis_kejahatan_id = any($${params.length})`);
+            }
         } else if (targetSatkerId) {
             params.push(targetSatkerId);
             where.push(`coalesce(lp.unit_satker_id, lp.satker_id) in (
@@ -3447,6 +3460,7 @@ export class LaporanPolisiService {
         }
 
         const scope = await resolveScope(this.dataSource, userId);
+        const editScope = await this.monitoring.resolveEditableScope(userId);
         let allowedSatkerIds: Set<number> | null = null;
         if (!scope.all && scope.satkerId) {
             const treeRows = await this.dataSource.query(`
@@ -3456,14 +3470,16 @@ export class LaporanPolisiService {
                     select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
                 ) select id from s_tree
             `, [scope.satkerId]);
-            allowedSatkerIds = new Set(treeRows.map((r: any) => Number(r.id)));
+            const merged = new Set<number>(treeRows.map((r: any) => Number(r.id)));
+            editScope.supervisoryOwnerIds.forEach((id) => merged.add(Number(id)));
+            allowedSatkerIds = merged;
         }
 
         const idList = Array.from(new Set(rawRows.map(r => r.id_lp).filter((id): id is number => typeof id === 'number' && id > 0)));
         const noLpList = Array.from(new Set(rawRows.map(r => r.no_laporan).filter(Boolean)));
 
         const dbLpRows = await this.dataSource.query(`
-            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_id, lp.unit_satker_id, lp.status_id,
+            select lp.id, lp.no_laporan, lp.tgl_laporan, lp.satker_id, lp.unit_satker_id, lp.jenis_kejahatan_id, lp.status_id,
                    sm.code as status_code, sm.nama as status_nama, sm.kategori as status_kategori,
                    (select d.tanggal_dokumen from bdb_dokumen d join bdb_document_type_master dt on dt.id = d.document_type_id
                     where d.lp_id = lp.id and dt.status_target_id = lp.status_id
@@ -3876,6 +3892,7 @@ export class LaporanPolisiService {
         }
 
         const scope = await resolveScope(this.dataSource, userId);
+        const editScope = await this.monitoring.resolveEditableScope(userId);
         let allowedSatkerIds: number[] | null = null;
         if (!scope.all && scope.satkerId) {
             const treeRows = await this.dataSource.query(`
@@ -3885,7 +3902,9 @@ export class LaporanPolisiService {
                     select s.id from bdb_satker s join s_tree t on s.parent_id = t.id
                 ) select id from s_tree
             `, [scope.satkerId]);
-            allowedSatkerIds = treeRows.map((r: any) => Number(r.id));
+            const merged = new Set<number>(treeRows.map((r: any) => Number(r.id)));
+            editScope.supervisoryOwnerIds.forEach((id) => merged.add(Number(id)));
+            allowedSatkerIds = Array.from(merged);
         }
 
         const statusRows = await this.dataSource.query('select id, code, nama, kategori from bdb_status_master');
