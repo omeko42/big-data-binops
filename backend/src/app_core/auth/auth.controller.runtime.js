@@ -214,7 +214,8 @@ let AuthController = class AuthController {
                 ip: req?.ip
             });
             return res.sendSuccess(data);
-        } catch (e) {
+        }
+        catch (e) {
             void this.audit.log({
                 action: 'LOGIN_PASSKEY',
                 entity: 'auth',

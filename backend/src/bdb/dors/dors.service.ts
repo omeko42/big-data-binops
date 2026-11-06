@@ -1171,6 +1171,7 @@ export class DorsService implements OnModuleInit {
         const summaryRes = await this.syncLogs.query(
             `select count(*)::int as total_all,
                     count(*) filter (where status='success')::int as total_success,
+                    count(*) filter (where status='partial')::int as total_partial,
                     count(*) filter (where status='error')::int as total_error,
                     count(*) filter (where status='cancelled')::int as total_cancelled,
                     count(*) filter (where status='running')::int as total_running
@@ -1197,7 +1198,22 @@ export class DorsService implements OnModuleInit {
             mitigasi_saran: this.buildMitigationAdvice(r)
         }));
         const cfg = await this.getConfig();
-        const isRunning = Boolean(this.syncing && (Number(summaryRes?.[0]?.total_running || 0) > 0 || enrichedRows?.[0]?.status === 'running'));
+        const rawSummary = summaryRes?.[0] || {
+            total_all: total,
+            total_success: 0,
+            total_partial: 0,
+            total_error: 0,
+            total_cancelled: 0,
+            total_running: 0
+        };
+        const summary = {
+            ...rawSummary,
+            total_partial: Number(rawSummary.total_partial || 0),
+            success_logs: Number(rawSummary.total_success || 0),
+            partial_logs: Number(rawSummary.total_partial || 0),
+            failed_logs: Number(rawSummary.total_error || 0)
+        };
+        const isRunning = Boolean(this.syncing && (Number(summary.total_running || 0) > 0 || enrichedRows?.[0]?.status === 'running'));
         return {
             status: 1,
             data: enrichedRows,
@@ -1205,7 +1221,7 @@ export class DorsService implements OnModuleInit {
             page,
             row,
             total_page: Math.max(1, Math.ceil(total / row)),
-            summary: summaryRes?.[0] || { total_all: total, total_success: 0, total_error: 0, total_cancelled: 0, total_running: 0 },
+            summary,
             running: isRunning,
             schedule: {
                 enabled: cfg.sync_enabled,

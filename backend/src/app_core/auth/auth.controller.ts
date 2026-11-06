@@ -287,8 +287,9 @@ export class AuthController {
     @Delete('passkey/devices/:id')
     @UseGuards(AuthGuard)
     @UseInterceptors(CurrentUserInterceptor)
-    async passkeyDeleteDevice(@CurrentUser() authUser, @Param('id') id: string, @Res() res) {
-        return res.sendSuccess(await this.authService.passkeyDeleteDevice(authUser, parseInt(id, 10)));
+    async passkeyDeleteDevice(@CurrentUser() authUser, @Param('id') id: string, @Body() body: any, @Query() query: any, @Req() req: any, @Res() res) {
+        const dto = Object.assign({}, req?.body || {}, body || {}, query || {});
+        return res.sendSuccess(await this.authService.passkeyDeleteDevice(authUser, parseInt(id, 10), dto));
     }
 
     @Get('passkey/login-options')

@@ -18,6 +18,7 @@ export interface PostComposerDto {
 export class JukrahService {
     private readonly logger = new Logger('JukrahService');
     private ready = false;
+    private primaryAdminHandle = '';
     private readonly streamSecret = process.env.JWT_SECRET || process.env.CAS_STREAM_SECRET || '';
     private readonly networkUsersCache = new Map<string, { exp: number; value: any }>();
     private readonly networkCountCache = new Map<string, { exp: number; total: number }>();
@@ -120,13 +121,17 @@ export class JukrahService {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_addr_status ON user_connections (addressee_id, status)');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_trb_police_lower_email ON trb_police (LOWER(email))');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
+            const uOne = await this.dataSource.query('SELECT username FROM auth_users WHERE id = 1 LIMIT 1');
+            if (uOne?.[0]?.username) {
+                this.primaryAdminHandle = String(uOne[0].username).trim().replace(/^@+/, '').toLowerCase();
+            }
         } catch {}
         this.clearNetworkUsersCache();
         this.ready = true;
     }
 
     extractTwoWordCallsignFromName(rawName?: any, authorId?: any): string {
-        if (Number(authorId) === 1) return 'om.eko_42';
+        if (Number(authorId) === 1 && this.primaryAdminHandle) return this.primaryAdminHandle;
         const str = String(rawName || '').trim();
         let beforeComma = str.split(',')[0] || '';
         beforeComma = beforeComma
@@ -188,7 +193,8 @@ export class JukrahService {
         if (Number(id) === 1) return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
+        if (this.primaryAdminHandle && (u === this.primaryAdminHandle || c === this.primaryAdminHandle)) return true;
+        return false;
     }
 
     private isSuperadminUser(id: any, roleBdb?: any, username?: any, callsign?: any): boolean {
@@ -198,7 +204,8 @@ export class JukrahService {
         if (r === 'superadmin' || r === 'super_admin' || r.includes('super') || r === 'admin_binops' || r === 'admin binops') return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'cosersebot', 'ai_taktis_cas'];
+        const superHandles = ['cosersebot', 'ai_taktis_cas'];
+        if (this.primaryAdminHandle) superHandles.push(this.primaryAdminHandle);
         return superHandles.includes(u) || superHandles.includes(c);
     }
 
@@ -210,7 +217,7 @@ export class JukrahService {
 
     private getRoleHierarchyRank(uid: any, role: any): number {
         const idNum = Number(uid || 0);
-        if (idNum === 1) return 5; // Primary Superadmin (@om.eko_42)
+        if (idNum === 1) return 5; // Primary Superadmin (@user_x)
         const r = String(role || '').toLowerCase().trim();
         if (r === 'superadmin' || r === 'super_admin' || r.includes('super')) return 4;
         if (r === 'admin_binops' || r === 'admin binops' || r === 'binops' || r === 'admin') return 3;
@@ -572,10 +579,15 @@ export class JukrahService {
         const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
         const shareHash = this.createPostShareHash(Number(r.id));
 
-        const media = (r.media_urls || []).map((m: any) => ({
-            ...m,
-            stream_url: m.key ? `/api/bdb/sharese/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid || 0)}` : null
-        }));
+        const media = (r.media_urls || []).map((m: any) => {
+            const streamUrl = m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid || 0)}` : (m.url || m.stream_url || null);
+            return {
+                ...m,
+                type: m.type || ((m.mime && String(m.mime).startsWith('image/')) ? 'image' : (m.mime && String(m.mime).startsWith('video/')) ? 'video' : 'document'),
+                url: streamUrl,
+                stream_url: streamUrl
+            };
+        });
 
         const commentRows = await this.dataSource.query(
             `SELECT c.id, c.post_id, c.user_id, c.parent_id, c.content, c.likes_count, c.is_edited, c.created_at,
@@ -818,7 +830,9 @@ export class JukrahService {
 
     formatCallsign(rawCallsign: any, authorId: any, username?: any, authorName?: any): string {
         const idStr = String(authorId || '');
-        if (idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign)) return '@om.eko_42';
+        if ((idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign)) && this.primaryAdminHandle) {
+            return '@' + this.primaryAdminHandle;
+        }
 
         const invalidPlaceholders = new Set(['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse']);
         const normalizeCandidate = (rawVal: any): string => {
@@ -827,7 +841,7 @@ export class JukrahService {
             if (invalidPlaceholders.has(v)) return '';
             if (v.startsWith('pers_') || v.startsWith('user_') || /^\d+$/.test(v)) return '';
             if (!/^[a-z0-9_.]{2,60}$/.test(v)) return '';
-            // Preserve intentional custom handles with digits (e.g. yud08, koko98, ni.nyoman_1).
+            // Preserve intentional custom handles with digits (e.g. @user_x).
             // Only fallback if handle has 3+ dot-separated words or 6+ trailing NRP digits.
             const dotParts = v.split('.').filter(Boolean);
             if (dotParts.length >= 3 || /[a-z]\d{6,}$/i.test(v)) {
@@ -1043,10 +1057,17 @@ export class JukrahService {
             const resolvedPhoto = this.resolveDefaultAvatar(r.author_photo, r.raw_author_name, null, r.author_social_media);
             const shareHash = this.createPostShareHash(Number(r.id));
 
-            const media = (r.media_urls || []).map((m: any) => ({
-                ...m,
-                stream_url: m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid)}` : null
-            }));
+            const media = (r.media_urls || []).map((m: any) => {
+                const streamUrl = m.key ? `/api/bdb/jukrah/stream/${this.createStreamToken(m.key, m.mime || 'application/octet-stream', uid)}` : (m.url || m.stream_url || null);
+                return {
+                    ...m,
+                    type: m.type || ((m.mime && String(m.mime).startsWith('image/')) ? 'image' : (m.mime && String(m.mime).startsWith('video/')) ? 'video' : 'document'),
+                    url: streamUrl,
+                    stream_url: streamUrl
+                };
+            });
+            const firstMedia = media[0] || null;
+            const docMedia = media.find((m: any) => m.type === 'document' || (m.mime && String(m.mime).includes('pdf'))) || null;
 
             return {
                 id: Number(r.id),
@@ -1068,6 +1089,9 @@ export class JukrahService {
                 target_satker_ids: r.target_satker_ids,
                 content: r.content,
                 media,
+                media_url: firstMedia ? (firstMedia.stream_url || firstMedia.url || null) : null,
+                attachment_url: docMedia ? (docMedia.stream_url || docMedia.url || null) : null,
+                attachment_name: docMedia ? (docMedia.name || docMedia.filename || null) : (firstMedia?.name || null),
                 case_lp_ids: r.case_lp_ids || [],
                 reaction_counts: r.reaction_counts || { like: 0, respect: 0, insightful: 0, applause: 0, fire: 0 },
                 total_reactions: Number(r.total_reactions || 0),

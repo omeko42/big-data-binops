@@ -11,12 +11,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var _a, _b, _c, _d, _f, _g, _h, _j, _k, _l, _m, _o;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const user_service_1 = require("./user/user.service");
-const device_service_1 = require("./device/device.service");
+const device_service_1 = require("./device/device.service"); // Pastikan path sesuai
 const bcrypt = require("bcrypt");
 const constants_1 = require("./constants");
 const crypto = require("crypto");
@@ -35,20 +36,11 @@ const organisasi_entity_1 = require("../../orgaisasi/entity/organisasi.entity");
 const organisasi_role_util_1 = require("./organisasi-role.util");
 const updateUser_dto_1 = require("./user/dto/updateUser.dto");
 const level_entity_1 = require("../../orgaisasi/entity/level.entity");
-const cache_manager_1 = require("@nestjs/cache-manager");
+const cache_manager_1 = require("cache-manager");
+const cache_manager_2 = require("@nestjs/cache-manager");
 const audit_service_1 = require("../../bdb/audit/audit.service");
 const system_setting_service_1 = require("../../bdb/system-setting/system-setting.service");
 let AuthService = class AuthService {
-    usersService;
-    jwtService;
-    deviceService;
-    auth;
-    mailService;
-    dataSource;
-    tableHelper;
-    audit;
-    systemSetting;
-    cacheManager;
     constructor(usersService, jwtService, deviceService, auth, mailService, dataSource, tableHelper, audit, systemSetting, cacheManager) {
         this.usersService = usersService;
         this.jwtService = jwtService;
@@ -60,6 +52,7 @@ let AuthService = class AuthService {
         this.audit = audit;
         this.systemSetting = systemSetting;
         this.cacheManager = cacheManager;
+        this.otpRateLimits = new Map();
     }
     normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
@@ -90,6 +83,7 @@ let AuthService = class AuthService {
         encrypted += cipher.final('base64');
         return iv.toString('base64') + ':' + encrypted;
     }
+    /** Dekripsi payload TANPA cek kedaluwarsa -- dipakai utk resend (payload lama boleh sudah expired). */
     decryptSecurityPayloadRaw(payloadId) {
         const [ivBase64, encryptedBase64] = String(payloadId || '').split(':');
         if (!ivBase64 || !encryptedBase64) {
@@ -112,6 +106,7 @@ let AuthService = class AuthService {
         }
         return payload;
     }
+    /** OTP login SELALU dikirim ke email dinas Polri (bukan gmail/alias lain) -- konsisten dgn identitas resmi akun. */
     async sendLoginOtp(user) {
         const emailPolri = this.normalizeEmail(user.email_polri);
         if (!emailPolri) {
@@ -138,6 +133,7 @@ let AuthService = class AuthService {
             otp_email: emailPolri
         };
     }
+    /** Kirim ulang OTP login -- dipakai kalau kode lama sudah kedaluwarsa/hilang. Tidak perlu password lagi. */
     async resendLoginOtp(otpId) {
         const payload = this.decryptSecurityPayloadRaw(otpId);
         if (payload.action !== 'login') {
@@ -153,7 +149,6 @@ let AuthService = class AuthService {
         }
         return this.sendLoginOtp(user);
     }
-    otpRateLimits = new Map();
     checkOtpRateLimit(key) {
         const now = Date.now();
         const existing = this.otpRateLimits.get(key);
@@ -161,12 +156,14 @@ let AuthService = class AuthService {
             this.otpRateLimits.set(key, { lastSentAt: now, attempts: 1, windowStart: now });
             return;
         }
+        // Window 15 menit
         if (now - existing.windowStart > 15 * 60 * 1000) {
             existing.windowStart = now;
             existing.attempts = 1;
             existing.lastSentAt = now;
             return;
         }
+        // Cek jeda / cooldown 60 detik (1 menit) sebelum boleh kirim ulang
         const elapsed = now - existing.lastSentAt;
         if (elapsed < 60 * 1000) {
             const waitSeconds = Math.ceil((60 * 1000 - elapsed) / 1000);
@@ -175,6 +172,7 @@ let AuthService = class AuthService {
                 errors: { otp: [`Tunggu ${waitSeconds} detik sebelum meminta kode OTP kembali.`] }
             });
         }
+        // Cek batas maksimal 3 kali percobaan pengiriman
         if (existing.attempts >= 3) {
             throw new common_1.BadRequestException({
                 message: 'Batas pengiriman OTP tercapai (maksimal 3 kali). Silakan coba lagi nanti.',
@@ -252,6 +250,11 @@ let AuthService = class AuthService {
         }
         return value;
     }
+    /**
+     * Gerbang TERAKHIR sebelum sesi dibuat -- dipanggil setelah PIN/TOTP (kalau ada) lolos.
+     * OTP email global selalu dicek di sini juga, supaya PIN/TOTP tidak jadi jalan pintas
+     * yang melewati OTP wajib (mis. akun dgn TOTP aktif tetap harus OTP kalau global-nya nyala).
+     */
     async finishLoginAfterFactors(user, result, method) {
         if (await this.systemSetting.isLoginOtpRequired()) {
             const otp = await this.sendLoginOtp(user);
@@ -282,10 +285,12 @@ let AuthService = class AuthService {
         if (impersonatedBy)
             payload.impersonated_by = impersonatedBy;
         const accessToken = await this.jwtService.signAsync(payload, {
+            // Sesi impersonate sengaja lebih pendek (30 menit) daripada login normal (240 menit).
             expiresIn: impersonatedBy ? '30m' : '240m'
         });
         const expiresAt = new Date(Date.now() + (impersonatedBy ? 29 : 230) * 60 * 1000).toISOString();
         const refreshToken = device.refresh_token;
+        // Jangan timpa histori login asli target saat cuma di-impersonate oleh superadmin.
         if (!impersonatedBy)
             await this.usersService.markLogin(user.id, method);
         return {
@@ -299,6 +304,11 @@ let AuthService = class AuthService {
             impersonated: !!impersonatedBy
         };
     }
+    /**
+     * Superadmin masuk sebagai user lain (tanpa tahu passwordnya) -- utk dukungan/investigasi.
+     * Tidak boleh ke sesama superadmin, wajib keterangan (min. 10 kata), sesi lebih pendek,
+     * dan setiap pemakaian tercatat penuh ke audit log (siapa impersonate siapa, kapan, alasan).
+     */
     async impersonate(actorUser, targetUserId, uaResult, keterangan) {
         const actorRole = String(actorUser?.role_bdb || '').toLowerCase();
         const actorId = Number(actorUser?.id);
@@ -348,6 +358,7 @@ let AuthService = class AuthService {
             });
         }
         this.usersService.assertCanPasswordLogin(user);
+        // Akun terkunci karena terlalu banyak gagal login?
         const lockedMinutes = this.usersService.lockRemainingMinutes(user);
         if (lockedMinutes > 0) {
             throw new common_1.BadRequestException({
@@ -362,6 +373,7 @@ let AuthService = class AuthService {
                 }
             });
         }
+        // Mode maintenance: SEMUA akun selain superadmin diblokir masuk, biar superadmin selalu bisa login utk mematikannya lagi.
         if (String(user.role_bdb || '').toLowerCase() !== 'superadmin' && (await this.systemSetting.isMaintenanceEnabled())) {
             const status = await this.systemSetting.getPublicMaintenanceStatus();
             throw new common_1.BadRequestException({
@@ -391,8 +403,11 @@ let AuthService = class AuthService {
                 refresh_token: ''
             };
         }
+        // OTP email saat login: kontrol GLOBAL milik superadmin (bdb_system_settings), bukan per-akun.
+        // Kalau aktif, SEMUA akun (termasuk superadmin) wajib OTP -- kode dikirim ke email dinas Polri.
         return this.finishLoginAfterFactors(user, result, 'LOCAL');
     }
+    /** Verifikasi OTP email saat login lalu buat sesi. Dipanggil setelah signIn() mengembalikan requires_otp:true. */
     async verifyLoginOtp(dto, result) {
         const payload = await this.falidationOtp(dto?.otp_id, dto?.otp_token);
         if (payload instanceof Error) {
@@ -421,6 +436,9 @@ let AuthService = class AuthService {
             });
         }
         this.usersService.assertCanPasswordLogin(user);
+        // Akun terkunci karena terlalu banyak gagal (password ATAU PIN) -- endpoint ini juga re-cek
+        // password, jadi tanpa pengecekan ini lockout login bisa dilewati dgn menyerang verify-pin
+        // langsung alih-alih /login.
         const lockedMinutes = this.usersService.lockRemainingMinutes(user);
         if (lockedMinutes > 0) {
             throw new common_1.BadRequestException({
@@ -535,14 +553,11 @@ let AuthService = class AuthService {
         catch (error) {
             throw new common_1.UnauthorizedException('Invalid token');
         }
-        if (!payload.device_id && !payload.device_token) {
+        if (!payload.device_id) {
             throw new common_1.UnauthorizedException('Device ID not found in token');
         }
-        await this.dataSource.query(
-            'DELETE FROM auth_devices WHERE id = $1 OR device_token = $2',
-            [payload.device_id || 0, payload.device_token || '']
-        );
-        return { logged_out: true };
+        const device = await this.deviceService.remove(payload.device_id);
+        return device;
     }
     async extractTokenFromHeader(request) {
         const authHeader = request.headers.authorization;
@@ -554,11 +569,13 @@ let AuthService = class AuthService {
     }
     async user(authUser) {
         console.time('Total Execution');
+        // Step 1: Load User + Org + Level + Role
         console.time('Step 1: Load User + Org + Level');
         const user = await this.dataSource.getRepository(user_entity_1.User).createQueryBuilder('user').leftJoinAndSelect('user.Organisasi', 'org').leftJoinAndSelect('org.OrganisasiLevel', 'level').leftJoinAndSelect('user.OrganisasiRole', 'role').where('user.id = :id', { id: authUser.id }).getOne();
         console.timeEnd('Step 1: Load User + Org + Level');
         if (!user)
             throw new common_1.NotFoundException('User tidak ditemukan');
+        // Step 2: Parallel Load Permission, Menu Tree, Root Levels
         console.time('Step 2: Parallel Load Permissions, Menu, Root Levels');
         const cacheKeyMenu = 'treeMenu';
         const cacheKeyRoot = 'rootLevels_Cache';
@@ -567,20 +584,27 @@ let AuthService = class AuthService {
             this.dataSource.getRepository(permission_entity_1.Permission).createQueryBuilder('perm').innerJoin('perm.OrganisasiRole', 'role').where('role.id = :roleId', { roleId: user.OrganisasiRole?.id }).getMany(),
             this.cacheGetOrSet.call(this, cacheKeyMenu, async () => {
                 return await this.dataSource.getTreeRepository(permission_entity_1.Permission).findTrees({ depth: 20 });
-            }, 0),
+            }, 
+            // 86400000
+            0),
             this.cacheGetOrSet.call(this, cacheKeyRoot, async () => {
                 return await this.dataSource.getRepository(level_entity_1.OrganisasiLevel).find({
                     where: { level_name: (0, typeorm_1.In)(['Mabes', 'Polda']) }
                 });
-            }, 0)
+            }, 
+            // 86400000
+            0)
         ]);
         console.timeEnd('Step 2: Parallel Load Permissions, Menu, Root Levels');
+        // Inject loaded permissions
         user.Organisasi.OrganisasiLevel.Permission = levelPermissions;
         user.OrganisasiRole.Permission = rolePermissions;
+        // Step 3: Extract IDs
         console.time('Step 3: Extract Permission IDs');
         const permissionIds = rolePermissions.map(p => p.id);
         const levelPermissionIds = levelPermissions.map(p => p.id);
         console.timeEnd('Step 3: Extract Permission IDs');
+        // Step 4: Filter Tree
         console.time('Step 4: Filter Tree Menu');
         function filterTree(tree) {
             return tree
@@ -602,9 +626,11 @@ let AuthService = class AuthService {
         }
         const filteredTree = filterTree(treeMenu);
         console.timeEnd('Step 4: Filter Tree Menu');
+        // Step 5: Clean Permissions
         console.time('Step 5: Clean Permissions');
         const cleanedPermission = rolePermissions.map(({ Timestamps, ...rest }) => rest);
         console.timeEnd('Step 5: Clean Permissions');
+        // Step 6: Resolve Satker
         console.time('Step 6: Resolve Satker');
         const userPath = user.Organisasi?.OrganisasiLevel?.path ?? '';
         const matchedRoot = rootLevels.filter(root => userPath.startsWith(root.path)).sort((a, b) => b.path.length - a.path.length)[0];
@@ -656,18 +682,14 @@ let AuthService = class AuthService {
         const roleBdb = this.normalizeBdbRole(user.role_bdb);
         if (scopeRow?.nama_satker_canonical && roleBdb !== 'superadmin') {
             satker = scopeRow.nama_satker_canonical;
-        } else if (roleBdb !== 'superadmin' && satker && String(satker).toLowerCase().includes('superadmin')) {
-            satker = policeProfile?.satuan || 'Polri';
         }
         const scopeAccessDisplay = roleBdb === 'superadmin'
             ? 'Nasional'
             : scopeRow?.nama_satker_canonical
                 ? `${scopeRow.nama_satker_canonical} dan bawahannya`
                 : satker || 'Belum pilih';
+        // Step 7: Transform Result
         console.time('Step 7: Transform Final Object');
-        const unifiedHandle = Number(user.id) === 1
-            ? 'om.eko_42'
-            : (String(user.callsign || user.username || '').trim().replace(/^@+/, '').toLowerCase() || user.username || null);
         const transformUser = {
             id: user.id,
             user_name: user.name,
@@ -675,8 +697,8 @@ let AuthService = class AuthService {
             email: user.email,
             email_google: user.email_google,
             email_polri: user.email_polri,
-            username: unifiedHandle,
-            callsign: unifiedHandle,
+            username: user.username,
+            callsign: user.username,
             login_method: user.login_method,
             local_password_enabled: user.local_password_enabled,
             role_bdb: user.role_bdb,
@@ -685,14 +707,15 @@ let AuthService = class AuthService {
             status: user.status,
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
-            scope_satker_name: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : scopeRow?.nama_satker_canonical || null,
-            satker_nama: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : scopeRow?.nama_satker_canonical || satker || null,
+            scope_satker_name: roleBdb === 'superadmin' ? '-' : scopeRow?.nama_satker_canonical || null,
             scope_satker_level: roleBdb === 'superadmin' ? null : scopeRow?.level || null,
             scope_access_display: scopeAccessDisplay,
-            nrp: policeProfile?.nrp || null,
+            nrp: policeProfile?.nrp || (Number(user.id) === 1 ? '98010710' : null),
             no_hp: policeProfile?.no_hp || null,
-            satuan: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : (policeProfile?.satuan || null),
-            pangkat: policeProfile?.pangkat || null,
+            satuan: policeProfile?.satuan || null,
+            pangkat: (Number(user.id) === 1)
+                ? ((!policeProfile?.pangkat || String(policeProfile.pangkat).toUpperCase() === 'KOMPOL') ? 'Briptu' : policeProfile.pangkat)
+                : (policeProfile?.pangkat || null),
             jabatan: policeProfile?.jabatan || null,
             foto: user.photo_url || policeProfile?.foto || null,
             photo_url: user.photo_url || policeProfile?.foto || null,
@@ -702,7 +725,7 @@ let AuthService = class AuthService {
             email_otp_required: await this.systemSetting.isLoginOtpRequired(),
             totp_enabled: Boolean(user.totp_secret || user.totp),
             pin_required: Boolean(user.pin_required),
-            satker: roleBdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : satker,
+            satker: satker,
             Organisasi: user.Organisasi,
             role: {
                 role_name: user.OrganisasiRole.role_name,
@@ -715,13 +738,14 @@ let AuthService = class AuthService {
         console.timeEnd('Total Execution');
         return transformUser;
     }
+    // Fungsi generic untuk cache get/set dengan TTL
     async cacheGetOrSet(key, fetcher, ttl) {
         const cached = await this.cacheManager.get(key);
         if (cached !== undefined && cached !== null) {
             return cached;
         }
         const freshData = await fetcher();
-        await this.cacheManager.set(key, freshData, ttl);
+        await this.cacheManager.set(key, freshData, ttl); // TTL dalam detik (sesuaikan kalau cacheManager-mu expect ms)
         return freshData;
     }
     async verifyOtp(action, otp_id, otp_token) {
@@ -748,6 +772,12 @@ let AuthService = class AuthService {
                     });
                 }
                 const hashedPassword = await bcrypt.hash(payload.new_user.password, 10);
+                // role_bdb SELALU 'viewer' di titik ini (baru disetel jadi role sungguhan saat
+                // admin approve lewat UserService.reviewApproval()) -- organisasiRoleId (legacy)
+                // WAJIB ikut cari id "viewer", JANGAN hardcode id manapun (lihat organisasi-role.util.ts
+                // utk riwayat bug fatal: hardcode id 1/"superadmin" di sini bikin user yg baru
+                // registrasi mandiri, begitu diapprove admin dgn role apa pun, tetap kebagian akses
+                // menu penuh spt superadmin krn field ini tak pernah disentuh ulang).
                 const viewerRoleId = await (0, organisasi_role_util_1.resolveOrganisasiRoleId)(this.dataSource, 'viewer');
                 const newData = queryRunner.manager.create(user_entity_1.User, {
                     name: payload.new_user.name,
@@ -795,9 +825,12 @@ let AuthService = class AuthService {
         }
     }
     async captcha() {
+        // Captcha proof-of-work (self-hosted, tanpa Google & tanpa gambar):
+        // user cukup klik "I'm not a robot", browser menghitung nonce PoW.
         return (0, pow_captcha_util_1.generatePowCaptcha)();
     }
     async validateCaptcha(captchaId, userInput) {
+        // userInput = nonce hasil proof-of-work dari browser
         return (0, pow_captcha_util_1.verifyPowCaptcha)(captchaId, userInput);
     }
     async TotpRegistration(registerTotp) {
@@ -905,6 +938,10 @@ let AuthService = class AuthService {
         const role = await queryRunner.manager.findOneOrFail(role_entity_1.OrganisasiRole, {
             where: { invitation_code: dto.role_code }
         });
+        // role_bdb (kolom asli BDB) WAJIB ikut disamakan dgn OrganisasiRole yg diundang --
+        // sebelumnya cuma OrganisasiRole yg diisi, role_bdb tak pernah disentuh. Dibatasi CHECK
+        // constraint ke 4 role baku (auth_users_role_bdb_check) -- role CUSTOM sengaja tak dipaksa
+        // isi (bakal gagal krn constraint), biarkan default apa adanya.
         const BAKU_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
         const roleBdbForInvite = BAKU_ROLES.includes(String(role.role_name || '').trim().toLowerCase()) ? String(role.role_name).trim().toLowerCase() : undefined;
         try {
@@ -1138,6 +1175,7 @@ let AuthService = class AuthService {
             .getOne();
         if (!user)
             throw new common_1.NotFoundException('User tidak ditemukan');
+        // Validasi password akun terlebih dahulu jika dikirimkan atau aksi aktivasi (mencegah OTP terbuang jika salah password)
         if (dto?.password || ['enable_email_otp', 'enable_pin', 'change_pin'].includes(action)) {
             if (!dto?.password) {
                 throw new common_1.BadRequestException({
@@ -1245,6 +1283,7 @@ let AuthService = class AuthService {
             this.clearUserSecurityRateLimits(user.id);
             return this.user({ id: user.id });
         }
+        // Disable TOTP: allow verification with TOTP token, Password, or PIN
         let verified = false;
         if (dto?.totp_token && user.totp_secret && otplib_1.authenticator.check(String(dto.totp_token).trim(), user.totp_secret)) {
             verified = true;
@@ -1450,7 +1489,11 @@ let AuthService = class AuthService {
             await queryRunner.manager.update(user_entity_1.User, user.id, {
                 password: hashedPassword,
                 local_password_enabled: true,
-                login_method: loginMethod
+                login_method: loginMethod,
+                pin_required: false,
+                security_pin_hash: null,
+                failed_login_attempts: 0,
+                locked_until: null
             });
             await queryRunner.commitTransaction();
             return { message: 'Password berhasil direset' };
@@ -1486,6 +1529,8 @@ let AuthService = class AuthService {
                 errors: { otp_token: ['expired token'] }
             });
         }
+        // Batasi percobaan tebak kode OTP spt lockout login (pakai akun yg sama) -- tanpa ini kode
+        // 6 digit bisa di-brute-force ratusan ribu kali dlm jendela 5 menit sblm token kedaluwarsa.
         const otpUser = payload.user_id ? await this.usersService.findOne(String(payload.user_id)) : null;
         if (otpUser) {
             const lockedMinutes = this.usersService.lockRemainingMinutes(otpUser);
@@ -1543,6 +1588,7 @@ let AuthService = class AuthService {
         finally {
             await queryRunner.release();
         }
+        // Password sudah committed. Pencabutan device tidak boleh membatalkan password baru.
         let sessionRevoked = true;
         try {
             await this.signOut(req);
@@ -1553,15 +1599,16 @@ let AuthService = class AuthService {
         await this.usersService.logOwnPasswordChange(authUser, sessionRevoked);
         return { message: 'Password berhasil diubah' };
     }
-
+    // ==========================================
+    // PASSKEY / WEBAUTHN / BIOMETRIC AUTHENTICATION
+    // ==========================================
     getRPInfo() {
         return {
             rpName: 'CAS Bareskrim Polri',
-            rpID: process.env.WEBAUTHN_RP_ID || 'localhost',
-            expectedOrigin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000'
+            rpID: process.env.WEBAUTHN_RP_ID || 'cas.bareskrim.polri.go.id',
+            expectedOrigin: process.env.WEBAUTHN_ORIGIN || 'https://cas.bareskrim.polri.go.id'
         };
     }
-
     inferPasskeyExpectedOs(pk) {
         if (pk?.os_name) return String(pk.os_name).trim();
         const dn = String(pk?.device_name || '').toLowerCase();
@@ -1571,22 +1618,23 @@ let AuthService = class AuthService {
         if (dn.includes('android')) return 'Android';
         return '';
     }
-
+    buildOsSig(ua) {
+        return [ua?.os?.name, ua?.device?.type || 'desktop', ua?.device?.vendor, ua?.device?.model]
+            .map((x) => String(x || '').trim().toLowerCase())
+            .filter(Boolean)
+            .join('|');
+    }
+    /** 1. Generate Registration Options for current authenticated user */
     async passkeyRegisterOptions(user) {
         const { generateRegistrationOptions } = require('@simplewebauthn/server');
         const { rpName, rpID } = this.getRPInfo();
-
         const uid = Number(user.id);
-        const existingKeys = await this.dataSource.query(
-            'SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1',
-            [uid]
-        );
-
+        const existingKeys = await this.dataSource.query('SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1', [uid]);
         const options = await generateRegistrationOptions({
             rpName,
             rpID,
             userID: new Uint8Array(Buffer.from(String(uid))),
-            userName: user.username || user.email || ('user_' + uid),
+            userName: user.username || user.email || `user_${uid}`,
             userDisplayName: user.name || user.username || 'Personil CAS',
             attestationType: 'none',
             excludeCredentials: existingKeys.map((k) => ({
@@ -1596,45 +1644,29 @@ let AuthService = class AuthService {
             authenticatorSelection: {
                 authenticatorAttachment: 'platform',
                 residentKey: 'required',
-                requireResidentKey: true,
                 userVerification: 'required'
             }
         });
-
-        await this.dataSource.query(
-            `INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
+        await this.dataSource.query(`INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
              VALUES ($1, $2, $3, 'registration', NOW() + INTERVAL '5 minutes')
-             ON CONFLICT (id) DO UPDATE SET challenge = $3, expires_at = NOW() + INTERVAL '5 minutes'`,
-            ['reg_' + uid, uid, options.challenge]
-        );
-
+             ON CONFLICT (id) DO UPDATE SET challenge = $3, expires_at = NOW() + INTERVAL '5 minutes'`, [`reg_${uid}`, uid, options.challenge]);
         return options;
     }
-
+    /** 2. Verify Registration Response and store passkey */
     async passkeyRegisterVerify(user, dto, userAgentResult) {
         const { verifyRegistrationResponse } = require('@simplewebauthn/server');
         const { rpID, expectedOrigin } = this.getRPInfo();
         const uid = Number(user.id);
-
-        const challengeRows = await this.dataSource.query(
-            `SELECT challenge FROM auth_passkey_challenges 
-             WHERE id = $1 AND type = 'registration' AND expires_at > NOW()`,
-            ['reg_' + uid]
-        );
-
+        const challengeRows = await this.dataSource.query(`SELECT challenge FROM auth_passkey_challenges 
+             WHERE id = $1 AND type = 'registration' AND expires_at > NOW()`, [`reg_${uid}`]);
         if (!challengeRows.length) {
             throw new common_1.BadRequestException('Sesi pendaftaran biometrik telah kedaluwarsa. Silakan ulangi.');
         }
-
         const expectedChallenge = challengeRows[0].challenge;
         const regResponse = dto.registrationResponse || dto;
-
         if (regResponse.authenticatorAttachment && regResponse.authenticatorAttachment !== 'platform') {
-            throw new common_1.BadRequestException(
-                'Pendaftaran ditolak: Hanya autentikator biometrik bawaan perangkat fisik (Platform Authenticator / Windows Hello / Touch ID) yang diizinkan.'
-            );
+            throw new common_1.BadRequestException('Pendaftaran ditolak: Hanya autentikator biometrik bawaan perangkat fisik (Platform Authenticator / Windows Hello / Touch ID) yang diizinkan.');
         }
-
         let verification;
         try {
             verification = await verifyRegistrationResponse({
@@ -1644,14 +1676,13 @@ let AuthService = class AuthService {
                 expectedRPID: rpID,
                 requireUserVerification: true
             });
-        } catch (err) {
-            throw new common_1.BadRequestException('Gagal memverifikasi pendaftaran biometrik (pastikan biometrik/PIN perangkat diverifikasi): ' + (err?.message || 'Data tidak valid'));
         }
-
+        catch (err) {
+            throw new common_1.BadRequestException(`Gagal memverifikasi pendaftaran biometrik (pastikan biometrik/PIN perangkat diverifikasi): ${err?.message || 'Data tidak valid'}`);
+        }
         if (!verification.verified || !verification.registrationInfo) {
             throw new common_1.BadRequestException('Verifikasi pendaftaran biometrik gagal.');
         }
-
         const info = verification.registrationInfo;
         const credentialID = info.credentialID || info.credential?.id || regResponse.id;
         const pubKey = info.credentialPublicKey || info.credential?.publicKey;
@@ -1660,43 +1691,40 @@ let AuthService = class AuthService {
         const aaguid = String(info.aaguid || '').toLowerCase() || null;
         const credentialDeviceType = info.credentialDeviceType || 'singleDevice';
         const credentialBackedUp = Boolean(info.credentialBackedUp);
-
         const os = userAgentResult?.os?.name || '';
         const vendor = userAgentResult?.device?.vendor || '';
         const model = userAgentResult?.device?.model || '';
         const browser = userAgentResult?.browser?.name || '';
-
-        // Allow platform & browser-managed passkeys (Windows Hello TPM & Chrome Passkey Enclave) — device/OS binding is enforced via os_name & browser_name
-
         const transports = ['internal'];
-
+        const deviceFingerprint = String(dto?.device_fingerprint || dto?.deviceFingerprint || dto?.fingerprint || '').trim() || null;
+        const osSignature = this.buildOsSig(userAgentResult) || null;
         let devName = String(dto.deviceName || '').trim();
         if (!devName) {
             if (vendor || model) {
-                devName = (vendor + ' ' + model).trim();
-            } else if (os) {
-                devName = (os + ' (' + (browser || 'Browser') + ')').trim();
-            } else {
+                devName = `${vendor} ${model}`.trim();
+            }
+            else if (os) {
+                devName = `${os} (${browser || 'Browser'})`.trim();
+            }
+            else {
                 devName = 'Gawai Terpercaya (FIDO2)';
             }
         }
-
-        await this.dataSource.query(
-            `INSERT INTO auth_passkeys (
+        await this.dataSource.query(`INSERT INTO auth_passkeys (
                 user_id, credential_id, public_key, counter, device_name, transports,
                 aaguid, credential_device_type, credential_backed_up, os_name, browser_name,
+                device_fingerprint, os_signature,
                 created_at, last_used_at
              )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
              ON CONFLICT (credential_id) DO UPDATE SET
                 public_key = $3, counter = $4, device_name = $5, transports = $6,
                 aaguid = $7, credential_device_type = $8, credential_backed_up = $9,
-                os_name = $10, browser_name = $11, last_used_at = NOW()`,
-            [uid, credentialID, publicKeyB64, counter, devName, transports, aaguid, credentialDeviceType, credentialBackedUp, os || null, browser || null]
-        );
-
-        await this.dataSource.query('DELETE FROM auth_passkey_challenges WHERE id = $1', ['reg_' + uid]);
-
+                os_name = $10, browser_name = $11,
+                device_fingerprint = COALESCE($12, auth_passkeys.device_fingerprint),
+                os_signature = COALESCE($13, auth_passkeys.os_signature),
+                last_used_at = NOW()`, [uid, credentialID, publicKeyB64, counter, devName, transports, aaguid, credentialDeviceType, credentialBackedUp, os || null, browser || null, deviceFingerprint, osSignature]);
+        await this.dataSource.query('DELETE FROM auth_passkey_challenges WHERE id = $1', [`reg_${uid}`]);
         void this.audit.log({
             userId: uid,
             userName: user.username,
@@ -1708,22 +1736,21 @@ let AuthService = class AuthService {
                 browser_name: browser || null,
                 credential_device_type: credentialDeviceType,
                 credential_backed_up: credentialBackedUp,
-                aaguid
-            }
+                aaguid,
+                os_signature: osSignature,
+                has_device_fingerprint: Boolean(deviceFingerprint)
+            },
+            ip: undefined
         });
-
         return { verified: true, device_name: devName };
     }
-
+    /** 3. Get Registered Devices for current user */
     async passkeyGetDevices(user) {
         const uid = Number(user.id);
-        const rows = await this.dataSource.query(
-            `SELECT id, device_name, device_type, transports, os_name, browser_name, credential_device_type, credential_backed_up, created_at, last_used_at
+        const rows = await this.dataSource.query(`SELECT id, device_name, device_type, transports, os_name, browser_name, credential_device_type, credential_backed_up, created_at, last_used_at
              FROM auth_passkeys
              WHERE user_id = $1
-             ORDER BY last_used_at DESC NULLS LAST, created_at DESC`,
-            [uid]
-        );
+             ORDER BY last_used_at DESC NULLS LAST, created_at DESC`, [uid]);
         return rows.map((r) => ({
             id: Number(r.id),
             device_name: r.device_name || 'Gawai Terpercaya',
@@ -1736,23 +1763,20 @@ let AuthService = class AuthService {
             last_used_at: r.last_used_at
         }));
     }
-
+    /** 4. Delete / Revoke a Registered Device */
     async passkeyDeleteDevice(user, deviceId, dto) {
         const uid = Number(user.id);
         const inputCode = String(dto?.password || dto?.code || dto?.pin || dto?.totp_token || dto?.verification || '').trim();
-
         if (!inputCode) {
             throw new common_1.BadRequestException('Masukkan password akun atau kode keamanan (PIN / 2FA) untuk konfirmasi pencabutan gawai.');
         }
-
-        const uRows = await this.dataSource.query('SELECT id, password, security_pin_hash, totp_secret FROM auth_users WHERE id = $1 LIMIT 1', [uid]); const userEntity = uRows[0];
+        const uRows = await this.dataSource.query('SELECT id, password, security_pin_hash, totp_secret FROM auth_users WHERE id = $1 LIMIT 1', [uid]);
+        const userEntity = uRows[0];
         if (!userEntity) {
             throw new common_1.NotFoundException('Data personil tidak ditemukan.');
         }
-
         const bcrypt = require('bcrypt');
         let verified = false;
-
         if (userEntity.password && (await bcrypt.compare(inputCode, userEntity.password))) {
             verified = true;
         }
@@ -1765,102 +1789,76 @@ let AuthService = class AuthService {
                 if (otplib.authenticator.check(inputCode, userEntity.totp_secret)) {
                     verified = true;
                 }
-            } catch(_e) {}
+            }
+            catch (_e) { }
         }
-
         if (!verified) {
             throw new common_1.BadRequestException('Password atau kode verifikasi keamanan salah. Otorisasi pencabutan akses ditolak.');
         }
-
-        const res = await this.dataSource.query(
-            'DELETE FROM auth_passkeys WHERE id = $1 AND user_id = $2 RETURNING device_name',
-            [deviceId, uid]
-        );
+        const res = await this.dataSource.query('DELETE FROM auth_passkeys WHERE id = $1 AND user_id = $2 RETURNING device_name', [deviceId, uid]);
         if (!res.length) {
             throw new common_1.NotFoundException('Perangkat tidak ditemukan atau sudah dihapus.');
         }
-
         void this.audit.log({
             userId: uid,
             userName: user.username,
             action: 'PASSKEY_REVOKE',
             entity: 'auth_passkeys',
-            meta: { device_id: deviceId, device_name: res[0].device_name }
+            meta: { device_id: deviceId, device_name: res[0].device_name },
+            ip: undefined
         });
-
         return { success: true, message: 'Akses gawai berhasil dicabut.' };
     }
-
+    /** 5. Generate Login Authentication Options (Public) */
     async passkeyLoginOptions(username) {
         const { generateAuthenticationOptions } = require('@simplewebauthn/server');
         const { rpID } = this.getRPInfo();
-
         let allowCredentials = [];
         let targetUid = null;
-
         if (username) {
             const cleanUser = String(username).trim().toLowerCase();
-            const uRows = await this.dataSource.query(
-                'SELECT id FROM auth_users WHERE LOWER(username) = $1 OR LOWER(email) = $1 OR LOWER(callsign) = $1',
-                [cleanUser]
-            );
+            const uRows = await this.dataSource.query('SELECT id FROM auth_users WHERE LOWER(username) = $1 OR LOWER(email) = $1', [cleanUser]);
             if (uRows.length) {
                 targetUid = Number(uRows[0].id);
-                const pkRows = await this.dataSource.query(
-                    'SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1',
-                    [targetUid]
-                );
+                const pkRows = await this.dataSource.query('SELECT credential_id, transports FROM auth_passkeys WHERE user_id = $1', [targetUid]);
                 allowCredentials = pkRows.map((pk) => ({
                     id: pk.credential_id,
                     transports: ['internal']
                 }));
             }
         }
-
         const options = await generateAuthenticationOptions({
             rpID,
             userVerification: 'required',
             allowCredentials: allowCredentials.length > 0 ? allowCredentials : undefined
         });
-
-        await this.dataSource.query(
-            `INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
-             VALUES ($1, $2, $3, 'authentication', NOW() + INTERVAL '5 minutes')`,
-            [options.challenge, targetUid, options.challenge]
-        );
-
+        await this.dataSource.query(`INSERT INTO auth_passkey_challenges (id, user_id, challenge, type, expires_at)
+             VALUES ($1, $2, $3, 'authentication', NOW() + INTERVAL '5 minutes')`, [options.challenge, targetUid, options.challenge]);
         return options;
     }
-
+    /** 6. Verify Login Authentication Response & Issue JWT Session (Public) */
     async passkeyLoginVerify(dto, userAgentResult) {
         const { verifyAuthenticationResponse } = require('@simplewebauthn/server');
         const { rpID, expectedOrigin } = this.getRPInfo();
-
         const authResponse = dto.authResponse || dto;
         const credId = authResponse?.id;
         if (!credId) {
             throw new common_1.BadRequestException('ID kredensial biometrik tidak ditemukan.');
         }
-
-        const pkRows = await this.dataSource.query(
-            `SELECT p.id, p.user_id, p.credential_id, p.public_key, p.counter, p.transports, p.device_name,
+        const pkRows = await this.dataSource.query(`SELECT p.id, p.user_id, p.credential_id, p.public_key, p.counter, p.transports, p.device_name,
                     p.aaguid, p.credential_device_type, p.credential_backed_up, p.os_name, p.browser_name,
+                    p.device_fingerprint, p.os_signature,
                     u.id as user_db_id, u.username, u.name, u.email, u.role_bdb, u.role_name, u.scope_satker_id, u.status
              FROM auth_passkeys p
              JOIN auth_users u ON u.id = p.user_id
-             WHERE p.credential_id = $1`,
-            [credId]
-        );
-
+             WHERE p.credential_id = $1`, [credId]);
         if (!pkRows.length) {
             throw new common_1.UnauthorizedException('Kredensial biometrik tidak terdaftar pada sistem CAS.');
         }
-
         const pk = pkRows[0];
         if (String(pk.status).toUpperCase() === 'NONAKTIF' || String(pk.status).toLowerCase() === 'inactive') {
             throw new common_1.UnauthorizedException('Akun personil sedang dinonaktifkan.');
         }
-
         let clientChallenge = null;
         try {
             const rawClientData = authResponse?.response?.clientDataJSON;
@@ -1870,35 +1868,23 @@ let AuthService = class AuthService {
                     clientChallenge = decoded.challenge;
                 }
             }
-        } catch (_e) {}
-
+        }
+        catch (_e) { }
         if (dto.challenge && clientChallenge && dto.challenge !== clientChallenge) {
             throw new common_1.UnauthorizedException('Challenge otentikasi biometrik tidak cocok (mismatch).');
         }
-
         const challengeToFind = clientChallenge || dto.challenge;
         if (!challengeToFind) {
             throw new common_1.BadRequestException('Challenge verifikasi biometrik tidak ditemukan.');
         }
-
-        const chRows = await this.dataSource.query(
-            `SELECT challenge, user_id FROM auth_passkey_challenges 
+        const chRows = await this.dataSource.query(`SELECT challenge, user_id FROM auth_passkey_challenges 
              WHERE challenge = $1 AND type = 'authentication' AND expires_at > NOW()
-               AND (user_id IS NULL OR user_id = $2)`,
-            [challengeToFind, pk.user_id]
-        );
-
+               AND (user_id IS NULL OR user_id = $2)`, [challengeToFind, pk.user_id]);
         if (!chRows.length) {
             throw new common_1.BadRequestException('Sesi verifikasi biometrik kedaluwarsa atau tidak valid. Silakan coba lagi.');
         }
-
         const challengeRow = chRows[0];
-
-        await this.dataSource.query(
-            'DELETE FROM auth_passkey_challenges WHERE challenge = $1',
-            [challengeRow.challenge]
-        );
-
+        await this.dataSource.query('DELETE FROM auth_passkey_challenges WHERE challenge = $1', [challengeRow.challenge]);
         const storedCounter = Number(pk.counter || 0);
         let verification;
         try {
@@ -1921,19 +1907,19 @@ let AuthService = class AuthService {
                 },
                 requireUserVerification: true
             });
-        } catch (err) {
-            throw new common_1.UnauthorizedException('Verifikasi biometrik gagal: ' + (err?.message || 'Tanda tangan tidak valid'));
         }
-
+        catch (err) {
+            throw new common_1.UnauthorizedException(`Verifikasi biometrik gagal: ${err?.message || 'Tanda tangan tidak valid'}`);
+        }
         if (!verification.verified) {
             throw new common_1.UnauthorizedException('Verifikasi biometrik ditolak.');
         }
-
         const authInfo = verification.authenticationInfo || {};
         const currentOs = String(userAgentResult?.os?.name || '').trim();
         const currentBrowser = String(userAgentResult?.browser?.name || '').trim();
         const expectedOs = this.inferPasskeyExpectedOs(pk);
-
+        const currentOsSig = this.buildOsSig(userAgentResult);
+        const incomingFp = String(dto?.device_fingerprint || dto?.deviceFingerprint || dto?.fingerprint || '').trim();
         if (expectedOs && currentOs && expectedOs.toLowerCase() !== currentOs.toLowerCase()) {
             void this.audit.log({
                 userId: Number(pk.user_db_id),
@@ -1947,49 +1933,75 @@ let AuthService = class AuthService {
                     actual_os: currentOs
                 }
             });
-            throw new common_1.UnauthorizedException(
-                `Login biometrik ditolak: Kredensial "${pk.device_name}" terdaftar untuk sistem operasi ${expectedOs}, tidak dapat digunakan pada perangkat ${currentOs} yang belum didaftarkan.`
-            );
+            throw new common_1.UnauthorizedException('Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Meskipun akun Chrome sama, setiap gawai wajib didaftarkan terlebih dahulu di menu Pengaturan Keamanan.');
         }
-
+        if (pk.device_fingerprint) {
+            if (incomingFp !== String(pk.device_fingerprint).trim()) {
+                void this.audit.log({
+                    userId: Number(pk.user_db_id),
+                    userName: pk.username,
+                    action: 'LOGIN_PASSKEY_BLOCKED',
+                    entity: 'auth',
+                    meta: {
+                        reason: 'DEVICE_FINGERPRINT_MISMATCH',
+                        registered_device: pk.device_name,
+                        os_signature: currentOsSig
+                    }
+                });
+                throw new common_1.UnauthorizedException('Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Meskipun akun Chrome sama, setiap gawai wajib didaftarkan terlebih dahulu di menu Pengaturan Keamanan.');
+            }
+        }
+        else {
+            const isBackedUp = Boolean(authInfo.credentialBackedUp ?? pk.credential_backed_up);
+            if ((pk.os_signature && currentOsSig && pk.os_signature !== currentOsSig) || (isBackedUp && !incomingFp)) {
+                void this.audit.log({
+                    userId: Number(pk.user_db_id),
+                    userName: pk.username,
+                    action: 'LOGIN_PASSKEY_BLOCKED',
+                    entity: 'auth',
+                    meta: {
+                        reason: 'UNBOUND_SYNCED_PASSKEY_OR_OS_SIG_MISMATCH',
+                        registered_device: pk.device_name,
+                        expected_os_sig: pk.os_signature,
+                        actual_os_sig: currentOsSig,
+                        credential_backed_up: isBackedUp
+                    }
+                });
+                throw new common_1.UnauthorizedException('Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Silakan masuk dengan Kata Sandi lalu daftarkan gawai ini di menu Pengaturan Keamanan.');
+            }
+            if (incomingFp && (!pk.os_signature || pk.os_signature === currentOsSig)) {
+                await this.dataSource.query('UPDATE auth_passkeys SET device_fingerprint = $1, os_signature = $2 WHERE id = $3', [incomingFp, currentOsSig || null, pk.id]);
+            }
+        }
         if (pk.browser_name && currentBrowser && String(pk.browser_name).toLowerCase() !== currentBrowser.toLowerCase()) {
-            throw new common_1.UnauthorizedException(
-                `Login biometrik ditolak: Peramban (${currentBrowser}) tidak sesuai dengan peramban yang didaftarkan (${pk.browser_name}).`
-            );
+            throw new common_1.UnauthorizedException(`Login biometrik ditolak: Peramban (${currentBrowser}) tidak sesuai dengan peramban yang didaftarkan (${pk.browser_name}).`);
         }
-
-        // OS & Browser binding already enforced above via expectedOs and pk.browser_name
-
         const newCounter = Number(authInfo.newCounter ?? storedCounter);
-        await this.dataSource.query(
-            `UPDATE auth_passkeys
+        await this.dataSource.query(`UPDATE auth_passkeys
              SET counter = $1,
                  credential_device_type = COALESCE(credential_device_type, $2),
                  credential_backed_up = COALESCE($3, credential_backed_up),
                  os_name = COALESCE(os_name, $4),
                  browser_name = COALESCE(browser_name, $5),
+                 os_signature = COALESCE(os_signature, $6),
                  last_used_at = NOW()
-             WHERE id = $6`,
-            [
-                newCounter,
-                authInfo.credentialDeviceType || null,
-                typeof authInfo.credentialBackedUp === 'boolean' ? authInfo.credentialBackedUp : false,
-                currentOs || null,
-                currentBrowser || null,
-                pk.id
-            ]
-        );
-
+             WHERE id = $7`, [
+            newCounter,
+            authInfo.credentialDeviceType || null,
+            typeof authInfo.credentialBackedUp === 'boolean' ? authInfo.credentialBackedUp : false,
+            currentOs || null,
+            currentBrowser || null,
+            currentOsSig || null,
+            pk.id
+        ]);
         const userEntity = await this.usersService.findOne(pk.user_db_id);
         if (!userEntity) {
             throw new common_1.NotFoundException('Data personil tidak ditemukan.');
         }
-
         const lockedMinutes = this.usersService.lockRemainingMinutes(userEntity);
         if (lockedMinutes > 0) {
             throw new common_1.UnauthorizedException(`Akun terkunci karena 3x gagal login. Coba lagi dalam ${lockedMinutes} menit.`);
         }
-
         void this.audit.log({
             userId: Number(pk.user_db_id),
             userName: pk.username,
@@ -2002,9 +2014,9 @@ let AuthService = class AuthService {
                 credential_device_type: authInfo.credentialDeviceType || null,
                 credential_backed_up: Boolean(authInfo.credentialBackedUp),
                 outcome: 'SUCCESS'
-            }
+            },
+            ip: undefined
         });
-
         return this.createLoginSession(userEntity, userAgentResult, 'PASSKEY_BIOMETRIC');
     }
 };
@@ -2013,25 +2025,16 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", typeof (_m = typeof Promise !== "undefined" && Promise) === "function" ? _m : Object)
 ], AuthService.prototype, "user", null);
 __decorate([
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [updateUser_dto_1.ResetPasswordDto, Object, Object]),
+    __metadata("design:paramtypes", [typeof (_o = typeof updateUser_dto_1.ResetPasswordDto !== "undefined" && updateUser_dto_1.ResetPasswordDto) === "function" ? _o : Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthService.prototype, "resetPassword", null);
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __param(9, (0, common_1.Inject)(cache_manager_1.CACHE_MANAGER)),
-    __metadata("design:paramtypes", [user_service_1.UserService,
-        jwt_1.JwtService,
-        device_service_1.DeviceService,
-        auth_helper_service_1.Auth,
-        mail_service_1.MailService,
-        typeorm_1.DataSource,
-        table_helper_service_1.TableHelperService,
-        audit_service_1.AuditService,
-        system_setting_service_1.SystemSettingService, Object])
+    __param(9, (0, common_1.Inject)(cache_manager_2.CACHE_MANAGER)),
+    __metadata("design:paramtypes", [typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object, typeof (_c = typeof device_service_1.DeviceService !== "undefined" && device_service_1.DeviceService) === "function" ? _c : Object, typeof (_d = typeof auth_helper_service_1.Auth !== "undefined" && auth_helper_service_1.Auth) === "function" ? _d : Object, typeof (_f = typeof mail_service_1.MailService !== "undefined" && mail_service_1.MailService) === "function" ? _f : Object, typeof (_g = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _g : Object, typeof (_h = typeof table_helper_service_1.TableHelperService !== "undefined" && table_helper_service_1.TableHelperService) === "function" ? _h : Object, typeof (_j = typeof audit_service_1.AuditService !== "undefined" && audit_service_1.AuditService) === "function" ? _j : Object, typeof (_k = typeof system_setting_service_1.SystemSettingService !== "undefined" && system_setting_service_1.SystemSettingService) === "function" ? _k : Object, typeof (_l = typeof cache_manager_1.Cache !== "undefined" && cache_manager_1.Cache) === "function" ? _l : Object])
 ], AuthService);
-//# sourceMappingURL=auth.service.js.map

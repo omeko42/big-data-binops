@@ -121,7 +121,7 @@ let JukrahService = class JukrahService {
     }
     extractTwoWordCallsignFromName(rawName, authorId) {
         if (Number(authorId) === 1)
-            return 'om.eko_42';
+            return 'user_1';
         const str = String(rawName || '').trim();
         let beforeComma = str.split(',')[0] || '';
         beforeComma = beforeComma
@@ -188,7 +188,7 @@ let JukrahService = class JukrahService {
             return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        return u === 'omeko42' || u === 'om.eko_42' || c === 'omeko42' || c === 'om.eko_42';
+        return u === 'user_1' || u === 'user_1' || c === 'user_1' || c === 'user_1';
     }
     isSuperadminUser(id, roleBdb, username, callsign) {
         const idNum = Number(id || 0);
@@ -199,7 +199,7 @@ let JukrahService = class JukrahService {
             return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['om.eko_42', 'omeko42', 'cosersebot', 'ai_taktis_cas'];
+        const superHandles = ['user_1', 'user_1', 'cosersebot', 'ai_taktis_cas'];
         return superHandles.includes(u) || superHandles.includes(c);
     }
     isVerifiedRole(role, isUserOne) {
@@ -764,7 +764,7 @@ let JukrahService = class JukrahService {
     formatCallsign(rawCallsign, authorId, username, authorName) {
         const idStr = String(authorId || '');
         if (idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign))
-            return '@om.eko_42';
+            return '@user_1';
         const invalidPlaceholders = new Set(['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse']);
         const normalizeCandidate = (rawVal) => {
             let v = String(rawVal || '').trim().replace(/^@+/, '').toLowerCase();
