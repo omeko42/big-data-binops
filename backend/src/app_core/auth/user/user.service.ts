@@ -727,6 +727,16 @@ export class UserService {
             }
         }
 
+        const rawRoleFilter = request?.query?.roleFilter ?? request?.query?.role_bdb;
+        const roleFilterVal = String(Array.isArray(rawRoleFilter) ? rawRoleFilter[0] : rawRoleFilter || '').trim().toLowerCase();
+        if (roleFilterVal) {
+            if (roleFilterVal === 'testing' || roleFilterVal === 'vendor_mitra') {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, '')) in ('testing', 'vendor_mitra')");
+            } else {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, 'viewer')) = :roleFilterVal", { roleFilterVal });
+            }
+        }
+
         const rawSearchAll = request?.query?.searchAll;
         const masterUserKeyword = String(Array.isArray(rawSearchAll) ? rawSearchAll[0] : rawSearchAll || '').trim().toLowerCase();
         if (masterUserKeyword) {
@@ -787,6 +797,8 @@ export class UserService {
         }
 
         const filterQuery = { ...request?.query };
+        delete filterQuery.roleFilter;
+        delete filterQuery.role_bdb;
         delete filterQuery.sortBy;
         delete filterQuery['sortBy[]'];
         delete filterQuery['sortBy[0]'];
@@ -1149,7 +1161,7 @@ export class UserService {
             );
             policeProfile = policeRows?.[0] || null;
         } catch {}
-        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594'].includes(String(user.id));
+        const isSuper = Number(user.id) === 1 || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'].includes(String(user.id));
         let satkerNama: string | null = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSingkat: string | null = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSatuan: string | null = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
@@ -1202,7 +1214,7 @@ export class UserService {
             satker_singkat: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             satker_nama: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             scope_satker_name: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
-            pangkat: (Number(user.id) === 1 || String(user.username || '').replace(/^@/, '') === 'om.eko_42')
+            pangkat: (Number(user.id) === 1)
                 ? ((!policeProfile?.pangkat || String(policeProfile.pangkat).toUpperCase() === 'KOMPOL') ? 'Briptu' : policeProfile.pangkat)
                 : (policeProfile?.pangkat || mergedSocial?.pangkat || null),
             jabatan: policeProfile?.jabatan || null,
@@ -1855,16 +1867,15 @@ export class UserService {
         const byEmail = new Map<string, any>(rows.map((row: any) => [row.email_key, row]));
 
         users.forEach((user) => {
-            const isEko = Number(user?.id) === 1 || String(user?.username || '').replace(/^@/, '') === 'om.eko_42';
+            const isPrimarySuper = Number(user?.id) === 1;
             const profile: any = byEmail.get(this.normalizeEmail(user?.email)) || byEmail.get(this.normalizeEmail(user?.email_polri));
             if (!profile) {
-                if (isEko) {
+                if (isPrimarySuper) {
                     user.pangkat = 'Briptu';
-                    user.nrp = user.nrp || '98010710';
                 }
                 return;
             }
-            if (isEko && (!profile.pangkat || String(profile.pangkat).toUpperCase() === 'KOMPOL')) {
+            if (isPrimarySuper && (!profile.pangkat || String(profile.pangkat).toUpperCase() === 'KOMPOL')) {
                 profile.pangkat = 'Briptu';
             }
             user.nrp = profile.nrp;
@@ -2579,7 +2590,12 @@ export class UserService {
 
         const rows = await this.dataSource.query(
             `
-            SELECT user_id, score, login_days_count, lp_created_count, lp_updated_count, 
+            SELECT user_id, score, login_days_count,
+                   COALESCE(session_minutes_30d, 0) AS session_minutes_30d,
+                   COALESCE(avg_session_minutes, 0) AS avg_session_minutes,
+                   COALESCE(session_duration_label, '0m') AS session_duration_label,
+                   COALESCE(activity_tier, 'PASIF') AS activity_tier,
+                   lp_created_count, lp_updated_count, 
                    docs_uploaded_count, last_active_at, status_keaktifan
             FROM auth_users_activity_cache
             WHERE user_id = ANY($1::bigint[])
@@ -2589,12 +2605,27 @@ export class UserService {
         const map = new Map<number, any>(rows.map((r: any) => [Number(r.user_id), r]));
         users.forEach((u) => {
             const a: any = map.get(Number(u.id));
-            u.activity_score = a ? a.score : 0;
-            u.activity_status = a ? a.status_keaktifan : 'INAKTIF';
-            u.activity_login_days = a ? a.login_days_count : 0;
-            u.activity_lp_created = a ? a.lp_created_count : 0;
-            u.activity_lp_updated = a ? a.lp_updated_count : 0;
-            u.activity_docs_uploaded = a ? a.docs_uploaded_count : 0;
+            const isSharese = String(u.role_bdb || u.role_name || '').trim().toLowerCase() === 'sharese';
+            const loginDays = isSharese ? 0 : Number(a?.login_days_count || 0);
+            const sessionMins = isSharese ? 0 : Number(a?.session_minutes_30d || 0);
+            const avgSessionMins = isSharese ? 0 : Number(a?.avg_session_minutes || (loginDays > 0 ? Math.round(sessionMins / loginDays) : 0));
+            const computedScore = (loginDays === 0 && sessionMins === 0)
+                ? 0
+                : Math.min(100, Math.max(1, Math.round((Math.min(30, loginDays) / 30) * 50 + (Math.min(1800, sessionMins) / 1800) * 50)));
+            const score = isSharese ? 0 : (a?.score !== undefined && a?.score !== null ? Number(a.score) : computedScore);
+            const tier = isSharese ? 'PASIF' : (a?.activity_tier || (score >= 75 ? 'SANGAT_AKTIF' : score >= 40 ? 'AKTIF' : score > 0 ? 'KURANG_AKTIF' : 'PASIF'));
+            const durLabel = isSharese ? '0m' : (a?.session_duration_label || (sessionMins <= 0 ? '0m' : sessionMins >= 60 ? `${Math.floor(sessionMins / 60)}j ${sessionMins % 60}m` : `${sessionMins}m`));
+            u.activity_score = score;
+            u.login_days_30d = loginDays;
+            u.session_minutes_30d = sessionMins;
+            u.avg_session_minutes = avgSessionMins;
+            u.session_duration_label = durLabel;
+            u.activity_tier = tier;
+            u.activity_status = isSharese ? 'PASIF' : (a ? a.status_keaktifan : 'PASIF');
+            u.activity_login_days = loginDays;
+            u.activity_lp_created = a ? Number(a.lp_created_count || 0) : 0;
+            u.activity_lp_updated = a ? Number(a.lp_updated_count || 0) : 0;
+            u.activity_docs_uploaded = a ? Number(a.docs_uploaded_count || 0) : 0;
             u.activity_last_active = a ? a.last_active_at : null;
         });
     }
@@ -2603,6 +2634,7 @@ export class UserService {
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) throw new NotFoundException('User tidak ditemukan');
 
+        const isSharese = String(user.role_bdb || user.role_name || '').trim().toLowerCase() === 'sharese';
         const cacheRow = await this.dataSource.query(
             `SELECT * FROM auth_users_activity_cache WHERE user_id = $1`,
             [userId]
@@ -2610,12 +2642,22 @@ export class UserService {
         const summary = cacheRow[0] || {
             score: 0,
             login_days_count: 0,
+            session_minutes_30d: 0,
+            avg_session_minutes: 0,
+            session_duration_label: '0m',
+            activity_tier: 'PASIF',
             lp_created_count: 0,
             lp_updated_count: 0,
             docs_uploaded_count: 0,
             last_active_at: null,
-            status_keaktifan: 'INAKTIF'
+            status_keaktifan: 'PASIF'
         };
+        const loginDays = isSharese ? 0 : Number(summary.login_days_count || 0);
+        const sessionMins = isSharese ? 0 : Number(summary.session_minutes_30d || 0);
+        const avgSessionMins = isSharese ? 0 : Number(summary.avg_session_minutes || (loginDays > 0 ? Math.round(sessionMins / loginDays) : 0));
+        const durLabel = isSharese ? '0m' : (summary.session_duration_label || (sessionMins <= 0 ? '0m' : sessionMins >= 60 ? `${Math.floor(sessionMins / 60)}j ${sessionMins % 60}m` : `${sessionMins}m`));
+        const score = isSharese ? 0 : Number(summary.score || 0);
+        const tier = isSharese ? 'PASIF' : (summary.activity_tier || (score >= 75 ? 'SANGAT_AKTIF' : score >= 40 ? 'AKTIF' : score > 0 ? 'KURANG_AKTIF' : 'PASIF'));
 
         const recentLogs = await this.dataSource.query(
             `
@@ -2635,13 +2677,25 @@ export class UserService {
             role_bdb: user.role_bdb,
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
+            login_days_30d: loginDays,
+            session_minutes_30d: sessionMins,
+            avg_session_minutes: avgSessionMins,
+            session_duration_label: durLabel,
+            activity_score: score,
+            activity_tier: tier,
             summary: {
-                score: summary.score,
-                status_keaktifan: summary.status_keaktifan,
-                login_days_count: summary.login_days_count,
-                lp_created_count: summary.lp_created_count,
-                lp_updated_count: summary.lp_updated_count,
-                docs_uploaded_count: summary.docs_uploaded_count,
+                score,
+                activity_score: score,
+                activity_tier: tier,
+                status_keaktifan: isSharese ? 'PASIF' : summary.status_keaktifan,
+                login_days_count: loginDays,
+                login_days_30d: loginDays,
+                session_minutes_30d: sessionMins,
+                avg_session_minutes: avgSessionMins,
+                session_duration_label: durLabel,
+                lp_created_count: Number(summary.lp_created_count || 0),
+                lp_updated_count: Number(summary.lp_updated_count || 0),
+                docs_uploaded_count: Number(summary.docs_uploaded_count || 0),
                 last_active_at: summary.last_active_at || user.last_login_at
             },
             recent_logs: recentLogs

@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var UserService_1;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,20 +20,17 @@ const crypto = require("crypto");
 const ExcelJS = require("exceljs");
 const table_helper_service_1 = require("../../helper/service/table.helper.service");
 const mail_service_1 = require("../../helper/service/mail.service");
-const audit_service_1 = require("src/bdb/audit/audit.service");
+const audit_service_1 = require("../../../bdb/audit/audit.service");
 const organisasi_role_util_1 = require("../organisasi-role.util");
-const BDB_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
-let UserService = class UserService {
-    static { UserService_1 = this; }
-    dataSource;
-    mailService;
-    audit;
-    userRepository;
-    tableHelper;
+const BDB_ROLES = ['superadmin', 'admin', 'admin_binops', 'operator', 'pejabat', 'analis', 'viewer', 'sharese', 'testing'];
+let UserService = UserService_1 = class UserService {
     constructor(dataSource, mailService, audit) {
         this.dataSource = dataSource;
         this.mailService = mailService;
         this.audit = audit;
+        // ===================== Reset Password + Kirim Email Kredensial =====================
+        this.bulkResetRunning = false;
+        this.bulkResetTablesReady = false;
         this.userRepository = this.dataSource.getRepository(user_entity_1.User);
         this.tableHelper = new table_helper_service_1.TableHelperService();
     }
@@ -365,6 +363,8 @@ let UserService = class UserService {
         const value = String(role || '').trim().toLowerCase();
         return BDB_ROLES.includes(value) ? value : 'viewer';
     }
+    /** Lihat organisasi-role.util.ts -- WAJIB dipakai di setiap create/update/approve user, JANGAN
+     *  pernah hardcode id tm_org_role manapun (riwayat bug fatal ada di sana). */
     resolveOrganisasiRoleId(roleBdb) {
         return (0, organisasi_role_util_1.resolveOrganisasiRoleId)(this.dataSource, roleBdb);
     }
@@ -372,7 +372,7 @@ let UserService = class UserService {
         return String(status || '').trim().toUpperCase();
     }
     shouldRequireScope(role, status, approvalStatus, isSuperadmin = false) {
-        if (role === 'superadmin')
+        if (role === 'superadmin' || role === 'testing' || role === 'sharese')
             return false;
         if (role === 'viewer' && isSuperadmin)
             return false;
@@ -410,8 +410,7 @@ let UserService = class UserService {
             locked_until: null
         });
     }
-    static MAX_LOGIN_ATTEMPTS = 3;
-    static LOCK_MINUTES = 30;
+    /** Sisa menit terkunci (0 bila tidak terkunci). */
     lockRemainingMinutes(user) {
         if (!user?.locked_until)
             return 0;
@@ -419,6 +418,7 @@ let UserService = class UserService {
         const diff = until - Date.now();
         return diff > 0 ? Math.ceil(diff / 60000) : 0;
     }
+    /** Catat percobaan login gagal; kunci akun bila mencapai batas. */
     async registerFailedLogin(user) {
         const attempts = (user?.failed_login_attempts || 0) + 1;
         if (attempts >= UserService_1.MAX_LOGIN_ATTEMPTS) {
@@ -447,6 +447,11 @@ let UserService = class UserService {
             .addSelect('user.totp_secret')
             .getOne();
     }
+    /**
+     * Login SEKARANG wajib pakai email dinas Polri (email_polri) ATAU username -- bukan email
+     * umum/google lagi. Dipakai khusus utk identifikasi login (signIn/verifyLoginOtp/verifyPin),
+     * supaya konsisten dgn kemana OTP email dikirim kalau fitur OTP-login diaktifkan.
+     */
     async findByLoginIdentifier(identifier) {
         const raw = String(identifier || '').trim().toLowerCase();
         const normalized = raw.startsWith('@') ? raw.slice(1) : raw;
@@ -465,6 +470,7 @@ let UserService = class UserService {
             .addSelect('user.totp_secret')
             .getOne();
     }
+    /** Cek ketersediaan username/email_polri -- dipakai form Master Pengguna sblm submit (live validation). */
     async checkIdentifierAvailability(field, value, excludeUserId) {
         const normalized = this.normalizeEmail(value);
         const rawTrim = String(value || '').trim();
@@ -505,7 +511,7 @@ let UserService = class UserService {
             const rows = await this.dataSource.query('select deskripsi from bdb_satker where id=$1', [existing.scope_satker_id]);
             satkerNama = rows[0]?.deskripsi;
         }
-        return { available: false, satker_nama: satkerNama || (existing.role_bdb === 'superadmin' ? 'Robinopsnal Bareskrim Polri' : undefined) };
+        return { available: false, satker_nama: satkerNama || (existing.role_bdb === 'superadmin' ? 'Superadmin' : undefined) };
     }
     async create(createUserDto, authUser) {
         const { password, password_confirmation, email, ...rest } = createUserDto;
@@ -696,6 +702,16 @@ let UserService = class UserService {
                 }
             }
         }
+        const rawRoleFilter = request?.query?.roleFilter ?? request?.query?.role_bdb;
+        const roleFilterVal = String(Array.isArray(rawRoleFilter) ? rawRoleFilter[0] : rawRoleFilter || '').trim().toLowerCase();
+        if (roleFilterVal) {
+            if (roleFilterVal === 'testing' || roleFilterVal === 'vendor_mitra') {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, '')) in ('testing', 'vendor_mitra')");
+            }
+            else {
+                queryBuilder.andWhere("lower(coalesce(user.role_bdb, user.role_name, 'viewer')) = :roleFilterVal", { roleFilterVal });
+            }
+        }
         const rawSearchAll = request?.query?.searchAll;
         const masterUserKeyword = String(Array.isArray(rawSearchAll) ? rawSearchAll[0] : rawSearchAll || '').trim().toLowerCase();
         if (masterUserKeyword) {
@@ -753,6 +769,8 @@ let UserService = class UserService {
             queryBuilder.addOrderBy('user.id', 'ASC');
         }
         const filterQuery = { ...request?.query };
+        delete filterQuery.roleFilter;
+        delete filterQuery.role_bdb;
         delete filterQuery.sortBy;
         delete filterQuery['sortBy[]'];
         delete filterQuery['sortBy[0]'];
@@ -861,6 +879,10 @@ let UserService = class UserService {
             const scopeSatkerId = scope.scope_satker_id;
             const scopeSatkerKey = scope.scope_satker_key;
             await this.assertCanManageUser(authUser, user, roleBdb, scopeSatkerId, scopeSatkerKey);
+            // Jaga OrganisasiRole (legacy) tetap selaras dgn role_bdb kalau rolenya berubah --
+            // sebelumnya field ini tak pernah disentuh di update(), jadi user yg role_bdb-nya
+            // kena bug create() (organisasiRoleId nyasar ke superadmin) tetap rusak akses menunya
+            // walau adminnya sudah "perbaiki" lewat edit role di UI (lihat resolveOrganisasiRoleId).
             const organisasiRoleId = roleBdb !== this.normalizeBdbRole(user.role_bdb) ? await this.resolveOrganisasiRoleId(roleBdb) : null;
             const resolvedUsername = (dto.username !== undefined
                 ? (this.sanitizeUsernameInput(dto.username) || this.generateDefaultHandle(id))
@@ -897,6 +919,7 @@ let UserService = class UserService {
                 updatedData.deactivated_at = null;
                 updatedData.deactivation_reason = null;
             }
+            // Jika satker berubah via edit profil, rekam ke tabel auth_user_mutations
             if (user.scope_satker_id && scopeSatkerId && Number(user.scope_satker_id) !== Number(scopeSatkerId)) {
                 let oldSatkerName = '-';
                 const oldSatkers = await queryRunner.query(`SELECT deskripsi FROM bdb_satker WHERE id = $1 LIMIT 1`, [user.scope_satker_id]);
@@ -950,6 +973,7 @@ let UserService = class UserService {
         const params = [];
         let where = "u.approval_status = 'PENDING_APPROVAL'";
         if (role === 'superadmin') {
+            // Superadmin melihat semua antrian.
         }
         else if (role === 'admin_binops') {
             const scopeId = authUser?.scope_satker_id ? Number(authUser.scope_satker_id) : null;
@@ -1006,6 +1030,11 @@ let UserService = class UserService {
             });
             return { id: targetId, approval_status: 'REJECTED' };
         }
+        // organisasiRoleId (legacy) WAJIB ikut disamakan di sini -- ini titik dimana role_bdb
+        // user BENAR-BENAR ditetapkan pertama kali (registrasi mandiri selalu mulai dari
+        // role_bdb='viewer' menunggu approval, lihat AuthService registrasi via OTP). Tanpa ini,
+        // user yg diapprove dgn role selain viewer tetap kebagian organisasiRoleId dari saat
+        // registrasi (lihat resolveOrganisasiRoleId utk riwayat bug lengkapnya).
         const organisasiRoleId = await this.resolveOrganisasiRoleId(targetRole);
         await this.userRepository.update(targetId, {
             role_bdb: targetRole,
@@ -1067,6 +1096,9 @@ let UserService = class UserService {
             return false;
         return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
     }
+    /**
+     * Dapatkan profil sendiri (termasuk foto profil avatar, data personil kepolisian, dll).
+     */
     async getOwnProfile(authUser) {
         const user = await this.userRepository.findOne({ where: { id: Number(authUser.id) } });
         if (!user)
@@ -1080,10 +1112,10 @@ let UserService = class UserService {
             policeProfile = policeRows?.[0] || null;
         }
         catch { }
-        const isSuper = String(user.id) === '1' || user.username === 'omeko42' || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'].includes(String(user.id));
+        const isSuper = Number(user.id) === 1 || String(user.role_bdb).toLowerCase() === 'superadmin' || ['1', '320', '15403', '15404', '16568', '16576', '16594', '17360'].includes(String(user.id));
         let satkerNama = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
         let satkerSingkat = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
-        let satkerSatuan = isSuper ? 'Robinopsnal Bareskrim Polri' : null;
+        let satkerSatuan = isSuper ? 'ROBINOPSNAL BARESKRIM POLRI' : null;
         if (!satkerNama && user.scope_satker_id) {
             try {
                 const sRows = await this.dataSource.query('select deskripsi, nama_singkat from bdb_satker where id=$1', [user.scope_satker_id]);
@@ -1138,13 +1170,20 @@ let UserService = class UserService {
             satker_singkat: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             satker_nama: satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
             scope_satker_name: satkerSingkat || satkerNama || (isSuper ? 'Robinopsnal Bareskrim Polri' : null),
-            pangkat: policeProfile?.pangkat || null,
+            pangkat: (Number(user.id) === 1)
+                ? ((!policeProfile?.pangkat || String(policeProfile.pangkat).toUpperCase() === 'KOMPOL') ? 'Briptu' : policeProfile.pangkat)
+                : (policeProfile?.pangkat || mergedSocial?.pangkat || null),
             jabatan: policeProfile?.jabatan || null,
             role_bdb: user.role_bdb,
             status: user.status,
             social_media: mergedSocial
         };
     }
+    /**
+     * Edit profil sendiri (siapa pun yang login) -- HANYA data personil non-sensitif
+     * (nama, NRP, pangkat, jabatan, satuan, no. HP). Tidak pernah lewat sini: role, scope
+     * satker, status, approval -- itu tetap lewat update() admin dengan pengecekan berjenjang.
+     */
     async updateOwnProfile(authUser, dto = {}, file) {
         if (dto && typeof dto.social_media === 'string') {
             try {
@@ -1346,6 +1385,14 @@ let UserService = class UserService {
         });
         return { id: authUser.id, status: 'NONAKTIF_MANDIRI' };
     }
+    /**
+     * Hapus PERMANEN akun pengguna (bukan soft-delete/nonaktifkan -- itu sudah ada di
+     * selfDeactivate). Superadmin-only. "Paksa": tetap jalan walau akun ini pernah jadi
+     * pelaku pelimpahan LP (satu-satunya FK yang bisa memblokir hapus biasa) -- riwayat
+     * pelimpahannya tetap ada, hanya penaut ke akun ini yang dikosongkan. Kolom lain yang
+     * mereferensikan user (created_by dkk) tidak punya FK constraint jadi otomatis aman,
+     * hanya jadi id yatim (dibiarkan, bukan tanggung jawab hapus akun).
+     */
     async remove(id, authUser) {
         if (!Number.isInteger(id) || id <= 0) {
             throw new common_1.BadRequestException('ID pengguna tidak valid.');
@@ -1366,10 +1413,14 @@ let UserService = class UserService {
                 throw new common_1.BadRequestException('Tidak bisa menghapus superadmin terakhir.');
             }
         }
+        // Lepas FK yang bisa memblokir hapus (bdb_lp_pelimpahan.dilimpahkan_oleh tanpa on delete).
+        // Try/catch: tabel ini baru dibuat saat fitur pelimpahan pertama dipakai (ensureTable), jadi
+        // di install baru mungkin belum ada -- itu bukan alasan gagal menghapus akun.
         try {
             await this.dataSource.query('update bdb_lp_pelimpahan set dilimpahkan_oleh = null where dilimpahkan_oleh = $1', [id]);
         }
         catch {
+            /* tabel belum ada -- aman diabaikan */
         }
         await this.dataSource.query('delete from auth_users where id = $1', [id]);
         return { status: 1, message: `Akun "${target.name}" (${target.email}) dihapus permanen.` };
@@ -1514,6 +1565,7 @@ let UserService = class UserService {
                 errors: { scope_satker_key: ['satker melekat wajib diisi untuk user non-superadmin'] }
             });
         }
+        // Satker melekat = hirarki Puskarda (bdb_satker). Master satker lama sudah tidak dipakai.
         const puskardaKey = rawKey && /^[0-9.]+$/.test(rawKey) ? rawKey : null;
         const rows = await this.dataSource.query(`
             select id, kode as satker_key, deskripsi as nama_satker_canonical, null as operational_role
@@ -1567,6 +1619,7 @@ let UserService = class UserService {
         const keys = Array.from(new Set(users.map((user) => user.scope_satker_key).filter(Boolean)));
         let pkRows = [];
         if (ids.length || keys.length) {
+            // Satker melekat = hirarki Puskarda (bdb_satker). Master lama tidak dipakai lagi.
             pkRows = await this.dataSource.query(`
                 select id, kode as satker_key, deskripsi as nama_satker_canonical, ('Tingkat ' || depth) as level, kode as full_path
                 from bdb_satker
@@ -1584,6 +1637,7 @@ let UserService = class UserService {
                 user.scope_access_display = 'Nasional';
                 return;
             }
+            // Cocokkan by KEY (kode Puskarda) dulu, lalu by id.
             const satker = pkByKey.get(user.scope_satker_key) || pkById.get(Number(user.scope_satker_id));
             if (satker) {
                 user.scope_satker_id = Number(satker.id);
@@ -1701,19 +1755,21 @@ let UserService = class UserService {
             `, [emails]);
         const byEmail = new Map(rows.map((row) => [row.email_key, row]));
         users.forEach((user) => {
-            const isSuper = this.normalizeBdbRole(user.role_bdb) === 'superadmin' || [1, 320, 15403, 15404, 16568, 16576, 16594, 17360].includes(Number(user.id));
+            const isPrimarySuper = Number(user?.id) === 1;
             const profile = byEmail.get(this.normalizeEmail(user?.email)) || byEmail.get(this.normalizeEmail(user?.email_polri));
             if (!profile) {
-                if (isSuper) {
-                    user.satuan = 'Robinopsnal Bareskrim Polri';
-                    user.satker = 'Robinopsnal Bareskrim Polri';
-                    user.satker_nama = 'Robinopsnal Bareskrim Polri';
+                if (isPrimarySuper) {
+                    user.pangkat = 'Briptu';
+                    user.nrp = user.nrp || '98010710';
                 }
                 return;
             }
+            if (isPrimarySuper && (!profile.pangkat || String(profile.pangkat).toUpperCase() === 'KOMPOL')) {
+                profile.pangkat = 'Briptu';
+            }
             user.nrp = profile.nrp;
             user.no_hp = profile.no_hp;
-            user.satuan = isSuper ? 'Robinopsnal Bareskrim Polri' : profile.satuan;
+            user.satuan = profile.satuan;
             user.pangkat = profile.pangkat;
             user.jabatan = profile.jabatan;
             user.is_pns = Boolean(user.is_pns || profile.is_pns);
@@ -1957,9 +2013,7 @@ let UserService = class UserService {
         `;
         return this.dataSource.query(sql, [scopeId, scopeKey]);
     }
-    static IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email Dinas Polri (Utama)', 'Email Sekunder (Opsional)', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
-    static IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
-    static IMPORT_STATUS_OPTS = ['AKTIF', 'NONAKTIF'];
+    /** Password acak (huruf besar+kecil+angka, 10 karakter) -- dipakai baris import yg tak isi password. */
     generateImportPassword() {
         const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         const lower = 'abcdefghijkmnpqrstuvwxyz';
@@ -1971,6 +2025,12 @@ let UserService = class UserService {
             pass += pick(all);
         return pass;
     }
+    /**
+     * Terima kode Puskarda ("060.01.02...") ATAU nama satker (deskripsi) dari kolom Excel --
+     * kode dipakai langsung, nama dicocokkan case-insensitive ke bdb_satker.deskripsi.
+     * Beda dari resolveScope() yg cuma terima kode -- ini lapisan tambahan khusus import supaya
+     * admin tak perlu hafal kode Puskarda tiap baris.
+     */
     async resolveSatkerForImport(raw) {
         const value = String(raw || '').trim();
         if (!value)
@@ -1985,8 +2045,9 @@ let UserService = class UserService {
         const rows = await this.dataSource.query('select kode, deskripsi from bdb_satker where is_synthetic=false and lower(deskripsi)=lower($1) order by id limit 2', [value]);
         if (rows.length === 1)
             return { key: rows[0].kode, name: rows[0].deskripsi };
-        return null;
+        return null; // 0 atau ambigu (>1 cocok nama sama) -- suruh isi kode persis
     }
+    /** Baca file Excel (buffer) -> baris mentah, mulai dari baris ke-2 (baris 1 = header). */
     async parseImportWorkbook(buffer) {
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.load(buffer);
@@ -1997,7 +2058,7 @@ let UserService = class UserService {
         const out = [];
         sheet.eachRow((row, rowNumber) => {
             if (rowNumber === 1)
-                return;
+                return; // header
             const name = cell(row, 1);
             const nrp = cell(row, 2);
             let val3 = cell(row, 3);
@@ -2007,7 +2068,7 @@ let UserService = class UserService {
             const satker_raw = cell(row, 7);
             const status = cell(row, 8).toUpperCase();
             if (!name && !val3 && !val4 && !nrp)
-                return;
+                return; // baris kosong, lewati
             let email_polri = '';
             let email_sekunder = '';
             if (val3.toLowerCase().endsWith('@polri.go.id')) {
@@ -2025,10 +2086,16 @@ let UserService = class UserService {
         });
         return out;
     }
+    /**
+     * Validasi (TANPA menyimpan) seluruh baris hasil upload template Excel -- dipakai layar "review"
+     * sebelum admin klik Import. Pakai ulang aturan yg SAMA dgn create() (email/username/email_polri
+     * unik, resolveScope, assertCanReview) supaya hasil preview dijamin konsisten dgn hasil commit.
+     */
     async previewBulkImport(buffer, authUser) {
         const raw = await this.parseImportWorkbook(buffer);
         if (!raw.length)
             throw new common_1.BadRequestException('Tidak ada baris data ditemukan (isi dari baris ke-2, baris 1 = header).');
+        // Deteksi duplikat DI DALAM file yg sama (blm tentu ketahuan dari cek DB krn blm ada di DB).
         const seen = { email: new Map(), email_polri: new Map(), username: new Map(), nrp: new Map() };
         const results = [];
         for (const r of raw) {
@@ -2104,6 +2171,11 @@ let UserService = class UserService {
         }
         return { rows: results };
     }
+    /**
+     * Eksekusi commit: buat akun utk tiap baris yg sudah lolos preview (dikirim balik oleh frontend).
+     * Pakai ulang create() apa adanya (bukan tulis ulang logikanya) -- password acak dibuat di sini
+     * kalau baris tak sertakan password, lalu dikembalikan SEKALI di hasil supaya admin bisa catat.
+     */
     async commitBulkImport(rows, authUser) {
         if (!Array.isArray(rows) || !rows.length)
             throw new common_1.BadRequestException('Tidak ada baris untuk diimpor.');
@@ -2134,6 +2206,13 @@ let UserService = class UserService {
         }
         return { results };
     }
+    /**
+     * Semua satker (kode + nama + jalur hierarki Polda/Polres/Polsek/Satuan) -- dipakai isi sheet
+     * "Daftar Satker" di template import, krn kebanyakan admin cuma hafal NAMA satkernya, bukan kode
+     * Puskarda-nya. Satu pass recursive CTE utk SEMUA baris (bukan subquery per-baris) krn datanya besar
+     * (~18 ribuan satker) -- jalur dibangun turun dari anak root (Polda-level), root sintetis "POLRI"
+     * sendiri tak diikutkan sbg baris/prefix jalur krn bukan satker yg bisa dipilih.
+     */
     async getSatkerReferenceRows() {
         return this.dataSource.query(`
             with recursive tree as (
@@ -2152,6 +2231,7 @@ let UserService = class UserService {
             order by t.kode
         `);
     }
+    /** Generate template Excel kosong (+ petunjuk + daftar satker) utk diisi admin sblm diupload lewat "Import Massal". */
     async buildImportTemplateBuffer() {
         const wb = new ExcelJS.Workbook();
         wb.creator = 'BDB';
@@ -2207,9 +2287,6 @@ let UserService = class UserService {
         }
         return (await wb.xlsx.writeBuffer());
     }
-    bulkResetRunning = false;
-    bulkResetTablesReady = false;
-    static BULK_RESET_PACE_MS = 300;
     async ensureBulkResetTables() {
         if (this.bulkResetTablesReady)
             return;
@@ -2239,11 +2316,13 @@ let UserService = class UserService {
         await this.dataSource.query('create index if not exists idx_bprj_items_job on bdb_bulk_password_reset_item(job_id)');
         this.bulkResetTablesReady = true;
     }
+    /** Superadmin only -- dipakai reset massal krn scope-nya lintas satker/lintas role (tak ada aturan resolveScope yg cocok). */
     assertSuperadmin(authUser) {
         if (this.normalizeBdbRole(authUser?.role_bdb) !== 'superadmin') {
             throw new common_1.ForbiddenException('Hanya superadmin yang dapat melakukan tindakan ini.');
         }
     }
+    /** Catat perubahan password sendiri tanpa pernah menyimpan password/hash ke audit. */
     async logOwnPasswordChange(authUser, sessionRevoked) {
         await this.audit.log({
             user: authUser,
@@ -2254,6 +2333,12 @@ let UserService = class UserService {
             meta: { session_revoked: sessionRevoked }
         });
     }
+    /**
+     * Kirim kredensial baru (password acak baru) ke SATU user via email -- dipakai tombol "Reset Password" per baris.
+     * Wewenang SAMA PERSIS dgn edit user (assertCanManageUser): superadmin bebas, admin_binops sesuai scope-nya,
+     * operator HANYA utk akun Viewer yg dia buat sendiri di satker yg sama -- supaya operator bisa bantu reset
+     * password reviewer/viewer di satkernya tanpa bisa menyentuh akun operator/admin lain.
+     */
     async resetPasswordAndNotify(id, authUser) {
         const user = await this.userRepository.findOne({ where: { id } });
         if (!user)
@@ -2272,11 +2357,13 @@ let UserService = class UserService {
         await this.audit.log({ user: authUser, action: 'RESET_PASSWORD_EMAIL', entity: 'user', entityId: id, meta: { target_email: recipient } });
         return { email: recipient };
     }
+    /** Jumlah akun (non-superadmin) yg akan kena reset massal -- dipakai layar konfirmasi sblm mulai. */
     async getBulkPasswordResetPreviewCount(authUser) {
         this.assertSuperadmin(authUser);
         const rows = await this.dataSource.query("select count(*)::int c from auth_users where coalesce(role_bdb,'viewer') <> 'superadmin'");
         return { total: rows[0]?.c || 0 };
     }
+    /** Mulai proses reset password + kirim email massal (background, TIDAK menunggu selesai di request ini). */
     async startBulkPasswordReset(authUser) {
         this.assertSuperadmin(authUser);
         if (this.bulkResetRunning)
@@ -2289,6 +2376,7 @@ let UserService = class UserService {
         const jobId = jobRows[0].id;
         this.bulkResetRunning = true;
         await this.audit.log({ user: authUser, action: 'BULK_RESET_PASSWORD_START', entity: 'user', entityId: jobId, meta: { total: targets.length } });
+        // Sengaja tidak di-await -- request langsung balik ke frontend dgn jobId, proses lanjut di background.
         this.processBulkResetJob(jobId, targets).catch(async (e) => {
             await this.dataSource.query('update bdb_bulk_password_reset_job set status=$1, last_error=$2, finished_at=now() where id=$3', ['failed', e?.message || 'Gagal tak terduga.', jobId]);
             this.bulkResetRunning = false;
@@ -2358,7 +2446,12 @@ let UserService = class UserService {
         if (!userIds.length)
             return;
         const rows = await this.dataSource.query(`
-            SELECT user_id, score, login_days_count, lp_created_count, lp_updated_count, 
+            SELECT user_id, score, login_days_count,
+                   COALESCE(session_minutes_30d, 0) AS session_minutes_30d,
+                   COALESCE(avg_session_minutes, 0) AS avg_session_minutes,
+                   COALESCE(session_duration_label, '0m') AS session_duration_label,
+                   COALESCE(activity_tier, 'PASIF') AS activity_tier,
+                   lp_created_count, lp_updated_count, 
                    docs_uploaded_count, last_active_at, status_keaktifan
             FROM auth_users_activity_cache
             WHERE user_id = ANY($1::bigint[])
@@ -2366,12 +2459,27 @@ let UserService = class UserService {
         const map = new Map(rows.map((r) => [Number(r.user_id), r]));
         users.forEach((u) => {
             const a = map.get(Number(u.id));
-            u.activity_score = a ? a.score : 0;
-            u.activity_status = a ? a.status_keaktifan : 'INAKTIF';
-            u.activity_login_days = a ? a.login_days_count : 0;
-            u.activity_lp_created = a ? a.lp_created_count : 0;
-            u.activity_lp_updated = a ? a.lp_updated_count : 0;
-            u.activity_docs_uploaded = a ? a.docs_uploaded_count : 0;
+            const isSharese = String(u.role_bdb || u.role_name || '').trim().toLowerCase() === 'sharese';
+            const loginDays = isSharese ? 0 : Number(a?.login_days_count || 0);
+            const sessionMins = isSharese ? 0 : Number(a?.session_minutes_30d || 0);
+            const avgSessionMins = isSharese ? 0 : Number(a?.avg_session_minutes || (loginDays > 0 ? Math.round(sessionMins / loginDays) : 0));
+            const computedScore = (loginDays === 0 && sessionMins === 0)
+                ? 0
+                : Math.min(100, Math.max(1, Math.round((Math.min(30, loginDays) / 30) * 50 + (Math.min(1800, sessionMins) / 1800) * 50)));
+            const score = isSharese ? 0 : (a?.score !== undefined && a?.score !== null ? Number(a.score) : computedScore);
+            const tier = isSharese ? 'PASIF' : (a?.activity_tier || (score >= 75 ? 'SANGAT_AKTIF' : score >= 40 ? 'AKTIF' : score > 0 ? 'KURANG_AKTIF' : 'PASIF'));
+            const durLabel = isSharese ? '0m' : (a?.session_duration_label || (sessionMins <= 0 ? '0m' : sessionMins >= 60 ? `${Math.floor(sessionMins / 60)}j ${sessionMins % 60}m` : `${sessionMins}m`));
+            u.activity_score = score;
+            u.login_days_30d = loginDays;
+            u.session_minutes_30d = sessionMins;
+            u.avg_session_minutes = avgSessionMins;
+            u.session_duration_label = durLabel;
+            u.activity_tier = tier;
+            u.activity_status = isSharese ? 'PASIF' : (a ? a.status_keaktifan : 'PASIF');
+            u.activity_login_days = loginDays;
+            u.activity_lp_created = a ? Number(a.lp_created_count || 0) : 0;
+            u.activity_lp_updated = a ? Number(a.lp_updated_count || 0) : 0;
+            u.activity_docs_uploaded = a ? Number(a.docs_uploaded_count || 0) : 0;
             u.activity_last_active = a ? a.last_active_at : null;
         });
     }
@@ -2383,12 +2491,23 @@ let UserService = class UserService {
         const summary = cacheRow[0] || {
             score: 0,
             login_days_count: 0,
+            session_minutes_30d: 0,
+            avg_session_minutes: 0,
+            session_duration_label: '0m',
+            activity_tier: 'PASIF',
             lp_created_count: 0,
             lp_updated_count: 0,
             docs_uploaded_count: 0,
             last_active_at: null,
-            status_keaktifan: 'INAKTIF'
+            status_keaktifan: 'PASIF'
         };
+        const isSharese = String(user.role_bdb || user.role_name || '').trim().toLowerCase() === 'sharese';
+        const loginDays = isSharese ? 0 : Number(summary.login_days_count || 0);
+        const sessionMins = isSharese ? 0 : Number(summary.session_minutes_30d || 0);
+        const avgSessionMins = isSharese ? 0 : Number(summary.avg_session_minutes || (loginDays > 0 ? Math.round(sessionMins / loginDays) : 0));
+        const durLabel = isSharese ? '0m' : (summary.session_duration_label || (sessionMins <= 0 ? '0m' : sessionMins >= 60 ? `${Math.floor(sessionMins / 60)}j ${sessionMins % 60}m` : `${sessionMins}m`));
+        const score = isSharese ? 0 : Number(summary.score || 0);
+        const tier = isSharese ? 'PASIF' : (summary.activity_tier || (score >= 75 ? 'SANGAT_AKTIF' : score >= 40 ? 'AKTIF' : score > 0 ? 'KURANG_AKTIF' : 'PASIF'));
         const recentLogs = await this.dataSource.query(`
             SELECT id, action, entity, entity_id, meta, ip, created_at, outcome
             FROM bdb_audit_log
@@ -2403,13 +2522,25 @@ let UserService = class UserService {
             role_bdb: user.role_bdb,
             scope_satker_id: user.scope_satker_id,
             scope_satker_key: user.scope_satker_key,
+            login_days_30d: loginDays,
+            session_minutes_30d: sessionMins,
+            avg_session_minutes: avgSessionMins,
+            session_duration_label: durLabel,
+            activity_score: score,
+            activity_tier: tier,
             summary: {
-                score: summary.score,
+                score,
+                activity_score: score,
+                activity_tier: tier,
                 status_keaktifan: summary.status_keaktifan,
-                login_days_count: summary.login_days_count,
-                lp_created_count: summary.lp_created_count,
-                lp_updated_count: summary.lp_updated_count,
-                docs_uploaded_count: summary.docs_uploaded_count,
+                login_days_count: loginDays,
+                login_days_30d: loginDays,
+                session_minutes_30d: sessionMins,
+                avg_session_minutes: avgSessionMins,
+                session_duration_label: durLabel,
+                lp_created_count: Number(summary.lp_created_count || 0),
+                lp_updated_count: Number(summary.lp_updated_count || 0),
+                docs_uploaded_count: Number(summary.docs_uploaded_count || 0),
                 last_active_at: summary.last_active_at || user.last_login_at
             },
             recent_logs: recentLogs
@@ -2423,6 +2554,7 @@ let UserService = class UserService {
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user)
             throw new common_1.NotFoundException('User tidak ditemukan');
+        // Admin Binops dan Superadmin tidak boleh dimutasi
         if (user.role_bdb === 'superadmin' || user.role_bdb === 'admin_binops') {
             throw new common_1.BadRequestException('User Admin Binops atau Superadmin tidak dapat dimutasi satker.');
         }
@@ -2458,6 +2590,7 @@ let UserService = class UserService {
             }
             targetSatker = targetSatkers[0];
         }
+        // Role tujuan mutasi tidak boleh superadmin atau admin_binops
         const reqRole = dto.to_role ? String(dto.to_role).trim().toLowerCase() : (user.role_bdb || 'operator');
         if (reqRole === 'superadmin' || reqRole === 'admin_binops') {
             throw new common_1.BadRequestException('Role tujuan mutasi hanya boleh Operator atau Viewer.');
@@ -2475,6 +2608,7 @@ let UserService = class UserService {
         await queryRunner.startTransaction();
         try {
             if (isOperatorReq) {
+                // Operator: Masukkan permohonan ke auth_user_mutations dengan status PENDING
                 await queryRunner.query(`
                     INSERT INTO auth_user_mutations (
                         user_id, from_satker_id, from_satker_key, from_satker_name, from_role,
@@ -2545,6 +2679,7 @@ let UserService = class UserService {
                     message: `Permohonan mutasi personil ${user.name} berhasil diajukan dan sedang menunggu persetujuan Superadmin.`
                 };
             }
+            // Superadmin / Admin Binops: Langsung eksekusi & approve
             await queryRunner.query(`UPDATE auth_user_mutations SET status = 'SUPERSEDED', reviewed_by = $1, reviewed_at = NOW() WHERE user_id = $2 AND status = 'PENDING'`, [authUser?.id ? Number(authUser.id) : null, userId]);
             if (isKeluarReserse) {
                 await queryRunner.query(`
@@ -2701,10 +2836,16 @@ let UserService = class UserService {
     }
 };
 exports.UserService = UserService;
+// ---- Lockout: 3x gagal -> kunci 30 menit ----
+UserService.MAX_LOGIN_ATTEMPTS = 3;
+UserService.LOCK_MINUTES = 30;
+// ===================== Import Massal Pengguna (Excel) =====================
+UserService.IMPORT_HEADERS = ['Nama', 'NRP/NIP', 'Email Dinas Polri (Utama)', 'Email Sekunder (Opsional)', 'Username', 'Role', 'Kode atau Nama Satker', 'Status'];
+UserService.IMPORT_ROLE_OPTS = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese'];
+UserService.IMPORT_STATUS_OPTS = ['AKTIF', 'NONAKTIF'];
+/** Jeda antar kirim email supaya tak membanjiri/memicu blokir server SMTP saat kirim ke ribuan akun sekaligus. */
+UserService.BULK_RESET_PACE_MS = 300;
 exports.UserService = UserService = UserService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        mail_service_1.MailService,
-        audit_service_1.AuditService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof mail_service_1.MailService !== "undefined" && mail_service_1.MailService) === "function" ? _b : Object, typeof (_c = typeof audit_service_1.AuditService !== "undefined" && audit_service_1.AuditService) === "function" ? _c : Object])
 ], UserService);
-//# sourceMappingURL=user.service.js.map

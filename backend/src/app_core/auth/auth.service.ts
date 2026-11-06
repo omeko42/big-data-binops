@@ -781,10 +781,10 @@ export class AuthService {
             scope_satker_name: roleBdb === 'superadmin' ? '-' : scopeRow?.nama_satker_canonical || null,
             scope_satker_level: roleBdb === 'superadmin' ? null : scopeRow?.level || null,
             scope_access_display: scopeAccessDisplay,
-            nrp: policeProfile?.nrp || (Number(user.id) === 1 ? '98010710' : null),
+            nrp: policeProfile?.nrp || null,
             no_hp: policeProfile?.no_hp || null,
             satuan: policeProfile?.satuan || null,
-            pangkat: (Number(user.id) === 1 || String(user.username || '').replace(/^@/, '') === 'om.eko_42')
+            pangkat: (Number(user.id) === 1)
                 ? ((!policeProfile?.pangkat || String(policeProfile.pangkat).toUpperCase() === 'KOMPOL') ? 'Briptu' : policeProfile.pangkat)
                 : (policeProfile?.pangkat || null),
             jabatan: policeProfile?.jabatan || null,
@@ -1744,9 +1744,26 @@ export class AuthService {
     private getRPInfo() {
         return {
             rpName: 'CAS Bareskrim Polri',
-            rpID: process.env.WEBAUTHN_RP_ID || 'localhost',
-            expectedOrigin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000'
+            rpID: process.env.WEBAUTHN_RP_ID || 'cas.bareskrim.polri.go.id',
+            expectedOrigin: process.env.WEBAUTHN_ORIGIN || 'https://cas.bareskrim.polri.go.id'
         };
+    }
+
+    private buildOsSig(ua: any): string {
+        return [ua?.os?.name, ua?.device?.type || 'desktop', ua?.device?.vendor, ua?.device?.model]
+            .map(x => String(x || '').trim().toLowerCase())
+            .filter(Boolean)
+            .join('|');
+    }
+
+    private inferPasskeyExpectedOs(pk: any): string {
+        if (pk?.os_name) return String(pk.os_name).trim();
+        const dn = String(pk?.device_name || '').toLowerCase();
+        if (dn.includes('windows')) return 'Windows';
+        if (dn.includes('mac')) return 'Mac OS';
+        if (dn.includes('iphone') || dn.includes('ipad') || dn.includes('ios')) return 'iOS';
+        if (dn.includes('android')) return 'Android';
+        return '';
     }
 
     /** 1. Generate Registration Options for current authenticated user */
@@ -1769,11 +1786,12 @@ export class AuthService {
             attestationType: 'none',
             excludeCredentials: existingKeys.map((k: any) => ({
                 id: k.credential_id,
-                transports: k.transports || ['internal', 'hybrid']
+                transports: ['internal']
             })),
             authenticatorSelection: {
-                residentKey: 'preferred',
-                userVerification: 'preferred'
+                authenticatorAttachment: 'platform',
+                residentKey: 'required',
+                userVerification: 'required'
             }
         });
 
@@ -1806,6 +1824,12 @@ export class AuthService {
         const expectedChallenge = challengeRows[0].challenge;
         const regResponse = dto.registrationResponse || dto;
 
+        if (regResponse.authenticatorAttachment && regResponse.authenticatorAttachment !== 'platform') {
+            throw new BadRequestException(
+                'Pendaftaran ditolak: Hanya autentikator biometrik bawaan perangkat fisik (Platform Authenticator / Windows Hello / Touch ID) yang diizinkan.'
+            );
+        }
+
         let verification: any;
         try {
             verification = await verifyRegistrationResponse({
@@ -1813,7 +1837,7 @@ export class AuthService {
                 expectedChallenge,
                 expectedOrigin,
                 expectedRPID: rpID,
-                requireUserVerification: false
+                requireUserVerification: true
             });
         } catch (err: any) {
             throw new BadRequestException(`Gagal memverifikasi pendaftaran biometrik: ${err?.message || 'Data tidak valid'}`);
@@ -1827,15 +1851,22 @@ export class AuthService {
         const credentialID = info.credentialID || info.credential?.id || regResponse.id;
         const pubKey = info.credentialPublicKey || info.credential?.publicKey;
         const publicKeyB64 = pubKey ? Buffer.from(pubKey).toString('base64') : '';
-        const counter = 0;
-        const transports = regResponse.response?.transports || ['internal', 'hybrid'];
+        const counter = Number(info.counter || 0);
+        const aaguid = String(info.aaguid || '').toLowerCase() || null;
+        const credentialDeviceType = info.credentialDeviceType || 'singleDevice';
+        const credentialBackedUp = Boolean(info.credentialBackedUp);
+
+        const os = userAgentResult?.os?.name || '';
+        const vendor = userAgentResult?.device?.vendor || '';
+        const model = userAgentResult?.device?.model || '';
+        const browser = userAgentResult?.browser?.name || '';
+        const transports = ['internal'];
+
+        const deviceFingerprint = String(dto?.device_fingerprint || dto?.deviceFingerprint || dto?.fingerprint || '').trim() || null;
+        const osSignature = this.buildOsSig(userAgentResult) || null;
 
         let devName = String(dto.deviceName || '').trim();
         if (!devName) {
-            const os = userAgentResult?.os?.name || '';
-            const vendor = userAgentResult?.device?.vendor || '';
-            const model = userAgentResult?.device?.model || '';
-            const browser = userAgentResult?.browser?.name || '';
             if (vendor || model) {
                 devName = `${vendor} ${model}`.trim();
             } else if (os) {
@@ -1846,10 +1877,21 @@ export class AuthService {
         }
 
         await this.dataSource.query(
-            `INSERT INTO auth_passkeys (user_id, credential_id, public_key, counter, device_name, transports, created_at, last_used_at)
-             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-             ON CONFLICT (credential_id) DO UPDATE SET public_key = $3, counter = $4, device_name = $5, last_used_at = NOW()`,
-            [uid, credentialID, publicKeyB64, counter, devName, transports]
+            `INSERT INTO auth_passkeys (
+                user_id, credential_id, public_key, counter, device_name, transports,
+                aaguid, credential_device_type, credential_backed_up, os_name, browser_name,
+                device_fingerprint, os_signature,
+                created_at, last_used_at
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+             ON CONFLICT (credential_id) DO UPDATE SET
+                public_key = $3, counter = $4, device_name = $5, transports = $6,
+                aaguid = $7, credential_device_type = $8, credential_backed_up = $9,
+                os_name = $10, browser_name = $11,
+                device_fingerprint = COALESCE($12, auth_passkeys.device_fingerprint),
+                os_signature = COALESCE($13, auth_passkeys.os_signature),
+                last_used_at = NOW()`,
+            [uid, credentialID, publicKeyB64, counter, devName, transports, aaguid, credentialDeviceType, credentialBackedUp, os || null, browser || null, deviceFingerprint, osSignature]
         );
 
         await this.dataSource.query(`DELETE FROM auth_passkey_challenges WHERE id = $1`, [`reg_${uid}`]);
@@ -1859,7 +1901,13 @@ export class AuthService {
             userName: user.username,
             action: 'PASSKEY_REGISTER',
             entity: 'auth_passkeys',
-            meta: { device_name: devName },
+            meta: {
+                device_name: devName,
+                os_name: os || null,
+                browser_name: browser || null,
+                os_signature: osSignature,
+                has_device_fingerprint: Boolean(deviceFingerprint)
+            },
             ip: undefined
         });
 
@@ -1994,6 +2042,8 @@ export class AuthService {
 
         const pkRows = await this.dataSource.query(
             `SELECT p.id, p.user_id, p.credential_id, p.public_key, p.counter, p.transports, p.device_name,
+                    p.aaguid, p.credential_device_type, p.credential_backed_up, p.os_name, p.browser_name,
+                    p.device_fingerprint, p.os_signature,
                     u.id as user_db_id, u.username, u.name, u.email, u.role_bdb, u.role_name, u.scope_satker_id, u.status
              FROM auth_passkeys p
              JOIN auth_users u ON u.id = p.user_id
@@ -2045,16 +2095,16 @@ export class AuthService {
                 authenticator: {
                     credentialID: pk.credential_id,
                     credentialPublicKey: new Uint8Array(Buffer.from(pk.public_key, 'base64')),
-                    counter: 0,
-                    transports: pk.transports || ['internal', 'hybrid']
+                    counter: Number(pk.counter || 0),
+                    transports: ['internal']
                 },
                 credential: {
                     id: pk.credential_id,
                     publicKey: Buffer.from(pk.public_key, 'base64'),
                     counter: Number(pk.counter || 0),
-                    transports: pk.transports || ['internal', 'hybrid']
+                    transports: ['internal']
                 },
-                requireUserVerification: false
+                requireUserVerification: true
             });
         } catch (err: any) {
             throw new UnauthorizedException(`Verifikasi biometrik gagal: ${err?.message || 'Tanda tangan tidak valid'}`);
@@ -2064,10 +2114,102 @@ export class AuthService {
             throw new UnauthorizedException('Verifikasi biometrik ditolak.');
         }
 
-        const newCounter = verification.authenticationInfo?.newCounter || 0;
+        const authInfo = verification.authenticationInfo || {};
+        const currentOs = String(userAgentResult?.os?.name || '').trim();
+        const currentBrowser = String(userAgentResult?.browser?.name || '').trim();
+        const expectedOs = this.inferPasskeyExpectedOs(pk);
+        const currentOsSig = this.buildOsSig(userAgentResult);
+        const incomingFp = String(dto?.device_fingerprint || dto?.deviceFingerprint || dto?.fingerprint || '').trim();
+
+        if (expectedOs && currentOs && expectedOs.toLowerCase() !== currentOs.toLowerCase()) {
+            void this.audit.log({
+                userId: Number(pk.user_db_id),
+                userName: pk.username,
+                action: 'LOGIN_PASSKEY_BLOCKED',
+                entity: 'auth',
+                meta: {
+                    reason: 'OS_MISMATCH',
+                    registered_device: pk.device_name,
+                    expected_os: expectedOs,
+                    actual_os: currentOs
+                }
+            });
+            throw new UnauthorizedException(
+                'Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Meskipun akun Chrome sama, setiap gawai wajib didaftarkan terlebih dahulu di menu Pengaturan Keamanan.'
+            );
+        }
+
+        if (pk.device_fingerprint) {
+            if (incomingFp !== String(pk.device_fingerprint).trim()) {
+                void this.audit.log({
+                    userId: Number(pk.user_db_id),
+                    userName: pk.username,
+                    action: 'LOGIN_PASSKEY_BLOCKED',
+                    entity: 'auth',
+                    meta: {
+                        reason: 'DEVICE_FINGERPRINT_MISMATCH',
+                        registered_device: pk.device_name,
+                        os_signature: currentOsSig
+                    }
+                });
+                throw new UnauthorizedException(
+                    'Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Meskipun akun Chrome sama, setiap gawai wajib didaftarkan terlebih dahulu di menu Pengaturan Keamanan.'
+                );
+            }
+        } else {
+            const isBackedUp = Boolean(authInfo.credentialBackedUp ?? pk.credential_backed_up);
+            if ((pk.os_signature && currentOsSig && pk.os_signature !== currentOsSig) || (isBackedUp && !incomingFp)) {
+                void this.audit.log({
+                    userId: Number(pk.user_db_id),
+                    userName: pk.username,
+                    action: 'LOGIN_PASSKEY_BLOCKED',
+                    entity: 'auth',
+                    meta: {
+                        reason: 'UNBOUND_SYNCED_PASSKEY_OR_OS_SIG_MISMATCH',
+                        registered_device: pk.device_name,
+                        expected_os_sig: pk.os_signature,
+                        actual_os_sig: currentOsSig,
+                        credential_backed_up: isBackedUp
+                    }
+                });
+                throw new UnauthorizedException(
+                    'Gawai/perangkat ini belum terdaftar untuk login Biometrik (Passkey). Silakan masuk dengan Kata Sandi lalu daftarkan gawai ini di menu Pengaturan Keamanan.'
+                );
+            }
+            if (incomingFp && (!pk.os_signature || pk.os_signature === currentOsSig)) {
+                await this.dataSource.query(
+                    `UPDATE auth_passkeys SET device_fingerprint = $1, os_signature = $2 WHERE id = $3`,
+                    [incomingFp, currentOsSig || null, pk.id]
+                );
+            }
+        }
+
+        if (pk.browser_name && currentBrowser && String(pk.browser_name).toLowerCase() !== currentBrowser.toLowerCase()) {
+            throw new UnauthorizedException(
+                `Login biometrik ditolak: Peramban (${currentBrowser}) tidak sesuai dengan peramban yang didaftarkan (${pk.browser_name}).`
+            );
+        }
+
+        const newCounter = Number(authInfo.newCounter || pk.counter || 0);
         await this.dataSource.query(
-            `UPDATE auth_passkeys SET counter = $1, last_used_at = NOW() WHERE id = $2`,
-            [newCounter, pk.id]
+            `UPDATE auth_passkeys
+             SET counter = $1,
+                 credential_device_type = COALESCE(credential_device_type, $2),
+                 credential_backed_up = COALESCE($3, credential_backed_up),
+                 os_name = COALESCE(os_name, $4),
+                 browser_name = COALESCE(browser_name, $5),
+                 os_signature = COALESCE(os_signature, $6),
+                 last_used_at = NOW()
+             WHERE id = $7`,
+            [
+                newCounter,
+                authInfo.credentialDeviceType || null,
+                typeof authInfo.credentialBackedUp === 'boolean' ? authInfo.credentialBackedUp : false,
+                currentOs || null,
+                currentBrowser || null,
+                currentOsSig || null,
+                pk.id
+            ]
         );
 
         await this.dataSource.query(

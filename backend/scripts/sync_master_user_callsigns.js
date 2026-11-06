@@ -3,7 +3,7 @@
  * Master User Callsign & Username 2-Word Standardizer + Bidirectional DB Trigger Installer
  *
  * Rules:
- * 1. User ID = 1 is always preserved as `om.eko_42` (`@om.eko_42`).
+ * 1. User ID = 1 is always preserved as `user_1` (`@user_1`).
  * 2. All other users derive their base handle from `auth_users.name` (first 2 words after
  *    stripping academic degrees after comma `,` and stripping police/military/civilian ranks & titles).
  *    Example: "Briptu Budi Santoso, S.Kom." -> "budi.santoso"
@@ -39,7 +39,7 @@ const RANK_AND_TITLE_STOPWORDS = new Set([
  * and joins the first 2 remaining words with `.`.
  */
 function extractTwoWordBaseCallsign(rawName, fallbackId) {
-    if (Number(fallbackId) === 1 || String(fallbackId) === "1") return "om.eko_42";
+    if (Number(fallbackId) === 1 || String(fallbackId) === "1") return "user_1";
     const str = String(rawName || "").trim();
     // 1. Strip everything from the first comma onwards (academic degrees like ", S.Kom., S.H., M.H.")
     let beforeComma = str.split(",")[0] || "";
@@ -88,7 +88,7 @@ function isAutoOrUnstandardizedHandle(handle, email, emailPolri) {
     if (!handle) return true;
     const h = String(handle).trim().replace(/^@+/, "").toLowerCase();
     if (!h || h.length < 3) return true;
-    if (h === "om.eko_42" || h === "omeko42") return false;
+    if (h === "user_1" || h === "user_1") return false;
     if (/^user_[0-9a-f_]+$/i.test(h) || h.startsWith("user_") || h.startsWith("pers_")) return true;
     if (/^\d+$/.test(h)) return true;
 
@@ -135,7 +135,7 @@ async function installCallsignTriggers(runQuery) {
             res TEXT;
         BEGIN
             IF fallback_id = 1 THEN
-                RETURN 'om.eko_42';
+                RETURN 'user_1';
             END IF;
 
             clean_str := split_part(COALESCE(raw_name, ''), ',', 1);
@@ -185,8 +185,8 @@ async function installCallsignTriggers(runQuery) {
             conflict_exists BOOLEAN;
         BEGIN
             IF NEW.id = 1 THEN
-                NEW.username := 'om.eko_42';
-                NEW.callsign := 'om.eko_42';
+                NEW.username := 'user_1';
+                NEW.callsign := 'user_1';
                 RETURN NEW;
             END IF;
 
@@ -361,7 +361,7 @@ async function syncMasterUserCallsigns(executor, options = {}) {
     }
 
     // 4. Compute base 2-word handles for all users
-    // On first run (or forceFull): standardize ALL users except id=1 ('om.eko_42') to the 2-word name rule.
+    // On first run (or forceFull): standardize ALL users except id=1 ('user_1') to the 2-word name rule.
     // On subsequent runs: preserve already-standardized handles unless empty, mismatched, or auto/unstandardized.
     const groupsByBase = new Map();
     const fixedByUserId = new Map();
@@ -370,8 +370,8 @@ async function syncMasterUserCallsigns(executor, options = {}) {
     for (const u of users) {
         const uid = Number(u.id);
         if (uid === 1) {
-            fixedByUserId.set(uid, "om.eko_42");
-            usedHandles.add("om.eko_42");
+            fixedByUserId.set(uid, "user_1");
+            usedHandles.add("user_1");
             continue;
         }
 
