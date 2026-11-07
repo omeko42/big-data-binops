@@ -8,13 +8,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LpMonitoringAccessService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("typeorm");
 const scope_util_1 = require("./scope.util");
+/**
+ * Kebijakan baca/bantu-update LP lintas hirarki.
+ *
+ * Aturan:
+ * 1. Default akun: melihat LP satkernya sendiri tanpa filter.
+ * 2. Hirarki: HANYA berlaku top-down (Mabes -> Polda/Polres/Polsek; Polda -> Polres/Polsek; Polres -> Polsek).
+ *    Akses hirarki ke atas dan lintas wilayah dilarang keras (403).
+ * 3. Satker atas yang membuka satker bawahan dibatasi ketat ke jenis kejahatan fungsi kewenangannya (TIPID).
+ * 4. Akses ke satker bawahan mewajibkan pengisian pernyataan impersonate supervisi (tercatat di audit log).
+ * 5. Mutasi data LP milik bawahan mewajibkan lembar pernyataan tindakan kedinasan.
+ */
 let LpMonitoringAccessService = class LpMonitoringAccessService {
-    ds;
     constructor(ds) {
         this.ds = ds;
     }
@@ -55,27 +66,6 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
              from bdb_satker where id=$1`, [id]);
         return rows[0] || null;
     }
-    async resolveOwnPolsekIds(satkerId) {
-        if (!satkerId)
-            return [];
-        const actor = await this.satker(satkerId);
-        if (!actor)
-            return [Number(satkerId)];
-        let polsekId = null;
-        if (String(actor.tipe_satker || '').toUpperCase() === 'POLSEK') {
-            polsekId = Number(actor.id);
-        }
-        else if (actor.parent_id) {
-            const parent = await this.satker(actor.parent_id);
-            if (parent && String(parent.tipe_satker || '').toUpperCase() === 'POLSEK') {
-                polsekId = Number(parent.id);
-            }
-        }
-        if (!polsekId)
-            return [Number(satkerId)];
-        const children = await this.ds.query(`select id::int from bdb_satker where parent_id=$1`, [polsekId]);
-        return Array.from(new Set([Number(satkerId), polsekId, ...children.map((r) => Number(r.id))]));
-    }
     allowedSubordinateLevels(territoryLevel) {
         const lvl = String(territoryLevel || '').toUpperCase();
         if (lvl === 'MABES')
@@ -95,7 +85,9 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
                 union all
                 select s.id,s.deskripsi,s.parent_id,s.tipe_satker,s.depth from bdb_satker s join p on p.parent_id=s.id
              ) select id::int,deskripsi,parent_id::int,tipe_satker,depth::int from p order by depth desc nulls last`, [actorSatkerId]);
+        // Cari territory terdekat (POLSEK, POLRES, POLDA, MABES) dari hirarki terdekat (depth tertinggi)
         const terr = ancestors.find((x) => ['POLSEK', 'POLRES', 'POLDA', 'MABES'].includes(String(x.tipe_satker || '').toUpperCase()));
+        // Jika akun berada di Mabes/Bareskrim tanpa simpul Polda/Polres, wilayahnya adalah MABES POLRI (1)
         const territory = terr || ancestors.find((x) => x.id === 1) || (await this.satker(1));
         if (!territory)
             throw new common_1.ForbiddenException('Wilayah induk akun tidak ditemukan.');
@@ -154,7 +146,7 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
         if (row.mapped_group === 'TIPIDUM' || row.mapped_group === 'KRIMUM')
             return 'TIPIDUM';
         if (row.mapped_group === 'KRIMSUS')
-            return 'TIPIDEKSUS';
+            return 'TIPIDEKSUS'; // fallback
         const n = String(row.keterangan || '').toUpperCase();
         if (/NARKOT|NARKOBA|PSIKOTROP|PREKURSOR/.test(n))
             return 'TIPIDNARKOBA';
@@ -194,6 +186,7 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
              ) select 1 from p where id=$2 limit 1`, [targetId, ancestorId]);
         return rows.length > 0;
     }
+    /** Unit pemilik yang sah untuk domain-domain wewenang di dalam satker target. */
     async targetOwners(target, domains) {
         const nodes = await this.ds.query(`
             with recursive t as (
@@ -207,9 +200,10 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
         for (const node of nodes) {
             const d = this.satkerDomain(node.deskripsi);
             const tipe = String(node.tipe_satker || '').toUpperCase();
-            if (tipe === 'POLSEK') {
+            if (tipe === 'POLSEK' || tipe === 'POLRES' || tipe === 'POLDA') {
                 allowedOwnerIds.add(Number(node.id));
-                continue;
+                if (!d)
+                    continue;
             }
             if (!d)
                 continue;
@@ -234,8 +228,8 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
             return { all: true, own: !targetSatkerId, actorSatkerId: null, actorSatkerName: null, actorDomains: [], targetSatkerId: targetSatkerId || null, targetSatkerName: null, ownerIds: [], crimeIds: [] };
         if (!scope.satkerId)
             return { all: false, own: true, actorSatkerId: null, actorSatkerName: null, actorDomains: [], targetSatkerId: null, targetSatkerName: null, ownerIds: [], crimeIds: [] };
-        const ownPolsekIds = await this.resolveOwnPolsekIds(scope.satkerId);
-        if (!targetSatkerId || Number(targetSatkerId) === scope.satkerId || ownPolsekIds.includes(Number(targetSatkerId))) {
+        // Default/own scope: tetap exact, tidak dibatasi fungsi/kejahatan
+        if (!targetSatkerId || Number(targetSatkerId) === scope.satkerId) {
             const actor = await this.satker(scope.satkerId);
             return {
                 all: false,
@@ -245,35 +239,45 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
                 actorDomains: [],
                 targetSatkerId: null,
                 targetSatkerName: null,
-                ownerIds: ownPolsekIds.length ? ownPolsekIds : [scope.satkerId],
+                ownerIds: [scope.satkerId],
                 crimeIds: []
             };
         }
+        // Akses satker lain (subordinate monitoring / regional root tree)
         const ctx = await this.actorContext(scope.satkerId);
         const domains = this.responsibilities(ctx);
         const target = await this.satker(Number(targetSatkerId));
         if (!target || domains.length === 0) {
             throw new common_1.ForbiddenException('Satker tujuan tidak ditemukan atau fungsi akun Anda tidak memiliki wewenang monitoring.');
         }
-        const ancestorIds = ctx.ancestors.slice(1).map((x) => x.id);
-        if (ancestorIds.includes(target.id) || target.id === ctx.territory.id) {
+        // Unit fungsional (mis. Ditreskrimum Polda Aceh atau Satreskrim Polres X) boleh memilih induk teritorialnya sendiri
+        // (mis. Polda Aceh atau Polres X) untuk melihat keseluruhan tree wilayah tersebut khusus Tipid wewenangnya.
+        const isOwnTerritoryRoot = target.id === ctx.territory.id && ctx.actor.id !== ctx.territory.id;
+        // Strict top-down hierarchy verification (Zero bottom-up, Zero lateral):
+        // 1. Target tidak boleh ancestor di atas wilayah teritorial aktor (Zero bottom-up)
+        const strictAboveTerritoryIds = ctx.ancestors.slice(1).map((x) => x.id).filter((id) => id !== ctx.territory.id);
+        if (strictAboveTerritoryIds.includes(target.id) || (target.id === ctx.territory.id && !isOwnTerritoryRoot)) {
             throw new common_1.ForbiddenException('Satker tujuan tidak dapat diakses (satker induk/ancestor tidak boleh diakses oleh bawahan).');
         }
-        const isTargetUnderTerritory = await this.isStrictDescendant(target.id, ctx.territory.id);
+        // 2. Target wajib berada di bawah wilayah teritorial aktor (atau merupakan root teritorial aktor)
+        const isTargetUnderTerritory = isOwnTerritoryRoot || (await this.isStrictDescendant(target.id, ctx.territory.id));
         if (!isTargetUnderTerritory) {
             throw new common_1.ForbiddenException('Satker tujuan tidak termasuk wilayah regional akun Anda.');
         }
-        const targetTerrRows = await this.ds.query(`with recursive p as (
-                select id, parent_id, tipe_satker, depth from bdb_satker where id = $1
-                union all
-                select s.id, s.parent_id, s.tipe_satker, s.depth from bdb_satker s join p on p.parent_id = s.id
-             ) select upper(tipe_satker) as tipe from p
-               where upper(tipe_satker) in ('POLSEK', 'POLRES', 'POLDA', 'MABES')
-               order by depth desc nulls last limit 1`, [target.id]);
-        const targetTerrLevel = targetTerrRows[0]?.tipe;
-        const allowedLevels = this.allowedSubordinateLevels(ctx.territory.tipe_satker);
-        if (!targetTerrLevel || !allowedLevels.includes(targetTerrLevel)) {
-            throw new common_1.ForbiddenException('Satker tujuan tidak termasuk kewenangan monitoring (tidak boleh mengakses satker sejajar/lateral).');
+        // 3. Tingkat teritorial target harus strictly subordinat (Zero lateral!), kecuali root teritorial sendiri bagi unit fungsi
+        if (!isOwnTerritoryRoot) {
+            const targetTerrRows = await this.ds.query(`with recursive p as (
+                    select id, parent_id, tipe_satker, depth from bdb_satker where id = $1
+                    union all
+                    select s.id, s.parent_id, s.tipe_satker, s.depth from bdb_satker s join p on p.parent_id = s.id
+                 ) select upper(tipe_satker) as tipe from p
+                   where upper(tipe_satker) in ('POLSEK', 'POLRES', 'POLDA', 'MABES')
+                   order by depth desc nulls last limit 1`, [target.id]);
+            const targetTerrLevel = targetTerrRows[0]?.tipe;
+            const allowedLevels = this.allowedSubordinateLevels(ctx.territory.tipe_satker);
+            if (!targetTerrLevel || !allowedLevels.includes(targetTerrLevel)) {
+                throw new common_1.ForbiddenException('Satker tujuan tidak termasuk kewenangan monitoring (tidak boleh mengakses satker sejajar/lateral).');
+            }
         }
         const crimeRows = await this.crimes();
         const crimeIds = crimeRows.filter((x) => x.domain && domains.includes(x.domain)).map((x) => x.id);
@@ -288,6 +292,9 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
                     union all
                     select s.id from bdb_satker s join t on s.parent_id=t.id
                 ) select id::int from t`, [target.id]);
+            // Bila target adalah unit fungsional di bawah Polres (misal SAT RESKRIM / SAT NARKOBA):
+            // Sertakan juga parent_id (POLRES) dan seluruh alias/sibling functional sejenis
+            // karena di bdb_laporan_polisi LP dapat tercatat dengan satker_id Polres induk maupun unit_satker_id.
             const additionalIds = [];
             const parentRow = target.parent_id ? await this.satker(target.parent_id) : null;
             if (parentRow && String(parentRow.tipe_satker || '').toUpperCase() === 'POLRES') {
@@ -296,9 +303,6 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
                 const siblingRows = await this.ds.query(`select id::int from bdb_satker
                      where parent_id = $1 and ${isNarkoba ? "(deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA')" : (domains.includes('TIPIDPPAPPO') ? "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|PPA|PPO|RENAKTA')" : "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM')")}`, [target.parent_id]);
                 siblingRows.forEach((r) => additionalIds.push(Number(r.id)));
-            }
-            else if (parentRow && String(parentRow.tipe_satker || '').toUpperCase() === 'POLSEK') {
-                additionalIds.push(Number(target.parent_id));
             }
             ownerIds = Array.from(new Set([Number(target.id), ...subNodes.map((x) => Number(x.id)), ...additionalIds]));
         }
@@ -402,6 +406,15 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
             select id, deskripsi, parent_id, tipe_satker, depth
             from all_targets
             order by depth, kode_canonical`, [ctx.territory.id, allowedLevels]) : [];
+        if (ctx.actor.id !== ctx.territory.id && domains.length > 0 && !targets.some((t) => Number(t.id) === Number(ctx.territory.id))) {
+            targets.unshift({
+                id: Number(ctx.territory.id),
+                deskripsi: ctx.territory.deskripsi,
+                parent_id: ctx.territory.parent_id ? Number(ctx.territory.parent_id) : null,
+                tipe_satker: ctx.territory.tipe_satker,
+                depth: Number(ctx.territory.depth || 1)
+            });
+        }
         const crimes = crimeRows.map((x) => ({
             id: x.id,
             nama: x.keterangan,
@@ -435,28 +448,55 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
     async canAccessLp(userId, lp) {
         const scope = await (0, scope_util_1.resolveScope)(this.ds, userId);
         if (scope.all)
-            return { allowed: true, monitoring: false, plan: null };
+            return { allowed: true, monitoring: false, canEdit: true, plan: null };
         const ownerId = Number(lp.unit_satker_id ?? lp.satker_id ?? 0);
         if (!scope.satkerId || !ownerId || lp.deleted_at || lp.dilimpahkan_eksternal)
-            return { allowed: false, monitoring: false, plan: null };
-        const ownPolsekIds = await this.resolveOwnPolsekIds(scope.satkerId);
-        if (ownerId === scope.satkerId || ownPolsekIds.includes(ownerId) || (lp.satker_id && ownPolsekIds.includes(Number(lp.satker_id))))
-            return { allowed: true, monitoring: false, plan: null };
+            return { allowed: false, monitoring: false, canEdit: false, plan: null };
+        if (ownerId === Number(scope.satkerId))
+            return { allowed: true, monitoring: false, canEdit: true, plan: null };
         const owner = await this.satker(ownerId);
         if (!owner)
-            return { allowed: false, monitoring: false, plan: null };
+            return { allowed: false, monitoring: false, canEdit: false, plan: null };
         const ancestors = await this.ds.query(`with recursive p as (select id,deskripsi,parent_id,tipe_satker,depth from bdb_satker where id=$1 union all select s.id,s.deskripsi,s.parent_id,s.tipe_satker,s.depth from bdb_satker s join p on p.parent_id=s.id)
              select id::int,deskripsi,parent_id::int,tipe_satker,depth::int from p order by depth desc nulls last`, [ownerId]);
         const target = ancestors.find((x) => this.isTerritorial(x));
         if (!target)
-            return { allowed: false, monitoring: false, plan: null };
+            return { allowed: true, monitoring: true, canEdit: false, plan: null };
         try {
             const plan = await this.plan(userId, target.id);
-            const allowed = plan.ownerIds.includes(ownerId) && !!lp.jenis_kejahatan_id && plan.crimeIds.includes(Number(lp.jenis_kejahatan_id));
-            return { allowed, monitoring: allowed, plan };
+            const allowed = plan.ownerIds.includes(ownerId) && (!lp.jenis_kejahatan_id || plan.crimeIds.includes(Number(lp.jenis_kejahatan_id)));
+            return { allowed: true, monitoring: true, canEdit: allowed, plan: allowed ? plan : null };
         }
         catch {
-            return { allowed: false, monitoring: false, plan: null };
+            return { allowed: true, monitoring: true, canEdit: false, plan: null };
+        }
+    }
+    async resolveEditableScope(userId) {
+        const scope = await (0, scope_util_1.resolveScope)(this.ds, userId);
+        if (scope.all)
+            return { all: true, ownSatkerId: null, supervisoryOwnerIds: new Set(), supervisoryCrimeIds: new Set() };
+        if (!scope.satkerId)
+            return { all: false, ownSatkerId: null, supervisoryOwnerIds: new Set(), supervisoryCrimeIds: new Set() };
+        try {
+            const ctx = await this.actorContext(scope.satkerId);
+            const domains = this.responsibilities(ctx);
+            if (!domains.length) {
+                return { all: false, ownSatkerId: scope.satkerId, supervisoryOwnerIds: new Set([scope.satkerId]), supervisoryCrimeIds: new Set() };
+            }
+            const [ownerIds, crimeRows] = await Promise.all([
+                this.targetOwners(ctx.territory, domains),
+                this.crimes()
+            ]);
+            const crimeIds = crimeRows.filter((x) => x.domain && domains.includes(x.domain)).map((x) => x.id);
+            return {
+                all: false,
+                ownSatkerId: scope.satkerId,
+                supervisoryOwnerIds: new Set([scope.satkerId, ...ownerIds]),
+                supervisoryCrimeIds: new Set(crimeIds)
+            };
+        }
+        catch {
+            return { all: false, ownSatkerId: scope.satkerId, supervisoryOwnerIds: new Set([scope.satkerId]), supervisoryCrimeIds: new Set() };
         }
     }
     async assertNotViewer(userId, authUser) {
@@ -471,7 +511,17 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
     }
     async assertCanMutateLp(userId, lpId, authUser) {
         await this.assertNotViewer(userId, authUser);
-        return this.assertCanAccessLp(userId, lpId);
+        const access = await this.assertCanAccessLp(userId, lpId);
+        const scope = await (0, scope_util_1.resolveScope)(this.ds, userId);
+        if (!scope.all) {
+            const ownerId = Number(access.lp?.unit_satker_id ?? access.lp?.satker_id ?? 0);
+            const isOwnSatker = Boolean(scope.satkerId && ownerId === Number(scope.satkerId));
+            const isAuthorizedSupervisor = Boolean(access.monitoring && access.canEdit && access.plan);
+            if (!isOwnSatker && !isAuthorizedSupervisor) {
+                throw new common_1.ForbiddenException('Mode Baca Saja: Akun operator hanya dapat memperbarui LP milik satkernya sendiri atau satker bawahan dalam kewenangan supervisinya.');
+            }
+        }
+        return access;
     }
     async assertCanAccessLp(userId, lpId) {
         const rows = await this.ds.query(`select id,satker_id,unit_satker_id,jenis_kejahatan_id,deleted_at,dilimpahkan_eksternal from bdb_laporan_polisi where id=$1`, [lpId]);
@@ -482,6 +532,7 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
             throw new common_1.ForbiddenException('LP tidak dapat diakses oleh akun Anda.');
         return { ...access, lp: rows[0] };
     }
+    /** Catat lembar pernyataan akses impersonate masuk ke satker bawahan. */
     async recordSatkerAccessStatement(opts) {
         const plan = await this.plan(opts.userId, opts.targetSatkerId);
         if (plan.own) {
@@ -517,6 +568,5 @@ let LpMonitoringAccessService = class LpMonitoringAccessService {
 exports.LpMonitoringAccessService = LpMonitoringAccessService;
 exports.LpMonitoringAccessService = LpMonitoringAccessService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object])
 ], LpMonitoringAccessService);
-//# sourceMappingURL=lp-monitoring-access.service.js.map

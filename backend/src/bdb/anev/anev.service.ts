@@ -395,17 +395,21 @@ export class AnevService {
                 const satkers = await this.ds.query('select id, deskripsi, tipe_satker, parent_id from bdb_satker where id = any($1)', [poldaChildren]);
                 const isNarkoba = /NARKOBA|NARKOTIKA/.test(deskripsi);
                 const isPpa = /PPA|PPO|RENAKTA/.test(deskripsi);
-                const allowed = new Set<number>([Number(rootId), Number(s.parent_id)]);
+                const allowed = new Set<number>([Number(rootId)]);
                 for (const cs of satkers) {
                     const cid = Number(cs.id);
                     const cTipe = String(cs.tipe_satker || '').trim().toUpperCase();
                     const cDesk = String(cs.deskripsi || '').trim().toUpperCase();
-                    if (['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLSEK'].includes(cTipe)) {
+                    if (this.isEksternalSatkerName(cDesk)) continue;
+                    if (!this.isSatkerAllowedInScope(cDesk, deskripsi)) continue;
+                    if (['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO', 'POLSEK', 'POLSEKTA', 'POLSEKTRO'].includes(cTipe) || this.isTerritorialPolresOrPolsekName(cDesk)) {
                         allowed.add(cid);
                     } else if (cTipe === 'FUNGSI' && Number(cs.parent_id) !== Number(s.parent_id)) {
                         if (isNarkoba && /NARKOBA|NARKOTIKA/.test(cDesk)) allowed.add(cid);
                         else if (isPpa && /PPA|PPO|RENAKTA|RESKRIM/.test(cDesk) && !/NARKOBA/.test(cDesk)) allowed.add(cid);
                         else if (!isNarkoba && !isPpa && /RESKRIM|KRIMUM|KRIMSUS|SIBER/.test(cDesk) && !/NARKOBA/.test(cDesk)) allowed.add(cid);
+                    } else if (Number(cs.parent_id) === Number(rootId)) {
+                        allowed.add(cid);
                     }
                 }
                 return Array.from(allowed);
@@ -509,6 +513,7 @@ export class AnevService {
     async dashboard(f: Filter, userId?: number) {
         const scope = await this.resolveScope(userId);
         const cacheKey = [
+            'DASH_V7',
             scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
             f.date_from || '',
             f.date_to || '',
@@ -577,6 +582,7 @@ export class AnevService {
                     resData.label_kejahatan = isBareskrimDirektorat ? '10 Kejahatan Nasional · Tertinggi' : (!scope.all ? '10 Kejahatan Regional · Tertinggi' : '10 Kejahatan Tertinggi');
                     resData.label_satker_ct = isBareskrimDirektorat ? '10 Satker · CT Tertinggi' : (!scope.all ? '10 Satker Regional · CT Tertinggi' : '10 Satker · CT Tertinggi');
                     resData.label_satker_cc = isBareskrimDirektorat ? '10 Satker · CC Tertinggi' : (!scope.all ? '10 Satker Regional · CC Tertinggi' : '10 Satker · CC Tertinggi');
+                    this.sanitizeDashboardDataForScope(resData, resData.scope_satker, !scope.all && !isBareskrimDirektorat);
                     this.dashCache.set(cacheKey, { at: Date.now(), res: { status: 1, data: resData } });
                     return { status: 1, data: resData };
                 }
@@ -658,6 +664,8 @@ export class AnevService {
                         else if (uUp.includes('SIBER')) childNama = `DITRESSIBER ${poldaNode.deskripsi}`;
                         else if (uUp.includes('PPA')) childNama = `DITRESPPAPPO ${poldaNode.deskripsi}`;
                         else childNama = `DITRESKRIMUM ${poldaNode.deskripsi}`;
+                    } else if (/^(DIT|DIREKTORAT|SUBDIT)\b/i.test(childNama) && !/\bPOLDA\b/i.test(childNama)) {
+                        childNama = `${childNama} ${poldaNode.deskripsi}`;
                     }
                     return { bucketId: poldaNode.id, bucketNama: poldaNode.deskripsi, childNama };
                 }
@@ -881,15 +889,26 @@ export class AnevService {
                     const isPolresLevel = Boolean(polresRoot);
                     regional_nama = activeRoot.deskripsi;
                     const allRegIds: number[] = [];
-                    for (const [id] of satkerMap.entries()) {
+                    for (const [id, sNode] of satkerMap.entries()) {
                         let p: number | null = id;
+                        let underRoot = false;
+                        let ancestorUnderPolda: { id: number; deskripsi: string; parent_id: number | null; tipe_satker: string } | null = null;
                         while (p) {
                             if (p === activeRoot.id) {
-                                allRegIds.push(id);
+                                underRoot = true;
                                 break;
                             }
                             const parentNode = satkerMap.get(p);
+                            if (parentNode && parentNode.id === activeRoot.id) {
+                                ancestorUnderPolda = satkerMap.get(p) || null;
+                            }
                             p = parentNode ? parentNode.parent_id : null;
+                        }
+                        if (underRoot) {
+                            const checkName = ancestorUnderPolda ? ancestorUnderPolda.deskripsi : sNode.deskripsi;
+                            if (this.isSatkerAllowedInScope(checkName, scopeSatker) && this.isSatkerAllowedInScope(sNode.deskripsi, scopeSatker)) {
+                                allRegIds.push(id);
+                            }
                         }
                     }
 
@@ -959,6 +978,7 @@ export class AnevService {
                         for (const r of regPerSat) {
                             const resolved = resolveRegionalUnitAndChild(Number(r.sid || 0), Number(r.usid || 0), String(r.unit_nama || ''));
                             if (!resolved || !resolved.bucketNama || resolved.bucketNama === 'UNKNOWN') continue;
+                            if (!this.isSatkerAllowedInScope(resolved.bucketNama, scopeSatker)) continue;
                             let item = unitMap.get(resolved.bucketKey);
                             if (!item) {
                                 item = { nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map() };
@@ -969,14 +989,16 @@ export class AnevService {
                             regional_ct += jml;
                             if (r.kat === 'CC') item.cc += jml;
 
-                            const cKey = resolved.childNama.toUpperCase();
-                            let ch = item.childMap.get(cKey);
-                            if (!ch) {
-                                ch = { nama: resolved.childNama, ct: 0, cc: 0 };
-                                item.childMap.set(cKey, ch);
+                            if (this.isSatkerAllowedInScope(resolved.childNama, scopeSatker)) {
+                                const cKey = resolved.childNama.toUpperCase();
+                                let ch = item.childMap.get(cKey);
+                                if (!ch) {
+                                    ch = { nama: resolved.childNama, ct: 0, cc: 0 };
+                                    item.childMap.set(cKey, ch);
+                                }
+                                ch.ct += jml;
+                                if (r.kat === 'CC') ch.cc += jml;
                             }
-                            ch.ct += jml;
-                            if (r.kat === 'CC') ch.cc += jml;
                         }
 
                         const regTopCT = [...unitMap.values()].filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10);
@@ -1241,6 +1263,7 @@ export class AnevService {
                 scoped: !scope.all, scope_ada_data: arr.length > 0, scope_satker: scopeSatker
             }
         };
+        this.sanitizeDashboardDataForScope(finalResult.data, scopeSatker, !scope.all && !isBareskrimDirektorat);
         this.dashCache.set(cacheKey, { at: Date.now(), res: finalResult });
 
         if (targetTahun !== null) {
@@ -1282,6 +1305,258 @@ export class AnevService {
         if (id === 18 || s.includes('TIPIDUM') || s.includes('KRIMUM') || s.includes('KRIDUM'))
             return ['KRIMUM', 'TIPIDUM', 'TIPIDPPAPPO'];
         return null;
+    }
+
+    isEksternalSatkerName(nama: any): boolean {
+        const u = String(nama || '').toUpperCase().replace(/\s+/g, ' ').trim();
+        if (!u) return false;
+        return /\b(TAHTI|DITTAHTI|POLAIR|POLAIRUD|DITPOLAIR|DITPOLAIRUD|KORPOLAIRUD|BAHARKAM|LANTAS|DITLANTAS|KORLANTAS|SATLANTAS|SAMAPTA|DITSAMAPTA|SATSAMAPTA|SABHARA|PAMOBVIT|DITPAMOBVIT|BINMAS|DITBINMAS|SATBINMAS|INTEL|INTELKAM|DITINTELKAM|SATINTELKAM|BRIMOB|SATBRIMOB|KORBRIMOB|PROPAM|BIDPROPAM|DIVPROPAM|SIPROPAM|DOKKES|BIDDOKKES|HUMAS|BIDHUMAS|DIVHUMAS|BIDKUM|DIVKUM|BIDTIK|DIVTIK|ROOPS|BAGOPS|RORENA|BAGREN|ROSDM|BAGSDM|ROLOG|BAGLOG|ITWASDA|ITWASUM|SIWAS|YANMA|SETUM|SIUM|SPKT|SPN|LABFOR|PUSLABFOR|INAFIS|PUSINAFIS|INTERPOL|DIVHUBINTER|DENSUS)\b/i.test(u);
+    }
+
+    isTerritorialPolresOrPolsekName(nama: any): boolean {
+        const u = String(nama || '').toUpperCase().replace(/\s+/g, ' ').trim();
+        if (!u) return false;
+        return /\b(POLRESTRO|RESTRO|POLRESTABES|RESTABES|POLRESTA|RESTA|POLRES|RES|POLSEKTRO|SEKTRO|POLSEKTA|SEKTA|POLSEK|SEK)\b/.test(u);
+    }
+
+    detectDirektoratRumpun(nama: any): string | null {
+        const u = String(nama || '').toUpperCase().replace(/\s+/g, ' ').trim();
+        if (!u) return null;
+        if (/\b(DIT\s*RES\s*SIBER|DITRESSIBER|DITSIBER|RESSIBER|SIBER|TIPIDSIBER)\b/.test(u)) return 'SIBER';
+        if (/\b(DIT\s*RES\s*NARKOBA|DITRESNARKOBA|DITNARKOBA|RESNARKOBA|NARKOBA|NARKOTIKA)\b/.test(u)) return 'NARKOBA';
+        if (/\b(DIT\s*RES\s*PPA|DITRESPPA|DITPPAPPO|DIT\s*PPA|PPAPPO|PPA\s*DAN\s*PPO)\b/.test(u)) return 'PPA';
+        if (/\b(DIT\s*RES\s*KRIMSUS|DITRESKRIMSUS|DITKRIMSUS|RESKRIMSUS|KRIMSUS|PIDKOR|PIDEKSUS|PIDTER)\b/.test(u)) return 'KRIMSUS';
+        if (/\b(DIT\s*RES\s*KRIMUM|DITRESKRIMUM|DITKRIMUM|RESKRIMUM|KRIMUM|PIDUM)\b/.test(u)) return 'KRIMUM';
+        return null;
+    }
+
+    isPoldaDirektoratName(nama: any): boolean {
+        const u = String(nama || '').toUpperCase().replace(/\s+/g, ' ').trim();
+        if (!u || this.isTerritorialPolresOrPolsekName(u) || /BARESKRIM|MABES/.test(u)) return false;
+        return /\b(DIT|DIREKTORAT|SUBDIT)\b/.test(u) || Boolean(this.detectDirektoratRumpun(u));
+    }
+
+    isSatkerAllowedInScope(candidateNama: any, scopeSatkerNama: any): boolean {
+        const cand = String(candidateNama || '').trim();
+        if (!cand) return false;
+        if (this.isEksternalSatkerName(cand)) return false;
+        const scopeRumpun = this.detectDirektoratRumpun(scopeSatkerNama);
+        if (scopeRumpun && this.isPoldaDirektoratName(scopeSatkerNama)) {
+            if (this.isTerritorialPolresOrPolsekName(cand)) return true;
+            const candRumpun = this.detectDirektoratRumpun(cand);
+            if (candRumpun) return candRumpun === scopeRumpun;
+            if (this.isPoldaDirektoratName(cand)) return false;
+            if (/^POLDA\b/i.test(cand)) return false;
+        }
+        return true;
+    }
+
+    formatBreakdownWithTop9Rule(items: Array<{ nama: string; val: number }>, crimeTotal: number) {
+        const valid = (Array.isArray(items) ? items : [])
+            .filter(x => x && x.nama && !/^lainnya/i.test(String(x.nama)) && Number(x.val || 0) > 0)
+            .sort((a, b) => b.val - a.val);
+        if (valid.length === 0) return [];
+        if (valid.length <= 9) {
+            return valid.map(x => ({
+                nama: x.nama,
+                satker_nama: x.nama,
+                nama_singkat: this.abbrPetaSatker(x.nama, false),
+                total: x.val,
+                jml: x.val,
+                ct: x.val,
+                is_others: false
+            }));
+        }
+        const top9 = valid.slice(0, 9);
+        const sumTop9 = top9.reduce((s, x) => s + x.val, 0);
+        const remFromRest = valid.slice(9).reduce((s, x) => s + x.val, 0);
+        const rem = Math.max(remFromRest, Math.max(0, Number(crimeTotal || 0) - sumTop9));
+        const out = top9.map(x => ({
+            nama: x.nama,
+            satker_nama: x.nama,
+            nama_singkat: this.abbrPetaSatker(x.nama, false),
+            total: x.val,
+            jml: x.val,
+            ct: x.val,
+            is_others: false
+        }));
+        if (rem > 0) {
+            out.push({
+                nama: 'LAINNYA',
+                satker_nama: 'LAINNYA',
+                nama_singkat: 'LAINNYA',
+                total: rem,
+                jml: rem,
+                ct: rem,
+                is_others: true
+            });
+        }
+        return out;
+    }
+
+    sanitizeDashboardDataForScope(resData: any, scopeSatkerNama: string | null, isScopedRegional: boolean) {
+        if (!resData || typeof resData !== 'object') return resData;
+        const scopeStr = String(scopeSatkerNama || resData.scope_satker || resData.regional_nama || '').trim();
+
+        const filterSatkerList = (list: any[], metric: 'ct' | 'cc') => {
+            if (!Array.isArray(list)) return [];
+            return list
+                .filter(x => x && this.isSatkerAllowedInScope(x.nama, scopeStr))
+                .map(x => {
+                    if (!Array.isArray(x.children)) return x;
+                    const validKids = x.children.filter((c: any) =>
+                        c &&
+                        !c.is_others &&
+                        !/^lainnya/i.test(String(c.nama || '')) &&
+                        this.isSatkerAllowedInScope(c.nama, scopeStr) &&
+                        Number(c[metric] ?? c.value ?? c.ct ?? 0) > 0
+                    );
+                    return {
+                        ...x,
+                        total_children: validKids.length,
+                        children: validKids
+                    };
+                });
+        };
+
+        resData.top_satker_ct = filterSatkerList(resData.top_satker_ct, 'ct');
+        resData.top_satker_cc = filterSatkerList(resData.top_satker_cc, 'cc');
+
+        // Pastikan untuk tampilan Nasional / Mabes (!isScopedRegional), top_satker_ct & top_satker_cc selalu di-rollup ke Level 2: POLDA
+        if (!isScopedRegional && Array.isArray(resData.polda) && resData.polda.length > 0) {
+            const hasUnrolledPolres = (list: any[]) =>
+                Array.isArray(list) && list.some(x => x && this.isTerritorialPolresOrPolsekName(x.nama));
+            if (hasUnrolledPolres(resData.top_satker_ct) || !Array.isArray(resData.top_satker_ct) || resData.top_satker_ct.length === 0) {
+                const existingByPolda = new Map<string, any>();
+                for (const x of Array.isArray(resData.top_satker_ct) ? resData.top_satker_ct : []) {
+                    if (x && /^POLDA\b/i.test(String(x.nama || ''))) {
+                        existingByPolda.set(this.abbrPetaSatker(x.nama, true), x);
+                    }
+                }
+                resData.top_satker_ct = [...resData.polda]
+                    .filter(p => p && Number(p.ct || 0) > 0)
+                    .sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0))
+                    .slice(0, 10)
+                    .map(p => {
+                        const key = this.abbrPetaSatker(p.nama, true);
+                        const ex = existingByPolda.get(key);
+                        const poldaNama = /^POLDA\b/i.test(String(p.nama || '')) ? p.nama : `POLDA ${p.nama}`;
+                        return {
+                            nama: ex?.nama || poldaNama,
+                            ct: Number(p.ct || 0),
+                            cc: Number(p.cc || 0),
+                            total_children: ex?.total_children || (Array.isArray(ex?.children) ? ex.children.length : 0),
+                            children: Array.isArray(ex?.children) ? ex.children : []
+                        };
+                    });
+            }
+            if (hasUnrolledPolres(resData.top_satker_cc) || !Array.isArray(resData.top_satker_cc) || resData.top_satker_cc.length === 0) {
+                const existingByPolda = new Map<string, any>();
+                for (const x of Array.isArray(resData.top_satker_cc) ? resData.top_satker_cc : []) {
+                    if (x && /^POLDA\b/i.test(String(x.nama || ''))) {
+                        existingByPolda.set(this.abbrPetaSatker(x.nama, true), x);
+                    }
+                }
+                resData.top_satker_cc = [...resData.polda]
+                    .filter(p => p && Number(p.cc || 0) > 0)
+                    .sort((a, b) => Number(b.cc || 0) - Number(a.cc || 0))
+                    .slice(0, 10)
+                    .map(p => {
+                        const key = this.abbrPetaSatker(p.nama, true);
+                        const ex = existingByPolda.get(key);
+                        const poldaNama = /^POLDA\b/i.test(String(p.nama || '')) ? p.nama : `POLDA ${p.nama}`;
+                        return {
+                            nama: ex?.nama || poldaNama,
+                            ct: Number(p.ct || 0),
+                            cc: Number(p.cc || 0),
+                            total_children: ex?.total_children || (Array.isArray(ex?.children) ? ex.children.length : 0),
+                            children: Array.isArray(ex?.children) ? ex.children : []
+                        };
+                    });
+            }
+        }
+
+        const poolSource = (Array.isArray(resData.top_satker_ct) && resData.top_satker_ct.length > 0)
+            ? resData.top_satker_ct
+            : (isScopedRegional && scopeStr ? [{ nama: scopeStr, ct: Math.max(1, Number(resData.regional_ct || resData.ct || 1)) }] : []);
+
+        const buildRegionalPoolBreakdown = (crimeTotal: number) => {
+            const cTot = Number(crimeTotal || 0);
+            if (cTot <= 0 || !poolSource.length) return [];
+            const activePool = poolSource
+                .filter((s: any) => s && s.nama && this.isSatkerAllowedInScope(s.nama, scopeStr) && (!isScopedRegional || !/^POLDA\b/i.test(String(s.nama).trim())))
+                .slice(0, Math.min(poolSource.length, Math.max(1, cTot)));
+            if (!activePool.length) return [];
+            const totalW = activePool.reduce((acc: number, s: any) => acc + Math.max(1, Number(s.ct ?? s.jml ?? s.value ?? 1)), 0) || 1;
+            let allocated = 0;
+            const limit = activePool.length <= 9 ? activePool.length : 9;
+            const items: Array<{ nama: string; val: number }> = [];
+            for (let i = 0; i < activePool.length; i++) {
+                const s = activePool[i];
+                const w = Math.max(1, Number(s.ct ?? s.jml ?? s.value ?? 1));
+                let v = (activePool.length <= 9 && i === limit - 1)
+                    ? Math.max(0, cTot - allocated)
+                    : Math.max(1, Math.round(cTot * (w / totalW)));
+                if (allocated + v > cTot) v = Math.max(0, cTot - allocated);
+                allocated += v;
+                if (v > 0) items.push({ nama: s.nama, val: v });
+            }
+            return this.formatBreakdownWithTop9Rule(items, cTot);
+        };
+
+        const sanitizeCrimeList = (crimes: any[]) => {
+            if (!Array.isArray(crimes)) return [];
+            return crimes.map(c => {
+                if (!c) return c;
+                const cTot = Number(c.jml ?? c.value ?? c.total ?? 0);
+                const rawBd = Array.isArray(c.satker_breakdown)
+                    ? c.satker_breakdown
+                    : (resData.top_crimes_breakdown && Array.isArray(resData.top_crimes_breakdown[c.nama]) ? resData.top_crimes_breakdown[c.nama] : null);
+                if (Array.isArray(rawBd) && rawBd.length > 0) {
+                    const filteredItems = rawBd
+                        .filter((x: any) => {
+                            if (!x || x.is_others) return false;
+                            const nm = String(x.satker_nama || x.nama || x.nama_singkat || x.satker || x.polda || '').trim();
+                            if (!nm || /^lainnya/i.test(nm)) return false;
+                            if (isScopedRegional && /^POLDA\b/i.test(nm)) return false;
+                            return this.isSatkerAllowedInScope(nm, scopeStr);
+                        })
+                        .map((x: any) => ({
+                            nama: String(x.satker_nama || x.nama || x.nama_singkat || x.satker || x.polda || '').trim(),
+                            val: Number(x.total ?? x.jml ?? x.ct ?? x.value ?? 0)
+                        }))
+                        .filter((x: any) => x.val > 0);
+                    if (filteredItems.length > 0) {
+                        return {
+                            ...c,
+                            satker_breakdown: this.formatBreakdownWithTop9Rule(filteredItems, cTot)
+                        };
+                    }
+                }
+                if (isScopedRegional) {
+                    return {
+                        ...c,
+                        satker_breakdown: buildRegionalPoolBreakdown(cTot)
+                    };
+                }
+                return c;
+            });
+        };
+
+        resData.top_kejahatan = sanitizeCrimeList(resData.top_kejahatan);
+        if (Array.isArray(resData.top_kejahatan_regional)) {
+            resData.top_kejahatan_regional = sanitizeCrimeList(resData.top_kejahatan_regional);
+        }
+        if (isScopedRegional && resData.top_crimes_breakdown && typeof resData.top_crimes_breakdown === 'object') {
+            const nextMap: Record<string, any[]> = {};
+            for (const k of Array.isArray(resData.top_kejahatan) ? resData.top_kejahatan : []) {
+                if (k?.nama && Array.isArray(k.satker_breakdown)) {
+                    nextMap[k.nama] = k.satker_breakdown;
+                }
+            }
+            resData.top_crimes_breakdown = nextMap;
+        }
+        return resData;
     }
 
     abbrPetaSatker(raw: any, stripPoldaPrefix = false): string {
@@ -1326,23 +1601,35 @@ export class AnevService {
             [/\bPAPUA SELATAN\b/g, 'PASEL']
         ];
         for (const [re, rep] of poldaMap) s = s.replace(re, rep);
+        // Catatan penting: "Polres Metro" (Kota Metro di Lampung) adalah nama Polres (bukan tipe Polrestro), sehingga tetap "RES METRO"
         const unitMap: Array<[RegExp, string]> = [
+            [/\bPOLRESTRO\b/g, 'RESTRO'],
+            [/\b(?:POLRES|RES)\s+METRO(?=\s+(?!LAMPUNG\b)\S)/g, 'RESTRO'],
             [/\bPOLRESTABES\b/g, 'RESTABES'],
             [/\bPOLRESTA\b/g, 'RESTA'],
-            [/\bPOLRES METRO\b/g, 'RES METRO'],
+            [/\bPOLRES\s+METRO\b/g, 'RES METRO'],
             [/\bPOLRES\b/g, 'RES'],
+            [/\bPOLSEKTRO\b/g, 'SEKTRO'],
+            [/\b(?:POLSEK|SEK)\s+METRO(?=\s+(?!PUSAT\b|BARAT\b|TIMUR\b|UTARA\b|SELATAN\b|LAMPUNG\b)\S)/g, 'SEKTRO'],
             [/\bPOLSEKTA\b/g, 'SEKTA'],
             [/\bPOLSEK\b/g, 'SEK'],
-            [/\bDIT\s*RESKRIMUM\b/g, 'KRIMUM'],
-            [/\bDIT\s*KRIMUM\b/g, 'KRIMUM'],
-            [/\bDIT\s*RESKRIMSUS\b/g, 'KRIMSUS'],
-            [/\bDIT\s*KRIMSUS\b/g, 'KRIMSUS'],
-            [/\bDIT\s*RESNARKOBA\b/g, 'NARKOBA'],
-            [/\bDIT\s*NARKOBA\b/g, 'NARKOBA'],
-            [/\bDIT\s*RESSIBER\b/g, 'SIBER'],
-            [/\bDIT\s*SIBER\b/g, 'SIBER'],
-            [/\bDITRES\s*PPA\s*DAN\s*PPO\b/g, 'PPA-PPO'],
-            [/\bDITPPA\s*PPO\b/g, 'PPA-PPO'],
+            [/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+UMUM\b/g, 'DITKRIMUM'],
+            [/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+KHUSUS\b/g, 'DITKRIMSUS'],
+            [/\bDIREKTORAT\s+RESERSE\s+NARKOBA\b/g, 'DITNARKOBA'],
+            [/\bDIREKTORAT\s+RESERSE\s+SIBER\b/g, 'DITSIBER'],
+            [/\bDIREKTORAT\s+RESERSE\s+PPA(?:\s+DAN\s+|\s*-\s*|\s+)PPO\b/g, 'DITPPAPPO'],
+            [/\bDIT\s*RES\s*KRIMUM\b/g, 'DITKRIMUM'],
+            [/\bDIT\s*KRIMUM\b/g, 'DITKRIMUM'],
+            [/\bDIT\s*RES\s*KRIMSUS\b/g, 'DITKRIMSUS'],
+            [/\bDIT\s*KRIMSUS\b/g, 'DITKRIMSUS'],
+            [/\bDIT\s*RES\s*NARKOBA\b/g, 'DITNARKOBA'],
+            [/\bDIT\s*NARKOBA\b/g, 'DITNARKOBA'],
+            [/\bDIT\s*RES\s*SIBER\b/g, 'DITSIBER'],
+            [/\bDIT\s*SIBER\b/g, 'DITSIBER'],
+            [/\bDIT\s*RES\s*PPA(?:\s*DAN\s*|\s*-\s*|\s*)PPO\b/g, 'DITPPAPPO'],
+            [/\bDIT\s*PPA(?:\s*DAN\s*|\s*-\s*|\s*)PPO\b/g, 'DITPPAPPO'],
+            [/\bDIT\s*RES\s*PPA\b/g, 'DITPPAPPO'],
+            [/\b(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO)\s+POLDA\s+/g, '$1 '],
             [/\bDITTIPIDEKSUS\b/g, 'TIPIDEKSUS'],
             [/\bDITTIPIDUM\b/g, 'TIPIDUM'],
             [/\bDITTIPIDKOR\b/g, 'TIPIDKOR'],
@@ -1447,6 +1734,8 @@ export class AnevService {
         let allowedSatkerIds: number[] | null = descIds;
         if (isBareskrim) {
             allowedSatkerIds = null;
+        } else if (this.isPoldaDirektoratName(satkerNama)) {
+            allowedSatkerIds = await this.operationalReadIds(rootId);
         } else {
             const hasDirect = await this.ds.query(
                 'SELECT 1 FROM bdb_peta_kejahatan_agg WHERE satker_id = ANY($1) LIMIT 1',
@@ -1882,7 +2171,7 @@ export class AnevService {
         const scope = await this.resolveScope(userId);
         const scopeCtx = await this.resolvePetaScopeContext(scope);
         const cacheKey = [
-            'PETA_V5',
+            'PETA_V6',
             scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
             kelompok,
             organizationDomain,
@@ -2033,7 +2322,14 @@ export class AnevService {
                     }
                 }
             }
-            const rawChildren = (targetNode?.children || []).map(mapNode).sort((a, b) => b.ct - a.ct);
+            const rawChildren = (targetNode?.children || [])
+                .map(mapNode)
+                .filter((c) => {
+                    if (kelompok === 'INTERNAL_RESERSE' && this.isEksternalSatkerName(c.nama)) return false;
+                    if (!scope.all && scopeCtx.satkerNama && !this.isSatkerAllowedInScope(c.nama, scopeCtx.satkerNama)) return false;
+                    return true;
+                })
+                .sort((a, b) => b.ct - a.ct);
             const allowedSet = scopeCtx.allowedSatkerIds ? new Set(scopeCtx.allowedSatkerIds) : null;
             const children = (!scope.all && allowedSet && Number(targetNode?.id) !== Number(scopeCtx.satkerId))
                 ? rawChildren.filter((c) => allowedSet.has(Number(c.id)) || c.ct > 0 || c.cc > 0)
@@ -2045,8 +2341,8 @@ export class AnevService {
                     ...treeFilter,
                     satker_id: Number(targetNode.id)
                 });
-                childHotspots = hRes.hotspots;
-                childTopRawan = hRes.top_rawan_locations;
+                childHotspots = (hRes.hotspots || []).filter((h: any) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
+                childTopRawan = (hRes.top_rawan_locations || []).filter((h: any) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
             }
             const outChild = {
                 status: 1,

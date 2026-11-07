@@ -813,7 +813,8 @@ export class KinerjaPerkaraService implements OnModuleInit {
         const loadPromise = (async (): Promise<SatkerRow[]> => {
             // R11 adalah taxonomy production yang authoritative.
             const rawRows = await this.ds.query(`
-                select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.jumlah_penduduk,
+                select s.id, s.kode, s.deskripsi, s.nama_dors, s.nama_satker_dors, s.nama_canonical, s.singkatan_canonical,
+                       s.parent_id, s.depth, s.jumlah_penduduk,
                        s.tipe_satker, s.urutan,
                        coalesce(t.function_domain, case when s.tipe_satker = 'FUNGSI' then 'INTERNAL_RESERSE' else 'STRUCTURAL' end) as function_domain_resolved,
                        coalesce(t.organization_domain, 'INTERNAL_POLRI') as organization_domain_resolved,
@@ -953,7 +954,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
         return {
             status: 1,
             data: {
-                defaultVisibility: 'scoped',
+                defaultVisibility: (scope.all || Number(scope.satkerId) === 13) ? 'national' : 'scoped',
                 defaultRegionId: defaultRegionId ?? 13,
                 options
             }

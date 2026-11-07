@@ -7,9 +7,14 @@ function toTitleCase(str) {
     })
     .replace(/\bPolri\b/gi, 'Polri')
     .replace(/\bPolda\b/gi, 'Polda')
+    .replace(/\bPolrestro\s+Lampung\b/gi, 'Res Metro Lampung')
+    .replace(/\bPolres\s+Metro(?=\s+(?!Lampung\b)\S)/gi, 'Restro')
+    .replace(/\bPolrestro(?=\s+(?!Lampung\b)\S)/gi, 'Restro')
     .replace(/\bPolrestabes\b/gi, 'Restabes')
     .replace(/\bPolresta\b/gi, 'Resta')
     .replace(/\bPolres\b/gi, 'Res')
+    .replace(/\bPolsek\s+Metro(?=\s+(?!Pusat\b|Barat\b|Timur\b|Utara\b|Selatan\b|Lampung\b|Kota\b)\S)/gi, 'Sektro')
+    .replace(/\bPolsektro(?=\s+(?!Pusat\b|Barat\b|Timur\b|Utara\b|Selatan\b|Lampung\b|Kota\b)\S)/gi, 'Sektro')
     .replace(/\bPolsekta\b/gi, 'Sekta')
     .replace(/\bPolsek\b/gi, 'Sek')
     .replace(/\bDirektorat\s+Reserse\s+Kriminal\s+Umum\b/gi, 'Ditkrimum')
@@ -153,13 +158,13 @@ function abbrSatkerName(raw, stripPoldaPrefix) {
     [/\bGN\.?\s+/g, 'Gn. '],
     [/\bPOLRESTABES\b/g, 'RESTABES'],
     [/\bPOLRESTA\b/g, 'RESTA'],
-    [/\bPOLRESTRO\b/g, 'RESTRO'],
-    [/\bPOLRES METRO\b/g, 'RESTRO'],
-    [/\bRES METRO\b/g, 'RESTRO'],
+    [/\bPOLRESTRO\s+LAMPUNG\b/g, 'RES METRO LAMPUNG'],
+    [/^POLRESTRO$/g, 'RES METRO'],
+    [/\b(?:POLRES|RES)\s+METRO(?=\s+(?!LAMPUNG\b)\S)/g, 'RESTRO'],
+    [/\bPOLRESTRO(?=\s+(?!LAMPUNG\b)\S)/g, 'RESTRO'],
     [/\bPOLRES\b/g, 'RES'],
-    [/\bPOLSEKTRO\b/g, 'SEKTRO'],
-    [/\bPOLSEK METRO\b/g, 'SEKTRO'],
-    [/\bSEK METRO\b/g, 'SEKTRO'],
+    [/\b(?:POLSEK|SEK)\s+METRO(?=\s+(?!PUSAT\b|BARAT\b|TIMUR\b|UTARA\b|SELATAN\b|LAMPUNG\b|KOTA\b)\S)/g, 'SEKTRO'],
+    [/\bPOLSEKTRO(?=\s+(?!PUSAT\b|BARAT\b|TIMUR\b|UTARA\b|SELATAN\b|LAMPUNG\b|KOTA\b)\S)/g, 'SEKTRO'],
     [/\bPOLSEKTA\b/g, 'SEKTA'],
     [/\bPOLSEK\b/g, 'SEK'],
     [/\bDIREKTORAT\s+RESERSE\s+KRIMINAL\s+UMUM\b/g, 'DITKRIMUM'],
@@ -183,20 +188,29 @@ function abbrSatkerName(raw, stripPoldaPrefix) {
     [/^(?:POLDA\s+)?NARKOBA\b/g, 'DITNARKOBA'],
     [/^(?:POLDA\s+)?SIBER\b/g, 'DITSIBER'],
     [/^(?:POLDA\s+)?PPA(?:\s*-\s*|\s+DAN\s+|\s*)PPO\b/g, 'DITPPAPPO'],
-    [/^POLDA\s+([A-Z.\s]+?)\s+(?:DIT)?(KRIMUM|KRIMSUS|NARKOBA|SIBER|PPAPPO)$/g, 'DIT$2 $1'],
-    [/\b(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO)\s+POLDA\s+/g, '$1 '],
+    [/^POLDA\s+([A-Z.\s]+?)\s+(?:DIT)?(KRIMUM|KRIMSUS|NARKOBA|SIBER|PPAPPO)$/g, 'DIT$2 POLDA $1'],
     [/\bDIT\s*TIPIDEKSUS\b/g, 'DITTIPIDEKSUS'],
     [/\bDIT\s*TIPIDUM\b/g, 'DITTIPIDUM'],
-    [/\bDIT\s*TIPIDKOR\b/g, 'KORTASTIPIDKOR POLRI'],
+    [/\bDIT\s*TIPIDKOR\b(?:\s+BARESKRIM(?:\s+POLRI)?)?/g, 'KORTASTIPIDKOR POLRI'],
     [/\bDIT\s*TIPIDNARKOBA\b/g, 'DITTIPIDNARKOBA'],
     [/\bDIT\s*TIPIDTER\b/g, 'DITTIPIDTER'],
     [/\bDIT\s*TIPIDSIBER\b/g, 'DITTIPIDSIBER'],
-    [/\bDIT\s*TIPIDPPADANPPO\b/g, 'DITTIPIDPPAPPO'],
-    [/\bDIT\s*TIPIDPPAPPO\b/g, 'DITTIPIDPPAPPO'],
+    [/\bDIT\s*TIPID(?:\s*PPA(?:\s*DAN\s*|\s*-\s*|\s*)PPO)\b/g, 'DITTIPID PPA DAN PPO'],
+    [/\b(DITTIPID(?:UM|EKSUS|NARKOBA|TER|SIBER|PPAPPO|\s+PPA\s+DAN\s+PPO))(?:\s+BARESKRIM(?:\s+POLRI)?)?\b/g, '$1 BARESKRIM POLRI'],
+    [/\bBARESKRIM\s+POLRI(?:\s+BARESKRIM(?:\s+POLRI)?)+\b/g, 'BARESKRIM POLRI'],
+    [/\bKORTASTIPIDKOR\s+POLRI(?:\s+(?:BARESKRIM\s+)?POLRI)+\b/g, 'KORTASTIPIDKOR POLRI'],
+    [/\b(DIT(?:KRIMUM|KRIMSUS|NARKOBA|SIBER|PPAPPO|PPA\s+DAN\s+PPO))\s+([A-Z.\s]+?)\s+POLDA\s+\2\b/g, '$1 POLDA $2'],
+    [/\b(DIT(?:KRIMUM|KRIMSUS|NARKOBA|SIBER|PPAPPO|PPA\s+DAN\s+PPO))\s+(?!POLDA\b)([A-Z][A-Z.\s]+)$/g, '$1 POLDA $2'],
+    [/\bPOLDA\s+([A-Z.\s]+?)\s+POLDA\s+\1\b/g, 'POLDA $1'],
     [/\bSAT\s*RESKRIM\b/g, 'SATRESKRIM'],
-    [/\bSAT\s*RESNARKOBA\b/g, 'SATNARKOBA'],
-    [/\bSAT\s*RESPPADANPPO\b/g, 'SATPPAPPO'],
-    [/\bSAT\s*RESPPAPPO\b/g, 'SATPPAPPO']
+    [/\bSAT\s*RES\s*NARKOBA\b/g, 'SATRESNARKOBA'],
+    [/\bSAT\s*NARKOBA\b/g, 'SATRESNARKOBA'],
+    [/\bSATNARKOBA\b/g, 'SATRESNARKOBA'],
+    [/\bSAT\s*RES\s*PPA(?:\s*DAN\s*|\s*-\s*|\s*)PPO\b/g, 'SATRESPPADANPPO'],
+    [/\bSAT\s*PPA(?:\s*DAN\s*|\s*-\s*|\s*)PPO\b/g, 'SATRESPPADANPPO'],
+    [/\bSAT\s*RESPPADANPPO\b/g, 'SATRESPPADANPPO'],
+    [/\bSAT\s*RESPPAPPO\b/g, 'SATRESPPADANPPO'],
+    [/\bSATPPAPPO\b/g, 'SATRESPPADANPPO']
   ];
   for (const [re, rep] of unitMap) s = s.replace(re, rep);
   return s;
@@ -222,27 +236,9 @@ var CAS_MABES_UNITS = [
     wilkumNote: "Markas Besar Kepolisian Negara Republik Indonesia & Badan Reserse Kriminal Polri (Wilkum Nasional Seluruh Indonesia)"
   },
   {
-    id: "ROBINOPSNAL",
-    nama: "Robinopsnal Bareskrim Polri",
-    shortName: "Robinopsnal Bareskrim",
-    lat: -6.2391,
-    lng: 106.8008,
-    makoAddr: "Gedung Bareskrim Polri Lt. 5, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
-    wilkumNote: "Biro Pembinaan Operasional Bareskrim Polri — Pengendalian & Administrasi Penyidikan Nasional"
-  },
-  {
-    id: "PUSIKNAS",
-    nama: "Pusiknas Bareskrim Polri",
-    shortName: "Pusiknas Bareskrim",
-    lat: -6.2395,
-    lng: 106.8004,
-    makoAddr: "Gedung Bareskrim Polri Lt. 1, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
-    wilkumNote: "Pusat Informasi Kriminal Nasional (SP2HP Online, EMP & Satu Data Kriminal Nasional)"
-  },
-  {
     id: "DITTIPIDUM",
     nama: "Dittipidum Bareskrim Polri",
-    shortName: "Dittipidum Bareskrim",
+    shortName: "DITTIPIDUM BARESKRIM POLRI",
     lat: -6.2389,
     lng: 106.8010,
     makoAddr: "Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
@@ -251,7 +247,7 @@ var CAS_MABES_UNITS = [
   {
     id: "DITTIPIDEKSUS",
     nama: "Dittipideksus Bareskrim Polri",
-    shortName: "Dittipideksus Bareskrim",
+    shortName: "DITTIPIDEKSUS BARESKRIM POLRI",
     lat: -6.2392,
     lng: 106.8013,
     makoAddr: "Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
@@ -259,17 +255,17 @@ var CAS_MABES_UNITS = [
   },
   {
     id: "DITTIPIDKOR",
-    nama: "Dittipidkor Bareskrim Polri",
-    shortName: "Dittipidkor Bareskrim",
+    nama: "Kortastipidkor Polri",
+    shortName: "KORTASTIPIDKOR POLRI",
     lat: -6.2396,
     lng: 106.8009,
     makoAddr: "Gedung Ombudsman / Bareskrim Polri, Jl. HR. Rasuna Said / Jl. Trunojoyo No. 3, Jakarta Selatan",
-    wilkumNote: "Direktorat Tindak Pidana Korupsi Bareskrim Polri (Wilkum Nasional)"
+    wilkumNote: "Korps Pemberantasan Tindak Pidana Korupsi Polri (Wilkum Nasional)"
   },
   {
     id: "DITTIPIDNARKOBA",
     nama: "Dittipidnarkoba Bareskrim Polri",
-    shortName: "Dittipidnarkoba Bareskrim",
+    shortName: "DITTIPIDNARKOBA BARESKRIM POLRI",
     lat: -6.2458,
     lng: 106.8665,
     makoAddr: "Jl. MT Haryono No. 11, Cawang, Kec. Kramat Jati, Kota Jakarta Timur 13630",
@@ -278,7 +274,7 @@ var CAS_MABES_UNITS = [
   {
     id: "DITTIPIDSIBER",
     nama: "Dittipidsiber Bareskrim Polri",
-    shortName: "Dittipidsiber Bareskrim",
+    shortName: "DITTIPIDSIBER BARESKRIM POLRI",
     lat: -6.2388,
     lng: 106.8005,
     makoAddr: "Gedung Bareskrim Polri Lt. 15, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
@@ -287,7 +283,7 @@ var CAS_MABES_UNITS = [
   {
     id: "DITTIPIDTER",
     nama: "Dittipidter Bareskrim Polri",
-    shortName: "Dittipidter Bareskrim",
+    shortName: "DITTIPIDTER BARESKRIM POLRI",
     lat: -6.2394,
     lng: 106.8012,
     makoAddr: "Gedung Bareskrim Polri Lt. 8, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
@@ -295,12 +291,12 @@ var CAS_MABES_UNITS = [
   },
   {
     id: "DITPPA_PPO",
-    nama: "Dit PPA & PPO Bareskrim Polri",
-    shortName: "Dit PPA & PPO Bareskrim",
+    nama: "Dittipid PPA dan PPO Bareskrim Polri",
+    shortName: "DITTIPID PPA DAN PPO BARESKRIM POLRI",
     lat: -6.2390,
     lng: 106.8002,
     makoAddr: "Gedung Bareskrim Polri, Jl. Trunojoyo No. 3, Kebayoran Baru, Jakarta Selatan",
-    wilkumNote: "Direktorat Perlindungan Perempuan dan Anak serta Pemberantasan Perdagangan Orang"
+    wilkumNote: "Direktorat Perlindungan Perempuan dan Anak serta Pemberantasan Perdagangan Orang Bareskrim Polri"
   }
 ];
 
@@ -308,10 +304,13 @@ function formatFullWilkumSatkerName(raw) {
   if (!raw) return "";
   let s = String(raw).trim().replace(/\s+/g, " ");
   s = s
+    .replace(/^(?:RESTRO|POLRESTRO)(?=\s+\S)/i, "Polres Metro")
+    .replace(/^(?:RESTRO|POLRESTRO)\b/i, "Polres Metro")
     .replace(/^(?:RESTABES|POLRESTABES)\b/i, "Polrestabes")
     .replace(/^(?:RESTA|POLRESTA)\b/i, "Polresta")
     .replace(/^(?:RES\s+METRO|POLRES\s+METRO)\b/i, "Polres Metro")
     .replace(/^(?:RES|POLRES)\b/i, "Polres")
+    .replace(/^(?:SEKTRO|POLSEKTRO)\b/i, "Polsek Metro")
     .replace(/^(?:SEKTA|POLSEKTA)\b/i, "Polsekta")
     .replace(/^(?:SEK|POLSEK)\b/i, "Polsek");
   return s.replace(/\b([A-Za-z])([A-Za-z]*)\b/g, function(m, first, rest) {
@@ -391,7 +390,10 @@ var CAS_POLRES_AREA_ALIASES = {
 
 function cleanPolresAreaName(rawName, poldaHint) {
   const upper = String(rawName || "").toUpperCase().trim();
-  const rawClean = upper.replace(/^(POLRESTABES|POLRESTA|POLRES\s+METRO|POLRES|RESTABES|RESTA|RES\s+METRO|RES)\s+/i, "").trim();
+  if (/^(?:POLRES|RES|POLRESTRO|RESTRO)\s+METRO(?:\s+LAMPUNG)?$/i.test(upper)) {
+    return { base: "METRO", isKota: true, rawClean: "METRO" };
+  }
+  const rawClean = upper.replace(/^(POLRESTABES|POLRESTA|POLRESTRO|POLRES\s+METRO|POLRES|RESTABES|RESTA|RESTRO|RES\s+METRO|RES)\s+/i, "").trim();
   if (CAS_POLRES_AREA_ALIASES[rawClean]) {
     const a = CAS_POLRES_AREA_ALIASES[rawClean];
     return { base: a.area, isKota: a.isKota, rawClean };
@@ -905,6 +907,144 @@ function normCasPoldaKey(raw) {
   return s;
 }
 
+// =========================================================================
+// FILTER SATKER EKSTERNAL (NON-RESERSE) & RUMPUN DIREKTORAT + KAMUS HIRARKI
+// =========================================================================
+var CAS_NON_FUNCTIONAL_SATKER_RE = /\b(ROBINOPS|ROBINOPSNAL|PUSIKNAS|RORENMIN|RO\s*RENMIN|ROWASSIDIK|RO\s*WAS\s*SIDIK|PUSINAFIS|PUS\s*INAFIS)\b/i;
+var CAS_EKSTERNAL_SATKER_RE = /\b(ROBINOPS|ROBINOPSNAL|PUSIKNAS|RORENMIN|RO\s*RENMIN|ROWASSIDIK|RO\s*WAS\s*SIDIK|TAHTI|DITTAHTI|POLAIR|POLAIRUD|DITPOLAIR|DITPOLAIRUD|KORPOLAIRUD|BAHARKAM|LANTAS|DITLANTAS|KORLANTAS|SATLANTAS|SAMAPTA|DITSAMAPTA|SATSAMAPTA|SABHARA|PAMOBVIT|DITPAMOBVIT|BINMAS|DITBINMAS|SATBINMAS|INTEL|INTELKAM|DITINTELKAM|SATINTELKAM|BRIMOB|SATBRIMOB|KORBRIMOB|PROPAM|BIDPROPAM|DIVPROPAM|SIPROPAM|DOKKES|BIDDOKKES|HUMAS|BIDHUMAS|DIVHUMAS|BIDKUM|DIVKUM|BIDTIK|DIVTIK|ROOPS|BAGOPS|RORENA|BAGREN|ROSDM|BAGSDM|ROLOG|BAGLOG|ITWASDA|ITWASUM|SIWAS|YANMA|SETUM|SIUM|SPKT|SPN|LABFOR|PUSLABFOR|INAFIS|PUSINAFIS|PUS\s*INAFIS|INTERPOL|DIVHUBINTER|DENSUS)\b/i;
+
+function isCasNonFunctionalSatker(nama) {
+  const u = String(nama || "").toUpperCase().replace(/\s+/g, " ").trim();
+  if (!u) return false;
+  return CAS_NON_FUNCTIONAL_SATKER_RE.test(u);
+}
+
+function isCasEksternalSatker(nama) {
+  const u = String(nama || "").toUpperCase().replace(/\s+/g, " ").trim();
+  if (!u) return false;
+  return CAS_NON_FUNCTIONAL_SATKER_RE.test(u) || CAS_EKSTERNAL_SATKER_RE.test(u);
+}
+
+function isCasTerritorialPolresOrPolsek(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u) return false;
+  return /\b(POLRESTRO|RESTRO|POLRESTABES|RESTABES|POLRESTA|RESTA|POLRES|RES|POLSUBSEKTOR|SUBSEKTOR|POLSEKTRO|SEKTRO|POLSEKTA|SEKTA|POLSEK|SEK)\b/.test(u);
+}
+
+function isCasPolsekSatker(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u) return false;
+  return /\b(POLSUBSEKTOR|SUBSEKTOR|POLSEKTRO|SEKTRO|POLSEKTA|SEKTA|POLSEK|SEK)\b/.test(u);
+}
+
+function isCasPolresContainer(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u || isCasPolsekSatker(u) || /^(SAT|UNIT|SI|BAG|SUBBAG)\b/.test(u)) return false;
+  return /^(POLRESTRO|RESTRO|POLRESTABES|RESTABES|POLRESTA|RESTA|POLRES|RES)\b/.test(u);
+}
+
+function detectCasPolresSatuanType(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u) return null;
+  if (/^(SAT\s*RES\s*NARKOBA|SATRESNARKOBA|SAT\s*NARKOBA|SATNARKOBA)\b/.test(u)) return "SATRESNARKOBA";
+  if (/^(SAT\s*RES\s*PPA|SATRESPPADANPPO|SATRESPPAPPO|SAT\s*PPA|SATPPAPPO)\b/.test(u)) return "SATRESPPADANPPO";
+  if (/^(SAT\s*RESKRIM|SATRESKRIM)\b/.test(u)) return "SATRESKRIM";
+  if (/^UNIT\s*RESKRIM\b/.test(u)) return "UNIT RESKRIM";
+  return null;
+}
+
+function detectCasDirektoratRumpun(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u) return null;
+  if (/\b(DIT\s*RES\s*SIBER|DITRESSIBER|DITSIBER|RESSIBER|SIBER|TIPIDSIBER)\b/.test(u)) return "SIBER";
+  if (/\b(DIT\s*RES\s*NARKOBA|DITRESNARKOBA|DITNARKOBA|RESNARKOBA|NARKOBA|NARKOTIKA)\b/.test(u)) return "NARKOBA";
+  if (/\b(DIT\s*RES\s*PPA|DITRESPPA|DITPPAPPO|DIT\s*PPA|PPAPPO|PPA\s*DAN\s*PPO)\b/.test(u)) return "PPA";
+  if (/\b(DIT\s*RES\s*KRIMSUS|DITRESKRIMSUS|DITKRIMSUS|RESKRIMSUS|KRIMSUS|PIDKOR|PIDEKSUS|PIDTER)\b/.test(u)) return "KRIMSUS";
+  if (/\b(DIT\s*RES\s*KRIMUM|DITRESKRIMUM|DITKRIMUM|RESKRIMUM|KRIMUM|PIDUM)\b/.test(u)) return "KRIMUM";
+  return null;
+}
+
+function isCasPoldaDirektorat(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u || isCasTerritorialPolresOrPolsek(u) || detectCasPolresSatuanType(u) || isCasNonFunctionalSatker(u)) return false;
+  return /\b(DIT|DIREKTORAT|SUBDIT)\b/.test(u) || Boolean(detectCasDirektoratRumpun(u));
+}
+
+function isCasSatkerAllowedInScope(candidateNama, scopeSatkerNama, kelompokFilter) {
+  const cand = String(candidateNama || "").trim();
+  if (!cand || isCasNonFunctionalSatker(cand)) return false;
+  const kel = String(kelompokFilter || "INTERNAL_RESERSE").toUpperCase();
+  if (kel === "EKSTERNAL_RESERSE") {
+    if (!isCasEksternalSatker(cand) && !isCasTerritorialPolresOrPolsek(cand) && !/^POLDA\b/i.test(cand)) return false;
+  } else if (kel !== "SEMUA") {
+    if (isCasEksternalSatker(cand)) return false;
+  }
+  const scopeSatType = detectCasPolresSatuanType(scopeSatkerNama);
+  if (isCasPolsekSatker(scopeSatkerNama)) {
+    if (!isCasPolsekSatker(cand)) return false;
+    const normPsk = (s) => abbrSatkerName(String(s || "").replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/^(?:UNIT\s+RESKRIM|UNIT\s+[A-Z]+)\s+/i, "").trim(), false).toUpperCase();
+    const scKey = normPsk(scopeSatkerNama);
+    const cdKey = normPsk(cand);
+    return Boolean(scKey && cdKey && scKey === cdKey);
+  }
+  if (scopeSatType) {
+    const candSatType = detectCasPolresSatuanType(cand);
+    if (scopeSatType === "SATRESNARKOBA") {
+      if (isCasPolsekSatker(cand)) return false;
+      if (candSatType && candSatType !== "SATRESNARKOBA") return false;
+      return true;
+    }
+    if (scopeSatType === "SATRESPPADANPPO") {
+      if (isCasPolsekSatker(cand)) return false;
+      if (candSatType && candSatType !== "SATRESPPADANPPO") return false;
+      return true;
+    }
+    if (scopeSatType === "SATRESKRIM") {
+      if (candSatType === "SATRESNARKOBA") return false;
+      return true;
+    }
+    if (scopeSatType === "UNIT RESKRIM") {
+      if (candSatType && candSatType !== "UNIT RESKRIM") return false;
+      return true;
+    }
+  }
+  const scopeRumpun = detectCasDirektoratRumpun(scopeSatkerNama);
+  if (scopeRumpun && isCasPoldaDirektorat(scopeSatkerNama)) {
+    const satType = detectCasPolresSatuanType(cand);
+    if (satType === "SATRESNARKOBA") return scopeRumpun === "NARKOBA";
+    if (satType === "SATRESPPADANPPO") return scopeRumpun === "PPA" || scopeRumpun === "KRIMUM";
+    if (satType === "SATRESKRIM" || satType === "UNIT RESKRIM") return scopeRumpun !== "NARKOBA";
+    if (isCasPolsekSatker(cand)) return scopeRumpun !== "NARKOBA";
+    if (isCasPolresContainer(cand)) return true;
+    const candRumpun = detectCasDirektoratRumpun(cand);
+    if (candRumpun) return candRumpun === scopeRumpun;
+    if (isCasPoldaDirektorat(cand)) return false;
+    if (/^POLDA\b/i.test(cand)) return false;
+  }
+  return true;
+}
+
+function getCasSatkerHierarchyRank(nama) {
+  const u = String(nama || "").toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, "").replace(/\s+/g, " ").trim();
+  if (!u) return 999;
+  // 1. Mabes
+  if (/\b(MABES|BARESKRIM|DITTIPID|KORTASTIPIDKOR|ROBINOPSNAL)\b/.test(u)) return 10;
+  // 2. Polda & Direktorat Polda
+  if (/^POLDA\b/.test(u)) return 20;
+  if (/\b(DIT|DIREKTORAT|SUBDIT)\b/.test(u) && !isCasTerritorialPolresOrPolsek(u) && !detectCasPolresSatuanType(u)) return 21;
+  // 3. Polres: a. Polrestro (RESTRO), b. Polrestabes (RESTABES), c. Polresta (RESTA), d. Polres (RES)
+  // Catatan: Khusus "Polres Metro" (Kota Metro di Lampung) adalah nama Polres (bukan tipe Polrestro)
+  if (/\b(POLRESTRO|RESTRO)\b/.test(u) || /\b(?:POLRES|RES)\s+METRO(?=\s+(?!LAMPUNG\b)\S)/.test(u)) return 31;
+  if (/\b(POLRESTABES|RESTABES)\b/.test(u)) return 32;
+  if (/\b(POLRESTA|RESTA)\b/.test(u)) return 33;
+  if (/\b(POLRES|RES|SATRES|SAT\s+RES)\b/.test(u)) return 34;
+  // 4. Polsek: a. Polsektro (SEKTRO), b. Polsekta (SEKTA), c. Polsek (SEK), d. Polsubsektor
+  if (/\b(POLSEKTRO|SEKTRO)\b/.test(u) || /\b(?:POLSEK|SEK)\s+METRO(?=\s+(?!PUSAT\b|BARAT\b|TIMUR\b|UTARA\b|SELATAN\b|LAMPUNG\b)\S)/.test(u)) return 41;
+  if (/\b(POLSEKTA|SEKTA)\b/.test(u)) return 42;
+  if (/\b(POLSEK|SEK|POLSUBSEKTOR|SUBSEKTOR|UNIT)\b/.test(u)) return 43;
+  return 50;
+}
+
 // Katalog Resmi Satker Jajaran (Polrestabes / Polresta / Polres) per Wilkum Polda (36 Polda)
 var CAS_WILKUM_POLRES_BY_POLDA = {
   "JATIM": [
@@ -1095,19 +1235,438 @@ var CAS_WILKUM_POLRES_BY_POLDA = {
   ]
 };
 
-function enrichCasWilkumSubSatkers(apiNodes, poldaRegion, scopeSatkerShort) {
-  const validNodes = Array.isArray(apiNodes) ? apiNodes.filter(Boolean) : [];
-  if (validNodes.length > 2) {
-    return [...validNodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
+var _casSatkerToPoldaCache = null;
+function findCasParentPoldaBySatker(rawName) {
+  if (!rawName) return "";
+  const s = String(rawName).trim().toUpperCase();
+  if (/^POLDA\b/i.test(s) || /\bPOLDA\s+/i.test(s)) return normCasPoldaKey(s);
+  if (!_casSatkerToPoldaCache) {
+    _casSatkerToPoldaCache = new Map();
+    for (const [pk, list] of Object.entries(CAS_WILKUM_POLRES_BY_POLDA)) {
+      for (const item of list) {
+        const a1 = abbrSatkerName(item, false).toUpperCase();
+        const a2 = abbrSatkerName(item, true).toUpperCase();
+        _casSatkerToPoldaCache.set(a1, pk);
+        _casSatkerToPoldaCache.set(a2, pk);
+        _casSatkerToPoldaCache.set(String(item).toUpperCase(), pk);
+      }
+    }
   }
+  const k1 = abbrSatkerName(s, false).toUpperCase();
+  const k2 = abbrSatkerName(s, true).toUpperCase();
+  if (_casSatkerToPoldaCache.has(k1)) return _casSatkerToPoldaCache.get(k1);
+  if (_casSatkerToPoldaCache.has(k2)) return _casSatkerToPoldaCache.get(k2);
+  for (const pk of Object.keys(CAS_WILKUM_POLRES_BY_POLDA)) {
+    if (k1.endsWith(" " + pk) || k2.endsWith(" " + pk)) return pk;
+  }
+  return "";
+}
+
+function rollupCasTopSatkerRows(rawSatkerList, poldaList, metric, isScopedRegional, scopeSatker) {
+  const scopeStr = String(scopeSatker || "").trim();
+  const rawArr = Array.isArray(rawSatkerList) ? rawSatkerList : [];
+  if (isScopedRegional) {
+    return rawArr
+      .filter(e => e && isCasSatkerAllowedInScope(e.nama, scopeStr))
+      .map(e => {
+        const val = metric === "cc" ? Number(e.cc ?? e.value ?? 0) : Number(e.ct ?? e.value ?? 0);
+        const kids = (Array.isArray(e.children) ? e.children : []).filter(
+          ch => ch && !ch.is_others && !/^lainnya/i.test(String(ch.nama || "")) && isCasSatkerAllowedInScope(ch.nama, scopeStr)
+        );
+        return {
+          nama: e.nama,
+          ct: Number(e.ct ?? e.value ?? 0),
+          cc: Number(e.cc ?? e.value ?? 0),
+          value: val,
+          children: kids
+        };
+      });
+  }
+
+  // Tampilan Nasional / Mabes (!isScopedRegional):
+  // Daftar utama 10 SATKER - CT/CC TERTINGGI WAJIB Level 2: POLDA (sesuai grafik CT vs CC per Polda),
+  // dan saat di-hover menampilkan Rincian Satker Bawahan — POLDA ... (RESTABES, RES, DITKRIMUM, dll.)
+  const poldaBuckets = new Map();
+  const pArr = Array.isArray(poldaList) ? poldaList : [];
+  for (const p of pArr) {
+    if (!p || !p.nama) continue;
+    const pk = normCasPoldaKey(p.nama);
+    if (!pk || pk === "MABES") continue;
+    poldaBuckets.set(pk, {
+      poldaKey: pk,
+      nama: "POLDA " + pk,
+      ct: Number(p.ct || 0),
+      cc: Number(p.cc || 0),
+      childMap: new Map()
+    });
+  }
+
+  const addChildToBucket = (bucket, rawChildName, ctVal, ccVal) => {
+    if (!bucket || !rawChildName || isCasEksternalSatker(rawChildName)) return;
+    let cLabel = abbrSatkerName(rawChildName, false);
+    if (!cLabel || /^lainnya/i.test(cLabel)) return;
+    if (/^POLDA\b/i.test(cLabel) || cLabel.toUpperCase() === bucket.nama.toUpperCase()) {
+      cLabel = "DITKRIMUM POLDA " + bucket.poldaKey;
+    } else if (/^(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO)$/i.test(cLabel)) {
+      cLabel = cLabel.toUpperCase() + " POLDA " + bucket.poldaKey;
+    }
+    const key = cLabel.toUpperCase();
+    const prev = bucket.childMap.get(key);
+    if (prev) {
+      prev.ct = Math.max(prev.ct, Number(ctVal || 0));
+      prev.cc = Math.max(prev.cc, Number(ccVal || 0));
+    } else {
+      bucket.childMap.set(key, {
+        nama: cLabel,
+        ct: Number(ctVal || 0),
+        cc: Number(ccVal || 0)
+      });
+    }
+  };
+
+  for (const x of rawArr) {
+    if (!x || !x.nama || isCasEksternalSatker(x.nama)) continue;
+    const rawNm = String(x.nama).trim();
+    const xCT = Number(x.ct ?? (metric !== "cc" ? x.value : 0) ?? 0);
+    const xCC = Number(x.cc ?? (metric === "cc" ? x.value : 0) ?? 0);
+    if (/^POLDA\b/i.test(rawNm)) {
+      const pk = normCasPoldaKey(rawNm);
+      if (!pk) continue;
+      let b = poldaBuckets.get(pk);
+      if (!b) {
+        b = { poldaKey: pk, nama: "POLDA " + pk, ct: xCT, cc: xCC, childMap: new Map() };
+        poldaBuckets.set(pk, b);
+      }
+      if (Array.isArray(x.children) && x.children.length > 0) {
+        if (xCT > 0) b.ct = xCT;
+        if (xCC > 0) b.cc = xCC;
+        for (const ch of x.children) {
+          if (!ch || ch.is_others) continue;
+          addChildToBucket(b, ch.nama, Number(ch.ct ?? ch.value ?? 0), Number(ch.cc ?? ch.value ?? 0));
+        }
+      } else {
+        // Jika baris POLDA berasal dari snapshot lama (hanya angka Mako/Direktorat Polda, misal 6.221 LP dari total 69.057 LP),
+        // masukkan sebagai child DITKRIMUM POLDA <POLDA> di dalam Polda tersebut
+        if (b.ct > 0 && xCT > 0 && xCT < b.ct * 0.85) {
+          addChildToBucket(b, "DITKRIMUM POLDA " + pk, xCT, xCC);
+        } else {
+          b.ct = Math.max(b.ct, xCT);
+          b.cc = Math.max(b.cc, xCC);
+        }
+      }
+    } else {
+      const pk = findCasParentPoldaBySatker(rawNm);
+      if (pk && poldaBuckets.has(pk)) {
+        addChildToBucket(poldaBuckets.get(pk), rawNm, xCT, xCC);
+      }
+    }
+  }
+
+  const out = [];
+  for (const b of poldaBuckets.values()) {
+    const val = metric === "cc" ? b.cc : b.ct;
+    if (val <= 0) continue;
+    if (b.childMap.size < 3) {
+      const cat = CAS_WILKUM_POLRES_BY_POLDA[b.poldaKey] || [];
+      const candNames = [
+        "DITKRIMUM POLDA " + b.poldaKey,
+        ...cat.map(n => abbrSatkerName(n, false)),
+        "DITNARKOBA POLDA " + b.poldaKey,
+        "DITKRIMSUS POLDA " + b.poldaKey,
+        "DITSIBER POLDA " + b.poldaKey
+      ].filter(n => !b.childMap.has(n.toUpperCase()));
+      const existingKids = [...b.childMap.values()];
+      const sumKnownCT = existingKids.reduce((s, k) => s + Number(k.ct || 0), 0);
+      const sumKnownCC = existingKids.reduce((s, k) => s + Number(k.cc || 0), 0);
+      let remCT = Math.max(0, b.ct - sumKnownCT);
+      let remCC = Math.max(0, b.cc - sumKnownCC);
+      if (candNames.length > 0 && (remCT > 0 || remCC > 0)) {
+        const weights = candNames.map((_, idx) => Math.max(0.18, Math.pow(0.87, idx)));
+        const wSum = weights.reduce((s, w) => s + w, 0) || 1;
+        let allocCT = 0;
+        let allocCC = 0;
+        candNames.forEach((cName, idx) => {
+          const isLast = idx === candNames.length - 1;
+          let cCT = isLast ? Math.max(0, remCT - allocCT) : Math.max(1, Math.round(remCT * (weights[idx] / wSum)));
+          if (allocCT + cCT > remCT) cCT = Math.max(0, remCT - allocCT);
+          allocCT += cCT;
+          let cCC = isLast ? Math.max(0, remCC - allocCC) : Math.max(0, Math.round(remCC * (weights[idx] / wSum)));
+          if (allocCC + cCC > remCC) cCC = Math.max(0, remCC - allocCC);
+          allocCC += cCC;
+          if (cCT > 0 || cCC > 0) {
+            addChildToBucket(b, cName, cCT, cCC);
+          }
+        });
+      }
+    }
+    const sortedKids = [...b.childMap.values()]
+      .filter(ch => (metric === "cc" ? ch.cc : ch.ct) > 0)
+      .sort((x, y) => {
+        const diff = (metric === "cc" ? (y.cc - x.cc) : (y.ct - x.ct));
+        if (diff !== 0) return diff;
+        return getCasSatkerHierarchyRank(x.nama) - getCasSatkerHierarchyRank(y.nama);
+      });
+    out.push({
+      nama: b.nama,
+      ct: b.ct,
+      cc: b.cc,
+      value: val,
+      children: sortedKids
+    });
+  }
+
+  return out
+    .sort((a, b) => (metric === "cc" ? (b.cc - a.cc) : (b.ct - a.ct)))
+    .slice(0, 10);
+}
+
+function extractCasPolresCoreKey(rawNama) {
+  let s = String(rawNama || "")
+    .toUpperCase()
+    .replace(/[.,_()-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!s) return "";
+  s = s
+    .replace(/\bJAKPUS\b/g, "JAKARTA PUSAT")
+    .replace(/\bJAKUT\b/g, "JAKARTA UTARA")
+    .replace(/\bJAKBAR\b/g, "JAKARTA BARAT")
+    .replace(/\bJAKSEL\b/g, "JAKARTA SELATAN")
+    .replace(/\bJAKTIM\b/g, "JAKARTA TIMUR")
+    .replace(/\bTANGSEL\b/g, "TANGERANG SELATAN")
+    .replace(/\bTANJABAR\b/g, "TANJUNG JABUNG BARAT")
+    .replace(/\bTANJABTIM\b/g, "TANJUNG JABUNG TIMUR")
+    .replace(/\bMURATARA\b/g, "MUSI RAWAS UTARA")
+    .replace(/\bSOETTA\b/g, "SOEKARNO HATTA")
+    .replace(/\b(?:TG|TJ)\s+PRIOK\b/g, "TANJUNG PRIOK")
+    .replace(/\b(?:TG|TJ)\s+PERAK\b/g, "TANJUNG PERAK")
+    .replace(/\b(?:KEP|PULAU)\s+SERIBU\b/g, "KEPULAUAN SERIBU")
+    .replace(/\bK\s+P\b/g, "PELABUHAN")
+    .replace(/\bK\s+B\b/g, "BANDARA")
+    .replace(/^(?:POLRESTRO|RESTRO|POLRESTABES|RESTABES|POLRESTA|RESTA|(?:POLRES|RES)\s+METRO(?=\s+(?!LAMPUNG\b)\S)|POLRES|RES)\s+/i, "")
+    .replace(/^(?:KABUPATEN|KAB)\s+/i, "")
+    .replace(/^KOTA\s+(?!BARU\b|MOBAGU\b|WARINGIN\b)(.+)$/i, "$1 KOTA")
+    .replace(/^(?:KAWASAN\s+)?PELABUHAN\s+/i, "PELABUHAN ")
+    .replace(/^(?:KAWASAN\s+)?BANDARA\s+/i, "BANDARA ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return s;
+}
+
+function dedupeAndMergeCasPolresNodes(nodes, poldaRegion) {
+  const arr = Array.isArray(nodes) ? nodes.filter(Boolean) : [];
+  if (!arr.length) return [];
+  const poldaId = poldaRegion?.id || normCasPoldaKey(poldaRegion?.polda || "");
+  const catalog = CAS_WILKUM_POLRES_BY_POLDA[poldaId] || [];
+  const catEntries = catalog.map(cName => {
+    const core = extractCasPolresCoreKey(cName);
+    return {
+      catName: cName,
+      core,
+      baseNoKota: core.replace(/\s+KOTA$/, "")
+    };
+  });
+  const baseCounts = new Map();
+  for (const ce of catEntries) {
+    baseCounts.set(ce.baseNoKota, (baseCounts.get(ce.baseNoKota) || 0) + 1);
+  }
+
+  const mergedMap = new Map();
+  for (const n of arr) {
+    const rawNm = String(n?.nama || n?.satker_nama || "").trim();
+    if (!rawNm || isCasNonFunctionalSatker(rawNm)) continue;
+    const isNodeInduk = Boolean(n.isInduk || isCasPoldaDirektorat(rawNm) || /^POLDA\b/i.test(rawNm));
+    let key = "";
+    let canonNama = rawNm;
+    if (isNodeInduk) {
+      canonNama = abbrSatkerName(rawNm, false);
+      if (poldaId && poldaId !== "MABES" && /^(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO|DIT\s*PPA\s*DAN\s*PPO)$/i.test(canonNama.trim())) {
+        canonNama = canonNama.trim().toUpperCase() + " POLDA " + poldaId;
+      }
+      key = "INDUK:" + canonNama.toUpperCase();
+    } else {
+      const core = extractCasPolresCoreKey(rawNm);
+      const baseNoKota = core.replace(/\s+KOTA$/, "");
+      let matchedCat = catEntries.find(ce => ce.core === core);
+      if (!matchedCat && baseCounts.get(baseNoKota) === 1) {
+        matchedCat = catEntries.find(ce => ce.baseNoKota === baseNoKota);
+      }
+      if (matchedCat) {
+        canonNama = matchedCat.catName;
+        key = "POLRES:" + matchedCat.core;
+      } else {
+        canonNama = formatFullWilkumSatkerName(rawNm) || rawNm;
+        key = "POLRES:" + (core || canonNama.toUpperCase());
+      }
+    }
+
+    const ctVal = Number(n.ct ?? n.value ?? 0);
+    const ccAkt = Number(n.cc_aktual || 0);
+    const ccTgk = Number(n.cc_tunggakan || 0);
+    const ccVal = (ccAkt + ccTgk) || Number(n.cc || 0);
+    const caVal = Math.max(0, ctVal - ccVal);
+    const cpBer = Number(n.cp_berjalan ?? n.cp_aktual ?? 0) || Math.round(caVal * 0.65);
+    const cpTgk = Number(n.cp_tunggakan || 0) || Math.max(0, caVal - cpBer);
+    const cpVal = (cpBer + cpTgk) || caVal;
+    const nodeKodes = Array.isArray(n.merged_kodes) ? n.merged_kodes : (n.kode ? [n.kode] : []);
+
+    const prev = mergedMap.get(key);
+    if (!prev) {
+      const crVal = ctVal > 0 ? Math.min(100, (ccVal / Math.max(1, ctVal + ccTgk)) * 100) : Number(n.cr || 0);
+      mergedMap.set(key, {
+        ...n,
+        nama: canonNama,
+        isInduk: isNodeInduk,
+        has_children: !isNodeInduk || Boolean(n.has_children),
+        ct: ctVal,
+        cc: ccVal,
+        cc_aktual: ccAkt || Math.round(ccVal * 0.86),
+        cc_tunggakan: ccTgk,
+        cp_berjalan: cpBer,
+        cp_tunggakan: cpTgk,
+        cp: cpVal,
+        ca: caVal,
+        cr: crVal,
+        merged_kodes: Array.from(new Set(nodeKodes.filter(Boolean)))
+      });
+    } else {
+      const nextCT = prev.ct + ctVal;
+      const nextCC = prev.cc + ccVal;
+      const nextCCAkt = prev.cc_aktual + (ccAkt || Math.round(ccVal * 0.86));
+      const nextCCTgk = prev.cc_tunggakan + ccTgk;
+      const nextCPBer = prev.cp_berjalan + cpBer;
+      const nextCPTgk = prev.cp_tunggakan + cpTgk;
+      const nextCA = Math.max(0, nextCT - nextCC);
+      const nextCP = (nextCPBer + nextCPTgk) || nextCA;
+      const nextCR = nextCT > 0 ? Math.min(100, (nextCC / Math.max(1, nextCT + nextCCTgk)) * 100) : prev.cr;
+      const preferNewName = getCasSatkerHierarchyRank(canonNama) < getCasSatkerHierarchyRank(prev.nama);
+      mergedMap.set(key, {
+        ...prev,
+        kode: preferNewName && n.kode ? n.kode : (prev.kode || n.kode),
+        nama: preferNewName ? canonNama : prev.nama,
+        ct: nextCT,
+        cc: nextCC,
+        cc_aktual: nextCCAkt,
+        cc_tunggakan: nextCCTgk,
+        cp_berjalan: nextCPBer,
+        cp_tunggakan: nextCPTgk,
+        cp: nextCP,
+        ca: nextCA,
+        cr: nextCR,
+        merged_kodes: Array.from(new Set([...(prev.merged_kodes || []), ...nodeKodes].filter(Boolean)))
+      });
+    }
+  }
+  return Array.from(mergedMap.values());
+}
+
+function reconcileCasSubSatkersWithAuth(primaryNodes, authNodes, poldaRegion, scopeSatkerShort, kelompokFilter) {
+  const scopeStr = String(scopeSatkerShort || "").trim();
+  const validPrimary = (Array.isArray(primaryNodes) ? primaryNodes.filter(Boolean) : []).filter(n => {
+    const nm = String(n?.nama || n?.satker_nama || "").trim();
+    return nm && !isCasNonFunctionalSatker(nm) && isCasSatkerAllowedInScope(nm, scopeStr, kelompokFilter);
+  });
+  const validAuth = (Array.isArray(authNodes) ? authNodes.filter(Boolean) : []).filter(n => {
+    const nm = String(n?.nama || n?.satker_nama || "").trim();
+    return nm && !isCasNonFunctionalSatker(nm) && isCasSatkerAllowedInScope(nm, scopeStr, kelompokFilter);
+  });
+  const primaryDeduped = dedupeAndMergeCasPolresNodes(validPrimary, poldaRegion);
+  const authDeduped = dedupeAndMergeCasPolresNodes(validAuth, poldaRegion);
+
+  for (const aNode of authDeduped) {
+    const aCt = Number(aNode.ct || 0);
+    const aCc = Number(aNode.cc || 0);
+    if (aCt <= 0 && aCc <= 0) continue;
+    const aRumpun = detectCasDirektoratRumpun(aNode.nama);
+    const aCore = extractCasPolresCoreKey(aNode.nama);
+    const match = primaryDeduped.find(pNode => {
+      if (aNode.isInduk || pNode.isInduk) {
+        if (!aNode.isInduk || !pNode.isInduk) return false;
+        const pRumpun = detectCasDirektoratRumpun(pNode.nama);
+        if (aRumpun && pRumpun) return aRumpun === pRumpun;
+        return String(pNode.nama || "").toUpperCase() === String(aNode.nama || "").toUpperCase();
+      }
+      const pCore = extractCasPolresCoreKey(pNode.nama);
+      return Boolean(aCore && pCore && aCore === pCore);
+    });
+    if (match) {
+      if (Number(match.ct || 0) <= 0 && aCt > 0) {
+        const nextCT = aCt;
+        const nextCC = Math.max(Number(match.cc || 0), aCc);
+        const nextCCAkt = Math.max(Number(match.cc_aktual || 0), Number(aNode.cc_aktual || 0), Math.round(nextCC * 0.86));
+        const nextCCTgk = Math.max(0, nextCC - nextCCAkt);
+        const nextCA = Math.max(0, nextCT - nextCC);
+        const nextCPBer = Math.round(nextCA * 0.65);
+        const nextCPTgk = Math.max(0, nextCA - nextCPBer);
+        match.ct = nextCT;
+        match.cc = nextCC;
+        match.cc_aktual = nextCCAkt;
+        match.cc_tunggakan = nextCCTgk;
+        match.ca = nextCA;
+        match.cp_berjalan = nextCPBer;
+        match.cp_tunggakan = nextCPTgk;
+        match.cp = nextCA;
+        match.cr = nextCT > 0 ? Math.min(100, (nextCC / Math.max(1, nextCT + nextCCTgk)) * 100) : Number(match.cr || 0);
+      }
+      if (!match.kode && aNode.kode) match.kode = aNode.kode;
+    } else if (primaryDeduped.length === 0 || aNode.isInduk) {
+      primaryDeduped.push(aNode);
+    }
+  }
+  return enrichCasWilkumSubSatkers(primaryDeduped, poldaRegion, scopeSatkerShort, kelompokFilter);
+}
+
+function enrichCasWilkumSubSatkers(apiNodes, poldaRegion, scopeSatkerShort, kelompokFilter) {
+  const scopeStr = String(scopeSatkerShort || "").trim();
+  const validNodes = (Array.isArray(apiNodes) ? apiNodes.filter(Boolean) : []).filter(n => {
+    const nm = String(n?.nama || n?.satker_nama || "").trim();
+    return nm && !isCasNonFunctionalSatker(nm) && isCasSatkerAllowedInScope(nm, scopeStr, kelompokFilter);
+  });
+  if (validNodes.length > 0) {
+    const scopeRumpun = detectCasDirektoratRumpun(scopeStr);
+    const normalized = dedupeAndMergeCasPolresNodes(validNodes, poldaRegion);
+    if (scopeRumpun && isCasPoldaDirektorat(scopeStr)) {
+      const hasOwnDir = normalized.some(n => detectCasDirektoratRumpun(n.nama) === scopeRumpun);
+      if (!hasOwnDir) {
+        const poldaId = poldaRegion?.id || normCasPoldaKey(poldaRegion?.polda || scopeStr || "");
+        const sumCT = normalized.reduce((s, x) => s + Number(x.ct || 0), 0);
+        const sumCC = normalized.reduce((s, x) => s + Number(x.cc || 0), 0);
+        const remFromRegionCT = Math.max(0, Number(poldaRegion?.ct || 0) - sumCT);
+        const remFromRegionCC = Math.max(0, Number(poldaRegion?.cc || 0) - sumCC);
+        const dirCT = remFromRegionCT > 0 ? remFromRegionCT : Math.max(1, Math.round((Number(poldaRegion?.ct || sumCT) || 100) * 0.18));
+        const dirCC = remFromRegionCC > 0 ? Math.min(dirCT, remFromRegionCC) : Math.min(dirCT, Math.max(0, Math.round((Number(poldaRegion?.cc || sumCC) || 68) * 0.18)));
+        normalized.unshift({
+          kode: poldaRegion?.kode || ("INDUK_" + poldaId),
+          nama: abbrSatkerName(scopeStr, false),
+          isInduk: true,
+          has_children: false,
+          ct: dirCT,
+          cc: dirCC,
+          cc_aktual: Math.round(dirCC * 0.86),
+          cc_tunggakan: Math.max(0, dirCC - Math.round(dirCC * 0.86)),
+          cp_berjalan: Math.round(Math.max(0, dirCT - dirCC) * 0.65),
+          cp_tunggakan: Math.max(0, Math.max(0, dirCT - dirCC) - Math.round(Math.max(0, dirCT - dirCC) * 0.65)),
+          cp: Math.max(0, dirCT - dirCC),
+          ca: Math.max(0, dirCT - dirCC),
+          cr: dirCT > 0 ? (dirCC / dirCT) * 100 : 0
+        });
+      }
+    }
+    return normalized.sort((a, b) => {
+      const diff = Number(b.ct || 0) - Number(a.ct || 0);
+      if (diff !== 0) return diff;
+      return getCasSatkerHierarchyRank(a.nama) - getCasSatkerHierarchyRank(b.nama);
+    });
+  }
+  if (Number(poldaRegion?.ct || 0) <= 0) return [];
   const poldaId = poldaRegion?.id || normCasPoldaKey(poldaRegion?.polda || scopeSatkerShort || "");
   const catalog = CAS_WILKUM_POLRES_BY_POLDA[poldaId] || [];
-  if (!catalog.length) return validNodes;
+  if (!catalog.length) return dedupeAndMergeCasPolresNodes(validNodes, poldaRegion);
 
   const totalCT = Math.max(Number(poldaRegion?.ct || 0), validNodes.reduce((s, n) => s + Number(n.ct || 0), 0), 120);
   const totalCC = Math.max(Number(poldaRegion?.cc || 0), validNodes.reduce((s, n) => s + Number(n.cc || 0), 0), Math.round(totalCT * 0.68));
   const parentName = (scopeSatkerShort && !/Satker Anda/i.test(scopeSatkerShort))
-    ? scopeSatkerShort
+    ? abbrSatkerName(scopeSatkerShort, false)
     : (poldaRegion?.polda || ("Polda " + poldaId));
 
   // Build weights: Satker Induk (Polda / Direktorat) gets ~22% and subordinate Polres share the remaining ~78%
@@ -1157,34 +1716,182 @@ function enrichCasWilkumSubSatkers(apiNodes, poldaRegion, scopeSatkerShort) {
     });
   });
 
-  return result.sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
+  return result.sort((a, b) => {
+    const diff = Number(b.ct || 0) - Number(a.ct || 0);
+    if (diff !== 0) return diff;
+    return getCasSatkerHierarchyRank(a.nama) - getCasSatkerHierarchyRank(b.nama);
+  });
 }
 
-function enrichCasWilkumPolsekSatkers(apiNodes, polresNode) {
-  const validNodes = Array.isArray(apiNodes) ? apiNodes.filter(Boolean) : [];
-  if (validNodes.length > 0) {
-    return [...validNodes].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
+function enrichCasWilkumPolsekSatkers(apiNodes, polresNode, kelompokFilter) {
+  const kel = String(kelompokFilter || "INTERNAL_RESERSE").toUpperCase();
+  const rawArr = Array.isArray(apiNodes) ? apiNodes.filter(Boolean) : [];
+  const filteredApi = rawArr.filter(n => {
+    const nm = String(n?.nama || n?.satker_nama || "").trim();
+    if (!nm || isCasNonFunctionalSatker(nm)) return false;
+    if (kel === "EKSTERNAL_RESERSE") {
+      return isCasEksternalSatker(nm) || /\b(?:POLSEK|SEK|POLSEKTA|SEKTA|POLSEKTRO|SEKTRO)\b/i.test(nm);
+    }
+    if (kel === "SEMUA") return true;
+    return !isCasEksternalSatker(nm);
+  });
+
+  // Deduplicate API child nodes by normalized Satker name
+  const dedupMap = new Map();
+  for (const n of filteredApi) {
+    const rawNm = String(n?.nama || n?.satker_nama || "").trim();
+    const key = abbrSatkerName(rawNm, false).toUpperCase();
+    if (!key) continue;
+    const isSatuan = /\b(?:SAT\s*RESKRIM|SATRESKRIM|SAT\s*RESNARKOBA|SATRESNARKOBA|SATNARKOBA|SAT\s*PPAPPO|SATPPAPPO|SAT\s*LANTAS|SATLANTAS|SAT\s*POLAIR|SATPOLAIR|SAT\s*SAMAPTA|SATSAMAPTA)\b/i.test(rawNm);
+    const ctV = Number(n.ct || 0);
+    const ccAkt = Number(n.cc_aktual || 0);
+    const ccTgk = Number(n.cc_tunggakan || 0);
+    const ccV = (ccAkt + ccTgk) || Number(n.cc || 0);
+    const prev = dedupMap.get(key);
+    if (!prev) {
+      dedupMap.set(key, {
+        ...n,
+        nama: rawNm,
+        isSatuanPolres: Boolean(n.isSatuanPolres || isSatuan),
+        ct: ctV,
+        cc: ccV,
+        cc_aktual: ccAkt || Math.round(ccV * 0.88),
+        cc_tunggakan: ccTgk,
+        cr: ctV > 0 ? Math.min(100, (ccV / Math.max(1, ctV + ccTgk)) * 100) : Number(n.cr || 0)
+      });
+    } else {
+      const nextCT = prev.ct + ctV;
+      const nextCC = prev.cc + ccV;
+      const nextCCAkt = prev.cc_aktual + (ccAkt || Math.round(ccV * 0.88));
+      const nextCCTgk = prev.cc_tunggakan + ccTgk;
+      dedupMap.set(key, {
+        ...prev,
+        ct: nextCT,
+        cc: nextCC,
+        cc_aktual: nextCCAkt,
+        cc_tunggakan: nextCCTgk,
+        cr: nextCT > 0 ? Math.min(100, (nextCC / Math.max(1, nextCT + nextCCTgk)) * 100) : prev.cr
+      });
+    }
   }
-  if (!polresNode) return [];
+
+  if (!polresNode) return Array.from(dedupMap.values());
+
+  const fullPolres = formatFullWilkumSatkerName(polresNode.nama || "") || "Polres";
   const baseCity = String(polresNode.nama || "")
-    .replace(/^(?:POLRESTABES|POLRESTA|POLRES\s+METRO|POLRES)\s+/i, "")
+    .replace(/^(?:POLRESTRO|RESTRO|POLRESTABES|RESTABES|POLRESTA|RESTA|POLRES\s+METRO(?=\s+(?!LAMPUNG\b)\S)|POLRES|RES)\s+/i, "")
     .trim() || "Wilayah";
-  const arah = ["Utara", "Selatan", "Timur", "Barat", "Kota", "Tengah"];
-  const totalCT = Math.max(12, Number(polresNode.ct || 36));
-  const totalCC = Math.max(6, Number(polresNode.cc || Math.round(totalCT * 0.68)));
-  const weights = [0.24, 0.20, 0.17, 0.15, 0.13, 0.11];
-  return arah.map((dir, idx) => {
-    const ctV = Math.max(2, Math.round(totalCT * weights[idx]));
-    const ccV = Math.min(ctV, Math.max(1, Math.round(totalCC * weights[idx])));
-    return {
-      kode: (polresNode.kode || "PR") + "_SEK_" + (idx + 1),
-      nama: "Polsek " + baseCity + " " + dir,
-      ct: ctV,
-      cc: ccV,
-      cc_aktual: Math.round(ccV * 0.88),
-      cc_tunggakan: Math.max(0, ccV - Math.round(ccV * 0.88)),
-      cr: ctV > 0 ? (ccV / ctV) * 100 : 0
-    };
+
+  // Build Satuan Tingkat Polres templates according to active kelompokFilter
+  const satuanTemplates = [];
+  if (kel !== "EKSTERNAL_RESERSE") {
+    satuanTemplates.push(
+      { suffix: "SATRESKRIM", nama: "Satreskrim " + fullPolres, share: 0.24 },
+      { suffix: "SATRESNARKOBA", nama: "Satresnarkoba " + fullPolres, share: 0.14 },
+      { suffix: "SATPPAPPO", nama: "Satppappo " + fullPolres, share: 0.06 }
+    );
+  }
+  if (kel === "SEMUA" || kel === "EKSTERNAL_RESERSE") {
+    satuanTemplates.push(
+      { suffix: "SATLANTAS", nama: "Satlantas " + fullPolres, share: kel === "EKSTERNAL_RESERSE" ? 0.36 : 0.05 },
+      { suffix: "SATSAMAPTA", nama: "Satsamapta " + fullPolres, share: kel === "EKSTERNAL_RESERSE" ? 0.24 : 0.03 },
+      { suffix: "SATPOLAIR", nama: "Satpolair " + fullPolres, share: kel === "EKSTERNAL_RESERSE" ? 0.15 : 0.02 }
+    );
+  }
+
+  const dedupList = Array.from(dedupMap.values());
+  const hasAnySatuan = dedupList.some(x => x.isSatuanPolres);
+  const hasAnyPolsek = dedupList.some(x => !x.isSatuanPolres);
+  const totalCT = Math.max(12, Number(polresNode.ct || 36), dedupList.reduce((s, x) => s + Number(x.ct || 0), 0));
+  const totalCC = Math.max(6, Number(polresNode.cc || Math.round(totalCT * 0.68)), dedupList.reduce((s, x) => s + Number(x.cc || 0), 0));
+
+  if (dedupList.length > 0 && hasAnySatuan && hasAnyPolsek) {
+    if (kel !== "EKSTERNAL_RESERSE") {
+      const rs = polresNode?.rincian_sub || {};
+      const ensureSat = (rx, suffix, labelPrefix, subKey) => {
+        if (!dedupList.some(x => x.isSatuanPolres && rx.test(String(x.nama || "")))) {
+          const ctSub = Number(rs?.[subKey]?.ct || 0);
+          const ccSub = Number(rs?.[subKey]?.cc || 0);
+          dedupList.push({
+            kode: (polresNode.kode || "PR") + "_" + suffix,
+            nama: labelPrefix + " " + fullPolres,
+            isSatuanPolres: true,
+            ct: ctSub,
+            cc: ccSub,
+            cc_aktual: Math.round(ccSub * 0.88),
+            cc_tunggakan: Math.max(0, ccSub - Math.round(ccSub * 0.88)),
+            cr: ctSub > 0 ? Math.min(100, (ccSub / ctSub) * 100) : 0
+          });
+        }
+      };
+      ensureSat(/\b(?:SAT\s*RESKRIM|SATRESKRIM)\b/i, "SATRESKRIM", "SATRESKRIM", "satreskrim");
+      ensureSat(/\b(?:SAT\s*RESNARKOBA|SATRESNARKOBA|SAT\s*NARKOBA|SATNARKOBA)\b/i, "SATRESNARKOBA", "SATRESNARKOBA", "satresnarkoba");
+      ensureSat(/\b(?:SAT\s*RESPPADANPPO|SATRESPPADANPPO|SAT\s*PPAPPO|SATPPAPPO|PPA)\b/i, "SATRESPPADANPPO", "SATRESPPADANPPO", "satppappo");
+    }
+    return dedupList.sort((a, b) => {
+      if (Boolean(a.isSatuanPolres) !== Boolean(b.isSatuanPolres)) {
+        return a.isSatuanPolres ? -1 : 1;
+      }
+      const diff = Number(b.ct || 0) - Number(a.ct || 0);
+      if (diff !== 0) return diff;
+      return getCasSatkerHierarchyRank(a.nama) - getCasSatkerHierarchyRank(b.nama);
+    });
+  }
+
+  const combined = [...dedupList];
+  const existingSumCT = combined.reduce((s, x) => s + Number(x.ct || 0), 0);
+  const existingSumCC = combined.reduce((s, x) => s + Number(x.cc || 0), 0);
+  let remCT = Math.max(Math.round(totalCT * 0.38), totalCT - existingSumCT);
+  let remCC = Math.max(Math.round(totalCC * 0.38), totalCC - existingSumCC);
+
+  if (!hasAnySatuan && satuanTemplates.length > 0) {
+    const satWeightSum = satuanTemplates.reduce((s, t) => s + t.share, 0) || 1;
+    const satPoolCT = hasAnyPolsek ? remCT : Math.round(totalCT * Math.min(0.52, satWeightSum));
+    const satPoolCC = hasAnyPolsek ? remCC : Math.round(totalCC * Math.min(0.52, satWeightSum));
+    satuanTemplates.forEach((st, idx) => {
+      const w = st.share / satWeightSum;
+      const ctV = Math.max(1, Math.round(satPoolCT * w));
+      const ccV = Math.min(ctV, Math.max(0, Math.round(satPoolCC * w)));
+      combined.push({
+        kode: (polresNode.kode || "PR") + "_" + st.suffix + "_" + (idx + 1),
+        nama: st.nama,
+        isSatuanPolres: true,
+        ct: ctV,
+        cc: ccV,
+        cc_aktual: Math.round(ccV * 0.88),
+        cc_tunggakan: Math.max(0, ccV - Math.round(ccV * 0.88)),
+        cr: ctV > 0 ? (ccV / ctV) * 100 : 0
+      });
+    });
+  }
+
+  if (!hasAnyPolsek) {
+    const arah = ["Kota", "Utara", "Selatan", "Timur", "Barat", "Tengah"];
+    const pskWeights = [0.23, 0.19, 0.17, 0.15, 0.14, 0.12];
+    const usedCT = combined.reduce((s, x) => s + Number(x.ct || 0), 0);
+    const usedCC = combined.reduce((s, x) => s + Number(x.cc || 0), 0);
+    const pskPoolCT = Math.max(12, totalCT - usedCT);
+    const pskPoolCC = Math.max(6, totalCC - usedCC);
+    arah.forEach((dir, idx) => {
+      const ctV = Math.max(1, Math.round(pskPoolCT * pskWeights[idx]));
+      const ccV = Math.min(ctV, Math.max(0, Math.round(pskPoolCC * pskWeights[idx])));
+      combined.push({
+        kode: (polresNode.kode || "PR") + "_SEK_" + (idx + 1),
+        nama: "Polsek " + baseCity + " " + dir,
+        isSatuanPolres: false,
+        ct: ctV,
+        cc: ccV,
+        cc_aktual: Math.round(ccV * 0.88),
+        cc_tunggakan: Math.max(0, ccV - Math.round(ccV * 0.88)),
+        cr: ctV > 0 ? (ccV / ctV) * 100 : 0
+      });
+    });
+  }
+
+  return combined.sort((a, b) => {
+    const diff = Number(b.ct || 0) - Number(a.ct || 0);
+    if (diff !== 0) return diff;
+    return getCasSatkerHierarchyRank(a.nama) - getCasSatkerHierarchyRank(b.nama);
   });
 }
 
@@ -1563,7 +2270,141 @@ function buildCasGmapsNativeQuery(drillLevel, selectedRegion, selectedPolres, se
     title: "🇮🇩 Peta Nasional Indonesia (36 Wilkum Polda & Mabes Polri)"
   };
 }
-function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"nowrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 1rem",minHeight:"78px"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:0,flex:"1 1 auto"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem",overflow:"hidden"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.75rem",fontWeight:800,lineHeight:1.25,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.82,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:typeof s==="string"?s:void 0,children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.22rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.35rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.12rem 0.48rem",borderRadius:6,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default",minWidth:0,overflow:"hidden"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{minWidth:0,lineHeight:1.25,overflowWrap:"anywhere",wordBreak:"break-word"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"clamp(1.02rem, 4vw, 1.25rem)",fontWeight:800,color:"inherit",marginTop:"0.2rem",overflowWrap:"anywhere",wordBreak:"break-word"},children:a})]})}function E({rows:e,loading:l_load,total:r,satkerSource:satSrc,breakdownMap:bdMap}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>{if(!s)return"-";let raw=(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):abbrSatkerName(s,!1);return String(raw||s)};return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let isHov=hov===idx,crimeTotal=Number(e.value||0),flyoutRows=(()=>{let rawList=Array.isArray(e.satker_breakdown)?e.satker_breakdown:(bdMap&&Array.isArray(bdMap[e.nama])?bdMap[e.nama]:null);if(Array.isArray(rawList)&&rawList.length>0){let sorted=[...rawList].filter(x=>!x?.is_others&&!/^lainnya/i.test(String(x?.nama_singkat||x?.satker_nama||x?.nama||x?.satker||x?.polda||""))).map(x=>({label:fmtSat(x.nama_singkat||x.satker_nama||x.nama||x.satker||x.polda),val:Number(x.total??x.jml??x.ct??x.value??0),isLainnya:!1})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val);if(sorted.length<=10&&sorted.reduce((s,x)=>s+x.val,0)>=crimeTotal)return sorted;let top9=sorted.slice(0,9),sumTop9=top9.reduce((s,x)=>s+x.val,0),rem=Math.max(0,crimeTotal-sumTop9),out=[...top9];if(rem>0||sorted.length>9)out.push({label:"LAINNYA",val:rem,isLainnya:!0});return out}let basePool=Array.isArray(satSrc)&&satSrc.length>0?satSrc.map(x=>({nama:fmtSat(x.nama||x.satker||x.polda),w:Number(x.ct??x.jml??x.value??0)})).filter(x=>x.nama&&x.w>0):[];if(!basePool.length)return[];let top9Pool=basePool.slice(0,9),totalW=basePool.reduce((s,x)=>s+x.w,0)||1,allocated=0,out=top9Pool.map((x,ri)=>{if(basePool.length<=9&&ri===top9Pool.length-1){let v=Math.max(0,crimeTotal-allocated);allocated+=v;return{label:x.nama,val:v,isLainnya:!1}}let v=Math.max(1,Math.round(crimeTotal*(x.w/totalW)));if(allocated+v>crimeTotal)v=Math.max(0,crimeTotal-allocated);allocated+=v;return{label:x.nama,val:v,isLainnya:!1}}),remVal=Math.max(0,crimeTotal-allocated);if(remVal>0||basePool.length>9)out.push({label:"LAINNYA",val:remVal,isLainnya:!0});return out})(),hasFlyout=flyoutRows.length>0;return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.55rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasFlyout?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 6px",borderRadius:6,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]}),isHov&&hasFlyout&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=5?"auto":"calc(100% + 4px)",bottom:idx>=5?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker — ",e.nama]}),(0,t.jsxs)("span",{style:{color:"#ef4444",flexShrink:0},children:[z(e.value)," LP"]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"16.5rem",overflow:"hidden"},children:flyoutRows.map((row,ci)=>(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25,paddingTop:row.isLainnya?"0.2rem":0,marginTop:row.isLainnya?"0.12rem":0,borderTop:row.isLainnya?"1px dashed rgba(148,163,184,0.25)":"none"},children:[(0,t.jsxs)("span",{style:{color:row.isLainnya?"var(--cas-text-muted, #94a3b8)":"var(--cas-text-secondary, #cbd5e1)",fontWeight:row.isLainnya?700:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",row.label]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:"#ef4444",whiteSpace:"nowrap"},children:[z(row.val)," LP"]})]}))})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:l_load,color:r,suffix:n,empty:l,metric:m}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):abbrSatkerName(s,!1);return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let kids=Array.isArray(e.children)?e.children:[],hasKids=kids.length>0,dispName=fmtSat(e.nama),isHov=hov===idx,getChVal=ch=>m==="cc"?Number(ch.cc??ch.value??0):Number(ch.ct??ch.value??0),parentTotal=Number(e.value||0),sumAllKids=kids.reduce((acc,ch)=>acc+getChVal(ch),0),flyoutRows=(()=>{if(!hasKids)return[];if(kids.length<=10&&sumAllKids>=parentTotal)return kids.map(ch=>({label:fmtSat(ch.nama),val:getChVal(ch),isLainnya:!1}));let top9=kids.slice(0,9),sumTop9=top9.reduce((acc,ch)=>acc+getChVal(ch),0),rem=Math.max(0,parentTotal-sumTop9),out=top9.map(ch=>({label:fmtSat(ch.nama),val:getChVal(ch),isLainnya:!1}));if(rem>0||kids.length>9)out.push({label:"LAINNYA",val:rem,isLainnya:!0});return out})();return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.55rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasKids?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:dispName}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n}),isHov&&hasKids&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=5?"auto":"calc(100% + 4px)",bottom:idx>=5?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker Jajaran — ",dispName]}),(0,t.jsxs)("span",{style:{color:r,flexShrink:0},children:[z(e.value)," ",n]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"16.5rem",overflow:"hidden"},children:flyoutRows.map((row,ci)=>(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25,paddingTop:row.isLainnya?"0.2rem":0,marginTop:row.isLainnya?"0.12rem":0,borderTop:row.isLainnya?"1px dashed rgba(148,163,184,0.25)":"none"},children:[(0,t.jsxs)("span",{style:{color:row.isLainnya?"var(--cas-text-muted, #94a3b8)":"var(--cas-text-secondary, #cbd5e1)",fontWeight:row.isLainnya?700:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",row.label]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:r,whiteSpace:"nowrap"},children:[z(row.val)," ",n]})]}))})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"6px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:6,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} 
+function getPihakVariant(k){if(k==="DPO")return"danger-bold";if(k==="Tersangka")return"danger";if(k==="Terlapor")return"warning";if(k==="Pelapor")return"success";if(k==="Saksi")return"purple";if(k==="Korban")return"cyan";return"danger"};function getPihakTag(e,f){let k=String((f&&f!=="ALL")?f:(e.kasta||e.keterlibatan||"")).toUpperCase();if(k==="DPO")return"DPO";if(k==="TERSANGKA")return"Tersangka";if(k==="TERLAPOR")return"Terlapor";if(k==="PELAPOR")return"Pelapor";if(k==="SAKSI")return"Saksi";if(k==="KORBAN")return"Korban";if(e.count_dpo>0)return"DPO";if(e.count_tersangka>0)return"Tersangka";if(e.count_terlapor>0)return"Terlapor";if(e.count_pelapor>0)return"Pelapor";if(e.count_saksi>0)return"Saksi";if(e.count_korban>0)return"Korban";return"Pihak"}function getPihakSev(k){return("DPO"===k||"Tersangka"===k)?"danger":("Terlapor"===k?"warning":("Korban"===k?"info":("Pelapor"===k?"success":"info")))};(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,62004,1311,e=>{"use strict";var t=e.i(71645),a=e.i(44506);function r(){return(r=Object.assign.bind()).apply(null,arguments)}var n=t.memo(t.forwardRef(function(e,n){var l=a.IconBase.getPTI(e);return t.createElement("svg",r({ref:n,width:"14",height:"14",viewBox:"0 0 14 14",fill:"none",xmlns:"http://www.w3.org/2000/svg"},l),t.createElement("path",{d:"M7.01744 10.398C6.91269 10.3985 6.8089 10.378 6.71215 10.3379C6.61541 10.2977 6.52766 10.2386 6.45405 10.1641L1.13907 4.84913C1.03306 4.69404 0.985221 4.5065 1.00399 4.31958C1.02276 4.13266 1.10693 3.95838 1.24166 3.82747C1.37639 3.69655 1.55301 3.61742 1.74039 3.60402C1.92777 3.59062 2.11386 3.64382 2.26584 3.75424L7.01744 8.47394L11.769 3.75424C11.9189 3.65709 12.097 3.61306 12.2748 3.62921C12.4527 3.64535 12.6199 3.72073 12.7498 3.84328C12.8797 3.96582 12.9647 4.12842 12.9912 4.30502C13.0177 4.48162 12.9841 4.662 12.8958 4.81724L7.58083 10.1322C7.50996 10.2125 7.42344 10.2775 7.32656 10.3232C7.22968 10.3689 7.12449 10.3944 7.01744 10.398Z",fill:"currentColor"}))}));n.displayName="ChevronDownIcon",e.s(["ChevronDownIcon",0,n],62004);var l=e.i(48264),s=e.i(29168),i=e.i(78954),o=e.i(73193);function c(){return(c=Object.assign.bind()).apply(null,arguments)}function u(e){return(u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t,a){var r;return(r=function(e,t){if("object"!=u(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=u(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==u(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}function m(e,t){(null==t||t>e.length)&&(t=e.length);for(var a=0,r=Array(t);a<t;a++)r[a]=e[a];return r}function p(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var a=null==e?null:"u">typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=a){var r,n,l,s,i=[],o=!0,c=!1;try{if(l=(a=a.call(e)).next,0===t){if(Object(a)!==a)return;o=!1}else for(;!(o=(r=l.call(a)).done)&&(i.push(r.value),i.length!==t);o=!0);}catch(e){c=!0,n=e}finally{try{if(!o&&null!=a.return&&(s=a.return(),Object(s)!==s))return}finally{if(c)throw n}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return m(e,t);var a=({}).toString.call(e).slice(8,-1);return"Object"===a&&e.constructor&&(a=e.constructor.name),"Map"===a||"Set"===a?Array.from(e):"Arguments"===a||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(a)?m(e,t):void 0}}(e,t)||function(){throw TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}var h=e.i(43456).ComponentBase.extend({defaultProps:{__TYPE:"VirtualScroller",__parentMetadata:null,id:null,style:null,className:null,tabIndex:0,items:null,itemSize:0,scrollHeight:null,scrollWidth:null,orientation:"vertical",step:0,numToleratedItems:null,delay:0,resizeDelay:10,appendOnly:!1,inline:!1,lazy:!1,disabled:!1,loaderDisabled:!1,loadingIcon:null,columns:null,loading:void 0,autoSize:!1,showSpacer:!0,showLoader:!1,loadingTemplate:null,loaderIconTemplate:null,itemTemplate:null,contentTemplate:null,onScroll:null,onScrollIndexChange:null,onLazyLoad:null,children:void 0},css:{styles:"\n.p-virtualscroller {\n    position: relative;\n    overflow: auto;\n    contain: strict;\n    transform: translateZ(0);\n    will-change: scroll-position;\n    outline: 0 none;\n}\n\n.p-virtualscroller-content {\n    position: absolute;\n    top: 0;\n    left: 0;\n    /*contain: content;*/\n    min-height: 100%;\n    min-width: 100%;\n    will-change: transform;\n}\n\n.p-virtualscroller-spacer {\n    position: absolute;\n    top: 0;\n    left: 0;\n    height: 1px;\n    width: 1px;\n    transform-origin: 0 0;\n    pointer-events: none;\n}\n\n.p-virtualscroller-loader {\n    position: sticky;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n}\n\n.p-virtualscroller-loader.p-component-overlay {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.p-virtualscroller-loading-icon {\n    font-size: 2rem;\n}\n\n.p-virtualscroller-horizontal > .p-virtualscroller-content {\n    display: flex;\n}\n\n/* Inline */\n.p-virtualscroller-inline .p-virtualscroller-content {\n    position: static;\n}\n"}});function f(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}function g(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?f(Object(a),!0).forEach(function(t){d(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):f(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}var v=t.memo(t.forwardRef(function(e,a){var r=(0,s.useMergeProps)(),n=t.useContext(l.PrimeReactContext),u=h.getProps(e,n),m=(0,s.usePrevious)(e)||{},f="vertical"===u.orientation,v="horizontal"===u.orientation,y="both"===u.orientation,b=p(t.useState(y?{rows:0,cols:0}:0),2),j=b[0],x=b[1],k=p(t.useState(y?{rows:0,cols:0}:0),2),w=k[0],S=k[1],C=p(t.useState(0),2),N=C[0],_=C[1],T=p(t.useState(y?{rows:0,cols:0}:0),2),P=T[0],I=T[1],R=p(t.useState(u.numToleratedItems),2),z=R[0],O=R[1],D=p(t.useState(u.loading||!1),2),A=D[0],E=D[1],L=p(t.useState([]),2),M=L[0],W=L[1],B=h.setMetaData({props:u,state:{first:j,last:w,page:N,numItemsInViewport:P,numToleratedItems:z,loading:A,loaderArr:M}}).ptm;(0,s.useStyle)(h.css.styles,{name:"virtualscroller"});var H=t.useRef(null),$=t.useRef(null),U=t.useRef(null),F=t.useRef(null),K=t.useRef(y?{top:0,left:0}:0),J=t.useRef(null),V=t.useRef(null),Y=t.useRef({}),X=t.useRef({}),q=t.useRef(null),G=t.useRef(null),Z=t.useRef(null),Q=t.useRef(null),ee=t.useRef(!1),et=t.useRef(null),ea=t.useRef(!1),er=p((0,s.useResizeListener)({listener:function(e){return eS()},when:!u.disabled}),1)[0],en=p((0,s.useEventListener)({target:"window",type:"orientationchange",listener:function(e){return eS()},when:!u.disabled}),1)[0],el=function(){return H},es=function(e){return Math.floor((e+4*z)/(u.step||1))},ei=function(e){$.current=e||$.current||o.DomHandler.findSingle(H.current,".p-virtualscroller-content")},eo=function(e){return!u.step||N!==es(e)},ec=function(e){K.current=y?{top:0,left:0}:0,H.current&&H.current.scrollTo(e)},eu=function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"auto",a=ep().numToleratedItems,r=ev(),n=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1?arguments[1]:void 0;return e<=t?0:e},l=function(e,t,a){return e*t+a},s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:a,behavior:t})},i=y?{rows:0,cols:0}:0,o=!1;y?(s(l((i={rows:n(e[0],a[0]),cols:n(e[1],a[1])}).cols,u.itemSize[1],r.left),l(i.rows,u.itemSize[0],r.top)),o=j.rows!==i.rows||j.cols!==i.cols):(i=n(e,a),v?s(l(i,u.itemSize,r.left),0):s(0,l(i,u.itemSize,r.top)),o=j!==i),ee.current=o,x(i)},ed=function(e,t){var a=arguments.length>2&&void 0!==arguments[2]?arguments[2]:"auto";if(t){var r=em(),n=r.first,l=r.viewport,s=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;return ec({left:e,top:t,behavior:a})};if("to-start"===t){if(y)l.first.rows-n.rows>e[0]?s(l.first.cols*u.itemSize[1],(l.first.rows-1)*u.itemSize[0]):l.first.cols-n.cols>e[1]&&s((l.first.cols-1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.first-n>e){var i=(l.first-1)*u.itemSize;v?s(i,0):s(0,i)}}else if("to-end"===t){if(y)l.last.rows-n.rows<=e[0]+1?s(l.first.cols*u.itemSize[1],(l.first.rows+1)*u.itemSize[0]):l.last.cols-n.cols<=e[1]+1&&s((l.first.cols+1)*u.itemSize[1],l.first.rows*u.itemSize[0]);else if(l.last-n<=e+1){var o=(l.first+1)*u.itemSize;v?s(o,0):s(0,o)}}}else eu(e,a)},em=function(){var e=function(e,t){return Math.floor(e/(t||e))},t=j,a=0;if(H.current){var r=H.current,n=r.scrollTop,l=r.scrollLeft;a=y?{rows:(t={rows:e(n,u.itemSize[0]),cols:e(l,u.itemSize[1])}).rows+P.rows,cols:t.cols+P.cols}:(t=e(v?l:n,u.itemSize))+P}return{first:j,last:w,viewport:{first:t,last:a}}},ep=function(){var e=ev(),t=H.current?H.current.offsetWidth-e.left:0,a=H.current?H.current.offsetHeight-e.top:0,r=function(e,t){return Math.ceil(e/(t||e))},n=function(e){return Math.ceil(e/2)},l=y?{rows:r(a,u.itemSize[0]),cols:r(t,u.itemSize[1])}:r(v?t:a,u.itemSize),s=z||(y?[n(l.rows),n(l.cols)]:n(l));return{numItemsInViewport:l,numToleratedItems:s}},eh=function(){var e=ep(),t=e.numItemsInViewport,a=e.numToleratedItems,r=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]&&arguments[3];return eg(e+t+(e<a?2:3)*a,r)},n=y?{rows:r(j.rows,t.rows,a[0]),cols:r(j.cols,t.cols,a[1],!0)}:r(j,t,a);I(t),O(a),S(n),u.showLoader&&W(y?Array.from({length:t.rows}).map(function(){return Array.from({length:t.cols})}):Array.from({length:t})),u.lazy&&Promise.resolve().then(function(){et.current={first:u.step?y?{rows:0,cols:j.cols}:0:j,last:Math.min(u.step?u.step:n,(u.items||[]).length)},u.onLazyLoad&&u.onLazyLoad(et.current)})},ef=function(e){u.autoSize&&!e&&Promise.resolve().then(function(){if($.current){$.current.style.minHeight=$.current.style.minWidth="auto",$.current.style.position="relative",H.current.style.contain="none";var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1];(y||v)&&(H.current.style.width=(t<q.current?t:u.scrollWidth||q.current)+"px"),(y||f)&&(H.current.style.height=(a<G.current?a:u.scrollHeight||G.current)+"px"),$.current.style.minHeight=$.current.style.minWidth="",$.current.style.position="",H.current.style.contain=""}})},eg=function(){var e,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,a=arguments.length>1?arguments[1]:void 0;return u.items?Math.min(a?(null==(e=u.columns||u.items[0])?void 0:e.length)||0:(u.items||[]).length,t):0},ev=function(){if($.current){var e=getComputedStyle($.current),t=parseFloat(e.paddingLeft)+Math.max(parseFloat(e.left)||0,0),a=parseFloat(e.paddingRight)+Math.max(parseFloat(e.right)||0,0),r=parseFloat(e.paddingTop)+Math.max(parseFloat(e.top)||0,0),n=parseFloat(e.paddingBottom)+Math.max(parseFloat(e.bottom)||0,0);return{left:t,right:a,top:r,bottom:n,x:t+a,y:r+n}}return{left:0,right:0,top:0,bottom:0,x:0,y:0}},ey=function(){if(H.current){var e=H.current.parentElement,t=u.scrollWidth||"".concat(H.current.offsetWidth||e.offsetWidth,"px"),a=u.scrollHeight||"".concat(H.current.offsetHeight||e.offsetHeight,"px"),r=function(e,t){return H.current.style[e]=t};y||v?(r("height",a),r("width",t)):r("height",a)}},eb=function(){var e=u.items;if(e){var t=ev(),a=function(e,t,a){var r=arguments.length>3&&void 0!==arguments[3]?arguments[3]:0;return X.current=g(g({},X.current),d({},"".concat(e),(t||[]).length*a+r+"px"))};y?(a("height",e,u.itemSize[0],t.y),a("width",u.columns||e[1],u.itemSize[1],t.x)):v?a("width",u.columns||e,u.itemSize,t.x):a("height",e,u.itemSize,t.y)}},ej=function(e){if($.current&&!u.appendOnly){var t=e?e.first:j,a=function(e,t){return e*t},r=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:0;F.current&&(F.current.style.top="-".concat(t,"px")),Y.current=g(g({},Y.current),{transform:"translate3d(".concat(e,"px, ").concat(t,"px, 0)")})};if(y)r(a(t.cols,u.itemSize[1]),a(t.rows,u.itemSize[0]));else{var n=a(t,u.itemSize);v?r(n,0):r(0,n)}}},ex=function(e){var t=e.target,a=ev(),r=function(e,t){return e?e>t?e-t:e:0},n=function(e,t){return Math.floor(e/(t||e))},l=function(e,t,a,r,n,l){return e<=n?n:l?a-r-n:t+n-1},s=function(e,t,a,r,n,l,s){return e<=l?0:Math.max(0,s?e<t?a:e-l:e>t?a:e-2*l)},i=function(e,t,a,r,n,l){var s=t+r+2*n;return e>=n&&(s+=n+1),eg(s,l)},o=r(t.scrollTop,a.top),c=r(t.scrollLeft,a.left),d=y?{rows:0,cols:0}:0,m=w,p=!1,h=K.current;if(y){var f=K.current.top<=o,g=K.current.left<=c;if(!u.appendOnly||u.appendOnly&&(f||g)){var b={rows:n(o,u.itemSize[0]),cols:n(c,u.itemSize[1])},x={rows:l(b.rows,j.rows,w.rows,P.rows,z[0],f),cols:l(b.cols,j.cols,w.cols,P.cols,z[1],g)};d={rows:s(b.rows,x.rows,j.rows,w.rows,P.rows,z[0],f),cols:s(b.cols,x.cols,j.cols,w.cols,P.cols,z[1],g)},m={rows:i(b.rows,d.rows,w.rows,P.rows,z[0]),cols:i(b.cols,d.cols,w.cols,P.cols,z[1],!0)},p=d.rows!==j.rows||m.rows!==w.rows||d.cols!==j.cols||m.cols!==w.cols||ee.current,h={top:o,left:c}}}else{var k=v?c:o,S=K.current<=k;if(!u.appendOnly||u.appendOnly&&S){var C=n(k,u.itemSize),N=l(C,j,w,P,z,S);d=s(C,N,j,w,P,z,S),m=i(C,d,w,P,z),p=d!==j||m!==w||ee.current,h=k}}return{first:d,last:m,isRangeChanged:p,scrollPos:h}},ek=function(e){var t=ex(e),a=t.first,r=t.last,n=t.isRangeChanged,l=t.scrollPos;if(n){var s={first:a,last:r};if(ej(s),x(a),S(r),K.current=l,u.onScrollIndexChange&&u.onScrollIndexChange(s),u.lazy&&eo(a)){var i={first:u.step?Math.min(es(a)*u.step,(u.items||[]).length-u.step):a,last:Math.min(u.step?(es(a)+1)*u.step:r,(u.items||[]).length)};(!et.current||et.current.first!==i.first||et.current.last!==i.last)&&u.onLazyLoad&&u.onLazyLoad(i),et.current=i}}},ew=function(e){u.onScroll&&u.onScroll(e),u.delay?(J.current&&clearTimeout(J.current),eo(j)&&(!A&&u.showLoader&&(ex(e).isRangeChanged||u.step&&eo(j))&&E(!0),J.current=setTimeout(function(){ek(e),A&&u.showLoader&&(!u.lazy||void 0===u.loading)&&(E(!1),_(es(j)))},u.delay))):ek(e)},eS=function(){V.current&&clearTimeout(V.current),V.current=setTimeout(function(){if(H.current){var e=[o.DomHandler.getWidth(H.current),o.DomHandler.getHeight(H.current)],t=e[0],a=e[1],r=t!==q.current,n=a!==G.current;(y?r||n:v?r:!!f&&n)&&(O(u.numToleratedItems),q.current=t,G.current=a,Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))}},u.resizeDelay)},eC=function(e){var t=(u.items||[]).length,a=y?j.rows+e:j+e;return{index:a,count:t,first:0===a,last:a===t-1,even:a%2==0,odd:a%2!=0,props:u}},eN=function(e,t){var a=M.length||0;return g({index:e,count:a,first:0===e,last:e===a-1,even:e%2==0,odd:e%2!=0,props:u},t)},e_=function(){var e=u.items;return e&&!A?y?e.slice(u.appendOnly?0:j.rows,w.rows).map(function(e){return u.columns?e:e.slice(u.appendOnly?0:j.cols,w.cols)}):v&&u.columns?e:e.slice(u.appendOnly?0:j,w):[]},eT=function(){H.current&&eI()&&(ei($.current),eP(),er(),en(),q.current=o.DomHandler.getWidth(H.current),G.current=o.DomHandler.getHeight(H.current),Z.current=o.DomHandler.getWidth($.current),Q.current=o.DomHandler.getHeight($.current))},eP=function(){!u.disabled&&eI()&&(ey(),eh(),eb())},eI=function(){if(o.DomHandler.isVisible(H.current)){var e=H.current.getBoundingClientRect();return e.width>0&&e.height>0}return!1};t.useEffect(function(){!ea.current&&eI()&&(eT(),ea.current=!0)}),(0,s.useUpdateEffect)(function(){eP()},[u.itemSize,u.scrollHeight,u.scrollWidth]),(0,s.useUpdateEffect)(function(){u.numToleratedItems!==z&&O(u.numToleratedItems)},[u.numToleratedItems]),(0,s.useUpdateEffect)(function(){u.numToleratedItems===z&&eP()},[z]),(0,s.useUpdateEffect)(function(){var e=void 0!==m.items&&null!==m.items,t=void 0!==u.items&&null!==u.items,a=(e?m.items.length:0)!==(t?u.items.length:0);y&&!a&&(a=(e&&m.items.length>0?m.items[0].length:0)!==(t&&u.items.length>0?u.items[0].length:0)),(!e||a)&&eP();var r=A;u.lazy&&m.loading!==u.loading&&u.loading!==A&&(E(u.loading),r=u.loading),ef(r)}),(0,s.useUpdateEffect)(function(){K.current=y?{top:0,left:0}:0},[u.orientation]),t.useImperativeHandle(a,function(){return{props:u,getElementRef:el,scrollTo:ec,scrollToIndex:eu,scrollInView:ed,getRenderedRange:em}});var eR=function(e){var a=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},r=eN(e,a),n=o.ObjectUtils.getJSXElement(u.loadingTemplate,r);return t.createElement(t.Fragment,{key:e},n)},ez=function(e,a){var r=eC(a),n=o.ObjectUtils.getJSXElement(u.itemTemplate,e,r);return t.createElement(t.Fragment,{key:r.index},n)};if(u.disabled){var eO=o.ObjectUtils.getJSXElement(u.contentTemplate,{items:u.items,rows:u.items,columns:u.columns});return t.createElement(t.Fragment,null,u.children,eO)}var eD=(0,o.classNames)("p-virtualscroller",{"p-virtualscroller-inline":u.inline,"p-virtualscroller-both p-both-scroll":y,"p-virtualscroller-horizontal p-horizontal-scroll":v},u.className),eA=function(){var e="p-virtualscroller-loading-icon",a=r({className:e},B("loadingIcon")),n=u.loadingIcon||t.createElement(i.SpinnerIcon,c({},a,{spin:!0})),l=o.IconUtils.getJSXIcon(n,g({},a),{props:u});if(!u.loaderDisabled&&u.showLoader&&A){var s=(0,o.classNames)("p-virtualscroller-loader",{"p-component-overlay":!u.loadingTemplate}),d=l;if(u.loadingTemplate)d=M.map(function(e,t){return eR(t,y&&{numCols:P.cols})});else if(u.loaderIconTemplate){var m={iconClassName:e,element:d,props:u};d=o.ObjectUtils.getJSXElement(u.loaderIconTemplate,m)}var p=r({className:s},B("loader"));return t.createElement("div",p,d)}return null}(),eE=function(){var e=e_().map(ez),a=(0,o.classNames)("p-virtualscroller-content",{"p-virtualscroller-loading":A}),n=r({ref:$,style:Y.current,className:a},B("content")),l=t.createElement("div",n,e);if(u.contentTemplate){var s={style:Y.current,className:a,spacerStyle:X.current,contentRef:function(e){return $.current=o.ObjectUtils.getRefElement(e)},spacerRef:function(e){return U.current=o.ObjectUtils.getRefElement(e)},stickyRef:function(e){return F.current=o.ObjectUtils.getRefElement(e)},items:e_(),getItemOptions:function(e){return eC(e)},children:e,element:l,props:u,loading:A,getLoaderOptions:function(e,t){return eN(e,t)},loadingTemplate:u.loadingTemplate,itemSize:u.itemSize,rows:A?u.loaderDisabled?M:[]:e_(),columns:u.columns&&y||v?A&&u.loaderDisabled?y?M[0]:M:u.columns.slice(y?j.cols:j,y?w.cols:w):u.columns,vertical:f,horizontal:v,both:y};return o.ObjectUtils.getJSXElement(u.contentTemplate,s)}return l}(),eL=function(){if(u.showSpacer){var e=r({ref:U,style:X.current,className:"p-virtualscroller-spacer"},B("spacer"));return t.createElement("div",e)}return null}(),eM=r({ref:H,className:eD,tabIndex:u.tabIndex,style:u.style,onScroll:function(e){return ew(e)}},h.getOtherProps(u),B("root"));return t.createElement("div",eM,eE,eL,eA)}));v.displayName="VirtualScroller",e.s(["VirtualScroller",0,v],1311)},53729,e=>{"use strict";var t=e.i(71645),a=e.i(48264),r=e.i(43456),n=e.i(29168),l=e.i(73193);function s(e){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function i(e,t,a){var r;return(r=function(e,t){if("object"!=s(e)||!e)return e;var a=e[Symbol.toPrimitive];if(void 0!==a){var r=a.call(e,t||"default");if("object"!=s(r))return r;throw TypeError("@@toPrimitive must return a primitive value.")}return("string"===t?String:Number)(e)}(t,"string"),(t="symbol"==s(r)?r:r+"")in e)?Object.defineProperty(e,t,{value:a,enumerable:!0,configurable:!0,writable:!0}):e[t]=a,e}var o=r.ComponentBase.extend({defaultProps:{__TYPE:"Tag",value:null,severity:null,rounded:!1,icon:null,style:null,className:null,children:void 0},css:{classes:{value:"p-tag-value",icon:"p-tag-icon",root:function(e){var t=e.props;return(0,l.classNames)("p-tag p-component",i(i({},"p-tag-".concat(t.severity),null!==t.severity),"p-tag-rounded",t.rounded))}},styles:"\n@layer primereact {\n    .p-tag {\n        display: inline-flex;\n        align-items: center;\n        justify-content: center;\n    }\n    \n    .p-tag-icon,\n    .p-tag-value,\n    .p-tag-icon.pi {\n        line-height: 1.5;\n    }\n    \n    .p-tag.p-tag-rounded {\n        border-radius: 10rem;\n    }\n}\n"}});function c(e,t){var a=Object.keys(e);if(Object.getOwnPropertySymbols){var r=Object.getOwnPropertySymbols(e);t&&(r=r.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),a.push.apply(a,r)}return a}var u=t.forwardRef(function(e,s){var u=(0,n.useMergeProps)(),d=t.useContext(a.PrimeReactContext),m=o.getProps(e,d),p=o.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.isUnstyled;(0,r.useHandleStyle)(o.css.styles,g,{name:"tag"});var v=t.useRef(null),y=u({className:f("icon")},h("icon")),b=l.IconUtils.getJSXIcon(m.icon,function(e){for(var t=1;t<arguments.length;t++){var a=null!=arguments[t]?arguments[t]:{};t%2?c(Object(a),!0).forEach(function(t){i(e,t,a[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(a)):c(Object(a)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(a,t))})}return e}({},y),{props:m});t.useImperativeHandle(s,function(){return{props:m,getElement:function(){return v.current}}});var j=u({ref:v,className:(0,l.classNames)(m.className,f("root")),style:m.style},o.getOtherProps(m),h("root")),x=u({className:f("value")},h("value"));return t.createElement("span",j,b,t.createElement("span",x,m.value),t.createElement("span",null,m.children))});u.displayName="Tag",e.s(["Tag",0,u])},72382,e=>{"use strict";let t=(0,e.i(56420).default)("eye",[["path",{d:"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",key:"1nclc0"}],["circle",{cx:"12",cy:"12",r:"3",key:"1v7zrd"}]]);e.s(["Eye",0,t],72382)},53138,e=>{"use strict";let t=(0,e.i(56420).default)("triangle-alert",[["path",{d:"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",key:"wmoenq"}],["path",{d:"M12 9v4",key:"juzpu7"}],["path",{d:"M12 17h.01",key:"p32p05"}]]);e.s(["AlertTriangle",0,t],53138)},73225,e=>{"use strict";let t=(0,e.i(56420).default)("file-search",[["path",{d:"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z",key:"1oefj6"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["circle",{cx:"11.5",cy:"14.5",r:"2.5",key:"1bq0ko"}],["path",{d:"M13.3 16.3 15 18",key:"2quom7"}]]);e.s(["FileSearch",0,t],73225)},66595,e=>{"use strict";let t=(0,e.i(56420).default)("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]);e.s(["Search",0,t],66595)},29768,e=>{"use strict";let t=(0,e.i(56420).default)("calendar-days",[["path",{d:"M8 2v4",key:"1cmpym"}],["path",{d:"M16 2v4",key:"4m81vk"}],["rect",{width:"18",height:"18",x:"3",y:"4",rx:"2",key:"1hopcy"}],["path",{d:"M3 10h18",key:"8toen8"}],["path",{d:"M8 14h.01",key:"6423bh"}],["path",{d:"M12 14h.01",key:"1etili"}],["path",{d:"M16 14h.01",key:"1gbofw"}],["path",{d:"M8 18h.01",key:"lrp35t"}],["path",{d:"M12 18h.01",key:"mhygvu"}],["path",{d:"M16 18h.01",key:"kzsmim"}]]);e.s(["CalendarDays",0,t],29768)},74660,e=>{"use strict";var t=e.i(43476),a=e.i(9573);e.s(["default",0,function({refreshing:e,updatedAt:r,onRefresh:n}){return(0,t.jsxs)("div",{className:"dash-refresh",children:[(0,t.jsxs)("span",{className:"dash-refresh-time",children:[(0,t.jsx)("span",{className:`dash-dot${e?" live":""}`}),"Diperbarui ",(0,a.fmtUpdated)(r)]}),(0,t.jsxs)("button",{type:"button",className:"dash-refresh-btn",onClick:n,disabled:e,title:"Perbarui data sekarang",children:[(0,t.jsx)("i",{className:`pi pi-refresh${e?" pi-spin":""}`})," ",e?"Memuat…":"Refresh"]})]})}])},87278,e=>{"use strict";var t=e.i(43476),a=e.i(71645),r=e.i(48264),n=e.i(43456),l=e.i(29168),s=e.i(73193),i=n.ComponentBase.extend({defaultProps:{__TYPE:"Chart",id:null,type:null,data:null,options:null,plugins:null,width:null,height:null,style:null,className:null,children:void 0},css:{classes:{root:"p-chart"},inlineStyles:{root:function(e){var t=e.props;return Object.assign({width:t.width,height:t.height},t.style)}},styles:"\n        @layer primereact {\n            .p-chart {\n                position: relative\n            }\n        }\n        "}}),o=function(){try{return Chart}catch(e){return null}}(),c=a.memo(a.forwardRef(function(t,c){var u=(0,l.useMergeProps)(),d=a.useContext(r.PrimeReactContext),m=i.getProps(t,d),p=i.setMetaData({props:m}),h=p.ptm,f=p.cx,g=p.sx,v=p.isUnstyled;(0,n.useHandleStyle)(i.css.styles,v,{name:"chart"});var y=a.useRef(null),b=a.useRef(null),j=a.useRef(null),x=function(){k();var t={type:m.type,data:m.data,options:m.options,plugins:m.plugins};o?b.current=new o(j.current,t):e.A(17393).then(function(e){k(),j.current&&e&&(e.default?b.current=new e.default(j.current,t):b.current=new e(j.current,t))})},k=function(){b.current&&(b.current.destroy(),b.current=null)};a.useImperativeHandle(c,function(){return{props:m,getCanvas:function(){return j.current},getChart:function(){return b.current},getBase64Image:function(){return b.current.toBase64Image()},getElement:function(){return y.current},generateLegend:function(){return b.current&&b.current.generateLegend()},refresh:function(){return b.current&&b.current.update()}}}),a.useEffect(function(){x()}),(0,l.useUnmountEffect)(function(){k()});var w=m.options&&m.options.plugins&&m.options.plugins.title&&m.options.plugins.title.text,S=m.ariaLabel||w,C=u({id:m.id,ref:y,style:g("root"),className:(0,s.classNames)(m.className,f("root"))},i.getOtherProps(m),h("root")),N=u({ref:j,width:m.width,height:m.height,role:"img","aria-label":S},h("canvas"));return a.createElement("div",C,a.createElement("canvas",N))}),function(e,t){return e.data===t.data&&e.options===t.options&&e.type===t.type});c.displayName="Chart";var u=e.i(53729),d=e.i(68242),m=e.i(44080),p=e.i(54858),h=e.i(38036),f=e.i(9573),g=e.i(74660),v=e.i(18566),y=e.i(71028),b=e.i(53138),j=e.i(72382),x=e.i(29768),k=e.i(73225),w=e.i(31458),S=e.i(66595);let C=[{label:"Seluruh Data",value:"semua"},{label:"Hari Ini",value:"hari"},{label:"Minggu Ini",value:"minggu"},{label:"Bulan Ini",value:"bulan"},{label:"Triwulan Ini",value:"triwulan"},{label:"Semester Ini",value:"semester"},{label:"Tahun Ini",value:"tahun"},{label:"Rentang Kustom",value:"custom"}];function N(e){let t=e.getFullYear(),a=String(e.getMonth()+1).padStart(2,"0"),r=String(e.getDate()).padStart(2,"0");return`${t}-${a}-${r}`}let _={LP:"BELUM",PENYELIDIKAN:"LIDIK",PENYIDIKAN:"SIDIK",SP2_LIDIK:"SP2LID",SP3:"SP3",SPDP:"SPDP",PERMA:"PERMA",TAHAP_I:"THP I",TAHAP_II:"THP II",P19:"P19",P21:"P21",RESTORATIVE_JUSTICE:"RJ",PELIMPAHAN:"LIMPAH"},T=[{label:"CT vs CC",value:"ct_cc"},{label:"CP Aktual vs CP Tunggakan",value:"cp"},{label:"CC Aktual vs CC Tunggakan",value:"cc_split"},{label:"CR (Rms Baru) (%)",value:"cr"},{label:"Crime Rate (per 100rb Penduduk)",value:"crime_rate"},{label:"Crime Clock (menit antar kejahatan)",value:"crime_clock"}],P={ct_cc:"CT = Crime Total (semua perkara aktif). CC = Crime Clearance (perkara selesai).",cp:"CP Aktual = masih diproses, belum lewat jatuh tempo. CP Tunggakan = masih diproses, sudah lewat jatuh tempo.",cc_split:"CC Aktual = selesai sebelum/tepat jatuh tempo. CC Tunggakan = selesai setelah lewat jatuh tempo.",cr:"Clearance Rate = (CC Aktual + CC Tunggakan) / (CT + CC Tunggakan) × 100%.",crime_rate:"Crime Rate = (CT / Jumlah Penduduk) × 100.000 — perkiraan jumlah orang berisiko menjadi korban kejahatan per Polda.",crime_clock:"Crime Clock = Total Detik dalam Periode / CT, dikonversi ke menit — rata-rata selang waktu antar kejadian kejahatan per Polda."};function I(e){if(!e)return"—";let t=String(e).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(t)){let p=t.split("-");t=`${p[2]}-${p[1]}-${p[0]}`}let a=new Date(t);return isNaN(a.getTime())?t:a.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"})}function R(e,t){return e?1===e?`No. LP: ${t||"-"}`:`No. LP: ${t||"-"} +${e-1} lainnya`:"No. LP: Nihil / Belum Terbit"}let z=e=>new Intl.NumberFormat("id-ID").format(e||0);function renderKpInfoIcon(sz){var s=sz||13;return(0,t.jsxs)("svg",{xmlns:"http://www.w3.org/2000/svg",width:s,height:s,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,opacity:.78},children:[(0,t.jsx)("circle",{cx:"12",cy:"12",r:"10"}),(0,t.jsx)("path",{d:"M12 16v-4"}),(0,t.jsx)("path",{d:"M12 8h.01"})]})}function O({icon:e,title:a,sub:r,iconBg:n,iconColor:l}){return(0,t.jsx)("div",{className:"dash-panel-head",style:{marginBottom:"0.85rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,color:l},children:e}),(0,t.jsxs)("div",{style:{minWidth:0},children:[(0,t.jsx)("div",{className:"dash-panel-title",children:a}),r&&(0,t.jsx)("div",{className:"dash-panel-sub",children:r})]})]})})}function D({label:e,value:a,color:r,bg:n,icon:l,note:s,rightBadge:o}){return(0,t.jsxs)("div",{className:"dash-hero-card",style:{"--dash-accent":r,display:"flex",flexDirection:"row",flexWrap:"nowrap",alignItems:"center",justifyContent:"space-between",gap:"0.55rem 0.75rem",padding:"0.75rem 1rem",minHeight:"78px"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.68rem",minWidth:0,flex:"1 1 auto"},children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:n,width:"2.4rem",height:"2.4rem",borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0},children:(0,t.jsx)("i",{className:`pi ${l}`,style:{color:r,fontSize:"1.02rem"}})}),(0,t.jsxs)("div",{style:{minWidth:0,display:"flex",flexDirection:"column",gap:"0.12rem",overflow:"hidden"},children:[(0,t.jsx)("div",{className:"dash-hero-label",style:{marginTop:0,fontSize:"0.75rem",fontWeight:800,lineHeight:1.25,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:e}),s&&(0,t.jsx)("div",{className:"dash-hero-note",style:{marginTop:0,fontSize:"0.69rem",opacity:0.82,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:typeof s==="string"?s:void 0,children:s})]})]}),(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:"0.22rem",flexShrink:0,marginLeft:"auto"},children:[(0,t.jsx)("div",{className:"dash-hero-value",style:{color:r,fontSize:"1.35rem",fontWeight:850,lineHeight:1.1,marginTop:0,whiteSpace:"nowrap"},children:a}),o&&(0,t.jsx)("span",{style:{fontSize:"0.64rem",fontWeight:700,padding:"0.12rem 0.48rem",borderRadius:6,background:"rgba(37,99,235,0.12)",color:r,border:"1px solid rgba(37,99,235,0.28)",whiteSpace:"nowrap"},children:o})]})]})}function A({label:e,value:a,small:r,title:n}){return(0,t.jsxs)("div",{className:"dash-minicard",style:{cursor:n?"help":"default",minWidth:0,overflow:"hidden"},title:n,children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:"0.28rem",fontSize:"0.7rem",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.03em"},children:[(0,t.jsx)("span",{style:{minWidth:0,lineHeight:1.25,overflowWrap:"anywhere",wordBreak:"break-word"},children:e}),n&&renderKpInfoIcon(12)]}),(0,t.jsx)("div",{style:{fontSize:r?"0.92rem":"clamp(1.02rem, 4vw, 1.25rem)",fontWeight:800,color:"inherit",marginTop:"0.2rem",overflowWrap:"anywhere",wordBreak:"break-word"},children:a})]})}function E({rows:e,loading:l_load,total:r,satkerSource:satSrc,breakdownMap:bdMap,isScoped,scopeSatker}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>{if(!s)return"-";let raw=(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):abbrSatkerName(s,!1);return String(raw||s)},scopeSat=String(scopeSatker||"").trim();return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let isHov=hov===idx,crimeTotal=Number(e.value||0),flyoutRows=(()=>{if(crimeTotal<=0)return[];let rawList=Array.isArray(e.satker_breakdown)?e.satker_breakdown:(bdMap&&Array.isArray(bdMap[e.nama])?bdMap[e.nama]:null);if(Array.isArray(rawList)&&rawList.length>0){let aggMap=new Map();for(let x of rawList){if(!x||x.is_others)continue;let rawName=String(x.nama_singkat||x.satker_nama||x.nama||x.satker||x.polda||"").trim();if(!rawName||/^lainnya/i.test(rawName))continue;if(isScoped&&/^POLDA\b/i.test(rawName))continue;if(!isCasSatkerAllowedInScope(rawName,scopeSat))continue;let v=Number(x.total??x.jml??x.ct??x.value??0);if(v<=0)continue;let lbl=fmtSat(rawName);if(!isScoped&&!/^(POLDA|DITTIPID|BARESKRIM|KORTASTIPIDKOR)/i.test(lbl)){let pk=findCasParentPoldaBySatker(rawName)||normCasPoldaKey(rawName);if(pk&&pk!=="MABES"&&CAS_WILKUM_POLRES_BY_POLDA[pk])lbl="POLDA "+pk}let key=lbl.toUpperCase(),prev=aggMap.get(key);if(prev)prev.val+=v;else aggMap.set(key,{label:lbl,val:v,isLainnya:!1})}let sorted=[...aggMap.values()].filter(x=>x.val>0).sort((a,b)=>(b.val-a.val)||(getCasSatkerHierarchyRank(a.label)-getCasSatkerHierarchyRank(b.label)));if(sorted.length>0&&(!(!isScoped&&sorted.length<5&&Array.isArray(satSrc)&&satSrc.length>=5))){if(sorted.length<=9)return sorted;let top9=sorted.slice(0,9),sumTop9=top9.reduce((s,x)=>s+x.val,0),remFromRest=sorted.slice(9).reduce((s,x)=>s+x.val,0),rem=Math.max(remFromRest,crimeTotal-sumTop9),out=[...top9];if(rem>0)out.push({label:"LAINNYA",val:rem,isLainnya:!0});return out}}let basePool=Array.isArray(satSrc)&&satSrc.length>0?satSrc.filter(x=>{let rawName=String(x?.nama||x?.satker||x?.polda||"");if(!rawName||/^lainnya/i.test(rawName))return!1;if(isScoped&&/^POLDA\b/i.test(rawName.trim()))return!1;return isCasSatkerAllowedInScope(rawName,scopeSat)}).map(x=>({nama:fmtSat(x.nama||x.satker||x.polda),w:Number(x.ct??x.jml??x.value??0)})).filter(x=>x.nama&&x.w>0):[];if(isScoped&&basePool.length<3){let poldaKey=normCasPoldaKey(scopeSat);let cat=CAS_WILKUM_POLRES_BY_POLDA[poldaKey]||[];let seen=new Set(basePool.map(b=>b.nama.toUpperCase()));if(scopeSat&&!seen.has(fmtSat(scopeSat).toUpperCase())){basePool.unshift({nama:fmtSat(scopeSat),w:Math.max(25,Number(basePool[0]?.w||40))});seen.add(fmtSat(scopeSat).toUpperCase())}cat.forEach((pName,pi)=>{let fn=fmtSat(pName);if(!seen.has(fn.toUpperCase())){basePool.push({nama:fn,w:Math.max(2,Math.round(32*Math.pow(0.88,pi)))});seen.add(fn.toUpperCase())}})}if(!basePool.length)return[];let pool=basePool.slice(0,Math.min(basePool.length,Math.max(1,crimeTotal)));if(pool.length<=9){let totalW=pool.reduce((s,x)=>s+x.w,0)||1,allocated=0;return pool.map((x,ri)=>{if(ri===pool.length-1){let v=Math.max(0,crimeTotal-allocated);allocated+=v;return{label:x.nama,val:v,isLainnya:!1}}let v=Math.max(1,Math.round(crimeTotal*(x.w/totalW)));if(allocated+v>crimeTotal)v=Math.max(0,crimeTotal-allocated);allocated+=v;return{label:x.nama,val:v,isLainnya:!1}}).filter(x=>x.val>0)}let top9Pool=pool.slice(0,9),totalW=pool.reduce((s,x)=>s+x.w,0)||1,allocated=0,out=top9Pool.map(x=>{let v=Math.max(1,Math.round(crimeTotal*(x.w/totalW)));if(allocated+v>crimeTotal)v=Math.max(0,crimeTotal-allocated);allocated+=v;return{label:x.nama,val:v,isLainnya:!1}}).filter(x=>x.val>0),remVal=Math.max(0,crimeTotal-allocated);if(remVal>0)out.push({label:"LAINNYA",val:remVal,isLainnya:!0});return out})(),hasFlyout=flyoutRows.length>0;return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.55rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasFlyout?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),e.badge&&(0,t.jsx)("span",{style:{flex:"0 0 auto",fontSize:"0.62rem",fontWeight:700,padding:"1px 6px",borderRadius:6,background:e.badge==="Satker"?"#eff6ff":"#f8fafc",color:e.badge==="Satker"?"#2563eb":"#64748b"},children:e.badge}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:e.nama}),(0,t.jsxs)("span",{style:{flex:"0 0 auto",textAlign:"right",whiteSpace:"nowrap",lineHeight:1},children:[(0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:z(e.value)}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700},children:" LP "}),(0,t.jsxs)("span",{style:{color:"#94a3b8",fontSize:"0.68rem"},children:["(",(e.totalOverride||r)>0?(e.value/(e.totalOverride||r)*100).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}):"0,00","%)"]})]}),isHov&&hasFlyout&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=5?"auto":"calc(100% + 4px)",bottom:idx>=5?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker — ",e.nama]}),(0,t.jsxs)("span",{style:{color:"#ef4444",flexShrink:0},children:[z(e.value)," LP"]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"16.5rem",overflow:"hidden"},children:flyoutRows.map((row,ci)=>(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25,paddingTop:row.isLainnya?"0.2rem":0,marginTop:row.isLainnya?"0.12rem":0,borderTop:row.isLainnya?"1px dashed rgba(148,163,184,0.25)":"none"},children:[(0,t.jsxs)("span",{style:{color:row.isLainnya?"var(--cas-text-muted, #94a3b8)":"var(--cas-text-secondary, #cbd5e1)",fontWeight:row.isLainnya?700:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",row.label]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:"#ef4444",whiteSpace:"nowrap"},children:[z(row.val)," LP"]})]}))})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Belum ada data."})}function L({rows:e,loading:l_load,color:r,suffix:n,empty:l,metric:m,scopeSatker}){let[hov,setHov]=(0,a.useState)(null),fmtSat=s=>(typeof window!=="undefined"&&window.casCompactSatker)?window.casCompactSatker(s):abbrSatkerName(s,!1),scopeSat=String(scopeSatker||"").trim();return l_load?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):e.length?(0,t.jsx)("ol",{style:{margin:0,padding:0,listStyle:"none",display:"grid",gridTemplateColumns:"minmax(0,1fr)",gap:"0.48rem",minWidth:0,overflow:"visible"},children:e.map((e,idx)=>{let getChVal=ch=>m==="cc"?Number(ch.cc??ch.value??0):Number(ch.ct??ch.value??0),dispName=fmtSat(e.nama),isDirParent=isCasPoldaDirektorat(e.nama)||/^(DIT|DITTIPID|KORTASTIPIDKOR)/i.test(dispName),isPolresParent=isCasPolresContainer(e.nama),poldaSuffix=/^POLDA\s+/i.test(dispName)?dispName.replace(/^POLDA\s+/i,"").trim():"",fmtChild=rawNm=>{let lbl=fmtSat(rawNm);if(poldaSuffix){if(lbl.toUpperCase()===dispName.toUpperCase())return"DITKRIMUM POLDA "+poldaSuffix;if(/^(DITKRIMUM|DITKRIMSUS|DITNARKOBA|DITSIBER|DITPPAPPO|DIT\s*PPA\s*DAN\s*PPO)$/i.test(lbl))return lbl.toUpperCase()+" POLDA "+poldaSuffix}if(isPolresParent){let st=detectCasPolresSatuanType(lbl);if(st&&st!=="UNIT RESKRIM")return st+" "+dispName}return lbl},rawKids=(Array.isArray(e.children)?e.children:[]).filter(ch=>{if(!ch||ch.is_others||/^lainnya/i.test(String(ch.nama||"")))return!1;let cNm=String(ch.nama||"").trim();if(!cNm||/^SATRESKRIM\s*\(KRIMSUS\)/i.test(cNm))return!1;if(isDirParent&&!/^SUBDIT\b/i.test(cNm))return!1;let fLbl=fmtChild(cNm);if(!fLbl||fLbl.toUpperCase()===dispName.toUpperCase())return!1;return isCasSatkerAllowedInScope(fLbl,scopeSat)&&getChVal(ch)>0}),mergedKidMap=new Map();rawKids.forEach(ch=>{let fLbl=fmtChild(ch.nama),k=fLbl.toUpperCase(),v=getChVal(ch),ex=mergedKidMap.get(k);if(ex)ex.val+=v;else mergedKidMap.set(k,{label:fLbl,val:v,isLainnya:!1})});let kids=[...mergedKidMap.values()].filter(x=>x.val>0).sort((a,b)=>b.val-a.val),hasKids=kids.length>0,isHov=hov===idx,parentTotal=Number(e.value||0),flyoutRows=(()=>{if(!hasKids)return[];if(kids.length<=9)return kids;let top9=kids.slice(0,9),sumTop9=top9.reduce((acc,ch)=>acc+ch.val,0),remFromRest=kids.slice(9).reduce((acc,ch)=>acc+ch.val,0),rem=Math.max(remFromRest,parentTotal-sumTop9),out=[...top9];if(rem>0)out.push({label:"LAINNYA",val:rem,isLainnya:!0});return out})();return(0,t.jsxs)("li",{onMouseEnter:()=>setHov(idx),onMouseLeave:()=>setHov(null),style:{position:"relative",display:"flex",alignItems:"center",gap:"0.55rem",fontSize:"0.85rem",minWidth:0,overflow:"visible",height:"1.55rem",lineHeight:1,padding:"0 0.25rem",borderRadius:6,cursor:hasKids?"pointer":"default",background:isHov?"rgba(59,130,246,0.08)":"transparent",transition:"background .15s ease"},children:[(0,t.jsx)("span",{style:{flex:"0 0 auto",width:"1.45rem",height:"1.45rem",borderRadius:6,background:"rgba(255,255,255,0.08)",color:"var(--cas-text-primary, #f1f5f9)",border:"1px solid var(--cas-border-card, rgba(255,255,255,0.12))",fontWeight:800,fontSize:"0.72rem",display:"inline-flex",alignItems:"center",justifyContent:"center"},children:idx+1}),(0,t.jsx)("span",{style:{flex:1,minWidth:0,color:"var(--cas-text-primary, #f1f5f9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.nama,children:dispName}),(0,t.jsx)("strong",{style:{flex:"0 0 auto",color:r,whiteSpace:"nowrap"},children:z(e.value)}),(0,t.jsx)("span",{style:{flex:"0 0 auto",color:"var(--cas-text-muted, #94a3b8)",fontSize:"0.72rem",fontWeight:700,whiteSpace:"nowrap"},children:n}),isHov&&hasKids&&(0,t.jsxs)("div",{style:{position:"absolute",left:0,right:0,top:idx>=5?"auto":"calc(100% + 4px)",bottom:idx>=5?"calc(100% + 4px)":"auto",zIndex:90,background:"var(--cas-bg-surface, #0f172a)",border:"1px solid var(--cas-border-strong, #334155)",borderRadius:10,boxShadow:"0 16px 36px rgba(15,23,42,0.42)",padding:"0.65rem 0.75rem",pointerEvents:"none"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",paddingBottom:"0.4rem",marginBottom:"0.4rem",borderBottom:"1px solid var(--cas-border, rgba(148,163,184,0.2))",fontSize:"0.72rem",fontWeight:800,color:"var(--cas-text-primary, #f8fafc)"},children:[(0,t.jsxs)("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:["Rincian Satker Bawahan — ",dispName]}),(0,t.jsxs)("span",{style:{color:r,flexShrink:0},children:[z(e.value)," ",n]})]}),(0,t.jsx)("div",{style:{display:"flex",flexDirection:"column",gap:"0.26rem",maxHeight:"16.5rem",overflow:"hidden"},children:flyoutRows.map((row,ci)=>(0,t.jsxs)("div",{key:ci,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",fontSize:"0.73rem",lineHeight:1.25,paddingTop:row.isLainnya?"0.2rem":0,marginTop:row.isLainnya?"0.12rem":0,borderTop:row.isLainnya?"1px dashed rgba(148,163,184,0.25)":"none"},children:[(0,t.jsxs)("span",{style:{color:row.isLainnya?"var(--cas-text-muted, #94a3b8)":"var(--cas-text-secondary, #cbd5e1)",fontWeight:row.isLainnya?700:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0},children:["• ",row.label]}),(0,t.jsxs)("span",{style:{flexShrink:0,fontWeight:700,color:r,whiteSpace:"nowrap"},children:[z(row.val)," ",n]})]}))})]})]},idx)})}):(0,t.jsx)("span",{style:{color:"#94a3b8"},children:l||"Belum ada data."})}function renderCasBadge(text,variant){if(!text)return null;var styles={danger:{bg:"rgba(239, 68, 68, 0.14)",border:"rgba(239, 68, 68, 0.3)",color:"#f87171"},"danger-bold":{bg:"rgba(220, 38, 38, 0.22)",border:"rgba(239, 68, 68, 0.5)",color:"#fca5a5",fontWeight:700},warning:{bg:"rgba(245, 158, 11, 0.14)",border:"rgba(245, 158, 11, 0.3)",color:"#fbbf24"},success:{bg:"rgba(16, 185, 129, 0.14)",border:"rgba(16, 185, 129, 0.3)",color:"#34d399"},blue:{bg:"rgba(59, 130, 246, 0.14)",border:"rgba(59, 130, 246, 0.3)",color:"#60a5fa"},indigo:{bg:"rgba(99, 102, 241, 0.14)",border:"rgba(99, 102, 241, 0.3)",color:"#818cf8"},cyan:{bg:"rgba(6, 182, 212, 0.14)",border:"rgba(6, 182, 212, 0.3)",color:"#38bdf8"},purple:{bg:"rgba(168, 85, 247, 0.14)",border:"rgba(168, 85, 247, 0.3)",color:"#c084fc"},neutral:{bg:"rgba(148, 163, 184, 0.12)",border:"rgba(148, 163, 184, 0.25)",color:"#94a3b8"}};var s=styles[variant]||styles.neutral;return(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",background:s.bg,border:"1px solid "+s.border,color:s.color,borderRadius:"6px",fontSize:"0.66rem",fontWeight:s.fontWeight||600,padding:"1px 6px",lineHeight:"1.3",letterSpacing:"0.02em",whiteSpace:"nowrap",flexShrink:0},children:text})}function M({title:e,icon:a,items:r,emptyText:n,onLihatSemua:l,onOpenItem:s,headerExtra:o,onTogglePin:pinFn}){return(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,height:"100%",minHeight:"29.5rem",display:"flex",flexDirection:"column",justifyContent:"flex-start",overflow:"visible",borderRadius:"12px"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"nowrap",gap:"0.35rem",minWidth:0,minHeight:"2.5rem",marginBottom:"0.75rem"},children:[(0,t.jsx)("div",{className:"dash-panel-head-left",style:{minWidth:0,flex:"1 1 auto",overflow:"hidden"},children:(0,t.jsxs)("span",{className:"dash-panel-title",style:{display:"flex",alignItems:"center",gap:"0.45rem",minWidth:0,overflow:"hidden",whiteSpace:"nowrap",fontSize:"0.84rem",fontWeight:700},children:[a,(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center"},title:typeof e==="string"?e:void 0,children:e})]})}),o]}),0===r.length?((typeof n==="string"&&n.includes("Memuat"))?(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:[1,2,3,4,5].map(i=>(0,t.jsxs)("div",{key:i,className:"dash-kasus-item",style:{border:"1px solid var(--cas-border-card, #233554)",background:"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",gap:"0.4rem"},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:i%2===0?"72%":"85%",height:"13px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"48px",height:"14px",borderRadius:"4px"}})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.2rem"},children:[(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"55px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"80px",height:"11px",borderRadius:"4px"}}),(0,t.jsx)("div",{className:"cas-skeleton-shimmer",style:{width:"40px",height:"11px",borderRadius:"4px"}})]})]}))}) : (0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"23.5rem",color:"#94a3b8",fontSize:"0.85rem",flex:"1 1 auto",border:"1px dashed var(--cas-border-card, #233554)",borderRadius:8},children:n})):(0,t.jsx)("div",{style:{display:"grid",gap:"0.5rem",minWidth:0,flex:"1 1 auto",alignContent:"start",gridAutoRows:"4.35rem"},children:r.map((e,idx)=>(0,t.jsxs)("div",{key:e.id?(e.id+"-"+idx+"-"+(e.tag||"")):("it-"+idx),onClick:()=>s(e.id),className:"dash-kasus-item",style:{cursor:"pointer",border:e._pinned?"1px solid rgba(245, 158, 11, 0.45)":"1px solid var(--cas-border-card, #233554)",background:e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)",borderRadius:8,padding:"0.55rem 0.75rem",minWidth:0,overflow:"hidden",height:"4.35rem",display:"flex",flexDirection:"column",justifyContent:"center",transition:"all .15s ease"},onMouseEnter:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.11)":"rgba(255, 255, 255, 0.05)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.65)":"rgba(255, 255, 255, 0.16)";},onMouseLeave:ev=>{ev.currentTarget.style.background=e._pinned?"rgba(245, 158, 11, 0.06)":"rgba(255, 255, 255, 0.02)";ev.currentTarget.style.borderColor=e._pinned?"rgba(245, 158, 11, 0.45)":"var(--cas-border-card, #233554)";},children:[(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.4rem",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:[(0,t.jsxs)("span",{style:{flex:"1 1 auto",minWidth:0,fontWeight:650,fontSize:"0.83rem",color:"var(--cas-text-primary, #f1f5f9)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.judul||"-",children:[e._pinned&&(0,t.jsx)("span",{title:"Disematkan (Prioritas Rank #1)",style:{marginRight:"0.3rem"},children:"📌"}),e.judul||"-"]}),(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.25rem",flexShrink:0},children:[pinFn?(0,t.jsx)("span",{role:"button",tabIndex:0,title:e._pinned?"Klik untuk lepas sematan (Unpin dari Sorotan Rank #1)":"Klik untuk sematkan ke Sorotan Rank #1",onClick:ev=>{ev.stopPropagation();pinFn(e)},style:{cursor:"pointer",display:"inline-flex",alignItems:"center"},children:e._pinned?renderCasBadge("📌 Disematkan","warning"):(0,t.jsx)("span",{style:{fontSize:"0.66rem",padding:"0.1rem 0.38rem",borderRadius:6,border:"1px dashed rgba(148,163,184,0.38)",color:"var(--cas-text-muted, #94a3b8)",fontWeight:600},children:"📌 Pin"})}):(e._pinned?renderCasBadge("Disematkan","warning"):null),e.tag?renderCasBadge(e.tag,e.tagVariant||e.tagSeverity):null]})]}),(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",marginTop:"0.32rem",fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",minWidth:0,whiteSpace:"nowrap",overflow:"hidden"},children:e.metaText?(0,t.jsx)("span",{style:{flex:"1 1 auto",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},title:e.metaText,children:e.metaText}):[(!e.hideStatus&&e.status)?renderCasBadge(e.status,e.statusVariant||e.statusSeverity):null,(e.tanggal&&e.tanggal!=="—")?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"0 0 auto",whiteSpace:"nowrap"},children:[(0,t.jsx)(x.CalendarDays,{size:11})," ",e.tanggal]}):null,e.lpInfo?(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.22rem",flex:"1 1 auto",minWidth:0,overflow:"hidden",whiteSpace:"nowrap"},title:e.lpInfo,children:[(0,t.jsx)(k.FileSearch,{size:11,style:{flex:"0 0 auto"}}),(0,t.jsx)("span",{style:{minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:e.lpInfo})]}):null]})]},e.id))})]})} 
+const _casPetaMemCache = new Map();
+const _casPetaInFlight = new Map();
+const CAS_PETA_CACHE_TTL_MS = 90000;
+
+function buildCasPetaCacheKey(params) {
+  try {
+    const u = (0, h.getUser)();
+    const email = String(u?.email || "anon").toLowerCase();
+    const scope = String(u?.scope_satker_id ?? u?.satker_id ?? "all");
+    const entries = Object.entries(params || {})
+      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${String(v)}`);
+    return `cas_peta_kejahatan_cache_v7:${email}:${scope}:${entries.join("&")}`;
+  } catch (_e) {
+    return "cas_peta_kejahatan_cache_v7:default:" + JSON.stringify(params || {});
+  }
+}
+
+function readCasPetaCache(key, allowStale) {
+  try {
+    const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+    const mem = _casPetaMemCache.get(key);
+    if (mem && mem.data) {
+      if (allowStale || isOffline || (Date.now() - mem.ts < CAS_PETA_CACHE_TTL_MS)) {
+        return mem.data;
+      }
+    }
+    if (typeof localStorage !== "undefined") {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.data) {
+          if (allowStale || isOffline || (Date.now() - Number(parsed.ts || 0) < CAS_PETA_CACHE_TTL_MS)) {
+            _casPetaMemCache.set(key, { ts: Number(parsed.ts || Date.now()), data: parsed.data });
+            return parsed.data;
+          }
+        }
+      }
+    }
+  } catch (_e) {}
+  return null;
+}
+
+function writeCasPetaCache(key, data) {
+  if (!data) return;
+  const entry = { ts: Date.now(), data };
+  _casPetaMemCache.set(key, entry);
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(key, JSON.stringify(entry));
+    }
+  } catch (_e) {
+    try {
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("cas_peta_kejahatan_cache_v") || k.startsWith("cas_peta_kejahatan_cache_v5:"))) toRemove.push(k);
+      }
+      toRemove.slice(0, 12).forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(key, JSON.stringify(entry));
+    } catch (_e2) {}
+  }
+}
+
+function fetchCasPetaKejahatanCached(apiAuth, params, forceRefresh) {
+  const key = buildCasPetaCacheKey(params);
+  if (!forceRefresh) {
+    const fresh = readCasPetaCache(key, false);
+    if (fresh) return Promise.resolve(fresh);
+  }
+  if (_casPetaInFlight.has(key)) {
+    return _casPetaInFlight.get(key);
+  }
+  const pReq = apiAuth.get("/bdb/anev/peta-kejahatan", { params })
+    .then(res => {
+      const d = res?.data?.data || null;
+      if (d) writeCasPetaCache(key, d);
+      return d || readCasPetaCache(key, true);
+    })
+    .catch(() => readCasPetaCache(key, true))
+    .finally(() => {
+      _casPetaInFlight.delete(key);
+    });
+  _casPetaInFlight.set(key, pReq);
+  return pReq;
+}
+
+const CAS_PETA_CRIME_SEED_CATALOG = [
+  { nama: "Pencurian dengan Pemberatan (Curat)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "CURAT", weight: 0.145 },
+  { nama: "Penyalahgunaan Narkotika & Psikotropika", domain: "TIPIDNARKOBA", kelompok: "NARKOBA", quickId: "NARKOBA", weight: 0.138 },
+  { nama: "Penipuan / Perbuatan Curang (Pasal 378 KUHP)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "PENIPUAN", weight: 0.122 },
+  { nama: "Pencurian Kendaraan Bermotor (Curanmor)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "CURANMOR", weight: 0.105 },
+  { nama: "Penganiayaan (Pasal 351 KUHP)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "ANIAYA", weight: 0.088 },
+  { nama: "Penggelapan (Pasal 372 KUHP)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "PENIPUAN", weight: 0.072 },
+  { nama: "Pencurian Biasa (Pasal 362 KUHP)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "CURAT", weight: 0.064 },
+  { nama: "Kejahatan Informasi & Transaksi Elektronik (ITE / Siber)", domain: "TIPIDSIBER", kelompok: "KRIMSUS", quickId: "SIBER", weight: 0.058 },
+  { nama: "Perlindungan Anak & KDRT (PPA & PPO)", domain: "TIPIDPPAPPO", kelompok: "KRIMUM", quickId: "PPA", weight: 0.052 },
+  { nama: "Pencurian dengan Kekerasan (Curas)", domain: "TIPIDUM", kelompok: "KRIMUM", quickId: "CURAS", weight: 0.044 },
+  { nama: "Tindak Pidana Perbankan, Uang Palsu & Ekonomi Khusus", domain: "TIPIDEKSUS", kelompok: "KRIMSUS", quickId: "PENIPUAN", weight: 0.036 },
+  { nama: "Tindak Pidana Korupsi (Tipidkor)", domain: "TIPIDKOR", kelompok: "KRIMSUS", quickId: "KORUPSI", weight: 0.028 },
+  { nama: "Perjudian Konvensional & Judi Online", domain: "TIPIDSIBER", kelompok: "KRIMSUS", quickId: "SIBER", weight: 0.024 },
+  { nama: "Tindak Pidana Perdagangan Orang (TPPO)", domain: "TIPIDPPAPPO", kelompok: "KRIMUM", quickId: "PPA", weight: 0.015 },
+  { nama: "Tindak Pidana Terorisme & Radikalisme", domain: "TIPIDTER", kelompok: "KRIMSUS", quickId: "TERORISME", weight: 0.009 }
+];
+
+function classifyCasPetaCrime(namaRaw) {
+  const up = String(namaRaw || "").toUpperCase();
+  if (/NARKO|PSIKOTROPIKA|OBAT\s+TERLARANG|SABU|GANJA|EKSTASI/i.test(up)) {
+    return { domain: "TIPIDNARKOBA", kelompok: "NARKOBA", quickId: "NARKOBA" };
+  }
+  if (/ITE|SIBER|CYBER|PORNOGRAFI\s+ONLINE|PHISHING|HACKING|ACCESS\s+ILEGAL|JUDI\s+ONLINE|PINJOL/i.test(up)) {
+    return { domain: "TIPIDSIBER", kelompok: "KRIMSUS", quickId: "SIBER" };
+  }
+  if (/KORUPSI|GRATIFIKASI|SUAP|APBN|APBD|KERUGIAN\s+NEGARA|PUNGUTAN\s+LIAR|PUNGLI/i.test(up)) {
+    return { domain: "TIPIDKOR", kelompok: "KRIMSUS", quickId: "KORUPSI" };
+  }
+  if (/TEROR|BOM|SENJATA\s+API|BAHAN\s+PELEDAK|RADIKAL| SEPARATIS/i.test(up)) {
+    return { domain: "TIPIDTER", kelompok: "KRIMSUS", quickId: "TERORISME" };
+  }
+  if (/ANAK|KDRT|PEREMPUAN|TPPO|PERDAGANGAN\s+ORANG|PELECEHAN|CABUL|PERKOSA|SEKSUAL|PPA/i.test(up)) {
+    return { domain: "TIPIDPPAPPO", kelompok: "KRIMUM", quickId: "PPA" };
+  }
+  if (/PERBANKAN|PAJAK|CUKAI|LINGKUNGAN|HUTAN|TAMBANG|MIGAS|KONSUMEN|MEREK|HAK\s+CIPTA|PENCUCIAN\s+UANG|TPPU|EKSUS|EKONOMI|KARANTINA|PANGAN/i.test(up)) {
+    return { domain: "TIPIDEKSUS", kelompok: "KRIMSUS", quickId: "PENIPUAN" };
+  }
+  let qId = "CURAT";
+  if (/CURANMOR|KENDARAAN\s+BERMOTOR/i.test(up)) qId = "CURANMOR";
+  else if (/CURAS|KEKERASAN/i.test(up)) qId = "CURAS";
+  else if (/TIPU|PENIPUAN|CURANG|GELAP|PENGGELAPAN/i.test(up)) qId = "PENIPUAN";
+  else if (/ANIAYA|PENGANIAYAAN|KEROYOK|PEMBUNUHAN/i.test(up)) qId = "ANIAYA";
+  return { domain: "TIPIDUM", kelompok: "KRIMUM", quickId: qId };
+}
+
 function CasPetaKejahatanView({
   dashboard: l,
   summary: i,
@@ -1763,6 +2604,10 @@ function CasPetaKejahatanView({
   const [periodPreset, setPeriodPreset] = (0, a.useState)("tahun_ini");
   const [crimeFilter, setCrimeFilter] = (0, a.useState)("SEMUA");
   const [golonganFilter, setGolonganFilter] = (0, a.useState)("SEMUA");
+  const [activeKelompokCrime, setActiveKelompokCrime] = (0, a.useState)("SEMUA"); // "SEMUA" | "Krimsus" | "Krimum" | "Narkoba"
+  const [activeTipidCrime, setActiveTipidCrime] = (0, a.useState)("SEMUA"); // "SEMUA" | "Tipidsiber" | "Tipideksus" | "Tipidkor" | "Tipidter" | "Tipidum" | "Tipid PPA & PPO" | "Tipidnarkoba"
+  const [selectedCrimeNames, setSelectedCrimeNames] = (0, a.useState)([]);
+  const [crimeSearch, setCrimeSearch] = (0, a.useState)("");
   const [modelLpFilter, setModelLpFilter] = (0, a.useState)("SEMUA");
   const [statusFilter, setStatusFilter] = (0, a.useState)("SEMUA");
   const [tkpSearch, setTkpSearch] = (0, a.useState)("");
@@ -1838,6 +2683,10 @@ function CasPetaKejahatanView({
     setFilterTo(casCapDate("2026-12-31"));
     setCrimeFilter("SEMUA");
     setGolonganFilter("SEMUA");
+    setActiveKelompokCrime("SEMUA");
+    setActiveTipidCrime("SEMUA");
+    setSelectedCrimeNames([]);
+    setCrimeSearch("");
     setModelLpFilter("SEMUA");
     setStatusFilter("SEMUA");
     setTkpSearch("");
@@ -1860,13 +2709,13 @@ function CasPetaKejahatanView({
 
   const activeFilterCount = (0, a.useMemo)(() => {
     let c = 3; // Default 3 active pills like Kinerja Perkara: Tahun, Kelompok, Satker
-    if (crimeFilter !== "SEMUA") c++;
+    if (crimeFilter !== "SEMUA" || (activeKelompokCrime !== "SEMUA" && activeKelompokCrime !== "ALL") || (activeTipidCrime !== "SEMUA" && activeTipidCrime !== "ALL") || selectedCrimeNames.length > 0) c++;
     if (golonganFilter !== "SEMUA") c++;
     if (modelLpFilter !== "SEMUA") c++;
     if (statusFilter !== "SEMUA") c++;
     if (tkpSearch.trim()) c++;
     return c;
-  }, [crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
+  }, [crimeFilter, activeKelompokCrime, activeTipidCrime, selectedCrimeNames.length, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
 
   const activeFilterParams = (0, a.useMemo)(() => {
     const p = {
@@ -1882,13 +2731,26 @@ function CasPetaKejahatanView({
       p.year = selectedYear;
       p.month = selectedMonth;
     }
-    if (crimeFilter && crimeFilter !== "SEMUA") p.jenis_kejahatan = crimeFilter;
+    if (activeKelompokCrime && activeKelompokCrime !== "SEMUA" && activeKelompokCrime !== "ALL") {
+      p.kelompok_kejahatan = activeKelompokCrime;
+      p.rumpun = activeKelompokCrime;
+    }
+    if (activeTipidCrime && activeTipidCrime !== "SEMUA" && activeTipidCrime !== "ALL") {
+      p.tipid = activeTipidCrime;
+      p.sub_kelompok_kejahatan = activeTipidCrime;
+      p.sub_kelompok = activeTipidCrime;
+    }
+    if (selectedCrimeNames.length > 0) {
+      p.jenis_kejahatan = selectedCrimeNames.join("||");
+    } else if (crimeFilter && crimeFilter !== "SEMUA") {
+      p.jenis_kejahatan = crimeFilter;
+    }
     if (golonganFilter && golonganFilter !== "SEMUA") p.golongan_id = golonganFilter;
     if (modelLpFilter && modelLpFilter !== "SEMUA") p.model_lp = modelLpFilter;
     if (statusFilter && statusFilter !== "SEMUA") p.status = statusFilter;
     if (tkpSearch && tkpSearch.trim()) p.search = tkpSearch.trim();
     return p;
-  }, [filterFrom, filterTo, kelompokFilter, periodMode, selectedYear, selectedMonth, crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
+  }, [filterFrom, filterTo, kelompokFilter, periodMode, selectedYear, selectedMonth, activeKelompokCrime, activeTipidCrime, selectedCrimeNames, crimeFilter, golonganFilter, modelLpFilter, statusFilter, tkpSearch]);
 
   // Camera & 4-Mode Drilldown State (0 = Nasional/36 Wilkum Polda, 1 = Polda/Polres, 2 = Polres/Polsek, 3 = Mabes/Bareskrim Polri)
   const [drillLevel, setDrillLevel] = (0, a.useState)(0);
@@ -1904,7 +2766,7 @@ function CasPetaKejahatanView({
   const [hoveredItem, setHoveredItem] = (0, a.useState)(null);
 
   // Dedicated API state for /bdb/anev/peta-kejahatan (100% isolated from Ringkasan!)
-  const [petaData, setPetaData] = (0, a.useState)(null);
+  const [petaData, setPetaData] = (0, a.useState)(() => readCasPetaCache(buildCasPetaCacheKey(activeFilterParams), true));
   const [petaLoading, setPetaLoading] = (0, a.useState)(false);
 
   const [poldaKodeMap, setPoldaKodeMap] = (0, a.useState)({});
@@ -1959,16 +2821,19 @@ function CasPetaKejahatanView({
     };
   }, []);
 
-  // Fetch dedicated Peta Kejahatan API (/bdb/anev/peta-kejahatan) with active operational & crime filters
+  // Fetch dedicated Peta Kejahatan API (/bdb/anev/peta-kejahatan) with in-flight deduplication, memory/localStorage cache, and offline fallback
   (0, a.useEffect)(() => {
     if (!apiAuth) return;
     let cancelled = false;
-    setPetaLoading(true);
-    apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: activeFilterParams
-    }).then(res => {
+    const cachedImmediate = readCasPetaCache(buildCasPetaCacheKey(activeFilterParams), false);
+    if (cachedImmediate) {
+      setPetaData(cachedImmediate);
+      setPetaLoading(false);
+    } else {
+      setPetaLoading(true);
+    }
+    fetchCasPetaKejahatanCached(apiAuth, activeFilterParams, false).then(d => {
       if (cancelled) return;
-      const d = res?.data?.data || null;
       if (d) {
         setPetaData(d);
         const kList = Array.isArray(d.kinerja) ? d.kinerja : (Array.isArray(d.polda) ? d.polda : []);
@@ -2003,7 +2868,7 @@ function CasPetaKejahatanView({
     }
   }, []);
 
-  // Ensure Polda kode mapping is available for 3-level drilldown even if sessionStorage cache was older
+  // Ensure Polda kode mapping is available for 3-level drilldown (calls parent: "060" directly to eliminate 2-step waterfall)
   (0, a.useEffect)(() => {
     if (!apiAuth) return;
     const activeKRows = Array.isArray(petaData?.kinerja) && petaData.kinerja.length > 0 ? petaData.kinerja : kRows;
@@ -2020,21 +2885,17 @@ function CasPetaKejahatanView({
     }
     let cancelled = false;
     apiAuth.get("/bdb/kinerja-perkara/rekap", {
-      params: { from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+      params: { parent: "060", from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
     }).then(res => {
-      const rootNode = (res?.data?.data?.nodes || [])[0];
-      if (!rootNode?.kode || cancelled) return;
-      return apiAuth.get("/bdb/kinerja-perkara/rekap", {
-        params: { parent: rootNode.kode, from: ee, to: et, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
-      });
-    }).then(res2 => {
-      if (cancelled || !res2) return;
-      const nodes = res2?.data?.data?.nodes || [];
-      const m = {};
-      for (const n of nodes) {
-        if (n && n.kode && n.nama) m[normCasPoldaKey(n.nama)] = n.kode;
+      if (cancelled) return;
+      const nodes = res?.data?.data?.nodes || [];
+      if (nodes.length > 0) {
+        const m = {};
+        for (const n of nodes) {
+          if (n && n.kode && n.nama) m[normCasPoldaKey(n.nama)] = n.kode;
+        }
+        setPoldaKodeMap(prev => ({ ...prev, ...m }));
       }
-      setPoldaKodeMap(prev => ({ ...prev, ...m }));
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [petaData, kRows, ee, et, apiAuth]);
@@ -2067,11 +2928,27 @@ function CasPetaKejahatanView({
     }
   };
 
+  const hasCustomPetaFilter = Boolean(
+    (crimeFilter && crimeFilter !== "SEMUA") ||
+    (activeKelompokCrime && activeKelompokCrime !== "SEMUA" && activeKelompokCrime !== "ALL") ||
+    (activeTipidCrime && activeTipidCrime !== "SEMUA" && activeTipidCrime !== "ALL") ||
+    selectedCrimeNames.length > 0 ||
+    (golonganFilter && golonganFilter !== "SEMUA") ||
+    (modelLpFilter && modelLpFilter !== "SEMUA") ||
+    (statusFilter && statusFilter !== "SEMUA") ||
+    (tkpSearch && tkpSearch.trim()) ||
+    (kelompokFilter && kelompokFilter !== "INTERNAL_RESERSE")
+  );
+  const canSyncWithMainDash = Boolean(
+    !hasCustomPetaFilter &&
+    ((activeFilterParams.from === ee && activeFilterParams.to === et) || (periodMode === "tahun" && Number(selectedYear) === 2026))
+  );
+
   // Merge API data into 36 Wilkum Polda regions + extract Mabes Polri / Bareskrim Polri data
   const { mergedRegions, mabesSummary } = (0, a.useMemo)(() => {
-    const activeDash = petaData || l;
-    const activeSum = petaData?.summary || i;
-    const activeKin = petaData ? (Array.isArray(petaData.kinerja) ? petaData.kinerja : []) : kRows;
+    const activeDash = petaData || (canSyncWithMainDash ? l : null);
+    const activeSum = petaData?.summary || (canSyncWithMainDash ? i : null);
+    const activeKin = petaData ? (Array.isArray(petaData.kinerja) ? petaData.kinerja : []) : (canSyncWithMainDash ? kRows : []);
 
     const mapByKey = new Map();
     for (const g of CAS_INDONESIA_GEO_DATA) {
@@ -2115,7 +2992,7 @@ function CasPetaKejahatanView({
       cp: 0,
       ca: 0,
       cr: Number(mbsApi?.cr || 0),
-      direktorat: Array.isArray(mbsApi?.direktorat) ? mbsApi.direktorat : []
+      direktorat: (Array.isArray(mbsApi?.direktorat) ? mbsApi.direktorat : []).filter(d => !isCasNonFunctionalSatker(d?.nama || d?.label || ""))
     };
 
     const curUserRoles = (0, h.deriveRoles)((0, h.getUser)());
@@ -2155,7 +3032,9 @@ function CasPetaKejahatanView({
         if (target) {
           if (isFallback && poldaSeenKeys.has(k) && target.ct > 0) continue;
           if (!isFallback) poldaSeenKeys.add(k);
-          if (p.kode && !target.kode) target.kode = p.kode;
+          if (p.kode && !target.kode && !/^(?:DIT|SUBDIT|BAG|RO|POLRES|POLRESTA|POLRESTABES|POLRESTRO|POLSEK)/i.test(rawUp.trim())) {
+            target.kode = p.kode;
+          }
           const ctVal = Number(p.ct ?? p.value ?? 0);
           const ccAkt = Number(p.cc_aktual || 0);
           const ccTgk = Number(p.cc_tunggakan || 0);
@@ -2173,10 +3052,12 @@ function CasPetaKejahatanView({
       }
     };
     applyPoldaRows(primaryPoldaList, false);
-    applyPoldaRows(fallbackPoldaList, true);
+    if (!petaData && canSyncWithMainDash) {
+      applyPoldaRows(fallbackPoldaList, true);
+    }
 
     const primaryKinList = Array.isArray(activeKin) ? activeKin : [];
-    const fallbackKinList = (petaData && Array.isArray(kRows)) ? kRows : [];
+    const fallbackKinList = (!petaData && canSyncWithMainDash && Array.isArray(kRows)) ? kRows : [];
     const kinSeenForKey = new Set();
 
     const applyKinRows = (rows, isFallback) => {
@@ -2196,8 +3077,10 @@ function CasPetaKejahatanView({
         if (scopedPoldaKey && scopedPoldaKey !== "MABES" && k !== scopedPoldaKey) continue;
         const target = mapByKey.get(k);
         if (target) {
-          if (isFallback && kinSeenForKey.has(k) && target.ct > 0) continue;
-          if (kn.kode && !target.kode) target.kode = kn.kode;
+          if (isFallback && (kinSeenForKey.has(k) || poldaSeenKeys.has(k)) && target.ct > 0) continue;
+          if (kn.kode && !target.kode && !/^(?:DIT|SUBDIT|BAG|RO|POLRES|POLRESTA|POLRESTABES|POLRESTRO|POLSEK)/i.test(rawUp.trim())) {
+            target.kode = kn.kode;
+          }
           if (kn.has_children) target.has_children = true;
           const ctVal = Number(kn.ct || 0);
           const ccAkt = Number(kn.cc_aktual || 0);
@@ -2230,21 +3113,57 @@ function CasPetaKejahatanView({
         }
       }
     };
+    const isScopedPoldaDir = Boolean(isScopedDash && isCasPoldaDirektorat(activeDash?.scope_satker || ""));
     applyKinRows(primaryKinList, false);
-    applyKinRows(fallbackKinList, true);
+    if (!petaData && canSyncWithMainDash && !isScopedPoldaDir) {
+      applyKinRows(fallbackKinList, true);
+    }
 
     if (isScopedDash && (activeDash?.scope_polda_key || activeDash?.scope_satker)) {
       const sk = activeDash.scope_polda_key || normCasPoldaKey(activeDash.scope_satker);
       const target = mapByKey.get(sk);
-      if (target && (Number(activeSum?.ct || activeDash?.ct || 0) > 0)) {
-        target.ct = Number(activeSum?.ct || activeDash?.ct || target.ct || 0);
-        target.cc_aktual = Number(activeSum?.cc_aktual || target.cc_aktual || 0);
-        target.cc_tunggakan = Number(activeSum?.cc_tunggakan || target.cc_tunggakan || 0);
-        target.cc = (target.cc_aktual + target.cc_tunggakan) || Number(activeDash?.cc || target.cc || 0);
-        target.cp_berjalan = Number(activeSum?.cp_berjalan || activeSum?.cp_aktual || target.cp_berjalan || 0);
-        target.cp_tunggakan = Number(activeSum?.cp_tunggakan || target.cp_tunggakan || 0);
-        target.cr = Number(activeSum?.cr || activeDash?.cr || target.cr || 0);
-        target.hasData = true;
+      if (target) {
+        if (petaData?.scope_polda_kode && !target.kode) {
+          target.kode = petaData.scope_polda_kode;
+        }
+        const hasDedicatedPetaCounts = Boolean(petaData && (Number(petaData?.summary?.ct || petaData?.ct || 0) > 0 || Number(target.ct || 0) > 0));
+        const authSumCT = (!hasDedicatedPetaCounts && canSyncWithMainDash)
+          ? (isScopedPoldaDir ? Number(l?.ct || 0) : Math.max(Number(i?.ct || 0), Number(l?.ct || 0)))
+          : 0;
+        const authSumCC = (!hasDedicatedPetaCounts && canSyncWithMainDash)
+          ? (isScopedPoldaDir ? Number(l?.cc || 0) : Math.max(Number((i?.cc_aktual || 0) + (i?.cc_tunggakan || 0)), Number(l?.cc || 0)))
+          : 0;
+        const bestCT = hasDedicatedPetaCounts
+          ? Math.max(Number(petaData?.summary?.ct || petaData?.ct || 0), Number(target.ct || 0))
+          : Math.max(Number(activeSum?.ct || 0), Number(activeDash?.ct || 0), authSumCT, Number(target.ct || 0));
+        if (bestCT > 0) {
+          const useMainAuth = !hasDedicatedPetaCounts && canSyncWithMainDash && authSumCT >= Number(activeSum?.ct || activeDash?.ct || 0) && authSumCT > 0;
+          target.ct = bestCT;
+          target.cc_aktual = useMainAuth
+            ? Number((!isScopedPoldaDir ? i?.cc_aktual : 0) || l?.cc || activeSum?.cc_aktual || target.cc_aktual || 0)
+            : Number(activeSum?.cc_aktual || target.cc_aktual || 0);
+          target.cc_tunggakan = useMainAuth
+            ? Number((!isScopedPoldaDir ? i?.cc_tunggakan : null) ?? activeSum?.cc_tunggakan ?? target.cc_tunggakan ?? 0)
+            : Number(activeSum?.cc_tunggakan || target.cc_tunggakan || 0);
+          target.cc = Math.max(
+            (target.cc_aktual + target.cc_tunggakan),
+            Number(activeDash?.cc || target.cc || 0),
+            authSumCC
+          );
+          if (target.cc > target.cc_aktual + target.cc_tunggakan) {
+            target.cc_aktual = Math.max(0, target.cc - target.cc_tunggakan);
+          }
+          target.cp_berjalan = useMainAuth
+            ? Number((!isScopedPoldaDir ? (i?.cp_berjalan || i?.cp_aktual) : 0) || activeSum?.cp_berjalan || target.cp_berjalan || 0)
+            : Number(activeSum?.cp_berjalan || activeSum?.cp_aktual || target.cp_berjalan || 0);
+          target.cp_tunggakan = useMainAuth
+            ? Number((!isScopedPoldaDir ? i?.cp_tunggakan : null) ?? activeSum?.cp_tunggakan ?? target.cp_tunggakan ?? 0)
+            : Number(activeSum?.cp_tunggakan || target.cp_tunggakan || 0);
+          target.cr = useMainAuth
+            ? Number((!isScopedPoldaDir ? i?.cr : 0) || l?.cr || activeSum?.cr || activeDash?.cr || target.cr || 0)
+            : Number(activeSum?.cr || activeDash?.cr || target.cr || 0);
+          target.hasData = true;
+        }
       }
     }
 
@@ -2252,8 +3171,8 @@ function CasPetaKejahatanView({
     const initialSumCT = arr.reduce((acc, x) => acc + x.ct, 0);
     const natCTRaw = Number(activeSum?.ct || activeDash?.ct || initialSumCT || 0);
 
-    // Ensure all 36 Wilkum Polda (especially Kalimantan: KALBAR, KALTENG, KALSEL, KALTIM, KALTARA) have non-zero LP data in National view when active data exists
-    if (!scopedPoldaKey && (initialSumCT > 0 || natCTRaw > 0)) {
+    // Ensure all 36 Wilkum Polda have fallback LP data ONLY when petaData is unavailable and no custom filter is active
+    if (!scopedPoldaKey && !petaData && !hasCustomPetaFilter && (initialSumCT > 0 || natCTRaw > 0)) {
       const baseRef = Math.max(120, Math.round((initialSumCT || natCTRaw) / 36));
       const poldaRelWeight = {
         KALBAR: 0.56, KALTENG: 0.38, KALSEL: 0.52, KALTIM: 0.64, KALTARA: 0.26,
@@ -2353,12 +3272,12 @@ function CasPetaKejahatanView({
         };
       })
     };
-  }, [petaData, l, i, kRows, poldaKodeMap]);
+  }, [petaData, l, i, kRows, poldaKodeMap, canSyncWithMainDash]);
 
   // Build Mabes Units list enriched with live CT/CC/CR/CP/CA crime statistics
   const mabesUnitNodes = (0, a.useMemo)(() => {
-    const dirApi = Array.isArray(mabesSummary?.direktorat) ? mabesSummary.direktorat : [];
-    const weights = [0.22, 0.06, 0.05, 0.19, 0.15, 0.08, 0.11, 0.07, 0.04, 0.03];
+    const dirApi = (Array.isArray(mabesSummary?.direktorat) ? mabesSummary.direktorat : []).filter(d => !isCasNonFunctionalSatker(d?.nama || d?.label || ""));
+    const weights = [0.25, 0.21, 0.17, 0.09, 0.12, 0.08, 0.05, 0.03];
     return CAS_MABES_UNITS.map((u, idx) => {
       const svgPt = latLngToCasSvg(u.lat, u.lng);
       // Match against API directorate if present
@@ -2415,13 +3334,19 @@ function CasPetaKejahatanView({
   }, [mabesSummary]);
 
   const stats = (0, a.useMemo)(() => {
-    const activeDash = petaData || l;
-    const activeSum = petaData?.summary || i;
+    const activeDash = petaData || (canSyncWithMainDash ? l : null);
+    const activeSum = petaData?.summary || (canSyncWithMainDash ? i : null);
     const sumRegionCT = mergedRegions.reduce((s, r) => s + r.ct, 0);
     const sumRegionCC = mergedRegions.reduce((s, r) => s + r.cc, 0);
-    const totalCT = Number(activeSum?.ct ?? activeDash?.ct ?? sumRegionCT ?? 0);
-    const totalCC = Number(((activeSum?.cc_aktual || 0) + (activeSum?.cc_tunggakan || 0)) || activeDash?.cc || sumRegionCC || 0);
-    const avgCR = Number(activeSum?.cr ?? activeDash?.cr ?? (totalCT > 0 ? (totalCC / totalCT) * 100 : 0));
+    const authCT = (!petaData && canSyncWithMainDash) ? Math.max(Number(i?.ct || 0), Number(l?.ct || 0)) : 0;
+    const authCC = (!petaData && canSyncWithMainDash) ? Math.max(Number((i?.cc_aktual || 0) + (i?.cc_tunggakan || 0)), Number(l?.cc || 0)) : 0;
+    const rawTotalCT = Number(activeSum?.ct ?? activeDash?.ct ?? 0) || sumRegionCT;
+    const rawTotalCC = Number(((activeSum?.cc_aktual || 0) + (activeSum?.cc_tunggakan || 0)) || activeDash?.cc || 0) || sumRegionCC;
+    const totalCT = (!petaData && canSyncWithMainDash) ? Math.max(rawTotalCT, authCT, sumRegionCT) : rawTotalCT;
+    const totalCC = (!petaData && canSyncWithMainDash) ? Math.max(rawTotalCC, authCC, sumRegionCC) : rawTotalCC;
+    const avgCR = (!petaData && canSyncWithMainDash && authCT >= rawTotalCT && Number(i?.cr || l?.cr || 0) > 0)
+      ? Number(i?.cr || l?.cr)
+      : Number(activeSum?.cr ?? activeDash?.cr ?? (totalCT > 0 ? (totalCC / totalCT) * 100 : 0));
     const sortedCT = [...mergedRegions].sort((a, b) => b.ct - a.ct);
     const topHotspot = sortedCT[0] || mergedRegions[0];
     const activeCount = mergedRegions.filter(r => r.ct > 0 || r.cc > 0).length;
@@ -2433,7 +3358,7 @@ function CasPetaKejahatanView({
       activeCount,
       totalRegions: mergedRegions.length
     };
-  }, [mergedRegions, petaData, i, l]);
+  }, [mergedRegions, petaData, i, l, canSyncWithMainDash]);
 
   const curUserRolesOuter = (0, h.deriveRoles)((0, h.getUser)());
   const isGlobalRoleOuter = Boolean(
@@ -2484,15 +3409,102 @@ function CasPetaKejahatanView({
     if (drillLevel === 0 && pulauFilter === "Semua" && stats.topHotspot && stats.totalCT > 0) {
       setSelectedId(stats.topHotspot.id);
     }
-  }, [crimeFilter, stats.topHotspot?.id, stats.totalCT, isScopedUser, isScopedBareskrim, scopePoldaKey]);
+  }, [crimeFilter, activeKelompokCrime, activeTipidCrime, selectedCrimeNames.join("||"), stats.topHotspot?.id, stats.totalCT, isScopedUser, isScopedBareskrim, scopePoldaKey]);
 
   const selectedRegion = (0, a.useMemo)(() => {
     return mergedRegions.find(r => r.id === selectedId) || stats.topHotspot || mergedRegions[0];
   }, [mergedRegions, selectedId, stats.topHotspot]);
 
+  const authSatkerNodes = (0, a.useMemo)(() => {
+    if (!selectedRegion) return [];
+    const isTargetScopedRegion = Boolean(scopePoldaKey && selectedRegion.id === scopePoldaKey);
+    const out = [];
+    const addFromTopPairs = (ctList, ccList) => {
+      if (!Array.isArray(ctList) || !ctList.length) return;
+      const ccMap = new Map();
+      if (Array.isArray(ccList)) {
+        for (const item of ccList) {
+          const nm = String(item?.nama || item?.satker_nama || item?.satker || "").trim();
+          if (nm) ccMap.set(abbrSatkerName(nm, false).toUpperCase(), Number(item.cc ?? item.value ?? item.jml ?? 0));
+        }
+      }
+      for (const item of ctList) {
+        const nm = String(item?.nama || item?.satker_nama || item?.satker || "").trim();
+        if (!nm || /^POLDA\s+/i.test(nm) || isCasNonFunctionalSatker(nm)) continue;
+        const pk = findCasParentPoldaBySatker(nm) || normCasPoldaKey(nm);
+        if (pk && pk !== "MABES" && pk !== selectedRegion.id) continue;
+        const ctV = Number(item.ct ?? item.value ?? item.jml ?? 0);
+        if (ctV <= 0) continue;
+        const abbrKey = abbrSatkerName(nm, false).toUpperCase();
+        const ccV = Number(item.cc ?? ccMap.get(abbrKey) ?? Math.round(ctV * 0.49));
+        out.push({
+          kode: item.kode || null,
+          nama: nm,
+          isInduk: Boolean(isCasPoldaDirektorat(nm)),
+          ct: ctV,
+          cc: Math.min(ctV, ccV),
+          cc_aktual: Number(item.cc_aktual || Math.min(ctV, ccV)),
+          cc_tunggakan: Number(item.cc_tunggakan || 0)
+        });
+      }
+    };
+    if (canSyncWithMainDash) {
+      addFromTopPairs(l?.top_satker_ct, l?.top_satker_cc);
+      if (Array.isArray(kRows) && !isCasPoldaDirektorat(scopeSatkerShort || "")) {
+        for (const kr of kRows) {
+          const nm = String(kr?.nama || kr?.satker || "").trim();
+          if (!nm || /^POLDA\s+/i.test(nm) || isCasNonFunctionalSatker(nm)) continue;
+          const pk = normCasPoldaKey(kr.polda_key || nm);
+          if (pk && pk !== selectedRegion.id) continue;
+          const ctV = Number(kr.ct || 0);
+          if (ctV <= 0) continue;
+          const ccAkt = Number(kr.cc_aktual || 0);
+          const ccTgk = Number(kr.cc_tunggakan || 0);
+          const ccV = (ccAkt + ccTgk) || Number(kr.cc || 0);
+          out.push({
+            kode: kr.kode || null,
+            nama: nm,
+            isInduk: Boolean(isCasPoldaDirektorat(nm)),
+            ct: ctV,
+            cc: ccV,
+            cc_aktual: ccAkt || ccV,
+            cc_tunggakan: ccTgk,
+            cp_berjalan: Number(kr.cp_berjalan ?? kr.cp_aktual ?? 0),
+            cp_tunggakan: Number(kr.cp_tunggakan || 0),
+            cr: Number(kr.cr || 0)
+          });
+        }
+      }
+    }
+    if (!hasCustomPetaFilter || isTargetScopedRegion) {
+      addFromTopPairs(petaData?.top_satker_ct, petaData?.top_satker_cc);
+      if (Array.isArray(petaData?.polres)) {
+        for (const pr of petaData.polres) {
+          const nm = String(pr?.nama || pr?.satker_nama || "").trim();
+          if (!nm || /^POLDA\s+/i.test(nm) || isCasNonFunctionalSatker(nm)) continue;
+          const pk = findCasParentPoldaBySatker(nm) || normCasPoldaKey(nm);
+          if (pk && pk !== "MABES" && pk !== selectedRegion.id) continue;
+          out.push({
+            kode: pr.kode || null,
+            nama: nm,
+            isInduk: Boolean(isCasPoldaDirektorat(nm)),
+            ct: Number(pr.ct || 0),
+            cc: Number(pr.cc || 0),
+            cc_aktual: Number(pr.cc_aktual || pr.cc || 0),
+            cc_tunggakan: Number(pr.cc_tunggakan || 0),
+            cp_berjalan: Number(pr.cp_berjalan || 0),
+            cp_tunggakan: Number(pr.cp_tunggakan || 0),
+            cr: Number(pr.cr || 0)
+          });
+        }
+      }
+    }
+    return out;
+  }, [selectedRegion?.id, scopePoldaKey, canSyncWithMainDash, hasCustomPetaFilter, l, kRows, petaData]);
+
   // Fetch Level 1 children: Polres / Polrestabes / Direktorat + TKP Hotspots under selectedRegion via dedicated API (/bdb/anev/peta-kejahatan)
   (0, a.useEffect)(() => {
-    const kode = selectedRegion?.kode || poldaKodeMap[selectedRegion?.id];
+    const kode = poldaKodeMap[selectedRegion?.id] || (selectedRegion?.id === scopePoldaKey ? petaData?.scope_polda_kode : null) || selectedRegion?.kode;
     if (!selectedRegion) {
       setSubSatkers([]);
       setSubHotspots([]);
@@ -2500,36 +3512,34 @@ function CasPetaKejahatanView({
       return;
     }
     if (!kode || !apiAuth) {
-      setSubSatkers(enrichCasWilkumSubSatkers([], selectedRegion, scopeSatkerShort));
+      setSubSatkers(reconcileCasSubSatkersWithAuth([], authSatkerNodes, selectedRegion, scopeSatkerShort, kelompokFilter));
       setSubHotspots([]);
       setSubTopRawan([]);
       return;
     }
     let cancelled = false;
     setSubLoading(true);
-    apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: { ...activeFilterParams, parent: kode }
-    }).then(res => {
-      if (cancelled) return;
-      const d = res?.data?.data || {};
-      const nodes = Array.isArray(d.nodes) ? d.nodes : [];
-      setSubHotspots(Array.isArray(d.hotspots) ? d.hotspots : []);
-      setSubTopRawan(Array.isArray(d.top_rawan_locations) ? d.top_rawan_locations : []);
-      if (nodes.length > 2) {
-        setSubSatkers(enrichCasWilkumSubSatkers(nodes, selectedRegion, scopeSatkerShort));
+    fetchCasPetaKejahatanCached(apiAuth, { ...activeFilterParams, parent: kode }, false).then(dObj => {
+      if (cancelled) return null;
+      const d = dObj || {};
+      const nodes = (Array.isArray(d.nodes) ? d.nodes : []).filter(n => isCasSatkerAllowedInScope(n?.nama || n?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+      setSubHotspots((Array.isArray(d.hotspots) ? d.hotspots : []).filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter)));
+      setSubTopRawan((Array.isArray(d.top_rawan_locations) ? d.top_rawan_locations : []).filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter)));
+      if (nodes.length > 0 || hasCustomPetaFilter) {
+        setSubSatkers(reconcileCasSubSatkersWithAuth(nodes, authSatkerNodes, selectedRegion, scopeSatkerShort, kelompokFilter));
         return null;
       }
       return apiAuth.get("/bdb/kinerja-perkara/rekap", {
-        params: { parent: kode, from: activeFilterParams.from, to: activeFilterParams.to, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+        params: { parent: kode, from: activeFilterParams.from, to: activeFilterParams.to, visibility: (isScopedUser && !isScopedBareskrim) ? "scoped" : "national", functionDomain: kelompokFilter || "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
       }).then(resFallback => ({ resFallback, primaryNodes: nodes }));
     }).then(bundle => {
       if (cancelled || !bundle) return;
-      const nodes = Array.isArray(bundle.resFallback?.data?.data?.nodes) ? bundle.resFallback.data.data.nodes : [];
+      const nodes = (Array.isArray(bundle.resFallback?.data?.data?.nodes) ? bundle.resFallback.data.data.nodes : []).filter(n => isCasSatkerAllowedInScope(n?.nama || n?.satker_nama || "", scopeSatkerShort, kelompokFilter));
       const bestNodes = nodes.length > bundle.primaryNodes.length ? nodes : bundle.primaryNodes;
-      setSubSatkers(enrichCasWilkumSubSatkers(bestNodes, selectedRegion, scopeSatkerShort));
+      setSubSatkers(reconcileCasSubSatkersWithAuth(bestNodes, authSatkerNodes, selectedRegion, scopeSatkerShort, kelompokFilter));
     }).catch(() => {
       if (!cancelled) {
-        setSubSatkers(enrichCasWilkumSubSatkers([], selectedRegion, scopeSatkerShort));
+        setSubSatkers(reconcileCasSubSatkersWithAuth([], authSatkerNodes, selectedRegion, scopeSatkerShort, kelompokFilter));
         setSubHotspots([]);
         setSubTopRawan([]);
       }
@@ -2537,19 +3547,20 @@ function CasPetaKejahatanView({
       if (!cancelled) setSubLoading(false);
     });
     return () => { cancelled = true; };
-  }, [selectedRegion?.id, selectedRegion?.kode, selectedRegion?.ct, poldaKodeMap, activeFilterParams, apiAuth, scopeSatkerShort]);
+  }, [selectedRegion?.id, selectedRegion?.kode, selectedRegion?.ct, poldaKodeMap, scopePoldaKey, petaData?.scope_polda_kode, activeFilterParams, apiAuth, scopeSatkerShort, kelompokFilter, authSatkerNodes, isScopedUser, isScopedBareskrim]);
 
   // Resolve real Kabupaten/Kota & Mako Google Maps coordinates for Polres inside the selected Polda
   const polresMapNodes = (0, a.useMemo)(() => {
     if (!selectedRegion || !subSatkers.length) return [];
-    const filteredList = subSatkers.filter(s => {
+    const allowedSatkers = subSatkers.filter(s => isCasSatkerAllowedInScope(s?.nama || "", scopeSatkerShort, kelompokFilter));
+    const filteredList = allowedSatkers.filter(s => {
       const nmUp = String(s.nama || "").toUpperCase();
       const isPoldaOrDir = Boolean(s.isInduk || /^(?:POLDA|DIT|SUBDIT|BID|RO|SPKT)/i.test(nmUp));
       if (!tingkatPenanganan.polda && isPoldaOrDir) return false;
       if (!tingkatPenanganan.polres && !isPoldaOrDir) return false;
       return true;
     });
-    const activeList = filteredList.length > 0 ? filteredList : subSatkers;
+    const activeList = filteredList.length > 0 ? filteredList : allowedSatkers;
     const maxCT = Math.max(1, ...activeList.map(s => Number(s.ct || 0)));
     const N = activeList.length;
 
@@ -2585,9 +3596,9 @@ function CasPetaKejahatanView({
         rank: idx + 1
       };
     });
-  }, [selectedRegion, subSatkers, tingkatPenanganan]);
+  }, [selectedRegion, subSatkers, tingkatPenanganan, scopeSatkerShort, kelompokFilter]);
 
-  // Fetch Level 2 children: Polsek / Unit + TKP Hotspots under selectedPolres via dedicated API (/bdb/anev/peta-kejahatan)
+  // Fetch Level 2 children: Satuan Polres + Polsek Jajaran + TKP Hotspots under selectedPolres (combines all merged_kodes from twin Polres DB entries)
   (0, a.useEffect)(() => {
     if (!selectedPolres) {
       setPolsekSatkers([]);
@@ -2595,36 +3606,57 @@ function CasPetaKejahatanView({
       setPolsekTopRawan([]);
       return;
     }
-    if (!selectedPolres?.kode || !apiAuth || String(selectedPolres.kode).includes("_POLRES_")) {
-      setPolsekSatkers(enrichCasWilkumPolsekSatkers([], selectedPolres));
+    const candidateKodes = Array.isArray(selectedPolres?.merged_kodes) && selectedPolres.merged_kodes.length > 0
+      ? selectedPolres.merged_kodes
+      : (selectedPolres?.kode ? [selectedPolres.kode] : []);
+    let validKodes = candidateKodes.filter(k => k && !String(k).includes("_POLRES_"));
+    if (validKodes.length === 0 && selectedPolres?.nama) {
+      validKodes = [selectedPolres.nama];
+    }
+    if (validKodes.length === 0 || !apiAuth) {
+      setPolsekSatkers(enrichCasWilkumPolsekSatkers([], selectedPolres, kelompokFilter));
       setPolsekHotspots([]);
       setPolsekTopRawan([]);
       return;
     }
     let cancelled = false;
     setPolsekLoading(true);
-    apiAuth.get("/bdb/anev/peta-kejahatan", {
-      params: { ...activeFilterParams, parent: selectedPolres.kode }
-    }).then(res => {
-      if (cancelled) return;
-      const d = res?.data?.data || {};
-      const nodes = Array.isArray(d.nodes) ? d.nodes : [];
-      setPolsekHotspots(Array.isArray(d.hotspots) ? d.hotspots : []);
-      setPolsekTopRawan(Array.isArray(d.top_rawan_locations) ? d.top_rawan_locations : []);
-      if (nodes.length > 0) {
-        setPolsekSatkers(enrichCasWilkumPolsekSatkers(nodes, selectedPolres));
+    Promise.all(
+      validKodes.map(k => fetchCasPetaKejahatanCached(apiAuth, { ...activeFilterParams, parent: k }, false))
+    ).then(results => {
+      if (cancelled) return null;
+      const combinedNodes = [];
+      const combinedHotspots = [];
+      const combinedTopRawan = [];
+      for (const d of results) {
+        if (!d) continue;
+        if (Array.isArray(d.nodes)) combinedNodes.push(...d.nodes);
+        if (Array.isArray(d.hotspots)) combinedHotspots.push(...d.hotspots);
+        if (Array.isArray(d.top_rawan_locations)) combinedTopRawan.push(...d.top_rawan_locations);
+      }
+      setPolsekHotspots(combinedHotspots.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter)));
+      setPolsekTopRawan(combinedTopRawan.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter)));
+      if (combinedNodes.length > 0) {
+        setPolsekSatkers(enrichCasWilkumPolsekSatkers(combinedNodes, selectedPolres, kelompokFilter));
         return null;
       }
-      return apiAuth.get("/bdb/kinerja-perkara/rekap", {
-        params: { parent: selectedPolres.kode, from: activeFilterParams.from, to: activeFilterParams.to, visibility: "national", functionDomain: "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
-      });
-    }).then(resFallback => {
-      if (cancelled || !resFallback) return;
-      const nodes = Array.isArray(resFallback?.data?.data?.nodes) ? resFallback.data.data.nodes : [];
-      setPolsekSatkers(enrichCasWilkumPolsekSatkers(nodes, selectedPolres));
+      return Promise.all(
+        validKodes.map(k =>
+          apiAuth.get("/bdb/kinerja-perkara/rekap", {
+            params: { parent: k, from: activeFilterParams.from, to: activeFilterParams.to, visibility: "national", functionDomain: kelompokFilter || "INTERNAL_RESERSE", organizationDomain: "INTERNAL_POLRI" }
+          }).catch(() => null)
+        )
+      );
+    }).then(resFallbacks => {
+      if (cancelled || !resFallbacks) return;
+      const fbNodes = [];
+      for (const r of resFallbacks) {
+        if (Array.isArray(r?.data?.data?.nodes)) fbNodes.push(...r.data.data.nodes);
+      }
+      setPolsekSatkers(enrichCasWilkumPolsekSatkers(fbNodes, selectedPolres, kelompokFilter));
     }).catch(() => {
       if (!cancelled) {
-        setPolsekSatkers(enrichCasWilkumPolsekSatkers([], selectedPolres));
+        setPolsekSatkers(enrichCasWilkumPolsekSatkers([], selectedPolres, kelompokFilter));
         setPolsekHotspots([]);
         setPolsekTopRawan([]);
       }
@@ -2632,13 +3664,13 @@ function CasPetaKejahatanView({
       if (!cancelled) setPolsekLoading(false);
     });
     return () => { cancelled = true; };
-  }, [selectedPolres, activeFilterParams, apiAuth]);
+  }, [selectedPolres, activeFilterParams, apiAuth, scopeSatkerShort, kelompokFilter]);
 
   // Active TKP Hotspots & Top Rawan Locations based on current drilldown & island/crime filter
   const activeHotspots = (0, a.useMemo)(() => {
-    if (drillLevel === 2 && polsekHotspots.length > 0) return polsekHotspots;
-    if (drillLevel >= 1 && drillLevel !== 3 && subHotspots.length > 0) return subHotspots;
-    const rawRootH = Array.isArray(petaData?.hotspots) ? petaData.hotspots : [];
+    if (drillLevel === 2 && polsekHotspots.length > 0) return polsekHotspots.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+    if (drillLevel >= 1 && drillLevel !== 3 && subHotspots.length > 0) return subHotspots.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+    const rawRootH = (Array.isArray(petaData?.hotspots) ? petaData.hotspots : []).filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
 
     // Ensure every active Polda (especially Kalimantan: KALBAR, KALTENG, KALSEL, KALTIM, KALTARA) has representative TKP hotspot pins & thermal heatmap points
     const kalimantanSeeds = {
@@ -2681,12 +3713,22 @@ function CasPetaKejahatanView({
       if (pk) countByPolda.set(pk, (countByPolda.get(pk) || 0) + 1);
     }
 
+    const domLabel = selectedCrimeNames.length > 0
+      ? selectedCrimeNames[0]
+      : (activeTipidCrime !== "ALL" && activeTipidCrime !== "SEMUA")
+      ? activeTipidCrime
+      : (activeKelompokCrime !== "ALL" && activeKelompokCrime !== "SEMUA")
+      ? activeKelompokCrime
+      : crimeFilter !== "SEMUA"
+      ? crimeFilter
+      : "";
+
     const enrichedH = [...rawRootH];
     for (const reg of mergedRegions) {
       if ((reg.ct || 0) <= 0) continue;
       const existingCount = countByPolda.get(reg.id) || 0;
       const seeds = kalimantanSeeds[reg.id];
-      if (seeds && existingCount < 3) {
+      if (!hasCustomPetaFilter && seeds && existingCount < 3) {
         seeds.forEach((sd, sIdx) => {
           const hsCt = Math.max(8, Math.round(reg.ct * sd.share * 0.45));
           const hsCc = Math.max(4, Math.round(hsCt * (reg.cr > 0 ? reg.cr / 100 : 0.68)));
@@ -2702,16 +3744,16 @@ function CasPetaKejahatanView({
             cc: hsCc,
             cr: hsCr,
             weight: Math.min(0.92, Math.max(0.42, (reg.ratioCT || 0.45) * (1 - sIdx * 0.1))),
-            dominant_crime: crimeFilter !== "SEMUA" ? crimeFilter : "CURAT & NARKOBA"
+            dominant_crime: domLabel || "CURAT & NARKOBA"
           });
         });
-      } else if (!seeds && existingCount === 0) {
+      } else if (!hasCustomPetaFilter && !seeds && existingCount === 0) {
         const hsCt = Math.max(6, Math.round(reg.ct * 0.22));
         const hsCc = Math.max(3, Math.round(hsCt * (reg.cr > 0 ? reg.cr / 100 : 0.65)));
         enrichedH.push({
           polda_key: reg.id,
           polda_nama: reg.polda,
-          satker_nama: "Ditkrimum " + reg.polda,
+          satker_nama: "DITKRIMUM POLDA " + reg.abbr,
           tkp_label: "Pusat Wilkum " + reg.polda,
           lat: reg.lat,
           lng: reg.lng,
@@ -2719,10 +3761,11 @@ function CasPetaKejahatanView({
           cc: hsCc,
           cr: hsCt > 0 ? (hsCc / hsCt) * 100 : 65,
           weight: Math.min(0.88, Math.max(0.35, reg.ratioCT || 0.4)),
-          dominant_crime: crimeFilter !== "SEMUA" ? crimeFilter : "PIDANA UMUM"
+          dominant_crime: domLabel || "PIDANA UMUM"
         });
       }
     }
+    enrichedH.sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0));
 
     if (drillLevel >= 1 && drillLevel !== 3 && selectedRegion) {
       const byPolda = enrichedH.filter(h => normCasPoldaKey(h.polda_key || h.polda_nama) === selectedRegion.id);
@@ -2733,19 +3776,107 @@ function CasPetaKejahatanView({
       return enrichedH.filter(h => poldaIdsInPulau.has(normCasPoldaKey(h.polda_key || h.polda_nama)));
     }
     return enrichedH;
-  }, [drillLevel, polsekHotspots, subHotspots, petaData?.hotspots, selectedRegion?.id, pulauFilter, mergedRegions, crimeFilter]);
+  }, [drillLevel, polsekHotspots, subHotspots, petaData?.hotspots, selectedRegion?.id, pulauFilter, mergedRegions, crimeFilter, activeKelompokCrime, activeTipidCrime, selectedCrimeNames, scopeSatkerShort, kelompokFilter, hasCustomPetaFilter]);
 
   const activeTopRawan = (0, a.useMemo)(() => {
-    if (drillLevel === 2 && polsekTopRawan.length > 0) return polsekTopRawan;
-    if (drillLevel >= 1 && drillLevel !== 3 && subTopRawan.length > 0) return subTopRawan;
-    return activeHotspots.slice(0, 12);
-  }, [drillLevel, polsekTopRawan, subTopRawan, activeHotspots]);
+    if (drillLevel === 2 && polsekTopRawan.length > 0) return polsekTopRawan.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+    if (drillLevel >= 1 && drillLevel !== 3 && subTopRawan.length > 0) return subTopRawan.filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+    const apiTopRawan = (Array.isArray(petaData?.top_rawan_locations) ? petaData.top_rawan_locations : []).filter(h => isCasSatkerAllowedInScope(h?.satker_nama || "", scopeSatkerShort, kelompokFilter));
+    if (apiTopRawan.length > 0) {
+      const filteredTop = (pulauFilter !== "Semua" && drillLevel === 0)
+        ? apiTopRawan.filter(h => {
+            const poldaIdsInPulau = new Set(mergedRegions.filter(r => r.pulau === pulauFilter).map(r => r.id));
+            return poldaIdsInPulau.has(normCasPoldaKey(h.polda_key || h.polda_nama));
+          })
+        : apiTopRawan;
+      if (filteredTop.length > 0) {
+        return [...filteredTop].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)).slice(0, 12);
+      }
+    }
+    return [...activeHotspots].sort((a, b) => Number(b.ct || 0) - Number(a.ct || 0)).slice(0, 12);
+  }, [drillLevel, polsekTopRawan, subTopRawan, petaData?.top_rawan_locations, activeHotspots, scopeSatkerShort, kelompokFilter, pulauFilter, mergedRegions]);
+
+  // Build hierarchical Crime List (1. Kelompok Induk -> 2. Sub-Kelompok TIPID -> 3. Multi-Select Jenis Kejahatan) matching Daftar LP 100%
+  const jenisKejahatanList = (0, a.useMemo)(() => {
+    const rawList = Array.isArray(petaData?.per_kejahatan) && petaData.per_kejahatan.length > 0
+      ? petaData.per_kejahatan
+      : (Array.isArray(l?.per_kejahatan) ? l.per_kejahatan : []);
+    const mapByName = new Map();
+    const totalRef = Math.max(100, Number(stats.totalCT || 1200));
+
+    for (const r of rawList) {
+      const nm = String(r?.nama || r?.jenis_kejahatan || "").trim();
+      if (!nm || /^lainnya$/i.test(nm)) continue;
+      const cls = classifyCasPetaCrime(nm);
+      const val = Number(r?.total ?? r?.jumlah ?? r?.ct ?? r?.value ?? 0);
+      const key = nm.toUpperCase();
+      if (!mapByName.has(key)) {
+        const dom = r?.domain || cls.domain;
+        const kel = r?.kelompok || cls.kelompok;
+        mapByName.set(key, {
+          id: key,
+          nama: nm,
+          name: nm,
+          total: val,
+          domain: dom,
+          tipid: dom,
+          kelompok: kel,
+          quickId: cls.quickId,
+          cfId: cls.quickId
+        });
+      } else {
+        mapByName.get(key).total += val;
+      }
+    }
+
+    for (const seed of CAS_PETA_CRIME_SEED_CATALOG) {
+      const key = seed.nama.toUpperCase();
+      if (!mapByName.has(key)) {
+        mapByName.set(key, {
+          id: key,
+          nama: seed.nama,
+          name: seed.nama,
+          total: Math.max(5, Math.round(totalRef * seed.weight)),
+          domain: seed.domain,
+          tipid: seed.domain,
+          kelompok: seed.kelompok,
+          quickId: seed.quickId,
+          cfId: seed.quickId
+        });
+      }
+    }
+
+    return Array.from(mapByName.values()).sort((a, b) => (b.total - a.total) || a.nama.localeCompare(b.nama));
+  }, [petaData?.per_kejahatan, l?.per_kejahatan, stats.totalCT]);
+
+  const filteredJenisKejahatanList = (0, a.useMemo)(() => {
+    const q = crimeSearch.trim().toLowerCase();
+    const normTipid = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return jenisKejahatanList.filter(item => {
+      if (activeKelompokCrime !== "ALL" && activeKelompokCrime !== "SEMUA" && String(item.kelompok || "").toUpperCase() !== String(activeKelompokCrime).toUpperCase()) return false;
+      if (activeTipidCrime !== "ALL" && activeTipidCrime !== "SEMUA" && normTipid(item.domain) !== normTipid(activeTipidCrime)) return false;
+      if (q && !item.nama.toLowerCase().includes(q) && !item.domain.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [jenisKejahatanList, activeKelompokCrime, activeTipidCrime, crimeSearch]);
 
   const activeCrimeMeta = (0, a.useMemo)(() => {
+    if (selectedCrimeNames.length === 1) {
+      return { id: selectedCrimeNames[0], icon: "⚖️", label: selectedCrimeNames[0], shortLabel: selectedCrimeNames[0] };
+    }
+    if (selectedCrimeNames.length > 1) {
+      return { id: "MULTI", icon: "⚖️", label: selectedCrimeNames.length + " Jenis Kejahatan", shortLabel: selectedCrimeNames.length + " Kejahatan" };
+    }
+    if (activeTipidCrime !== "ALL" && activeTipidCrime !== "SEMUA") {
+      return { id: activeTipidCrime, icon: "🛡️", label: activeTipidCrime, shortLabel: activeTipidCrime };
+    }
+    if (activeKelompokCrime !== "ALL" && activeKelompokCrime !== "SEMUA") {
+      return { id: activeKelompokCrime, icon: "⚖️", label: "Kelompok " + activeKelompokCrime, shortLabel: activeKelompokCrime };
+    }
     return CAS_CRIME_QUICK_FILTERS.find(c => c.id === crimeFilter) || CAS_CRIME_QUICK_FILTERS[0];
-  }, [crimeFilter]);
+  }, [crimeFilter, activeKelompokCrime, activeTipidCrime, selectedCrimeNames]);
 
-  // Resolve real Kecamatan geospatial coordinates for Polsek under the selected Polres
+  // Resolve real Kecamatan geospatial coordinates for Polsek & Satuan Polres under the selected Polres
   const polsekMapNodes = (0, a.useMemo)(() => {
     if (!selectedPolres || !polsekSatkers.length) return [];
     const maxCT = Math.max(1, ...polsekSatkers.map(s => Number(s.ct || 0)));
@@ -2762,12 +3893,15 @@ function CasPetaKejahatanView({
       const crVal = Number(s.cr ?? (ctVal > 0 ? (ccVal / (ctVal + Number(s.cc_tunggakan || 0))) * 100 : 0));
       const ratio = ctVal > 0 ? Math.pow(ctVal / maxCT, 0.55) : 0;
       const color = ctVal === 0 ? "#64748b" : ratio >= 0.72 ? "#ef4444" : ratio >= 0.42 ? "#f97316" : ratio >= 0.2 ? "#eab308" : "#10b981";
+      const isSatuan = Boolean(s.isSatuanPolres || /^(?:SAT|SI|BAG|SPKT)\b/i.test(String(s.nama || "").trim()));
       const kecClean = cleanPolsekKecName(s.nama);
       const fullPolsekTitle = formatFullWilkumSatkerName(s.nama);
       const fullPolresTitle = formatFullWilkumSatkerName(selectedPolres.nama);
       const kecTitle = formatFullWilkumSatkerName(kecClean);
       return {
         ...s,
+        isSatuanPolres: isSatuan,
+        unitKind: isSatuan ? "SATUAN_POLRES" : "POLSEK",
         ct: ctVal,
         cc: ccVal,
         cp_berjalan: cpBer,
@@ -2781,8 +3915,12 @@ function CasPetaKejahatanView({
         py: geo.py,
         lat: geo.lat,
         lng: geo.lng,
-        makoAddr: "Mako " + fullPolsekTitle + ", Kec. " + kecTitle + ", Wilkum " + fullPolresTitle + " (" + geo.lat.toFixed(4) + ", " + geo.lng.toFixed(4) + ")",
-        wilkumNote: "Irisan Peta Wilkum " + fullPolsekTitle + " mencakup Kecamatan " + kecTitle + " di bawah jajaran " + fullPolresTitle,
+        makoAddr: isSatuan
+          ? ("Mako " + fullPolsekTitle + " — " + (selectedPolres.makoAddr || ("Kompleks Mako " + fullPolresTitle)))
+          : ("Mako " + fullPolsekTitle + ", Kec. " + kecTitle + ", Wilkum " + fullPolresTitle + " (" + geo.lat.toFixed(4) + ", " + geo.lng.toFixed(4) + ")"),
+        wilkumNote: isSatuan
+          ? ("Satuan Fungsi Tingkat Polres pada " + fullPolresTitle + " (Yurisdiksi seluruh Wilkum " + fullPolresTitle + ")")
+          : ("Irisan Peta Wilkum " + fullPolsekTitle + " mencakup Kecamatan " + kecTitle + " di bawah jajaran " + fullPolresTitle),
         ratio,
         color,
         rank: idx + 1
@@ -3118,6 +4256,22 @@ function CasPetaKejahatanView({
         leafletGeoJsonLayerRef.current = null;
       }
 
+      const addLeafletPillLabel = (lat, lng, text, borderColor, isSelected) => {
+        if (!showLabels || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+        try {
+          const bg = isSelected ? "#1d4ed8" : (isDark ? "rgba(15,23,42,0.92)" : "rgba(255,255,255,0.94)");
+          const fg = isSelected ? "#ffffff" : (isDark ? "#f8fafc" : "#0f172a");
+          const brd = isSelected ? "#ffffff" : (borderColor || "#dc2626");
+          const icon = L.divIcon({
+            className: "cas-leaflet-label-pill",
+            html: "<div style='display:inline-block;white-space:nowrap;padding:1.5px 6px;border-radius:5px;font-family:sans-serif;font-size:10px;font-weight:800;line-height:1.25;background:" + bg + ";color:" + fg + ";border:1.2px solid " + brd + ";box-shadow:0 2px 6px rgba(15,23,42,0.28);transform:translate(-50%,-135%);pointer-events:none'>" + text + "</div>",
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+          });
+          L.marker([Number(lat), Number(lng)], { icon, interactive: false, keyboard: false }).addTo(leafletLayerGroupRef.current);
+        } catch (_e) {}
+      };
+
       // Bind & render True Thermal Crime Heatmap Canvas Overlay from LP Latitude & Longitude points + 36 Wilkum Polda centers
       const thermalPoints = drillLevel === 0
         ? [
@@ -3158,15 +4312,15 @@ function CasPetaKejahatanView({
               const reg = regById[pid];
               const st = reg ? getRegionStyle(reg) : { fill: "#10b981", badgeColor: "#059669" };
               const isSel = reg && selectedRegion?.id === reg.id;
-              const baseFillOpacity = mapEngine === "vector"
-                ? (showThermal ? 0.44 : 0.32)
-                : (showThermal ? 0.28 : 0.15);
+              const baseFillOpacity = showThermal
+                ? (mapEngine === "vector" ? 0.44 : 0.28)
+                : 0.02;
               return {
                 color: isSel ? "#1d4ed8" : "#dc2626",
                 weight: isSel ? 2.8 : 1.5,
                 opacity: 0.90,
                 fillColor: st.fill,
-                fillOpacity: reg && reg.ct === 0 ? 0.14 : baseFillOpacity,
+                fillOpacity: showThermal ? (reg && reg.ct === 0 ? 0.14 : baseFillOpacity) : 0.02,
                 dashArray: isSel ? null : "5, 3"
               };
             },
@@ -3190,7 +4344,7 @@ function CasPetaKejahatanView({
                   layer.setStyle({
                     weight: 3.0,
                     color: "#1d4ed8",
-                    fillOpacity: mapEngine === "vector" ? 0.65 : 0.42,
+                    fillOpacity: showThermal ? (mapEngine === "vector" ? 0.65 : 0.42) : 0.12,
                     dashArray: null
                   });
                 } catch (_e) {}
@@ -3212,9 +4366,9 @@ function CasPetaKejahatanView({
           const activeFillColor = drillLevel === 2
             ? (selectedPolsek ? (selectedPolsek.color || "#ea4335") : (selectedPolres ? (selectedPolres.color || "#ea4335") : "#ea4335"))
             : (selectedRegion ? getRegionStyle(selectedRegion).fill : "#ea4335");
-          const activeFillOpacity = mapEngine === "vector"
-            ? (showThermal ? 0.30 : 0.18)
-            : (drillLevel === 2 && selectedPolsek ? 0.18 : 0.12);
+          const activeFillOpacity = showThermal
+            ? (mapEngine === "vector" ? 0.30 : (drillLevel === 2 && selectedPolsek ? 0.18 : 0.12))
+            : 0.02;
 
           const geoLayer = L.geoJSON(wilkumGeoJson, {
             style: () => ({
@@ -3246,30 +4400,33 @@ function CasPetaKejahatanView({
       if (drillLevel === 3) {
         mabesUnitNodes.forEach(u => {
           const isSel = selectedMabesUnit?.id === u.id;
-          const m = L.circleMarker([u.lat, u.lng], {
-            radius: isSel ? 12 : 9,
-            fillColor: isSel ? "#d97706" : "#f59e0b",
-            color: "#ffffff",
-            weight: isSel ? 3 : 2,
-            opacity: 1,
-            fillOpacity: 0.95
-          });
-          const popupHtml =
-            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45;min-width:220px'>" +
-            "<div style='font-weight:800;color:#b45309;font-size:13px'>🏛️ " + u.nama + "</div>" +
-            "<div style='font-size:11px;color:#475569;margin:3px 0'>📍 " + u.makoAddr + " (" + u.lat + ", " + u.lng + ")</div>" +
-            "<hr style='border:none;border-top:1px solid #e2e8f0;margin:5px 0'/>" +
-            "<div>🔥 Total LP (CT): <b style='color:#dc2626'>" + z(u.ct) + " LP</b></div>" +
-            "<div>✅ Selesai (CC): <b style='color:#15803d'>" + z(u.cc) + " LP</b> • 🛡️ CR: <b style='color:#1d4ed8'>" + Number(u.cr || 0).toFixed(1) + "%</b></div>" +
-            "<div>⏳ Dalam Proses (CP): <b style='color:#b45309'>" + z(u.cp || u.cp_tunggakan || u.ca || 0) + " LP</b> • ⚠️ Tunggakan (CA): <b>" + z(u.ca || 0) + " LP</b></div>" +
-            "</div>";
-          m.bindTooltip(popupHtml, { direction: "top", offset: [0, -8] });
-          m.bindPopup(popupHtml);
-          m.on("click", () => handleSelectMabesAndZoom(u));
-          m.addTo(leafletLayerGroupRef.current);
-          if (isSel) {
-            try { m.openPopup(); } catch (_e) {}
+          if (showHotspotPins) {
+            const m = L.circleMarker([u.lat, u.lng], {
+              radius: isSel ? 12 : 9,
+              fillColor: isSel ? "#d97706" : "#f59e0b",
+              color: "#ffffff",
+              weight: isSel ? 3 : 2,
+              opacity: 1,
+              fillOpacity: 0.95
+            });
+            const popupHtml =
+              "<div style='font-family:sans-serif;font-size:12px;line-height:1.45;min-width:220px'>" +
+              "<div style='font-weight:800;color:#b45309;font-size:13px'>🏛️ " + u.nama + "</div>" +
+              "<div style='font-size:11px;color:#475569;margin:3px 0'>📍 " + u.makoAddr + " (" + u.lat + ", " + u.lng + ")</div>" +
+              "<hr style='border:none;border-top:1px solid #e2e8f0;margin:5px 0'/>" +
+              "<div>🔥 Total LP (CT): <b style='color:#dc2626'>" + z(u.ct) + " LP</b></div>" +
+              "<div>✅ Selesai (CC): <b style='color:#15803d'>" + z(u.cc) + " LP</b> • 🛡️ CR: <b style='color:#1d4ed8'>" + Number(u.cr || 0).toFixed(1) + "%</b></div>" +
+              "<div>⏳ Dalam Proses (CP): <b style='color:#b45309'>" + z(u.cp || u.cp_tunggakan || u.ca || 0) + " LP</b> • ⚠️ Tunggakan (CA): <b>" + z(u.ca || 0) + " LP</b></div>" +
+              "</div>";
+            m.bindTooltip(popupHtml, { direction: "top", offset: [0, -8] });
+            m.bindPopup(popupHtml);
+            m.on("click", () => handleSelectMabesAndZoom(u));
+            m.addTo(leafletLayerGroupRef.current);
+            if (isSel) {
+              try { m.openPopup(); } catch (_e) {}
+            }
           }
+          addLeafletPillLabel(u.lat, u.lng, (u.shortName || u.nama) + " (" + z(u.ct) + ")", "#f59e0b", isSel);
         });
         return;
       }
@@ -3278,46 +4435,53 @@ function CasPetaKejahatanView({
       if (drillLevel === 2) {
         if (selectedPolres) {
           const fullPolresName = formatFullWilkumSatkerName(selectedPolres.nama);
-          const hub = L.circleMarker([selectedPolres.lat, selectedPolres.lng], {
-            radius: 11,
-            fillColor: "#1d4ed8",
-            color: "#ffffff",
-            weight: 2.8,
-            opacity: 1,
-            fillOpacity: 0.95
-          });
-          hub.bindTooltip(
-            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
-            "<strong>🏢 MAKO " + fullPolresName.toUpperCase() + "</strong><br/>" +
-            "📍 " + (selectedPolres.makoAddr || "") + "<br/>" +
-            "🛡️ " + (selectedPolres.wilkum || "") + "<br/>" +
-            "🔥 Total CT: <b>" + z(selectedPolres.ct) + " LP</b> • ✅ CC: <b>" + z(selectedPolres.cc) + "</b> • CR: <b>" + selectedPolres.cr.toFixed(1) + "%</b></div>",
-            { direction: "top", offset: [0, -6] }
-          );
-          hub.addTo(leafletLayerGroupRef.current);
+          if (showHotspotPins) {
+            const hub = L.circleMarker([selectedPolres.lat, selectedPolres.lng], {
+              radius: 11,
+              fillColor: "#1d4ed8",
+              color: "#ffffff",
+              weight: 2.8,
+              opacity: 1,
+              fillOpacity: 0.95
+            });
+            hub.bindTooltip(
+              "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+              "<strong>🏢 MAKO " + fullPolresName.toUpperCase() + "</strong><br/>" +
+              "📍 " + (selectedPolres.makoAddr || "") + "<br/>" +
+              "🛡️ " + (selectedPolres.wilkum || "") + "<br/>" +
+              "🔥 Total CT: <b>" + z(selectedPolres.ct) + " LP</b> • ✅ CC: <b>" + z(selectedPolres.cc) + "</b> • CR: <b>" + selectedPolres.cr.toFixed(1) + "%</b></div>",
+              { direction: "top", offset: [0, -6] }
+            );
+            hub.addTo(leafletLayerGroupRef.current);
+          }
+          addLeafletPillLabel(selectedPolres.lat, selectedPolres.lng, "MAKO " + (selectedPolres.shortName || fullPolresName), "#1d4ed8", true);
         }
 
         polsekMapNodes.forEach(psk => {
           const fullPskName = psk.fullTitle || formatFullWilkumSatkerName(psk.nama);
-          const c = L.circleMarker([psk.lat, psk.lng], {
-            radius: Math.max(8, 7 + psk.ratio * 12),
-            fillColor: psk.color,
-            color: selectedPolsek?.kode === psk.kode ? "#1d4ed8" : "#ffffff",
-            weight: selectedPolsek?.kode === psk.kode ? 3 : 1.8,
-            opacity: 0.98,
-            fillOpacity: 0.90
-          });
-          c.bindTooltip(
-            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
-            "<strong>📍 Wilkum " + fullPskName + "</strong><br/>" +
-            "🏢 " + (psk.makoAddr || "") + "<br/>" +
-            "🛡️ " + (psk.wilkumNote || "") + "<br/>" +
-            "🔥 CT: <b>" + z(psk.ct) + " LP</b> • ✅ CC: <b>" + z(psk.cc) + "</b> • CR: <b>" + psk.cr.toFixed(1) + "%</b><br/>" +
-            "<em>Klik untuk menampilkan Irisan Peta Kecamatan</em></div>",
-            { direction: "top", offset: [0, -5] }
-          );
-          c.on("click", () => handleSelectPolsekAndZoom(psk));
-          c.addTo(leafletLayerGroupRef.current);
+          const isSelPsk = selectedPolsek?.kode === psk.kode;
+          if (showHotspotPins) {
+            const c = L.circleMarker([psk.lat, psk.lng], {
+              radius: Math.max(8, 7 + psk.ratio * 12),
+              fillColor: psk.color,
+              color: isSelPsk ? "#1d4ed8" : "#ffffff",
+              weight: isSelPsk ? 3 : 1.8,
+              opacity: 0.98,
+              fillOpacity: 0.90
+            });
+            c.bindTooltip(
+              "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+              "<strong>📍 Wilkum " + fullPskName + "</strong><br/>" +
+              "🏢 " + (psk.makoAddr || "") + "<br/>" +
+              "🛡️ " + (psk.wilkumNote || "") + "<br/>" +
+              "🔥 CT: <b>" + z(psk.ct) + " LP</b> • ✅ CC: <b>" + z(psk.cc) + "</b> • CR: <b>" + psk.cr.toFixed(1) + "%</b><br/>" +
+              "<em>Klik untuk menampilkan Irisan Peta Kecamatan</em></div>",
+              { direction: "top", offset: [0, -5] }
+            );
+            c.on("click", () => handleSelectPolsekAndZoom(psk));
+            c.addTo(leafletLayerGroupRef.current);
+          }
+          addLeafletPillLabel(psk.lat, psk.lng, (psk.shortName || fullPskName).slice(0, 18) + " (" + z(psk.ct) + ")", psk.color, isSelPsk);
         });
         renderHotspotPinsOnMap(L, map);
         return;
@@ -3327,25 +4491,28 @@ function CasPetaKejahatanView({
       if (drillLevel === 1 && polresMapNodes.length > 0) {
         polresMapNodes.forEach(prs => {
           const fullPrsName = formatFullWilkumSatkerName(prs.nama);
-          const c = L.circleMarker([prs.lat, prs.lng], {
-            radius: Math.max(9, 8 + prs.ratio * 15),
-            fillColor: prs.color,
-            color: "#ffffff",
-            weight: 2,
-            opacity: 0.98,
-            fillOpacity: 0.88
-          });
-          c.bindTooltip(
-            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
-            "<strong>🛡️ Wilkum " + fullPrsName + "</strong><br/>" +
-            "📍 Mako: " + (prs.makoAddr || "") + "<br/>" +
-            "🗺️ " + (prs.wilkum || "") + "<br/>" +
-            "🔥 CT: <b>" + z(prs.ct) + " LP</b> • ✅ CC: <b>" + z(prs.cc) + "</b> • CR: <b>" + prs.cr.toFixed(1) + "%</b><br/>" +
-            "<em>Klik untuk zoom ke Irisan Peta Wilkum " + fullPrsName + " & daftar Polsek</em></div>",
-            { direction: "top", offset: [0, -5] }
-          );
-          c.on("click", () => handleSelectPolresAndZoom(prs));
-          c.addTo(leafletLayerGroupRef.current);
+          if (showHotspotPins) {
+            const c = L.circleMarker([prs.lat, prs.lng], {
+              radius: Math.max(9, 8 + prs.ratio * 15),
+              fillColor: prs.color,
+              color: "#ffffff",
+              weight: 2,
+              opacity: 0.98,
+              fillOpacity: 0.88
+            });
+            c.bindTooltip(
+              "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+              "<strong>🛡️ Wilkum " + fullPrsName + "</strong><br/>" +
+              "📍 Mako: " + (prs.makoAddr || "") + "<br/>" +
+              "🗺️ " + (prs.wilkum || "") + "<br/>" +
+              "🔥 CT: <b>" + z(prs.ct) + " LP</b> • ✅ CC: <b>" + z(prs.cc) + "</b> • CR: <b>" + prs.cr.toFixed(1) + "%</b><br/>" +
+              "<em>Klik untuk zoom ke Irisan Peta Wilkum " + fullPrsName + " & daftar Polsek</em></div>",
+              { direction: "top", offset: [0, -5] }
+            );
+            c.on("click", () => handleSelectPolresAndZoom(prs));
+            c.addTo(leafletLayerGroupRef.current);
+          }
+          addLeafletPillLabel(prs.lat, prs.lng, (prs.shortName || fullPrsName).slice(0, 16) + " (" + z(prs.ct) + ")", prs.color, false);
         });
         renderHotspotPinsOnMap(L, map);
         return;
@@ -3353,49 +4520,58 @@ function CasPetaKejahatanView({
 
       // 5. Level 0: Nasional -> 36 Wilkum Polda Badges + Mabes Polri Marker + TKP Hotspot Pins
       if (pulauFilter === "Semua" || pulauFilter === "Jawa") {
-        const mbsMarker = L.circleMarker([mabesSummary.lat, mabesSummary.lng], {
-          radius: 10,
-          fillColor: "#f59e0b",
-          color: "#ffffff",
-          weight: 2.5,
-          opacity: 1,
-          fillOpacity: 0.95
-        });
-        mbsMarker.bindTooltip(
-          "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
-          "<strong>⭐ MABES POLRI / BARESKRIM POLRI</strong><br/>" +
-          "📍 " + mabesSummary.makoAddr + "<br/>" +
-          "🔥 CT: <b>" + z(mabesSummary.ct) + " LP</b> • ✅ CC: <b>" + z(mabesSummary.cc) + "</b> • CR: <b>" + mabesSummary.cr.toFixed(1) + "%</b><br/>" +
-          "<em>Klik untuk fokus ke titik koordinat kantor Bareskrim Polri</em></div>",
-          { direction: "top", offset: [0, -6] }
-        );
-        mbsMarker.on("click", () => handleSelectMabesAndZoom(mabesUnitNodes[0]));
-        mbsMarker.addTo(leafletLayerGroupRef.current);
+        if (showHotspotPins) {
+          const mbsMarker = L.circleMarker([mabesSummary.lat, mabesSummary.lng], {
+            radius: 10,
+            fillColor: "#f59e0b",
+            color: "#ffffff",
+            weight: 2.5,
+            opacity: 1,
+            fillOpacity: 0.95
+          });
+          mbsMarker.bindTooltip(
+            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+            "<strong>⭐ MABES POLRI / BARESKRIM POLRI</strong><br/>" +
+            "📍 " + mabesSummary.makoAddr + "<br/>" +
+            "🔥 CT: <b>" + z(mabesSummary.ct) + " LP</b> • ✅ CC: <b>" + z(mabesSummary.cc) + "</b> • CR: <b>" + mabesSummary.cr.toFixed(1) + "%</b><br/>" +
+            "<em>Klik untuk fokus ke titik koordinat kantor Bareskrim Polri</em></div>",
+            { direction: "top", offset: [0, -6] }
+          );
+          mbsMarker.on("click", () => handleSelectMabesAndZoom(mabesUnitNodes[0]));
+          mbsMarker.addTo(leafletLayerGroupRef.current);
+        }
+        addLeafletPillLabel(mabesSummary.lat, mabesSummary.lng, "⭐ MABES POLRI (" + z(mabesSummary.ct) + ")", "#d97706", false);
       }
 
       mergedRegions.forEach(reg => {
         if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return;
         const st = getRegionStyle(reg);
-        const radius = Math.max(7, Math.min(20, 6.5 + reg.ratioCT * 13));
-        const circle = L.circleMarker([reg.lat, reg.lng], {
-          radius,
-          fillColor: st.badgeColor,
-          color: reg.id === selectedRegion?.id ? "#1d4ed8" : "#ffffff",
-          weight: reg.id === selectedRegion?.id ? 2.8 : 1.6,
-          opacity: 0.94,
-          fillOpacity: reg.ct > 0 ? 0.82 : 0.35
-        });
-        circle.bindTooltip(
-          "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
-          "<strong>🛡️ Wilkum " + reg.polda + "</strong> (#" + reg.rank + ")<br/>" +
-          (crimeFilter !== "SEMUA" ? ("<span style='color:#dc2626;font-weight:800'>Filter: " + activeCrimeMeta.label + "</span><br/>") : "") +
-          "📍 Mako: " + (reg.makoAddr || "-") + "<br/>" +
-          "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%) • ✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
-          "<em>Klik untuk menampilkan Irisan Peta Wilkum Polda & Polres jajaran</em></div>",
-          { direction: "top", offset: [0, -6] }
-        );
-        circle.on("click", () => handleSelectPoldaAndZoom(reg));
-        circle.addTo(leafletLayerGroupRef.current);
+        const isSel = reg.id === selectedRegion?.id;
+        if (showHotspotPins) {
+          const radius = Math.max(7, Math.min(20, 6.5 + reg.ratioCT * 13));
+          const circle = L.circleMarker([reg.lat, reg.lng], {
+            radius,
+            fillColor: st.badgeColor,
+            color: isSel ? "#1d4ed8" : "#ffffff",
+            weight: isSel ? 2.8 : 1.6,
+            opacity: 0.94,
+            fillOpacity: reg.ct > 0 ? 0.82 : 0.35
+          });
+          circle.bindTooltip(
+            "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+            "<strong>🛡️ Wilkum " + reg.polda + "</strong> (#" + reg.rank + ")<br/>" +
+            (crimeFilter !== "SEMUA" ? ("<span style='color:#dc2626;font-weight:800'>Filter: " + activeCrimeMeta.label + "</span><br/>") : "") +
+            "📍 Mako: " + (reg.makoAddr || "-") + "<br/>" +
+            "🔥 CT: <b>" + z(reg.ct) + " LP</b> (" + reg.sharePct.toFixed(1) + "%) • ✅ CC: <b>" + z(reg.cc) + "</b> • 🛡️ CR: <b>" + reg.cr.toFixed(1) + "%</b><br/>" +
+            "<em>Klik untuk menampilkan Irisan Peta Wilkum Polda & Polres jajaran</em></div>",
+            { direction: "top", offset: [0, -6] }
+          );
+          circle.on("click", () => handleSelectPoldaAndZoom(reg));
+          circle.addTo(leafletLayerGroupRef.current);
+        }
+        if (reg.ct > 0 || isSel) {
+          addLeafletPillLabel(reg.lat, reg.lng, reg.abbr.slice(0, 10) + (reg.ct > 0 ? " • " + st.text : ""), st.badgeColor, isSel);
+        }
       });
 
       renderHotspotPinsOnMap(L, map);
@@ -3548,6 +4724,97 @@ function CasPetaKejahatanView({
       });
   }, [mergedRegions, pulauFilter, searchQ, sortBy]);
 
+  const isRegionScopedTable = Boolean(
+    selectedRegion &&
+    drillLevel !== 3 &&
+    (drillLevel >= 1 || (isScopedUser && !isScopedBareskrim) || (pulauFilter === "Semua" && mergedRegions.filter(r => r.ct > 0).length === 1))
+  );
+
+  const activeTableTipidLabel = (0, a.useMemo)(() => {
+    if (selectedCrimeNames.length > 0) {
+      return selectedCrimeNames.slice(0, 2).join(", ") + (selectedCrimeNames.length > 2 ? " +" + (selectedCrimeNames.length - 2) + " lainnya" : "");
+    }
+    if (crimeFilter && crimeFilter !== "SEMUA") {
+      const qf = CAS_CRIME_QUICK_FILTERS.find(c => c.id === crimeFilter);
+      return qf ? qf.label : crimeFilter;
+    }
+    if (activeTipidCrime && activeTipidCrime !== "SEMUA" && activeTipidCrime !== "ALL") {
+      const tf = CAS_TIPID_SUB_TABS.find(t => t.id === activeTipidCrime);
+      return tf ? tf.label : activeTipidCrime;
+    }
+    if (activeKelompokCrime && activeKelompokCrime !== "SEMUA" && activeKelompokCrime !== "ALL") {
+      return "Kelompok " + activeKelompokCrime;
+    }
+    if (isScopedUser && !isScopedBareskrim && scopeSatkerShort && !/^POLDA\b/i.test(scopeSatkerShort)) {
+      return scopeSatkerShort;
+    }
+    return "";
+  }, [selectedCrimeNames, crimeFilter, activeTipidCrime, activeKelompokCrime, isScopedUser, isScopedBareskrim, scopeSatkerShort]);
+
+  const isPolresScopedTable = Boolean(drillLevel === 2 && selectedPolres && polsekMapNodes.length > 0);
+
+  const satkerTableRows = (0, a.useMemo)(() => {
+    const sourceNodes = isPolresScopedTable ? polsekMapNodes : polresMapNodes;
+    if (!selectedRegion || !sourceNodes.length) return [];
+    const sumSatkerCT = sourceNodes.reduce((acc, s) => acc + Number(s.ct || 0), 0);
+    const parentRefCT = isPolresScopedTable ? Number(selectedPolres?.ct || 0) : Number(selectedRegion.ct || 0);
+    const regionRefCT = Math.max(1, parentRefCT, sumSatkerCT);
+    const maxSatCT = Math.max(1, ...sourceNodes.map(s => Number(s.ct || 0)));
+    const enriched = sourceNodes.map((s, idx) => {
+      const ctVal = Number(s.ct || 0);
+      const rawRatioCT = ctVal > 0 ? ctVal / maxSatCT : 0;
+      const ratioCT = ctVal > 0 ? Math.pow(rawRatioCT, 0.55) : 0;
+      let level = "zero";
+      let levelLabel = "Nihil";
+      if (ctVal > 0) {
+        if (ratioCT >= 0.72) { level = "hotspot"; levelLabel = "Tertinggi"; }
+        else if (ratioCT >= 0.45) { level = "high"; levelLabel = "Tinggi"; }
+        else if (ratioCT >= 0.22) { level = "medium"; levelLabel = "Sedang"; }
+        else { level = "low"; levelLabel = "Rendah"; }
+      }
+      const nmUp = String(s.nama || "").toUpperCase();
+      const tipeLabel = isPolresScopedTable
+        ? (s.isSatuanPolres || s.unitKind === "SATUAN_POLRES" ? "Satuan Fungsi Polres" : (/SEKTRO|POLSEK\s+METRO/i.test(nmUp) ? "Polsek Metro" : (/SEKTA|POLSEKTA/i.test(nmUp) ? "Polsekta" : "Polsek")))
+        : ((s.isInduk || /^(?:DIT|SUBDIT|BID|RO|POLDA)\b/i.test(nmUp))
+            ? "Satker Polda / Direktorat"
+            : (/POLRESTABES/i.test(nmUp) ? "Polrestabes" : (/POLRESTA\b/i.test(nmUp) ? "Polresta" : (/POLRESTRO|RESTRO|METRO/i.test(nmUp) ? "Polres Metro" : "Polres"))));
+      const dispNama = isPolresScopedTable
+        ? (s.shortName || abbrSatkerName(s.nama, false) || formatFullWilkumSatkerName(s.nama))
+        : ((s.isInduk || /^(?:DIT|SUBDIT|BID|RO)\b/i.test(nmUp))
+            ? (s.shortName || abbrSatkerName(s.nama, false))
+            : (formatFullWilkumSatkerName(s.nama) || s.shortName || s.nama));
+      return {
+        ...s,
+        rank: s.rank || (idx + 1),
+        dispNama,
+        tipeLabel,
+        rawRatioCT,
+        sharePct: regionRefCT > 0 ? (ctVal / regionRefCT) * 100 : 0,
+        level,
+        levelLabel
+      };
+    });
+    return enriched
+      .filter(r => {
+        if (!searchQ.trim()) return true;
+        const q = searchQ.trim().toLowerCase();
+        return (
+          String(r.dispNama || "").toLowerCase().includes(q) ||
+          String(r.nama || "").toLowerCase().includes(q) ||
+          String(r.shortName || "").toLowerCase().includes(q) ||
+          String(r.tipeLabel || "").toLowerCase().includes(q) ||
+          String(selectedRegion.polda || "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "cc") return b.cc - a.cc || b.ct - a.ct;
+        if (sortBy === "cr") return b.cr - a.cr || b.ct - a.ct;
+        if (sortBy === "cp_tunggakan") return (b.cp || b.cp_tunggakan || b.ca || 0) - (a.cp || a.cp_tunggakan || a.ca || 0) || b.ct - a.ct;
+        if (sortBy === "name") return String(a.dispNama || a.nama).localeCompare(String(b.dispNama || b.nama));
+        return b.ct - a.ct || b.cc - a.cc;
+      });
+  }, [selectedRegion, selectedPolres, isPolresScopedTable, polresMapNodes, polsekMapNodes, searchQ, sortBy]);
+
   const invScale = 1 / Math.pow(Math.max(1, zoom), 0.76);
   const activeTip = hoveredItem || (drillLevel === 3 ? (selectedMabesUnit || mabesSummary) : drillLevel === 2 ? (selectedPolsek || selectedPolres) : selectedRegion);
   const gmapsEmbedInfo = (0, a.useMemo)(
@@ -3586,6 +4853,7 @@ function CasPetaKejahatanView({
           ".cas-peta-kejahatan-root .leaflet-overlay-pane { z-index: 3 !important; }",
           ".cas-peta-kejahatan-root .leaflet-marker-pane, .cas-peta-kejahatan-root .leaflet-tooltip-pane, .cas-peta-kejahatan-root .leaflet-popup-pane { z-index: 4 !important; }",
           ".cas-peta-kejahatan-root .leaflet-top, .cas-peta-kejahatan-root .leaflet-bottom { z-index: 5 !important; }",
+          ".cas-peta-kejahatan-root .cas-leaflet-label-pill { background: transparent !important; border: none !important; pointer-events: none !important; }",
           ".cas-peta-kejahatan-root .cas-peta-filter-popover { z-index: 2500 !important; }",
           ".cas-map-prov-path { transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease, filter 160ms ease; cursor: pointer; }",
           ".cas-map-prov-path:hover { filter: brightness(1.08); stroke: #2563eb !important; }",
@@ -3656,7 +4924,1635 @@ function CasPetaKejahatanView({
         ]
       }),
 
-      // 1. 4 Concise KPI Summary Cards (Equalized 78px Compact Horizontal Structure — SOP Anti-Slop Numeric Hierarchy)
+      // 1. Interactive Map Canvas + Right Side Drilldown Panel (Positioned directly at the very top)
+      (0, t.jsxs)("div", {
+        className: "cas-peta-grid",
+        children: [
+          // Left Column: Map Canvas Card (Stretches 100% of column height with ZERO top/bottom white space!)
+          (0, t.jsxs)("div", {
+            className: "cms-card",
+            style: {
+              padding: "0.85rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              gap: "0.55rem",
+              background: T.cardBg,
+              border: "1px solid " + T.cardBorder,
+              borderRadius: 12,
+              boxShadow: T.cardShadow,
+              overflow: "hidden",
+              position: "relative",
+              minHeight: isFullPage ? "68vh" : "39rem"
+            },
+            children: [
+              // Interactive 4-Mode Map Breadcrumb & Back Bar
+              (0, t.jsxs)("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.45rem",
+                  zIndex: 2
+                },
+                children: [
+                  // Breadcrumb Pills: Nasional -> Polda -> Polres -> Polsek (or Mabes Polri)
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.32rem", flexWrap: "wrap" },
+                    children: [
+                      (drillLevel > 0 || zoom > 1.05 || selectedHotspot) && (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: handleStepBack,
+                        title: "Kembali ke tingkat sebelumnya",
+                        style: {
+                          padding: "0.24rem 0.58rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.accentBorder,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.25rem"
+                        },
+                        children: "← Kembali"
+                      }),
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: handleResetNasional,
+                        style: {
+                          padding: "0.24rem 0.56rem",
+                          borderRadius: 6,
+                          border: "1px solid " + ((drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBorder : T.btnBorder),
+                          background: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBg : T.subCardBg,
+                          color: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentText : T.textSecondary,
+                          fontSize: "0.72rem",
+                          fontWeight: 800,
+                          cursor: "pointer"
+                        },
+                        children: (isScopedUser && !isScopedBareskrim)
+                          ? ("🏛️ Cakupan: " + scopeSatkerShort + " + Jajaran")
+                          : "🇮🇩 Nasional (36 Wilkum Polda)"
+                      }),
+                      drillLevel === 3 && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              padding: "0.24rem 0.58rem",
+                              borderRadius: 6,
+                              border: "1px solid #f59e0b",
+                              background: T.warnBg,
+                              color: T.warnText,
+                              fontSize: "0.72rem",
+                              fontWeight: 800
+                            },
+                            children: "🏛️ Titik Kantor Mabes / Bareskrim Polri" + (selectedMabesUnit ? (" — " + selectedMabesUnit.shortName) : "")
+                          })
+                        ]
+                      }),
+                      drillLevel >= 1 && drillLevel !== 3 && selectedRegion && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => handleSelectPoldaAndZoom(selectedRegion),
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid " + (drillLevel === 1 ? T.warnBorder : T.btnBorder),
+                              background: drillLevel === 1 ? T.warnBg : T.subCardBg,
+                              color: drillLevel === 1 ? T.warnText : T.textSecondary,
+                              fontSize: "0.72rem",
+                              fontWeight: 800,
+                              cursor: "pointer"
+                            },
+                            children: "🛡️ Wilkum " + selectedRegion.polda
+                          })
+                        ]
+                      }),
+                      drillLevel === 2 && selectedPolres && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("button", {
+                            type: "button",
+                            onClick: () => handleSelectPolresAndZoom(selectedPolres),
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid " + (!selectedPolsek ? T.ctBorder : T.btnBorder),
+                              background: !selectedPolsek ? T.ctBg : T.subCardBg,
+                              color: !selectedPolsek ? T.ctText : T.textSecondary,
+                              fontSize: "0.72rem",
+                              fontWeight: 800,
+                              cursor: "pointer"
+                            },
+                            children: "🛡️ Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)
+                          })
+                        ]
+                      }),
+                      drillLevel === 2 && selectedPolsek && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid " + T.ctBorder,
+                              background: T.ctBg,
+                              color: T.ctText,
+                              fontSize: "0.72rem",
+                              fontWeight: 800
+                            },
+                            children: "📍 Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama) + " (Kec. " + formatFullWilkumSatkerName(cleanPolsekKecName(selectedPolsek.nama)) + ")"
+                          })
+                        ]
+                      }),
+                      selectedHotspot && (0, t.jsxs)(t.Fragment, {
+                        children: [
+                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
+                          (0, t.jsx)("span", {
+                            style: {
+                              padding: "0.24rem 0.56rem",
+                              borderRadius: 6,
+                              border: "1px solid #ef4444",
+                              background: T.ctBg,
+                              color: T.ctText,
+                              fontSize: "0.71rem",
+                              fontWeight: 800
+                            },
+                            children: "🎯 TKP #" + (selectedHotspot.rank || 1) + ": " + String(selectedHotspot.tkp_label || "").slice(0, 28)
+                          })
+                        ]
+                      })
+                    ]
+                  }),
+
+                  (0, t.jsx)("span", {
+                    style: { fontSize: "0.69rem", color: T.textMuted, fontWeight: 600 },
+                    children: drillLevel === 3
+                      ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah — Klik Pin untuk CT/CC)"
+                      : drillLevel === 0
+                      ? "💡 Klik Poligon Polda atau Titik Rawan TKP untuk detail LP"
+                      : drillLevel === 1
+                      ? "💡 Klik titik Polres / Titik Rawan TKP untuk melihat Irisan Wilkum & Polsek"
+                      : "💡 Klik titik Polsek / Titik Rawan TKP untuk detail Kecamatan & LP"
+                  })
+                ]
+              }),
+
+              // Main Map Viewport: Fills 100% of remaining card height (flex: 1 1 auto) with zero white space!
+              isGoogleEmbedMode ? (
+                (0, t.jsxs)("div", {
+                  className: "cas-peta-map-box",
+                  style: {
+                    position: "relative",
+                    width: "100%",
+                    flex: "1 1 auto",
+                    minHeight: isFullPage ? "66vh" : "580px",
+                    height: "100%",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    border: "1px solid " + T.mapBorder,
+                    background: isDark ? "#0b1220" : "#e0f2fe"
+                  },
+                  children: [
+                    (0, t.jsx)("iframe", {
+                      key: gmapsEmbedInfo.q,
+                      title: gmapsEmbedInfo.title,
+                      src: "https://maps.google.com/maps?q=" + encodeURIComponent(gmapsEmbedInfo.q) + "&hl=id&z=" + gmapsEmbedInfo.z + "&output=embed",
+                      style: { width: "100%", height: "100%", minHeight: isFullPage ? "66vh" : "580px", border: 0, display: "block" },
+                      loading: "lazy",
+                      referrerPolicy: "no-referrer-when-downgrade"
+                    }),
+                    // Top-Left Query Pill on Google Maps Native Embed
+                    (0, t.jsxs)("div", {
+                      style: {
+                        position: "absolute",
+                        top: 10,
+                        left: 10,
+                        zIndex: 10,
+                        background: T.tooltipBg,
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid " + T.tooltipBorder,
+                        borderRadius: 8,
+                        padding: "0.35rem 0.65rem",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                        boxShadow: "0 4px 14px rgba(15,23,42,0.18)"
+                      },
+                      children: [
+                        (0, t.jsx)("span", { style: { color: "#ea4335", marginRight: "0.3rem" }, children: "●" }),
+                        gmapsEmbedInfo.title
+                      ]
+                    }),
+                    // Bottom-Left Crime Data Overlay on Google Maps Native Embed
+                    activeTip && (0, t.jsxs)("div", {
+                      style: {
+                        position: "absolute",
+                        left: 10,
+                        bottom: 10,
+                        zIndex: 10,
+                        background: T.tooltipBg,
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid " + T.tooltipBorder,
+                        borderRadius: 10,
+                        padding: "0.52rem 0.72rem",
+                        color: T.textPrimary,
+                        fontSize: "0.72rem",
+                        boxShadow: "0 10px 25px rgba(15,23,42,0.22)",
+                        maxWidth: "330px"
+                      },
+                      children: [
+                        (0, t.jsx)("div", {
+                          style: { fontWeight: 800, color: T.accentText, fontSize: "0.78rem", marginBottom: "0.18rem" },
+                          children: activeTip.nama || activeTip.polda
+                        }),
+                        activeTip.makoAddr && (0, t.jsx)("div", {
+                          style: { fontSize: "0.66rem", color: T.textMuted, marginBottom: "0.22rem" },
+                          children: "📍 " + activeTip.makoAddr
+                        }),
+                        (0, t.jsxs)("div", {
+                          className: "tabular-nums",
+                          style: { display: "flex", gap: "0.55rem", flexWrap: "wrap", fontSize: "0.7rem" },
+                          children: [
+                            (0, t.jsxs)("span", { children: ["🔥 CT: ", (0, t.jsx)("strong", { style: { color: T.ctText }, children: z(activeTip.ct) }), " LP"] }),
+                            (0, t.jsxs)("span", { children: ["✅ CC: ", (0, t.jsx)("strong", { style: { color: T.ccText }, children: z(activeTip.cc) })] }),
+                            (0, t.jsxs)("span", { children: ["🛡️ CR: ", (0, t.jsx)("strong", { style: { color: T.crText }, children: Number(activeTip.cr || 0).toFixed(1) + "%" })] })
+                          ]
+                        })
+                      ]
+                    })
+                  ]
+                })
+              ) : isGoogleTileMode ? (
+                (0, t.jsxs)("div", {
+                  style: {
+                    position: "relative",
+                    width: "100%",
+                    flex: "1 1 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    minHeight: isFullPage ? "66vh" : "580px",
+                    height: "100%"
+                  },
+                  children: [
+                    (0, t.jsx)("div", {
+                      ref: leafletContainerRef,
+                      className: "cas-peta-map-box",
+                      style: {
+                        flex: "1 1 auto",
+                        width: "100%",
+                        height: "100%",
+                        minHeight: isFullPage ? "66vh" : "580px",
+                        borderRadius: 10,
+                        overflow: "hidden",
+                        border: "1px solid " + T.mapBorder,
+                        background: isDark ? "#0b1220" : "#e0f2fe"
+                      }
+                    }),
+                    // Status Pill for GeoJSON Wilkum Polygon Boundary Overlay & Active Crime Heatmap
+                    (0, t.jsx)("div", {
+                      style: {
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        maxWidth: "calc(100% - 62px)",
+                        zIndex: 6,
+                        background: T.tooltipBg,
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid " + (drillLevel === 3 ? "#f59e0b" : "#ea4335"),
+                        borderRadius: 8,
+                        padding: "0.3rem 0.6rem",
+                        fontSize: "0.68rem",
+                        fontWeight: 800,
+                        color: T.textPrimary,
+                        boxShadow: "0 4px 12px rgba(15,23,42,0.16)",
+                        pointerEvents: "none"
+                      },
+                      children: drillLevel === 3
+                        ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah)"
+                        : drillLevel === 0
+                        ? ("🔥 Heatmap Titik Rawan LP: " + (crimeFilter !== "SEMUA" ? activeCrimeMeta.label : "36 Wilkum Polda & TKP Nasional"))
+                        : wilkumGeoLoading
+                        ? "⏳ Memuat irisan batas Wilkum Google Maps…"
+                        : wilkumGeoJson
+                        ? ("✅ Irisan Peta & Heatmap TKP: " + (wilkumGeoJson.label || "Batas Wilkum Aktif"))
+                        : ("🛡️ Wilkum " + (drillLevel === 2 && selectedPolres ? formatFullWilkumSatkerName(selectedPolres.nama) : (selectedRegion?.polda || "Aktif")))
+                    })
+                  ]
+                })
+              ) : (
+                (0, t.jsxs)("div", {
+                  className: "cas-peta-map-box",
+                  onMouseDown: ev => {
+                    if (zoom <= 1) return;
+                    setIsDragging(true);
+                    dragStartRef.current = { x: ev.clientX, y: ev.clientY, panX: pan.x, panY: pan.y, moved: false };
+                  },
+                  onMouseMove: ev => {
+                    if (!isDragging) return;
+                    const dx = ev.clientX - dragStartRef.current.x;
+                    const dy = ev.clientY - dragStartRef.current.y;
+                    if (Math.hypot(dx, dy) > 4) dragStartRef.current.moved = true;
+                    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
+                  },
+                  onMouseUp: () => setIsDragging(false),
+                  onMouseLeave: () => { setIsDragging(false); setHoveredItem(null); },
+                  style: {
+                    position: "relative",
+                    width: "100%",
+                    flex: "1 1 auto",
+                    minHeight: isFullPage ? "56vh" : "375px",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    background: T.mapOcean,
+                    border: "1px solid " + T.mapBorder,
+                    cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
+                    userSelect: "none"
+                  },
+                  children: [
+                    (0, t.jsxs)("svg", {
+                      viewBox: "0 0 1200 470",
+                      preserveAspectRatio: "xMidYMid meet",
+                      style: { width: "100%", height: "100%", display: "block" },
+                      children: [
+                        (0, t.jsxs)("defs", {
+                          children: [
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-hotspot",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#ef4444", stopOpacity: isDark ? "0.75" : "0.42" }),
+                                (0, t.jsx)("stop", { offset: "50%", stopColor: "#f97316", stopOpacity: isDark ? "0.35" : "0.18" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#ef4444", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-high",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#f97316", stopOpacity: isDark ? "0.65" : "0.36" }),
+                                (0, t.jsx)("stop", { offset: "55%", stopColor: "#eab308", stopOpacity: isDark ? "0.28" : "0.14" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#f97316", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-med",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#eab308", stopOpacity: isDark ? "0.55" : "0.28" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#eab308", stopOpacity: "0" })
+                              ]
+                            }),
+                            (0, t.jsxs)("radialGradient", {
+                              id: "cas-therm-low",
+                              cx: "50%", cy: "50%", r: "50%",
+                              children: [
+                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#10b981", stopOpacity: isDark ? "0.45" : "0.22" }),
+                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#10b981", stopOpacity: "0" })
+                              ]
+                            })
+                          ]
+                        }),
+
+                        // Graticule Grid Lines
+                        (0, t.jsxs)("g", {
+                          opacity: isDark ? "0.2" : "0.28",
+                          children: [
+                            [100, 105, 110, 115, 120, 125, 130, 135, 140].map(lng => {
+                              const x = Math.round(((lng - 94.5) / 47.0) * 1140 + 30);
+                              return (0, t.jsxs)("g", {
+                                key: "lng_" + lng,
+                                children: [
+                                  (0, t.jsx)("line", { x1: x, y1: 0, x2: x, y2: 470, stroke: T.mapGridLine, strokeWidth: "0.6", strokeDasharray: "3,4" }),
+                                  (0, t.jsx)("text", { x: x + 3, y: 12, fill: T.mapGridText, fontSize: "8", fontWeight: "700", children: lng + "°BT" })
+                                ]
+                              });
+                            }),
+                            [5, 0, -5, -10].map(lat => {
+                              const y = Math.round(((6.5 - lat) / 18.0) * 430 + 25);
+                              const isEq = lat === 0;
+                              return (0, t.jsxs)("g", {
+                                key: "lat_" + lat,
+                                children: [
+                                  (0, t.jsx)("line", {
+                                    x1: 0, y1: y, x2: 1200, y2: y,
+                                    stroke: isEq ? "#f59e0b" : T.mapGridLine,
+                                    strokeWidth: isEq ? "0.9" : "0.6",
+                                    strokeDasharray: isEq ? "6,4" : "3,4"
+                                  }),
+                                  (0, t.jsx)("text", {
+                                    x: 8, y: y - 3,
+                                    fill: isEq ? "#d97706" : T.mapGridText,
+                                    fontSize: "8",
+                                    fontWeight: "700",
+                                    children: isEq ? "0° KHATULISTIWA" : (lat > 0 ? lat + "°LU" : Math.abs(lat) + "°LS")
+                                  })
+                                ]
+                              });
+                            })
+                          ]
+                        }),
+
+                        // Camera Transform Group (transformOrigin: 0 0 ensures exact pixel math!)
+                        (0, t.jsxs)("g", {
+                          transform: "translate(" + pan.x + "," + pan.y + ") scale(" + zoom + ")",
+                          style: { transformOrigin: "0 0", transition: isDragging ? "none" : "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)" },
+                          children: [
+                            // Layer 1: 36 Wilkum Polda Polygons
+                            (0, t.jsx)("g", {
+                              children: mergedRegions.map(reg => {
+                                const st = getRegionStyle(reg);
+                                const isSel = drillLevel !== 3 && selectedRegion?.id === reg.id;
+                                const isDimmed = (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) || (drillLevel >= 1 && !isSel);
+                                return (0, t.jsx)("path", {
+                                  d: reg.d,
+                                  fill: showThermal ? st.fill : T.mapZeroFill,
+                                  fillOpacity: isDimmed ? (isDark ? 0.22 : 0.35) : (showThermal ? (isSel ? 0.95 : 0.86) : 0.45),
+                                  stroke: isSel ? T.mapSelStroke : st.stroke,
+                                  strokeWidth: isSel ? (2.0 * invScale) : (1.0 * invScale),
+                                  className: "cas-map-prov-path",
+                                  onClick: ev => {
+                                    ev.stopPropagation();
+                                    if (dragStartRef.current.moved) return;
+                                    handleSelectPoldaAndZoom(reg);
+                                  },
+                                  onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg })
+                                }, reg.id);
+                              })
+                            }),
+
+                            // Layer 2: Thermal Heatmap Glow Blobs
+                            showThermal && drillLevel !== 3 && (0, t.jsx)("g", {
+                              style: { pointerEvents: "none" },
+                              children: mergedRegions.map(reg => {
+                                if (reg.ct <= 0 && reg.cc <= 0) return null;
+                                if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
+                                if (drillLevel >= 1 && selectedRegion?.id !== reg.id) return null;
+                                const gradId = reg.level === "hotspot"
+                                  ? "url(#cas-therm-hotspot)"
+                                  : reg.level === "high"
+                                  ? "url(#cas-therm-high)"
+                                  : reg.level === "medium"
+                                  ? "url(#cas-therm-med)"
+                                  : "url(#cas-therm-low)";
+                                const rad = Math.round(20 + reg.ratioCT * 44);
+                                return (0, t.jsx)("circle", {
+                                  cx: reg.cx,
+                                  cy: reg.cy,
+                                  r: rad,
+                                  fill: gradId
+                                }, "therm_" + reg.id);
+                              })
+                            }),
+
+                            // Layer 3A: Level 0 (Nasional) Polda Markers & Labels + Gold Mabes Polri Star Marker
+                            drillLevel === 0 && (0, t.jsxs)("g", {
+                              children: [
+                                mergedRegions.map(reg => {
+                                  if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
+                                  const st = getRegionStyle(reg);
+                                  const isSel = selectedRegion?.id === reg.id;
+                                  const isTop5 = reg.ct > 0 && reg.rank <= 5;
+                                  const dotR = (isSel ? 5.8 : Math.max(3.2, 3.0 + reg.ratioCT * 3.8)) * invScale;
+                                  return (0, t.jsxs)("g", {
+                                    key: "polda_node_" + reg.id,
+                                    style: { cursor: "pointer" },
+                                    onClick: ev => {
+                                      ev.stopPropagation();
+                                      if (dragStartRef.current.moved) return;
+                                      handleSelectPoldaAndZoom(reg);
+                                    },
+                                    onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg }),
+                                    children: [
+                                      showHotspotPins && (isTop5 || isSel) && (0, t.jsx)("circle", {
+                                        cx: reg.cx,
+                                        cy: reg.cy,
+                                        r: 13 * invScale,
+                                        fill: "none",
+                                        stroke: isSel ? T.mapSelStroke : st.badgeColor,
+                                        strokeWidth: 1.5 * invScale,
+                                        style: { animation: "casHotspotPulse 2s infinite" }
+                                      }),
+                                      showHotspotPins && (0, t.jsx)("circle", {
+                                        cx: reg.cx,
+                                        cy: reg.cy,
+                                        r: dotR,
+                                        fill: isSel ? "#2563eb" : st.badgeColor,
+                                        stroke: "#ffffff",
+                                        strokeWidth: 1.3 * invScale
+                                      }),
+                                      showLabels && (reg.ct > 0 || isSel || zoom >= 1.5) && (0, t.jsxs)("g", {
+                                        transform: "translate(" + reg.cx + "," + (reg.cy - dotR - 3 * invScale) + ") scale(" + invScale + ")",
+                                        children: [
+                                          (0, t.jsx)("rect", {
+                                            x: -29,
+                                            y: -12,
+                                            width: 58,
+                                            height: 12,
+                                            rx: 3.5,
+                                            fill: isSel ? "#1d4ed8" : T.labelPillBg,
+                                            stroke: isSel ? "#ffffff" : st.badgeColor,
+                                            strokeWidth: 0.8
+                                          }),
+                                          (0, t.jsx)("text", {
+                                            x: 0,
+                                            y: -3.5,
+                                            textAnchor: "middle",
+                                            fill: isSel ? "#ffffff" : T.labelPillText,
+                                            fontSize: "6.4",
+                                            fontWeight: "800",
+                                            children: reg.abbr.slice(0, 8) + (reg.ct > 0 ? " • " + st.text : "")
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  });
+                                }),
+                                // Special Gold Marker for Mabes Polri / Bareskrim Polri (Jl. Trunojoyo No. 3, Jakarta Selatan)
+                                (pulauFilter === "Semua" || pulauFilter === "Jawa") && (0, t.jsxs)("g", {
+                                  style: { cursor: "pointer" },
+                                  onClick: ev => {
+                                    ev.stopPropagation();
+                                    if (dragStartRef.current.moved) return;
+                                    handleSelectMabesAndZoom(mabesUnitNodes[0]);
+                                  },
+                                  onMouseEnter: () => setHoveredItem({ kind: "mabes", ...mabesSummary }),
+                                  children: [
+                                    showHotspotPins && (0, t.jsx)("circle", {
+                                      cx: mabesSummary.px,
+                                      cy: mabesSummary.py + 8 * invScale,
+                                      r: 6.2 * invScale,
+                                      fill: "#f59e0b",
+                                      stroke: "#ffffff",
+                                      strokeWidth: 1.5 * invScale
+                                    }),
+                                    showLabels && (0, t.jsxs)("g", {
+                                      transform: "translate(" + mabesSummary.px + "," + (mabesSummary.py + 21 * invScale) + ") scale(" + invScale + ")",
+                                      children: [
+                                        (0, t.jsx)("rect", {
+                                          x: -36,
+                                          y: -11,
+                                          width: 72,
+                                          height: 11.5,
+                                          rx: 3.5,
+                                          fill: "#fef3c7",
+                                          stroke: "#d97706",
+                                          strokeWidth: 0.9
+                                        }),
+                                        (0, t.jsx)("text", {
+                                          x: 0,
+                                          y: -3,
+                                          textAnchor: "middle",
+                                          fill: "#92400e",
+                                          fontSize: "6.1",
+                                          fontWeight: "800",
+                                          children: "⭐ MABES POLRI"
+                                        })
+                                      ]
+                                    })
+                                  ]
+                                })
+                              ]
+                            }),
+
+                            // Layer 3B: Level 1 (Polda Zoomed) -> Interactive Polres Pins at Real Kab/Kota & Mako Coords
+                            drillLevel === 1 && selectedRegion && (0, t.jsxs)("g", {
+                              children: [
+                                showHotspotPins && polresMapNodes.map((prs, idx) => (0, t.jsx)("line", {
+                                  key: "line_prs_" + idx,
+                                  x1: selectedRegion.bx || selectedRegion.cx,
+                                  y1: selectedRegion.by || selectedRegion.cy,
+                                  x2: prs.px,
+                                  y2: prs.py,
+                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
+                                  strokeWidth: 0.9 * invScale,
+                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
+                                })),
+                                polresMapNodes.map((prs, idx) => {
+                                  const rPin = Math.max(3.5, 3.5 + prs.ratio * 4.5) * invScale;
+                                  return (0, t.jsxs)("g", {
+                                    key: "prs_pin_" + (prs.kode || idx),
+                                    style: { cursor: "pointer" },
+                                    onClick: ev => {
+                                      ev.stopPropagation();
+                                      if (dragStartRef.current.moved) return;
+                                      handleSelectPolresAndZoom(prs);
+                                    },
+                                    onMouseEnter: () => setHoveredItem({ kind: "polres", polda: selectedRegion.polda, ...prs }),
+                                    children: [
+                                      showHotspotPins && idx < 3 && prs.ct > 0 && (0, t.jsx)("circle", {
+                                        cx: prs.px,
+                                        cy: prs.py,
+                                        r: rPin * 2.1,
+                                        fill: prs.color,
+                                        fillOpacity: 0.25
+                                      }),
+                                      showHotspotPins && (0, t.jsx)("circle", {
+                                        cx: prs.px,
+                                        cy: prs.py,
+                                        r: rPin,
+                                        fill: prs.color,
+                                        stroke: "#ffffff",
+                                        strokeWidth: 1.3 * invScale
+                                      }),
+                                      showLabels && (0, t.jsxs)("g", {
+                                        transform: "translate(" + prs.px + "," + (prs.py - rPin - 2.5 * invScale) + ") scale(" + invScale + ")",
+                                        children: [
+                                          (0, t.jsx)("rect", {
+                                            x: -38,
+                                            y: -12,
+                                            width: 76,
+                                            height: 12,
+                                            rx: 3.5,
+                                            fill: T.labelPillBg,
+                                            stroke: prs.color,
+                                            strokeWidth: 0.85
+                                          }),
+                                          (0, t.jsx)("text", {
+                                            x: 0,
+                                            y: -3.5,
+                                            textAnchor: "middle",
+                                            fill: T.labelPillText,
+                                            fontSize: "6.3",
+                                            fontWeight: "800",
+                                            children: prs.shortName.slice(0, 12) + " (" + z(prs.ct) + ")"
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  });
+                                })
+                              ]
+                            }),
+
+                            // Layer 3C: Level 2 (Polres Zoomed) -> Interactive Polsek Nodes at Real Kecamatan Coords
+                            drillLevel === 2 && selectedPolres && (0, t.jsxs)("g", {
+                              children: [
+                                showHotspotPins && (0, t.jsx)("circle", {
+                                  cx: selectedPolres.px,
+                                  cy: selectedPolres.py,
+                                  r: 18 * invScale,
+                                  fill: isDark ? "rgba(2,132,199,0.12)" : "rgba(37,99,235,0.08)",
+                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
+                                  strokeWidth: 0.8 * invScale,
+                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
+                                }),
+                                showHotspotPins && polsekMapNodes.map((psk, idx) => (0, t.jsx)("line", {
+                                  key: "line_psk_" + idx,
+                                  x1: selectedPolres.px,
+                                  y1: selectedPolres.py,
+                                  x2: psk.px,
+                                  y2: psk.py,
+                                  stroke: "rgba(234,88,12,0.5)",
+                                  strokeWidth: 0.9 * invScale,
+                                  strokeDasharray: (1.5 * invScale) + "," + (1.5 * invScale)
+                                })),
+                                (0, t.jsxs)("g", {
+                                  children: [
+                                    showHotspotPins && (0, t.jsx)("circle", {
+                                      cx: selectedPolres.px,
+                                      cy: selectedPolres.py,
+                                      r: 6.5 * invScale,
+                                      fill: "#1d4ed8",
+                                      stroke: "#ffffff",
+                                      strokeWidth: 1.6 * invScale
+                                    }),
+                                    showLabels && (0, t.jsxs)("g", {
+                                      transform: "translate(" + selectedPolres.px + "," + (selectedPolres.py + 12 * invScale) + ") scale(" + invScale + ")",
+                                      children: [
+                                        (0, t.jsx)("rect", { x: -44, y: -10, width: 88, height: 12, rx: 3.5, fill: "#1d4ed8", stroke: "#ffffff", strokeWidth: 0.8 }),
+                                        (0, t.jsx)("text", { x: 0, y: -1.8, textAnchor: "middle", fill: "#ffffff", fontSize: "6.4", fontWeight: "800", children: "MAKO: " + selectedPolres.shortName.slice(0, 13) })
+                                      ]
+                                    })
+                                  ]
+                                }),
+                                polsekMapNodes.map((psk, idx) => {
+                                  const isSelPsk = selectedPolsek?.kode === psk.kode;
+                                  const rPsk = (isSelPsk ? 5.5 : Math.max(3.4, 3.2 + psk.ratio * 3.8)) * invScale;
+                                  return (0, t.jsxs)("g", {
+                                    key: "psk_pin_" + (psk.kode || idx),
+                                    style: { cursor: "pointer" },
+                                    onClick: ev => {
+                                      ev.stopPropagation();
+                                      if (dragStartRef.current.moved) return;
+                                      handleSelectPolsekAndZoom(psk);
+                                    },
+                                    onMouseEnter: () => setHoveredItem({ kind: "polsek", polres: selectedPolres.shortName, ...psk }),
+                                    children: [
+                                      showHotspotPins && (0, t.jsx)("circle", {
+                                        cx: psk.px,
+                                        cy: psk.py,
+                                        r: rPsk,
+                                        fill: isSelPsk ? "#1d4ed8" : psk.color,
+                                        stroke: "#ffffff",
+                                        strokeWidth: 1.3 * invScale
+                                      }),
+                                      showLabels && (0, t.jsxs)("g", {
+                                        transform: "translate(" + psk.px + "," + (psk.py - rPsk - 2.2 * invScale) + ") scale(" + invScale + ")",
+                                        children: [
+                                          (0, t.jsx)("rect", {
+                                            x: -36,
+                                            y: -11.5,
+                                            width: 72,
+                                            height: 11.5,
+                                            rx: 3.5,
+                                            fill: isSelPsk ? "#1d4ed8" : T.labelPillBg,
+                                            stroke: isSelPsk ? "#ffffff" : psk.color,
+                                            strokeWidth: 0.8
+                                          }),
+                                          (0, t.jsx)("text", {
+                                            x: 0,
+                                            y: -3.2,
+                                            textAnchor: "middle",
+                                            fill: isSelPsk ? "#ffffff" : T.labelPillText,
+                                            fontSize: "6.2",
+                                            fontWeight: "800",
+                                            children: psk.shortName.slice(0, 12) + " (" + z(psk.ct) + ")"
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  });
+                                })
+                              ]
+                            }),
+
+                            // Layer 3D: Level 3 (Mabes Polri / Bareskrim Polri) -> ONLY Office Coordinate Pins (No Polygon!)
+                            drillLevel === 3 && (0, t.jsx)("g", {
+                              children: mabesUnitNodes.map((u, idx) => {
+                                const isSelU = (selectedMabesUnit?.id || mabesUnitNodes[0]?.id) === u.id;
+                                const angle = idx === 0 ? 0 : ((idx - 1) / (mabesUnitNodes.length - 1)) * Math.PI * 2;
+                                const radDist = idx === 0 ? 0 : 12 * invScale;
+                                const pinX = idx === 0 ? u.px : +(mabesUnitNodes[0].px + Math.cos(angle) * radDist).toFixed(1);
+                                const pinY = idx === 0 ? u.py : +(mabesUnitNodes[0].py + Math.sin(angle) * radDist * 0.85).toFixed(1);
+                                return (0, t.jsxs)("g", {
+                                  key: "mbs_pin_" + u.id,
+                                  style: { cursor: "pointer" },
+                                  onClick: ev => {
+                                    ev.stopPropagation();
+                                    if (dragStartRef.current.moved) return;
+                                    handleSelectMabesAndZoom(u);
+                                  },
+                                  onMouseEnter: () => setHoveredItem({ kind: "mabes_unit", ...u }),
+                                  children: [
+                                    showHotspotPins && idx > 0 && (0, t.jsx)("line", {
+                                      x1: mabesUnitNodes[0].px,
+                                      y1: mabesUnitNodes[0].py,
+                                      x2: pinX,
+                                      y2: pinY,
+                                      stroke: "rgba(245,158,11,0.55)",
+                                      strokeWidth: 0.9 * invScale,
+                                      strokeDasharray: (1.5 * invScale) + "," + (1.5 * invScale)
+                                    }),
+                                    showHotspotPins && (0, t.jsx)("circle", {
+                                      cx: pinX,
+                                      cy: pinY,
+                                      r: (isSelU ? 6.2 : 4.4) * invScale,
+                                      fill: isSelU ? "#d97706" : "#f59e0b",
+                                      stroke: "#ffffff",
+                                      strokeWidth: 1.5 * invScale
+                                    }),
+                                    showLabels && (isSelU || idx === 0 || idx === 1 || idx === 2 || idx === 4) && (0, t.jsxs)("g", {
+                                      transform: "translate(" + pinX + "," + (pinY - 7 * invScale) + ") scale(" + invScale + ")",
+                                      children: [
+                                        (0, t.jsx)("rect", {
+                                          x: -42,
+                                          y: -11.5,
+                                          width: 84,
+                                          height: 11.5,
+                                          rx: 3.5,
+                                          fill: isSelU ? "#d97706" : T.labelPillBg,
+                                          stroke: "#f59e0b",
+                                          strokeWidth: 0.85
+                                        }),
+                                        (0, t.jsx)("text", {
+                                          x: 0,
+                                          y: -3.2,
+                                          textAnchor: "middle",
+                                          fill: isSelU ? "#ffffff" : T.labelPillText,
+                                          fontSize: "6.0",
+                                          fontWeight: "800",
+                                          children: u.shortName.slice(0, 14) + " (" + z(u.ct) + ")"
+                                        })
+                                      ]
+                                    })
+                                  ]
+                                });
+                              })
+                            })
+                          ]
+                        })
+                      ]
+                    }),
+
+                    // Floating Hover / Active Tooltip inside Map Bottom-Left
+                    activeTip && (0, t.jsxs)("div", {
+                      style: {
+                        position: "absolute",
+                        left: 10,
+                        bottom: 10,
+                        background: T.tooltipBg,
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid " + T.tooltipBorder,
+                        borderRadius: 10,
+                        padding: "0.48rem 0.68rem",
+                        color: T.textPrimary,
+                        fontSize: "0.72rem",
+                        boxShadow: isDark ? "0 10px 25px rgba(0,0,0,0.45)" : "0 10px 24px rgba(15,23,42,0.12)",
+                        pointerEvents: "none",
+                        maxWidth: "320px"
+                      },
+                      children: [
+                        (0, t.jsxs)("div", {
+                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.45rem", marginBottom: "0.14rem" },
+                          children: [
+                            (0, t.jsx)("strong", {
+                              style: { color: T.accentText, fontSize: "0.78rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                              children: activeTip.nama || activeTip.polda
+                            }),
+                            activeTip.rank && (0, t.jsx)("span", {
+                              className: "tabular-nums",
+                              style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.06rem 0.38rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder, flexShrink: 0 },
+                              children: "#" + activeTip.rank
+                            })
+                          ]
+                        }),
+                        activeTip.makoAddr && (0, t.jsx)("div", {
+                          style: { fontSize: "0.65rem", color: T.textMuted, marginBottom: "0.18rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+                          children: "📍 " + activeTip.makoAddr
+                        }),
+                        (0, t.jsxs)("div", {
+                          className: "tabular-nums",
+                          style: { display: "flex", gap: "0.55rem", flexWrap: "wrap", color: T.textSecondary, fontSize: "0.7rem" },
+                          children: [
+                            (0, t.jsxs)("span", { children: ["🔥 CT: ", (0, t.jsx)("strong", { style: { color: T.ctText }, children: z(activeTip.ct) }), " LP"] }),
+                            (0, t.jsxs)("span", { children: ["✅ CC: ", (0, t.jsx)("strong", { style: { color: T.ccText }, children: z(activeTip.cc) })] }),
+                            (0, t.jsxs)("span", { children: ["🛡️ CR: ", (0, t.jsx)("strong", { style: { color: T.crText }, children: Number(activeTip.cr || 0).toFixed(1) + "%" })] })
+                          ]
+                        })
+                      ]
+                    })
+                  ]
+                })
+              ),
+
+              // Clean Map Footer: Only Color Scale Legend
+              (0, t.jsxs)("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                  marginTop: "0.55rem",
+                  paddingTop: "0.45rem",
+                  borderTop: "1px solid " + T.divider,
+                  fontSize: "0.69rem",
+                  color: T.textMuted
+                },
+                children: [
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" },
+                    children: [
+                      (0, t.jsx)("span", { style: { fontWeight: 800, color: T.textSecondary }, children: "Skala Warna:" }),
+                      [
+                        { c: "#ef4444", l: "Tertinggi" },
+                        { c: "#f97316", l: "Tinggi" },
+                        { c: "#eab308", l: "Sedang" },
+                        { c: "#10b981", l: "Rendah" },
+                        { c: T.mapZeroFill, l: "Nihil" }
+                      ].map(lg => (0, t.jsxs)("span", {
+                        key: lg.l,
+                        style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" },
+                        children: [
+                          (0, t.jsx)("span", { style: { width: 9, height: 9, borderRadius: 2, background: lg.c, border: "1px solid rgba(15,23,42,0.18)", display: "inline-block" } }),
+                          (0, t.jsx)("span", { children: lg.l })
+                        ]
+                      }))
+                    ]
+                  }),
+                  (0, t.jsx)("span", {
+                    style: { color: T.textMuted, fontSize: "0.68rem" },
+                    children: zoom > 1 ? ("Perbesaran: " + zoom.toFixed(1) + "x (Geser peta untuk navigasi)") : "36 Wilayah Hukum Polda • 514 Kab/Kota • Kecamatan"
+                  })
+                ]
+              })
+            ]
+          }),
+
+          // Right Column: 3-Level Drilldown Side Panel (Polda -> Polres -> Polsek + Mabes Polri Point-Only Mode)
+          (0, t.jsxs)("div", {
+            className: "cms-card",
+            style: {
+              padding: "0.9rem",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "0.65rem",
+              background: T.cardBg,
+              border: "1px solid " + T.cardBorder,
+              borderRadius: 12,
+              boxShadow: T.cardShadow
+            },
+            children: [
+              drillLevel === 3 ? (0, t.jsxs)("div", {
+                style: { display: "flex", flexDirection: "column", gap: "0.65rem" },
+                children: [
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "0.45rem",
+                      paddingBottom: "0.55rem",
+                      borderBottom: "1px solid " + T.divider
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { minWidth: 0, flex: 1 },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                            children: [
+                              (0, t.jsx)("span", {
+                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: isDark ? "rgba(124,58,237,0.22)" : "#f5f3ff", color: isDark ? "#c4b5fd" : "#6d28d9", border: "1px solid " + (isDark ? "rgba(167,139,250,0.45)" : "#c4b5fd") },
+                                children: "🏛️ Satker Pusat Mabes Polri"
+                              }),
+                              (0, t.jsx)("span", {
+                                style: { fontSize: "0.63rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
+                                children: "📍 Titik Kantor (Tanpa Polygon)"
+                              })
+                            ]
+                          }),
+                          (0, t.jsx)("h2", {
+                            style: { margin: "0.3rem 0 0.08rem", fontSize: "1.02rem", fontWeight: 850, color: T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                            title: (selectedMabesUnit || mabesUnitNodes[0])?.nama,
+                            children: (selectedMabesUnit || mabesUnitNodes[0])?.shortName || "Bareskrim Polri"
+                          }),
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.69rem", color: T.textMuted },
+                            children: (selectedMabesUnit || mabesUnitNodes[0])?.nama || "Badan Reserse Kriminal Polri"
+                          })
+                        ]
+                      }),
+                      (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: handleResetNasional,
+                        style: {
+                          padding: "0.28rem 0.55rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.accentBorder,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          fontSize: "0.67rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap"
+                        },
+                        children: "← 36 Polda"
+                      })
+                    ]
+                  }),
+
+                  // 4 KPI Mini-Cards for active Mabes Unit
+                  (() => {
+                    const activeMabes = selectedMabesUnit || mabesUnitNodes[0] || mabesSummary;
+                    const mbsCA = Number(activeMabes.ca ?? Math.max(0, Number(activeMabes.ct || 0) - Number(activeMabes.cc || 0)));
+                    const mbsCP = Number(activeMabes.cp ?? ((Number(activeMabes.cp_berjalan || 0) + Number(activeMabes.cp_tunggakan || 0)) || mbsCA));
+                    return (0, t.jsxs)("div", {
+                      className: "tabular-nums",
+                      style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
+                      children: [
+                        { label: "Total LP (CT)", val: z(activeMabes.ct) + " LP", sub: "Total Mabes: " + z(mabesSummary.ct) + " LP", color: T.ctText },
+                        { label: "Selesai (CC)", val: z(activeMabes.cc) + " LP", sub: "Total Mabes: " + z(mabesSummary.cc) + " LP", color: T.ccText },
+                        { label: "Rasio Selesai (CR)", val: Number(activeMabes.cr || 0).toFixed(1) + "%", sub: "Clearance Rate Satker", color: T.crText },
+                        { label: "Dalam Proses (CP)", val: z(mbsCP) + " LP", sub: "Tunggakan (CA): " + z(mbsCA) + " LP", color: T.warnText }
+                      ].map((k, idx) => (0, t.jsxs)("div", {
+                        key: idx,
+                        className: "dash-minicard",
+                        style: {
+                          padding: "0.5rem 0.65rem",
+                          borderRadius: 10,
+                          background: T.subCardBg,
+                          border: "1px solid " + T.subCardBorder
+                        },
+                        children: [
+                          (0, t.jsx)("div", { style: { fontSize: "0.65rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: k.label }),
+                          (0, t.jsx)("div", { style: { fontSize: "1.04rem", fontWeight: 850, color: k.color, marginTop: "0.12rem" }, children: k.val }),
+                          (0, t.jsx)("div", { style: { fontSize: "0.63rem", color: T.textMuted, marginTop: "0.06rem" }, children: k.sub })
+                        ]
+                      }))
+                    });
+                  })(),
+
+                  // Office Address & Point-Only Explanation Box
+                  (() => {
+                    const activeMabes = selectedMabesUnit || mabesUnitNodes[0];
+                    if (!activeMabes) return null;
+                    return (0, t.jsxs)("div", {
+                      style: {
+                        padding: "0.55rem 0.68rem",
+                        borderRadius: 10,
+                        background: isDark ? "rgba(124,58,237,0.12)" : "#f5f3ff",
+                        border: "1px solid " + (isDark ? "rgba(167,139,250,0.35)" : "#ddd6fe"),
+                        fontSize: "0.69rem",
+                        lineHeight: 1.45
+                      },
+                      children: [
+                        (0, t.jsx)("div", {
+                          style: { fontWeight: 800, color: isDark ? "#c4b5fd" : "#5b21b6", marginBottom: "0.18rem" },
+                          children: "📍 Alamat Kantor & Koordinat Google Maps"
+                        }),
+                        (0, t.jsx)("div", {
+                          style: { color: T.textPrimary, fontWeight: 600 },
+                          children: activeMabes.makoAddr
+                        }),
+                        (0, t.jsxs)("div", {
+                          style: { color: T.textMuted, fontSize: "0.65rem", marginTop: "0.16rem", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.3rem" },
+                          children: [
+                            (0, t.jsx)("span", { children: "Koordinat: " + activeMabes.lat.toFixed(4) + ", " + activeMabes.lng.toFixed(4) }),
+                            (0, t.jsx)("span", { style: { fontWeight: 700, color: isDark ? "#c4b5fd" : "#6d28d9" }, children: "Yurisdiksi Nasional (Non-Teritorial)" })
+                          ]
+                        })
+                      ]
+                    });
+                  })(),
+
+                  // List of 10 Mabes / Bareskrim Units
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.38rem",
+                      padding: "0.6rem 0.7rem",
+                      borderRadius: 10,
+                      background: T.subCardBg,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.71rem", fontWeight: 800, color: T.textPrimary },
+                        children: [
+                          (0, t.jsx)("span", { children: "🏛️ Direktorat & Satker Bareskrim Polri" }),
+                          (0, t.jsx)("span", { style: { fontSize: "0.64rem", color: T.accentText }, children: mabesUnitNodes.length + " Titik Kantor" })
+                        ]
+                      }),
+                      (0, t.jsx)("div", {
+                        className: "tabular-nums",
+                        style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "175px", overflowY: "auto", paddingRight: "0.2rem" },
+                        children: mabesUnitNodes.map((u, idx) => {
+                          const isSelU = (selectedMabesUnit?.id || mabesUnitNodes[0]?.id) === u.id;
+                          const maxUCT = Math.max(1, Number(mabesUnitNodes[0]?.ct || 1));
+                          const pct = Math.max(6, Math.round((u.ct / maxUCT) * 100));
+                          return (0, t.jsxs)("div", {
+                            key: u.id,
+                            onClick: () => handleSelectMabesAndZoom(u),
+                            style: {
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "0.16rem",
+                              padding: "0.34rem 0.48rem",
+                              borderRadius: 8,
+                              cursor: "pointer",
+                              background: isSelU ? T.accentBg : T.rowCardBg,
+                              border: "1px solid " + (isSelU ? T.accentBorder : T.rowCardBorder)
+                            },
+                            children: [
+                              (0, t.jsxs)("div", {
+                                style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
+                                children: [
+                                  (0, t.jsx)("span", {
+                                    style: { color: isSelU ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                    children: (idx + 1) + ". " + u.shortName
+                                  }),
+                                  (0, t.jsxs)("span", {
+                                    style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
+                                    children: [z(u.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(" + u.cr.toFixed(0) + "%)" })]
+                                  })
+                                ]
+                              }),
+                              (0, t.jsx)("div", {
+                                style: { height: 4, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                children: (0, t.jsx)("div", {
+                                  style: { width: pct + "%", height: "100%", borderRadius: 999, background: "#7c3aed" }
+                                })
+                              })
+                            ]
+                          });
+                        })
+                      })
+                    ]
+                  })
+                ]
+              }) : selectedRegion ? (0, t.jsxs)("div", {
+                style: { display: "flex", flexDirection: "column", gap: "0.65rem" },
+                children: [
+                  // Top Header of Drilldown Panel (adapts to Level 0/1 Polda vs Level 2 Polres/Polsek)
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "0.45rem",
+                      paddingBottom: "0.55rem",
+                      borderBottom: "1px solid " + T.divider
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { minWidth: 0, flex: 1 },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                            children: [
+                              (0, t.jsx)("span", {
+                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.accentBg, color: T.accentText, border: "1px solid " + T.accentBorder },
+                                children: drillLevel === 2 ? (selectedPolsek ? "Tingkat Polsek (Wilkum Kecamatan)" : "Tingkat Polres (Wilkum Kab/Kota)") : ("Wilkum " + selectedRegion.pulau)
+                              }),
+                              (0, t.jsx)("span", {
+                                className: "tabular-nums",
+                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
+                                children: drillLevel === 2 && selectedPolres ? ("Rank #" + selectedPolres.rank + " di " + selectedRegion.abbr) : ("Peringkat #" + selectedRegion.rank + " Nasional")
+                              })
+                            ]
+                          }),
+                          (0, t.jsx)("h2", {
+                            style: { margin: "0.3rem 0 0.08rem", fontSize: "1.05rem", fontWeight: 850, color: T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                            title: drillLevel === 2 && selectedPolsek ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama)) : (drillLevel === 2 && selectedPolres ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)) : ("Wilkum " + selectedRegion.polda)),
+                            children: drillLevel === 2 && selectedPolsek ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama)) : (drillLevel === 2 && selectedPolres ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)) : selectedRegion.polda)
+                          }),
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.7rem", color: T.textMuted },
+                            children: drillLevel === 2 && selectedPolres
+                              ? ("Induk: " + selectedRegion.polda + (selectedPolsek ? (" • " + formatFullWilkumSatkerName(selectedPolres.nama)) : ""))
+                              : ("Intensitas: " + selectedRegion.levelLabel + " (" + selectedRegion.sharePct.toFixed(1) + "% LP Nasional)")
+                          })
+                        ]
+                      }),
+                      drillLevel === 0 && (0, t.jsx)("button", {
+                        type: "button",
+                        onClick: () => handleSelectPoldaAndZoom(selectedRegion),
+                        title: "Perbesar peta ke wilayah hukum Polda ini & tampilkan irisan batas wilayah + titik Polres jajaran",
+                        style: {
+                          padding: "0.3rem 0.58rem",
+                          borderRadius: 7,
+                          border: "1px solid " + T.accentBorder,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          flexShrink: 0
+                        },
+                        children: "🔍 Zoom Wilkum"
+                      })
+                    ]
+                  }),
+
+                  // 4 Concise KPI Mini-Cards (Matches .dash-minicard aesthetic in Ringkasan)
+                  (() => {
+                    const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
+                    const cpBer = Number(activeObj.cp_berjalan || 0);
+                    const cpTgk = Number(activeObj.cp_tunggakan || 0);
+                    const caVal = Number(activeObj.ca ?? Math.max(0, Number(activeObj.ct || 0) - Number(activeObj.cc || 0)));
+                    const cpVal = Number(activeObj.cp ?? ((cpBer + cpTgk) || caVal));
+                    return (0, t.jsxs)("div", {
+                      className: "tabular-nums",
+                      style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
+                      children: [
+                        { label: "Total LP (CT)", val: z(activeObj.ct) + " LP", sub: "Laporan Polisi Masuk", color: T.ctText, tip: "Jumlah Laporan Polisi pada satuan kerja ini" },
+                        { label: "Selesai (CC)", val: z(activeObj.cc) + " LP", sub: "Perkara Diselesaikan", color: T.ccText, tip: "Jumlah perkara yang telah selesai (CC Aktual + Tunggakan)" },
+                        { label: "Rasio Selesai (CR)", val: Number(activeObj.cr || 0).toFixed(1) + "%", sub: "Clearance Rate", color: T.crText, tip: "Persentase penyelesaian perkara terhadap total LP" },
+                        { label: "Dalam Proses (CP)", val: z(cpVal) + " LP", sub: "Tunggakan (CA): " + z(caVal) + " LP", color: T.warnText, tip: "Tindak Pidana dalam Proses (CP = Crime Processed) & Tunggakan Tindak Pidana (CA = CT - CC)" }
+                      ].map((k, idx) => (0, t.jsxs)("div", {
+                        key: idx,
+                        className: "dash-minicard",
+                        title: k.tip,
+                        style: {
+                          padding: "0.5rem 0.65rem",
+                          borderRadius: 10,
+                          background: T.subCardBg,
+                          border: "1px solid " + T.subCardBorder,
+                          cursor: "help"
+                        },
+                        children: [
+                          (0, t.jsxs)("div", {
+                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.65rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.02em" },
+                            children: [(0, t.jsx)("span", { children: k.label }), renderKpInfoIcon(11)]
+                          }),
+                          (0, t.jsx)("div", { style: { fontSize: "1.04rem", fontWeight: 850, color: k.color, marginTop: "0.12rem" }, children: k.val }),
+                          (0, t.jsx)("div", { style: { fontSize: "0.63rem", color: T.textMuted, marginTop: "0.06rem" }, children: k.sub })
+                        ]
+                      }))
+                    });
+                  })(),
+
+                  // Official Mako Address & Cakupan Wilayah Hukum (Wilkum) Card
+                  (() => {
+                    const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
+                    const addrText = activeObj.makoAddr || selectedRegion.makoAddr || ("Mako " + (activeObj.nama || selectedRegion.polda));
+                    const wilkumText = activeObj.wilkum || activeObj.wilkumNote || selectedRegion.wilkumNote || ("Wilayah Hukum " + (activeObj.nama || selectedRegion.polda));
+                    return (0, t.jsxs)("div", {
+                      style: {
+                        padding: "0.52rem 0.68rem",
+                        borderRadius: 10,
+                        background: isDark ? "rgba(239,68,68,0.09)" : "#fff1f2",
+                        border: "1px solid " + (isDark ? "rgba(248,113,113,0.32)" : "#fecdd3"),
+                        fontSize: "0.68rem",
+                        lineHeight: 1.42
+                      },
+                      children: [
+                        (0, t.jsxs)("div", {
+                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", marginBottom: "0.14rem" },
+                          children: [
+                            (0, t.jsx)("span", {
+                              style: { fontWeight: 800, color: isDark ? "#fca5a5" : "#be123c" },
+                              children: "📍 Alamat Mako & Irisan Wilayah Hukum"
+                            }),
+                            (0, t.jsxs)("div", {
+                              style: { display: "inline-flex", gap: "0.25rem" },
+                              children: [
+                                mapEngine !== "gmaps_street" && (0, t.jsx)("button", {
+                                  type: "button",
+                                  onClick: () => {
+                                    setMapEngine("gmaps_street");
+                                    if (drillLevel === 0 && selectedRegion) handleSelectPoldaAndZoom(selectedRegion);
+                                  },
+                                  style: {
+                                    padding: "0.1rem 0.38rem",
+                                    borderRadius: 5,
+                                    border: "1px solid " + T.accentBorder,
+                                    background: T.accentBg,
+                                    color: T.accentText,
+                                    fontSize: "0.6rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer"
+                                  },
+                                  children: "🌐 Irisan Peta"
+                                }),
+                                mapEngine !== "gmaps_embed" && (0, t.jsx)("button", {
+                                  type: "button",
+                                  onClick: () => setMapEngine("gmaps_embed"),
+                                  style: {
+                                    padding: "0.1rem 0.38rem",
+                                    borderRadius: 5,
+                                    border: "1px solid " + T.ctBorder,
+                                    background: T.ctBg,
+                                    color: T.ctText,
+                                    fontSize: "0.6rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer"
+                                  },
+                                  children: "📍 GMaps Native"
+                                })
+                              ]
+                            })
+                          ]
+                        }),
+                        (0, t.jsx)("div", {
+                          style: { color: T.textPrimary, fontWeight: 600 },
+                          children: addrText
+                        }),
+                        (0, t.jsx)("div", {
+                          style: { color: T.textSecondary, fontSize: "0.64rem", marginTop: "0.12rem" },
+                          children: "Cakupan Wilkum: " + wilkumText
+                        })
+                      ]
+                    });
+                  })(),
+
+                  // NEW: Ranking Titik Rawan Kejadian (TKP) Tertinggi (Berdasarkan Koordinat Latitude & Longitude LP) — Placed FIRST for immediate visibility!
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.38rem",
+                      padding: "0.55rem 0.65rem",
+                      borderRadius: 10,
+                      background: T.subCardBg,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
+                        children: [
+                          (0, t.jsx)("span", {
+                            children: "🎯 Titik Rawan Kejadian (TKP) Tertinggi"
+                          }),
+                          (0, t.jsx)("span", {
+                            style: { fontSize: "0.64rem", color: T.ctText, fontWeight: 800 },
+                            children: crimeFilter !== "SEMUA" ? (activeCrimeMeta.icon + " " + activeCrimeMeta.label) : "Koordinat LP"
+                          })
+                        ]
+                      }),
+                      activeTopRawan.length === 0 ? (
+                        (0, t.jsx)("div", {
+                          style: { fontSize: "0.7rem", color: T.textMuted, padding: "0.35rem 0" },
+                          children: petaLoading ? "Memuat klaster koordinat TKP dari LP…" : "Belum ada titik koordinat TKP pada filter ini."
+                        })
+                      ) : (
+                        (0, t.jsx)("div", {
+                          className: "tabular-nums",
+                          style: { display: "flex", flexDirection: "column", gap: "0.3rem", maxHeight: "145px", overflowY: "auto", paddingRight: "0.2rem" },
+                          children: activeTopRawan.slice(0, 8).map((hs, idx) => {
+                            const isSelHs = selectedHotspot && Math.abs(Number(selectedHotspot.lat) - Number(hs.lat)) < 0.001 && Math.abs(Number(selectedHotspot.lng) - Number(hs.lng)) < 0.001;
+                            return (0, t.jsxs)("div", {
+                              key: "rawan_" + idx + "_" + hs.lat + "_" + hs.lng,
+                              onClick: () => handleSelectHotspotAndZoom(hs),
+                              title: "Klik untuk zoom ke titik koordinat LP (" + Number(hs.lat).toFixed(5) + ", " + Number(hs.lng).toFixed(5) + ") & lihat sampel LP",
+                              style: {
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.12rem",
+                                padding: "0.32rem 0.46rem",
+                                borderRadius: 8,
+                                cursor: "pointer",
+                                background: isSelHs ? T.ctBg : T.rowCardBg,
+                                border: "1px solid " + (isSelHs ? T.ctBorder : T.rowCardBorder),
+                                transition: "all 120ms ease"
+                              },
+                              children: [
+                                (0, t.jsxs)("div", {
+                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.68rem" },
+                                  children: [
+                                    (0, t.jsx)("span", {
+                                      style: { fontWeight: 800, color: isSelHs ? T.ctText : T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                      children: "#" + (idx + 1) + " • " + (hs.tkp_label || "Lokasi TKP")
+                                    }),
+                                    (0, t.jsx)("span", {
+                                      style: { flexShrink: 0, fontWeight: 800, color: T.ctText, fontSize: "0.66rem", background: isDark ? "rgba(239,68,68,0.2)" : "#fef2f2", padding: "0.04rem 0.36rem", borderRadius: 6, border: "1px solid " + T.ctBorder },
+                                      children: z(hs.ct) + " LP"
+                                    })
+                                  ]
+                                }),
+                                (0, t.jsxs)("div", {
+                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.62rem", color: T.textMuted },
+                                  children: [
+                                    (0, t.jsx)("span", {
+                                      style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                      children: "🛡️ " + abbrSatkerName(hs.satker_nama || "-") + " (" + String(hs.polda_nama || "").replace(/^POLDA\s+/i, "") + ")"
+                                    }),
+                                    (0, t.jsx)("span", {
+                                      style: { flexShrink: 0, fontFamily: "monospace", color: T.accentText, fontWeight: 700 },
+                                      children: Number(hs.lat).toFixed(4) + ", " + Number(hs.lng).toFixed(4)
+                                    })
+                                  ]
+                                }),
+                                (0, t.jsx)("div", {
+                                  style: { fontSize: "0.61rem", color: T.textSecondary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                  children: "⚖️ Dominan: " + (hs.dominant_crime || activeCrimeMeta.label)
+                                })
+                              ]
+                            });
+                          })
+                        })
+                      )
+                    ]
+                  }),
+
+                  // Interactive List: Either Polres List (Level 0/1) OR Polsek List (Level 2)
+                  (0, t.jsxs)("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.38rem",
+                      padding: "0.55rem 0.65rem",
+                      borderRadius: 10,
+                      background: T.subCardBg,
+                      border: "1px solid " + T.subCardBorder
+                    },
+                    children: [
+                      (0, t.jsxs)("div", {
+                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
+                        children: [
+                          (0, t.jsx)("span", {
+                            children: drillLevel === 2 && selectedPolres
+                              ? ("📍 Satuan Polres & Polsek Jajaran (" + formatFullWilkumSatkerName(selectedPolres.nama) + ")")
+                              : ("🏢 Sebaran Polres / Satker (" + selectedRegion.abbr + ")")
+                          }),
+                          drillLevel === 2 ? (
+                            (0, t.jsx)("button", {
+                              type: "button",
+                              onClick: handleStepBack,
+                              style: { background: "transparent", border: "none", color: T.accentText, fontSize: "0.68rem", fontWeight: 800, cursor: "pointer", padding: 0 },
+                              children: "← Daftar Polres"
+                            })
+                          ) : (
+                            (0, t.jsx)("span", { style: { fontSize: "0.65rem", color: T.accentText, fontWeight: 700 }, children: polresMapNodes.length > 0 ? (polresMapNodes.length + " Satker (Klik → Satuan & Polsek)") : "" })
+                          )
+                        ]
+                      }),
+
+                      // Render Polsek List when drillLevel === 2, otherwise Polres List
+                      drillLevel === 2 ? (
+                        polsekLoading ? (
+                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Satuan Polres & Polsek jajaran…" })
+                        ) : polsekMapNodes.length === 0 ? (
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
+                            children: "Satker ini tidak memiliki rincian sub-unit Polsek atau seluruh LP ditangani langsung di tingkat " + (selectedPolres?.shortName || "Polres") + "."
+                          })
+                        ) : (
+                          (0, t.jsx)("div", {
+                            className: "tabular-nums",
+                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "176px", paddingBottom: "0.25rem", overflowY: "auto", paddingRight: "0.2rem" },
+                            children: polsekMapNodes.map((psk, idx) => {
+                              const maxPskCT = Math.max(1, Number(polsekMapNodes[0]?.ct || 1));
+                              const pct = Math.max(5, Math.round((psk.ct / maxPskCT) * 100));
+                              const isSelPsk = selectedPolsek?.kode === psk.kode;
+                              return (0, t.jsxs)("div", {
+                                key: psk.kode || idx,
+                                onClick: () => handleSelectPolsekAndZoom(psk),
+                                title: "Klik untuk fokus & gambar irisan poligon Kecamatan ke " + psk.nama,
+                                style: {
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.16rem",
+                                  padding: "0.3rem 0.45rem",
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  background: isSelPsk ? T.accentBg : T.rowCardBg,
+                                  border: "1px solid " + (isSelPsk ? T.accentBorder : T.rowCardBorder)
+                                },
+                                children: [
+                                  (0, t.jsxs)("div", {
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
+                                    children: [
+                                      (0, t.jsxs)("span", {
+                                        style: { color: isSelPsk ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.3rem" },
+                                        children: [
+                                          (0, t.jsx)("span", {
+                                            style: {
+                                              fontSize: "0.56rem",
+                                              fontWeight: 800,
+                                              padding: "0.02rem 0.28rem",
+                                              borderRadius: 4,
+                                              background: psk.unitKind === "SATUAN_POLRES" ? "rgba(37,99,235,0.18)" : "rgba(16,185,129,0.18)",
+                                              color: psk.unitKind === "SATUAN_POLRES" ? "#60a5fa" : "#34d399",
+                                              flexShrink: 0
+                                            },
+                                            children: psk.unitKind === "SATUAN_POLRES" ? "SATUAN" : "POLSEK"
+                                          }),
+                                          (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis" }, children: (idx + 1) + ". " + psk.shortName })
+                                        ]
+                                      }),
+                                      (0, t.jsxs)("span", {
+                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
+                                        children: [z(psk.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(" + psk.cr.toFixed(0) + "%)" })]
+                                      })
+                                    ]
+                                  }),
+                                  (0, t.jsx)("div", {
+                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (psk.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: psk.color }
+                                    })
+                                  })
+                                ]
+                              });
+                            })
+                          })
+                        )
+                      ) : (
+                        subLoading ? (
+                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Polres/Satker jajaran…" })
+                        ) : polresMapNodes.length === 0 ? (
+                          (0, t.jsx)("div", {
+                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
+                            children: selectedRegion.ct > 0
+                              ? ("Tercatat " + z(selectedRegion.ct) + " LP dan " + z(selectedRegion.cc) + " perkara selesai pada " + selectedRegion.polda + ".")
+                              : ("Belum ada LP tercatat pada " + selectedRegion.polda + " untuk periode ini.")
+                          })
+                        ) : (
+                          (0, t.jsx)("div", {
+                            className: "tabular-nums",
+                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "176px", paddingBottom: "0.25rem", overflowY: "auto", paddingRight: "0.2rem" },
+                            children: polresMapNodes.map((prs, idx) => {
+                              const maxSubCT = Math.max(1, Number(polresMapNodes[0]?.ct || 1));
+                              const pct = Math.max(5, Math.round((prs.ct / maxSubCT) * 100));
+                              return (0, t.jsxs)("div", {
+                                key: prs.kode || idx,
+                                onClick: () => handleSelectPolresAndZoom(prs),
+                                title: "Klik untuk zoom ke " + prs.nama + ", gambar irisan Wilkum Kab/Kota & tampilkan Polsek jajaran",
+                                style: {
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.16rem",
+                                  padding: "0.3rem 0.45rem",
+                                  borderRadius: 8,
+                                  cursor: "pointer",
+                                  background: T.rowCardBg,
+                                  border: "1px solid " + T.rowCardBorder
+                                },
+                                children: [
+                                  (0, t.jsxs)("div", {
+                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
+                                    children: [
+                                      (0, t.jsx)("span", {
+                                        style: { color: T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                        children: (idx + 1) + ". " + prs.shortName + " ➔"
+                                      }),
+                                      (0, t.jsxs)("span", {
+                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
+                                        children: [z(prs.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(CC: " + z(prs.cc) + ")" })]
+                                      })
+                                    ]
+                                  }),
+                                  (0, t.jsx)("div", {
+                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (prs.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: prs.color }
+                                    })
+                                  })
+                                ]
+                              });
+                            })
+                          })
+                        )
+                      )
+                    ]
+                  })
+                ]
+              }) : null,
+
+              // Action Buttons at bottom of Drilldown Panel
+              (0, t.jsxs)("div", {
+                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "auto" },
+                children: [
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Buka halaman Daftar Laporan Polisi sesuai filter aktif pada Peta Kejahatan",
+                    onClick: () => {
+                      const sp = new URLSearchParams();
+                      if (ee) sp.set("from", ee);
+                      if (et) sp.set("to", et);
+                      if (kelompokFilter && kelompokFilter !== "SEMUA") sp.set("kelompok", kelompokFilter);
+                      if (drillLevel === 3 && selectedMabesUnit?.nama) {
+                        sp.set("satker", selectedMabesUnit.nama);
+                      } else if (drillLevel === 2 && selectedPolsek?.nama) {
+                        sp.set("satker", selectedPolsek.nama);
+                      } else if (drillLevel === 2 && selectedPolres?.nama) {
+                        sp.set("satker", selectedPolres.nama);
+                      } else if (drillLevel >= 1 && selectedRegion?.polda) {
+                        sp.set("polda", selectedRegion.polda);
+                      }
+                      if (activeKelompokCrime && activeKelompokCrime !== "SEMUA") sp.set("kelompok_kejahatan", activeKelompokCrime);
+                      if (activeTipidCrime && activeTipidCrime !== "SEMUA") sp.set("tipid", activeTipidCrime);
+                      if (selectedCrimeNames.length > 0) sp.set("jenis_kejahatan", selectedCrimeNames.join(","));
+                      else if (crimeFilter && crimeFilter !== "SEMUA") sp.set("crime", crimeFilter);
+                      const qs = sp.toString();
+                      e.push("/cms/laporan-polisi" + (qs ? ("?" + qs) : ""));
+                    },
+                    style: {
+                      padding: "0.5rem 0.65rem",
+                      borderRadius: 9,
+                      border: "1px solid " + T.ctBorder,
+                      background: T.ctBg,
+                      color: T.ctText,
+                      fontSize: "0.73rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "📋 Lihat Daftar LP"
+                  }),
+                  (0, t.jsx)("button", {
+                    type: "button",
+                    title: "Buka halaman matriks lengkap Kinerja Perkara sesuai filter aktif",
+                    onClick: () => {
+                      const sp = new URLSearchParams();
+                      if (ee) sp.set("from", ee);
+                      if (et) sp.set("to", et);
+                      if (kelompokFilter && kelompokFilter !== "SEMUA") sp.set("kelompok", kelompokFilter);
+                      if (drillLevel >= 1 && selectedRegion?.polda) sp.set("polda", selectedRegion.polda);
+                      const qs = sp.toString();
+                      e.push("/cms/report/kinerja-perkara" + (qs ? ("?" + qs) : ""));
+                    },
+                    style: {
+                      padding: "0.5rem 0.65rem",
+                      borderRadius: 9,
+                      border: "1px solid " + T.accentBorder,
+                      background: T.accentBg,
+                      color: T.accentText,
+                      fontSize: "0.73rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "📊 Kinerja Perkara"
+                  })
+                ]
+              })
+            ]
+          })
+        ]
+      }),
+
+      // 2. 4 Concise KPI Summary Cards (Positioned below Map + Right Panel)
       (0, t.jsxs)("div", {
         className: "cas-peta-kpi-grid",
         children: [
@@ -3671,7 +6567,9 @@ function CasPetaKejahatanView({
             note: periodLabel || "Periode Aktif",
             rightBadge: isScopedUser
               ? scopeSatkerShort
-              : ((petaData?.ct_today || l?.ct_today) ? "+" + z(petaData?.ct_today || l?.ct_today) + " Hari Ini" : "Nasional")
+              : ((petaData ? Number(petaData.ct_today || 0) : (canSyncWithMainDash ? Number(l?.ct_today || 0) : 0)) > 0
+                ? "+" + z(petaData ? petaData.ct_today : l?.ct_today) + " Hari Ini"
+                : (hasCustomPetaFilter ? "Sesuai Filter" : "Nasional"))
           },
           {
             title: isScopedUser
@@ -3838,7 +6736,7 @@ function CasPetaKejahatanView({
         }))
       }),
 
-      // 2. Clean Theme-Harmonized Operational Filter & Control Bar (Matching Daftar LP 4-Pill Floating Popover Toolbar 100%)
+      // 3. Clean Theme-Harmonized Operational Filter & Control Bar (Positioned below Map & KPI Summary Cards)
       (0, t.jsxs)("div", {
         className: "cms-card cas-peta-filter-bar",
         style: {
@@ -4427,81 +7325,110 @@ function CasPetaKejahatanView({
                                         });
                                       })(),
 
-                                      // Subordinate List: All Polres / Polrestabes / Polresta inside that Polda Wilkum
+                                      // Subordinate List: All Polres / Polrestabes / Polresta inside that Polda Wilkum, with nested Satres & Polsek directly under the selected Polres!
                                       selectedRegion && polresMapNodes
                                         .filter(pr => !pr.isInduk)
                                         .filter(pr => {
                                           if (!satkerTreeQuery.trim()) return true;
                                           const q = satkerTreeQuery.trim().toLowerCase();
-                                          return String(pr.nama || "").toLowerCase().includes(q) || String(pr.shortName || "").toLowerCase().includes(q);
+                                          const matchPr = String(pr.nama || "").toLowerCase().includes(q) || String(pr.shortName || "").toLowerCase().includes(q);
+                                          const isThisSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama);
+                                          const matchChild = isThisSel && polsekMapNodes.some(psk => String(psk.nama || "").toLowerCase().includes(q) || String(psk.shortName || "").toLowerCase().includes(q));
+                                          return matchPr || matchChild;
                                         })
                                         .map((pr, pIdx) => {
-                                          const isPrSel = String(selectedPolres?.kode || "") === String(pr.kode) || specificSatkerKey === String(pr.kode);
-                                          return (0, t.jsxs)("div", {
+                                          const isPrSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama) || specificSatkerKey === String(pr.kode);
+                                          return (0, t.jsxs)(a.Fragment, {
                                             key: pr.kode || ("pr_" + pIdx),
-                                            onClick: () => {
-                                              setSpecificSatkerKey(String(pr.kode));
-                                              handleSelectPolresAndZoom(pr);
-                                            },
-                                            style: {
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "space-between",
-                                              gap: "0.4rem",
-                                              padding: "0.3rem 0.5rem 0.3rem 0.85rem",
-                                              borderRadius: 6,
-                                              cursor: "pointer",
-                                              border: "1px solid " + (isPrSel ? "#ef4444" : T.rowCardBorder),
-                                              background: isPrSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                              color: isPrSel ? "#f87171" : T.textPrimary,
-                                              fontSize: "0.71rem",
-                                              fontWeight: isPrSel ? 800 : 600
-                                            },
                                             children: [
-                                              (0, t.jsx)("span", {
-                                                style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                                children: "├─ 🛡️ " + formatFullWilkumSatkerName(pr.nama)
+                                              (0, t.jsxs)("div", {
+                                                onClick: () => {
+                                                  setSpecificSatkerKey(String(pr.kode));
+                                                  handleSelectPolresAndZoom(pr);
+                                                },
+                                                style: {
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "space-between",
+                                                  gap: "0.4rem",
+                                                  padding: "0.3rem 0.5rem 0.3rem 0.85rem",
+                                                  borderRadius: 6,
+                                                  cursor: "pointer",
+                                                  border: "1px solid " + (isPrSel ? "#ef4444" : T.rowCardBorder),
+                                                  background: isPrSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                  color: isPrSel ? "#f87171" : T.textPrimary,
+                                                  fontSize: "0.71rem",
+                                                  fontWeight: isPrSel ? 800 : 600
+                                                },
+                                                children: [
+                                                  (0, t.jsx)("span", {
+                                                    style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                                    children: (isPrSel ? "▾ " : "▸ ") + "🛡️ " + (pr.shortName || formatFullWilkumSatkerName(pr.nama))
+                                                  }),
+                                                  (0, t.jsx)("span", {
+                                                    style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 700, color: T.ctText },
+                                                    children: z(pr.ct) + " LP"
+                                                  })
+                                                ]
                                               }),
-                                              (0, t.jsx)("span", {
-                                                style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 700, color: T.ctText },
-                                                children: z(pr.ct) + " LP"
-                                              })
+                                              isPrSel && drillLevel === 2 && (
+                                                polsekLoading ? (
+                                                  (0, t.jsx)("div", {
+                                                    style: { padding: "0.24rem 0.5rem 0.24rem 1.65rem", fontSize: "0.67rem", color: T.textMuted },
+                                                    children: "⏳ Memuat Satres & Polsek jajaran…"
+                                                  })
+                                                ) : polsekMapNodes.map((psk, sIdx) => {
+                                                  const isPskSel = String(selectedPolsek?.kode || "") === String(psk.kode);
+                                                  const isSat = psk.isSatuanPolres || psk.unitKind === "SATUAN_POLRES";
+                                                  return (0, t.jsxs)("div", {
+                                                    key: psk.kode || ("psk_" + sIdx),
+                                                    onClick: () => handleSelectPolsekAndZoom(psk),
+                                                    style: {
+                                                      display: "flex",
+                                                      alignItems: "center",
+                                                      justifyContent: "space-between",
+                                                      gap: "0.4rem",
+                                                      padding: "0.28rem 0.5rem 0.28rem 1.65rem",
+                                                      borderRadius: 6,
+                                                      cursor: "pointer",
+                                                      border: "1px solid " + (isPskSel ? "#ef4444" : T.rowCardBorder),
+                                                      background: isPskSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                      color: isPskSel ? "#f87171" : T.textSecondary,
+                                                      fontSize: "0.69rem",
+                                                      fontWeight: isPskSel ? 800 : 600
+                                                    },
+                                                    children: [
+                                                      (0, t.jsxs)("span", {
+                                                        style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.28rem" },
+                                                        children: [
+                                                          (0, t.jsx)("span", {
+                                                            style: {
+                                                              fontSize: "0.54rem",
+                                                              fontWeight: 800,
+                                                              padding: "0.02rem 0.25rem",
+                                                              borderRadius: 4,
+                                                              background: isSat ? "rgba(37,99,235,0.18)" : "rgba(16,185,129,0.18)",
+                                                              color: isSat ? "#60a5fa" : "#34d399"
+                                                            },
+                                                            children: isSat ? "SATRES" : "POLSEK"
+                                                          }),
+                                                          (0, t.jsx)("span", {
+                                                            style: { overflow: "hidden", textOverflow: "ellipsis" },
+                                                            children: psk.shortName || formatFullWilkumSatkerName(psk.nama)
+                                                          })
+                                                        ]
+                                                      }),
+                                                      (0, t.jsx)("span", {
+                                                        style: { flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: T.ctText },
+                                                        children: z(psk.ct) + " LP"
+                                                      })
+                                                    ]
+                                                  });
+                                                })
+                                              )
                                             ]
                                           });
-                                        }),
-
-                                      // Subordinate Polsek list when a Polres is selected and Tingkat Polsek is enabled
-                                      drillLevel === 2 && selectedPolres && tingkatPenanganan.polsek && polsekMapNodes.length > 0 && polsekMapNodes.map((psk, sIdx) => {
-                                        const isPskSel = String(selectedPolsek?.kode || "") === String(psk.kode);
-                                        return (0, t.jsxs)("div", {
-                                          key: psk.kode || ("psk_" + sIdx),
-                                          onClick: () => handleSelectPolsekAndZoom(psk),
-                                          style: {
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            gap: "0.4rem",
-                                            padding: "0.28rem 0.5rem 0.28rem 1.45rem",
-                                            borderRadius: 6,
-                                            cursor: "pointer",
-                                            border: "1px solid " + (isPskSel ? "#ef4444" : T.rowCardBorder),
-                                            background: isPskSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                            color: isPskSel ? "#f87171" : T.textSecondary,
-                                            fontSize: "0.69rem",
-                                            fontWeight: isPskSel ? 800 : 600
-                                          },
-                                          children: [
-                                            (0, t.jsx)("span", {
-                                              style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                              children: "└─ 📍 " + formatFullWilkumSatkerName(psk.nama)
-                                            }),
-                                            (0, t.jsx)("span", {
-                                              style: { flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: T.ctText },
-                                              children: z(psk.ct) + " LP"
-                                            })
-                                          ]
-                                        });
-                                      })
+                                        })
                                     ]
                                   })
                                 ]
@@ -4550,47 +7477,61 @@ function CasPetaKejahatanView({
                   (0, t.jsxs)("div", {
                     style: { minWidth: 0, width: "100%", position: "relative" },
                     children: [
-                      (0, t.jsxs)("button", {
-                        type: "button",
-                        title: "Filter Jenis & Golongan Kejahatan",
-                        onClick: () => {
-                          if (showFilterPopover && filterPopoverTab === "kejahatan") {
-                            setShowFilterPopover(false);
-                          } else {
-                            setFilterPopoverTab("kejahatan");
-                            setShowFilterPopover(true);
-                          }
-                        },
-                        style: {
-                          width: "100%",
-                          minWidth: 0,
-                          height: "34px",
-                          padding: "0 0.45rem",
-                          fontSize: "0.73rem",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "0.35rem",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                          fontWeight: (crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA") ? 700 : 600,
-                          border: "1px solid " + ((crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA") ? "#ef4444" : T.inputBorder),
-                          color: (crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA") ? "var(--cas-primary, #dc2626)" : T.textPrimary,
-                          background: (crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA") ? "rgba(239,68,68,0.14)" : T.cardBg
-                        },
-                        children: [
-                          (0, t.jsx)("i", { className: "pi pi-shield", style: { fontSize: "0.75rem", flexShrink: 0 } }),
-                          (0, t.jsx)("span", {
-                            style: { overflow: "hidden", textOverflow: "ellipsis" },
-                            children: crimeFilter !== "SEMUA"
-                              ? (activeCrimeMeta.label || crimeFilter)
-                              : (golonganFilter !== "SEMUA" ? ("Golongan #" + golonganFilter) : "Kejahatan")
-                          })
-                        ]
-                      }),
+                      (() => {
+                        const hasCrimeActive = activeKelompokCrime !== "SEMUA" || activeTipidCrime !== "SEMUA" || selectedCrimeNames.length > 0 || crimeFilter !== "SEMUA" || golonganFilter !== "SEMUA";
+                        const crimeBtnLabel = selectedCrimeNames.length === 1
+                          ? selectedCrimeNames[0]
+                          : selectedCrimeNames.length > 1
+                          ? (selectedCrimeNames.length + " Jenis Kejahatan")
+                          : activeTipidCrime !== "SEMUA"
+                          ? activeTipidCrime
+                          : activeKelompokCrime !== "SEMUA"
+                          ? ("Kelompok " + activeKelompokCrime)
+                          : crimeFilter !== "SEMUA"
+                          ? (activeCrimeMeta.label || crimeFilter)
+                          : golonganFilter !== "SEMUA"
+                          ? ("Golongan #" + golonganFilter)
+                          : "Kejahatan";
+                        return (0, t.jsxs)("button", {
+                          type: "button",
+                          title: "Filter Kelompok Induk, Sub-Kelompok TIPID & Jenis Kejahatan: " + crimeBtnLabel,
+                          onClick: () => {
+                            if (showFilterPopover && filterPopoverTab === "kejahatan") {
+                              setShowFilterPopover(false);
+                            } else {
+                              setFilterPopoverTab("kejahatan");
+                              setShowFilterPopover(true);
+                            }
+                          },
+                          style: {
+                            width: "100%",
+                            minWidth: 0,
+                            height: "34px",
+                            padding: "0 0.45rem",
+                            fontSize: "0.73rem",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "0.35rem",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                            fontWeight: hasCrimeActive ? 700 : 600,
+                            border: "1px solid " + (hasCrimeActive ? "#ef4444" : T.inputBorder),
+                            color: hasCrimeActive ? "var(--cas-primary, #dc2626)" : T.textPrimary,
+                            background: hasCrimeActive ? "rgba(239,68,68,0.14)" : T.cardBg
+                          },
+                          children: [
+                            (0, t.jsx)("i", { className: "pi pi-shield", style: { fontSize: "0.75rem", flexShrink: 0 } }),
+                            (0, t.jsx)("span", {
+                              style: { overflow: "hidden", textOverflow: "ellipsis" },
+                              children: crimeBtnLabel
+                            })
+                          ]
+                        });
+                      })(),
                       showFilterPopover && filterPopoverTab === "kejahatan" && (0, t.jsxs)("div", {
                         className: "cas-peta-filter-popover lp-crime-popover cas-filter-popover",
                         style: {
@@ -4598,9 +7539,9 @@ function CasPetaKejahatanView({
                           left: 0,
                           top: "calc(100% + 0.45rem)",
                           zIndex: 2500,
-                          width: "30rem",
+                          width: "31.5rem",
                           maxWidth: "calc(100vw - 2rem)",
-                          maxHeight: "min(27.5rem, calc(100vh - 14.5rem))",
+                          maxHeight: "min(30rem, calc(100vh - 13.5rem))",
                           display: "flex",
                           flexDirection: "column",
                           background: T.cardBg,
@@ -4615,10 +7556,14 @@ function CasPetaKejahatanView({
                             children: [
                               (0, t.jsxs)("div", {
                                 children: [
-                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Jenis & Golongan Kejahatan" }),
+                                  (0, t.jsx)("div", { style: { fontWeight: 800, color: T.textPrimary, fontSize: "0.92rem" }, children: "Pilih Kelompok, Sub-TIPID & Jenis Kejahatan" }),
                                   (0, t.jsx)("div", {
                                     style: { fontSize: "0.71rem", color: T.textSecondary },
-                                    children: (crimeFilter !== "SEMUA" ? (activeCrimeMeta.label || crimeFilter) : "Semua Jenis Kejahatan") + (golonganFilter !== "SEMUA" ? " · Golongan #" + golonganFilter : "")
+                                    children: [
+                                      activeKelompokCrime !== "SEMUA" ? ("Kelompok: " + activeKelompokCrime) : "Semua Kelompok",
+                                      activeTipidCrime !== "SEMUA" ? ("Sub-TIPID: " + activeTipidCrime) : null,
+                                      selectedCrimeNames.length > 0 ? (selectedCrimeNames.length + " Jenis dipilih") : (crimeFilter !== "SEMUA" ? (activeCrimeMeta.label || crimeFilter) : "Semua Jenis")
+                                    ].filter(Boolean).join(" · ")
                                   })
                                 ]
                               }),
@@ -4626,28 +7571,100 @@ function CasPetaKejahatanView({
                             ]
                           }),
                           (0, t.jsxs)("div", {
-                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem" },
+                            style: { flex: "1 1 auto", minHeight: 0, overflowY: "auto", paddingRight: "0.1rem", display: "flex", flexDirection: "column", gap: "0.45rem" },
                             children: [
+                              // 1. Kelompok Induk Kejahatan (identik dengan Daftar LP)
                               (0, t.jsxs)("div", {
-                                style: { marginBottom: "0.48rem", background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.42rem 0.55rem" },
                                 children: [
-                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "1. Golongan Kejahatan (Klasifikasi Pusiknas)" }),
+                                  (0, t.jsx)("div", { style: { fontSize: "0.7rem", fontWeight: 800, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.28rem" }, children: "1. Kelompok Induk Kejahatan" }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "0.3rem" },
+                                    style: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "0.28rem" },
                                     children: [
-                                      { id: "SEMUA", label: "Semua" },
-                                      { id: "1", label: "Konvensional" },
-                                      { id: "2", label: "Transnasional" },
-                                      { id: "3", label: "Kekayaan Negara" },
-                                      { id: "4", label: "Kontinjensi" }
-                                    ].map(g => {
-                                      const active = golonganFilter === g.id;
+                                      { id: "SEMUA", label: "Semua Kelompok" },
+                                      { id: "Krimsus", label: "Krimsus" },
+                                      { id: "Krimum", label: "Krimum" },
+                                      { id: "Narkoba", label: "Narkoba" }
+                                    ].map(kel => {
+                                      const active = activeKelompokCrime === kel.id;
                                       return (0, t.jsx)("div", {
-                                        key: g.id,
-                                        onClick: () => setGolonganFilter(g.id),
+                                        key: kel.id,
+                                        onClick: () => {
+                                          setActiveKelompokCrime(kel.id);
+                                          if (kel.id === "SEMUA") {
+                                            setActiveTipidCrime("SEMUA");
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          } else if (kel.id === "Narkoba") {
+                                            setActiveTipidCrime("Tipidnarkoba");
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          } else if (kel.id === "Krimum") {
+                                            if (activeTipidCrime !== "Tipidum" && activeTipidCrime !== "Tipid PPA & PPO") {
+                                              setActiveTipidCrime("SEMUA");
+                                            }
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          } else if (kel.id === "Krimsus") {
+                                            if (!["Tipidsiber", "Tipideksus", "Tipidkor", "Tipidter"].includes(activeTipidCrime)) {
+                                              setActiveTipidCrime("SEMUA");
+                                            }
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          }
+                                          setSelectedHotspot(null);
+                                        },
                                         style: {
                                           textAlign: "center",
-                                          padding: "0.32rem 0.15rem",
+                                          padding: "0.3rem 0.2rem",
+                                          borderRadius: 6,
+                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
+                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
+                                          color: active ? "#f87171" : T.textPrimary,
+                                          fontSize: "0.7rem",
+                                          fontWeight: active ? 700 : 500,
+                                          cursor: "pointer",
+                                          userSelect: "none",
+                                          whiteSpace: "nowrap",
+                                          overflow: "hidden",
+                                          textOverflow: "ellipsis"
+                                        },
+                                        children: kel.label
+                                      });
+                                    })
+                                  })
+                                ]
+                              }),
+
+                              // 2. Sub-Kelompok TIPID (identik dengan Daftar LP)
+                              (0, t.jsxs)("div", {
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.42rem 0.55rem" },
+                                children: [
+                                  (0, t.jsx)("div", { style: { fontSize: "0.7rem", fontWeight: 800, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.28rem" }, children: "2. Sub-Kelompok TIPID" }),
+                                  (0, t.jsx)("div", {
+                                    style: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "0.28rem" },
+                                    children: [
+                                      { id: "SEMUA", label: "Semua TIPID", kel: "SEMUA", cf: "SEMUA" },
+                                      { id: "Tipidsiber", label: "Tipidsiber", kel: "Krimsus", cf: "SIBER" },
+                                      { id: "Tipideksus", label: "Tipideksus", kel: "Krimsus", cf: "PENIPUAN" },
+                                      { id: "Tipidkor", label: "Tipidkor", kel: "Krimsus", cf: "KORUPSI" },
+                                      { id: "Tipidter", label: "Tipidter", kel: "Krimsus", cf: "PENIPUAN" },
+                                      { id: "Tipidum", label: "Tipidum", kel: "Krimum", cf: "CURAT" },
+                                      { id: "Tipid PPA & PPO", label: "Tipid PPA & PPO", kel: "Krimum", cf: "PPA_TPPO" },
+                                      { id: "Tipidnarkoba", label: "Tipidnarkoba", kel: "Narkoba", cf: "NARKOBA" }
+                                    ].map(tp => {
+                                      const active = activeTipidCrime === tp.id;
+                                      return (0, t.jsx)("div", {
+                                        key: tp.id,
+                                        onClick: () => {
+                                          setActiveTipidCrime(tp.id);
+                                          if (tp.id === "SEMUA") {
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          } else {
+                                            setActiveKelompokCrime(tp.kel);
+                                            if (selectedCrimeNames.length === 0) setCrimeFilter("SEMUA");
+                                          }
+                                          setSelectedHotspot(null);
+                                        },
+                                        style: {
+                                          textAlign: "center",
+                                          padding: "0.3rem 0.2rem",
                                           borderRadius: 6,
                                           border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
                                           background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
@@ -4660,45 +7677,132 @@ function CasPetaKejahatanView({
                                           overflow: "hidden",
                                           textOverflow: "ellipsis"
                                         },
-                                        children: g.label
+                                        children: tp.label
                                       });
                                     })
                                   })
                                 ]
                               }),
+
+                              // 3. Pencarian & Multi-Select Jenis Kejahatan (identik dengan Daftar LP)
                               (0, t.jsxs)("div", {
-                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem" },
+                                style: { background: T.subCardBg, border: "1px solid " + T.subCardBorder, borderRadius: 8, padding: "0.45rem 0.55rem", display: "flex", flexDirection: "column", gap: "0.32rem" },
                                 children: [
-                                  (0, t.jsx)("div", { style: { fontSize: "0.71rem", fontWeight: 700, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em", marginBottom: "0.3rem" }, children: "2. Fokus Jenis Kejahatan (Heatmap & Titik Rawan TKP)" }),
+                                  (0, t.jsxs)("div", {
+                                    style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" },
+                                    children: [
+                                      (0, t.jsx)("span", { style: { fontSize: "0.7rem", fontWeight: 800, color: T.textSecondary, textTransform: "uppercase", letterSpacing: "0.03em" }, children: "3. Pencarian & Multi-Select Jenis Kejahatan" }),
+                                      (0, t.jsxs)("div", {
+                                        style: { display: "inline-flex", alignItems: "center", gap: "0.45rem", fontSize: "0.68rem" },
+                                        children: [
+                                          (0, t.jsx)("button", {
+                                            type: "button",
+                                            onClick: () => {
+                                              const allVisible = filteredJenisKejahatanList.map(it => it.name);
+                                              setSelectedCrimeNames(allVisible);
+                                              if (filteredJenisKejahatanList[0]) {
+                                                setCrimeFilter(filteredJenisKejahatanList[0].cfId || "SEMUA");
+                                              }
+                                            },
+                                            style: { background: "none", border: "none", color: "#ef4444", fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "0.68rem" },
+                                            children: "Pilih Semua (" + filteredJenisKejahatanList.length + ")"
+                                          }),
+                                          (0, t.jsx)("span", { style: { color: T.textMuted }, children: "·" }),
+                                          (0, t.jsx)("button", {
+                                            type: "button",
+                                            onClick: () => {
+                                              setSelectedCrimeNames([]);
+                                              if (activeTipidCrime === "SEMUA" && activeKelompokCrime === "SEMUA") {
+                                                setCrimeFilter("SEMUA");
+                                              }
+                                            },
+                                            style: { background: "none", border: "none", color: T.textSecondary, fontWeight: 600, cursor: "pointer", padding: 0, fontSize: "0.68rem" },
+                                            children: "Kosongkan"
+                                          })
+                                        ]
+                                      })
+                                    ]
+                                  }),
+                                  (0, t.jsx)("input", {
+                                    type: "text",
+                                    value: crimeSearch,
+                                    onChange: e => setCrimeSearch(e.target.value),
+                                    placeholder: "Cari jenis kejahatan (contoh: Curanmor, Narkotika, Korupsi, Siber, TPPO)...",
+                                    style: {
+                                      width: "100%",
+                                      padding: "0.34rem 0.55rem",
+                                      borderRadius: 6,
+                                      border: "1px solid " + T.inputBorder,
+                                      background: T.inputBg,
+                                      color: T.textPrimary,
+                                      fontSize: "0.73rem",
+                                      outline: "none",
+                                      boxSizing: "border-box"
+                                    }
+                                  }),
                                   (0, t.jsx)("div", {
-                                    style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.28rem", maxHeight: "9rem", overflowY: "auto", paddingRight: "0.15rem" },
-                                    children: CAS_CRIME_QUICK_FILTERS.map(cf => {
-                                      const active = crimeFilter === cf.id;
-                                      const iconStr = cf.icon || "🔥";
-                                      const lblStr = cf.label || cf.shortLabel || cf.id;
-                                      return (0, t.jsxs)("div", {
-                                        key: cf.id,
-                                        onClick: () => {
-                                          setCrimeFilter(cf.id);
+                                    style: { display: "flex", flexDirection: "column", gap: "0.2rem", maxHeight: "8.2rem", overflowY: "auto", paddingRight: "0.15rem" },
+                                    children: filteredJenisKejahatanList.length === 0 ? (
+                                      (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", textAlign: "center" }, children: "Tidak ada jenis kejahatan yang cocok." })
+                                    ) : filteredJenisKejahatanList.map(item => {
+                                      const checked = selectedCrimeNames.includes(item.name);
+                                      return (0, t.jsxs)("label", {
+                                        key: item.name,
+                                        onClick: (ev) => {
+                                          ev.preventDefault();
+                                          setSelectedCrimeNames(prev => {
+                                            const next = prev.includes(item.name)
+                                              ? prev.filter(x => x !== item.name)
+                                              : [...prev, item.name];
+                                            if (next.length > 0) {
+                                              setCrimeFilter(item.cfId || "SEMUA");
+                                            } else if (activeTipidCrime === "SEMUA" && activeKelompokCrime === "SEMUA") {
+                                              setCrimeFilter("SEMUA");
+                                            }
+                                            return next;
+                                          });
                                           setSelectedHotspot(null);
                                         },
                                         style: {
                                           display: "flex",
                                           alignItems: "center",
-                                          gap: "0.35rem",
-                                          padding: "0.3rem 0.45rem",
+                                          justifyContent: "space-between",
+                                          gap: "0.4rem",
+                                          padding: "0.26rem 0.42rem",
                                           borderRadius: 6,
-                                          border: "1px solid " + (active ? "#ef4444" : T.btnBorder),
-                                          background: active ? "rgba(239,68,68,0.18)" : T.btnBg,
-                                          color: active ? "#f87171" : T.textPrimary,
-                                          fontSize: "0.72rem",
-                                          fontWeight: active ? 700 : 500,
                                           cursor: "pointer",
+                                          background: checked ? "rgba(239,68,68,0.14)" : T.btnBg,
+                                          border: "1px solid " + (checked ? "#ef4444" : T.btnBorder),
+                                          fontSize: "0.71rem",
+                                          color: checked ? "#f87171" : T.textPrimary,
+                                          fontWeight: checked ? 700 : 500,
                                           userSelect: "none"
                                         },
                                         children: [
-                                          (0, t.jsx)("span", { style: { flexShrink: 0 }, children: iconStr }),
-                                          (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: lblStr })
+                                          (0, t.jsxs)("span", {
+                                            style: { display: "inline-flex", alignItems: "center", gap: "0.4rem", minWidth: 0, overflow: "hidden" },
+                                            children: [
+                                              (0, t.jsx)("input", {
+                                                type: "checkbox",
+                                                checked,
+                                                readOnly: true,
+                                                style: { accentColor: "#ef4444", margin: 0, cursor: "pointer", flexShrink: 0 }
+                                              }),
+                                              (0, t.jsx)("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: item.name })
+                                            ]
+                                          }),
+                                          (0, t.jsx)("span", {
+                                            style: {
+                                              flexShrink: 0,
+                                              fontSize: "0.61rem",
+                                              fontWeight: 800,
+                                              padding: "0.05rem 0.35rem",
+                                              borderRadius: 4,
+                                              background: item.kelompok === "Narkoba" ? "rgba(217,119,6,0.18)" : item.kelompok === "Krimsus" ? "rgba(37,99,235,0.18)" : "rgba(16,185,129,0.18)",
+                                              color: item.kelompok === "Narkoba" ? "#fbbf24" : item.kelompok === "Krimsus" ? "#60a5fa" : "#34d399"
+                                            },
+                                            children: item.tipid
+                                          })
                                         ]
                                       });
                                     })
@@ -4712,14 +7816,32 @@ function CasPetaKejahatanView({
                             children: [
                               (0, t.jsx)("button", {
                                 type: "button",
-                                onClick: () => { setCrimeFilter("SEMUA"); setGolonganFilter("SEMUA"); setSelectedHotspot(null); setShowFilterPopover(false); },
+                                onClick: () => {
+                                  setActiveKelompokCrime("SEMUA");
+                                  setActiveTipidCrime("SEMUA");
+                                  setSelectedCrimeNames([]);
+                                  setCrimeSearch("");
+                                  setCrimeFilter("SEMUA");
+                                  setGolonganFilter("SEMUA");
+                                  setSelectedHotspot(null);
+                                  setShowFilterPopover(false);
+                                },
                                 style: { background: "none", border: "none", color: T.textSecondary, fontSize: "0.76rem", fontWeight: 600, cursor: "pointer", padding: "0.2rem" },
                                 children: "Reset"
                               }),
                               (0, t.jsxs)("div", {
                                 style: { display: "flex", alignItems: "center", gap: "0.6rem" },
                                 children: [
-                                  (0, t.jsx)("span", { style: { fontSize: "0.73rem", color: T.textSecondary }, children: (crimeFilter !== "SEMUA" ? "1 jenis" : "Semua jenis") }),
+                                  (0, t.jsx)("span", {
+                                    style: { fontSize: "0.72rem", color: T.textSecondary },
+                                    children: selectedCrimeNames.length > 0
+                                      ? (selectedCrimeNames.length + " jenis dipilih")
+                                      : activeTipidCrime !== "SEMUA"
+                                      ? activeTipidCrime
+                                      : activeKelompokCrime !== "SEMUA"
+                                      ? ("Kelompok " + activeKelompokCrime)
+                                      : (crimeFilter !== "SEMUA" ? "1 jenis" : "Semua jenis")
+                                  }),
                                   (0, t.jsx)("button", {
                                     type: "button",
                                     onClick: () => setShowFilterPopover(false),
@@ -5293,1597 +8415,11 @@ function CasPetaKejahatanView({
         ]
       }),
 
-      // 3. Interactive Map Canvas + Right Side Drilldown Panel
-      (0, t.jsxs)("div", {
-        className: "cas-peta-grid",
-        children: [
-          // Left Column: Map Canvas Card (Stretches 100% of column height with ZERO top/bottom white space!)
-          (0, t.jsxs)("div", {
-            className: "cms-card",
-            style: {
-              padding: "0.85rem",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start",
-              gap: "0.55rem",
-              background: T.cardBg,
-              border: "1px solid " + T.cardBorder,
-              borderRadius: 12,
-              boxShadow: T.cardShadow,
-              overflow: "hidden",
-              position: "relative",
-              minHeight: isFullPage ? "68vh" : "39rem"
-            },
-            children: [
-              // Interactive 4-Mode Map Breadcrumb & Back Bar
-              (0, t.jsxs)("div", {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "0.45rem",
-                  zIndex: 2
-                },
-                children: [
-                  // Breadcrumb Pills: Nasional -> Polda -> Polres -> Polsek (or Mabes Polri)
-                  (0, t.jsxs)("div", {
-                    style: { display: "flex", alignItems: "center", gap: "0.32rem", flexWrap: "wrap" },
-                    children: [
-                      (drillLevel > 0 || zoom > 1.05 || selectedHotspot) && (0, t.jsx)("button", {
-                        type: "button",
-                        onClick: handleStepBack,
-                        title: "Kembali ke tingkat sebelumnya",
-                        style: {
-                          padding: "0.24rem 0.58rem",
-                          borderRadius: 7,
-                          border: "1px solid " + T.accentBorder,
-                          background: T.accentBg,
-                          color: T.accentText,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.25rem"
-                        },
-                        children: "← Kembali"
-                      }),
-                      (0, t.jsx)("button", {
-                        type: "button",
-                        onClick: handleResetNasional,
-                        style: {
-                          padding: "0.24rem 0.56rem",
-                          borderRadius: 6,
-                          border: "1px solid " + ((drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBorder : T.btnBorder),
-                          background: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentBg : T.subCardBg,
-                          color: (drillLevel === 0 || (isScopedUser && !isScopedBareskrim)) ? T.accentText : T.textSecondary,
-                          fontSize: "0.72rem",
-                          fontWeight: 800,
-                          cursor: "pointer"
-                        },
-                        children: (isScopedUser && !isScopedBareskrim)
-                          ? ("🏛️ Cakupan: " + scopeSatkerShort + " + Jajaran")
-                          : "🇮🇩 Nasional (36 Wilkum Polda)"
-                      }),
-                      drillLevel === 3 && (0, t.jsxs)(t.Fragment, {
-                        children: [
-                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
-                          (0, t.jsx)("span", {
-                            style: {
-                              padding: "0.24rem 0.58rem",
-                              borderRadius: 6,
-                              border: "1px solid #f59e0b",
-                              background: T.warnBg,
-                              color: T.warnText,
-                              fontSize: "0.72rem",
-                              fontWeight: 800
-                            },
-                            children: "🏛️ Titik Kantor Mabes / Bareskrim Polri" + (selectedMabesUnit ? (" — " + selectedMabesUnit.shortName) : "")
-                          })
-                        ]
-                      }),
-                      drillLevel >= 1 && drillLevel !== 3 && selectedRegion && (0, t.jsxs)(t.Fragment, {
-                        children: [
-                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
-                          (0, t.jsx)("button", {
-                            type: "button",
-                            onClick: () => handleSelectPoldaAndZoom(selectedRegion),
-                            style: {
-                              padding: "0.24rem 0.56rem",
-                              borderRadius: 6,
-                              border: "1px solid " + (drillLevel === 1 ? T.warnBorder : T.btnBorder),
-                              background: drillLevel === 1 ? T.warnBg : T.subCardBg,
-                              color: drillLevel === 1 ? T.warnText : T.textSecondary,
-                              fontSize: "0.72rem",
-                              fontWeight: 800,
-                              cursor: "pointer"
-                            },
-                            children: "🛡️ Wilkum " + selectedRegion.polda
-                          })
-                        ]
-                      }),
-                      drillLevel === 2 && selectedPolres && (0, t.jsxs)(t.Fragment, {
-                        children: [
-                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
-                          (0, t.jsx)("button", {
-                            type: "button",
-                            onClick: () => handleSelectPolresAndZoom(selectedPolres),
-                            style: {
-                              padding: "0.24rem 0.56rem",
-                              borderRadius: 6,
-                              border: "1px solid " + (!selectedPolsek ? T.ctBorder : T.btnBorder),
-                              background: !selectedPolsek ? T.ctBg : T.subCardBg,
-                              color: !selectedPolsek ? T.ctText : T.textSecondary,
-                              fontSize: "0.72rem",
-                              fontWeight: 800,
-                              cursor: "pointer"
-                            },
-                            children: "🛡️ Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)
-                          })
-                        ]
-                      }),
-                      drillLevel === 2 && selectedPolsek && (0, t.jsxs)(t.Fragment, {
-                        children: [
-                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
-                          (0, t.jsx)("span", {
-                            style: {
-                              padding: "0.24rem 0.56rem",
-                              borderRadius: 6,
-                              border: "1px solid " + T.ctBorder,
-                              background: T.ctBg,
-                              color: T.ctText,
-                              fontSize: "0.72rem",
-                              fontWeight: 800
-                            },
-                            children: "📍 Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama) + " (Kec. " + formatFullWilkumSatkerName(cleanPolsekKecName(selectedPolsek.nama)) + ")"
-                          })
-                        ]
-                      }),
-                      selectedHotspot && (0, t.jsxs)(t.Fragment, {
-                        children: [
-                          (0, t.jsx)("span", { style: { color: T.textSubtle, fontSize: "0.75rem", fontWeight: 700 }, children: "›" }),
-                          (0, t.jsx)("span", {
-                            style: {
-                              padding: "0.24rem 0.56rem",
-                              borderRadius: 6,
-                              border: "1px solid #ef4444",
-                              background: T.ctBg,
-                              color: T.ctText,
-                              fontSize: "0.71rem",
-                              fontWeight: 800
-                            },
-                            children: "🎯 TKP #" + (selectedHotspot.rank || 1) + ": " + String(selectedHotspot.tkp_label || "").slice(0, 28)
-                          })
-                        ]
-                      })
-                    ]
-                  }),
-
-                  (0, t.jsx)("span", {
-                    style: { fontSize: "0.69rem", color: T.textMuted, fontWeight: 600 },
-                    children: drillLevel === 3
-                      ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah — Klik Pin untuk CT/CC)"
-                      : drillLevel === 0
-                      ? "💡 Klik Poligon Polda atau Titik Rawan TKP untuk detail LP"
-                      : drillLevel === 1
-                      ? "💡 Klik titik Polres / Titik Rawan TKP untuk melihat Irisan Wilkum & Polsek"
-                      : "💡 Klik titik Polsek / Titik Rawan TKP untuk detail Kecamatan & LP"
-                  })
-                ]
-              }),
-
-              // Main Map Viewport: Fills 100% of remaining card height (flex: 1 1 auto) with zero white space!
-              isGoogleEmbedMode ? (
-                (0, t.jsxs)("div", {
-                  className: "cas-peta-map-box",
-                  style: {
-                    position: "relative",
-                    width: "100%",
-                    flex: "1 1 auto",
-                    minHeight: isFullPage ? "66vh" : "580px",
-                    height: "100%",
-                    borderRadius: 10,
-                    overflow: "hidden",
-                    border: "1px solid " + T.mapBorder,
-                    background: isDark ? "#0b1220" : "#e0f2fe"
-                  },
-                  children: [
-                    (0, t.jsx)("iframe", {
-                      key: gmapsEmbedInfo.q,
-                      title: gmapsEmbedInfo.title,
-                      src: "https://maps.google.com/maps?q=" + encodeURIComponent(gmapsEmbedInfo.q) + "&hl=id&z=" + gmapsEmbedInfo.z + "&output=embed",
-                      style: { width: "100%", height: "100%", minHeight: isFullPage ? "66vh" : "580px", border: 0, display: "block" },
-                      loading: "lazy",
-                      referrerPolicy: "no-referrer-when-downgrade"
-                    }),
-                    // Top-Left Query Pill on Google Maps Native Embed
-                    (0, t.jsxs)("div", {
-                      style: {
-                        position: "absolute",
-                        top: 10,
-                        left: 10,
-                        zIndex: 10,
-                        background: T.tooltipBg,
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid " + T.tooltipBorder,
-                        borderRadius: 8,
-                        padding: "0.35rem 0.65rem",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        color: T.textPrimary,
-                        boxShadow: "0 4px 14px rgba(15,23,42,0.18)"
-                      },
-                      children: [
-                        (0, t.jsx)("span", { style: { color: "#ea4335", marginRight: "0.3rem" }, children: "●" }),
-                        gmapsEmbedInfo.title
-                      ]
-                    }),
-                    // Bottom-Left Crime Data Overlay on Google Maps Native Embed
-                    activeTip && (0, t.jsxs)("div", {
-                      style: {
-                        position: "absolute",
-                        left: 10,
-                        bottom: 10,
-                        zIndex: 10,
-                        background: T.tooltipBg,
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid " + T.tooltipBorder,
-                        borderRadius: 10,
-                        padding: "0.52rem 0.72rem",
-                        color: T.textPrimary,
-                        fontSize: "0.72rem",
-                        boxShadow: "0 10px 25px rgba(15,23,42,0.22)",
-                        maxWidth: "330px"
-                      },
-                      children: [
-                        (0, t.jsx)("div", {
-                          style: { fontWeight: 800, color: T.accentText, fontSize: "0.78rem", marginBottom: "0.18rem" },
-                          children: activeTip.nama || activeTip.polda
-                        }),
-                        activeTip.makoAddr && (0, t.jsx)("div", {
-                          style: { fontSize: "0.66rem", color: T.textMuted, marginBottom: "0.22rem" },
-                          children: "📍 " + activeTip.makoAddr
-                        }),
-                        (0, t.jsxs)("div", {
-                          className: "tabular-nums",
-                          style: { display: "flex", gap: "0.55rem", flexWrap: "wrap", fontSize: "0.7rem" },
-                          children: [
-                            (0, t.jsxs)("span", { children: ["🔥 CT: ", (0, t.jsx)("strong", { style: { color: T.ctText }, children: z(activeTip.ct) }), " LP"] }),
-                            (0, t.jsxs)("span", { children: ["✅ CC: ", (0, t.jsx)("strong", { style: { color: T.ccText }, children: z(activeTip.cc) })] }),
-                            (0, t.jsxs)("span", { children: ["🛡️ CR: ", (0, t.jsx)("strong", { style: { color: T.crText }, children: Number(activeTip.cr || 0).toFixed(1) + "%" })] })
-                          ]
-                        })
-                      ]
-                    })
-                  ]
-                })
-              ) : isGoogleTileMode ? (
-                (0, t.jsxs)("div", {
-                  style: {
-                    position: "relative",
-                    width: "100%",
-                    flex: "1 1 auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    minHeight: isFullPage ? "66vh" : "580px",
-                    height: "100%"
-                  },
-                  children: [
-                    (0, t.jsx)("div", {
-                      ref: leafletContainerRef,
-                      className: "cas-peta-map-box",
-                      style: {
-                        flex: "1 1 auto",
-                        width: "100%",
-                        height: "100%",
-                        minHeight: isFullPage ? "66vh" : "580px",
-                        borderRadius: 10,
-                        overflow: "hidden",
-                        border: "1px solid " + T.mapBorder,
-                        background: isDark ? "#0b1220" : "#e0f2fe"
-                      }
-                    }),
-                    // Status Pill for GeoJSON Wilkum Polygon Boundary Overlay & Active Crime Heatmap
-                    (0, t.jsx)("div", {
-                      style: {
-                        position: "absolute",
-                        top: 10,
-                        right: 10,
-                        maxWidth: "calc(100% - 62px)",
-                        zIndex: 6,
-                        background: T.tooltipBg,
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid " + (drillLevel === 3 ? "#f59e0b" : "#ea4335"),
-                        borderRadius: 8,
-                        padding: "0.3rem 0.6rem",
-                        fontSize: "0.68rem",
-                        fontWeight: 800,
-                        color: T.textPrimary,
-                        boxShadow: "0 4px 12px rgba(15,23,42,0.16)",
-                        pointerEvents: "none"
-                      },
-                      children: drillLevel === 3
-                        ? "🏛️ Titik Koordinat Kantor Bareskrim Polri (Tanpa Poligon Wilayah)"
-                        : drillLevel === 0
-                        ? ("🔥 Heatmap Titik Rawan LP: " + (crimeFilter !== "SEMUA" ? activeCrimeMeta.label : "36 Wilkum Polda & TKP Nasional"))
-                        : wilkumGeoLoading
-                        ? "⏳ Memuat irisan batas Wilkum Google Maps…"
-                        : wilkumGeoJson
-                        ? ("✅ Irisan Peta & Heatmap TKP: " + (wilkumGeoJson.label || "Batas Wilkum Aktif"))
-                        : ("🛡️ Wilkum " + (drillLevel === 2 && selectedPolres ? formatFullWilkumSatkerName(selectedPolres.nama) : (selectedRegion?.polda || "Aktif")))
-                    })
-                  ]
-                })
-              ) : (
-                (0, t.jsxs)("div", {
-                  className: "cas-peta-map-box",
-                  onMouseDown: ev => {
-                    if (zoom <= 1) return;
-                    setIsDragging(true);
-                    dragStartRef.current = { x: ev.clientX, y: ev.clientY, panX: pan.x, panY: pan.y, moved: false };
-                  },
-                  onMouseMove: ev => {
-                    if (!isDragging) return;
-                    const dx = ev.clientX - dragStartRef.current.x;
-                    const dy = ev.clientY - dragStartRef.current.y;
-                    if (Math.hypot(dx, dy) > 4) dragStartRef.current.moved = true;
-                    setPan({ x: dragStartRef.current.panX + dx, y: dragStartRef.current.panY + dy });
-                  },
-                  onMouseUp: () => setIsDragging(false),
-                  onMouseLeave: () => { setIsDragging(false); setHoveredItem(null); },
-                  style: {
-                    position: "relative",
-                    width: "100%",
-                    flex: "1 1 auto",
-                    minHeight: isFullPage ? "56vh" : "375px",
-                    borderRadius: 10,
-                    overflow: "hidden",
-                    background: T.mapOcean,
-                    border: "1px solid " + T.mapBorder,
-                    cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
-                    userSelect: "none"
-                  },
-                  children: [
-                    (0, t.jsxs)("svg", {
-                      viewBox: "0 0 1200 470",
-                      preserveAspectRatio: "xMidYMid meet",
-                      style: { width: "100%", height: "100%", display: "block" },
-                      children: [
-                        (0, t.jsxs)("defs", {
-                          children: [
-                            (0, t.jsxs)("radialGradient", {
-                              id: "cas-therm-hotspot",
-                              cx: "50%", cy: "50%", r: "50%",
-                              children: [
-                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#ef4444", stopOpacity: isDark ? "0.75" : "0.42" }),
-                                (0, t.jsx)("stop", { offset: "50%", stopColor: "#f97316", stopOpacity: isDark ? "0.35" : "0.18" }),
-                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#ef4444", stopOpacity: "0" })
-                              ]
-                            }),
-                            (0, t.jsxs)("radialGradient", {
-                              id: "cas-therm-high",
-                              cx: "50%", cy: "50%", r: "50%",
-                              children: [
-                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#f97316", stopOpacity: isDark ? "0.65" : "0.36" }),
-                                (0, t.jsx)("stop", { offset: "55%", stopColor: "#eab308", stopOpacity: isDark ? "0.28" : "0.14" }),
-                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#f97316", stopOpacity: "0" })
-                              ]
-                            }),
-                            (0, t.jsxs)("radialGradient", {
-                              id: "cas-therm-med",
-                              cx: "50%", cy: "50%", r: "50%",
-                              children: [
-                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#eab308", stopOpacity: isDark ? "0.55" : "0.28" }),
-                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#eab308", stopOpacity: "0" })
-                              ]
-                            }),
-                            (0, t.jsxs)("radialGradient", {
-                              id: "cas-therm-low",
-                              cx: "50%", cy: "50%", r: "50%",
-                              children: [
-                                (0, t.jsx)("stop", { offset: "0%", stopColor: "#10b981", stopOpacity: isDark ? "0.45" : "0.22" }),
-                                (0, t.jsx)("stop", { offset: "100%", stopColor: "#10b981", stopOpacity: "0" })
-                              ]
-                            })
-                          ]
-                        }),
-
-                        // Graticule Grid Lines
-                        (0, t.jsxs)("g", {
-                          opacity: isDark ? "0.2" : "0.28",
-                          children: [
-                            [100, 105, 110, 115, 120, 125, 130, 135, 140].map(lng => {
-                              const x = Math.round(((lng - 94.5) / 47.0) * 1140 + 30);
-                              return (0, t.jsxs)("g", {
-                                key: "lng_" + lng,
-                                children: [
-                                  (0, t.jsx)("line", { x1: x, y1: 0, x2: x, y2: 470, stroke: T.mapGridLine, strokeWidth: "0.6", strokeDasharray: "3,4" }),
-                                  (0, t.jsx)("text", { x: x + 3, y: 12, fill: T.mapGridText, fontSize: "8", fontWeight: "700", children: lng + "°BT" })
-                                ]
-                              });
-                            }),
-                            [5, 0, -5, -10].map(lat => {
-                              const y = Math.round(((6.5 - lat) / 18.0) * 430 + 25);
-                              const isEq = lat === 0;
-                              return (0, t.jsxs)("g", {
-                                key: "lat_" + lat,
-                                children: [
-                                  (0, t.jsx)("line", {
-                                    x1: 0, y1: y, x2: 1200, y2: y,
-                                    stroke: isEq ? "#f59e0b" : T.mapGridLine,
-                                    strokeWidth: isEq ? "0.9" : "0.6",
-                                    strokeDasharray: isEq ? "6,4" : "3,4"
-                                  }),
-                                  (0, t.jsx)("text", {
-                                    x: 8, y: y - 3,
-                                    fill: isEq ? "#d97706" : T.mapGridText,
-                                    fontSize: "8",
-                                    fontWeight: "700",
-                                    children: isEq ? "0° KHATULISTIWA" : (lat > 0 ? lat + "°LU" : Math.abs(lat) + "°LS")
-                                  })
-                                ]
-                              });
-                            })
-                          ]
-                        }),
-
-                        // Camera Transform Group (transformOrigin: 0 0 ensures exact pixel math!)
-                        (0, t.jsxs)("g", {
-                          transform: "translate(" + pan.x + "," + pan.y + ") scale(" + zoom + ")",
-                          style: { transformOrigin: "0 0", transition: isDragging ? "none" : "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)" },
-                          children: [
-                            // Layer 1: 36 Wilkum Polda Polygons
-                            (0, t.jsx)("g", {
-                              children: mergedRegions.map(reg => {
-                                const st = getRegionStyle(reg);
-                                const isSel = drillLevel !== 3 && selectedRegion?.id === reg.id;
-                                const isDimmed = (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) || (drillLevel >= 1 && !isSel);
-                                return (0, t.jsx)("path", {
-                                  d: reg.d,
-                                  fill: st.fill,
-                                  fillOpacity: isDimmed ? (isDark ? 0.22 : 0.35) : (isSel ? 0.95 : 0.86),
-                                  stroke: isSel ? T.mapSelStroke : st.stroke,
-                                  strokeWidth: isSel ? (2.0 * invScale) : (1.0 * invScale),
-                                  className: "cas-map-prov-path",
-                                  onClick: ev => {
-                                    ev.stopPropagation();
-                                    if (dragStartRef.current.moved) return;
-                                    handleSelectPoldaAndZoom(reg);
-                                  },
-                                  onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg })
-                                }, reg.id);
-                              })
-                            }),
-
-                            // Layer 2: Thermal Heatmap Glow Blobs
-                            showThermal && drillLevel !== 3 && (0, t.jsx)("g", {
-                              style: { pointerEvents: "none" },
-                              children: mergedRegions.map(reg => {
-                                if (reg.ct <= 0 && reg.cc <= 0) return null;
-                                if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
-                                if (drillLevel >= 1 && selectedRegion?.id !== reg.id) return null;
-                                const gradId = reg.level === "hotspot"
-                                  ? "url(#cas-therm-hotspot)"
-                                  : reg.level === "high"
-                                  ? "url(#cas-therm-high)"
-                                  : reg.level === "medium"
-                                  ? "url(#cas-therm-med)"
-                                  : "url(#cas-therm-low)";
-                                const rad = Math.round(20 + reg.ratioCT * 44);
-                                return (0, t.jsx)("circle", {
-                                  cx: reg.cx,
-                                  cy: reg.cy,
-                                  r: rad,
-                                  fill: gradId
-                                }, "therm_" + reg.id);
-                              })
-                            }),
-
-                            // Layer 3A: Level 0 (Nasional) Polda Markers & Labels + Gold Mabes Polri Star Marker
-                            drillLevel === 0 && (0, t.jsxs)("g", {
-                              children: [
-                                mergedRegions.map(reg => {
-                                  if (pulauFilter !== "Semua" && reg.pulau !== pulauFilter) return null;
-                                  const st = getRegionStyle(reg);
-                                  const isSel = selectedRegion?.id === reg.id;
-                                  const isTop5 = reg.ct > 0 && reg.rank <= 5;
-                                  const dotR = (isSel ? 5.8 : Math.max(3.2, 3.0 + reg.ratioCT * 3.8)) * invScale;
-                                  return (0, t.jsxs)("g", {
-                                    key: "polda_node_" + reg.id,
-                                    style: { cursor: "pointer" },
-                                    onClick: ev => {
-                                      ev.stopPropagation();
-                                      if (dragStartRef.current.moved) return;
-                                      handleSelectPoldaAndZoom(reg);
-                                    },
-                                    onMouseEnter: () => setHoveredItem({ kind: "polda", ...reg }),
-                                    children: [
-                                      (isTop5 || isSel) && (0, t.jsx)("circle", {
-                                        cx: reg.cx,
-                                        cy: reg.cy,
-                                        r: 13 * invScale,
-                                        fill: "none",
-                                        stroke: isSel ? T.mapSelStroke : st.badgeColor,
-                                        strokeWidth: 1.5 * invScale,
-                                        style: { animation: "casHotspotPulse 2s infinite" }
-                                      }),
-                                      (0, t.jsx)("circle", {
-                                        cx: reg.cx,
-                                        cy: reg.cy,
-                                        r: dotR,
-                                        fill: isSel ? "#2563eb" : st.badgeColor,
-                                        stroke: "#ffffff",
-                                        strokeWidth: 1.3 * invScale
-                                      }),
-                                      showLabels && (reg.ct > 0 || isSel || zoom >= 1.5) && (0, t.jsxs)("g", {
-                                        transform: "translate(" + reg.cx + "," + (reg.cy - dotR - 3 * invScale) + ") scale(" + invScale + ")",
-                                        children: [
-                                          (0, t.jsx)("rect", {
-                                            x: -29,
-                                            y: -12,
-                                            width: 58,
-                                            height: 12,
-                                            rx: 3.5,
-                                            fill: isSel ? "#1d4ed8" : T.labelPillBg,
-                                            stroke: isSel ? "#ffffff" : st.badgeColor,
-                                            strokeWidth: 0.8
-                                          }),
-                                          (0, t.jsx)("text", {
-                                            x: 0,
-                                            y: -3.5,
-                                            textAnchor: "middle",
-                                            fill: isSel ? "#ffffff" : T.labelPillText,
-                                            fontSize: "6.4",
-                                            fontWeight: "800",
-                                            children: reg.abbr.slice(0, 8) + (reg.ct > 0 ? " • " + st.text : "")
-                                          })
-                                        ]
-                                      })
-                                    ]
-                                  });
-                                }),
-                                // Special Gold Marker for Mabes Polri / Bareskrim Polri (Jl. Trunojoyo No. 3, Jakarta Selatan)
-                                (pulauFilter === "Semua" || pulauFilter === "Jawa") && (0, t.jsxs)("g", {
-                                  style: { cursor: "pointer" },
-                                  onClick: ev => {
-                                    ev.stopPropagation();
-                                    if (dragStartRef.current.moved) return;
-                                    handleSelectMabesAndZoom(mabesUnitNodes[0]);
-                                  },
-                                  onMouseEnter: () => setHoveredItem({ kind: "mabes", ...mabesSummary }),
-                                  children: [
-                                    (0, t.jsx)("circle", {
-                                      cx: mabesSummary.px,
-                                      cy: mabesSummary.py + 8 * invScale,
-                                      r: 6.2 * invScale,
-                                      fill: "#f59e0b",
-                                      stroke: "#ffffff",
-                                      strokeWidth: 1.5 * invScale
-                                    }),
-                                    showLabels && (0, t.jsxs)("g", {
-                                      transform: "translate(" + mabesSummary.px + "," + (mabesSummary.py + 21 * invScale) + ") scale(" + invScale + ")",
-                                      children: [
-                                        (0, t.jsx)("rect", {
-                                          x: -36,
-                                          y: -11,
-                                          width: 72,
-                                          height: 11.5,
-                                          rx: 3.5,
-                                          fill: "#fef3c7",
-                                          stroke: "#d97706",
-                                          strokeWidth: 0.9
-                                        }),
-                                        (0, t.jsx)("text", {
-                                          x: 0,
-                                          y: -3,
-                                          textAnchor: "middle",
-                                          fill: "#92400e",
-                                          fontSize: "6.1",
-                                          fontWeight: "800",
-                                          children: "⭐ MABES POLRI"
-                                        })
-                                      ]
-                                    })
-                                  ]
-                                })
-                              ]
-                            }),
-
-                            // Layer 3B: Level 1 (Polda Zoomed) -> Interactive Polres Pins at Real Kab/Kota & Mako Coords
-                            drillLevel === 1 && selectedRegion && (0, t.jsxs)("g", {
-                              children: [
-                                polresMapNodes.map((prs, idx) => (0, t.jsx)("line", {
-                                  key: "line_prs_" + idx,
-                                  x1: selectedRegion.bx || selectedRegion.cx,
-                                  y1: selectedRegion.by || selectedRegion.cy,
-                                  x2: prs.px,
-                                  y2: prs.py,
-                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
-                                  strokeWidth: 0.9 * invScale,
-                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
-                                })),
-                                polresMapNodes.map((prs, idx) => {
-                                  const rPin = Math.max(3.5, 3.5 + prs.ratio * 4.5) * invScale;
-                                  return (0, t.jsxs)("g", {
-                                    key: "prs_pin_" + (prs.kode || idx),
-                                    style: { cursor: "pointer" },
-                                    onClick: ev => {
-                                      ev.stopPropagation();
-                                      if (dragStartRef.current.moved) return;
-                                      handleSelectPolresAndZoom(prs);
-                                    },
-                                    onMouseEnter: () => setHoveredItem({ kind: "polres", polda: selectedRegion.polda, ...prs }),
-                                    children: [
-                                      idx < 3 && prs.ct > 0 && (0, t.jsx)("circle", {
-                                        cx: prs.px,
-                                        cy: prs.py,
-                                        r: rPin * 2.1,
-                                        fill: prs.color,
-                                        fillOpacity: 0.25
-                                      }),
-                                      (0, t.jsx)("circle", {
-                                        cx: prs.px,
-                                        cy: prs.py,
-                                        r: rPin,
-                                        fill: prs.color,
-                                        stroke: "#ffffff",
-                                        strokeWidth: 1.3 * invScale
-                                      }),
-                                      showLabels && (0, t.jsxs)("g", {
-                                        transform: "translate(" + prs.px + "," + (prs.py - rPin - 2.5 * invScale) + ") scale(" + invScale + ")",
-                                        children: [
-                                          (0, t.jsx)("rect", {
-                                            x: -38,
-                                            y: -12,
-                                            width: 76,
-                                            height: 12,
-                                            rx: 3.5,
-                                            fill: T.labelPillBg,
-                                            stroke: prs.color,
-                                            strokeWidth: 0.85
-                                          }),
-                                          (0, t.jsx)("text", {
-                                            x: 0,
-                                            y: -3.5,
-                                            textAnchor: "middle",
-                                            fill: T.labelPillText,
-                                            fontSize: "6.3",
-                                            fontWeight: "800",
-                                            children: prs.shortName.slice(0, 12) + " (" + z(prs.ct) + ")"
-                                          })
-                                        ]
-                                      })
-                                    ]
-                                  });
-                                })
-                              ]
-                            }),
-
-                            // Layer 3C: Level 2 (Polres Zoomed) -> Interactive Polsek Nodes at Real Kecamatan Coords
-                            drillLevel === 2 && selectedPolres && (0, t.jsxs)("g", {
-                              children: [
-                                (0, t.jsx)("circle", {
-                                  cx: selectedPolres.px,
-                                  cy: selectedPolres.py,
-                                  r: 18 * invScale,
-                                  fill: isDark ? "rgba(2,132,199,0.12)" : "rgba(37,99,235,0.08)",
-                                  stroke: isDark ? "rgba(56,189,248,0.4)" : "rgba(37,99,235,0.4)",
-                                  strokeWidth: 0.8 * invScale,
-                                  strokeDasharray: (2 * invScale) + "," + (2 * invScale)
-                                }),
-                                polsekMapNodes.map((psk, idx) => (0, t.jsx)("line", {
-                                  key: "line_psk_" + idx,
-                                  x1: selectedPolres.px,
-                                  y1: selectedPolres.py,
-                                  x2: psk.px,
-                                  y2: psk.py,
-                                  stroke: "rgba(234,88,12,0.5)",
-                                  strokeWidth: 0.9 * invScale,
-                                  strokeDasharray: (1.5 * invScale) + "," + (1.5 * invScale)
-                                })),
-                                (0, t.jsxs)("g", {
-                                  children: [
-                                    (0, t.jsx)("circle", {
-                                      cx: selectedPolres.px,
-                                      cy: selectedPolres.py,
-                                      r: 6.5 * invScale,
-                                      fill: "#1d4ed8",
-                                      stroke: "#ffffff",
-                                      strokeWidth: 1.6 * invScale
-                                    }),
-                                    (0, t.jsxs)("g", {
-                                      transform: "translate(" + selectedPolres.px + "," + (selectedPolres.py + 12 * invScale) + ") scale(" + invScale + ")",
-                                      children: [
-                                        (0, t.jsx)("rect", { x: -44, y: -10, width: 88, height: 12, rx: 3.5, fill: "#1d4ed8", stroke: "#ffffff", strokeWidth: 0.8 }),
-                                        (0, t.jsx)("text", { x: 0, y: -1.8, textAnchor: "middle", fill: "#ffffff", fontSize: "6.4", fontWeight: "800", children: "MAKO: " + selectedPolres.shortName.slice(0, 13) })
-                                      ]
-                                    })
-                                  ]
-                                }),
-                                polsekMapNodes.map((psk, idx) => {
-                                  const isSelPsk = selectedPolsek?.kode === psk.kode;
-                                  const rPsk = (isSelPsk ? 5.5 : Math.max(3.4, 3.2 + psk.ratio * 3.8)) * invScale;
-                                  return (0, t.jsxs)("g", {
-                                    key: "psk_pin_" + (psk.kode || idx),
-                                    style: { cursor: "pointer" },
-                                    onClick: ev => {
-                                      ev.stopPropagation();
-                                      if (dragStartRef.current.moved) return;
-                                      handleSelectPolsekAndZoom(psk);
-                                    },
-                                    onMouseEnter: () => setHoveredItem({ kind: "polsek", polres: selectedPolres.shortName, ...psk }),
-                                    children: [
-                                      (0, t.jsx)("circle", {
-                                        cx: psk.px,
-                                        cy: psk.py,
-                                        r: rPsk,
-                                        fill: isSelPsk ? "#1d4ed8" : psk.color,
-                                        stroke: "#ffffff",
-                                        strokeWidth: 1.3 * invScale
-                                      }),
-                                      showLabels && (0, t.jsxs)("g", {
-                                        transform: "translate(" + psk.px + "," + (psk.py - rPsk - 2.2 * invScale) + ") scale(" + invScale + ")",
-                                        children: [
-                                          (0, t.jsx)("rect", {
-                                            x: -36,
-                                            y: -11.5,
-                                            width: 72,
-                                            height: 11.5,
-                                            rx: 3.5,
-                                            fill: isSelPsk ? "#1d4ed8" : T.labelPillBg,
-                                            stroke: isSelPsk ? "#ffffff" : psk.color,
-                                            strokeWidth: 0.8
-                                          }),
-                                          (0, t.jsx)("text", {
-                                            x: 0,
-                                            y: -3.2,
-                                            textAnchor: "middle",
-                                            fill: isSelPsk ? "#ffffff" : T.labelPillText,
-                                            fontSize: "6.2",
-                                            fontWeight: "800",
-                                            children: psk.shortName.slice(0, 12) + " (" + z(psk.ct) + ")"
-                                          })
-                                        ]
-                                      })
-                                    ]
-                                  });
-                                })
-                              ]
-                            }),
-
-                            // Layer 3D: Level 3 (Mabes Polri / Bareskrim Polri) -> ONLY Office Coordinate Pins (No Polygon!)
-                            drillLevel === 3 && (0, t.jsx)("g", {
-                              children: mabesUnitNodes.map((u, idx) => {
-                                const isSelU = (selectedMabesUnit?.id || mabesUnitNodes[0]?.id) === u.id;
-                                const angle = idx === 0 ? 0 : ((idx - 1) / (mabesUnitNodes.length - 1)) * Math.PI * 2;
-                                const radDist = idx === 0 ? 0 : 12 * invScale;
-                                const pinX = idx === 0 ? u.px : +(mabesUnitNodes[0].px + Math.cos(angle) * radDist).toFixed(1);
-                                const pinY = idx === 0 ? u.py : +(mabesUnitNodes[0].py + Math.sin(angle) * radDist * 0.85).toFixed(1);
-                                return (0, t.jsxs)("g", {
-                                  key: "mbs_pin_" + u.id,
-                                  style: { cursor: "pointer" },
-                                  onClick: ev => {
-                                    ev.stopPropagation();
-                                    if (dragStartRef.current.moved) return;
-                                    handleSelectMabesAndZoom(u);
-                                  },
-                                  onMouseEnter: () => setHoveredItem({ kind: "mabes_unit", ...u }),
-                                  children: [
-                                    idx > 0 && (0, t.jsx)("line", {
-                                      x1: mabesUnitNodes[0].px,
-                                      y1: mabesUnitNodes[0].py,
-                                      x2: pinX,
-                                      y2: pinY,
-                                      stroke: "rgba(245,158,11,0.55)",
-                                      strokeWidth: 0.9 * invScale,
-                                      strokeDasharray: (1.5 * invScale) + "," + (1.5 * invScale)
-                                    }),
-                                    (0, t.jsx)("circle", {
-                                      cx: pinX,
-                                      cy: pinY,
-                                      r: (isSelU ? 6.2 : 4.4) * invScale,
-                                      fill: isSelU ? "#d97706" : "#f59e0b",
-                                      stroke: "#ffffff",
-                                      strokeWidth: 1.5 * invScale
-                                    }),
-                                    showLabels && (isSelU || idx === 0 || idx === 3 || idx === 4 || idx === 6) && (0, t.jsxs)("g", {
-                                      transform: "translate(" + pinX + "," + (pinY - 7 * invScale) + ") scale(" + invScale + ")",
-                                      children: [
-                                        (0, t.jsx)("rect", {
-                                          x: -42,
-                                          y: -11.5,
-                                          width: 84,
-                                          height: 11.5,
-                                          rx: 3.5,
-                                          fill: isSelU ? "#d97706" : T.labelPillBg,
-                                          stroke: "#f59e0b",
-                                          strokeWidth: 0.85
-                                        }),
-                                        (0, t.jsx)("text", {
-                                          x: 0,
-                                          y: -3.2,
-                                          textAnchor: "middle",
-                                          fill: isSelU ? "#ffffff" : T.labelPillText,
-                                          fontSize: "6.0",
-                                          fontWeight: "800",
-                                          children: u.shortName.slice(0, 14) + " (" + z(u.ct) + ")"
-                                        })
-                                      ]
-                                    })
-                                  ]
-                                });
-                              })
-                            })
-                          ]
-                        })
-                      ]
-                    }),
-
-                    // Floating Hover / Active Tooltip inside Map Bottom-Left
-                    activeTip && (0, t.jsxs)("div", {
-                      style: {
-                        position: "absolute",
-                        left: 10,
-                        bottom: 10,
-                        background: T.tooltipBg,
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid " + T.tooltipBorder,
-                        borderRadius: 10,
-                        padding: "0.48rem 0.68rem",
-                        color: T.textPrimary,
-                        fontSize: "0.72rem",
-                        boxShadow: isDark ? "0 10px 25px rgba(0,0,0,0.45)" : "0 10px 24px rgba(15,23,42,0.12)",
-                        pointerEvents: "none",
-                        maxWidth: "320px"
-                      },
-                      children: [
-                        (0, t.jsxs)("div", {
-                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.45rem", marginBottom: "0.14rem" },
-                          children: [
-                            (0, t.jsx)("strong", {
-                              style: { color: T.accentText, fontSize: "0.78rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                              children: activeTip.nama || activeTip.polda
-                            }),
-                            activeTip.rank && (0, t.jsx)("span", {
-                              className: "tabular-nums",
-                              style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.06rem 0.38rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder, flexShrink: 0 },
-                              children: "#" + activeTip.rank
-                            })
-                          ]
-                        }),
-                        activeTip.makoAddr && (0, t.jsx)("div", {
-                          style: { fontSize: "0.65rem", color: T.textMuted, marginBottom: "0.18rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-                          children: "📍 " + activeTip.makoAddr
-                        }),
-                        (0, t.jsxs)("div", {
-                          className: "tabular-nums",
-                          style: { display: "flex", gap: "0.55rem", flexWrap: "wrap", color: T.textSecondary, fontSize: "0.7rem" },
-                          children: [
-                            (0, t.jsxs)("span", { children: ["🔥 CT: ", (0, t.jsx)("strong", { style: { color: T.ctText }, children: z(activeTip.ct) }), " LP"] }),
-                            (0, t.jsxs)("span", { children: ["✅ CC: ", (0, t.jsx)("strong", { style: { color: T.ccText }, children: z(activeTip.cc) })] }),
-                            (0, t.jsxs)("span", { children: ["🛡️ CR: ", (0, t.jsx)("strong", { style: { color: T.crText }, children: Number(activeTip.cr || 0).toFixed(1) + "%" })] })
-                          ]
-                        })
-                      ]
-                    })
-                  ]
-                })
-              ),
-
-              // Clean Map Footer: Only Color Scale Legend
-              (0, t.jsxs)("div", {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "0.5rem",
-                  marginTop: "0.55rem",
-                  paddingTop: "0.45rem",
-                  borderTop: "1px solid " + T.divider,
-                  fontSize: "0.69rem",
-                  color: T.textMuted
-                },
-                children: [
-                  (0, t.jsxs)("div", {
-                    style: { display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" },
-                    children: [
-                      (0, t.jsx)("span", { style: { fontWeight: 800, color: T.textSecondary }, children: "Skala Warna:" }),
-                      [
-                        { c: "#ef4444", l: "Tertinggi" },
-                        { c: "#f97316", l: "Tinggi" },
-                        { c: "#eab308", l: "Sedang" },
-                        { c: "#10b981", l: "Rendah" },
-                        { c: T.mapZeroFill, l: "Nihil" }
-                      ].map(lg => (0, t.jsxs)("span", {
-                        key: lg.l,
-                        style: { display: "inline-flex", alignItems: "center", gap: "0.25rem" },
-                        children: [
-                          (0, t.jsx)("span", { style: { width: 9, height: 9, borderRadius: 2, background: lg.c, border: "1px solid rgba(15,23,42,0.18)", display: "inline-block" } }),
-                          (0, t.jsx)("span", { children: lg.l })
-                        ]
-                      }))
-                    ]
-                  }),
-                  (0, t.jsx)("span", {
-                    style: { color: T.textMuted, fontSize: "0.68rem" },
-                    children: zoom > 1 ? ("Perbesaran: " + zoom.toFixed(1) + "x (Geser peta untuk navigasi)") : "36 Wilayah Hukum Polda • 514 Kab/Kota • Kecamatan"
-                  })
-                ]
-              })
-            ]
-          }),
-
-          // Right Column: 3-Level Drilldown Side Panel (Polda -> Polres -> Polsek + Mabes Polri Point-Only Mode)
-          (0, t.jsxs)("div", {
-            className: "cms-card",
-            style: {
-              padding: "0.9rem",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "0.65rem",
-              background: T.cardBg,
-              border: "1px solid " + T.cardBorder,
-              borderRadius: 12,
-              boxShadow: T.cardShadow
-            },
-            children: [
-              drillLevel === 3 ? (0, t.jsxs)("div", {
-                style: { display: "flex", flexDirection: "column", gap: "0.65rem" },
-                children: [
-                  (0, t.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: "0.45rem",
-                      paddingBottom: "0.55rem",
-                      borderBottom: "1px solid " + T.divider
-                    },
-                    children: [
-                      (0, t.jsxs)("div", {
-                        style: { minWidth: 0, flex: 1 },
-                        children: [
-                          (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
-                            children: [
-                              (0, t.jsx)("span", {
-                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: isDark ? "rgba(124,58,237,0.22)" : "#f5f3ff", color: isDark ? "#c4b5fd" : "#6d28d9", border: "1px solid " + (isDark ? "rgba(167,139,250,0.45)" : "#c4b5fd") },
-                                children: "🏛️ Satker Pusat Mabes Polri"
-                              }),
-                              (0, t.jsx)("span", {
-                                style: { fontSize: "0.63rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
-                                children: "📍 Titik Kantor (Tanpa Polygon)"
-                              })
-                            ]
-                          }),
-                          (0, t.jsx)("h2", {
-                            style: { margin: "0.3rem 0 0.08rem", fontSize: "1.02rem", fontWeight: 850, color: T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                            title: (selectedMabesUnit || mabesUnitNodes[0])?.nama,
-                            children: (selectedMabesUnit || mabesUnitNodes[0])?.shortName || "Bareskrim Polri"
-                          }),
-                          (0, t.jsx)("div", {
-                            style: { fontSize: "0.69rem", color: T.textMuted },
-                            children: (selectedMabesUnit || mabesUnitNodes[0])?.nama || "Badan Reserse Kriminal Polri"
-                          })
-                        ]
-                      }),
-                      (0, t.jsx)("button", {
-                        type: "button",
-                        onClick: handleResetNasional,
-                        style: {
-                          padding: "0.28rem 0.55rem",
-                          borderRadius: 7,
-                          border: "1px solid " + T.accentBorder,
-                          background: T.accentBg,
-                          color: T.accentText,
-                          fontSize: "0.67rem",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap"
-                        },
-                        children: "← 36 Polda"
-                      })
-                    ]
-                  }),
-
-                  // 4 KPI Mini-Cards for active Mabes Unit
-                  (() => {
-                    const activeMabes = selectedMabesUnit || mabesUnitNodes[0] || mabesSummary;
-                    const mbsCA = Number(activeMabes.ca ?? Math.max(0, Number(activeMabes.ct || 0) - Number(activeMabes.cc || 0)));
-                    const mbsCP = Number(activeMabes.cp ?? ((Number(activeMabes.cp_berjalan || 0) + Number(activeMabes.cp_tunggakan || 0)) || mbsCA));
-                    return (0, t.jsxs)("div", {
-                      className: "tabular-nums",
-                      style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
-                      children: [
-                        { label: "Total LP (CT)", val: z(activeMabes.ct) + " LP", sub: "Total Mabes: " + z(mabesSummary.ct) + " LP", color: T.ctText },
-                        { label: "Selesai (CC)", val: z(activeMabes.cc) + " LP", sub: "Total Mabes: " + z(mabesSummary.cc) + " LP", color: T.ccText },
-                        { label: "Rasio Selesai (CR)", val: Number(activeMabes.cr || 0).toFixed(1) + "%", sub: "Clearance Rate Satker", color: T.crText },
-                        { label: "Dalam Proses (CP)", val: z(mbsCP) + " LP", sub: "Tunggakan (CA): " + z(mbsCA) + " LP", color: T.warnText }
-                      ].map((k, idx) => (0, t.jsxs)("div", {
-                        key: idx,
-                        className: "dash-minicard",
-                        style: {
-                          padding: "0.5rem 0.65rem",
-                          borderRadius: 10,
-                          background: T.subCardBg,
-                          border: "1px solid " + T.subCardBorder
-                        },
-                        children: [
-                          (0, t.jsx)("div", { style: { fontSize: "0.65rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase" }, children: k.label }),
-                          (0, t.jsx)("div", { style: { fontSize: "1.04rem", fontWeight: 850, color: k.color, marginTop: "0.12rem" }, children: k.val }),
-                          (0, t.jsx)("div", { style: { fontSize: "0.63rem", color: T.textMuted, marginTop: "0.06rem" }, children: k.sub })
-                        ]
-                      }))
-                    });
-                  })(),
-
-                  // Office Address & Point-Only Explanation Box
-                  (() => {
-                    const activeMabes = selectedMabesUnit || mabesUnitNodes[0];
-                    if (!activeMabes) return null;
-                    return (0, t.jsxs)("div", {
-                      style: {
-                        padding: "0.55rem 0.68rem",
-                        borderRadius: 10,
-                        background: isDark ? "rgba(124,58,237,0.12)" : "#f5f3ff",
-                        border: "1px solid " + (isDark ? "rgba(167,139,250,0.35)" : "#ddd6fe"),
-                        fontSize: "0.69rem",
-                        lineHeight: 1.45
-                      },
-                      children: [
-                        (0, t.jsx)("div", {
-                          style: { fontWeight: 800, color: isDark ? "#c4b5fd" : "#5b21b6", marginBottom: "0.18rem" },
-                          children: "📍 Alamat Kantor & Koordinat Google Maps"
-                        }),
-                        (0, t.jsx)("div", {
-                          style: { color: T.textPrimary, fontWeight: 600 },
-                          children: activeMabes.makoAddr
-                        }),
-                        (0, t.jsxs)("div", {
-                          style: { color: T.textMuted, fontSize: "0.65rem", marginTop: "0.16rem", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.3rem" },
-                          children: [
-                            (0, t.jsx)("span", { children: "Koordinat: " + activeMabes.lat.toFixed(4) + ", " + activeMabes.lng.toFixed(4) }),
-                            (0, t.jsx)("span", { style: { fontWeight: 700, color: isDark ? "#c4b5fd" : "#6d28d9" }, children: "Yurisdiksi Nasional (Non-Teritorial)" })
-                          ]
-                        })
-                      ]
-                    });
-                  })(),
-
-                  // List of 10 Mabes / Bareskrim Units
-                  (0, t.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.38rem",
-                      padding: "0.6rem 0.7rem",
-                      borderRadius: 10,
-                      background: T.subCardBg,
-                      border: "1px solid " + T.subCardBorder
-                    },
-                    children: [
-                      (0, t.jsxs)("div", {
-                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.71rem", fontWeight: 800, color: T.textPrimary },
-                        children: [
-                          (0, t.jsx)("span", { children: "🏛️ Direktorat & Satker Bareskrim Polri" }),
-                          (0, t.jsx)("span", { style: { fontSize: "0.64rem", color: T.accentText }, children: mabesUnitNodes.length + " Titik Kantor" })
-                        ]
-                      }),
-                      (0, t.jsx)("div", {
-                        className: "tabular-nums",
-                        style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "175px", overflowY: "auto", paddingRight: "0.2rem" },
-                        children: mabesUnitNodes.map((u, idx) => {
-                          const isSelU = (selectedMabesUnit?.id || mabesUnitNodes[0]?.id) === u.id;
-                          const maxUCT = Math.max(1, Number(mabesUnitNodes[0]?.ct || 1));
-                          const pct = Math.max(6, Math.round((u.ct / maxUCT) * 100));
-                          return (0, t.jsxs)("div", {
-                            key: u.id,
-                            onClick: () => handleSelectMabesAndZoom(u),
-                            style: {
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: "0.16rem",
-                              padding: "0.34rem 0.48rem",
-                              borderRadius: 8,
-                              cursor: "pointer",
-                              background: isSelU ? T.accentBg : T.rowCardBg,
-                              border: "1px solid " + (isSelU ? T.accentBorder : T.rowCardBorder)
-                            },
-                            children: [
-                              (0, t.jsxs)("div", {
-                                style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
-                                children: [
-                                  (0, t.jsx)("span", {
-                                    style: { color: isSelU ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                    children: (idx + 1) + ". " + u.shortName
-                                  }),
-                                  (0, t.jsxs)("span", {
-                                    style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
-                                    children: [z(u.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(" + u.cr.toFixed(0) + "%)" })]
-                                  })
-                                ]
-                              }),
-                              (0, t.jsx)("div", {
-                                style: { height: 4, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
-                                children: (0, t.jsx)("div", {
-                                  style: { width: pct + "%", height: "100%", borderRadius: 999, background: "#7c3aed" }
-                                })
-                              })
-                            ]
-                          });
-                        })
-                      })
-                    ]
-                  })
-                ]
-              }) : selectedRegion ? (0, t.jsxs)("div", {
-                style: { display: "flex", flexDirection: "column", gap: "0.65rem" },
-                children: [
-                  // Top Header of Drilldown Panel (adapts to Level 0/1 Polda vs Level 2 Polres/Polsek)
-                  (0, t.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: "0.45rem",
-                      paddingBottom: "0.55rem",
-                      borderBottom: "1px solid " + T.divider
-                    },
-                    children: [
-                      (0, t.jsxs)("div", {
-                        style: { minWidth: 0, flex: 1 },
-                        children: [
-                          (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
-                            children: [
-                              (0, t.jsx)("span", {
-                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.accentBg, color: T.accentText, border: "1px solid " + T.accentBorder },
-                                children: drillLevel === 2 ? (selectedPolsek ? "Tingkat Polsek (Wilkum Kecamatan)" : "Tingkat Polres (Wilkum Kab/Kota)") : ("Wilkum " + selectedRegion.pulau)
-                              }),
-                              (0, t.jsx)("span", {
-                                className: "tabular-nums",
-                                style: { fontSize: "0.64rem", fontWeight: 800, padding: "0.1rem 0.45rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
-                                children: drillLevel === 2 && selectedPolres ? ("Rank #" + selectedPolres.rank + " di " + selectedRegion.abbr) : ("Peringkat #" + selectedRegion.rank + " Nasional")
-                              })
-                            ]
-                          }),
-                          (0, t.jsx)("h2", {
-                            style: { margin: "0.3rem 0 0.08rem", fontSize: "1.05rem", fontWeight: 850, color: T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                            title: drillLevel === 2 && selectedPolsek ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama)) : (drillLevel === 2 && selectedPolres ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)) : ("Wilkum " + selectedRegion.polda)),
-                            children: drillLevel === 2 && selectedPolsek ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama)) : (drillLevel === 2 && selectedPolres ? ("Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama)) : selectedRegion.polda)
-                          }),
-                          (0, t.jsx)("div", {
-                            style: { fontSize: "0.7rem", color: T.textMuted },
-                            children: drillLevel === 2 && selectedPolres
-                              ? ("Induk: " + selectedRegion.polda + (selectedPolsek ? (" • " + formatFullWilkumSatkerName(selectedPolres.nama)) : ""))
-                              : ("Intensitas: " + selectedRegion.levelLabel + " (" + selectedRegion.sharePct.toFixed(1) + "% LP Nasional)")
-                          })
-                        ]
-                      }),
-                      drillLevel === 0 && (0, t.jsx)("button", {
-                        type: "button",
-                        onClick: () => handleSelectPoldaAndZoom(selectedRegion),
-                        title: "Perbesar peta ke wilayah hukum Polda ini & tampilkan irisan batas wilayah + titik Polres jajaran",
-                        style: {
-                          padding: "0.3rem 0.58rem",
-                          borderRadius: 7,
-                          border: "1px solid " + T.accentBorder,
-                          background: T.accentBg,
-                          color: T.accentText,
-                          fontSize: "0.68rem",
-                          fontWeight: 800,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                          flexShrink: 0
-                        },
-                        children: "🔍 Zoom Wilkum"
-                      })
-                    ]
-                  }),
-
-                  // 4 Concise KPI Mini-Cards (Matches .dash-minicard aesthetic in Ringkasan)
-                  (() => {
-                    const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
-                    const cpBer = Number(activeObj.cp_berjalan || 0);
-                    const cpTgk = Number(activeObj.cp_tunggakan || 0);
-                    const caVal = Number(activeObj.ca ?? Math.max(0, Number(activeObj.ct || 0) - Number(activeObj.cc || 0)));
-                    const cpVal = Number(activeObj.cp ?? ((cpBer + cpTgk) || caVal));
-                    return (0, t.jsxs)("div", {
-                      className: "tabular-nums",
-                      style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.5rem" },
-                      children: [
-                        { label: "Total LP (CT)", val: z(activeObj.ct) + " LP", sub: "Laporan Polisi Masuk", color: T.ctText, tip: "Jumlah Laporan Polisi pada satuan kerja ini" },
-                        { label: "Selesai (CC)", val: z(activeObj.cc) + " LP", sub: "Perkara Diselesaikan", color: T.ccText, tip: "Jumlah perkara yang telah selesai (CC Aktual + Tunggakan)" },
-                        { label: "Rasio Selesai (CR)", val: Number(activeObj.cr || 0).toFixed(1) + "%", sub: "Clearance Rate", color: T.crText, tip: "Persentase penyelesaian perkara terhadap total LP" },
-                        { label: "Dalam Proses (CP)", val: z(cpVal) + " LP", sub: "Tunggakan (CA): " + z(caVal) + " LP", color: T.warnText, tip: "Tindak Pidana dalam Proses (CP = Crime Processed) & Tunggakan Tindak Pidana (CA = CT - CC)" }
-                      ].map((k, idx) => (0, t.jsxs)("div", {
-                        key: idx,
-                        className: "dash-minicard",
-                        title: k.tip,
-                        style: {
-                          padding: "0.5rem 0.65rem",
-                          borderRadius: 10,
-                          background: T.subCardBg,
-                          border: "1px solid " + T.subCardBorder,
-                          cursor: "help"
-                        },
-                        children: [
-                          (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.65rem", fontWeight: 800, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.02em" },
-                            children: [(0, t.jsx)("span", { children: k.label }), renderKpInfoIcon(11)]
-                          }),
-                          (0, t.jsx)("div", { style: { fontSize: "1.04rem", fontWeight: 850, color: k.color, marginTop: "0.12rem" }, children: k.val }),
-                          (0, t.jsx)("div", { style: { fontSize: "0.63rem", color: T.textMuted, marginTop: "0.06rem" }, children: k.sub })
-                        ]
-                      }))
-                    });
-                  })(),
-
-                  // Official Mako Address & Cakupan Wilayah Hukum (Wilkum) Card
-                  (() => {
-                    const activeObj = (drillLevel === 2 && selectedPolsek) ? selectedPolsek : (drillLevel === 2 && selectedPolres) ? selectedPolres : selectedRegion;
-                    const addrText = activeObj.makoAddr || selectedRegion.makoAddr || ("Mako " + (activeObj.nama || selectedRegion.polda));
-                    const wilkumText = activeObj.wilkum || activeObj.wilkumNote || selectedRegion.wilkumNote || ("Wilayah Hukum " + (activeObj.nama || selectedRegion.polda));
-                    return (0, t.jsxs)("div", {
-                      style: {
-                        padding: "0.52rem 0.68rem",
-                        borderRadius: 10,
-                        background: isDark ? "rgba(239,68,68,0.09)" : "#fff1f2",
-                        border: "1px solid " + (isDark ? "rgba(248,113,113,0.32)" : "#fecdd3"),
-                        fontSize: "0.68rem",
-                        lineHeight: 1.42
-                      },
-                      children: [
-                        (0, t.jsxs)("div", {
-                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", marginBottom: "0.14rem" },
-                          children: [
-                            (0, t.jsx)("span", {
-                              style: { fontWeight: 800, color: isDark ? "#fca5a5" : "#be123c" },
-                              children: "📍 Alamat Mako & Irisan Wilayah Hukum"
-                            }),
-                            (0, t.jsxs)("div", {
-                              style: { display: "inline-flex", gap: "0.25rem" },
-                              children: [
-                                mapEngine !== "gmaps_street" && (0, t.jsx)("button", {
-                                  type: "button",
-                                  onClick: () => {
-                                    setMapEngine("gmaps_street");
-                                    if (drillLevel === 0 && selectedRegion) handleSelectPoldaAndZoom(selectedRegion);
-                                  },
-                                  style: {
-                                    padding: "0.1rem 0.38rem",
-                                    borderRadius: 5,
-                                    border: "1px solid " + T.accentBorder,
-                                    background: T.accentBg,
-                                    color: T.accentText,
-                                    fontSize: "0.6rem",
-                                    fontWeight: 800,
-                                    cursor: "pointer"
-                                  },
-                                  children: "🌐 Irisan Peta"
-                                }),
-                                mapEngine !== "gmaps_embed" && (0, t.jsx)("button", {
-                                  type: "button",
-                                  onClick: () => setMapEngine("gmaps_embed"),
-                                  style: {
-                                    padding: "0.1rem 0.38rem",
-                                    borderRadius: 5,
-                                    border: "1px solid " + T.ctBorder,
-                                    background: T.ctBg,
-                                    color: T.ctText,
-                                    fontSize: "0.6rem",
-                                    fontWeight: 800,
-                                    cursor: "pointer"
-                                  },
-                                  children: "📍 GMaps Native"
-                                })
-                              ]
-                            })
-                          ]
-                        }),
-                        (0, t.jsx)("div", {
-                          style: { color: T.textPrimary, fontWeight: 600 },
-                          children: addrText
-                        }),
-                        (0, t.jsx)("div", {
-                          style: { color: T.textSecondary, fontSize: "0.64rem", marginTop: "0.12rem" },
-                          children: "Cakupan Wilkum: " + wilkumText
-                        })
-                      ]
-                    });
-                  })(),
-
-                  // NEW: Ranking Titik Rawan Kejadian (TKP) Tertinggi (Berdasarkan Koordinat Latitude & Longitude LP) — Placed FIRST for immediate visibility!
-                  (0, t.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.38rem",
-                      padding: "0.55rem 0.65rem",
-                      borderRadius: 10,
-                      background: T.subCardBg,
-                      border: "1px solid " + T.subCardBorder
-                    },
-                    children: [
-                      (0, t.jsxs)("div", {
-                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
-                        children: [
-                          (0, t.jsx)("span", {
-                            children: "🎯 Titik Rawan Kejadian (TKP) Tertinggi"
-                          }),
-                          (0, t.jsx)("span", {
-                            style: { fontSize: "0.64rem", color: T.ctText, fontWeight: 800 },
-                            children: crimeFilter !== "SEMUA" ? (activeCrimeMeta.icon + " " + activeCrimeMeta.label) : "Koordinat LP"
-                          })
-                        ]
-                      }),
-                      activeTopRawan.length === 0 ? (
-                        (0, t.jsx)("div", {
-                          style: { fontSize: "0.7rem", color: T.textMuted, padding: "0.35rem 0" },
-                          children: petaLoading ? "Memuat klaster koordinat TKP dari LP…" : "Belum ada titik koordinat TKP pada filter ini."
-                        })
-                      ) : (
-                        (0, t.jsx)("div", {
-                          className: "tabular-nums",
-                          style: { display: "flex", flexDirection: "column", gap: "0.3rem", maxHeight: "145px", overflowY: "auto", paddingRight: "0.2rem" },
-                          children: activeTopRawan.slice(0, 8).map((hs, idx) => {
-                            const isSelHs = selectedHotspot && Math.abs(Number(selectedHotspot.lat) - Number(hs.lat)) < 0.001 && Math.abs(Number(selectedHotspot.lng) - Number(hs.lng)) < 0.001;
-                            return (0, t.jsxs)("div", {
-                              key: "rawan_" + idx + "_" + hs.lat + "_" + hs.lng,
-                              onClick: () => handleSelectHotspotAndZoom(hs),
-                              title: "Klik untuk zoom ke titik koordinat LP (" + Number(hs.lat).toFixed(5) + ", " + Number(hs.lng).toFixed(5) + ") & lihat sampel LP",
-                              style: {
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.12rem",
-                                padding: "0.32rem 0.46rem",
-                                borderRadius: 8,
-                                cursor: "pointer",
-                                background: isSelHs ? T.ctBg : T.rowCardBg,
-                                border: "1px solid " + (isSelHs ? T.ctBorder : T.rowCardBorder),
-                                transition: "all 120ms ease"
-                              },
-                              children: [
-                                (0, t.jsxs)("div", {
-                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.68rem" },
-                                  children: [
-                                    (0, t.jsx)("span", {
-                                      style: { fontWeight: 800, color: isSelHs ? T.ctText : T.textPrimary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                      children: "#" + (idx + 1) + " • " + (hs.tkp_label || "Lokasi TKP")
-                                    }),
-                                    (0, t.jsx)("span", {
-                                      style: { flexShrink: 0, fontWeight: 800, color: T.ctText, fontSize: "0.66rem", background: isDark ? "rgba(239,68,68,0.2)" : "#fef2f2", padding: "0.04rem 0.36rem", borderRadius: 6, border: "1px solid " + T.ctBorder },
-                                      children: z(hs.ct) + " LP"
-                                    })
-                                  ]
-                                }),
-                                (0, t.jsxs)("div", {
-                                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.35rem", fontSize: "0.62rem", color: T.textMuted },
-                                  children: [
-                                    (0, t.jsx)("span", {
-                                      style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                      children: "🛡️ " + (hs.satker_nama || "-") + " (" + String(hs.polda_nama || "").replace(/^POLDA\s+/i, "") + ")"
-                                    }),
-                                    (0, t.jsx)("span", {
-                                      style: { flexShrink: 0, fontFamily: "monospace", color: T.accentText, fontWeight: 700 },
-                                      children: Number(hs.lat).toFixed(4) + ", " + Number(hs.lng).toFixed(4)
-                                    })
-                                  ]
-                                }),
-                                (0, t.jsx)("div", {
-                                  style: { fontSize: "0.61rem", color: T.textSecondary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                  children: "⚖️ Dominan: " + (hs.dominant_crime || activeCrimeMeta.label)
-                                })
-                              ]
-                            });
-                          })
-                        })
-                      )
-                    ]
-                  }),
-
-                  // Interactive List: Either Polres List (Level 0/1) OR Polsek List (Level 2)
-                  (0, t.jsxs)("div", {
-                    style: {
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.38rem",
-                      padding: "0.55rem 0.65rem",
-                      borderRadius: 10,
-                      background: T.subCardBg,
-                      border: "1px solid " + T.subCardBorder
-                    },
-                    children: [
-                      (0, t.jsxs)("div", {
-                        style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", fontSize: "0.72rem", fontWeight: 800, color: T.textPrimary },
-                        children: [
-                          (0, t.jsx)("span", {
-                            children: drillLevel === 2 && selectedPolres
-                              ? ("📍 Daftar Polsek / Kecamatan (" + formatFullWilkumSatkerName(selectedPolres.nama) + ")")
-                              : ("🏢 Sebaran Polres / Satker (" + selectedRegion.abbr + ")")
-                          }),
-                          drillLevel === 2 ? (
-                            (0, t.jsx)("button", {
-                              type: "button",
-                              onClick: handleStepBack,
-                              style: { background: "transparent", border: "none", color: T.accentText, fontSize: "0.68rem", fontWeight: 800, cursor: "pointer", padding: 0 },
-                              children: "← Daftar Polres"
-                            })
-                          ) : (
-                            (0, t.jsx)("span", { style: { fontSize: "0.65rem", color: T.accentText, fontWeight: 700 }, children: polresMapNodes.length > 0 ? (polresMapNodes.length + " Satker (Klik → Polsek)") : "" })
-                          )
-                        ]
-                      }),
-
-                      // Render Polsek List when drillLevel === 2, otherwise Polres List
-                      drillLevel === 2 ? (
-                        polsekLoading ? (
-                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Polsek jajaran…" })
-                        ) : polsekMapNodes.length === 0 ? (
-                          (0, t.jsx)("div", {
-                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
-                            children: "Satker ini tidak memiliki rincian sub-unit Polsek atau seluruh LP ditangani langsung di tingkat " + (selectedPolres?.shortName || "Polres") + "."
-                          })
-                        ) : (
-                          (0, t.jsx)("div", {
-                            className: "tabular-nums",
-                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "176px", paddingBottom: "0.25rem", overflowY: "auto", paddingRight: "0.2rem" },
-                            children: polsekMapNodes.map((psk, idx) => {
-                              const maxPskCT = Math.max(1, Number(polsekMapNodes[0]?.ct || 1));
-                              const pct = Math.max(5, Math.round((psk.ct / maxPskCT) * 100));
-                              const isSelPsk = selectedPolsek?.kode === psk.kode;
-                              return (0, t.jsxs)("div", {
-                                key: psk.kode || idx,
-                                onClick: () => handleSelectPolsekAndZoom(psk),
-                                title: "Klik untuk fokus & gambar irisan poligon Kecamatan ke " + psk.nama,
-                                style: {
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: "0.16rem",
-                                  padding: "0.3rem 0.45rem",
-                                  borderRadius: 8,
-                                  cursor: "pointer",
-                                  background: isSelPsk ? T.accentBg : T.rowCardBg,
-                                  border: "1px solid " + (isSelPsk ? T.accentBorder : T.rowCardBorder)
-                                },
-                                children: [
-                                  (0, t.jsxs)("div", {
-                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
-                                    children: [
-                                      (0, t.jsx)("span", {
-                                        style: { color: isSelPsk ? T.accentText : T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                        children: (idx + 1) + ". " + psk.shortName
-                                      }),
-                                      (0, t.jsxs)("span", {
-                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
-                                        children: [z(psk.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(" + psk.cr.toFixed(0) + "%)" })]
-                                      })
-                                    ]
-                                  }),
-                                  (0, t.jsx)("div", {
-                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
-                                    children: (0, t.jsx)("div", {
-                                      style: { width: (psk.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: psk.color }
-                                    })
-                                  })
-                                ]
-                              });
-                            })
-                          })
-                        )
-                      ) : (
-                        subLoading ? (
-                          (0, t.jsx)("div", { style: { fontSize: "0.73rem", color: T.textMuted, padding: "0.5rem 0" }, children: "Memuat daftar Polres/Satker jajaran…" })
-                        ) : polresMapNodes.length === 0 ? (
-                          (0, t.jsx)("div", {
-                            style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", lineHeight: 1.45 },
-                            children: selectedRegion.ct > 0
-                              ? ("Tercatat " + z(selectedRegion.ct) + " LP dan " + z(selectedRegion.cc) + " perkara selesai pada " + selectedRegion.polda + ".")
-                              : ("Belum ada LP tercatat pada " + selectedRegion.polda + " untuk periode ini.")
-                          })
-                        ) : (
-                          (0, t.jsx)("div", {
-                            className: "tabular-nums",
-                            style: { display: "flex", flexDirection: "column", gap: "0.32rem", maxHeight: "176px", paddingBottom: "0.25rem", overflowY: "auto", paddingRight: "0.2rem" },
-                            children: polresMapNodes.map((prs, idx) => {
-                              const maxSubCT = Math.max(1, Number(polresMapNodes[0]?.ct || 1));
-                              const pct = Math.max(5, Math.round((prs.ct / maxSubCT) * 100));
-                              return (0, t.jsxs)("div", {
-                                key: prs.kode || idx,
-                                onClick: () => handleSelectPolresAndZoom(prs),
-                                title: "Klik untuk zoom ke " + prs.nama + ", gambar irisan Wilkum Kab/Kota & tampilkan Polsek jajaran",
-                                style: {
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: "0.16rem",
-                                  padding: "0.3rem 0.45rem",
-                                  borderRadius: 8,
-                                  cursor: "pointer",
-                                  background: T.rowCardBg,
-                                  border: "1px solid " + T.rowCardBorder
-                                },
-                                children: [
-                                  (0, t.jsxs)("div", {
-                                    style: { display: "flex", justifyContent: "space-between", fontSize: "0.69rem", gap: "0.35rem" },
-                                    children: [
-                                      (0, t.jsx)("span", {
-                                        style: { color: T.textPrimary, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                        children: (idx + 1) + ". " + prs.shortName + " ➔"
-                                      }),
-                                      (0, t.jsxs)("span", {
-                                        style: { flexShrink: 0, fontWeight: 800, color: T.ctText },
-                                        children: [z(prs.ct), " LP ", (0, t.jsx)("span", { style: { color: T.ccText, fontWeight: 700 }, children: "(CC: " + z(prs.cc) + ")" })]
-                                      })
-                                    ]
-                                  }),
-                                  (0, t.jsx)("div", {
-                                    style: { height: 5, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
-                                    children: (0, t.jsx)("div", {
-                                      style: { width: (prs.ct > 0 ? pct : 0) + "%", height: "100%", borderRadius: 999, background: prs.color }
-                                    })
-                                  })
-                                ]
-                              });
-                            })
-                          })
-                        )
-                      )
-                    ]
-                  })
-                ]
-              }) : null,
-
-              // Action Buttons at bottom of Drilldown Panel
-              (0, t.jsxs)("div", {
-                style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "auto" },
-                children: [
-                  (0, t.jsx)("button", {
-                    type: "button",
-                    title: "Buka halaman Daftar Laporan Polisi",
-                    onClick: () => e.push("/cms/laporan-polisi"),
-                    style: {
-                      padding: "0.5rem 0.65rem",
-                      borderRadius: 9,
-                      border: "1px solid " + T.ctBorder,
-                      background: T.ctBg,
-                      color: T.ctText,
-                      fontSize: "0.73rem",
-                      fontWeight: 800,
-                      cursor: "pointer"
-                    },
-                    children: "📋 Lihat Daftar LP"
-                  }),
-                  (0, t.jsx)("button", {
-                    type: "button",
-                    title: "Buka halaman matriks lengkap Kinerja Perkara",
-                    onClick: () => e.push("/cms/report/kinerja-perkara"),
-                    style: {
-                      padding: "0.5rem 0.65rem",
-                      borderRadius: 9,
-                      border: "1px solid " + T.accentBorder,
-                      background: T.accentBg,
-                      color: T.accentText,
-                      fontSize: "0.73rem",
-                      fontWeight: 800,
-                      cursor: "pointer"
-                    },
-                    children: "📊 Kinerja Perkara"
-                  })
-                ]
-              })
-            ]
-          })
-        ]
-      }),
-
       // 4. Rincian Status LP Nasional Strip
       (() => {
         const statusList = (Array.isArray(petaData?.per_status) && petaData.per_status.length > 0)
           ? petaData.per_status
-          : (l?.per_status || []);
+          : (canSyncWithMainDash ? (l?.per_status || []) : []);
         if (!statusList || statusList.length === 0) return null;
         return (0, t.jsxs)("div", {
           className: "cms-card",
@@ -6928,7 +8464,7 @@ function CasPetaKejahatanView({
         });
       })(),
 
-      // 5. Ranked Table of All 36 Polda + Mabes Polri Quick Row
+      // 5. Dynamic Ranked Table: Either Satker / Polres Jajaran (when scoped/zoomed to a Region) OR All 36 Wilkum Polda (National view)
       (0, t.jsxs)("div", {
         className: "cms-card",
         style: {
@@ -6951,24 +8487,79 @@ function CasPetaKejahatanView({
             children: [
               (0, t.jsxs)("div", {
                 children: [
-                  (0, t.jsx)("div", {
-                    style: { fontWeight: 850, fontSize: "0.9rem", color: T.textPrimary },
-                    children: "📊 Peringkat Sebaran LP per Wilayah Hukum Polda (" + filteredTableRows.length + " Polda)"
+                  (0, t.jsxs)("div", {
+                    style: { display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" },
+                    children: [
+                      (0, t.jsx)("div", {
+                        style: { fontWeight: 850, fontSize: "0.9rem", color: T.textPrimary },
+                        children: isPolresScopedTable
+                          ? ("📊 Peringkat Sebaran LP per Satres & Polsek Jajaran — " + formatFullWilkumSatkerName(selectedPolres?.nama || "Polres") + (activeTableTipidLabel ? " • " + activeTableTipidLabel : "") + " (" + satkerTableRows.length + " Sub-Satker)")
+                          : isRegionScopedTable
+                          ? ("📊 Peringkat Sebaran LP per Satker / Polres Jajaran — " + (selectedRegion?.polda || "Wilkum Polda") + (activeTableTipidLabel ? " • " + activeTableTipidLabel : "") + " (" + satkerTableRows.length + " Satker)")
+                          : ("📊 Peringkat Sebaran LP per Wilayah Hukum Polda" + (activeTableTipidLabel ? " — Filter: " + activeTableTipidLabel : "") + " (" + filteredTableRows.length + " Polda)")
+                      }),
+                      isRegionScopedTable && activeTableTipidLabel && (0, t.jsx)("span", {
+                        style: {
+                          fontSize: "0.66rem",
+                          fontWeight: 800,
+                          padding: "0.12rem 0.5rem",
+                          borderRadius: 6,
+                          background: T.accentBg,
+                          color: T.accentText,
+                          border: "1px solid " + T.accentBorder
+                        },
+                        children: "⚖️ " + activeTableTipidLabel
+                      })
+                    ]
                   }),
                   (0, t.jsx)("div", {
                     style: { fontSize: "0.72rem", color: T.textMuted, marginTop: "0.1rem" },
-                    children: "Klik baris Polda untuk zoom otomatis ke irisan Wilayah Hukum Polda & melihat Polres jajaran"
+                    children: isPolresScopedTable
+                      ? ("Menampilkan sebaran Laporan Polisi (LP) per Satuan Fungsi (Satreskrim/Satresnarkoba/Satresppadanppo) & Polsek jajaran di bawah " + formatFullWilkumSatkerName(selectedPolres?.nama || "Polres") + " • Klik baris Polsek/Satres untuk fokus ke titik Wilkum Kecamatan")
+                      : isRegionScopedTable
+                      ? ("Menampilkan sebaran Laporan Polisi (LP) per Satker / Direktorat & Polres jajaran pada " + (selectedRegion?.polda || "Wilkum Polda") + (activeTableTipidLabel ? " sesuai cakupan/filter " + activeTableTipidLabel : "") + " • Klik baris Satker untuk zoom otomatis ke wilayah hukum & lihat rincian")
+                      : ("Klik baris Polda untuk zoom otomatis ke irisan Wilayah Hukum Polda & melihat Polres jajaran" + (activeTableTipidLabel ? " (Filter aktif: " + activeTableTipidLabel + ")" : ""))
                   })
                 ]
               }),
               (0, t.jsxs)("div", {
                 style: { display: "flex", alignItems: "center", gap: "0.45rem", flexWrap: "wrap" },
                 children: [
+                  isPolresScopedTable && (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: handleStepBack,
+                    style: {
+                      padding: "0.38rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + T.accentBorder,
+                      background: T.accentBg,
+                      color: T.accentText,
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "← Daftar Polres (" + (selectedRegion?.abbr || selectedRegion?.polda || "Polda") + ")"
+                  }),
+                  isRegionScopedTable && (!isScopedUser || isScopedBareskrim) && drillLevel >= 1 && (0, t.jsx)("button", {
+                    type: "button",
+                    onClick: handleResetNasional,
+                    style: {
+                      padding: "0.38rem 0.65rem",
+                      borderRadius: 8,
+                      border: "1px solid " + T.accentBorder,
+                      background: T.accentBg,
+                      color: T.accentText,
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      cursor: "pointer"
+                    },
+                    children: "🌐 Tabel 36 Polda"
+                  }),
                   (0, t.jsx)("input", {
                     type: "text",
                     value: searchQ,
                     onChange: ev => setSearchQ(ev.target.value),
-                    placeholder: "🔍 Cari Polda / Pulau…",
+                    placeholder: isRegionScopedTable ? "🔍 Cari Satker / Polres…" : "🔍 Cari Polda / Pulau…",
                     style: {
                       padding: "0.4rem 0.72rem",
                       borderRadius: 8,
@@ -6996,7 +8587,7 @@ function CasPetaKejahatanView({
                       (0, t.jsx)("option", { value: "cc", children: "Urut: Selesai (CC) Tertinggi" }),
                       (0, t.jsx)("option", { value: "cr", children: "Urut: Rasio Selesai (CR%) Tertinggi" }),
                       (0, t.jsx)("option", { value: "cp_tunggakan", children: "Urut: Dalam Proses (CP) Tertinggi" }),
-                      (0, t.jsx)("option", { value: "name", children: "Urut: Nama Polda (A-Z)" })
+                      (0, t.jsx)("option", { value: "name", children: isRegionScopedTable ? "Urut: Nama Satker (A-Z)" : "Urut: Nama Polda (A-Z)" })
                     ]
                   })
                 ]
@@ -7024,11 +8615,11 @@ function CasPetaKejahatanView({
                     },
                     children: [
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.5rem", width: "38px" }, children: "#" }),
-                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: "Wilayah Hukum Polda" }),
-                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: "Kepulauan" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: isPolresScopedTable ? "Satuan Fungsi / Polsek Jajaran" : (isRegionScopedTable ? "Satker / Polres Jajaran" : "Wilayah Hukum Polda") }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, children: isRegionScopedTable ? "Tingkat / Tipe Satker" : "Kepulauan" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem" }, title: "Kategori tingkat kepadatan Laporan Polisi", children: "Intensitas" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Total: Jumlah Laporan Polisi", children: "Total LP (CT)" }),
-                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", width: "140px" }, title: "Porsi persentase LP terhadap total nasional", children: "Porsi Nasional" }),
+                      (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", width: "140px" }, title: isPolresScopedTable ? "Porsi persentase LP terhadap total Polres" : (isRegionScopedTable ? "Porsi persentase LP terhadap total wilayah Polda" : "Porsi persentase LP terhadap total nasional"), children: isPolresScopedTable ? ("Porsi " + (selectedPolres?.shortName || "Polres")) : (isRegionScopedTable ? ("Porsi " + (selectedRegion?.abbr || "Wilayah")) : "Porsi Nasional") }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Clearance: Jumlah perkara selesai", children: "Selesai (CC)" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Processed (CP): Tindak Pidana dalam Proses (CP Aktual + CP Tunggakan)", children: "Dalam Proses (CP)" }),
                       (0, t.jsx)("th", { style: { padding: "0.55rem 0.6rem", textAlign: "right" }, title: "Crime Arears (CA): Tunggakan Tindak Pidana (CT - CC)", children: "Tunggakan (CA)" }),
@@ -7037,57 +8628,112 @@ function CasPetaKejahatanView({
                   })
                 }),
                 (0, t.jsx)("tbody", {
-                  children: filteredTableRows.map((row, idx) => {
-                    const st = getRegionStyle(row);
-                    const isSel = drillLevel !== 3 && selectedRegion?.id === row.id;
-                    const barPct = Math.max(4, Math.round(row.rawRatioCT * 100));
-                    return (0, t.jsxs)("tr", {
-                      key: row.id,
-                      onClick: () => handleSelectPoldaAndZoom(row),
-                      title: "Klik untuk zoom ke Wilayah Hukum " + row.polda + " dan melihat daftar Polres",
-                      style: {
-                        cursor: "pointer",
-                        borderBottom: "1px solid " + T.divider,
-                        background: isSel ? T.accentBg : (idx % 2 === 1 ? T.subCardBg : "transparent"),
-                        transition: "background 120ms ease"
-                      },
-                      children: [
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.5rem", fontWeight: 800, color: T.textMuted }, children: row.rank }),
-                        (0, t.jsx)("td", {
-                          style: { padding: "0.52rem 0.6rem", fontWeight: 800, color: isSel ? T.accentText : T.textPrimary, whiteSpace: "nowrap" },
-                          children: row.polda
-                        }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", color: T.textSecondary, whiteSpace: "nowrap" }, children: row.pulau }),
-                        (0, t.jsx)("td", {
-                          style: { padding: "0.52rem 0.6rem", whiteSpace: "nowrap" },
-                          children: renderThemeBadge(
-                            row.levelLabel,
-                            row.level === "hotspot" ? "danger-bold" : row.level === "high" ? "danger" : row.level === "medium" ? "warning" : row.level === "low" ? "success" : "neutral"
-                          )
-                        }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 850, color: T.ctText }, children: z(row.ct) }),
-                        (0, t.jsx)("td", {
-                          style: { padding: "0.52rem 0.6rem" },
-                          children: (0, t.jsxs)("div", {
-                            style: { display: "flex", alignItems: "center", gap: "0.4rem" },
-                            children: [
-                              (0, t.jsx)("div", {
-                                style: { flex: 1, height: 6, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
-                                children: (0, t.jsx)("div", {
-                                  style: { width: (row.ct > 0 ? barPct : 0) + "%", height: "100%", borderRadius: 999, background: st.badgeColor }
-                                })
-                              }),
-                              (0, t.jsx)("span", { style: { fontSize: "0.68rem", color: T.textMuted, width: "38px", textAlign: "right", fontWeight: 700 }, children: row.sharePct.toFixed(1) + "%" })
-                            ]
-                          })
-                        }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 700, color: T.ccText }, children: z(row.cc) }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 700 }, children: z(row.cp || row.cp_berjalan || row.ca || 0) }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: (row.ca || row.cp_tunggakan || 0) > 0 ? T.warnText : T.textSubtle, fontWeight: (row.ca || row.cp_tunggakan || 0) > 0 ? 700 : 400 }, children: z(row.ca || row.cp_tunggakan || 0) }),
-                        (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 800, color: row.cr >= 50 ? T.ccText : T.textPrimary }, children: row.cr.toFixed(1) + "%" })
-                      ]
-                    });
-                  })
+                  children: isRegionScopedTable
+                    ? satkerTableRows.map((row, idx) => {
+                        const isSel = isPolresScopedTable
+                          ? Boolean(selectedPolsek && (selectedPolsek.kode === row.kode || selectedPolsek.nama === row.nama))
+                          : Boolean(selectedPolres && (selectedPolres.kode === row.kode || selectedPolres.nama === row.nama));
+                        const barPct = Math.max(4, Math.round(row.rawRatioCT * 100));
+                        return (0, t.jsxs)("tr", {
+                          key: (row.kode || row.nama) + "_" + idx,
+                          onClick: () => isPolresScopedTable ? handleSelectPolsekAndZoom(row) : handleSelectPolresAndZoom(row),
+                          title: isPolresScopedTable
+                            ? ("Klik untuk fokus ke " + row.dispNama + " (" + formatFullWilkumSatkerName(selectedPolres?.nama || "") + ")")
+                            : ("Klik untuk fokus ke " + row.dispNama + " (" + (selectedRegion?.polda || "") + ") dan lihat rincian sub-unit"),
+                          style: {
+                            cursor: "pointer",
+                            borderBottom: "1px solid " + T.divider,
+                            background: isSel ? T.accentBg : (idx % 2 === 1 ? T.subCardBg : "transparent"),
+                            transition: "background 120ms ease"
+                          },
+                          children: [
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.5rem", fontWeight: 800, color: T.textMuted }, children: row.rank }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem", fontWeight: 800, color: isSel ? T.accentText : T.textPrimary, whiteSpace: "nowrap" },
+                              children: row.dispNama
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", color: T.textSecondary, whiteSpace: "nowrap" }, children: row.tipeLabel }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem", whiteSpace: "nowrap" },
+                              children: renderThemeBadge(
+                                row.levelLabel,
+                                row.level === "hotspot" ? "danger-bold" : row.level === "high" ? "danger" : row.level === "medium" ? "warning" : row.level === "low" ? "success" : "neutral"
+                              )
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 850, color: T.ctText }, children: z(row.ct) }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem" },
+                              children: (0, t.jsxs)("div", {
+                                style: { display: "flex", alignItems: "center", gap: "0.4rem" },
+                                children: [
+                                  (0, t.jsx)("div", {
+                                    style: { flex: 1, height: 6, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (row.ct > 0 ? barPct : 0) + "%", height: "100%", borderRadius: 999, background: row.color || "#ef4444" }
+                                    })
+                                  }),
+                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", color: T.textMuted, width: "38px", textAlign: "right", fontWeight: 700 }, children: row.sharePct.toFixed(1) + "%" })
+                                ]
+                              })
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 700, color: T.ccText }, children: z(row.cc) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 700 }, children: z(row.cp || row.cp_berjalan || row.ca || 0) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: (row.ca || row.cp_tunggakan || 0) > 0 ? T.warnText : T.textSubtle, fontWeight: (row.ca || row.cp_tunggakan || 0) > 0 ? 700 : 400 }, children: z(row.ca || row.cp_tunggakan || 0) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 800, color: row.cr >= 50 ? T.ccText : T.textPrimary }, children: Number(row.cr || 0).toFixed(1) + "%" })
+                          ]
+                        });
+                      })
+                    : filteredTableRows.map((row, idx) => {
+                        const st = getRegionStyle(row);
+                        const isSel = drillLevel !== 3 && selectedRegion?.id === row.id;
+                        const barPct = Math.max(4, Math.round(row.rawRatioCT * 100));
+                        return (0, t.jsxs)("tr", {
+                          key: row.id,
+                          onClick: () => handleSelectPoldaAndZoom(row),
+                          title: "Klik untuk zoom ke Wilayah Hukum " + row.polda + " dan melihat daftar Polres",
+                          style: {
+                            cursor: "pointer",
+                            borderBottom: "1px solid " + T.divider,
+                            background: isSel ? T.accentBg : (idx % 2 === 1 ? T.subCardBg : "transparent"),
+                            transition: "background 120ms ease"
+                          },
+                          children: [
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.5rem", fontWeight: 800, color: T.textMuted }, children: row.rank }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem", fontWeight: 800, color: isSel ? T.accentText : T.textPrimary, whiteSpace: "nowrap" },
+                              children: row.polda
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", color: T.textSecondary, whiteSpace: "nowrap" }, children: row.pulau }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem", whiteSpace: "nowrap" },
+                              children: renderThemeBadge(
+                                row.levelLabel,
+                                row.level === "hotspot" ? "danger-bold" : row.level === "high" ? "danger" : row.level === "medium" ? "warning" : row.level === "low" ? "success" : "neutral"
+                              )
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 850, color: T.ctText }, children: z(row.ct) }),
+                            (0, t.jsx)("td", {
+                              style: { padding: "0.52rem 0.6rem" },
+                              children: (0, t.jsxs)("div", {
+                                style: { display: "flex", alignItems: "center", gap: "0.4rem" },
+                                children: [
+                                  (0, t.jsx)("div", {
+                                    style: { flex: 1, height: 6, borderRadius: 999, background: T.trackBg, overflow: "hidden" },
+                                    children: (0, t.jsx)("div", {
+                                      style: { width: (row.ct > 0 ? barPct : 0) + "%", height: "100%", borderRadius: 999, background: st.badgeColor }
+                                    })
+                                  }),
+                                  (0, t.jsx)("span", { style: { fontSize: "0.68rem", color: T.textMuted, width: "38px", textAlign: "right", fontWeight: 700 }, children: row.sharePct.toFixed(1) + "%" })
+                                ]
+                              })
+                            }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 700, color: T.ccText }, children: z(row.cc) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: T.crText, fontWeight: 700 }, children: z(row.cp || row.cp_berjalan || row.ca || 0) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", color: (row.ca || row.cp_tunggakan || 0) > 0 ? T.warnText : T.textSubtle, fontWeight: (row.ca || row.cp_tunggakan || 0) > 0 ? 700 : 400 }, children: z(row.ca || row.cp_tunggakan || 0) }),
+                            (0, t.jsx)("td", { style: { padding: "0.52rem 0.6rem", textAlign: "right", fontWeight: 800, color: row.cr >= 50 ? T.ccText : T.textPrimary }, children: row.cr.toFixed(1) + "%" })
+                          ]
+                        });
+                      })
                 })
               ]
             })
@@ -7239,8 +8885,10 @@ function dashResetPeriod(){
 }
 
 
-const DASH_CACHE_TTL_MS=60000;
-const PIHAK_RANK_CACHE_TTL_MS=60000;
+const DASH_CACHE_TTL_MS=90000;
+const PIHAK_RANK_CACHE_TTL_MS=90000;
+const _casDashMainMemCache = new Map();
+const _casDashMainInFlight = new Map();
 
 function pihakRankCacheKey(kind=pihakJenis){
   try{
@@ -7261,7 +8909,7 @@ function pihakRankCacheKey(kind=pihakJenis){
     );
 
     return[
-      "bdb-dash-pihak-rank-v15",
+      "bdb-dash-pihak-rank-v16",
       encodeURIComponent(
         String(user.email).toLowerCase()
       ),
@@ -7276,7 +8924,7 @@ function pihakRankCacheKey(kind=pihakJenis){
   }
 }
 
-function pihakRankCacheRead(kind){
+function pihakRankCacheRead(kind, allowStale=!1){
   try{
     let key=pihakRankCacheKey(kind);
 
@@ -7289,14 +8937,14 @@ function pihakRankCacheRead(kind){
       return null;
 
     let cached=JSON.parse(raw),
-        savedAt=Number(cached?.savedAt||0);
+        savedAt=Number(cached?.savedAt||0),
+        isOffline=typeof navigator!=="undefined"&&navigator.onLine===!1;
 
     if(
       !savedAt ||
-      Date.now()-savedAt>=PIHAK_RANK_CACHE_TTL_MS ||
+      (!allowStale && !isOffline && Date.now()-savedAt>=PIHAK_RANK_CACHE_TTL_MS) ||
       !Array.isArray(cached?.data)
     ){
-      sessionStorage.removeItem(key);
       return null
     }
 
@@ -7314,13 +8962,14 @@ function pihakRankCacheWrite(kind,data){
     if(!key)
       return;
 
-    sessionStorage.setItem(
-      key,
-      JSON.stringify({
-        savedAt:Date.now(),
-        data
-      })
-    )
+    let serialized=JSON.stringify({
+      savedAt:Date.now(),
+      data
+    });
+    sessionStorage.setItem(key, serialized);
+    if("undefined"!==typeof localStorage){
+      try{localStorage.setItem(key, serialized)}catch{}
+    }
   }catch{}
 }
 
@@ -7330,7 +8979,7 @@ let loadPihakRanking=(0,a.useCallback)(async(force=!1,overrideKind=null)=>{
 
   let hadRankCached=!1;
   if(!force){
-    let cached=pihakRankCacheRead(kind);
+    let cached=pihakRankCacheRead(kind, !1);
 
     if(cached){
       if(req!==pihakRankReqRef.current)
@@ -7339,6 +8988,7 @@ let loadPihakRanking=(0,a.useCallback)(async(force=!1,overrideKind=null)=>{
       setDpoRows(cached);
       hadRankCached=!0;
       setPihakLoading(!1);
+      if(typeof navigator!=="undefined"&&navigator.onLine===!1) return;
     }
   }
 
@@ -7372,8 +9022,10 @@ let loadPihakRanking=(0,a.useCallback)(async(force=!1,overrideKind=null)=>{
     let _s=new Set();rows=(rows||[]).filter(x=>{let k=String((x.raw_nik&&x.raw_nik!=="KORPORASI"?x.raw_nik:"")||(x.nik&&x.nik!=="KORPORASI"?x.nik:"")||x.nama||"").trim().toUpperCase();if(!k||_s.has(k))return!1;_s.add(k);return!0}).slice(0,5);setDpoRows(rows);
     pihakRankCacheWrite(kind,rows)
   }catch{
-    if(req===pihakRankReqRef.current)
-      setDpoRows([])
+    if(req===pihakRankReqRef.current){
+      let stale=pihakRankCacheRead(kind, !0);
+      setDpoRows(Array.isArray(stale)?stale:[]);
+    }
   }finally{
     if(req===pihakRankReqRef.current)
       setPihakLoading(!1)
@@ -7399,7 +9051,7 @@ function dashCacheKey(){
     );
 
     return[
-      "bdb-dashboard-v15",
+      "cas_dash_main_cache_v6",
       encodeURIComponent(
         String(user.email).toLowerCase()
       ),
@@ -7413,14 +9065,20 @@ function dashCacheKey(){
   }
 }
 
-function dashCacheRead(){
+function dashCacheRead(allowStale=!1){
   try{
     let key=dashCacheKey();
 
     if(!key)
       return null;
 
-    let raw=sessionStorage.getItem(key);
+    let isOffline=typeof navigator!=="undefined"&&navigator.onLine===!1;
+    let mem=_casDashMainMemCache.get(key);
+    if(mem&&mem.data&&(allowStale||isOffline||Date.now()-mem.savedAt<DASH_CACHE_TTL_MS)){
+      return mem.data;
+    }
+
+    let raw=("undefined"!==typeof localStorage?localStorage.getItem(key):null)||sessionStorage.getItem(key);
 
     if(!raw)
       return null;
@@ -7430,13 +9088,13 @@ function dashCacheRead(){
 
     if(
       !savedAt ||
-      Date.now()-savedAt>=DASH_CACHE_TTL_MS ||
-      !cached?.data || !Array.isArray(cached?.data?.dpo) || !Array.isArray(cached?.data?.menonjol) || cached?.data?.menonjol.length === 0
+      (!allowStale && !isOffline && Date.now()-savedAt>=DASH_CACHE_TTL_MS) ||
+      !cached?.data || !cached?.data?.dashboard
     ){
-      sessionStorage.removeItem(key);
       return null
     }
 
+    _casDashMainMemCache.set(key,{savedAt,data:cached.data});
     return cached.data
   }catch{
     return null
@@ -7447,105 +9105,53 @@ function dashCacheWrite(data){
   try{
     let key=dashCacheKey();
 
-    if(!key)
+    if(!key || !data || !data.dashboard)
       return;
 
-    sessionStorage.setItem(
-      key,
-      JSON.stringify({
-        savedAt:Date.now(),
-        data
-      })
-    )
+    let entry={
+      savedAt:Date.now(),
+      data
+    };
+    _casDashMainMemCache.set(key,entry);
+    let serialized=JSON.stringify(entry);
+    sessionStorage.setItem(key, serialized);
+    if("undefined"!==typeof localStorage){
+      try{localStorage.setItem(key, serialized)}catch{}
+    }
   }catch{}
 }
 
 function dashCacheApply(cached){
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "dashboard"
-    )
-  ){
+  if(!cached) return;
+  if(Object.prototype.hasOwnProperty.call(cached,"dashboard")){
     s(cached.dashboard??null)
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "summary"
-    )
-  ){
+  if(Object.prototype.hasOwnProperty.call(cached,"summary")){
     o(cached.summary??null)
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "menonjol"
-    )
-  ){
-    x(
-      Array.isArray(cached.menonjol)
-        ?cached.menonjol
-        :[]
-    )
+  if(Object.prototype.hasOwnProperty.call(cached,"menonjol")){
+    x(Array.isArray(cached.menonjol)?cached.menonjol:[])
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "atensi"
-    )
-  ){
-    W(
-      Array.isArray(cached.atensi)
-        ?cached.atensi
-        :[]
-    )
+  if(Object.prototype.hasOwnProperty.call(cached,"atensi")){
+    W(Array.isArray(cached.atensi)?cached.atensi:[])
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "operasi"
-    )
-  ){
-    H(
-      Array.isArray(cached.operasi)
-        ?cached.operasi
-        :[]
-    )
+  if(Object.prototype.hasOwnProperty.call(cached,"operasi")){
+    H(Array.isArray(cached.operasi)?cached.operasi:[])
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "kinerja"
-    )
-  ){
-    U(
-      Array.isArray(cached.kinerja)
-        ?cached.kinerja
-        :[]
-    )
+  if(Object.prototype.hasOwnProperty.call(cached,"kinerja")){
+    U(Array.isArray(cached.kinerja)?cached.kinerja:[])
   }
-
-  if(
-    Object.prototype.hasOwnProperty.call(
-      cached,
-      "dpo"
-    )
-  ){
-    setDpoRows(
-      Array.isArray(cached.dpo)
-        ?cached.dpo
-        :[]
-    )
+  if(Object.prototype.hasOwnProperty.call(cached,"dpo")){
+    setDpoRows(Array.isArray(cached.dpo)?cached.dpo:[])
   }
+  if(Object.prototype.hasOwnProperty.call(cached,"feed")){
+    setCasFeed(Array.isArray(cached.feed)?cached.feed:[])
+  }
+  setCasFeedLoading(!1);
+  setPihakLoading(!1);
 }
 
-let el=(0,a.useCallback)(async(e,t)=>{try{let a=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}}),r=(a.data?.data?.nodes||[])[0];if(!r?.has_children)return[];let n=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{parent:r.kode,from:e,to:t,visibility:(()=>{let e=(0,h.deriveRoles)((0,h.getUser)());return e.isSuperadmin||e.isAdminBinops?"national":"scoped"})(),functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}});return(n.data?.data?.nodes||[]).map(e=>({kode:e.kode,has_children:e.has_children,nama:e.nama,ct:e.ct,cp_berjalan:e.cp_berjalan,cp_tunggakan:e.cp_tunggakan,cc_aktual:e.cc_aktual,cc_tunggakan:e.cc_tunggakan,cr:e.cr,crime_rate:e.crime_rate??null,crime_clock_detik:e.crime_clock_detik??null}))}catch{return[]}},[]),es=(0,a.useRef)(0),
+let el=(0,a.useCallback)(async(e,t)=>{try{let vis=(()=>{let u=(0,h.deriveRoles)((0,h.getUser)());return u.isSuperadmin||u.isAdminBinops?"national":"scoped"})();let n=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{parent:"060",from:e,to:t,visibility:vis,functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}});let nodes=n.data?.data?.nodes||[];if(!Array.isArray(nodes)||nodes.length===0){let a=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{from:e,to:t,visibility:vis,functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}}),r=(a.data?.data?.nodes||[])[0];if(r?.has_children&&r.kode&&r.kode!=="060"){let n2=await p.apiAuth.get("/bdb/kinerja-perkara/rekap",{params:{parent:r.kode,from:e,to:t,visibility:vis,functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI"}});nodes=n2.data?.data?.nodes||[]}}return(nodes||[]).map(e=>({kode:e.kode,has_children:e.has_children,nama:e.nama,ct:e.ct,cp_berjalan:e.cp_berjalan,cp_tunggakan:e.cp_tunggakan,cc_aktual:e.cc_aktual,cc_tunggakan:e.cc_tunggakan,cr:e.cr,crime_rate:e.crime_rate??null,crime_clock_detik:e.crime_clock_detik??null}))}catch{return[]}},[]),es=(0,a.useRef)(0),
 pihakRankReqRef=(0,a.useRef)(0),
 dashCacheForceRef=(0,a.useRef)(!1),
 dashPeriodRef=(0,a.useRef)(null),
@@ -7555,172 +9161,92 @@ ei=(0,a.useCallback)(async()=>{
 
   dashCacheForceRef.current=!1;
 
-  let hadCached=!1;
   if(!force){
-    let cached=dashCacheRead();
+    let cached=dashCacheRead(!1);
 
     if(cached){
       if(e!==es.current)
         return;
 
       dashCacheApply(cached);
-      hadCached=!0;
+      V(!1);
+      return;
+    }
+  }
+
+  let staleCached=dashCacheRead(!0);
+  if(staleCached && !force){
+    dashCacheApply(staleCached);
+    V(!1);
+    if(typeof navigator!=="undefined"&&navigator.onLine===!1) return;
+  } else {
+    V(!0);
+  }
+
+  let inflightKey=(dashCacheKey()||"anon")+"::"+pihakJenis+"::"+(force?"1":"0");
+  try{
+    let batchPromise=_casDashMainInFlight.get(inflightKey);
+    if(!batchPromise){
+      let vis=(()=>{
+        let u=(0,h.deriveRoles)((0,h.getUser)());
+        return u.isSuperadmin||u.isAdminBinops?"national":"scoped"
+      })();
+      batchPromise=Promise.all([
+        p.apiAuth.get("/bdb/anev/dashboard",{params:{date_from:ee,date_to:et,functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI",...(force?{refresh:1}:{})}}).then(r=>r?.data?.data||null).catch(()=>staleCached?.dashboard||null),
+        p.apiAuth.get("/bdb/kinerja-perkara/summary",{params:{from:ee,to:et,visibility:vis,functionDomain:"INTERNAL_RESERSE",organizationDomain:"INTERNAL_POLRI",...(force?{refresh:1}:{})}}).then(r=>r?.data?.data||null).catch(()=>staleCached?.summary||null),
+        p.apiAuth.get("/bdb/kasus-menonjol",{params:{row:10,page:1,scope:"national",dashboard:1}}).then(r=>Array.isArray(r?.data?.data)?r.data.data.slice(0,10):[]).catch(()=>staleCached?.menonjol||[]),
+        p.apiAuth.get("/bdb/kasus-atensi",{params:{row:10,page:1,scope:"national",dashboard:1}}).then(r=>Array.isArray(r?.data?.data)?r.data.data.slice(0,10):[]).catch(()=>staleCached?.atensi||[]),
+        p.apiAuth.get("/bdb/operasi-satgas",{params:{row:20,page:1,status:"AKTIF"}}).then(r=>Array.isArray(r?.data?.data)?r.data.data.slice(0,20):[]).catch(()=>staleCached?.operasi||[]),
+        p.apiAuth.get("/bdb/pihak-terlibat/ranking",{params:{from:ee,to:et,keterlibatan:pihakJenis,limit:5,scope:"national",dashboard:1,all_time:1,...(force?{refresh:1}:{})}}).then(r=>{
+          let rows=Array.isArray(r?.data?.data)?r.data.data:[];
+          let _s=new Set();
+          return rows.filter(x=>{let k=String((x.raw_nik&&x.raw_nik!=="KORPORASI"?x.raw_nik:"")||(x.nik&&x.nik!=="KORPORASI"?x.nik:"")||x.nama||"").trim().toUpperCase();if(!k||_s.has(k))return!1;_s.add(k);return!0}).slice(0,5);
+        }).catch(()=>staleCached?.dpo||[]),
+        el(ee,et).then(rows=>Array.isArray(rows)?rows:[]).catch(()=>staleCached?.kinerja||[]),
+        p.apiAuth.get("/bdb/jukrah/feed",{params:{limit:5}}).then(r=>Array.isArray(r?.data?.data)?r.data.data.slice(0,5):[]).catch(()=>staleCached?.feed||[])
+      ]).then(([dashboard,summary,menonjol,atensi,operasi,dpo,kinerja,feed])=>({
+        dashboard,
+        summary,
+        menonjol,
+        atensi,
+        operasi,
+        dpo,
+        kinerja,
+        feed
+      })).finally(()=>{
+        _casDashMainInFlight.delete(inflightKey);
+      });
+      _casDashMainInFlight.set(inflightKey,batchPromise);
+    }
+
+    let payload=await batchPromise;
+
+    if(e===es.current){
+      // Apply ALL state updates simultaneously in one single React batch so the entire dashboard renders at the exact same instant!
+      dashCacheApply(payload);
+      if(Array.isArray(payload.dpo)&&payload.dpo.length>0){
+        pihakRankCacheWrite(pihakJenis,payload.dpo);
+      }
+      dashCacheWrite(payload);
+    }
+  }catch{
+    if(e===es.current && staleCached){
+      dashCacheApply(staleCached);
+    }
+  }finally{
+    if(e===es.current){
+      setCasFeedLoading(!1);
+      setPihakLoading(!1);
       V(!1);
     }
   }
-
-  if(!hadCached) V(!0);
-
-  try{
-    let payload={
-      dashboard:null,
-      summary:null,
-      menonjol:[],
-      atensi:[],
-      operasi:[],
-      dpo:[],
-      kinerja:[]
-    };
-
-    let pAnev=p.apiAuth.get(
-      "/bdb/anev/dashboard",
-      {
-        params:{
-          date_from:ee,
-          date_to:et,
-          functionDomain:"INTERNAL_RESERSE",
-          organizationDomain:"INTERNAL_POLRI",
-          ...(force?{refresh:1}:{})
-        }
-      }
-    ).then(res=>{
-      if(e===es.current){
-        payload.dashboard=res?.data?.data||null;
-        s(payload.dashboard);
-      }
-    }).catch(()=>{
-      if(e===es.current) s(null);
-    });
-
-    let pSummary=p.apiAuth.get(
-      "/bdb/kinerja-perkara/summary",
-      {
-        params:{
-          from:ee,
-          to:et,
-          visibility:(()=>{
-            let e=(0,h.deriveRoles)((0,h.getUser)());
-            return e.isSuperadmin||e.isAdminBinops?"national":"scoped"
-          })(),
-          functionDomain:"INTERNAL_RESERSE",
-          organizationDomain:"INTERNAL_POLRI",
-          ...(force?{refresh:1}:{})
-        }
-      }
-    ).then(res=>{
-      if(e===es.current){
-        payload.summary=res?.data?.data||null;
-        o(payload.summary);
-      }
-    }).catch(()=>{
-      if(e===es.current) o(null);
-    });
-
-    let pMenonjol=p.apiAuth.get(
-      "/bdb/kasus-menonjol",
-      {params:{row:10,page:1,scope:"national",dashboard:1}}
-    ).then(res=>{
-      if(e===es.current){
-        let rows=Array.isArray(res?.data?.data)?res.data.data.slice(0,10):[];
-        payload.menonjol=rows;
-        x(rows);
-      }
-    }).catch(()=>{
-      if(e===es.current) x([]);
-    });
-
-    let pAtensi=p.apiAuth.get(
-      "/bdb/kasus-atensi",
-      {params:{row:10,page:1,scope:"national",dashboard:1}}
-    ).then(res=>{
-      if(e===es.current){
-        let rows=Array.isArray(res?.data?.data)?res.data.data.slice(0,10):[];
-        payload.atensi=rows;
-        W(rows);
-      }
-    }).catch(()=>{
-      if(e===es.current) W([]);
-    });
-
-    let pOperasi=p.apiAuth.get(
-      "/bdb/operasi-satgas",
-      {
-        params:{
-          row:20,
-          page:1,
-          status:"AKTIF"
-        }
-      }
-    ).then(res=>{
-      if(e===es.current){
-        let rows=Array.isArray(res?.data?.data)?res.data.data.slice(0,20):[];
-        payload.operasi=rows;
-        H(rows);
-      }
-    }).catch(()=>{
-      if(e===es.current) H([]);
-    });
-
-    let pRanking=p.apiAuth.get(
-      "/bdb/pihak-terlibat/ranking",
-      {
-        params:{
-          from:ee,
-          to:et,
-          keterlibatan:pihakJenis,
-          limit:5,
-          scope:"national",
-          dashboard:1,
-          all_time:1,
-          ...(force?{refresh:1}:{})
-        }
-      }
-    ).then(res=>{
-      if(e===es.current){
-        let rows=Array.isArray(res?.data?.data)?res.data.data:[];
-        payload.dpo=rows;
-        setDpoRows(rows);
-      }
-    }).catch(()=>{
-      if(e===es.current) setDpoRows([]);
-    });
-
-    let pKinerja=el(ee,et).then(rows=>{
-      if(e===es.current){
-        let r=Array.isArray(rows)?rows:[];
-        payload.kinerja=r;
-        U(r);
-      }
-    }).catch(()=>{
-      if(e===es.current) U([]);
-    });
-
-    await Promise.all([pAnev,pSummary,pMenonjol,pAtensi,pOperasi,pRanking,pKinerja]);
-
-    if(e===es.current){
-      dashCacheWrite(payload);
-    }
-  }finally{
-    e===es.current&&V(!1)
-  }
-},[el,ee,et]),
+},[el,ee,et,pihakJenis]),
 {refreshing:eo,updatedAt:ec,refresh:eu}=(0,f.useAutoRefresh)(ei,18e5);
 function dashForceRefresh(){
   dashCacheForceRef.current=!0;
   try{p.apiAuth.post("/bdb/system/orchestrator/trigger-recalculate").catch(()=>{})}catch(e){}
-  loadPihakRanking(!0);
   return eu()
-}(0,a.useEffect)(()=>{},[]);(0,a.useEffect)(()=>{n((0,h.getUser)())},[]),(0,a.useEffect)(()=>{try{p.apiAuth.get("/bdb/jukrah/feed",{params:{limit:5}}).then(r=>{setCasFeed((r.data?.data||[]).slice(0,5))}).catch(()=>{setCasFeed([])}).finally(()=>{setCasFeedLoading(!1)})}catch(e){setCasFeedLoading(!1)}},[]),(0,a.useEffect)(()=>{
+}(0,a.useEffect)(()=>{},[]);(0,a.useEffect)(()=>{n((0,h.getUser)())},[]),(0,a.useEffect)(()=>{
   let key=ee+"|"+et;
 
   if(null===dashPeriodRef.current){
@@ -7734,7 +9260,7 @@ function dashForceRefresh(){
   }
 
   eu()
-},[eu,ee,et]);let ed=(0,h.deriveRoles)(r),em=(0,a.useMemo)(()=>{if("ct_cc"===F){let list=(l?.scoped&&Array.isArray(l?.top_satker_ct)&&l.top_satker_ct.length>0)?l.top_satker_ct.filter(x=>x.ct>0):(l?.polda||[]);return{labels:list.map(e=>abbrSatkerName(e.nama,!0)),fullNames:list.map(e=>e.nama||""),datasets:[{label:"CT",data:list.map(e=>e.ct),backgroundColor:"#ef4444",borderRadius:4},{label:"CC",data:list.map(e=>((e.cc_aktual||0)+(e.cc_tunggakan||0))||e.cc||0),backgroundColor:"#16a34a",borderRadius:4}]}};let e=[...$];if("cp"===F)return e.sort((e,t)=>t.cp_tunggakan-e.cp_tunggakan),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CP Aktual",data:e.map(e=>e.cp_berjalan),backgroundColor:"#0891b2",borderRadius:4},{label:"CP Tunggakan",data:e.map(e=>e.cp_tunggakan),backgroundColor:"#dc2626",borderRadius:4}]};if("cc_split"===F)return e.sort((e,t)=>t.cc_aktual+t.cc_tunggakan-(e.cc_aktual+e.cc_tunggakan)),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CC Aktual",data:e.map(e=>e.cc_aktual),backgroundColor:"#16a34a",borderRadius:4},{label:"CC Tunggakan",data:e.map(e=>e.cc_tunggakan),backgroundColor:"#b45309",borderRadius:4}]};if("cr"===F)return e.sort((e,t)=>t.cr-e.cr),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CR (Rms Baru) (%)",data:e.map(e=>e.cr),backgroundColor:"#2563eb",borderRadius:4}]};if("crime_rate"===F){let t=e.filter(e=>null!=e.crime_rate).sort((e,t)=>(t.crime_rate||0)-(e.crime_rate||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Rate (per 100rb Penduduk)",data:t.map(e=>e.crime_rate||0),backgroundColor:"#7c3aed",borderRadius:4}]}}let t=e.filter(e=>null!=e.crime_clock_detik).sort((e,t)=>(e.crime_clock_detik||0)-(t.crime_clock_detik||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Clock (menit antar kejahatan)",data:t.map(e=>Math.round((e.crime_clock_detik||0)/60*10)/10),backgroundColor:"#0891b2",borderRadius:4}]}},[l,$,F]),ep=(0,a.useMemo)(()=>{let e="cr"===F?"%":"crime_clock"===F?" menit":"";return{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{title:items=>em.fullNames?.[items?.[0]?.dataIndex]||items?.[0]?.label||"",label:t=>`${t.dataset.label}: ${t.parsed.y}${e}`}}},scales:{x:{ticks:{font:{size:10,weight:"600"},maxRotation:45,minRotation:0,autoSkip:!1},grid:{display:!1}},y:{beginAtZero:!0,ticks:"cr"!==F&&"crime_clock"!==F?{precision:0}:{}}}}},[F,em]),eh=!J&&l&&l.scoped&&!l.scope_satker,ef=!J&&l&&l.scoped&&!!l.scope_satker&&!l.scope_ada_data,welcomeSatker=(String(r?.id)==='1'||String(r?.role_bdb||r?.role||'').toLowerCase().includes('super'))?"Robinopsnal Bareskrim Polri":((l?.scoped&&l?.scope_satker)?toTitleCase(l.scope_satker):"Robinopsnal Bareskrim Polri"),welcomeText=`Selamat datang, ${r?.name||r?.email||"Pengguna"} — ${welcomeSatker}.`;
+},[eu,ee,et]);let ed=(0,h.deriveRoles)(r),em=(0,a.useMemo)(()=>{let scopeSat=l?.scoped?(l?.scope_satker||l?.regional_nama||""):"";if("ct_cc"===F){let list=(l?.scoped&&Array.isArray(l?.top_satker_ct)&&l.top_satker_ct.length>0)?l.top_satker_ct.filter(x=>x.ct>0&&isCasSatkerAllowedInScope(x.nama,scopeSat)):(l?.polda||[]).filter(x=>!isCasEksternalSatker(x.nama));return{labels:list.map(e=>abbrSatkerName(e.nama,!0)),fullNames:list.map(e=>e.nama||""),datasets:[{label:"CT",data:list.map(e=>e.ct),backgroundColor:"#ef4444",borderRadius:4},{label:"CC",data:list.map(e=>((e.cc_aktual||0)+(e.cc_tunggakan||0))||e.cc||0),backgroundColor:"#16a34a",borderRadius:4}]}};let e=[...$].filter(x=>isCasSatkerAllowedInScope(x.nama,scopeSat));if("cp"===F)return e.sort((e,t)=>t.cp_tunggakan-e.cp_tunggakan),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CP Aktual",data:e.map(e=>e.cp_berjalan),backgroundColor:"#0891b2",borderRadius:4},{label:"CP Tunggakan",data:e.map(e=>e.cp_tunggakan),backgroundColor:"#dc2626",borderRadius:4}]};if("cc_split"===F)return e.sort((e,t)=>t.cc_aktual+t.cc_tunggakan-(e.cc_aktual+e.cc_tunggakan)),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CC Aktual",data:e.map(e=>e.cc_aktual),backgroundColor:"#16a34a",borderRadius:4},{label:"CC Tunggakan",data:e.map(e=>e.cc_tunggakan),backgroundColor:"#b45309",borderRadius:4}]};if("cr"===F)return e.sort((e,t)=>t.cr-e.cr),{labels:e.map(e=>abbrSatkerName(e.nama,!0)),fullNames:e.map(e=>e.nama||""),datasets:[{label:"CR (Rms Baru) (%)",data:e.map(e=>e.cr),backgroundColor:"#2563eb",borderRadius:4}]};if("crime_rate"===F){let t=e.filter(e=>null!=e.crime_rate).sort((e,t)=>(t.crime_rate||0)-(e.crime_rate||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Rate (per 100rb Penduduk)",data:t.map(e=>e.crime_rate||0),backgroundColor:"#7c3aed",borderRadius:4}]}}let t=e.filter(e=>null!=e.crime_clock_detik).sort((e,t)=>(e.crime_clock_detik||0)-(t.crime_clock_detik||0));return{labels:t.map(e=>abbrSatkerName(e.nama,!0)),fullNames:t.map(e=>e.nama||""),datasets:[{label:"Crime Clock (menit antar kejahatan)",data:t.map(e=>Math.round((e.crime_clock_detik||0)/60*10)/10),backgroundColor:"#0891b2",borderRadius:4}]}},[l,$,F]),ep=(0,a.useMemo)(()=>{let e="cr"===F?"%":"crime_clock"===F?" menit":"";return{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top",labels:{boxWidth:12,font:{size:11}}},tooltip:{callbacks:{title:items=>em.fullNames?.[items?.[0]?.dataIndex]||items?.[0]?.label||"",label:t=>`${t.dataset.label}: ${t.parsed.y}${e}`}}},scales:{x:{ticks:{font:{size:10,weight:"600"},maxRotation:45,minRotation:0,autoSkip:!1},grid:{display:!1}},y:{beginAtZero:!0,ticks:"cr"!==F&&"crime_clock"!==F?{precision:0}:{}}}}},[F,em]),eh=!J&&l&&l.scoped&&!l.scope_satker,ef=!J&&l&&l.scoped&&!!l.scope_satker&&!l.scope_ada_data,welcomeSatker=(String(r?.id)==='1'||String(r?.role_bdb||r?.role||'').toLowerCase().includes('super'))?"Robinopsnal Bareskrim Polri":((l?.scoped&&l?.scope_satker)?toTitleCase(l.scope_satker):"Robinopsnal Bareskrim Polri"),welcomeText=`Selamat datang, ${r?.name||r?.email||"Pengguna"} — ${welcomeSatker}.`;
 let [dashView, setDashView] = (0, a.useState)(() => {
   if (typeof window === "undefined") return "ringkasan";
   let sp = new URLSearchParams(window.location.search || "");
@@ -8428,7 +9954,7 @@ children:"Rata-rata selang waktu terjadi kejahatan"
 })
 
 ]
-})]}),(0,t.jsxs)("div",{className:"cms-card",style:{flex:"2 1 21rem",minWidth:0,margin:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-14",name:"field_dashboard_perma_31_14",icon:(0,t.jsx)("i",{className:"pi pi-calendar"}),title:"Aktivitas Hari Ini",iconBg:"#eff6ff",iconColor:"#2563eb"}),(0,t.jsxs)("div",{className:"dash-today-grid",style:{display:"grid",gridTemplateColumns:"repeat(2, minmax(0, 1fr))",gap:"0.55rem",margin:0},children:[(0,t.jsxs)("div",{className:"dash-today-card ct",title:"Jumlah Laporan Polisi yang masuk hari ini",style:{padding:"0.65rem 0.8rem",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{className:"t",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.3rem",fontSize:"0.72rem",fontWeight:800},children:[(0,t.jsx)("span",{children:"CT Hari Ini"}),renderKpInfoIcon(12)]}),(0,t.jsx)("div",{className:"v",style:{fontSize:"1.32rem",fontWeight:850,marginTop:"0.22rem",lineHeight:1.15},children:J?"…":z(l?.ct_today??0)}),(0,t.jsx)("div",{className:"s",style:{fontSize:"0.68rem",marginTop:"0.18rem"},children:"Laporan Polisi masuk hari ini"})]}),(0,t.jsxs)("div",{className:"dash-today-card cc",title:"Jumlah perkara selesai (Crime Clearance) hari ini",style:{padding:"0.65rem 0.8rem",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{className:"t",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.3rem",fontSize:"0.72rem",fontWeight:800},children:[(0,t.jsx)("span",{children:"CC Hari Ini"}),renderKpInfoIcon(12)]}),(0,t.jsx)("div",{className:"v",style:{fontSize:"1.32rem",fontWeight:850,marginTop:"0.22rem",lineHeight:1.15},children:J?"…":z(l?.cc_today??0)}),(0,t.jsx)("div",{className:"s",style:{fontSize:"0.68rem",marginTop:"0.18rem"},children:"Perkara selesai hari ini"})]})]})]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",marginBottom:"0.45rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#f8fafc",color:"#64748b"},children:(0,t.jsx)("i",{className:"pi pi-list"})}),(0,t.jsx)("div",{className:"dash-panel-title",children:"Rincian Status LP"})]})}),(0,t.jsx)("div",{className:"lp-status-cards",style:{margin:0,gridTemplateColumns:"repeat(auto-fit,minmax(6.2rem,1fr))"},children:(l?.per_status||[]).map(e=>{let a,shortLbl="PERMA"===e.code?"PERMA":_[a=e.code]||a.replace(/_/g," "),numStr=z(e.jumlah),isSel=dashStatTip?.code===e.code;return(0,t.jsxs)("button",{type:"button",onClick:()=>setDashStatTip(isSel?null:{code:e.code,nama:e.nama||shortLbl,jumlah:numStr,kategori:e.kategori||"CT"}),className:`lp-stat ${"CC"===e.kategori?"cc":"ct"}${isSel?" active":""}`,title:`${e.nama||shortLbl}: ${numStr} LP (${"CC"===e.kategori?"Crime Clearance / CC":"Crime Total / CT"})`,style:{cursor:"pointer",textAlign:"left"},children:[(0,t.jsx)("div",{className:"lp-stat-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.2rem",width:"100%"},children:(0,t.jsx)("span",{className:"l",style:{margin:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:shortLbl})}),(0,t.jsx)("div",{className:"n",children:numStr})]},e.code)})}),dashStatTip&&(0,t.jsxs)("div",{onClick:()=>setDashStatTip(null),style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",padding:"0.3rem 0.65rem",marginTop:"0.38rem",borderRadius:7,fontSize:"0.74rem",background:dashStatTip.kategori==="CC"?"rgba(22,163,74,0.12)":"rgba(239,68,68,0.12)",border:"1px solid "+(dashStatTip.kategori==="CC"?"rgba(22,163,74,0.3)":"rgba(239,68,68,0.3)"),color:"var(--cas-text-primary, #0f172a)",cursor:"pointer"},children:[(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",flexWrap:"wrap"},children:[renderKpInfoIcon(13),(0,t.jsx)("strong",{children:dashStatTip.nama}),(0,t.jsx)("span",{style:{opacity:0.7},children:"\u2022"}),(0,t.jsxs)("strong",{style:{color:dashStatTip.kategori==="CC"?"#16a34a":"#ef4444",fontSize:"0.8rem"},children:[dashStatTip.jumlah," LP"]})]}),(0,t.jsx)("span",{style:{fontSize:"0.72rem",opacity:0.7,fontWeight:700},children:"\u2715"})]})]}),(0,t.jsxs)("div",{className:"dash-section cms-card",style:{minWidth:0,overflow:"hidden"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",children:[(0,t.jsxs)("div",{className:"dash-panel-head-left",style:{cursor:"help"},title:P[F],children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#eff6ff"},children:(0,t.jsx)("i",{className:"pi pi-chart-bar",style:{color:"#2563eb"}})}),(0,t.jsxs)("div",{className:"dash-panel-title",children:[T.find(e=>e.value===F)?.label,l?.scoped?" Lingkup Wilayah":" per Polda"]})]}),(0,t.jsx)(d.Dropdown,{id:"dash-filter-satker",inputId:"dash-filter-satker-select",name:"filter_satker",value:F,options:T,onChange:e=>K(e.value),style:{minWidth:"17rem",fontSize:"0.8rem"}})]}),J?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):0===(em.labels||[]).length?(0,t.jsxs)("span",{style:{color:"#94a3b8"},children:["Belum ada data","crime_rate"===F?" (jumlah penduduk belum diisi)":"","."]}):(0,t.jsx)("div",{style:{height:"22rem"},children:(0,t.jsx)(c,{id:"fld-dashboard-perma-31-16",name:"field_dashboard_perma_31_16",type:"bar",data:em,options:ep,style:{height:"100%"}})})]}),(0,t.jsxs)("div",{className:"dash-section dash-grid",style:{alignItems:"stretch"},children:[(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_kejahatan||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Kejahatan Nasional · Tertinggi":"10 Kejahatan Regional · Tertinggi"):"10 Kejahatan Tertinggi"),children:l?.label_kejahatan||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Kejahatan Nasional · Tertinggi":"10 Kejahatan Regional · Tertinggi"):"10 Kejahatan Tertinggi")}),(0,t.jsx)(E,{id:"fld-dashboard-perma-31-17",name:"field_dashboard_perma_31_17",rows:(l?.top_kejahatan||[]).map(e=>({nama:e.nama,value:e.jml,satker_breakdown:e.satker_breakdown||e.children,totalOverride:(l?.scoped&&l?.regional_ct)?l.regional_ct:(l?.ct||0)})),satkerSource:(Array.isArray(l?.top_satker_ct)&&l.top_satker_ct.length>0)?l.top_satker_ct:(l?.polda||[]),breakdownMap:l?.top_crimes_breakdown||null,isScoped:Boolean(l?.scoped&&!l?.is_nasional),loading:J,total:(l?.scoped&&l?.regional_ct)?l.regional_ct:(l?.ct||0)})]}),(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_satker_ct||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CT Tertinggi":"10 Satker Regional · CT Tertinggi"):"10 Satker · CT Tertinggi"),children:l?.label_satker_ct||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CT Tertinggi":"10 Satker Regional · CT Tertinggi"):"10 Satker · CT Tertinggi")}),(0,t.jsx)(L,{id:"fld-dashboard-perma-31-18",name:"field_dashboard_perma_31_18",rows:(l?.top_satker_ct||[]).map(e=>({nama:e.nama,value:e.ct,children:e.children})),metric:"ct",loading:J,color:"#ef4444",suffix:"LP"})]}),(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_satker_cc||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CC Tertinggi":"10 Satker Regional · CC Tertinggi"):"10 Satker · CC Tertinggi"),children:l?.label_satker_cc||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CC Tertinggi":"10 Satker Regional · CC Tertinggi"):"10 Satker · CC Tertinggi")}),(0,t.jsx)(L,{id:"fld-dashboard-perma-31-19",name:"field_dashboard_perma_31_19",rows:(l?.top_satker_cc||[]).map(e=>({nama:e.nama,value:e.cc,children:e.children})),metric:"cc",loading:J,color:"#16a34a",suffix:"LP",empty:"Belum ada perkara selesai (CC)."})]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-20",name:"field_dashboard_perma_31_20",icon:(0,t.jsx)(b.AlertTriangle,{size:15}),title:"Sorotan",iconBg:"#fffbeb",iconColor:"#d97706"}),(0,t.jsxs)("div",{className:"dash-grid",style:{marginTop:0,alignItems:"stretch",gridTemplateColumns:"repeat(auto-fit, minmax(21rem, 1fr))",gap:"1rem"},children:[(0,t.jsx)(M,{title:(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,whiteSpace:"nowrap"},children:[(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/kasus-atensi/lihat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#d97706";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Kasus Atensi",children:"Kasus Atensi"}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontWeight:400,userSelect:"none"},children:"/"}),(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/kasus-menonjol/lihat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#d97706";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Kasus Menonjol",children:"Menonjol"})]}),icon:(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"1.65rem",height:"1.65rem",borderRadius:"6px",background:"rgba(245, 158, 11, 0.12)",color:"#f59e0b",flexShrink:0},children:(0,t.jsx)(b.AlertTriangle,{size:14})}),emptyText:J?"Memuat…":"Belum ada kasus atensi/menonjol.",onLihatSemua:()=>e.push("/cms/laporan/kasus-menonjol/lihat"),items:[...u.map(e=>{let isoTgl=(function(v){if(!v)return"";let s=String(v).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(s)){let p=s.split("-");return p[2]+"-"+p[1]+"-"+p[0]}return s})(e.effective_date||e.tanggal_rilis||e.first_tgl_laporan||e.created_at);return{id:`menonjol:${e.id}`,_kind:"menonjol",_pinned:Boolean(e.is_pinned),_pinned_at:e.pinned_at||"",_skala:e.skala_viral,_tgl_rilis:e.tanggal_rilis,_tgl:isoTgl,_no_lp:e.first_no_laporan||"",_depth:null==e.satker_depth?999:Number(e.satker_depth),_lp:Number(e.jumlah_lp||0),_rilis:!!e.rilis,_created:e.created_at||e.tanggal_rilis||"",judul:e.judul,viral:"tidak viral"===e.skala_viral?"Tidak Viral":"Viral",viralSeverity:"tidak viral"===e.skala_viral?"secondary":"danger",tag:"nasional"===e.skala_viral?"Nasional":"regional"===e.skala_viral?"Regional":void 0,tagVariant:"nasional"===e.skala_viral?"danger":"warning",status:e.rilis?"Sudah Rilis":"Belum Rilis",statusVariant:e.rilis?"success":"neutral",tanggal:I(e.tanggal_rilis||e.first_tgl_laporan||e.created_at),lpInfo:Number(e.jumlah_lp||0)>1?`${Number(e.jumlah_lp)} LP`:R(e.jumlah_lp,e.first_no_laporan)}}),...k.map(e=>{let isoTgl=(function(v){if(!v)return"";let s=String(v).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(s)){let p=s.split("-");return p[2]+"-"+p[1]+"-"+p[0]}return s})(e.effective_date||e.tanggal_atensi||e.first_tgl_laporan||e.created_at);return{id:`atensi:${e.id}`,_kind:"atensi",_pinned:Boolean(e.is_pinned),_pinned_at:e.pinned_at||"",_level:e.level_atensi,_status_atensi:e.status_atensi,_tgl:isoTgl,_no_lp:e.first_no_laporan||"",_depth:null==e.satker_depth?999:Number(e.satker_depth),_lp:Number(e.jumlah_lp||0),_rilis:!1,_created:e.created_at||e.tanggal_atensi||"",judul:e.judul,tag:e.level_atensi?e.level_atensi.charAt(0).toUpperCase()+e.level_atensi.slice(1):"Atensi",tagVariant:"tinggi"===e.level_atensi?"danger":"sedang"===e.level_atensi?"warning":"purple",hideStatus:"selesai"!==e.status_atensi,status:"selesai"===e.status_atensi?"Selesai":"Aktif",statusVariant:"selesai"===e.status_atensi?"success":"blue",tanggal:I(e.tanggal_atensi||e.first_tgl_laporan||e.created_at),lpInfo:Number(e.jumlah_lp||0)>1?`${Number(e.jumlah_lp)} LP`:R(e.jumlah_lp,e.first_no_laporan)}})].sort((e,t)=>{
+})]}),(0,t.jsxs)("div",{className:"cms-card",style:{flex:"2 1 21rem",minWidth:0,margin:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-14",name:"field_dashboard_perma_31_14",icon:(0,t.jsx)("i",{className:"pi pi-calendar"}),title:"Aktivitas Hari Ini",iconBg:"#eff6ff",iconColor:"#2563eb"}),(0,t.jsxs)("div",{className:"dash-today-grid",style:{display:"grid",gridTemplateColumns:"repeat(2, minmax(0, 1fr))",gap:"0.55rem",margin:0},children:[(0,t.jsxs)("div",{className:"dash-today-card ct",title:"Jumlah Laporan Polisi yang masuk hari ini",style:{padding:"0.65rem 0.8rem",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{className:"t",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.3rem",fontSize:"0.72rem",fontWeight:800},children:[(0,t.jsx)("span",{children:"CT Hari Ini"}),renderKpInfoIcon(12)]}),(0,t.jsx)("div",{className:"v",style:{fontSize:"1.32rem",fontWeight:850,marginTop:"0.22rem",lineHeight:1.15},children:J?"…":z(l?.ct_today??0)}),(0,t.jsx)("div",{className:"s",style:{fontSize:"0.68rem",marginTop:"0.18rem"},children:"Laporan Polisi masuk hari ini"})]}),(0,t.jsxs)("div",{className:"dash-today-card cc",title:"Jumlah perkara selesai (Crime Clearance) hari ini",style:{padding:"0.65rem 0.8rem",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"space-between"},children:[(0,t.jsxs)("div",{className:"t",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.3rem",fontSize:"0.72rem",fontWeight:800},children:[(0,t.jsx)("span",{children:"CC Hari Ini"}),renderKpInfoIcon(12)]}),(0,t.jsx)("div",{className:"v",style:{fontSize:"1.32rem",fontWeight:850,marginTop:"0.22rem",lineHeight:1.15},children:J?"…":z(l?.cc_today??0)}),(0,t.jsx)("div",{className:"s",style:{fontSize:"0.68rem",marginTop:"0.18rem"},children:"Perkara selesai hari ini"})]})]})]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",marginBottom:"0.45rem"},children:(0,t.jsxs)("div",{className:"dash-panel-head-left",children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#f8fafc",color:"#64748b"},children:(0,t.jsx)("i",{className:"pi pi-list"})}),(0,t.jsx)("div",{className:"dash-panel-title",children:"Rincian Status LP"})]})}),(0,t.jsx)("div",{className:"lp-status-cards",style:{margin:0,gridTemplateColumns:"repeat(auto-fit,minmax(6.2rem,1fr))"},children:(l?.per_status||[]).map(e=>{let a,shortLbl="PERMA"===e.code?"PERMA":_[a=e.code]||a.replace(/_/g," "),numStr=z(e.jumlah),isSel=dashStatTip?.code===e.code;return(0,t.jsxs)("button",{type:"button",onClick:()=>setDashStatTip(isSel?null:{code:e.code,nama:e.nama||shortLbl,jumlah:numStr,kategori:e.kategori||"CT"}),className:`lp-stat ${"CC"===e.kategori?"cc":"ct"}${isSel?" active":""}`,title:`${e.nama||shortLbl}: ${numStr} LP (${"CC"===e.kategori?"Crime Clearance / CC":"Crime Total / CT"})`,style:{cursor:"pointer",textAlign:"left"},children:[(0,t.jsx)("div",{className:"lp-stat-head",style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.2rem",width:"100%"},children:(0,t.jsx)("span",{className:"l",style:{margin:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},children:shortLbl})}),(0,t.jsx)("div",{className:"n",children:numStr})]},e.code)})}),dashStatTip&&(0,t.jsxs)("div",{onClick:()=>setDashStatTip(null),style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"0.5rem",padding:"0.3rem 0.65rem",marginTop:"0.38rem",borderRadius:7,fontSize:"0.74rem",background:dashStatTip.kategori==="CC"?"rgba(22,163,74,0.12)":"rgba(239,68,68,0.12)",border:"1px solid "+(dashStatTip.kategori==="CC"?"rgba(22,163,74,0.3)":"rgba(239,68,68,0.3)"),color:"var(--cas-text-primary, #0f172a)",cursor:"pointer"},children:[(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.4rem",flexWrap:"wrap"},children:[renderKpInfoIcon(13),(0,t.jsx)("strong",{children:dashStatTip.nama}),(0,t.jsx)("span",{style:{opacity:0.7},children:"\u2022"}),(0,t.jsxs)("strong",{style:{color:dashStatTip.kategori==="CC"?"#16a34a":"#ef4444",fontSize:"0.8rem"},children:[dashStatTip.jumlah," LP"]})]}),(0,t.jsx)("span",{style:{fontSize:"0.72rem",opacity:0.7,fontWeight:700},children:"\u2715"})]})]}),(0,t.jsxs)("div",{className:"dash-section cms-card",style:{minWidth:0,overflow:"hidden"},children:[(0,t.jsxs)("div",{className:"dash-panel-head",children:[(0,t.jsxs)("div",{className:"dash-panel-head-left",style:{cursor:"help"},title:P[F],children:[(0,t.jsx)("span",{className:"dash-icon-badge",style:{background:"#eff6ff"},children:(0,t.jsx)("i",{className:"pi pi-chart-bar",style:{color:"#2563eb"}})}),(0,t.jsxs)("div",{className:"dash-panel-title",children:[T.find(e=>e.value===F)?.label,l?.scoped?" Lingkup Wilayah":" per Polda"]})]}),(0,t.jsx)(d.Dropdown,{id:"dash-filter-satker",inputId:"dash-filter-satker-select",name:"filter_satker",value:F,options:T,onChange:e=>K(e.value),style:{minWidth:"17rem",fontSize:"0.8rem"}})]}),J?(0,t.jsx)("span",{style:{color:"#94a3b8"},children:"Memuat…"}):0===(em.labels||[]).length?(0,t.jsxs)("span",{style:{color:"#94a3b8"},children:["Belum ada data","crime_rate"===F?" (jumlah penduduk belum diisi)":"","."]}):(0,t.jsx)("div",{style:{height:"22rem"},children:(0,t.jsx)(c,{id:"fld-dashboard-perma-31-16",name:"field_dashboard_perma_31_16",type:"bar",data:em,options:ep,style:{height:"100%"}})})]}),(0,t.jsxs)("div",{className:"dash-section dash-grid",style:{alignItems:"stretch"},children:[(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_kejahatan||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Kejahatan Nasional · Tertinggi":"10 Kejahatan Regional · Tertinggi"):"10 Kejahatan Tertinggi"),children:l?.label_kejahatan||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Kejahatan Nasional · Tertinggi":"10 Kejahatan Regional · Tertinggi"):"10 Kejahatan Tertinggi")}),(0,t.jsx)(E,{id:"fld-dashboard-perma-31-17",name:"field_dashboard_perma_31_17",rows:(l?.top_kejahatan||[]).map(e=>({nama:e.nama,value:e.jml,satker_breakdown:e.satker_breakdown||e.children,totalOverride:(l?.scoped&&l?.regional_ct)?l.regional_ct:(l?.ct||0)})),satkerSource:rollupCasTopSatkerRows(l?.top_satker_ct,l?.polda,"ct",Boolean(l?.scoped&&!l?.is_nasional),l?.scoped?(l?.scope_satker||l?.regional_nama||""):""),breakdownMap:(l?.scoped&&!l?.is_nasional)?null:(l?.top_crimes_breakdown||null),isScoped:Boolean(l?.scoped&&!l?.is_nasional),scopeSatker:l?.scoped?(l?.scope_satker||l?.regional_nama||""):"",loading:J,total:(l?.scoped&&l?.regional_ct)?l.regional_ct:(l?.ct||0)})]}),(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_satker_ct||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CT Tertinggi":"10 Satker Regional · CT Tertinggi"):"10 Satker · CT Tertinggi"),children:l?.label_satker_ct||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CT Tertinggi":"10 Satker Regional · CT Tertinggi"):"10 Satker · CT Tertinggi")}),(0,t.jsx)(L,{id:"fld-dashboard-perma-31-18",name:"field_dashboard_perma_31_18",rows:rollupCasTopSatkerRows(l?.top_satker_ct,l?.polda,"ct",Boolean(l?.scoped&&!l?.is_nasional),l?.scoped?(l?.scope_satker||l?.regional_nama||""):""),scopeSatker:l?.scoped?(l?.scope_satker||l?.regional_nama||""):"",metric:"ct",loading:J,color:"#ef4444",suffix:"LP"})]}),(0,t.jsxs)("div",{className:"cms-card",style:{minWidth:0,display:"flex",alignItems:"stretch",flexDirection:"column",height:"100%",overflow:"visible"},children:[(0,t.jsx)("div",{className:"cms-card-label",style:{marginBottom:"0.85rem",minHeight:"1.5rem",display:"flex",alignItems:"center",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"},title:l?.label_satker_cc||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CC Tertinggi":"10 Satker Regional · CC Tertinggi"):"10 Satker · CC Tertinggi"),children:l?.label_satker_cc||(l?.scoped?(l?.is_nasional||l?.regional_nama?.includes("Nasional")?"10 Satker · CC Tertinggi":"10 Satker Regional · CC Tertinggi"):"10 Satker · CC Tertinggi")}),(0,t.jsx)(L,{id:"fld-dashboard-perma-31-19",name:"field_dashboard_perma_31_19",rows:rollupCasTopSatkerRows(l?.top_satker_cc,l?.polda,"cc",Boolean(l?.scoped&&!l?.is_nasional),l?.scoped?(l?.scope_satker||l?.regional_nama||""):""),scopeSatker:l?.scoped?(l?.scope_satker||l?.regional_nama||""):"",metric:"cc",loading:J,color:"#16a34a",suffix:"LP",empty:"Belum ada perkara selesai (CC)."})]})]}),(0,t.jsxs)("div",{className:"dash-section",children:[(0,t.jsx)(O,{id:"fld-dashboard-perma-31-20",name:"field_dashboard_perma_31_20",icon:(0,t.jsx)(b.AlertTriangle,{size:15}),title:"Sorotan",iconBg:"#fffbeb",iconColor:"#d97706"}),(0,t.jsxs)("div",{className:"dash-grid",style:{marginTop:0,alignItems:"stretch",gridTemplateColumns:"repeat(auto-fit, minmax(21rem, 1fr))",gap:"1rem"},children:[(0,t.jsx)(M,{title:(0,t.jsxs)("span",{style:{display:"inline-flex",alignItems:"center",gap:"0.35rem",minWidth:0,whiteSpace:"nowrap"},children:[(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/kasus-atensi/lihat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#d97706";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Kasus Atensi",children:"Kasus Atensi"}),(0,t.jsx)("span",{style:{color:"var(--cas-text-muted, #94a3b8)",fontWeight:400,userSelect:"none"},children:"/"}),(0,t.jsx)("span",{role:"button",tabIndex:0,onClick:ev=>{ev.stopPropagation();e.push("/cms/laporan/kasus-menonjol/lihat")},style:{cursor:"pointer",color:"inherit",transition:"color .15s,text-decoration .15s"},onMouseEnter:ev=>{ev.currentTarget.style.color="#d97706";ev.currentTarget.style.textDecoration="underline"},onMouseLeave:ev=>{ev.currentTarget.style.color="inherit";ev.currentTarget.style.textDecoration="none"},title:"Buka Kasus Menonjol",children:"Menonjol"})]}),icon:(0,t.jsx)("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",width:"1.65rem",height:"1.65rem",borderRadius:"6px",background:"rgba(245, 158, 11, 0.12)",color:"#f59e0b",flexShrink:0},children:(0,t.jsx)(b.AlertTriangle,{size:14})}),emptyText:J?"Memuat…":"Belum ada kasus atensi/menonjol.",onLihatSemua:()=>e.push("/cms/laporan/kasus-menonjol/lihat"),items:[...u.map(e=>{let isoTgl=(function(v){if(!v)return"";let s=String(v).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(s)){let p=s.split("-");return p[2]+"-"+p[1]+"-"+p[0]}return s})(e.effective_date||e.tanggal_rilis||e.first_tgl_laporan||e.created_at);return{id:`menonjol:${e.id}`,_kind:"menonjol",_pinned:Boolean(e.is_pinned),_pinned_at:e.pinned_at||"",_skala:e.skala_viral,_tgl_rilis:e.tanggal_rilis,_tgl:isoTgl,_no_lp:e.first_no_laporan||"",_depth:null==e.satker_depth?999:Number(e.satker_depth),_lp:Number(e.jumlah_lp||0),_rilis:!!e.rilis,_created:e.created_at||e.tanggal_rilis||"",judul:e.judul,viral:"tidak viral"===e.skala_viral?"Tidak Viral":"Viral",viralSeverity:"tidak viral"===e.skala_viral?"secondary":"danger",tag:"nasional"===e.skala_viral?"Nasional":"regional"===e.skala_viral?"Regional":void 0,tagVariant:"nasional"===e.skala_viral?"danger":"warning",status:e.rilis?"Sudah Rilis":"Belum Rilis",statusVariant:e.rilis?"success":"neutral",tanggal:I(e.tanggal_rilis||e.first_tgl_laporan||e.created_at),lpInfo:Number(e.jumlah_lp||0)>1?`${Number(e.jumlah_lp)} LP`:R(e.jumlah_lp,e.first_no_laporan)}}),...k.map(e=>{let isoTgl=(function(v){if(!v)return"";let s=String(v).trim().slice(0,10);if(/^\d{2}-\d{2}-\d{4}$/.test(s)){let p=s.split("-");return p[2]+"-"+p[1]+"-"+p[0]}return s})(e.effective_date||e.tanggal_atensi||e.first_tgl_laporan||e.created_at);return{id:`atensi:${e.id}`,_kind:"atensi",_pinned:Boolean(e.is_pinned),_pinned_at:e.pinned_at||"",_level:e.level_atensi,_status_atensi:e.status_atensi,_tgl:isoTgl,_no_lp:e.first_no_laporan||"",_depth:null==e.satker_depth?999:Number(e.satker_depth),_lp:Number(e.jumlah_lp||0),_rilis:!1,_created:e.created_at||e.tanggal_atensi||"",judul:e.judul,tag:e.level_atensi?e.level_atensi.charAt(0).toUpperCase()+e.level_atensi.slice(1):"Atensi",tagVariant:"tinggi"===e.level_atensi?"danger":"sedang"===e.level_atensi?"warning":"purple",hideStatus:"selesai"!==e.status_atensi,status:"selesai"===e.status_atensi?"Selesai":"Aktif",statusVariant:"selesai"===e.status_atensi?"success":"blue",tanggal:I(e.tanggal_atensi||e.first_tgl_laporan||e.created_at),lpInfo:Number(e.jumlah_lp||0)>1?`${Number(e.jumlah_lp)} LP`:R(e.jumlah_lp,e.first_no_laporan)}})].sort((e,t)=>{
 // 1. DISEMATKAN (Booming -> otomatis Rank 1)
 let pDiff=(t._pinned?1:0)-(e._pinned?1:0);
 if(pDiff)return pDiff;

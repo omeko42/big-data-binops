@@ -64,7 +64,11 @@ function isShareseSuperadmin(userId, role, username) {
 
 function getVerificationBadge(role, isUserOne, userId, username) {
   var r = String(role || '').toLowerCase().trim();
+  var uStr = String(username || '').toLowerCase().trim();
   if (r === 'vendor_mitra' || r === 'vendor' || r === 'mitra') return null;
+  if (String(userId) === '-1' || r.includes('ai_') || r === 'bot' || uStr.includes('cosersebot') || uStr.includes('ai_taktis')) {
+    return { color: '#64748b', label: 'Cosersebot Resmi CAS Bareskrim Polri', role: 'bot' };
+  }
   if (isUserOne || isShareseSuperadmin(userId, role, username)) {
     return { color: '#f59e0b', label: 'Superadmin Terverifikasi', role: 'superadmin' };
   }
@@ -113,6 +117,13 @@ function formatCallsign(rawCallsign, authorId, username) {
   if (c) return '@' + c;
   var u = toTwoWordHandle(username);
   if (u) return '@' + u;
+  if (idStr === '1') {
+    try {
+      var cur = JSON.parse(localStorage.getItem('user') || 'null');
+      var curUn = String((cur && String(cur.id || cur.user_id) === '1' && (cur.username || cur.callsign)) || '').trim().replace(/^@/, '').toLowerCase();
+      if (curUn && !curUn.startsWith('user_')) return '@' + curUn;
+    } catch (_e) {}
+  }
   return '@anggota.' + (idStr || '1');
 }
 
@@ -205,10 +216,20 @@ function isPolwanUser(u) {
   if (/^(doliandri|muhammad|muhamad|mohammad|mohamad|mochamad|mochammad|m\.|moh\.|muh\.|ahmad|achmad|budi|agus|hendra|eko|rizky|rizki|andi|dedi|dedy|wahyu|bayu|dimas|bagus|fajar|reza|ilham|arif|arief|irfan|taufik|taufiq|hidayat|saputra|pratama|dewangga|irwan|iwan|heru|heri|hery|bambang|slamet|joko|tri\s+budi|agung|dwi\s+putra|putra)\b/i.test(nm)) return false;
   return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(nm);
 }
+var COSERSEBOT_BENDER_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFlMjkzYiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJtZXRhbCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48c3RvcCBvZmZzZXQ9IjI1JSIgc3RvcC1jb2xvcj0iI2NiZDVlMSIvPjxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjOTRhM2I4Ii8+PHN0b3Agb2Zmc2V0PSI3OCUiIHN0b3AtY29sb3I9IiNlMmU4ZjAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM0NzU1NjkiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0idmlzb3IiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2JkNWUxIi8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiM5NGEzYjgiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0idXJsKCNiZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNNTcuNSAyNSBMNTkgMTAgTDYxIDEwIEw2Mi41IDI1IFoiIGZpbGw9IiNjYmQ1ZTEiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48ZWxsaXBzZSBjeD0iNjAiIGN5PSIyNSIgcng9IjguNSIgcnk9IjMuNSIgZmlsbD0iIzk0YTNiOCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuNCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iOC41IiByPSI0LjIiIGZpbGw9IiNlMmU4ZjAiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiLz48Y2lyY2xlIGN4PSI1OC44IiBjeT0iNy4zIiByPSIxLjMiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzIgOTggTDMzIDQ2IEEyNyAyMiAwIDAgMSA4NyA0NiBMODggOTggTDkzIDEwNSBRNjAgMTEyIDI3IDEwNSBaIiBmaWxsPSJ1cmwoI21ldGFsKSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00MiAzNSBRNjAgMjcgNzggMzUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y4ZmFmYyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNyIvPjxyZWN0IHg9IjIwIiB5PSI0MiIgd2lkdGg9IjgwIiBoZWlnaHQ9IjI4IiByeD0iMTQiIGZpbGw9InVybCgjdmlzb3IpIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PHJlY3QgeD0iMjUiIHk9IjQ2LjUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxOSIgcng9IjkuNSIgZmlsbD0iIzA5MGQxNiIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxyZWN0IHg9IjQyLjQiIHk9IjUzLjQiIHdpZHRoPSI1LjIiIGhlaWdodD0iNS4yIiByeD0iMC44IiBmaWxsPSIjMDkwZDE2Ii8+PHJlY3QgeD0iNzIuNCIgeT0iNTMuNCIgd2lkdGg9IjUuMiIgaGVpZ2h0PSI1LjIiIHJ4PSIwLjgiIGZpbGw9IiMwOTBkMTYiLz48cGF0aCBkPSJNMzQgNDkuNSBMNTQgNTIuNSBNODYgNDkuNSBMNjYgNTIuNSIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMzUiIHk9Ijc1IiB3aWR0aD0iNTAiIGhlaWdodD0iMTgiIHJ4PSI4IiBmaWxsPSIjZmVmOWMzIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PGxpbmUgeDE9IjM1LjUiIHkxPSI4NCIgeDI9Ijg0LjUiIHkyPSI4NCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI0Ny41IiB5MT0iNzUuNSIgeDI9IjQ3LjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PGxpbmUgeDE9IjYwIiB5MT0iNzUuNSIgeDI9IjYwIiB5Mj0iOTIuNSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI3Mi41IiB5MT0iNzUuNSIgeDI9IjcyLjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PC9zdmc+';
+function isCosersebotUser(u) {
+  if (!u || typeof u !== 'object') return false;
+  var uid = String(u.id ?? u.partner_id ?? u.author_id ?? '');
+  if (uid === '-1' || u.is_ai) return true;
+  var nm = String(u.name || u.author_name || u.username || u.callsign || u.handle || u.author_username || u.author_callsign || '').toLowerCase();
+  return nm.includes('coserse') || nm.includes('ai_taktis') || nm.includes('spra bender');
+}
 function getDefaultAvatarUrl(u) {
+  if (isCosersebotUser(u)) return COSERSEBOT_BENDER_AVATAR;
   return isPolwanUser(u) ? '/images/default-avatar-polwan.jpg' : '/images/default-avatar-polki.png';
 }
 function resolveUserAvatar(photoUrl, userObj) {
+  if (isCosersebotUser(userObj)) return COSERSEBOT_BENDER_AVATAR;
   var isCustom = function(v) {
     if (!v || typeof v !== 'string') return false;
     var s = v.trim();
@@ -3047,47 +3068,49 @@ e.s(["default",0,function() {
     ),
             // Feed Pagination Navigation Bar
     totalPages > 1 && (0,t.jsxs)("div",{
-      className:"cms-card",
+      className:"cms-card cas-unified-paginator",
       style:{
         display:"flex",
         alignItems:"center",
         justifyContent:"space-between",
-        padding:"0.85rem 1.25rem",
+        padding:"0.65rem 1rem",
         borderRadius:"12px",
         position:"relative",
         background:"var(--cas-bg-surface, #ffffff)",
-        marginTop:"1.5rem",
-        border:"1px solid var(--cas-border, #cbd5e1)",
+        marginTop:"1.25rem",
+        border:"1px solid var(--cas-border, #e2e8f0)",
         flexWrap:"wrap",
         gap:"0.75rem"
       },
       children:[
         // Counter
-        (0,t.jsxs)("div",{style:{fontSize:"0.8rem",color:"#94a3b8"},children:[
+        (0,t.jsxs)("div",{style:{fontSize:"12px",fontWeight:600,color:"#64748b"},children:[
           "Menampilkan ",
           (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems > 0 ? (startIndex + 1) : 0}),
           " - ",
           (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:endIndex}),
           " dari ",
-          (0,t.jsx)("strong",{style:{color:"#38bdf8"},children:totalItems}),
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems}),
           " postingan"
         ]}),
 
         // Pagination buttons
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem"},children:[
+        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
           (0,t.jsxs)("button",{
             type:"button",
+            className:"cas-page-btn",
             disabled:validPage <= 1,
             onClick:() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 380, behavior: 'smooth' }); },
             style:{
-              background:"var(--cas-bg-subtle, #f8fafc)",
-              border:"1px solid var(--cas-border, #cbd5e1)",
-              borderRadius:"6px",
-              color:validPage <= 1 ? '#94a3b8' : 'var(--cas-text-primary, #0f172a)',
+              background:"#ffffff",
+              border:"1px solid #e2e8f0",
+              borderRadius:"8px",
+              color:validPage <= 1 ? '#94a3b8' : '#334155',
               cursor:validPage <= 1 ? 'not-allowed' : 'pointer',
-              padding:"0.4rem 0.75rem",
-              fontSize:"0.78rem",
-              fontWeight:700,
+              height:"32px",
+              padding:"0 0.75rem",
+              fontSize:"12px",
+              fontWeight:600,
               display:"inline-flex",
               alignItems:"center",
               gap:"0.25rem"
@@ -3104,20 +3127,25 @@ e.s(["default",0,function() {
             .map((pNum, pIdx, arr) => {
               var showEllipsisBefore = pIdx > 0 && pNum - arr[pIdx - 1] > 1;
               return (0,t.jsxs)(n.Fragment,{key:pNum,children:[
-                showEllipsisBefore && (0,t.jsx)("span",{style:{color:"#64748b",padding:"0 0.2rem"},children:"…"}),
+                showEllipsisBefore && (0,t.jsx)("span",{style:{color:"#64748b",padding:"0 0.2rem",fontSize:"12px",fontWeight:700},children:"…"}),
                 (0,t.jsx)("button",{
                   type:"button",
+                  className:"cas-page-btn" + (validPage === pNum ? " is-active" : ""),
                   onClick:() => { setCurrentPage(pNum); window.scrollTo({ top: 380, behavior: 'smooth' }); },
                   style:{
-                    background:validPage === pNum ? '#2563eb' : 'var(--cas-bg-subtle, #f8fafc)',
-                    border:validPage === pNum ? '1px solid #3b82f6' : '1px solid var(--cas-border, #cbd5e1)',
-                    borderRadius:"6px",
-                    color:validPage === pNum ? '#fff' : 'var(--cas-text-primary, #0f172a)',
+                    background:validPage === pNum ? '#1e293b' : '#ffffff',
+                    border:validPage === pNum ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                    borderRadius:"8px",
+                    color:validPage === pNum ? '#ffffff' : '#334155',
                     cursor:"pointer",
-                    padding:"0.4rem 0.65rem",
-                    fontSize:"0.78rem",
-                    fontWeight:validPage === pNum ? 800 : 600,
-                    minWidth:"2rem",
+                    height:"32px",
+                    minWidth:"32px",
+                    padding:"0 0.55rem",
+                    fontSize:"12px",
+                    fontWeight:validPage === pNum ? 700 : 600,
+                    display:"inline-flex",
+                    alignItems:"center",
+                    justifyContent:"center",
                     textAlign:"center"
                   },
                   children:pNum
@@ -3127,17 +3155,19 @@ e.s(["default",0,function() {
 
           (0,t.jsxs)("button",{
             type:"button",
+            className:"cas-page-btn",
             disabled:validPage >= totalPages,
             onClick:() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 380, behavior: 'smooth' }); },
             style:{
-              background:"var(--cas-bg-subtle, #f8fafc)",
-              border:"1px solid var(--cas-border, #cbd5e1)",
-              borderRadius:"6px",
-              color:validPage >= totalPages ? '#94a3b8' : 'var(--cas-text-primary, #0f172a)',
+              background:"#ffffff",
+              border:"1px solid #e2e8f0",
+              borderRadius:"8px",
+              color:validPage >= totalPages ? '#94a3b8' : '#334155',
               cursor:validPage >= totalPages ? 'not-allowed' : 'pointer',
-              padding:"0.4rem 0.75rem",
-              fontSize:"0.78rem",
-              fontWeight:700,
+              height:"32px",
+              padding:"0 0.75rem",
+              fontSize:"12px",
+              fontWeight:600,
               display:"inline-flex",
               alignItems:"center",
               gap:"0.25rem"
@@ -3747,7 +3777,21 @@ e.s(["default",0,function() {
             (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.45rem",flexWrap:"wrap"},children:[
               (0,t.jsx)("span",{style:{fontSize:"1.2rem",fontWeight:800,color:"#38bdf8"},children:formatCallsign(previewUser.callsign, previewUser.id, previewUser.username)}),
               renderMetaVerifiedBadge(getVerificationBadge(previewUser.role_bdb, isShareseSuperadmin(previewUser.id, previewUser.role_bdb, previewUser.username || previewUser.callsign), previewUser.id, previewUser.username), 18),
-              (0,t.jsx)("span",{style:{fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:"rgba(34,197,94,0.15)",color:"#4ade80",border:"1px solid rgba(34,197,94,0.3)"},children:"● Online / Aktif"})
+              (function(){
+                var pInfo = (typeof window !== "undefined" && typeof window.getCasUserPresence === "function")
+                  ? window.getCasUserPresence(previewUser, currentUser ? (currentUser.id || currentUser.user_id) : 0)
+                  : (previewUser && (previewUser.is_ai || Number(previewUser.id) === -1 || (currentUser && Number(previewUser.id) === Number(currentUser.id || currentUser.user_id))))
+                    ? { label: "Online", color: "#10b981", bg: "rgba(16,185,129,0.14)", border: "rgba(16,185,129,0.32)", tooltip: "Online — Aktif sekarang" }
+                    : { label: "Offline", color: "#94a3b8", bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.32)", tooltip: "Offline — Tidak sedang aktif" };
+                return (0,t.jsxs)("span",{
+                  title:pInfo.tooltip,
+                  style:{display:"inline-flex",alignItems:"center",gap:"0.32rem",fontSize:"0.74rem",fontWeight:700,padding:"0.15rem 0.55rem",borderRadius:"999px",background:pInfo.bg,color:pInfo.color,border:"1px solid " + pInfo.border},
+                  children:[
+                    (0,t.jsx)("span",{style:{width:7,height:7,borderRadius:"50%",background:pInfo.color,display:"inline-block"}}),
+                    pInfo.label
+                  ]
+                });
+              })()
             ]}),
             previewUser.name ? (0,t.jsx)("div",{style:{fontSize:"0.84rem",color:"#94a3b8",fontWeight:600,marginTop:"0.2rem"},children:previewUser.name}) : null,
             (0,t.jsxs)("div",{style:{fontSize:"0.86rem",color:"var(--cas-text-secondary, #334155)",marginTop:"0.25rem",fontWeight:600},children:[

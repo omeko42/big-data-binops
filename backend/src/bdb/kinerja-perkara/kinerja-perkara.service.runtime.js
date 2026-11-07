@@ -98,21 +98,26 @@ class KinerjaCrimeGroupResolver {
             'TIPIDUM', 'TIPIDTER', 'TIPIDEKSUS', 'TIPIDKOR', 'TIPIDSIBER', 'TIPIDNARKOBA', 'TIPIDPPAPPO'
         ];
         const approvedByGroup = new Map(officialGroupNames.map((g) => [g, []]));
+        const groupByCrimeId = new Map();
         const approvedAll = new Set();
         for (const row of approvedRows) {
             const id = Number(row.id), group = String(row.kelompok || '').toUpperCase().trim();
             if (!Number.isInteger(id) || id <= 0)
                 continue;
             approvedAll.add(id);
+            if (!groupByCrimeId.has(id))
+                groupByCrimeId.set(id, []);
             if (approvedByGroup.has(group)) {
                 approvedByGroup.get(group).push(id);
+                groupByCrimeId.get(id).push(group);
             }
             const parent = exports.CHILD_TO_PARENT_GROUP[group];
             if (parent && approvedByGroup.has(parent)) {
                 approvedByGroup.get(parent).push(id);
+                groupByCrimeId.get(id).push(parent);
             }
         }
-        const value = { versionId, version, usedIds, approvedByGroup, approvedAll, reviewCount: usedIds.filter((id) => !approvedAll.has(id)).length };
+        const value = { versionId, version, usedIds, approvedByGroup, groupByCrimeId, approvedAll, reviewCount: usedIds.filter((id) => !approvedAll.has(id)).length };
         this.cache = { value, at: Date.now() };
         return value;
     }
@@ -155,11 +160,17 @@ class KinerjaCrimeGroupResolver {
             return direct;
         }));
         const reviewSelected = groups.includes('REVIEW');
+        const baseIds = intersectCrimeSets([explicitIn === undefined ? undefined : explicit, master]);
+        let inferredTreeGroups = [];
+        if (!officialGroups.length && !reviewSelected && Array.isArray(baseIds) && baseIds.length > 0 && baseIds.every((id) => state.groupByCrimeId?.has(id))) {
+            inferredTreeGroups = [...new Set(baseIds.flatMap((id) => state.groupByCrimeId.get(id) || []))];
+        }
         return {
-            baseIds: intersectCrimeSets([explicitIn === undefined ? undefined : explicit, master]),
+            baseIds,
             officialGroupCrimeIds,
             reviewCrimeIds: reviewSelected ? state.usedIds.filter((id) => !state.approvedAll.has(id)) : [],
             officialGroups, reviewSelected,
+            inferredTreeGroups,
             appliedFilters: { jenisKejahatanIds: explicit, golonganIds: golongan, iccsKategoriIds: iccs, kelompokHitung: groups },
             mapping: { version: state.version, versionId: state.versionId, reviewCount: state.reviewCount }
         };
@@ -192,11 +203,13 @@ const kinerjaDirectFunctionGroup = (nameIn) => {
 exports.kinerjaDirectFunctionGroup = kinerjaDirectFunctionGroup;
 const buildKinerjaGroupPlan = (satkers, dimensions) => {
     const active = dimensions.officialGroups.length > 0 || dimensions.reviewSelected;
-    if (!active) {
+    const treeGroups = dimensions.officialGroups.length > 0 ? dimensions.officialGroups : (dimensions.inferredTreeGroups || []);
+    if (!active && !treeGroups.length) {
         return {
             active: false,
             functionMatchedSatkerIds: [],
             fallbackSatkerIds: [],
+            allowedTreeSatkerIds: null,
             officialCrimeIds: [],
             reviewCrimeIds: [],
             reviewSelected: false
@@ -219,7 +232,7 @@ const buildKinerjaGroupPlan = (satkers, dimensions) => {
         memo.set(id, group);
         return group;
     };
-    const selected = new Set(dimensions.officialGroups);
+    const selected = new Set(treeGroups);
     const isCompatibleGroup = (satkerGroup, sel) => {
         if (satkerGroup === sel)
             return true;
@@ -250,10 +263,14 @@ const buildKinerjaGroupPlan = (satkers, dimensions) => {
             }
         }
     }
+    const allowedTreeSatkerIds = treeGroups.length > 0 && !dimensions.reviewSelected
+        ? new Set([...functionMatchedSatkerIds, ...fallbackSatkerIds])
+        : null;
     return {
         active,
-        functionMatchedSatkerIds,
-        fallbackSatkerIds,
+        functionMatchedSatkerIds: active ? functionMatchedSatkerIds : [],
+        fallbackSatkerIds: active ? fallbackSatkerIds : [],
+        allowedTreeSatkerIds,
         officialCrimeIds: [...dimensions.officialGroupCrimeIds],
         reviewCrimeIds: [...dimensions.reviewCrimeIds],
         reviewSelected: dimensions.reviewSelected
@@ -305,46 +322,46 @@ const hasSatkerToken = (value, token) => satkerTokens(value).includes(token);
 const compactSatkerName = (value) => satkerTokens(value).join('');
 const isPolresSatkerType = (value) => ['POLRES', 'POLRESTA', 'POLRESTABES'].includes(normalizedSatkerWords(value));
 const POLDA_BUSINESS_ORDER = [
-    'POLDA ACEH',
-    'POLDA SUMATERA UTARA',
-    'POLDA RIAU',
-    'POLDA KEPULAUAN RIAU',
-    'POLDA JAMBI',
-    'POLDA BENGKULU',
-    'POLDA SUMATERA BARAT',
-    'POLDA SUMATERA SELATAN',
-    'POLDA KEPULAUAN BANGKA BELITUNG',
-    'POLDA LAMPUNG',
-    'POLDA BANTEN',
-    'POLDA METRO JAYA',
-    'POLDA JAWA BARAT',
-    'POLDA JAWA TENGAH',
-    'POLDA DAERAH ISTIMEWA YOGYAKARTA',
-    'POLDA JAWA TIMUR',
-    'POLDA BALI',
-    'POLDA NUSA TENGGARA BARAT',
-    'POLDA NUSA TENGGARA TIMUR',
-    'POLDA KALIMANTAN TIMUR',
-    'POLDA KALIMANTAN BARAT',
-    'POLDA KALIMANTAN TENGAH',
-    'POLDA KALIMANTAN SELATAN',
-    'POLDA KALIMANTAN UTARA',
-    'POLDA SULAWESI SELATAN',
-    'POLDA SULAWESI UTARA',
-    'POLDA SULAWESI TENGAH',
-    'POLDA SULAWESI TENGGARA',
-    'POLDA SULAWESI BARAT',
-    'POLDA GORONTALO',
-    'POLDA MALUKU',
-    'POLDA MALUKU UTARA',
-    'POLDA PAPUA',
-    'POLDA PAPUA BARAT',
-    'POLDA PAPUA BARAT DAYA',
-    'POLDA PAPUA TENGAH',
-    'POLDA PAPUA PEGUNUNGAN',
-    'POLDA PAPUA SELATAN'
+    ['POLDA ACEH', 'POLDA NANGGROE ACEH DARUSSALAM', 'POLDA NAD'],
+    ['POLDA SUMATERA UTARA', 'POLDA SUMUT'],
+    ['POLDA SUMATERA BARAT', 'POLDA SUMBAR'],
+    ['POLDA RIAU'],
+    ['POLDA KEPULAUAN RIAU', 'POLDA KEPRI'],
+    ['POLDA JAMBI'],
+    ['POLDA BENGKULU'],
+    ['POLDA SUMATERA SELATAN', 'POLDA SUMSEL'],
+    ['POLDA KEPULAUAN BANGKA BELITUNG', 'POLDA BABEL', 'POLDA BANGKA BELITUNG', 'POLDA KEP BANGKA BELITUNG'],
+    ['POLDA LAMPUNG'],
+    ['POLDA BANTEN'],
+    ['POLDA METRO JAYA', 'POLDA DKI JAKARTA'],
+    ['POLDA JAWA BARAT', 'POLDA JABAR'],
+    ['POLDA JAWA TENGAH', 'POLDA JATENG'],
+    ['POLDA DAERAH ISTIMEWA YOGYAKARTA', 'POLDA DIY', 'POLDA D I YOGYAKARTA'],
+    ['POLDA JAWA TIMUR', 'POLDA JATIM'],
+    ['POLDA BALI'],
+    ['POLDA NUSA TENGGARA BARAT', 'POLDA NTB'],
+    ['POLDA NUSA TENGGARA TIMUR', 'POLDA NTT'],
+    ['POLDA KALIMANTAN BARAT', 'POLDA KALBAR'],
+    ['POLDA KALIMANTAN TENGAH', 'POLDA KALTENG'],
+    ['POLDA KALIMANTAN SELATAN', 'POLDA KALSEL'],
+    ['POLDA KALIMANTAN TIMUR', 'POLDA KALTIM'],
+    ['POLDA KALIMANTAN UTARA', 'POLDA KALTARA'],
+    ['POLDA SULAWESI UTARA', 'POLDA SULUT'],
+    ['POLDA GORONTALO'],
+    ['POLDA SULAWESI TENGAH', 'POLDA SULTENG'],
+    ['POLDA SULAWESI BARAT', 'POLDA SULBAR'],
+    ['POLDA SULAWESI SELATAN', 'POLDA SULSEL'],
+    ['POLDA SULAWESI TENGGARA', 'POLDA SULTRA'],
+    ['POLDA MALUKU'],
+    ['POLDA MALUKU UTARA', 'POLDA MALUT'],
+    ['POLDA PAPUA BARAT', 'POLDA PABAR', 'POLDA PAPBAR'],
+    ['POLDA PAPUA BARAT DAYA', 'POLDA PABARDAYA', 'POLDA PABD'],
+    ['POLDA PAPUA'],
+    ['POLDA PAPUA TENGAH', 'POLDA PAPTENG', 'POLDA PATENG'],
+    ['POLDA PAPUA PEGUNUNGAN', 'POLDA PAPEG'],
+    ['POLDA PAPUA SELATAN', 'POLDA PASEL', 'POLDA PAPSEL']
 ];
-const poldaBusinessRank = new Map(POLDA_BUSINESS_ORDER.map((name, index) => [normalizedSatkerWords(name), index + 1]));
+const poldaBusinessRank = new Map(POLDA_BUSINESS_ORDER.flatMap((aliases, index) => aliases.map((name) => [normalizedSatkerWords(name), index + 1])));
 const polriChildRank = (childName) => {
     if (startsWithSatkerTokens(childName, ['BARESKRIM']))
         return 10;
@@ -374,7 +391,7 @@ const hasSiberFunctionMarker = (value) => {
     if (tokens.includes('SIBER') || tokens.includes('TIPIDSIBER'))
         return true;
     const compact = tokens.join('');
-    return compact.startsWith('DITTIPIDSIBER') || compact.startsWith('DITRESSIBER');
+    return compact.startsWith('DITTIPIDSIBER') || compact.startsWith('DITRESSIBER') || compact.startsWith('DITSIBER') || compact.includes('SIBER');
 };
 const bareskrimChildRank = (childName) => {
     const tokens = satkerTokens(childName);
@@ -395,13 +412,14 @@ const bareskrimChildRank = (childName) => {
 };
 const poldaChildRank = (parentName, childName, childType) => {
     if (!isPolresSatkerType(childType)) {
-        if (hasSatkerToken(childName, 'KRIMUM'))
+        const compact = compactSatkerName(childName);
+        if (hasSatkerToken(childName, 'KRIMUM') || compact.includes('KRIMUM'))
             return 10;
-        if (hasSatkerToken(childName, 'KRIMSUS'))
+        if (hasSatkerToken(childName, 'KRIMSUS') || compact.includes('KRIMSUS'))
             return 20;
-        if (hasSatkerToken(childName, 'NARKOBA') || hasSatkerToken(childName, 'TIPIDNARKOBA'))
+        if (hasSatkerToken(childName, 'NARKOBA') || hasSatkerToken(childName, 'TIPIDNARKOBA') || compact.includes('NARKOBA'))
             return 30;
-        if (hasSiberFunctionMarker(childName))
+        if (hasSiberFunctionMarker(childName) || compact.includes('SIBER'))
             return 40;
         if (hasPpaPpoFunctionMarker(childName))
             return 50;
@@ -651,7 +669,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
         const version = this.satkerCacheVersion;
         const loadPromise = (async () => {
             const rawRows = await this.ds.query(`
-                select s.id, s.kode, s.deskripsi, s.parent_id, s.depth, s.jumlah_penduduk,
+                select s.id, s.kode, s.deskripsi, s.nama_dors, s.nama_satker_dors, s.nama_canonical, s.singkatan_canonical,
+                       s.parent_id, s.depth, s.jumlah_penduduk,
                        s.tipe_satker, s.urutan,
                        coalesce(t.function_domain, case when s.tipe_satker = 'FUNGSI' then 'INTERNAL_RESERSE' else 'STRUCTURAL' end) as function_domain_resolved,
                        coalesce(t.organization_domain, 'INTERNAL_POLRI') as organization_domain_resolved,
@@ -779,7 +798,7 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
         return {
             status: 1,
             data: {
-                defaultVisibility: 'scoped',
+                defaultVisibility: (scope.all || Number(scope.satkerId) === 13) ? 'national' : 'scoped',
                 defaultRegionId: defaultRegionId ?? 13,
                 options
             }
@@ -1470,6 +1489,9 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                 id: s.id,
                 kode: s.kode,
                 nama: s.deskripsi,
+                nama_dors: s.nama_dors || s.nama_satker_dors || s.deskripsi,
+                nama_canonical: s.nama_canonical || s.deskripsi,
+                singkatan_canonical: s.singkatan_canonical || s.deskripsi,
                 parent_id: s.parent_id,
                 depth: s.depth,
                 urutan: s.urutan,
@@ -1608,6 +1630,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
             if (scopeVisibleIds && !scopeVisibleIds.has(Number(n.id)))
                 continue;
             if (!taxonomyVisibleSet.has(Number(n.id)))
+                continue;
+            if (groupPlan.allowedTreeSatkerIds && !groupPlan.allowedTreeSatkerIds.has(Number(n.id)))
                 continue;
             byId.set(n.id, { ...n, ...withMetrics(n), nomor: '', children: [] });
         }
@@ -1764,6 +1788,51 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
         const { children, ...rest } = n;
         return { ...rest, has_children: !!children.length };
     }
+    normalizeSnapshotRekapNodes(nodes, satkers, parentKey = null) {
+        if (!Array.isArray(nodes) || !nodes.length) return [];
+        const byId = new Map();
+        const byKode = new Map();
+        for (const s of satkers || []) {
+            byId.set(Number(s.id), s);
+            if (s.kode) byKode.set(String(s.kode), s);
+        }
+        const parentSatker = parentKey
+            ? (byKode.get(String(parentKey)) || byId.get(Number(parentKey)) || null)
+            : null;
+        const enriched = nodes.map((n, idx) => {
+            const s = (n?.id != null ? byId.get(Number(n.id)) : null) || (n?.kode ? byKode.get(String(n.kode)) : null) || null;
+            if (!s) return null;
+            const nama = s?.deskripsi || n.nama;
+            return {
+                ...n,
+                nama,
+                urutan: s?.urutan ?? n.urutan,
+                nama_dors: s?.nama_dors || s?.nama_satker_dors || n.nama_dors || nama,
+                nama_canonical: s?.nama_canonical || n.nama_canonical || nama,
+                singkatan_canonical: s?.singkatan_canonical || n.singkatan_canonical || nama,
+                _origIdx: idx,
+                _tipe: s?.tipe_satker || ''
+            };
+        }).filter(Boolean);
+        if (parentSatker && (normalizedSatkerWords(parentSatker.tipe_satker) === 'POLDA' || Number(parentSatker.id) === 13 || Number(parentSatker.id) === 1 || startsWithSatkerTokens(parentSatker.deskripsi, ['POLRI']))) {
+            const pObj = { id: Number(parentSatker.id), kode: parentSatker.kode, nama: parentSatker.deskripsi, urutan: parentSatker.urutan };
+            const firstNomor = String(enriched[0]?.nomor || '');
+            const prefixMatch = firstNomor.match(/^(.+)\.\d+\.?$/);
+            const prefix = prefixMatch ? prefixMatch[1] : null;
+            enriched.sort((a, b) => {
+                const rA = satkerStructuralRank(pObj, { id: Number(a.id || 0), kode: a.kode, nama: a.nama, urutan: a.urutan }, parentSatker.tipe_satker, a._tipe);
+                const rB = satkerStructuralRank(pObj, { id: Number(b.id || 0), kode: b.kode, nama: b.nama, urutan: b.urutan }, parentSatker.tipe_satker, b._tipe);
+                if (rA !== rB) return rA - rB;
+                return a._origIdx - b._origIdx;
+            });
+            if (prefix) {
+                enriched.forEach((item, i) => {
+                    item.nomor = `${prefix}.${i + 1}`;
+                });
+            }
+        }
+        return enriched.map(({ _origIdx, _tipe, ...rest }) => rest);
+    }
     paginateNodes(nodes, pageIn, limitIn) {
         const total = nodes.length;
         const paginated = pageIn != null || limitIn != null;
@@ -1833,6 +1902,7 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
             if (targetTahun !== null) {
                 try {
                     if (isNational) {
+                        const satkers = await this.getSatkerTree();
                         if (parent) {
                             const snapSql = targetBulan !== null
                                 ? "SELECT rekap_data->'children'->$3 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
@@ -1841,7 +1911,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                             const snapRows = await this.ds.query(snapSql, snapParams);
                             if (snapRows.length > 0 && snapRows[0]?.children?.nodes) {
                                 const payload = snapRows[0].children;
-                                const sliced = this.paginateNodes(payload.nodes, page, limit);
+                                const normNodes = this.normalizeSnapshotRekapNodes(payload.nodes, satkers, parent);
+                                const sliced = this.paginateNodes(normNodes, page, limit);
                                 return {
                                     status: 1,
                                     data: {
@@ -1860,7 +1931,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                             const snapRows = await this.ds.query(snapSql, snapParams);
                             if (snapRows.length > 0 && snapRows[0]?.root?.nodes) {
                                 const payload = snapRows[0].root;
-                                const sliced = this.paginateNodes(payload.nodes, page, limit);
+                                const normNodes = this.normalizeSnapshotRekapNodes(payload.nodes, satkers, null);
+                                const sliced = this.paginateNodes(normNodes, page, limit);
                                 return {
                                     status: 1,
                                     data: {
@@ -1873,6 +1945,7 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                         }
                     }
                     else if (scopeSatkerId && (scope.all || !scope.satkerId || Number(scope.satkerId) === 13 || !(0, exports.kinerjaScopeFunctionGroup)((await this.getSatkerTree()).find((s) => Number(s.id) === Number(scope.satkerId))?.deskripsi))) {
+                        const satkers = await this.getSatkerTree();
                         if (parent) {
                             const snapSql = targetBulan !== null
                                 ? "SELECT rekap_data->'children'->$3 as children FROM bdb_kinerja_perkara_summary_snapshot WHERE tahun = $1 AND bulan = $2 AND scope_key = 'ALL' LIMIT 1"
@@ -1881,7 +1954,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                             const snapRows = await this.ds.query(snapSql, snapParams);
                             if (snapRows.length > 0 && snapRows[0]?.children?.nodes) {
                                 const payload = snapRows[0].children;
-                                const sliced = this.paginateNodes(payload.nodes, page, limit);
+                                const normNodes = this.normalizeSnapshotRekapNodes(payload.nodes, satkers, parent);
+                                const sliced = this.paginateNodes(normNodes, page, limit);
                                 return {
                                     status: 1,
                                     data: {
@@ -1893,7 +1967,6 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                             }
                         }
                         else {
-                            const satkers = await this.getSatkerTree();
                             const targetSatker = satkers.find((s) => Number(s.id) === Number(scopeSatkerId));
                             const parentKey = targetSatker && targetSatker.parent_id != null ? String(targetSatker.parent_id) : '060';
                             const snapSql = targetBulan !== null
@@ -1904,7 +1977,8 @@ let KinerjaPerkaraService = class KinerjaPerkaraService {
                             if (snapRows.length > 0 && Array.isArray(snapRows[0]?.reg_nodes)) {
                                 const found = snapRows[0].reg_nodes.find((n) => Number(n.id) === Number(scopeSatkerId));
                                 if (found) {
-                                    const node = { ...found, nomor: '1.' };
+                                    const normArr = this.normalizeSnapshotRekapNodes([found], satkers, null);
+                                    const node = { ...normArr[0], nomor: '1.' };
                                     const totals = {
                                         ct: Number(node.ct || 0),
                                         cp_berjalan: Number(node.cp_berjalan || 0),

@@ -36,7 +36,7 @@ async function bootstrap() {
         origin: true,
         // origin: process.env.FRONTEND,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        allowedHeaders: 'Authorization,Content-Type, Accept',
+        allowedHeaders: 'Authorization,Content-Type,Accept,X-Device-Fingerprint,x-device-fingerprint,X-Requested-With',
         credentials: true
     });
     await app.listen(process.env.PORT);

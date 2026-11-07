@@ -174,10 +174,13 @@ let JukrahController = class JukrahController {
         return this.service.getNotifications(req?.user, category);
     }
     markNotificationRead(req, id) {
-        return this.service.markNotificationRead(req?.user, parseInt(id, 10));
+        return this.service.markNotificationRead(req?.user, id);
+    }
+    deleteNotification(req, id) {
+        return this.service.deleteNotification(req?.user, id);
     }
     markAllNotificationsRead(req, category) {
-        return this.service.markAllNotificationsRead(req?.user, category || 'social');
+        return this.service.markAllNotificationsRead(req?.user, category || 'all');
     }
     getDashboardWidgets(req) {
         return this.service.getDashboardWidgets(req?.user);
@@ -523,6 +526,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "markNotificationRead", null);
+__decorate([
+    (0, common_1.Post)('notifications/:id/delete'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "deleteNotification", null);
 __decorate([
     (0, common_1.Post)('notifications/read-all'),
     __param(0, (0, common_1.Req)()),

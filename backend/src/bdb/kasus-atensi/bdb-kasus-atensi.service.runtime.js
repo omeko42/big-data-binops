@@ -1,0 +1,618 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BdbKasusAtensiService = void 0;
+const common_1 = require("@nestjs/common");
+const typeorm_1 = require("typeorm");
+const scope_util_1 = require("../common/scope.util");
+const minio_service_1 = require("../kerma/minio.service");
+const SUMBER_OPTS = ['pimpinan', 'internal', 'media', 'masyarakat', 'instansi lain'];
+const LEVEL_OPTS = ['tinggi', 'sedang', 'biasa'];
+const STATUS_OPTS = ['aktif', 'selesai'];
+/**
+ * Kasus Atensi (Susatensi) -- penandaan kasus yg mendapat perhatian khusus pimpinan atau
+ * butuh monitoring internal. Struktur & pola identik dgn BdbKasusMenonjolService (Susjol),
+ * cuma field spesifiknya beda (sumber/level/status atensi vs skala_viral/rilis).
+ */
+let BdbKasusAtensiService = class BdbKasusAtensiService {
+    constructor(dataSource, minio) {
+        this.dataSource = dataSource;
+        this.minio = minio;
+        this.tableEnsured = false;
+    }
+    async ensureTables() {
+        if (this.tableEnsured)
+            return;
+        this.tableEnsured = true;
+        await this.dataSource.query(`
+            create table if not exists bdb_kasus_atensi (
+                id bigserial primary key,
+                judul text not null,
+                sumber_atensi text,
+                level_atensi text,
+                tanggal_atensi date,
+                status_atensi text not null default 'aktif',
+                keterangan text,
+                satker_id bigint,
+                created_by bigint,
+                updated_by bigint,
+                created_at timestamptz not null default now(),
+                updated_at timestamptz not null default now(),
+                deleted_at timestamptz
+            );
+            create table if not exists bdb_kasus_atensi_lp (
+                id bigserial primary key,
+                kasus_atensi_id bigint not null,
+                lp_id bigint not null,
+                created_at timestamptz not null default now(),
+                unique (kasus_atensi_id, lp_id)
+            );
+            create table if not exists bdb_kasus_atensi_attachments (
+                id bigserial primary key,
+                kasus_atensi_id bigint not null,
+                file_name text not null,
+                object_key text not null,
+                content_type text,
+                size bigint,
+                created_at timestamptz not null default now()
+            );
+            alter table bdb_kasus_atensi
+                add column if not exists is_pinned boolean not null default false,
+                add column if not exists pinned_at timestamptz,
+                add column if not exists delete_status text,
+                add column if not exists deleted_by bigint,
+                add column if not exists delete_reason text,
+                add column if not exists delete_requested_at timestamptz;
+            update bdb_kasus_atensi set delete_status = 'ARCHIVED' where deleted_at is not null and delete_status is null;
+        `);
+    }
+    toBoolean(v) {
+        if (typeof v === 'boolean')
+            return v;
+        return ['true', '1', 'ya', 'yes'].includes(String(v ?? '').trim().toLowerCase());
+    }
+    toText(v) {
+        if (v === undefined || v === null)
+            return null;
+        const t = String(v).trim();
+        return t ? t : null;
+    }
+    toDate(v) {
+        if (!v)
+            return null;
+        if (v instanceof Date && !isNaN(v.getTime())) {
+            const jkt = new Date(v.getTime() + 7 * 3600 * 1000);
+            return jkt.toISOString().slice(0, 10);
+        }
+        const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+        const t = String(v).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+            if (t > todayWib)
+                throw new common_1.BadRequestException('Tanggal atensi tidak boleh di masa depan (melebihi hari ini).');
+            return t;
+        }
+        const dmy = t.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+        if (dmy)
+            return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(t)) {
+            const parsed = new Date(t);
+            if (!isNaN(parsed.getTime())) {
+                const jkt = new Date(parsed.getTime() + 7 * 3600 * 1000);
+                return jkt.toISOString().slice(0, 10);
+            }
+            return t.slice(0, 10);
+        }
+        return null;
+    }
+    toSumber(v) {
+        const s = String(v ?? '').trim().toLowerCase();
+        return SUMBER_OPTS.includes(s) ? s : null;
+    }
+    toLevel(v) {
+        const s = String(v ?? '').trim().toLowerCase();
+        return LEVEL_OPTS.includes(s) ? s : null;
+    }
+    toStatus(v) {
+        const s = String(v ?? '').trim().toLowerCase();
+        return STATUS_OPTS.includes(s) ? s : 'aktif';
+    }
+    toLpIds(v) {
+        const arr = Array.isArray(v) ? v : v === undefined || v === null || v === '' ? [] : [v];
+        return [...new Set(arr.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0))];
+    }
+    /** Pastikan LP yg mau ditautkan benar ada & (kalau bukan admin) semuanya di satker pemanggil. */
+    async validateLpIds(lpIds, scope) {
+        if (!lpIds.length)
+            return [];
+        const rows = await this.dataSource.query(`select id, satker_id from bdb_laporan_polisi where id = any($1) and deleted_at is null`, [lpIds]);
+        if (rows.length !== lpIds.length)
+            throw new common_1.BadRequestException('Ada LP yang dipilih tidak ditemukan.');
+        if (!scope.all) {
+            const outside = rows.filter((r) => Number(r.satker_id) !== scope.satkerId);
+            if (outside.length)
+                throw new common_1.ForbiddenException('Semua LP yang ditautkan harus dari satker Anda sendiri.');
+        }
+        return rows;
+    }
+    async enrichGenericTitle(judul, lpIds) {
+        const isGeneric = /^(pihak\s+)?terlibat\s+(wna|anggota\s+polri|polri)$/i.test(judul.trim()) ||
+            /^(perhatian\s+publik)$/i.test(judul.trim());
+        if (!isGeneric || !lpIds.length)
+            return judul;
+        const rows = await this.dataSource.query(`select tempat_kejadian, unit_nama, satker_nama, payload_json from bdb_laporan_polisi where id = $1 limit 1`, [lpIds[0]]);
+        if (!rows.length)
+            return judul;
+        const r = rows[0];
+        const rawTkp = (r.tempat_kejadian || r.payload_json?.tempat_kejadian || '').replace(/^JL\.?\s*/i, '').split(',')[0].trim();
+        const tag = rawTkp ? rawTkp.slice(0, 45) : (r.unit_nama || r.satker_nama || '').trim();
+        return tag ? `${judul.trim().toUpperCase()} - ${tag.toUpperCase()}` : judul;
+    }
+    satkerDepthExpr() {
+        return `coalesce((
+            select case
+                when s.id in (1,2,3,4,13) or s.parent_id = 13
+                  or upper(coalesce(s.deskripsi,'')) like '%BARESKRIM%'
+                  or upper(coalesce(s.deskripsi,'')) like '%MABES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DITTIPID%'
+                  or upper(coalesce(s.deskripsi,'')) like '%DENSUS%'
+                  or upper(coalesce(s.deskripsi,'')) like '%BAHARKAM%'
+                  or upper(coalesce(s.nama_singkat,'')) like '%BARESKRIM%' then 1
+                when upper(coalesce(s.deskripsi,'')) like '%POLSEK%' then 4
+                when upper(coalesce(s.deskripsi,'')) like '%POLRES%'
+                  or upper(coalesce(s.deskripsi,'')) like '%POLRESTA%'
+                  or upper(coalesce(s.deskripsi,'')) like 'RES %'
+                  or upper(coalesce(s.deskripsi,'')) like '% RES %' then 3
+                when upper(coalesce(s.deskripsi,'')) like '%POLDA%' or s.depth <= 2 then 2
+                else greatest(2, least(4, coalesce(s.depth::int, 4)))
+            end
+            from bdb_satker s
+            where s.id = coalesce(
+                k.satker_id,
+                (select coalesce(lp0.unit_satker_id, lp0.satker_id) from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1)
+            )
+            limit 1
+        ), 99)`;
+    }
+    effectiveDateExpr() {
+        return `coalesce(
+            k.tanggal_atensi,
+            (
+                select case
+                    when lp0.tgl_laporan ~ '^\\d{2}[-/]\\d{2}[-/]\\d{4}' then to_date(replace(left(lp0.tgl_laporan, 10), '/', '-'), 'DD-MM-YYYY')
+                    when lp0.tgl_laporan ~ '^\\d{4}[-/]\\d{2}[-/]\\d{2}' then replace(left(lp0.tgl_laporan, 10), '/', '-')::date
+                    else null
+                end
+                from bdb_kasus_atensi_lp l0
+                join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                where l0.kasus_atensi_id = k.id
+                order by l0.id
+                limit 1
+            ),
+            (k.created_at at time zone 'Asia/Jakarta')::date
+        )`;
+    }
+    buildBaseSelect() {
+        return `
+            select
+                k.id, k.judul, k.sumber_atensi, k.level_atensi, k.tanggal_atensi::text as tanggal_atensi, k.status_atensi, k.keterangan, k.satker_id,
+                coalesce(k.is_pinned, false) as is_pinned,
+                k.pinned_at,
+                (${this.effectiveDateExpr()})::text as effective_date,
+                ${this.satkerDepthExpr()} as satker_depth,
+                coalesce(
+                    (select coalesce(nullif(s.nama_singkat,''), s.deskripsi) from bdb_satker s where s.id = k.satker_id limit 1),
+                    (select lp0.satker_nama from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_atensi_id = k.id order by l0.id limit 1)
+                ) as satker_nama,
+                k.created_by, k.updated_by, k.created_at, k.updated_at,
+                k.deleted_at, k.delete_status, k.deleted_by, k.delete_reason, k.delete_requested_at,
+                (select u.username from auth_users u where u.id = k.created_by limit 1) as created_by_username,
+                (select u.name from auth_users u where u.id = k.created_by limit 1) as created_by_name,
+                (select u.username from auth_users u where u.id = k.deleted_by limit 1) as deleted_by_username,
+                (select u.name from auth_users u where u.id = k.deleted_by limit 1) as deleted_by_name,
+                (select count(*)::int from bdb_kasus_atensi_lp l where l.kasus_atensi_id = k.id) as jumlah_lp,
+                (select count(*)::int from bdb_kasus_atensi_attachments a where a.kasus_atensi_id = k.id) as jumlah_lampiran,
+                (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_atensi_lp l
+                    join bdb_laporan_polisi s on s.id = l.lp_id where l.kasus_atensi_id = k.id) as satker_terkait,
+                (select lp0.no_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                    where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_no_laporan,
+                (select lp0.tgl_laporan from bdb_kasus_atensi_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id
+                    where l0.kasus_atensi_id = k.id order by l0.id limit 1) as first_tgl_laporan
+            from bdb_kasus_atensi k
+        `;
+    }
+    async list(userId, query = {}) {
+        await this.ensureTables();
+        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        const page = Math.max(1, Number(query.page || 1));
+        const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
+        const offset = (page - 1) * limit;
+        const params = [];
+        const deletedMode = String(query.deleted_mode || '').trim().toUpperCase();
+        const where = [];
+        if (deletedMode === 'PENDING_DELETE') {
+            where.push(`k.deleted_at is not null and coalesce(k.delete_status, 'ARCHIVED') = 'PENDING_DELETE'`);
+        }
+        else if (deletedMode === 'ARCHIVED') {
+            where.push(`k.deleted_at is not null and coalesce(k.delete_status, 'ARCHIVED') = 'ARCHIVED'`);
+        }
+        else if (deletedMode === 'ALL_DELETED') {
+            where.push(`k.deleted_at is not null`);
+        }
+        else {
+            where.push('k.deleted_at is null');
+        }
+        if (query.scope === 'scoped' && !scope.all) {
+            if (!scope.satkerId) {
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page,
+                        limit,
+                        totalPages: 1,
+                        summary: { total_all: 0, tinggi: 0, sedang: 0, biasa: 0, aktif: 0, selesai: 0, total_lp_terkait: 0 }
+                    }
+                };
+            }
+            params.push(scope.satkerId);
+            where.push(`k.satker_id = $${params.length}`);
+        }
+        const search = this.toText(query.search);
+        if (search) {
+            params.push(`%${search.toLowerCase()}%`);
+            const p = params.length;
+            where.push(`(
+                lower(coalesce(k.judul,'')) like $${p}
+                or lower(coalesce(k.keterangan,'')) like $${p}
+                or exists (
+                    select 1 from bdb_kasus_atensi_lp l_s
+                    join bdb_laporan_polisi lp_s on lp_s.id = l_s.lp_id
+                    where l_s.kasus_atensi_id = k.id
+                      and (lower(coalesce(lp_s.no_laporan,'')) like $${p} or lower(coalesce(lp_s.satker_nama,'')) like $${p})
+                )
+            )`);
+        }
+        const summaryWhereSql = where.join(' and ');
+        const summaryParams = [...params];
+        const status = this.toText(query.status_atensi)?.toLowerCase() || null;
+        if (status && !['all', 'semua'].includes(status)) {
+            params.push(status);
+            where.push(`lower(coalesce(k.status_atensi,'aktif')) = $${params.length}`);
+        }
+        const level = this.toText(query.level_atensi)?.toLowerCase() || null;
+        if (level && !['all', 'semua'].includes(level)) {
+            params.push(level);
+            where.push(`lower(coalesce(k.level_atensi,'')) = $${params.length}`);
+        }
+        const sumber = this.toText(query.sumber_atensi)?.toLowerCase() || null;
+        if (sumber && !['all', 'semua'].includes(sumber)) {
+            params.push(sumber);
+            where.push(`lower(coalesce(k.sumber_atensi,'')) = $${params.length}`);
+        }
+        const rawPinned = this.toText(query.pinned);
+        if (rawPinned && !['all', 'semua'].includes(rawPinned.toLowerCase())) {
+            const isPinned = ['true', '1', 'ya', 'yes', 'pinned', 'disematkan'].includes(rawPinned.toLowerCase());
+            params.push(isPinned);
+            where.push(`coalesce(k.is_pinned, false) = $${params.length}`);
+        }
+        const whereSql = where.join(' and ');
+        const orderBy = `order by
+            coalesce(k.is_pinned, false) desc,
+            k.pinned_at desc nulls last,
+            ${this.effectiveDateExpr()} desc nulls last,
+            (select count(*)::int from bdb_kasus_atensi_lp l where l.kasus_atensi_id = k.id) desc,
+            ${this.satkerDepthExpr()} asc,
+            case when lower(coalesce(k.level_atensi,'')) = 'tinggi' then 1
+                 when lower(coalesce(k.level_atensi,'')) = 'sedang' then 2
+                 else 3 end asc,
+            case when lower(coalesce(k.status_atensi,'aktif')) = 'aktif' then 0 else 1 end asc,
+            k.created_at desc,
+            k.id desc`;
+        const [totalRow, summaryRow, rows] = await Promise.all([
+            this.dataSource.query(`select count(*)::int as total from bdb_kasus_atensi k where ${whereSql}`, params),
+            this.dataSource.query(`select
+                    count(*)::int as total_all,
+                    count(*) filter (where coalesce(k.is_pinned, false) = true)::int as disematkan,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'tinggi')::int as tinggi,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'sedang')::int as sedang,
+                    count(*) filter (where lower(coalesce(k.level_atensi,'')) = 'biasa' or coalesce(k.level_atensi,'') = '')::int as biasa,
+                    count(*) filter (where lower(coalesce(k.status_atensi,'aktif')) = 'aktif')::int as aktif,
+                    count(*) filter (where lower(coalesce(k.status_atensi,'aktif')) = 'selesai')::int as selesai,
+                    coalesce((
+                        select count(*)::int
+                        from bdb_kasus_atensi_lp l_cnt
+                        join bdb_kasus_atensi k on k.id = l_cnt.kasus_atensi_id
+                        where ${summaryWhereSql}
+                    ), 0) as total_lp_terkait
+                 from bdb_kasus_atensi k
+                 where ${summaryWhereSql}`, summaryParams),
+            this.dataSource.query(`${this.buildBaseSelect()} where ${whereSql} ${orderBy} limit $${params.length + 1} offset $${params.length + 2}`, [...params, limit, offset])
+        ]);
+        const total = Number(totalRow?.[0]?.total || 0);
+        const s = summaryRow?.[0] || {};
+        const summary = {
+            total_all: Number(s.total_all || 0),
+            disematkan: Number(s.disematkan || 0),
+            tinggi: Number(s.tinggi || 0),
+            sedang: Number(s.sedang || 0),
+            biasa: Number(s.biasa || 0),
+            aktif: Number(s.aktif || 0),
+            selesai: Number(s.selesai || 0),
+            total_lp_terkait: Number(s.total_lp_terkait || 0)
+        };
+        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
+    }
+    async findOne(id, userId) {
+        await this.ensureTables();
+        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        const rows = await this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1 and k.deleted_at is null`, [id]);
+        const row = rows[0];
+        if (!row)
+            throw new common_1.NotFoundException('Kasus atensi tidak ditemukan.');
+        return row;
+    }
+    async listLp(kasusId, userId) {
+        await this.findOne(kasusId, userId); // scope-check
+        return this.dataSource.query(`select lp.id as lp_id, lp.no_laporan, lp.satker_nama, lp.unit_nama, lp.tgl_laporan,
+                    coalesce(sm.code,'LP') as status_code, coalesce(sm.nama,'Laporan Polisi') as status_nama
+             from bdb_kasus_atensi_lp l
+             join bdb_laporan_polisi lp on lp.id = l.lp_id
+             left join bdb_status_master sm on sm.id = lp.status_id
+             where l.kasus_atensi_id = $1
+             order by l.id`, [kasusId]);
+    }
+    async replaceLpLinks(kasusId, lpIds) {
+        await this.dataSource.query(`delete from bdb_kasus_atensi_lp where kasus_atensi_id = $1`, [kasusId]);
+        for (const lpId of lpIds) {
+            await this.dataSource.query(`insert into bdb_kasus_atensi_lp (kasus_atensi_id, lp_id) values ($1,$2) on conflict do nothing`, [kasusId, lpId]);
+        }
+    }
+    async create(userId, dto) {
+        await this.ensureTables();
+        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        let judul = this.toText(dto.judul);
+        if (!judul)
+            throw new common_1.BadRequestException('Judul wajib diisi.');
+        const lpIds = this.toLpIds(dto.lp_ids);
+        const lpRows = await this.validateLpIds(lpIds, scope);
+        judul = await this.enrichGenericTitle(judul, lpIds);
+        let satkerId = null;
+        if (lpRows.length)
+            satkerId = Number(lpRows[0].satker_id) || null;
+        else if (!scope.all)
+            satkerId = scope.satkerId;
+        const isPinned = this.toBoolean(dto.is_pinned);
+        const payload = {
+            judul,
+            sumber_atensi: this.toSumber(dto.sumber_atensi),
+            level_atensi: this.toLevel(dto.level_atensi),
+            tanggal_atensi: this.toDate(dto.tanggal_atensi),
+            status_atensi: this.toStatus(dto.status_atensi),
+            keterangan: this.toText(dto.keterangan),
+            is_pinned: isPinned,
+            pinned_at: isPinned ? new Date() : null,
+            satker_id: satkerId,
+            created_by: userId ?? null,
+            updated_by: userId ?? null
+        };
+        const keys = Object.keys(payload);
+        const rows = await this.dataSource.query(`insert into bdb_kasus_atensi (${keys.join(', ')}) values (${keys.map((_, i) => `$${i + 1}`).join(', ')}) returning id`, keys.map((k) => payload[k]));
+        const id = Number(rows[0].id);
+        if (lpIds.length)
+            await this.replaceLpLinks(id, lpIds);
+        return this.findOne(id, userId);
+    }
+    async isSuperAdminUser(userId) {
+        if (!userId) return false;
+        try {
+            const rows = await this.dataSource.query(`select lower(coalesce(role_bdb,'')) as role_bdb from auth_users where id = $1 limit 1`, [Number(userId)]);
+            return rows?.[0]?.role_bdb === 'superadmin';
+        } catch {
+            return false;
+        }
+    }
+    async restore(id, userId) {
+        await this.ensureTables();
+        const isSuper = await this.isSuperAdminUser(userId);
+        const rows = await this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1`, [id]);
+        const existing = rows?.[0];
+        if (!existing) throw new common_1.NotFoundException('Kasus atensi tidak ditemukan.');
+        if (!isSuper && Number(existing.created_by || 0) !== Number(userId || 0) && Number(existing.deleted_by || 0) !== Number(userId || 0)) {
+            throw new common_1.ForbiddenException('Hanya Superadmin atau pengaju yang dapat memulihkan data ini.');
+        }
+        await this.dataSource.query(
+            `update bdb_kasus_atensi
+             set deleted_at = null,
+                 delete_status = null,
+                 deleted_by = null,
+                 delete_reason = null,
+                 delete_requested_at = null,
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1`,
+            [id, userId ?? null]
+        );
+        return { status: 1, message: 'Data kasus atensi berhasil dipulihkan ke daftar aktif.' };
+    }
+    async approveDelete(id, userId) {
+        await this.ensureTables();
+        const isSuper = await this.isSuperAdminUser(userId);
+        if (!isSuper) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menyetujui permohonan hapus ke arsip.');
+        }
+        await this.dataSource.query(
+            `update bdb_kasus_atensi
+             set delete_status = 'ARCHIVED',
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1 and deleted_at is not null`,
+            [id, userId ?? null]
+        );
+        return { status: 1, message: 'Permohonan hapus disetujui dan dipindahkan ke Arsip Terhapus.' };
+    }
+    async permanentDelete(id, userId) {
+        await this.ensureTables();
+        const isSuper = await this.isSuperAdminUser(userId);
+        if (!isSuper) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menghapus data secara permanen dari arsip.');
+        }
+        await this.dataSource.query(`delete from bdb_kasus_atensi_lp where kasus_atensi_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_kasus_atensi_attachments where kasus_atensi_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_kasus_atensi where id = $1`, [id]);
+        return { status: 1, message: 'Data kasus atensi dihapus permanen dari arsip.' };
+    }
+    async update(id, userId, dto) {
+        await this.ensureTables();
+        if (dto && dto._action === 'RESTORE') return this.restore(id, userId);
+        if (dto && dto._action === 'APPROVE_DELETE') return this.approveDelete(id, userId);
+        if (dto && dto._action === 'PERMANENT_DELETE') return this.permanentDelete(id, userId);
+        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        const existing = await this.findOne(id, userId); // scope-checked
+        if (!scope.all && Number(existing.satker_id) !== scope.satkerId) {
+            throw new common_1.ForbiddenException('Tidak memiliki akses mengubah kasus ini.');
+        }
+        const lpIds = dto.lp_ids !== undefined ? this.toLpIds(dto.lp_ids) : null;
+        const lpRows = lpIds !== null ? await this.validateLpIds(lpIds, scope) : null;
+        let satkerId = existing.satker_id;
+        if (lpRows !== null) {
+            if (lpRows.length)
+                satkerId = Number(lpRows[0].satker_id) || null;
+            else if (!scope.all)
+                satkerId = scope.satkerId;
+            else
+                satkerId = null;
+        }
+        const payload = { updated_by: userId ?? null, satker_id: satkerId };
+        if (dto.judul !== undefined) {
+            let judul = this.toText(dto.judul);
+            if (!judul)
+                throw new common_1.BadRequestException('Judul wajib diisi.');
+            const targetLpIds = lpIds !== null ? lpIds : (await this.dataSource.query('select lp_id from bdb_kasus_atensi_lp where kasus_atensi_id = $1 limit 1', [id])).map((r) => r.lp_id);
+            judul = await this.enrichGenericTitle(judul, targetLpIds);
+            payload.judul = judul;
+        }
+        if (dto.sumber_atensi !== undefined)
+            payload.sumber_atensi = this.toSumber(dto.sumber_atensi);
+        if (dto.level_atensi !== undefined)
+            payload.level_atensi = this.toLevel(dto.level_atensi);
+        if (dto.tanggal_atensi !== undefined)
+            payload.tanggal_atensi = this.toDate(dto.tanggal_atensi);
+        if (dto.status_atensi !== undefined)
+            payload.status_atensi = this.toStatus(dto.status_atensi);
+        if (dto.keterangan !== undefined)
+            payload.keterangan = this.toText(dto.keterangan);
+        if (dto.is_pinned !== undefined) {
+            const nextPin = this.toBoolean(dto.is_pinned);
+            payload.is_pinned = nextPin;
+            payload.pinned_at = nextPin ? (existing.pinned_at || new Date()) : null;
+        }
+        const keys = Object.keys(payload);
+        const sets = keys.map((k, i) => `${k} = $${i + 1}`);
+        sets.push('updated_at = now()');
+        const params = keys.map((k) => payload[k]);
+        params.push(id);
+        await this.dataSource.query(`update bdb_kasus_atensi set ${sets.join(', ')} where id = $${params.length} and deleted_at is null`, params);
+        if (lpIds !== null)
+            await this.replaceLpLinks(id, lpIds);
+        return this.findOne(id, userId);
+    }
+    async setPin(id, userId, pinned) {
+        await this.ensureTables();
+        const existing = await this.findOne(id, userId);
+        const nextPin = pinned !== undefined && pinned !== null ? this.toBoolean(pinned) : !Boolean(existing.is_pinned);
+        await this.dataSource.query(`update bdb_kasus_atensi
+             set is_pinned = $2,
+                 pinned_at = case when $2 then now() else null end,
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1 and deleted_at is null`, [id, nextPin, userId ?? null]);
+        return this.findOne(id, userId);
+    }
+    async remove(id, userId, alasan) {
+        await this.ensureTables();
+        const [scope, isSuper] = await Promise.all([
+            (0, scope_util_1.resolveScope)(this.dataSource, userId),
+            this.isSuperAdminUser(userId)
+        ]);
+        const existing = await this.findOne(id, userId);
+        if (!isSuper && !scope.all && Number(existing.satker_id) !== scope.satkerId && Number(existing.created_by || 0) !== Number(userId || 0)) {
+            throw new common_1.ForbiddenException('Tidak memiliki akses menghapus kasus ini.');
+        }
+        const reason = this.toText(alasan) || (isSuper ? 'Dihapus ke arsip oleh Superadmin' : 'Permohonan hapus oleh pengelola data');
+        const nextStatus = isSuper ? 'ARCHIVED' : 'PENDING_DELETE';
+        await this.dataSource.query(
+            `update bdb_kasus_atensi
+             set deleted_at = now(),
+                 delete_status = $2,
+                 deleted_by = $3,
+                 delete_reason = $4,
+                 delete_requested_at = now(),
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1`,
+            [id, nextStatus, userId ?? null, reason]
+        );
+        return {
+            status: 1,
+            delete_status: nextStatus,
+            message: isSuper
+                ? 'Kasus atensi dipindahkan ke Arsip Terhapus.'
+                : 'Permohonan hapus berhasil dikirim dan ditampung di tab Permohonan Hapus & Arsip.'
+        };
+    }
+    // ===== Lampiran (MinIO) =====
+    async addAttachments(kasusId, userId, files) {
+        await this.findOne(kasusId, userId); // scope-check
+        if (!files?.length)
+            return this.listAttachments(kasusId, userId);
+        for (const f of files) {
+            const key = await this.minio.upload(f, 'kasus-atensi');
+            await this.dataSource.query(`insert into bdb_kasus_atensi_attachments (kasus_atensi_id, file_name, object_key, content_type, size) values ($1,$2,$3,$4,$5)`, [kasusId, f.originalname, key, f.mimetype || null, f.size || null]);
+        }
+        return this.listAttachments(kasusId, userId);
+    }
+    async listAttachments(kasusId, userId) {
+        await this.findOne(kasusId, userId); // scope-check
+        const rows = await this.dataSource.query(`select id, file_name, object_key, content_type, size, created_at from bdb_kasus_atensi_attachments where kasus_atensi_id = $1 order by id desc`, [kasusId]);
+        const data = [];
+        for (const r of rows) {
+            let url = null;
+            try {
+                url = await this.minio.presignedUrl(r.object_key, 3600);
+            }
+            catch {
+                url = null;
+            }
+            data.push({ id: r.id, file_name: r.file_name, content_type: r.content_type, size: r.size, created_at: r.created_at, url });
+        }
+        return { status: 1, data };
+    }
+    async removeAttachment(attId, userId) {
+        const rows = await this.dataSource.query(`select kasus_atensi_id, object_key from bdb_kasus_atensi_attachments where id = $1`, [attId]);
+        if (!rows.length)
+            throw new common_1.NotFoundException('Lampiran tidak ditemukan.');
+        await this.findOne(Number(rows[0].kasus_atensi_id), userId); // scope-check
+        try {
+            await this.minio.remove(rows[0].object_key);
+        }
+        catch {
+            /* biarkan hapus metadata walau objek gagal dihapus */
+        }
+        await this.dataSource.query(`delete from bdb_kasus_atensi_attachments where id = $1`, [attId]);
+        return { status: 1, message: 'Lampiran dihapus.' };
+    }
+};
+exports.BdbKasusAtensiService = BdbKasusAtensiService;
+exports.BdbKasusAtensiService = BdbKasusAtensiService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _b : Object])
+], BdbKasusAtensiService);

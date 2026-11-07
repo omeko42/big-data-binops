@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BdbOperasiSatgasService = void 0;
 const common_1 = require("@nestjs/common");
@@ -18,13 +19,11 @@ const lp_scope_util_1 = require("../common/lp-scope.util");
 const id_cipher_util_1 = require("../laporan-polisi/id-cipher.util");
 const laporan_polisi_service_1 = require("../laporan-polisi/laporan-polisi.service");
 let BdbOperasiSatgasService = class BdbOperasiSatgasService {
-    dataSource;
-    minio;
-    laporanPolisiService;
     constructor(dataSource, minio, laporanPolisiService) {
         this.dataSource = dataSource;
         this.minio = minio;
         this.laporanPolisiService = laporanPolisiService;
+        this.tableEnsured = false;
     }
     async actor(userId) {
         const id = Number(userId || 0);
@@ -102,11 +101,11 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
             await this.minio.remove(rows[0].object_key);
         }
         catch {
+            /* biarkan hapus metadata walau objek gagal dihapus */
         }
         await this.dataSource.query(`delete from bdb_operasi_satgas_attachments where id = $1`, [attId]);
         return { status: 1, message: 'Lampiran dihapus' };
     }
-    tableEnsured = false;
     async ensureTable() {
         if (this.tableEnsured)
             return;
@@ -131,11 +130,15 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
                 deleted_at timestamptz
             );
         `);
+        // jenis_kategori = sub-klasifikasi opsional (mis. "Operasi Tangkap", "Satgas Anti Narkoba"),
+        // beda dari kolom `jenis` (yg cuma diskriminator OPERASI/SATGAS) -- lihat ensureJenisMasterTable().
         await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists jenis_kategori text;`);
-        await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists is_pinned boolean not null default false, add column if not exists pinned_at timestamptz;`);
+        await this.dataSource.query(`alter table bdb_operasi_satgas add column if not exists is_pinned boolean not null default false, add column if not exists pinned_at timestamptz, add column if not exists delete_status text, add column if not exists deleted_by bigint, add column if not exists delete_reason text, add column if not exists delete_requested_at timestamptz;`);
+        await this.dataSource.query(`update bdb_operasi_satgas set delete_status = 'ARCHIVED' where deleted_at is not null and delete_status is null;`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_deleted on bdb_operasi_satgas(deleted_at);`);
         await this.dataSource.query(`create index if not exists idx_operasi_satgas_jenis on bdb_operasi_satgas(jenis);`);
     }
+    /** Master ringan "Jenis Operasi"/"Jenis Satgas" (dropdown opsional, dapat ditambah bebas dari form). */
     async ensureJenisMasterTable() {
         await this.dataSource.query(`
             create table if not exists bdb_operasi_satgas_jenis (
@@ -153,6 +156,7 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const rows = await this.dataSource.query(`select id, nama from bdb_operasi_satgas_jenis where kelompok = $1 order by nama`, [k]);
         return { status: 1, data: rows };
     }
+    /** Idempotent -- dipanggil dari create/update kalau user mengetik kategori baru yg belum ada di master. */
     async ensureJenisMasterValue(kelompok, nama) {
         if (!nama)
             return;
@@ -189,8 +193,10 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
             nama: this.toText(source.nama),
             jenis_kategori: this.toText(source.jenis_kategori),
             nomor_dasar: this.toText(source.nomor_dasar),
-            tanggal_dibentuk: (() => { const d = this.toDate(source.tanggal_dibentuk); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (d && d > td) throw new common_1.BadRequestException('Tanggal dibentuk tidak boleh di masa depan (melebihi hari ini).'); return d; })(),
-            tanggal_mulai: (() => { const d = this.toDate(source.tanggal_mulai); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (d && d > td) throw new common_1.BadRequestException('Periode mulai tidak boleh di masa depan (melebihi hari ini).'); return d; })(),
+            tanggal_dibentuk: (() => { const d = this.toDate(source.tanggal_dibentuk); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (d && d > td)
+                throw new common_1.BadRequestException('Tanggal dibentuk tidak boleh di masa depan (melebihi hari ini).'); return d; })(),
+            tanggal_mulai: (() => { const d = this.toDate(source.tanggal_mulai); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (d && d > td)
+                throw new common_1.BadRequestException('Periode mulai tidak boleh di masa depan (melebihi hari ini).'); return d; })(),
             tanggal_selesai: this.toDate(source.tanggal_selesai),
             satker_penyelenggara: this.toText(source.satker_penyelenggara),
             pimpinan: this.toText(source.pimpinan),
@@ -269,7 +275,12 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
                       )
                     where nullif(trim(x.token),'') is not null
                 ) as satker_depth,
-                created_by, updated_by, created_at, updated_at
+                created_by, updated_by, created_at, updated_at,
+                deleted_at, delete_status, deleted_by, delete_reason, delete_requested_at,
+                (select u.username from auth_users u where u.id = bdb_operasi_satgas.created_by limit 1) as created_by_username,
+                (select u.name from auth_users u where u.id = bdb_operasi_satgas.created_by limit 1) as created_by_name,
+                (select u.username from auth_users u where u.id = bdb_operasi_satgas.deleted_by limit 1) as deleted_by_username,
+                (select u.name from auth_users u where u.id = bdb_operasi_satgas.deleted_by limit 1) as deleted_by_name
             from bdb_operasi_satgas
         `;
     }
@@ -280,7 +291,20 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 100));
         const offset = (page - 1) * limit;
         const params = [];
-        const innerWhere = ['deleted_at is null'];
+        const deletedMode = String(query.deleted_mode || '').trim().toUpperCase();
+        const innerWhere = [];
+        if (deletedMode === 'PENDING_DELETE') {
+            innerWhere.push(`deleted_at is not null and coalesce(delete_status, 'ARCHIVED') = 'PENDING_DELETE'`);
+        }
+        else if (deletedMode === 'ARCHIVED') {
+            innerWhere.push(`deleted_at is not null and coalesce(delete_status, 'ARCHIVED') = 'ARCHIVED'`);
+        }
+        else if (deletedMode === 'ALL_DELETED') {
+            innerWhere.push(`deleted_at is not null`);
+        }
+        else {
+            innerWhere.push('deleted_at is null');
+        }
         const search = this.toText(query.search);
         if (search) {
             params.push(`%${search.toLowerCase()}%`);
@@ -314,6 +338,7 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         }
         return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) } };
     }
+    /** Register LP yang sudah ditautkan ke operasi/satgas (diisi dari input di detail LP). */
     async rekapLp(userId, query = {}) {
         await this.ensureTable();
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
@@ -388,6 +413,7 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
             throw new common_1.NotFoundException('Data operasi/satgas tidak ditemukan');
         return rows[0];
     }
+    /** LP yang saat ini tertaut ke operasi/satgas ini -- dipakai isi awal LpPickerDialog di halaman ini. */
     async listLinkedLp(id) {
         await this.ensureTable();
         const rows = await this.dataSource.query(`select lp.id, lp.no_laporan, lp.satker_nama, lp.unit_nama, coalesce(sm.nama, 'Laporan Polisi') as status_nama
@@ -397,6 +423,12 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
              order by lp.no_laporan`, [id]);
         return { status: 1, data: rows };
     }
+    /**
+     * Samakan LP yang tertaut ke operasi/satgas ini dgn daftar lp_ids yg dipilih di LpPickerDialog
+     * (model sama spt halaman Kasus Menonjol/Susjol) -- LP baru ditautkan, LP yg dihapus dari
+     * pilihan dilepas. Pakai LaporanPolisiService.setOperasiSatgas() per LP (sudah ada validasi
+     * scope satker & status aktif operasi/satgas), bukan query massal langsung.
+     */
     async setLinkedLp(id, lpIds, userId) {
         const actor = await this.actor(userId);
         this.assertNotViewer(actor);
@@ -446,8 +478,61 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         const rows = await this.dataSource.query(`insert into bdb_operasi_satgas (${columns}) values (${values}) returning id`, params);
         return this.findOne(Number(rows[0].id));
     }
+    async restore(id, userId) {
+        await this.ensureTable();
+        const actor = await this.actor(userId);
+        const rows = await this.dataSource.query(`select * from (${this.buildBaseSelect()}) o where id = $1`, [id]);
+        const existing = rows?.[0];
+        if (!existing) throw new common_1.NotFoundException('Data operasi/satgas tidak ditemukan');
+        if (!actor.isSuper && Number(existing.created_by || 0) !== Number(actor.id || 0) && Number(existing.deleted_by || 0) !== Number(actor.id || 0)) {
+            throw new common_1.ForbiddenException('Hanya Superadmin atau pengaju yang dapat memulihkan data ini.');
+        }
+        await this.dataSource.query(
+            `update bdb_operasi_satgas
+             set deleted_at = null,
+                 delete_status = null,
+                 deleted_by = null,
+                 delete_reason = null,
+                 delete_requested_at = null,
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1`,
+            [id, actor.id]
+        );
+        return { status: 1, message: 'Data Operasi/Satgas berhasil dipulihkan ke daftar aktif.' };
+    }
+    async approveDelete(id, userId) {
+        await this.ensureTable();
+        const actor = await this.actor(userId);
+        if (!actor.isSuper) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menyetujui permohonan hapus ke arsip.');
+        }
+        await this.dataSource.query(
+            `update bdb_operasi_satgas
+             set delete_status = 'ARCHIVED',
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1 and deleted_at is not null`,
+            [id, actor.id]
+        );
+        return { status: 1, message: 'Permohonan hapus disetujui dan dipindahkan ke Arsip Terhapus.' };
+    }
+    async permanentDelete(id, userId) {
+        await this.ensureTable();
+        const actor = await this.actor(userId);
+        if (!actor.isSuper) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menghapus data secara permanen dari arsip.');
+        }
+        await this.dataSource.query(`update bdb_laporan_polisi set operasi_satgas_id = null where operasi_satgas_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_operasi_satgas_attachments where operasi_satgas_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_operasi_satgas where id = $1`, [id]);
+        return { status: 1, message: 'Data Operasi/Satgas dihapus permanen dari arsip.' };
+    }
     async update(id, dto, userId) {
         await this.ensureTable();
+        if (dto && dto._action === 'RESTORE') return this.restore(id, userId);
+        if (dto && dto._action === 'APPROVE_DELETE') return this.approveDelete(id, userId);
+        if (dto && dto._action === 'PERMANENT_DELETE') return this.permanentDelete(id, userId);
         const actor = await this.actor(userId);
         this.assertNotViewer(actor);
         const existing = await this.findOne(id);
@@ -466,6 +551,7 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         await this.dataSource.query(`update bdb_operasi_satgas set ${sets.join(', ')} where id = $${params.length} and deleted_at is null`, params);
         return this.findOne(id);
     }
+    /** Toggle "Off"/"On" -- override manual, lepas dari status periode tanggal. */
     async setAktif(id, aktif, userId) {
         await this.ensureTable();
         const actor = await this.actor(userId);
@@ -474,6 +560,7 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         await this.dataSource.query('update bdb_operasi_satgas set is_aktif = $2, updated_by = $3, updated_at = now() where id = $1', [id, aktif, actor.id]);
         return this.findOne(id);
     }
+    /** Toggle "Sematkan" (Pin) -- otomatis menjadi Rank #1 di daftar & dashboard. */
     async setPin(id, pinned, userId) {
         await this.ensureTable();
         const actor = await this.actor(userId);
@@ -497,23 +584,33 @@ let BdbOperasiSatgasService = class BdbOperasiSatgasService {
         if (!actor.isSuper && ownerId !== actor.id) {
             throw new common_1.ForbiddenException('Hanya pembuat Operasi/Satgas atau superadmin yang dapat menghapus data ini.');
         }
-        const reason = this.toText(alasan) || 'Penghapusan melalui menu Operasi/Satgas';
+        const reason = this.toText(alasan) || (actor.isSuper ? 'Dihapus ke arsip oleh Superadmin' : 'Permohonan hapus melalui menu Operasi/Satgas');
+        const nextStatus = actor.isSuper ? 'ARCHIVED' : 'PENDING_DELETE';
         await this.dataSource.transaction(async (manager) => {
             await manager.query(`update bdb_operasi_satgas
-                 set deleted_at = now(), updated_by = $2, updated_at = now()
-                 where id = $1 and deleted_at is null`, [id, actor.id]);
+                 set deleted_at = now(),
+                     delete_status = $2,
+                     deleted_by = $3,
+                     delete_reason = $4,
+                     delete_requested_at = now(),
+                     updated_by = $3,
+                     updated_at = now()
+                 where id = $1 and deleted_at is null`, [id, nextStatus, actor.id, reason]);
             await manager.query(`insert into bdb_audit_log
                     (user_id,user_nama,action,entity,entity_id,meta,outcome)
-                 values ($1,$2,'DELETE_OWNED_OPERASI_SATGAS','bdb_operasi_satgas',$3,$4::jsonb,'SUCCESS')`, [actor.id, actor.name, String(id), JSON.stringify({ alasan: reason, before: existing })]);
+                 values ($1,$2,'DELETE_OWNED_OPERASI_SATGAS','bdb_operasi_satgas',$3,$4::jsonb,'SUCCESS')`, [actor.id, actor.name, String(id), JSON.stringify({ alasan: reason, delete_status: nextStatus, before: existing })]);
         });
-        return { status: 1, message: 'Operasi/Satgas dihapus' };
+        return {
+            status: 1,
+            delete_status: nextStatus,
+            message: actor.isSuper
+                ? 'Operasi/Satgas dipindahkan ke Arsip Terhapus.'
+                : 'Permohonan hapus berhasil dikirim dan ditampung di tab Permohonan Hapus & Arsip.'
+        };
     }
 };
 exports.BdbOperasiSatgasService = BdbOperasiSatgasService;
 exports.BdbOperasiSatgasService = BdbOperasiSatgasService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        minio_service_1.MinioService,
-        laporan_polisi_service_1.LaporanPolisiService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _b : Object, typeof (_c = typeof laporan_polisi_service_1.LaporanPolisiService !== "undefined" && laporan_polisi_service_1.LaporanPolisiService) === "function" ? _c : Object])
 ], BdbOperasiSatgasService);
-//# sourceMappingURL=bdb-operasi-satgas.service.js.map

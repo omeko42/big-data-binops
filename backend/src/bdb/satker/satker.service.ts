@@ -36,7 +36,25 @@ export class SatkerService implements OnModuleInit {
 
     private tableEnsured = false;
     async ensureTable() {
-        return;
+        if (this.tableEnsured) return;
+        this.tableEnsured = true;
+        try {
+            const cols = await this.dataSource.query(`
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'bdb_satker'
+                  AND column_name IN ('nama_dors', 'nama_canonical', 'singkatan_canonical')
+            `);
+            if (!Array.isArray(cols) || cols.length < 3) {
+                await this.dataSource.query(`
+                    ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS nama_dors TEXT;
+                    ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS nama_canonical TEXT;
+                    ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS singkatan_canonical TEXT;
+                `);
+            }
+        } catch (e: any) {
+            this.logger.warn('ensureTable canonical columns warn: ' + (e?.message || e));
+        }
     }
 
     // kolom alamat/lokasi yang bisa dikelola manual (operator/admin_binops self-service jg boleh)
@@ -423,11 +441,19 @@ export class SatkerService implements OnModuleInit {
         const dup = await this.dataSource.query('select id, deskripsi from bdb_satker where kode_canonical=$1', [canon]);
         if (dup.length) throw new BadRequestException(`Kode ${kode} sudah dipakai: ${dup[0].deskripsi}.`);
         const extraCols = SatkerService.EXTRA_COLS;
-        const insCols = ['kode', 'kode_canonical', 'deskripsi', ...extraCols, 'keanggotaan', 'fungsi', 'kinerja_aktif', 'urutan'];
+        const rawDesc = (body.nama_canonical || body.deskripsi || '').trim();
+        const namaCanonical = this.cellVal(body.nama_canonical) || rawDesc;
+        const namaDors = this.cellVal(body.nama_dors) || body.deskripsi.trim();
+        const singkatanCanonical = this.cellVal(body.singkatan_canonical ?? body.singkatan) || namaCanonical;
+        const insCols = ['kode', 'kode_canonical', 'deskripsi', 'nama_dors', 'nama_canonical', 'singkatan_canonical', 'singkatan', ...extraCols, 'keanggotaan', 'fungsi', 'kinerja_aktif', 'urutan'];
         const insVals = [
             kode,
             canon,
-            body.deskripsi.trim(),
+            rawDesc,
+            namaDors,
+            namaCanonical,
+            singkatanCanonical,
+            singkatanCanonical,
             ...extraCols.map((c) => this.cellVal((body as any)[c])),
             this.validKlasifikasi('keanggotaan', body.keanggotaan),
             this.validKlasifikasi('fungsi', body.fungsi),
@@ -505,6 +531,20 @@ export class SatkerService implements OnModuleInit {
         }
         const sets = ['kode=$1', 'kode_canonical=$2', 'deskripsi=coalesce($3, deskripsi)'];
         const vals: any[] = [kode, canon, deskripsi ?? null];
+        if ('nama_dors' in body) {
+            vals.push(this.cellVal(body.nama_dors));
+            sets.push(`nama_dors=$${vals.length}`);
+        }
+        if ('nama_canonical' in body || deskripsi !== undefined) {
+            vals.push('nama_canonical' in body ? (this.cellVal(body.nama_canonical) ?? deskripsi ?? null) : (deskripsi ?? null));
+            sets.push(`nama_canonical=coalesce($${vals.length}, nama_canonical, deskripsi)`);
+        }
+        if ('singkatan_canonical' in body || 'singkatan' in body) {
+            const sc = this.cellVal(body.singkatan_canonical ?? body.singkatan);
+            vals.push(sc);
+            sets.push(`singkatan_canonical=$${vals.length}`);
+            sets.push(`singkatan=coalesce($${vals.length}, singkatan)`);
+        }
         for (const c of SatkerService.EXTRA_COLS) {
             if (c in body) {
                 vals.push(this.cellVal(body[c]));
@@ -634,12 +674,12 @@ export class SatkerService implements OnModuleInit {
         const id = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
         const rows = id
             ? await this.dataSource.query(
-                  `select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+                  `select id, kode, deskripsi, singkatan, nama_dors, nama_canonical, singkatan_canonical, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
                    from bdb_satker where id=$1`,
                   [id]
               )
             : await this.dataSource.query(
-                  `select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+                  `select id, kode, deskripsi, singkatan, nama_dors, nama_canonical, singkatan_canonical, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
                    from bdb_satker where kode='01' or is_root=true order by (kode='01') desc, is_root desc, id asc limit 1`
               );
         if (!rows.length) throw new NotFoundException('Satker Anda tidak ditemukan di master data.');
@@ -749,16 +789,16 @@ export class SatkerService implements OnModuleInit {
         let where = 'where s.is_synthetic=false';
         if (opts.search && opts.search.trim()) {
             params.push(`%${opts.search.trim()}%`);
-            where += ` and (lower(s.deskripsi) like lower($${params.length}) or lower(coalesce(s.singkatan, '')) like lower($${params.length}) or s.kode like $${params.length} or s.dors_kode like $${params.length})`;
+            where += ` and (lower(s.deskripsi) like lower($${params.length}) or lower(coalesce(s.nama_dors, '')) like lower($${params.length}) or lower(coalesce(s.nama_canonical, '')) like lower($${params.length}) or lower(coalesce(s.singkatan_canonical, s.singkatan, '')) like lower($${params.length}) or s.kode like $${params.length} or s.dors_kode like $${params.length})`;
         }
         const totalRow = await this.dataSource.query(`select count(*)::int c from bdb_satker s ${where}`, params);
         const total = totalRow[0]?.c || 0;
         params.push(row, offset);
         const rows = await this.dataSource.query(
-            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth, s.source,
+            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth, s.source,
                 s.alamat, s.provinsi, s.kabupaten_kota, s.kecamatan, s.desa, s.kode_pos, s.longitude, s.latitude, s.jumlah_penduduk,
                 s.keanggotaan, s.fungsi, s.kinerja_aktif, s.dors_kode, s.tipe_satker, s.urutan,
-                p.deskripsi as parent_deskripsi, p.singkatan as parent_singkatan, p.kode as parent_kode,
+                p.deskripsi as parent_deskripsi, p.singkatan as parent_singkatan, p.nama_canonical as parent_nama_canonical, p.singkatan_canonical as parent_singkatan_canonical, p.kode as parent_kode,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id) as child_count
              from bdb_satker s
              left join bdb_satker p on p.id=s.parent_id
@@ -812,7 +852,7 @@ export class SatkerService implements OnModuleInit {
     async roots() {
         await this.ensureTable();
         const rows = await this.dataSource.query(
-            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth,
+            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth,
                 exists(select 1 from bdb_satker c where c.parent_id=s.id) as has_children,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id) as child_count
              from bdb_satker s where s.is_root=true order by s.id`
@@ -998,7 +1038,7 @@ export class SatkerService implements OnModuleInit {
         }
 
         const rows = await this.dataSource.query(
-            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth, s.parent_id,
+            `select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth, s.parent_id,
                 exists(select 1 from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as has_children,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as child_count
              from bdb_satker s
@@ -1046,7 +1086,7 @@ export class SatkerService implements OnModuleInit {
             const total = countRows[0]?.c ? Number(countRows[0].c) : 0;
             params.push(cleanLimit, offset);
             const extRows = await this.dataSource.query(
-                'select e.id, null as kode, e.nama as deskripsi, e.nama as singkatan, 0 as depth, \'EKSTERNAL\' as tipe_satker, ' +
+                'select e.id, null as kode, e.nama as deskripsi, e.nama as singkatan, e.nama as nama_dors, e.nama as nama_canonical, e.nama as singkatan_canonical, 0 as depth, \'EKSTERNAL\' as tipe_satker, ' +
                 '\'NOT_APPLICABLE\' as function_domain, \'EKSTERNAL_POLRI\' as organization_domain, ' +
                 'e.nama as jalur, array[e.id] as path_ids ' +
                 'from bdb_satker_eksternal e ' +
@@ -1129,17 +1169,17 @@ export class SatkerService implements OnModuleInit {
 
             cteAllowed =
                 "with recursive sub as (" +
-                "select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
+                "select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                 "from bdb_satker s " +
                 "where s.id = $" + pTerr + " or s.id = $" + pActor + " " +
                 "union all " +
-                "select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
+                "select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                 "from bdb_satker s " +
                 "join sub on s.parent_id = sub.id" +
                 "), " +
                 "pool as (" +
                 "select distinct on (s.id) " +
-                "s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, " +
+                "s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                 "case " +
                 "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
@@ -1169,7 +1209,7 @@ export class SatkerService implements OnModuleInit {
             cteAllowed =
                 "with pool as (" +
                 "select " +
-                "s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, " +
+                "s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, " +
                 "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                 "case " +
                 "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
@@ -1338,6 +1378,9 @@ export class SatkerService implements OnModuleInit {
                         '(' +
                         'lower(s.deskripsi) like lower($' + pRaw + ') ' +
                         'or lower(coalesce(s.singkatan, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.nama_dors, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.nama_canonical, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.singkatan_canonical, \'\')) like lower($' + pRaw + ') ' +
                         'or replace(replace(lower(s.deskripsi), \'dan\', \'\'), \' \', \'\') like lower($' + pClean + ') ' +
                         'or s.kode like $' + pRaw + ' ' +
                         'or coalesce(s.dors_kode, \'\') like $' + pRaw +
@@ -1380,7 +1423,7 @@ export class SatkerService implements OnModuleInit {
         const sql =
             cteAllowed +
             'filtered as (' +
-            'select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
+            'select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
             'count(*) over()::int as full_count ' +
             'from ' + fromSource + ' ' +
             whereSql + ' ' +
@@ -1390,7 +1433,7 @@ export class SatkerService implements OnModuleInit {
             'order by depth, coalesce(kode_canonical, kode) ' +
             'limit ' + limitParam + ' offset ' + offsetParam + ' ' +
             ') ' +
-            'select p.id, p.kode, p.deskripsi, p.singkatan, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
+            'select p.id, p.kode, p.deskripsi, p.singkatan, p.nama_dors, p.nama_canonical, p.singkatan_canonical, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
             '(with recursive up(id,kode,deskripsi,parent_id,lvl) as (' +
             'select s.id,s.kode,s.deskripsi,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
             'union all select s.id,s.kode,s.deskripsi,s.parent_id,up.lvl+1 from bdb_satker s join up on s.id=up.parent_id' +

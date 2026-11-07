@@ -177,6 +177,191 @@
       return "/bdb/kasus-menonjol";
     }
 
+    function parseJwtPayloadSafe(tokenStr) {
+      try {
+        if (!tokenStr || typeof tokenStr !== "string") return null;
+        var parts = tokenStr.split(".");
+        if (parts.length < 2) return null;
+        var b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4 !== 0) b64 += "=";
+        return JSON.parse(atob(b64));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function getActiveSessionUser() {
+      try {
+        if (typeof window === "undefined" || !window.localStorage) return null;
+        var parsedUser = null;
+        var keys = ["user", "cas_auth_user", "bdb_user"];
+        for (var i = 0; i < keys.length; i++) {
+          var raw = window.localStorage.getItem(keys[i]);
+          if (!raw) continue;
+          try {
+            var obj = JSON.parse(raw);
+            if (obj && typeof obj === "object") {
+              parsedUser = obj.user && typeof obj.user === "object" ? obj.user : obj;
+              break;
+            }
+          } catch (e) {}
+        }
+        var activeToken = window.localStorage.getItem("auth.access_token") || "";
+        if (!activeToken) {
+          try {
+            var rawAuth = JSON.parse(window.localStorage.getItem("auth") || "null");
+            if (rawAuth && rawAuth.access_token) activeToken = rawAuth.access_token;
+          } catch (e) {}
+        }
+        var jwtPayload = parseJwtPayloadSafe(activeToken);
+        if (jwtPayload && typeof jwtPayload === "object") {
+          if (!parsedUser) {
+            return {
+              id: jwtPayload.sub || jwtPayload.id || null,
+              username: jwtPayload.username || null,
+              role_bdb: jwtPayload.role_bdb || null,
+              role_name: jwtPayload.role || jwtPayload.role_name || null,
+              scope_type: jwtPayload.scope_type || null,
+              scope_satker_id: jwtPayload.scope_satker_id || null,
+              satker: jwtPayload.satker || jwtPayload.scope_satker_name || null
+            };
+          }
+          var merged = Object.assign({}, parsedUser);
+          if (jwtPayload.sub && (!merged.id || Number(merged.id) !== Number(jwtPayload.sub))) {
+            merged.id = jwtPayload.sub;
+          }
+          if (jwtPayload.username && (!merged.username || String(merged.username) !== String(jwtPayload.username))) {
+            merged.username = jwtPayload.username;
+          }
+          if (jwtPayload.role_bdb) {
+            merged.role_bdb = jwtPayload.role_bdb;
+          }
+          if (jwtPayload.scope_satker_id !== undefined && jwtPayload.scope_satker_id !== null) {
+            merged.scope_satker_id = jwtPayload.scope_satker_id;
+          }
+          return merged;
+        }
+        return parsedUser;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function isStrictSuperAdminUser(userObj) {
+      var u = userObj || getActiveSessionUser();
+      if (!u || typeof u !== "object") return false;
+      var roleBdb = String(u.role_bdb || u.bdb_role || "").trim().toLowerCase();
+      var roleName = String(u.role?.role_name || u.role_name || (typeof u.role === "string" ? u.role : "") || "").trim().toLowerCase();
+      var username = String(u.username || "").trim().toLowerCase();
+      if (
+        roleBdb === "testing" ||
+        roleBdb === "vendor_mitra" ||
+        roleName.indexOf("testing") !== -1 ||
+        roleName.indexOf("vendor") !== -1 ||
+        username === "testing" ||
+        username.indexOf("testing_") === 0 ||
+        username.indexOf("vendor_") === 0
+      ) {
+        return false;
+      }
+      if (roleBdb) {
+        return roleBdb === "superadmin";
+      }
+      return roleName === "superadmin" || roleName === "super admin" || roleName === "super_admin";
+    }
+
+    function isReadOnlyUser(userObj) {
+      var u = userObj || getActiveSessionUser();
+      if (!u || typeof u !== "object") return true;
+      var roleBdb = String(u.role_bdb || u.bdb_role || "").trim().toLowerCase();
+      var roleName = String(u.role?.role_name || u.role_name || (typeof u.role === "string" ? u.role : "") || "").trim().toLowerCase();
+      var username = String(u.username || "").trim().toLowerCase();
+      if (
+        roleBdb === "testing" ||
+        roleBdb === "vendor_mitra" ||
+        roleBdb === "viewer" ||
+        roleBdb === "sharese" ||
+        roleName.indexOf("testing") !== -1 ||
+        roleName.indexOf("vendor") !== -1 ||
+        username === "testing" ||
+        username.indexOf("testing_") === 0 ||
+        username.indexOf("vendor_") === 0
+      ) {
+        return true;
+      }
+      if (!isStrictSuperAdminUser(u) && (roleName === "viewer" || roleName === "sharese")) {
+        return true;
+      }
+      return false;
+    }
+
+    function normalizeSatkerCompareKey(rawVal) {
+      if (!rawVal) return "";
+      var norm = String( normalizeSatkerKamus(String(rawVal || "").trim()) || rawVal || "" )
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+      var genericLabels = [
+        "",
+        "-",
+        "bareskrim polri",
+        "satker jajaran polri",
+        "mabes polri",
+        "polri",
+        "tipidum",
+        "tipideksus",
+        "tipidkor",
+        "tipidter",
+        "tipidsiber",
+        "narkoba",
+        "ppa ppo"
+      ];
+      if (genericLabels.indexOf(norm) !== -1) return "";
+      return norm;
+    }
+
+    function canManageRow(row, userObj) {
+      if (!row || typeof row !== "object") return false;
+      var u = userObj || getActiveSessionUser();
+      if (!u || isReadOnlyUser(u)) return false;
+      if (isStrictSuperAdminUser(u)) return true;
+      if (row.can_manage === true) return true;
+
+      var currentUserId = Number(u.id || u.user_id || u.sub || 0);
+      var rowCreatorId = Number(row.created_by || row.uploaded_by || row.user_id || row.pembuat_id || row.author_id || 0);
+      if (currentUserId > 0 && rowCreatorId > 0 && currentUserId === rowCreatorId) {
+        return true;
+      }
+
+      var currentUsername = String(u.username || u.email || "").trim().toLowerCase();
+      var rowCreatorUsername = String(
+        row.created_by_username || row.uploaded_by_username || row.creator_username || row.username || ""
+      ).trim().toLowerCase();
+      if (currentUsername && rowCreatorUsername && currentUsername === rowCreatorUsername) {
+        return true;
+      }
+
+      var userSatkerId = Number(u.scope_satker_id || u.satker_id || 0);
+      var rowSatkerId = Number(row.satker_id || row.satker_penyelenggara_id || 0);
+      if (userSatkerId > 0 && rowSatkerId > 0) {
+        return userSatkerId === rowSatkerId;
+      }
+
+      if (row.can_manage === false) return false;
+      if (rowCreatorId > 0 && currentUserId > 0 && rowCreatorId !== currentUserId) {
+        return false;
+      }
+
+      var userSatkerKey = normalizeSatkerCompareKey(u.scope_satker_name || u.satker || u.satker_nama || "");
+      var rowSatkerKey = normalizeSatkerCompareKey(row.satker_nama || row.satker_penyelenggara || "");
+      if (userSatkerKey && rowSatkerKey && userSatkerKey === rowSatkerKey) {
+        return true;
+      }
+
+      return false;
+    }
+
     // Fetchers
     var fetchSusjol = useCallback(async function() {
       var f = tabFilters.SUSJOL;
@@ -379,6 +564,10 @@
 
     async function handleQuickSprinUpload() {
       if (!sprinQuickRow) return;
+      if (!canManageRow(sprinQuickRow)) {
+        alert("Hanya Superadmin dan Pengupload yang dapat menambahkan revisi Sprin pada data ini.");
+        return;
+      }
       if (!sprinNomor.trim() && !sprinFiles.length) {
         alert("Harap isi Nomor Sprin atau pilih file PDF Sprin.");
         return;
@@ -541,6 +730,8 @@
       return Object.entries(map).sort(function(a, b) { return b[1] - a[1]; });
     }, [drillLps]);
 
+    var _drillPage = useState(1), drillPage = _drillPage[0], setDrillPage = _drillPage[1];
+    var _drillRows = useState(25), drillRows = _drillRows[0], setDrillRows = _drillRows[1];
     var filteredDrillLps = useMemo(function() {
       var q = drillSearch.trim().toLowerCase();
       return drillLps.filter(function(lp) {
@@ -554,6 +745,10 @@
         return true;
       });
     }, [drillLps, drillStatusFilter, drillSatkerFilter, drillSearch]);
+    var drillTotalPages = Math.max(1, Math.ceil(filteredDrillLps.length / Math.max(1, Number(drillRows) || 25)));
+    var safeDrillPage = Math.min(Math.max(1, Number(drillPage) || 1), drillTotalPages);
+    var drillRowOffset = (safeDrillPage - 1) * Math.max(1, Number(drillRows) || 25);
+    var pagedDrillLps = filteredDrillLps.slice(drillRowOffset, drillRowOffset + Math.max(1, Number(drillRows) || 25));
 
     var drillSprinList = useMemo(function() {
       return drillAtts.filter(function(x) { return String(x.kategori_lampiran || "").toUpperCase() === "SPRIN"; });
@@ -573,6 +768,120 @@
       { key: "GABUNGAN", icon: "pi pi-chart-bar", label: "Semua Gabungan (Susopsgas)", count: (susjolTotal + atensiTotal + opsTotal), color: "#059669", bgActive: "linear-gradient(135deg, #059669, #047857)" }
     ];
 
+    function renderSusopsgasPagination(pageVal, rowsVal, totalVal, onChangePage, onChangeRows) {
+      var totalRec = Math.max(0, Number(totalVal) || 0);
+      var rpp = Math.max(1, Number(rowsVal) || 25);
+      var tPages = Math.max(1, Math.ceil(totalRec / rpp));
+      var pCur = Math.min(Math.max(1, Number(pageVal) || 1), tPages);
+      var startRec = totalRec === 0 ? 0 : (pCur - 1) * rpp + 1;
+      var endRec = Math.min(totalRec, pCur * rpp);
+      var winStart = Math.max(1, Math.min(pCur - 2, Math.max(1, tPages - 4)));
+      var winEnd = Math.min(tPages, winStart + 4);
+      var pageNums = [];
+      for (var p = winStart; p <= winEnd; p++) pageNums.push(p);
+      var btnBase = {
+        minWidth: "34px",
+        height: "34px",
+        padding: "0 0.55rem",
+        borderRadius: "8px",
+        border: "1px solid var(--cas-border, #cbd5e1)",
+        background: "var(--cas-bg-surface, #ffffff)",
+        color: "var(--cas-text-primary, #334155)",
+        fontWeight: 700,
+        fontSize: "0.78rem",
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center"
+      };
+      return jsxs("div", {
+        className: "p-paginator p-component",
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "0.75rem",
+          padding: "0.75rem 1rem",
+          borderTop: "1px solid var(--cas-border, #e2e8f0)",
+          background: "var(--cas-bg-surface, #ffffff)"
+        },
+        children: [
+          jsxs("div", {
+            style: { fontSize: "0.78rem", color: "#64748b", fontWeight: 600 },
+            children: ["Menampilkan ", startRec.toLocaleString("id-ID"), "–", endRec.toLocaleString("id-ID"), " dari ", totalRec.toLocaleString("id-ID"), " data"]
+          }),
+          jsxs("div", {
+            style: { display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+            children: [
+              jsx("button", {
+                type: "button",
+                disabled: pCur <= 1,
+                onClick: function() { if (pCur > 1) onChangePage(1); },
+                style: Object.assign({}, btnBase, pCur <= 1 ? { opacity: 0.45, cursor: "not-allowed" } : {}),
+                title: "Halaman Pertama",
+                children: "«"
+              }),
+              jsx("button", {
+                type: "button",
+                disabled: pCur <= 1,
+                onClick: function() { if (pCur > 1) onChangePage(pCur - 1); },
+                style: Object.assign({}, btnBase, pCur <= 1 ? { opacity: 0.45, cursor: "not-allowed" } : {}),
+                title: "Halaman Sebelumnya",
+                children: "‹"
+              }),
+              pageNums.map(function(num) {
+                var isAct = num === pCur;
+                return jsx("button", {
+                  type: "button",
+                  onClick: function() { if (num !== pCur) onChangePage(num); },
+                  style: Object.assign({}, btnBase, isAct ? {
+                    background: "#dc2626",
+                    borderColor: "#dc2626",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    boxShadow: "0 2px 6px rgba(220,38,38,0.28)"
+                  } : {}),
+                  children: num
+                }, "pg-" + num);
+              }),
+              jsx("button", {
+                type: "button",
+                disabled: pCur >= tPages,
+                onClick: function() { if (pCur < tPages) onChangePage(pCur + 1); },
+                style: Object.assign({}, btnBase, pCur >= tPages ? { opacity: 0.45, cursor: "not-allowed" } : {}),
+                title: "Halaman Berikutnya",
+                children: "›"
+              }),
+              jsx("button", {
+                type: "button",
+                disabled: pCur >= tPages,
+                onClick: function() { if (pCur < tPages) onChangePage(tPages); },
+                style: Object.assign({}, btnBase, pCur >= tPages ? { opacity: 0.45, cursor: "not-allowed" } : {}),
+                title: "Halaman Terakhir",
+                children: "»"
+              })
+            ]
+          }),
+          jsxs("div", {
+            style: { display: "inline-flex", alignItems: "center", gap: "0.45rem" },
+            children: [
+              jsx("span", { style: { fontSize: "0.76rem", color: "#64748b", fontWeight: 600 }, children: "Baris:" }),
+              jsxs("select", {
+                value: rpp,
+                onChange: function(ev) { onChangeRows(Number(ev.target.value) || 25); },
+                className: "p-inputtext p-component",
+                style: { height: "34px", padding: "0 0.6rem", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" },
+                children: [10, 25, 50, 100].map(function(opt) {
+                  return jsx("option", { value: opt, children: opt }, "rpp-" + opt);
+                })
+              })
+            ]
+          })
+        ]
+      });
+    }
+
     function renderTableRows(rows, tabMode) {
       if (!rows.length) {
         return jsx("div", {
@@ -581,73 +890,95 @@
           children: "Belum ada data pada filter ini."
         });
       }
+      var tf = tabFilters[tabMode] || curFilter;
+      var curP = Math.max(1, Number(tf.page) || 1);
+      var curR = Math.max(1, Number(tf.rows) || 25);
+      var rawTotal = tabMode === "SUSJOL" ? susjolTotal : tabMode === "SUSATENSI" ? atensiTotal : tabMode === "OPS_SATGAS" ? opsTotal : rows.length;
+      var tabTotal = Math.max(Number(rawTotal || 0), rows.length);
+      var tPages = Math.max(1, Math.ceil(tabTotal / curR));
+      var safeP = Math.min(curP, tPages);
+      var rOffset = (safeP - 1) * curR;
+      var dispRows = rows.length > curR ? rows.slice(rOffset, rOffset + curR) : rows;
+      var pagEl = renderSusopsgasPagination(
+        safeP,
+        curR,
+        tabTotal,
+        function(nextP) { updateFilter(tabMode, { page: nextP }); },
+        function(nextR) { updateFilter(tabMode, { rows: nextR, page: 1 }); }
+      );
       if (curFilter.viewMode === "card") {
-        return jsx("div", {
-          style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 19rem), 1fr))", gap: "0.85rem" },
-          children: rows.map(function(row) {
-            var kat = String(row._source_type || row.kategori || "").toUpperCase();
-            var isAtensi = kat === "ATENSI" || kat === "SUSATENSI";
-            var isOps = kat === "OPS_SATGAS" || kat === "OPERASI" || kat === "SATGAS";
-            var accent = row.is_pinned ? "#f59e0b" : isAtensi ? "#7c3aed" : isOps ? "#d97706" : "#0284c7";
-            var dateStr = fmtDateId(row.tanggal_rilis || row.tanggal_atensi || row.tanggal_mulai || row.tanggal_dibentuk || row.first_tgl_laporan || row.created_at);
-            var satkerStr = inferSatker(row);
-            return jsxs("div", {
-              className: "cms-card",
-              style: { borderTop: "4px solid " + accent, padding: "1rem 1.15rem", display: "flex", flexDirection: "column", gap: "0.6rem", justifyContent: "space-between" },
-              children: [
-                jsxs("div", {
-                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" },
+        return jsxs("div", {
+          style: { display: "grid", gap: "0.85rem" },
+          children: [
+            jsx("div", {
+              style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 19rem), 1fr))", gap: "0.85rem" },
+              children: dispRows.map(function(row) {
+                var kat = String(row._source_type || row.kategori || "").toUpperCase();
+                var isAtensi = kat === "ATENSI" || kat === "SUSATENSI";
+                var isOps = kat === "OPS_SATGAS" || kat === "OPERASI" || kat === "SATGAS";
+                var accent = row.is_pinned ? "#f59e0b" : isAtensi ? "#7c3aed" : isOps ? "#d97706" : "#0284c7";
+                var dateStr = fmtDateId(row.tanggal_rilis || row.tanggal_atensi || row.tanggal_mulai || row.tanggal_dibentuk || row.first_tgl_laporan || row.created_at);
+                var satkerStr = inferSatker(row);
+                return jsxs("div", {
+                  className: "cms-card",
+                  style: { borderTop: "4px solid " + accent, padding: "1rem 1.15rem", display: "flex", flexDirection: "column", gap: "0.6rem", justifyContent: "space-between" },
                   children: [
                     jsxs("div", {
-                      style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                      style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" },
                       children: [
-                        row.is_pinned && jsx(Tag, { icon: "pi pi-bookmark-fill", value: "Disematkan", severity: "warning" }),
-                        jsx(Tag, {
-                          value: isAtensi ? "SUSATENSI" : isOps ? (row.jenis || "OPERASI") : "SUSJOL",
-                          severity: isAtensi ? "danger" : isOps ? "warning" : "info"
+                        jsxs("div", {
+                          style: { display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
+                          children: [
+                            row.is_pinned && jsx(Tag, { icon: "pi pi-bookmark-fill", value: "Disematkan", severity: "warning" }),
+                            jsx(Tag, {
+                              value: isAtensi ? "SUSATENSI" : isOps ? (row.jenis || "OPERASI") : "SUSJOL",
+                              severity: isAtensi ? "danger" : isOps ? "warning" : "info"
+                            }),
+                            row.skala_viral && jsx(Tag, { value: "Skala " + row.skala_viral, severity: row.skala_viral === "nasional" ? "danger" : "warning" }),
+                            row.level_atensi && jsx(Tag, { value: "Level " + row.level_atensi, severity: row.level_atensi === "tinggi" ? "danger" : "warning" }),
+                            row.status_tampil && jsx(Tag, { value: row.status_tampil, severity: row.status_tampil === "AKTIF" ? "success" : "secondary" })
+                          ]
                         }),
-                        row.skala_viral && jsx(Tag, { value: "Skala " + row.skala_viral, severity: row.skala_viral === "nasional" ? "danger" : "warning" }),
-                        row.level_atensi && jsx(Tag, { value: "Level " + row.level_atensi, severity: row.level_atensi === "tinggi" ? "danger" : "warning" }),
-                        row.status_tampil && jsx(Tag, { value: row.status_tampil, severity: row.status_tampil === "AKTIF" ? "success" : "secondary" })
+                        jsx("span", { style: { fontSize: "0.74rem", color: "#64748b", fontWeight: 700 }, children: dateStr })
                       ]
                     }),
-                    jsx("span", { style: { fontSize: "0.74rem", color: "#64748b", fontWeight: 700 }, children: dateStr })
+                    jsx("div", {
+                      onClick: function() { openDrilldownModal(row, "LP"); },
+                      style: { fontWeight: 800, fontSize: "0.96rem", color: "#0f172a", cursor: "pointer", lineHeight: 1.38 },
+                      children: row.judul || row.nama || "—"
+                    }),
+                    jsxs("div", {
+                      style: { fontSize: "0.77rem", color: "#475569", display: "grid", gap: "0.25rem", padding: "0.55rem 0.7rem", borderRadius: "8px", background: "#f8fafc", border: "1px solid #e2e8f0" },
+                      children: [
+                        jsxs("div", { children: [jsx("strong", { children: "Satker: " }), satkerStr] }),
+                        (row.latest_nomor_sprin || row.nomor_dasar) && jsxs("div", { children: [jsx("strong", { children: "No. Sprin Terakhir: " }), row.latest_nomor_sprin || row.nomor_dasar] }),
+                        row.pimpinan && jsxs("div", { children: [jsx("strong", { children: "Pimpinan: " }), row.pimpinan] })
+                      ]
+                    }),
+                    row.keterangan && jsx("div", {
+                      style: { fontSize: "0.8rem", color: "#475569", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
+                      children: row.keterangan
+                    }),
+                    jsxs("div", {
+                      style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", flexWrap: "wrap", paddingTop: "0.45rem", borderTop: "1px solid #e2e8f0" },
+                      children: [
+                        renderClickableLpBadge(row),
+                        renderSeparatedLampiranBadges(row)
+                      ]
+                    })
                   ]
-                }),
-                jsx("div", {
-                  onClick: function() { openDrilldownModal(row, "LP"); },
-                  style: { fontWeight: 800, fontSize: "0.96rem", color: "#0f172a", cursor: "pointer", lineHeight: 1.38 },
-                  children: row.judul || row.nama || "—"
-                }),
-                jsxs("div", {
-                  style: { fontSize: "0.77rem", color: "#475569", display: "grid", gap: "0.25rem", padding: "0.55rem 0.7rem", borderRadius: "8px", background: "#f8fafc", border: "1px solid #e2e8f0" },
-                  children: [
-                    jsxs("div", { children: [jsx("strong", { children: "Satker: " }), satkerStr] }),
-                    (row.latest_nomor_sprin || row.nomor_dasar) && jsxs("div", { children: [jsx("strong", { children: "No. Sprin Terakhir: " }), row.latest_nomor_sprin || row.nomor_dasar] }),
-                    row.pimpinan && jsxs("div", { children: [jsx("strong", { children: "Pimpinan: " }), row.pimpinan] })
-                  ]
-                }),
-                row.keterangan && jsx("div", {
-                  style: { fontSize: "0.8rem", color: "#475569", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
-                  children: row.keterangan
-                }),
-                jsxs("div", {
-                  style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", flexWrap: "wrap", paddingTop: "0.45rem", borderTop: "1px solid #e2e8f0" },
-                  children: [
-                    renderClickableLpBadge(row),
-                    renderSeparatedLampiranBadges(row)
-                  ]
-                })
-              ]
-            }, (row._source_type || "R") + "-" + row.id);
-          })
+                }, (row._source_type || "R") + "-" + row.id);
+              })
+            }),
+            jsx("div", { className: "cms-card", style: { padding: 0, overflow: "hidden" }, children: pagEl })
+          ]
         });
       }
 
-      return jsx("div", {
+      return jsxs("div", {
         className: "cms-card",
         style: { padding: 0, overflow: "hidden" },
-        children: jsx("div", {
+        children: [jsx("div", {
           style: { overflowX: "auto" },
           children: jsxs("table", {
             style: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" },
@@ -678,7 +1009,7 @@
                 })
               }),
               jsx("tbody", {
-                children: rows.map(function(row, idx) {
+                children: dispRows.map(function(row, idx) {
                   var kat = String(row._source_type || row.kategori || "").toUpperCase();
                   var isAtensi = kat === "ATENSI" || kat === "SUSATENSI";
                   var isOps = kat === "OPS_SATGAS" || kat === "OPERASI" || kat === "SATGAS";
@@ -687,7 +1018,7 @@
                   return jsxs("tr", {
                     style: { borderBottom: "1px solid #e2e8f0", background: idx % 2 === 1 ? "rgba(148,163,184,0.05)" : "transparent" },
                     children: [
-                      jsx("td", { style: { padding: "0.7rem 0.85rem", fontWeight: 700, color: "#64748b" }, children: idx + 1 }),
+                      jsx("td", { style: { padding: "0.7rem 0.85rem", fontWeight: 700, color: "#64748b" }, children: rOffset + idx + 1 }),
                       tabMode === "GABUNGAN" && jsx("td", {
                         style: { padding: "0.7rem 0.85rem" },
                         children: jsx(Tag, {
@@ -780,7 +1111,8 @@
               })
             ]
           })
-        })
+        }),
+        pagEl]
       });
     }
 
@@ -1121,7 +1453,7 @@
               // Modal Scrollable Content
               jsxs("div", {
                 className: "p-dialog-content cas-std-modal-body",
-                style: { padding: "1.1rem 1.35rem", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "0.95rem" },
+                style: { padding: "1.1rem 1.35rem", overflowY: "auto", WebkitOverflowScrolling: "touch", flex: "1 1 0%", minHeight: 0, display: "flex", flexDirection: "column", gap: "0.95rem" },
                 children: [
                   // 1. Top Summary Strip + Mini Status Cards
                   jsxs("div", {
@@ -1143,7 +1475,7 @@
                               })
                             ]
                           }),
-                          jsxs("button", {
+                          canManageRow(drillRow) && jsxs("button", {
                             type: "button",
                             onClick: function() {
                               setSprinQuickRow(drillRow);
@@ -1305,9 +1637,9 @@
                   drillLoading ? jsx("div", { style: { padding: "2rem", textAlign: "center", color: "#64748b", fontWeight: 600 }, children: "Memuat rincian LP dan berkas lampiran…" }) :
                   drillTab === "LP" ? (
                     filteredDrillLps.length === 0 ? jsx("div", { style: { padding: "2rem", textAlign: "center", color: "#94a3b8" }, children: "Tidak ada Laporan Polisi yang cocok dengan filter." }) :
-                    jsx("div", {
-                      style: { overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: "10px" },
-                      children: jsxs("table", {
+                    jsxs("div", {
+                      style: { overflowX: "auto", flexShrink: 0, border: "1px solid #e2e8f0", borderRadius: "10px", overflow: "hidden" },
+                      children: [jsxs("table", {
                         style: { width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" },
                         children: [
                           jsx("thead", {
@@ -1334,14 +1666,14 @@
                             })
                           }),
                           jsx("tbody", {
-                            children: filteredDrillLps.map(function(lp, idx) {
+                            children: pagedDrillLps.map(function(lp, idx) {
                               var bucket = classifyLpStatusBucket(lp);
                               var stStyle = getStatusBadgeStyle(bucket);
                               var docs = Array.isArray(lp.dokumen_list) ? lp.dokumen_list : [];
                               return jsxs("tr", {
                                 style: { borderTop: "1px solid #e2e8f0", background: idx % 2 === 1 ? "#f8fafc" : "#ffffff" },
                                 children: [
-                                  jsx("td", { style: { padding: "0.6rem 0.75rem", fontWeight: 700, color: "#64748b" }, children: idx + 1 }),
+                                  jsx("td", { style: { padding: "0.6rem 0.75rem", fontWeight: 700, color: "#64748b" }, children: drillRowOffset + idx + 1 }),
                                   jsxs("td", {
                                     style: { padding: "0.6rem 0.75rem" },
                                     children: [
@@ -1460,7 +1792,14 @@
                             })
                           })
                         ]
-                      })
+                      }),
+                      renderSusopsgasPagination(
+                        safeDrillPage,
+                        drillRows,
+                        filteredDrillLps.length,
+                        function(nextP) { setDrillPage(nextP); },
+                        function(nextR) { setDrillRows(nextR); setDrillPage(1); }
+                      )]
                     })
                   ) : drillTab === "SPRIN" ? (
                     jsxs("div", {
@@ -1475,7 +1814,7 @@
                                 jsx("div", { style: { fontSize: "0.75rem", color: "#b45309" }, children: "Setiap perubahan / perpanjangan Sprin tercatat berurutan lengkap dengan Nomor Sprin, Periode Berlaku, dan Catatan Perubahan." })
                               ]
                             }),
-                            jsxs("button", {
+                            canManageRow(drillRow) && jsxs("button", {
                               type: "button",
                               onClick: function() {
                                 setSprinQuickRow(drillRow);
