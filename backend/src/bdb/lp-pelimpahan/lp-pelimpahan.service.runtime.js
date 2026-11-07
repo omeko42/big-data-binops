@@ -105,16 +105,16 @@ let LpPelimpahanService = class LpPelimpahanService {
                 JOIN satker_chain c ON p.id = c.parent_id
             )
             SELECT 
-                max(CASE WHEN tipe_satker = 'POLDA' THEN id END) AS polda_id,
-                max(CASE WHEN tipe_satker = 'POLDA' THEN deskripsi END) AS polda_nama,
-                max(CASE WHEN tipe_satker = 'POLDA' THEN kode END) AS polda_kode,
-                max(CASE WHEN tipe_satker = 'POLRES' THEN id END) AS polres_id,
-                max(CASE WHEN tipe_satker = 'POLRES' THEN deskripsi END) AS polres_nama,
-                max(CASE WHEN tipe_satker = 'POLSEK' THEN id END) AS polsek_id,
-                max(CASE WHEN tipe_satker = 'POLSEK' THEN deskripsi END) AS polsek_nama,
-                bool_or(tipe_satker = 'POLSEK') AS has_polsek,
-                bool_or(tipe_satker = 'POLRES') AS has_polres,
-                bool_or(tipe_satker = 'POLDA') AS has_polda
+                max(CASE WHEN tipe_satker = 'POLDA' OR deskripsi ~* '^POLDA\\y' THEN id END) AS polda_id,
+                max(CASE WHEN tipe_satker = 'POLDA' OR deskripsi ~* '^POLDA\\y' THEN deskripsi END) AS polda_nama,
+                max(CASE WHEN tipe_satker = 'POLDA' OR deskripsi ~* '^POLDA\\y' THEN kode END) AS polda_kode,
+                max(CASE WHEN tipe_satker IN ('POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO') OR deskripsi ~* '^(POLRESTRO|POLRESTABES|POLRESTA|POLRES)\\y' THEN id END) AS polres_id,
+                max(CASE WHEN tipe_satker IN ('POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO') OR deskripsi ~* '^(POLRESTRO|POLRESTABES|POLRESTA|POLRES)\\y' THEN deskripsi END) AS polres_nama,
+                max(CASE WHEN tipe_satker IN ('POLSEK', 'POLSEKTA', 'POLSEKTRO', 'POLSUBSEKTOR') OR deskripsi ~* '^(POLSUBSEKTOR|POLSEKTRO|POLSEKTA|POLSEK)\\y' THEN id END) AS polsek_id,
+                max(CASE WHEN tipe_satker IN ('POLSEK', 'POLSEKTA', 'POLSEKTRO', 'POLSUBSEKTOR') OR deskripsi ~* '^(POLSUBSEKTOR|POLSEKTRO|POLSEKTA|POLSEK)\\y' THEN deskripsi END) AS polsek_nama,
+                bool_or(tipe_satker IN ('POLSEK', 'POLSEKTA', 'POLSEKTRO', 'POLSUBSEKTOR') OR deskripsi ~* '^(POLSUBSEKTOR|POLSEKTRO|POLSEKTA|POLSEK)\\y') AS has_polsek,
+                bool_or(tipe_satker IN ('POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO') OR deskripsi ~* '^(POLRESTRO|POLRESTABES|POLRESTA|POLRES)\\y') AS has_polres,
+                bool_or(tipe_satker = 'POLDA' OR deskripsi ~* '^POLDA\\y') AS has_polda
             FROM satker_chain`, [satkerId]);
         const r = rows[0] || {};
         let tier = 'MABES';
@@ -166,87 +166,92 @@ let LpPelimpahanService = class LpPelimpahanService {
         let anak = [];
         let sesama = [];
         if (hier.tier === 'POLSEK') {
+            // Polsek di bawah kendali Polres (1 level di atas). Pelimpahan dari Polsek harus melewati Polres induknya.
             if (hier.polresId) {
-                induk = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
+                const polresRow = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker where id = $1`, [hier.polresId]);
+                const polresSatuan = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
                      where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true
+                       and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
                        and (
                            deskripsi ilike '%RESKRIM%' or deskripsi ilike '%SATRESKRIM%'
-                           or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%'
+                           or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%PPA%' or deskripsi ilike '%PPO%'
+                           or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%'
                            or deskripsi ilike '%LANTAS%'
                        )
                      order by deskripsi asc`, [hier.polresId]);
-                if (induk.length === 0) {
-                    induk = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker where id = $1`, [hier.polresId]);
-                }
+                induk = [...polresSatuan, ...polresRow];
             }
             anak = [];
-            if (hier.polresId) {
-                sesama = await this.dataSource.query(`select u.id, u.kode, u.deskripsi
-                     from bdb_satker p
-                     join bdb_satker u on u.parent_id = p.id and (u.deskripsi ilike '%RESKRIM%' or u.deskripsi ilike '%UNIT RESKRIM%')
-                     where p.parent_id = $1 and p.tipe_satker = 'POLSEK' and coalesce(p.kinerja_aktif, true) = true and coalesce(u.kinerja_aktif, true) = true
-                       and u.id != $2
-                     order by u.deskripsi asc`, [hier.polresId, currentOwnerId]);
+            if (hier.polsekId) {
+                sesama = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
+                     where parent_id = $1 and coalesce(kinerja_aktif, true) = true
+                       and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
+                       and id != $2
+                     order by deskripsi asc`, [hier.polsekId, currentOwnerId]);
             }
         }
         else if (hier.tier === 'POLRES') {
+            // Polres di bawah kendali Polda (1 level di atas). Pelimpahan keluar Polres harus melewati Polda induknya.
             if (hier.poldaId) {
-                induk = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
+                const poldaRow = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker where id = $1`, [hier.poldaId]);
+                const poldaDirs = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
                      where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true
+                       and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
                        and (
                            deskripsi ilike '%KRIM%' or deskripsi ilike '%NARKOBA%'
-                           or deskripsi ilike '%SIBER%' or deskripsi ilike '%POLAIR%' or deskripsi ilike '%LANTAS%'
+                           or deskripsi ilike '%SIBER%' or deskripsi ilike '%PPA%' or deskripsi ilike '%PPO%'
+                           or deskripsi ilike '%POLAIR%' or deskripsi ilike '%LANTAS%'
                        )
                      order by deskripsi asc`, [hier.poldaId]);
-                if (induk.length === 0) {
-                    induk = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker where id = $1`, [hier.poldaId]);
-                }
+                induk = [...poldaDirs, ...poldaRow];
             }
             if (hier.polresId) {
-                anak = await this.dataSource.query(`select u.id, u.kode, u.deskripsi
+                anak = await this.dataSource.query(`select coalesce(u.id, p.id) as id, coalesce(u.kode, p.kode) as kode, coalesce(u.deskripsi, p.deskripsi) as deskripsi
                      from bdb_satker p
-                     join bdb_satker u on u.parent_id = p.id and (u.deskripsi ilike '%RESKRIM%' or u.deskripsi ilike '%UNIT RESKRIM%')
-                     where p.parent_id = $1 and p.tipe_satker = 'POLSEK' and coalesce(p.kinerja_aktif, true) = true and coalesce(u.kinerja_aktif, true) = true
-                     order by u.deskripsi asc`, [hier.polresId]);
+                     left join bdb_satker u on u.parent_id = p.id and coalesce(u.kinerja_aktif, true) = true and (u.deskripsi ilike '%RESKRIM%' or u.deskripsi ilike '%UNIT RESKRIM%')
+                     where p.parent_id = $1 and (p.tipe_satker in ('POLSEK', 'POLSEKTA', 'POLSEKTRO', 'POLSUBSEKTOR') or p.deskripsi ~* '^(POLSUBSEKTOR|POLSEKTRO|POLSEKTA|POLSEK)\\y')
+                       and coalesce(p.kinerja_aktif, true) = true and p.deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
+                     order by coalesce(u.deskripsi, p.deskripsi) asc`, [hier.polresId]);
             }
-            const samePolresUnits = hier.polresId
+            sesama = hier.polresId
                 ? await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                       where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true and id != $2
-                         and (deskripsi ilike '%RESKRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%' or deskripsi ilike '%LANTAS%')
+                       where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true
+                         and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and id != $2
+                         and (deskripsi ilike '%RESKRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%PPA%' or deskripsi ilike '%PPO%' or deskripsi ilike '%POL AIR%' or deskripsi ilike '%POLAIRUD%' or deskripsi ilike '%LANTAS%')
                        order by deskripsi asc`, [hier.polresId, currentOwnerId])
                 : [];
-            const siblingPolresUnits = hier.poldaId
-                ? await this.dataSource.query(`select coalesce(u.id, p.id) as id, coalesce(u.kode, p.kode) as kode, coalesce(u.deskripsi, p.deskripsi) as deskripsi
-                       from bdb_satker p
-                       left join bdb_satker u on u.parent_id = p.id and coalesce(u.kinerja_aktif, true) = true and (u.deskripsi ilike '%SAT RESKRIM%' or u.deskripsi ilike '%SATRESKRIM%') where p.parent_id = $1 and p.tipe_satker = 'POLRES' and coalesce(p.kinerja_aktif, true) = true and p.id != $2
-                       order by coalesce(u.deskripsi, p.deskripsi) asc`, [hier.poldaId, hier.polresId])
-                : [];
-            sesama = [...samePolresUnits, ...siblingPolresUnits];
         }
         else if (hier.tier === 'POLDA') {
+            // Polda di bawah kendali Mabes, namun diberikan kewenangan otonom melimpahkan langsung antar-Polda tanpa melewati Mabes.
             induk = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                 where parent_id = 13 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true
-                   and (deskripsi ilike '%DIT %' or deskripsi ilike '%DITTIPID%' or deskripsi ilike '%TIPID%')
+                 where (parent_id = 13 or id in (13, 18, 19, 20, 21, 22, 23, 20675)) and coalesce(kinerja_aktif, true) = true
+                   and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
+                   and (id = 13 or deskripsi ilike '%DIT %' or deskripsi ilike '%DITTIPID%' or deskripsi ilike '%TIPID%' or deskripsi ilike '%KORTASTIPIDKOR%')
                  order by deskripsi asc`);
             if (hier.poldaId) {
                 anak = await this.dataSource.query(`select coalesce(u.id, p.id) as id, coalesce(u.kode, p.kode) as kode, coalesce(u.deskripsi, p.deskripsi) as deskripsi
                      from bdb_satker p
-                     left join bdb_satker u on u.parent_id = p.id and coalesce(u.kinerja_aktif, true) = true and (u.deskripsi ilike '%SAT RESKRIM%' or u.deskripsi ilike '%SATRESKRIM%') where p.parent_id = $1 and p.tipe_satker = 'POLRES' and coalesce(p.kinerja_aktif, true) = true
+                     left join bdb_satker u on u.parent_id = p.id and coalesce(u.kinerja_aktif, true) = true and u.deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and (u.deskripsi ilike '%SAT RESKRIM%' or u.deskripsi ilike '%SATRESKRIM%' or u.deskripsi ilike '%SAT RESNARKOBA%' or u.deskripsi ilike '%SAT NARKOBA%' or u.deskripsi ilike '%PPA%')
+                     where p.parent_id = $1 and (p.tipe_satker in ('POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO') or p.deskripsi ~* '^(POLRESTRO|POLRESTABES|POLRESTA|POLRES)\\y')
+                       and coalesce(p.kinerja_aktif, true) = true and p.deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
                      order by coalesce(u.deskripsi, p.deskripsi) asc`, [hier.poldaId]);
             }
             if (hier.poldaId) {
                 const samePoldaUnits = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                     where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true and id != $2
-                       and (deskripsi ilike '%KRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%SIBER%' or deskripsi ilike '%POLAIR%')
+                     where parent_id = $1 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true
+                       and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and id != $2
+                       and (deskripsi ilike '%KRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%SIBER%' or deskripsi ilike '%PPA%' or deskripsi ilike '%PPO%' or deskripsi ilike '%POLAIR%')
                      order by deskripsi asc`, [hier.poldaId, currentOwnerId]);
                 const otherPoldas = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                     where tipe_satker = 'POLDA' and coalesce(kinerja_aktif, true) = true and id != $1
+                     where tipe_satker = 'POLDA' and coalesce(kinerja_aktif, true) = true
+                       and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and id != $1
                      order by deskripsi asc`, [hier.poldaId]);
                 const otherPoldaUnits = await this.dataSource.query(`select u.id, u.kode, concat(p.deskripsi, ' - ', u.deskripsi) as deskripsi
                      from bdb_satker p
                      join bdb_satker u on u.parent_id = p.id and u.tipe_satker = 'FUNGSI'
-                     where p.tipe_satker = 'POLDA' and coalesce(p.kinerja_aktif, true) = true and coalesce(u.kinerja_aktif, true) = true and p.id != $1
-                       and (u.deskripsi ilike '%KRIM%' or u.deskripsi ilike '%NARKOBA%' or u.deskripsi ilike '%SIBER%' or u.deskripsi ilike '%POLAIR%')
+                     where p.tipe_satker = 'POLDA' and coalesce(p.kinerja_aktif, true) = true and coalesce(u.kinerja_aktif, true) = true
+                       and p.deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and u.deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and p.id != $1
+                       and (u.deskripsi ilike '%KRIM%' or u.deskripsi ilike '%NARKOBA%' or u.deskripsi ilike '%SIBER%' or u.deskripsi ilike '%PPA%' or u.deskripsi ilike '%PPO%' or u.deskripsi ilike '%POLAIR%')
                      order by p.deskripsi asc, u.deskripsi asc`, [hier.poldaId]);
                 sesama = [...samePoldaUnits, ...otherPoldas, ...otherPoldaUnits];
             }
@@ -254,12 +259,14 @@ let LpPelimpahanService = class LpPelimpahanService {
         else {
             induk = [];
             anak = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                 where coalesce(kinerja_aktif, true) = true and parent_id in (select id from bdb_satker where tipe_satker = 'POLDA' and coalesce(kinerja_aktif, true) = true)
-                   and (deskripsi ilike '%KRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%SIBER%')
+                 where coalesce(kinerja_aktif, true) = true and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]'
+                   and (tipe_satker = 'POLDA' or (parent_id in (select id from bdb_satker where tipe_satker = 'POLDA' and coalesce(kinerja_aktif, true) = true)
+                   and (deskripsi ilike '%KRIM%' or deskripsi ilike '%NARKOBA%' or deskripsi ilike '%SIBER%' or deskripsi ilike '%PPA%' or deskripsi ilike '%PPO%')))
                  order by deskripsi asc`);
             sesama = await this.dataSource.query(`select id, kode, deskripsi from bdb_satker
-                 where parent_id = 13 and tipe_satker = 'FUNGSI' and coalesce(kinerja_aktif, true) = true and id != $1
-                   and (deskripsi ilike '%DIT %' or deskripsi ilike '%DITTIPID%' or deskripsi ilike '%TIPID%')
+                 where (parent_id = 13 or id in (18, 19, 20, 21, 22, 23, 20675)) and coalesce(kinerja_aktif, true) = true
+                   and deskripsi !~* '^\\[DUPLIKAT NONAKTIF\\]' and id != $1
+                   and (deskripsi ilike '%DIT %' or deskripsi ilike '%DITTIPID%' or deskripsi ilike '%TIPID%' or deskripsi ilike '%KORTASTIPIDKOR%')
                  order by deskripsi asc`, [currentOwnerId]);
         }
         return { induk, anak, sesama, tier: hier.tier };

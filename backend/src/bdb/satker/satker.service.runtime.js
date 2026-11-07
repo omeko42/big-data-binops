@@ -36,7 +36,25 @@ let SatkerService = class SatkerService {
     }
     tableEnsured = false;
     async ensureTable() {
-        return;
+        if (this.tableEnsured)
+            return;
+        this.tableEnsured = true;
+        try {
+            const cols = await this.dataSource.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'bdb_satker' AND column_name IN ('nama_dors', 'nama_canonical', 'singkatan_canonical')");
+            const have = new Set(cols.map((r) => r.column_name));
+            if (!have.has('nama_dors')) {
+                await this.dataSource.query('ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS nama_dors TEXT');
+            }
+            if (!have.has('nama_canonical')) {
+                await this.dataSource.query('ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS nama_canonical TEXT');
+            }
+            if (!have.has('singkatan_canonical')) {
+                await this.dataSource.query('ALTER TABLE bdb_satker ADD COLUMN IF NOT EXISTS singkatan_canonical TEXT');
+            }
+        }
+        catch (e) {
+            this.logger.warn('ensureTable canonical columns warn: ' + (e?.message || e));
+        }
     }
     static EXTRA_COLS = ['alamat', 'provinsi', 'kabupaten_kota', 'kecamatan', 'desa', 'kode_pos', 'longitude', 'latitude', 'jumlah_penduduk'];
     static KEANGGOTAAN_OPTS = ['INTERNAL_POLRI', 'EKSTERNAL_POLRI'];
@@ -326,11 +344,19 @@ let SatkerService = class SatkerService {
         if (dup.length)
             throw new common_1.BadRequestException(`Kode ${kode} sudah dipakai: ${dup[0].deskripsi}.`);
         const extraCols = SatkerService_1.EXTRA_COLS;
-        const insCols = ['kode', 'kode_canonical', 'deskripsi', ...extraCols, 'keanggotaan', 'fungsi', 'kinerja_aktif', 'urutan'];
+        const rawDesc = (body.nama_canonical || body.deskripsi || '').trim();
+        const namaCanonical = this.cellVal(body.nama_canonical) || rawDesc;
+        const namaDors = this.cellVal(body.nama_dors) || body.deskripsi.trim();
+        const singkatanCanonical = this.cellVal(body.singkatan_canonical ?? body.singkatan) || namaCanonical;
+        const insCols = ['kode', 'kode_canonical', 'deskripsi', 'nama_dors', 'nama_canonical', 'singkatan_canonical', 'singkatan', ...extraCols, 'keanggotaan', 'fungsi', 'kinerja_aktif', 'urutan'];
         const insVals = [
             kode,
             canon,
-            body.deskripsi.trim(),
+            rawDesc,
+            namaDors,
+            namaCanonical,
+            singkatanCanonical,
+            singkatanCanonical,
             ...extraCols.map((c) => this.cellVal(body[c])),
             this.validKlasifikasi('keanggotaan', body.keanggotaan),
             this.validKlasifikasi('fungsi', body.fungsi),
@@ -401,6 +427,20 @@ let SatkerService = class SatkerService {
         }
         const sets = ['kode=$1', 'kode_canonical=$2', 'deskripsi=coalesce($3, deskripsi)'];
         const vals = [kode, canon, deskripsi ?? null];
+        if ('nama_dors' in body) {
+            vals.push(this.cellVal(body.nama_dors));
+            sets.push(`nama_dors=$${vals.length}`);
+        }
+        if ('nama_canonical' in body || deskripsi !== undefined) {
+            vals.push('nama_canonical' in body ? (this.cellVal(body.nama_canonical) ?? deskripsi ?? null) : (deskripsi ?? null));
+            sets.push(`nama_canonical=coalesce($${vals.length}, nama_canonical, deskripsi)`);
+        }
+        if ('singkatan_canonical' in body || 'singkatan' in body) {
+            const sc = this.cellVal(body.singkatan_canonical ?? body.singkatan);
+            vals.push(sc);
+            sets.push(`singkatan_canonical=$${vals.length}`);
+            sets.push(`singkatan=coalesce($${vals.length}, singkatan)`);
+        }
         for (const c of SatkerService_1.EXTRA_COLS) {
             if (c in body) {
                 vals.push(this.cellVal(body[c]));
@@ -506,9 +546,9 @@ let SatkerService = class SatkerService {
         const role = String(authUser.role_bdb || '').toLowerCase();
         const id = authUser.scope_satker_id ? Number(authUser.scope_satker_id) : null;
         const rows = id
-            ? await this.dataSource.query(`select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+            ? await this.dataSource.query(`select id, kode, deskripsi, singkatan, nama_dors, nama_canonical, singkatan_canonical, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
              from bdb_satker where id=$1`, [id])
-            : await this.dataSource.query(`select id, kode, deskripsi, singkatan, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
+            : await this.dataSource.query(`select id, kode, deskripsi, singkatan, nama_dors, nama_canonical, singkatan_canonical, alamat, provinsi, kabupaten_kota, kecamatan, desa, kode_pos, longitude, latitude, jumlah_penduduk, tipe_satker
              from bdb_satker where kode='01' or is_root=true order by (kode='01') desc, is_root desc, id asc limit 1`);
         if (!rows.length)
             throw new common_1.NotFoundException('Satker Anda tidak ditemukan di master data.');
@@ -600,15 +640,15 @@ let SatkerService = class SatkerService {
         let where = 'where s.is_synthetic=false';
         if (opts.search && opts.search.trim()) {
             params.push(`%${opts.search.trim()}%`);
-            where += ` and (lower(s.deskripsi) like lower($${params.length}) or lower(coalesce(s.singkatan, '')) like lower($${params.length}) or s.kode like $${params.length} or s.dors_kode like $${params.length})`;
+            where += ` and (lower(s.deskripsi) like lower($${params.length}) or lower(coalesce(s.nama_dors, '')) like lower($${params.length}) or lower(coalesce(s.nama_canonical, '')) like lower($${params.length}) or lower(coalesce(s.singkatan_canonical, s.singkatan, '')) like lower($${params.length}) or s.kode like $${params.length} or s.dors_kode like $${params.length})`;
         }
         const totalRow = await this.dataSource.query(`select count(*)::int c from bdb_satker s ${where}`, params);
         const total = totalRow[0]?.c || 0;
         params.push(row, offset);
-        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth, s.source,
+        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth, s.source,
                 s.alamat, s.provinsi, s.kabupaten_kota, s.kecamatan, s.desa, s.kode_pos, s.longitude, s.latitude, s.jumlah_penduduk,
                 s.keanggotaan, s.fungsi, s.kinerja_aktif, s.dors_kode, s.tipe_satker, s.urutan,
-                p.deskripsi as parent_deskripsi, p.singkatan as parent_singkatan, p.kode as parent_kode,
+                p.deskripsi as parent_deskripsi, p.singkatan as parent_singkatan, p.nama_canonical as parent_nama_canonical, p.singkatan_canonical as parent_singkatan_canonical, p.kode as parent_kode,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id) as child_count
              from bdb_satker s
              left join bdb_satker p on p.id=s.parent_id
@@ -645,7 +685,7 @@ let SatkerService = class SatkerService {
     }
     async roots() {
         await this.ensureTable();
-        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth,
+        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth,
                 exists(select 1 from bdb_satker c where c.parent_id=s.id) as has_children,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id) as child_count
              from bdb_satker s where s.is_root=true order by s.id`);
@@ -821,7 +861,7 @@ let SatkerService = class SatkerService {
                 `;
             }
         }
-        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.depth, s.parent_id,
+        const rows = await this.dataSource.query(`select s.id, s.kode, s.kode_canonical, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.depth, s.parent_id,
                 exists(select 1 from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as has_children,
                 (select count(*)::int from bdb_satker c where c.parent_id=s.id and not (coalesce(c.kinerja_aktif, true) = false and coalesce(c.dors_mapping_aktif, true) = false) ${allowedSql ? allowedSql.replace(/s\\.id/g, 'c.id') : ''}) as child_count
              from bdb_satker s
@@ -849,7 +889,7 @@ let SatkerService = class SatkerService {
             const countRows = await this.dataSource.query('select count(*)::int as c from bdb_satker_eksternal e ' + whereExt, params);
             const total = countRows[0]?.c ? Number(countRows[0].c) : 0;
             params.push(cleanLimit, offset);
-            const extRows = await this.dataSource.query('select e.id, null as kode, e.nama as deskripsi, e.nama as singkatan, 0 as depth, \'EKSTERNAL\' as tipe_satker, ' +
+            const extRows = await this.dataSource.query('select e.id, null as kode, e.nama as deskripsi, e.nama as singkatan, e.nama as nama_dors, e.nama as nama_canonical, e.nama as singkatan_canonical, 0 as depth, \'EKSTERNAL\' as tipe_satker, ' +
                 '\'NOT_APPLICABLE\' as function_domain, \'EKSTERNAL_POLRI\' as organization_domain, ' +
                 'e.nama as jalur, array[e.id] as path_ids ' +
                 'from bdb_satker_eksternal e ' +
@@ -921,17 +961,17 @@ let SatkerService = class SatkerService {
             const pActor = params.length;
             cteAllowed =
                 "with recursive sub as (" +
-                    "select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
+                    "select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.urutan, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                     "from bdb_satker s " +
                     "where s.id = $" + pTerr + " or s.id = $" + pActor + " " +
                     "union all " +
-                    "select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
+                    "select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.urutan, s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, s.tipe_satker " +
                     "from bdb_satker s " +
                     "join sub on s.parent_id = sub.id" +
                     "), " +
                     "pool as (" +
                     "select distinct on (s.id) " +
-                    "s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, " +
+                    "s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.urutan, p.urutan as parent_urutan, p.tipe_satker as parent_tipe_satker, " +
                     "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                     "case " +
                     "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
@@ -946,9 +986,11 @@ let SatkerService = class SatkerService {
                     "end as tipe_satker " +
                     "from sub s " +
                     "left join bdb_satker p on p.id = s.parent_id " +
-                    "where s.is_synthetic = false " +
+                    "where s.is_synthetic = false and s.id <> 1 " +
                     "and s.organization_domain = 'INTERNAL_POLRI' " +
-                    "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                    "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL', 'EKSTERNAL_RESERSE') " +
+                    "and not (s.parent_id = 13 and upper(s.deskripsi) not like 'DIT%' and upper(s.deskripsi) not like 'KORTAS%') " +
+                    "and upper(s.deskripsi) !~ '(^| )(RO RENMIN|RORENMIN|RO WAS SIDIK|ROWASSIDIK|RO BINOPS|ROBINOPS|RO KORWAS|ROKORWAS|PUSIKNAS|PUSLABFOR|PUSINAFIS|SETUM|YANMA|SPKT|TAHTI|PROPAM|BIDPROPAM|SIPROPAM|ITWASDA|ITWASUM|SIWAS|BIRO SDM|BAG SDM|BIRO RENA|BAGREN|BIRO LOG|BAG LOG|BID TIK|SITIK|BID HUMAS|SIHUMAS|BID KEU|SIKEU|BID DOKKES|SIDOKKES|BIDKUM|SIKUM|SPN|DITTAHTI|SATTAHTI)( |$)'" +
                     (actorDomain !== 'ALL'
                         ? " and not (s.depth = 2 and s.parent_id = $" + pTerr + " and s.id <> $" + pActor + " and s.tipe_satker = 'FUNGSI') and not (s.id = $" + pTerr + " and s.depth = 1)"
                         : "") +
@@ -958,7 +1000,7 @@ let SatkerService = class SatkerService {
             cteAllowed =
                 "with pool as (" +
                     "select " +
-                    "s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, " +
+                    "s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.urutan, p.urutan as parent_urutan, p.tipe_satker as parent_tipe_satker, " +
                     "s.function_domain, s.organization_domain, s.kode_canonical, s.dors_kode, s.is_synthetic, s.kinerja_aktif, s.dors_mapping_aktif, " +
                     "case " +
                     "when s.tipe_satker = 'POLSEK' then 'POLSEK' " +
@@ -973,9 +1015,11 @@ let SatkerService = class SatkerService {
                     "end as tipe_satker " +
                     "from bdb_satker s " +
                     "left join bdb_satker p on p.id = s.parent_id " +
-                    "where s.is_synthetic = false " +
+                    "where s.is_synthetic = false and s.id <> 1 " +
                     "and s.organization_domain = 'INTERNAL_POLRI' " +
-                    "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL')" +
+                    "and s.function_domain in ('INTERNAL_RESERSE', 'STRUCTURAL', 'EKSTERNAL_RESERSE') " +
+                    "and not (s.parent_id = 13 and upper(s.deskripsi) not like 'DIT%' and upper(s.deskripsi) not like 'KORTAS%') " +
+                    "and upper(s.deskripsi) !~ '(^| )(RO RENMIN|RORENMIN|RO WAS SIDIK|ROWASSIDIK|RO BINOPS|ROBINOPS|RO KORWAS|ROKORWAS|PUSIKNAS|PUSLABFOR|PUSINAFIS|SETUM|YANMA|SPKT|TAHTI|PROPAM|BIDPROPAM|SIPROPAM|ITWASDA|ITWASUM|SIWAS|BIRO SDM|BAG SDM|BIRO RENA|BAGREN|BIRO LOG|BAG LOG|BID TIK|SITIK|BID HUMAS|SIHUMAS|BID KEU|SIKEU|BID DOKKES|SIDOKKES|BIDKUM|SIKUM|SPN|DITTAHTI|SATTAHTI)( |$)'" +
                     "), ";
         }
         if (cleanQ) {
@@ -1003,6 +1047,9 @@ let SatkerService = class SatkerService {
                     tokenConds.push('(' +
                         'lower(s.deskripsi) like lower($' + pRaw + ') ' +
                         'or lower(coalesce(s.singkatan, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.nama_dors, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.nama_canonical, \'\')) like lower($' + pRaw + ') ' +
+                        'or lower(coalesce(s.singkatan_canonical, \'\')) like lower($' + pRaw + ') ' +
                         'or replace(replace(lower(s.deskripsi), \'dan\', \'\'), \' \', \'\') like lower($' + pClean + ') ' +
                         'or s.kode like $' + pRaw + ' ' +
                         'or coalesce(s.dors_kode, \'\') like $' + pRaw +
@@ -1023,6 +1070,10 @@ let SatkerService = class SatkerService {
                 whereClauses.push('s.function_domain = any($' + params.length + ')');
             }
         }
+        else {
+            params.push(['INTERNAL_RESERSE', 'STRUCTURAL']);
+            whereClauses.push('(s.function_domain = any($' + params.length + ") or s.tipe_satker = 'POLSEK')");
+        }
         if (level) {
             const levels = level
                 .split(',')
@@ -1040,17 +1091,21 @@ let SatkerService = class SatkerService {
         const whereSql = whereClauses.length > 0 ? 'where ' + whereClauses.join(' and ') : '';
         const sql = cteAllowed +
             'filtered as (' +
-            'select s.id, s.kode, s.deskripsi, s.singkatan, s.parent_id, s.depth, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
+            'select s.id, s.kode, s.deskripsi, s.singkatan, s.nama_dors, s.nama_canonical, s.singkatan_canonical, s.parent_id, s.depth, s.urutan, s.parent_urutan, s.parent_tipe_satker, s.tipe_satker, s.function_domain, s.organization_domain, s.kode_canonical, ' +
             'count(*) over()::int as full_count ' +
             'from ' + fromSource + ' ' +
             whereSql + ' ' +
             '), ' +
             'paged as (' +
             'select * from filtered ' +
-            'order by depth, coalesce(kode_canonical, kode) ' +
+            'order by ' +
+            "case when id = 13 then 10 when tipe_satker = 'MABES' then 11 when tipe_satker = 'POLDA' and depth = 1 then 20 when tipe_satker = 'POLDA' then 21 when tipe_satker = 'POLRES' and coalesce(parent_tipe_satker, '') = 'POLDA' then 30 when tipe_satker = 'POLRES' then 31 when tipe_satker = 'POLSEK' and coalesce(parent_tipe_satker, '') = 'POLRES' then 40 else 41 end, " +
+            "case when tipe_satker = 'POLDA' and depth = 1 then coalesce(urutan, 999) when tipe_satker = 'POLDA' then coalesce(parent_urutan, 999) when tipe_satker = 'MABES' then case when upper(deskripsi) like 'DITTIPIDUM%' then 1 when upper(deskripsi) like 'DITTIPIDEKSUS%' then 2 when upper(deskripsi) like 'DITTIPIDNARKOBA%' then 3 when upper(deskripsi) like 'DITTIPIDTER%' then 4 when upper(deskripsi) like 'DITTIPIDSIBER%' then 5 when upper(deskripsi) like 'DITTIPID PPA%' or upper(deskripsi) like 'DITTIPIDPPAPPO%' then 6 when upper(deskripsi) like 'KORTAS%' then 7 else 99 end else 999 end, " +
+            "case when tipe_satker = 'POLDA' and depth > 1 then case when upper(deskripsi) like '%KRIMUM%' then 1 when upper(deskripsi) like '%KRIMSUS%' then 2 when upper(deskripsi) like '%NARKOBA%' then 3 when upper(deskripsi) like '%SIBER%' then 4 when upper(deskripsi) like '%PPA%' then 5 else 9 end else 0 end, " +
+            'coalesce(kode_canonical, kode), id ' +
             'limit ' + limitParam + ' offset ' + offsetParam + ' ' +
             ') ' +
-            'select p.id, p.kode, p.deskripsi, p.singkatan, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
+            'select p.id, p.kode, p.deskripsi, p.singkatan, p.nama_dors, p.nama_canonical, p.singkatan_canonical, p.depth, p.tipe_satker, p.function_domain, p.organization_domain, p.full_count, ' +
             '(with recursive up(id,kode,deskripsi,parent_id,lvl) as (' +
             'select s.id,s.kode,s.deskripsi,s.parent_id,0 from bdb_satker s where s.id=p.id ' +
             'union all select s.id,s.kode,s.deskripsi,s.parent_id,up.lvl+1 from bdb_satker s join up on s.id=up.parent_id' +

@@ -58,7 +58,12 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             );
             alter table bdb_kasus_menonjol
                 add column if not exists is_pinned boolean not null default false,
-                add column if not exists pinned_at timestamptz;
+                add column if not exists pinned_at timestamptz,
+                add column if not exists delete_status text,
+                add column if not exists deleted_by bigint,
+                add column if not exists delete_reason text,
+                add column if not exists delete_requested_at timestamptz;
+            update bdb_kasus_menonjol set delete_status = 'ARCHIVED' where deleted_at is not null and delete_status is null;
         `)
                 .then(() => undefined)
                 .catch((error) => {
@@ -197,6 +202,11 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
                     (select lp0.satker_nama from bdb_kasus_menonjol_lp l0 join bdb_laporan_polisi lp0 on lp0.id = l0.lp_id where l0.kasus_menonjol_id = k.id order by l0.id limit 1)
                 ) as satker_nama,
                 k.created_by, k.updated_by, k.created_at, k.updated_at,
+                k.deleted_at, k.delete_status, k.deleted_by, k.delete_reason, k.delete_requested_at,
+                (select u.username from auth_users u where u.id = k.created_by limit 1) as created_by_username,
+                (select u.name from auth_users u where u.id = k.created_by limit 1) as created_by_name,
+                (select u.username from auth_users u where u.id = k.deleted_by limit 1) as deleted_by_username,
+                (select u.name from auth_users u where u.id = k.deleted_by limit 1) as deleted_by_name,
                 (select count(*)::int from bdb_kasus_menonjol_lp l where l.kasus_menonjol_id = k.id) as jumlah_lp,
                 (select count(*)::int from bdb_kasus_menonjol_attachments a where a.kasus_menonjol_id = k.id) as jumlah_lampiran,
                 (select string_agg(distinct s.satker_nama, ', ') from bdb_kasus_menonjol_lp l
@@ -208,14 +218,149 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             from bdb_kasus_menonjol k
         `;
     }
+    async resolveActor(userId) {
+        if (!userId || !Number.isFinite(Number(userId)) || Number(userId) <= 0) {
+            return {
+                id: null,
+                username: null,
+                name: null,
+                roleBdb: 'viewer',
+                isSuperAdmin: false,
+                isReadOnly: true,
+                satkerId: null,
+                satkerName: null
+            };
+        }
+        try {
+            let u = null;
+            try {
+                const uRows = await this.dataSource.query(
+                    `select u.id, u.username, u.name, u.email, coalesce(u.role_bdb, 'operator') as role_bdb, u.organisasi_id
+                     from auth_users u
+                     where u.id = $1
+                     limit 1`,
+                    [Number(userId)]
+                );
+                u = uRows?.[0] || null;
+            }
+            catch {
+                u = null;
+            }
+            let scope = { all: false, isSuper: false, satkerId: null };
+            try {
+                scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+            }
+            catch {
+                scope = { all: false, isSuper: false, satkerId: null };
+            }
+            if (!u) {
+                return {
+                    id: Number(userId),
+                    username: null,
+                    name: null,
+                    roleBdb: scope.isSuper ? 'superadmin' : 'operator',
+                    isSuperAdmin: Boolean(scope.isSuper && !scope.isVendorMitra),
+                    isReadOnly: Boolean(scope.isVendorMitra),
+                    satkerId: scope.satkerId || null,
+                    satkerName: null
+                };
+            }
+            const roleBdb = String(u.role_bdb || '').trim().toLowerCase();
+            const username = String(u.username || '').trim().toLowerCase();
+            const isTestingOrVendor =
+                Boolean(scope.isVendorMitra) ||
+                roleBdb === 'testing' ||
+                roleBdb === 'vendor_mitra' ||
+                username === 'testing' ||
+                username.startsWith('testing_') ||
+                username.startsWith('vendor_');
+            const isSuperAdmin =
+                !isTestingOrVendor &&
+                (roleBdb === 'superadmin' || (!roleBdb && Boolean(scope.isSuper)));
+            const isReadOnly =
+                isTestingOrVendor ||
+                roleBdb === 'viewer' ||
+                roleBdb === 'sharese';
+            const satkerId = scope.satkerId || null;
+            return {
+                id: Number(u.id),
+                username: u.username ? String(u.username).trim() : null,
+                name: u.name ? String(u.name).trim() : null,
+                roleBdb: roleBdb || 'operator',
+                isSuperAdmin,
+                isReadOnly,
+                satkerId,
+                satkerName: null
+            };
+        }
+        catch {
+            return {
+                id: Number(userId),
+                username: null,
+                name: null,
+                roleBdb: 'operator',
+                isSuperAdmin: false,
+                isReadOnly: false,
+                satkerId: null,
+                satkerName: null
+            };
+        }
+    }
+    canActorManageRow(row, actor) {
+        if (!row || !actor || !actor.id || actor.isReadOnly) return false;
+        if (actor.isSuperAdmin) return true;
+        if (row.created_by != null && Number(row.created_by) > 0 && Number(row.created_by) === Number(actor.id)) {
+            return true;
+        }
+        if (
+            row.created_by_username &&
+            actor.username &&
+            String(row.created_by_username).trim().toLowerCase() === String(actor.username).trim().toLowerCase()
+        ) {
+            return true;
+        }
+        if (
+            row.satker_id != null &&
+            Number(row.satker_id) > 0 &&
+            actor.satkerId != null &&
+            Number(actor.satkerId) > 0 &&
+            Number(row.satker_id) === Number(actor.satkerId)
+        ) {
+            return true;
+        }
+        return false;
+    }
+    async assertCanManageRow(row, userId, actionLabel = 'mengelola') {
+        const actor = await this.resolveActor(userId);
+        if (!this.canActorManageRow(row, actor)) {
+            throw new common_1.ForbiddenException(`Hanya Superadmin dan Pengupload yang memiliki akses ${actionLabel} data kasus ini.`);
+        }
+        return actor;
+    }
     async list(userId, query = {}) {
         await this.ensureTables();
-        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        const [scope, actor] = await Promise.all([
+            (0, scope_util_1.resolveScope)(this.dataSource, userId),
+            this.resolveActor(userId)
+        ]);
         const page = Math.max(1, Number(query.page || 1));
         const limit = Math.max(1, Math.min(Number(query.row || query.limit || 20), 200));
         const offset = (page - 1) * limit;
         const params = [];
-        const where = ['k.deleted_at is null'];
+        const deletedMode = String(query.deleted_mode || '').trim().toUpperCase();
+        const where = [];
+        if (deletedMode === 'PENDING_DELETE') {
+            where.push(`k.deleted_at is not null and coalesce(k.delete_status, 'ARCHIVED') = 'PENDING_DELETE'`);
+        }
+        else if (deletedMode === 'ARCHIVED') {
+            where.push(`k.deleted_at is not null and coalesce(k.delete_status, 'ARCHIVED') = 'ARCHIVED'`);
+        }
+        else if (deletedMode === 'ALL_DELETED') {
+            where.push(`k.deleted_at is not null`);
+        }
+        else {
+            where.push('k.deleted_at is null');
+        }
         if (query.scope === 'scoped' && !scope.all) {
             if (!scope.satkerId) {
                 return {
@@ -311,15 +456,23 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             belum_rilis: Number(s.belum_rilis || 0),
             total_lp_terkait: Number(s.total_lp_terkait || 0)
         };
-        return { data: rows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
+        const mappedRows = (rows || []).map((r) => ({
+            ...r,
+            can_manage: this.canActorManageRow(r, actor)
+        }));
+        return { data: mappedRows, meta: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)), summary } };
     }
     async findOne(id, userId) {
         await this.ensureTables();
-        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
-        const rows = await this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1 and k.deleted_at is null`, [id]);
+        const [, actor, rows] = await Promise.all([
+            (0, scope_util_1.resolveScope)(this.dataSource, userId),
+            this.resolveActor(userId),
+            this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1 and k.deleted_at is null`, [id])
+        ]);
         const row = rows[0];
         if (!row)
             throw new common_1.NotFoundException('Kasus menonjol tidak ditemukan.');
+        row.can_manage = this.canActorManageRow(row, actor);
         return row;
     }
     async listLp(kasusId, userId) {
@@ -340,7 +493,13 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     }
     async create(userId, dto) {
         await this.ensureTables();
-        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
+        const [scope, actor] = await Promise.all([
+            (0, scope_util_1.resolveScope)(this.dataSource, userId),
+            this.resolveActor(userId)
+        ]);
+        if (!actor.id || actor.isReadOnly) {
+            throw new common_1.ForbiddenException('Akun Anda hanya memiliki akses baca dan tidak dapat menambahkan data kasus.');
+        }
         let judul = this.toText(dto.judul);
         if (!judul)
             throw new common_1.BadRequestException('Judul wajib diisi.');
@@ -350,7 +509,9 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         let satkerId = null;
         if (lpRows.length)
             satkerId = Number(lpRows[0].satker_id) || null;
-        else if (!scope.all)
+        if (!satkerId && actor.satkerId)
+            satkerId = Number(actor.satkerId) || null;
+        if (!satkerId && !scope.all)
             satkerId = scope.satkerId;
         const rilis = this.toBoolean(dto.rilis);
         const tanggalRilis = this.toDate(dto.tanggal_rilis);
@@ -366,8 +527,8 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             is_pinned: isPinned,
             pinned_at: isPinned ? new Date() : null,
             satker_id: satkerId,
-            created_by: userId ?? null,
-            updated_by: userId ?? null
+            created_by: actor.id ?? userId ?? null,
+            updated_by: actor.id ?? userId ?? null
         };
         const keys = Object.keys(payload);
         const rows = await this.dataSource.query(`insert into bdb_kasus_menonjol (${keys.join(', ')}) values (${keys.map((_, i) => `$${i + 1}`).join(', ')}) returning id`, keys.map((k) => payload[k]));
@@ -376,23 +537,74 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
             await this.replaceLpLinks(id, lpIds);
         return this.findOne(id, userId);
     }
+    async restore(id, userId) {
+        await this.ensureTables();
+        const [actor, rows] = await Promise.all([
+            this.resolveActor(userId),
+            this.dataSource.query(`${this.buildBaseSelect()} where k.id = $1`, [id])
+        ]);
+        const existing = rows?.[0];
+        if (!existing) throw new common_1.NotFoundException('Kasus menonjol tidak ditemukan.');
+        if (!actor.isSuperAdmin && !this.canActorManageRow(existing, actor) && Number(existing.deleted_by || 0) !== Number(actor.id || 0)) {
+            throw new common_1.ForbiddenException('Hanya Superadmin atau pengaju yang dapat memulihkan data ini.');
+        }
+        await this.dataSource.query(
+            `update bdb_kasus_menonjol
+             set deleted_at = null,
+                 delete_status = null,
+                 deleted_by = null,
+                 delete_reason = null,
+                 delete_requested_at = null,
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1`,
+            [id, actor.id ?? userId ?? null]
+        );
+        return { status: 1, message: 'Data kasus menonjol berhasil dipulihkan ke daftar aktif.' };
+    }
+    async approveDelete(id, userId) {
+        await this.ensureTables();
+        const actor = await this.resolveActor(userId);
+        if (!actor.isSuperAdmin) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menyetujui permohonan hapus ke arsip.');
+        }
+        await this.dataSource.query(
+            `update bdb_kasus_menonjol
+             set delete_status = 'ARCHIVED',
+                 updated_by = $2,
+                 updated_at = now()
+             where id = $1 and deleted_at is not null`,
+            [id, actor.id ?? userId ?? null]
+        );
+        return { status: 1, message: 'Permohonan hapus disetujui dan dipindahkan ke Arsip Terhapus.' };
+    }
+    async permanentDelete(id, userId) {
+        await this.ensureTables();
+        const actor = await this.resolveActor(userId);
+        if (!actor.isSuperAdmin) {
+            throw new common_1.ForbiddenException('Hanya Superadmin yang dapat menghapus data secara permanen dari arsip.');
+        }
+        await this.dataSource.query(`delete from bdb_kasus_menonjol_lp where kasus_menonjol_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_kasus_menonjol_attachments where kasus_menonjol_id = $1`, [id]);
+        await this.dataSource.query(`delete from bdb_kasus_menonjol where id = $1`, [id]);
+        return { status: 1, message: 'Data kasus menonjol dihapus permanen dari arsip.' };
+    }
     async update(id, userId, dto) {
         await this.ensureTables();
+        if (dto && dto._action === 'RESTORE') return this.restore(id, userId);
+        if (dto && dto._action === 'APPROVE_DELETE') return this.approveDelete(id, userId);
+        if (dto && dto._action === 'PERMANENT_DELETE') return this.permanentDelete(id, userId);
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
         const existing = await this.findOne(id, userId);
-        if (!scope.all && Number(existing.satker_id) !== scope.satkerId) {
-            throw new common_1.ForbiddenException('Tidak memiliki akses mengubah kasus ini.');
-        }
+        await this.assertCanManageRow(existing, userId, 'mengubah');
         const lpIds = dto.lp_ids !== undefined ? this.toLpIds(dto.lp_ids) : null;
         const lpRows = lpIds !== null ? await this.validateLpIds(lpIds, scope) : null;
         let satkerId = existing.satker_id;
         if (lpRows !== null) {
             if (lpRows.length)
-                satkerId = Number(lpRows[0].satker_id) || null;
+                satkerId = Number(lpRows[0].satker_id) || existing.satker_id || null;
             else if (!scope.all)
                 satkerId = scope.satkerId;
-            else
-                satkerId = null;
         }
         const payload = { updated_by: userId ?? null, satker_id: satkerId };
         if (dto.judul !== undefined) {
@@ -433,6 +645,7 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
     async setPin(id, userId, pinned) {
         await this.ensureTables();
         const existing = await this.findOne(id, userId);
+        await this.assertCanManageRow(existing, userId, 'menyematkan');
         const nextPin = pinned !== undefined && pinned !== null ? this.toBoolean(pinned) : !Boolean(existing.is_pinned);
         await this.dataSource.query(`update bdb_kasus_menonjol
              set is_pinned = $2,
@@ -442,18 +655,35 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
              where id = $1 and deleted_at is null`, [id, nextPin, userId ?? null]);
         return this.findOne(id, userId);
     }
-    async remove(id, userId) {
+    async remove(id, userId, alasan) {
         await this.ensureTables();
-        const scope = await (0, scope_util_1.resolveScope)(this.dataSource, userId);
         const existing = await this.findOne(id, userId);
-        if (!scope.all && Number(existing.satker_id) !== scope.satkerId) {
-            throw new common_1.ForbiddenException('Tidak memiliki akses menghapus kasus ini.');
-        }
-        await this.dataSource.query('update bdb_kasus_menonjol set deleted_at = now() where id = $1', [id]);
-        return { status: 1, message: 'Kasus menonjol dihapus.' };
+        const actor = await this.assertCanManageRow(existing, userId, 'menghapus');
+        const reason = this.toText(alasan) || (actor.isSuperAdmin ? 'Dihapus ke arsip oleh Superadmin' : 'Permohonan hapus oleh pengelola data');
+        const nextStatus = actor.isSuperAdmin ? 'ARCHIVED' : 'PENDING_DELETE';
+        await this.dataSource.query(
+            `update bdb_kasus_menonjol
+             set deleted_at = now(),
+                 delete_status = $2,
+                 deleted_by = $3,
+                 delete_reason = $4,
+                 delete_requested_at = now(),
+                 updated_by = $3,
+                 updated_at = now()
+             where id = $1`,
+            [id, nextStatus, actor.id ?? userId ?? null, reason]
+        );
+        return {
+            status: 1,
+            delete_status: nextStatus,
+            message: actor.isSuperAdmin
+                ? 'Kasus menonjol dipindahkan ke Arsip Terhapus.'
+                : 'Permohonan hapus berhasil dikirim dan ditampung di tab Permohonan Hapus & Arsip.'
+        };
     }
     async addAttachments(kasusId, userId, files) {
-        await this.findOne(kasusId, userId);
+        const existing = await this.findOne(kasusId, userId);
+        await this.assertCanManageRow(existing, userId, 'menambahkan lampiran pada');
         if (!files?.length)
             return this.listAttachments(kasusId, userId);
         for (const f of files) {
@@ -482,7 +712,8 @@ let BdbKasusMenonjolService = class BdbKasusMenonjolService {
         const rows = await this.dataSource.query(`select kasus_menonjol_id, object_key from bdb_kasus_menonjol_attachments where id = $1`, [attId]);
         if (!rows.length)
             throw new common_1.NotFoundException('Lampiran tidak ditemukan.');
-        await this.findOne(Number(rows[0].kasus_menonjol_id), userId);
+        const existing = await this.findOne(Number(rows[0].kasus_menonjol_id), userId);
+        await this.assertCanManageRow(existing, userId, 'menghapus lampiran pada');
         try {
             await this.minio.remove(rows[0].object_key);
         }

@@ -1,6 +1,6 @@
 (globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,2114,e=>{"use strict";let a=(0,e.i(56420).default)("gavel",[["path",{d:"m14 13-8.381 8.38a1 1 0 0 1-3.001-3l8.384-8.381",key:"pgg06f"}],["path",{d:"m16 16 6-6",key:"vzrcl6"}],["path",{d:"m21.5 10.5-8-8",key:"a17d9x"}],["path",{d:"m8 8 6-6",key:"18bi4p"}],["path",{d:"m8.5 7.5 8 8",key:"1oyaui"}]]),LIcon=(0,e.i(56420).default)("landmark",[["path",{d:"M10 18v-7",key:"wt116b"}],["path",{d:"M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z",key:"yxxwt6"}],["path",{d:"M14 18v-7",key:"vav6t3"}],["path",{d:"M18 18v-7",key:"aexdmj"}],["path",{d:"M3 22h18",key:"8prr45"}],["path",{d:"M6 18v-7",key:"1ivflk"}]]);e.s(["Gavel",0,a,"Landmark",0,LIcon],2114)},91246,e=>{"use strict";var a=e.i(43476),l=e.i(71645),t=e.i(17580),s=e.i(24718),n=e.i(53729),i=e.i(44080),r=e.i(68242),d=e.i(2114),o=e.i(54858),authBB=e.i(38036);
 
-const BB_LIST_CACHE_PREFIX="bdb-bb-list-v5:",BB_LIST_TTL=24e4,BB_SUMMARY_CACHE_PREFIX="bdb-bb-summary-v5:",BB_SUMMARY_TTL=24e4,BB_LOCAL_OVERRIDES_KEY="cas_rekap_bb_overrides_v1";
+const BB_LIST_CACHE_PREFIX="bdb-bb-list-v6:",BB_LIST_TTL=24e4,BB_SUMMARY_CACHE_PREFIX="bdb-bb-summary-v6:",BB_SUMMARY_TTL=24e4,BB_LOCAL_OVERRIDES_KEY="cas_rekap_bb_overrides_v1";
 
 function SafeLandmark({size=12,style={}}){
   return(0,a.jsxs)("svg",{
@@ -147,6 +147,60 @@ function safeTodayWib(){
   }
 }
 
+const ANIMAL_KEYWORDS_RE=/\b(sapi|kerbau|kambing|domba|ayam|unggas|bebek|itik|anjing|kucing|burung|merpati|murai|babi|kuda|ikan|udang|benur|bibit\s*lobster|lobster|ternak|hewan|satwa|binatang|trenggiling|gajah|harimau|orangutan|rusa|ular|buaya|penyu)\b/i;
+const NARKOTIKA_KEYWORDS_RE=/\b(sabu|shabu|metamfetamina|ganja|kanabis|ekstasi|inex|narkotika|narkoba|psikotropika|heroin|kokain|tembakau\s*gorila|sinte|double\s*l|tramadol|hexymer|trihexyphenidyl|dextro|carnophen|zenith|yarindo|alprazolam|riklona|dumolid|serbuk\s*kristal|kristal\s*putih|pil\s*koplo|obat\s*keras|miras|minuman\s*keras|alkohol|ciu\b|tuak|cap\s*tikus|anggur\s*merah|botol\s*minuman|bong\b|pipet|pirex)\b/i;
+
+function detectCategoryFromKeywords(txtInput){
+  let txt=String(txtInput||"").toLowerCase().trim();
+  if(!txt)return"";
+  if(NARKOTIKA_KEYWORDS_RE.test(txt)||/\b(\bpil\b|\bobat\b)\b/i.test(txt)){
+    return"Narkotika, Psikotropika & Obat";
+  }
+  if(/\b(pistol|revolver|senapan|laras\s*panjang|senjata\s*api|senpi|airsoft|airgun|amunisi|peluru|proyektil|selongsong|magasin|bom\b|bahan\s*peledak|handak|detonator|mesiu|petasan|mercon|granat)\b/i.test(txt)){
+    return"Senjata Api & Bahan Peledak";
+  }
+  if(/\b(parang|celurit|clurit|pisau|golok|badik|pedang|samurai|katana|keris|klewang|mandau|sabit|arit|tombak|kujang|belati|sangkur|kapak|kampak|anak\s*panah|busur\s*panah|ketapel|senjata\s*tajam|sajam)\b/i.test(txt)){
+    return"Senjata Tajam";
+  }
+  if(/\b(sepeda\s*motor|\bmotor\b|\bmobil\b|\btruk\b|pikap|pick\s*up|stnk|bpkb|nopol|plat\s*nomor|yamaha|honda|toyota|suzuki|kawasaki|daihatsu|mitsubishi|vespa|nmax|vario|beat|scoopy|avanza|xenia|innova|pajero|fortuner|brio|sigra|calya|kendaraan|ranmor)\b/i.test(txt)){
+    return"Kendaraan Bermotor";
+  }
+  if(/\b(handphone|\bhp\b|iphone|samsung|xiaomi|oppo|vivo|realme|infinix|nokia|telepon|imei|sim\s*card|simcard|laptop|komputer|\bpc\b|monitor|televisi|\btv\b|flashdisk|harddisk|ssd|microsd|memory\s*card|cctv|dvr|modem|router|printer|kamera|drone|elektronik|digital)\b/i.test(txt)){
+    return"Perangkat Elektronik & Komunikasi";
+  }
+  if(/\b(uang|rupiah|\brp\b|tunai|dollar|\busd\b|mata\s*uang|emas\b|perak\b|berlian|permata|perhiasan|cincin|kalung|gelang|anting|liontin|logam\s*mulia|antam|kartu\s*atm|kartu\s*kredit|kartu\s*debit|e-money|flazz|brizzi)\b/i.test(txt)){
+    return"Uang Tunai & Logam Mulia";
+  }
+  if(/\b(sertifikat|\bshm\b|\bshgb\b|\bsurat\b|\bktp\b|\bkk\b|kartu\s*keluarga|akta|ijazah|paspor|\bsim\b|buku\s*tabungan|rekening|mutasi|kwitansi|kuitansi|\bnota\b|faktur|invoice|struk|bilyet|\bcek\b|giro|dokumen|polis|kontrak|perjanjian|skep|berkas|arsip|bukti\s*transfer)\b/i.test(txt)){
+    return"Dokumen & Surat Berharga";
+  }
+  if(/\b(kartu\s*remi|domino|gaple|ceki|dadu|koprok|kupon\s*togel|togel|toto\s*gelap|rekapan\s*togel|tafsir\s*mimpi|mesin\s*judi|dingdong|slot\b|chip\s*judi|bilyar|billiard|sabung\s*ayam|alat\s*perjudian|\bjudi\b)\b/i.test(txt)){
+    return"Alat Perjudian & Permainan";
+  }
+  if(/\b(senter|lampu|bohlam|led|kabel\s*listrik|saklar|stop\s*kontak|steker|aki\b|accu\b|baterai|genset|generator|trafo|inverter|kwh|meteran\s*listrik|alat\s*penerangan|kelistrikan)\b/i.test(txt)){
+    return"Alat Penerangan & Kelistrikan";
+  }
+  if(/\b(solar|biosolar|pertalite|pertamax|\bbbm\b|bensin|minyak\s*tanah|avtur|\boli\b|pelumas|aspal|\bgas\b|elpiji|lpg|pupuk|urea|phonska|npk|pestisida|herbisida|sianida|merkuri|air\s*raksa|asam\s*sulfat|bahan\s*kimia|semen|\bbesi\b|baja|tembaga|aluminium|seng|\bkayu\b|balok|papan|rotan|pasir|\bbatu\b|kerikil|batubara|nikel|timah|bauksit|tambang|material)\b/i.test(txt)){
+    return"Bahan Bakar, Kimia & Material";
+  }
+  if(/\b(beras|gabah|padi|gula|minyak\s*goreng|migor|tepung|terigu|daging|telur|susu|garam|bawang|cabai|kedelai|jagung|kopi|kakao|karet|lateks|kelapa\s*sawit|sawit|\btbs\b|tandan\s*buah|berondolan|\bcpo\b|cengkeh|pala|lada|merica|tembakau|rokok|cerutu|makanan|minuman|sembako|pangan|pertanian|perkebunan)\b/i.test(txt)){
+    return"Pangan, Pertanian & Perkebunan";
+  }
+  if(/\b(kunci\s*t|kunci\s*l|kunci\s*inggris|kunci\s*pas|\bkunci\b|obeng|\btang\b|\bpalu\b|martil|linggis|gergaji|chainsaw|senso|\bbor\b|gerinda|mesin|pompa|kompresor|dinamo|ekskavator|excavator|bulldozer|loader|crane|traktor|alat\s*berat|timbangan|gunting|cangkul|sekop|dodos|egrek|tojok|angkong|perkakas)\b/i.test(txt)){
+    return"Perkakas, Mesin & Alat Berat";
+  }
+  if(/\b(baju|kaos|kemeja|celana|jeans|jaket|hoodie|sweater|daster|gamis|kerudung|jilbab|hijab|mukena|sarung|batik|\bkain\b|tekstil|handuk|selendang|pakaian|helm\b|\btas\b|ransel|dompet|koper|sepatu|sandal|topi|ikat\s*pinggang|sabuk|kacamata|jam\s*tangan|arloji)\b/i.test(txt)){
+    return"Pakaian, Tekstil & Aksesoris";
+  }
+  if(/\b(kursi|sofa|meja|lemari|bufet|\brak\b|kasur|matras|bantal|guling|sprei|selimut|karpet|tikar|terpal|gorden|kompor|panci|wajan|piring|gelas|sendok|termos|dispenser|kulkas|mesin\s*cuci|kipas\s*angin|setrika|blender|magic\s*com|rice\s*cooker|ember|baskom|gayung|galon|tabung|jerigen|drum|tandon|toren|keranjang|karung|goni|\bsak\b|plastik|kardus|karton|kotak|\bbox\b|peti|botol|kaleng|perabotan|rumah\s*tangga)\b/i.test(txt)){
+    return"Perabotan & Alat Rumah Tangga";
+  }
+  if(ANIMAL_KEYWORDS_RE.test(txt)){
+    return"Hewan & Ternak";
+  }
+  return"";
+}
+
 /**
  * Klasifikasi & Normalisasi Jenis Barang ke 16 Kategori Standar Indonesia
  * sekaligus menjaga deskripsi spesifik pada Nama / Detail Barang.
@@ -157,47 +211,37 @@ function classifyJenisBarang(rawJenisInput,rawNamaInput){
   if(["-","—","null","NULL","undefined","TIDAK DIKETAHUI","NIHIL"].includes(rawJ))rawJ="";
   if(["-","—","null","NULL","undefined"].includes(rawN))rawN="";
 
-  let exactMatch=MASTER_JENIS_BARANG_INDONESIA.find(c=>c.toUpperCase()===rawJ.toUpperCase());
-  let txt=(rawJ+" "+rawN).toLowerCase();
-  let category=exactMatch||"";
+  let exactMatch=MASTER_JENIS_BARANG_INDONESIA.find(c=>c.toUpperCase()===rawJ.toUpperCase())||"";
+  let fromNama=rawN?detectCategoryFromKeywords(rawN):"";
+  let nonGenericRawJ=exactMatch===""?rawJ:"";
+  let fromJenis=nonGenericRawJ?detectCategoryFromKeywords(nonGenericRawJ):"";
 
-  if(!category){
-    if(/\b(senter|lampu|bohlam|led|kabel\s*listrik|saklar|stop\s*kontak|steker|aki\b|accu\b|baterai|genset|generator|trafo|inverter|kwh|meteran\s*listrik|alat\s*penerangan|kelistrikan)\b/i.test(txt)){
-      category="Alat Penerangan & Kelistrikan";
-    }else if(/\b(ayam|unggas|bebek|itik|burung|merpati|murai|sapi|kerbau|kambing|domba|babi|kuda|anjing|kucing|ikan|benur|lobster|penyu|trenggiling|satwa|hewan|ternak|binatang)\b/i.test(txt)){
-      category="Hewan & Ternak";
-    }else if(/\b(pistol|revolver|senapan|laras\s*panjang|senjata\s*api|senpi|airsoft|airgun|amunisi|peluru|proyektil|selongsong|magasin|bom\b|bahan\s*peledak|handak|detonator|mesiu|petasan|mercon|granat)\b/i.test(txt)){
-      category="Senjata Api & Bahan Peledak";
-    }else if(/\b(parang|celurit|clurit|pisau|golok|badik|pedang|samurai|katana|keris|klewang|mandau|sabit|arit|tombak|kujang|belati|sangkur|kapak|kampak|anak\s*panah|busur\s*panah|ketapel|senjata\s*tajam|sajam)\b/i.test(txt)){
-      category="Senjata Tajam";
-    }else if(/\b(sabu|shabu|metamfetamina|ganja|kanabis|ekstasi|inex|tramadol|hexymer|trihexyphenidyl|dextro|yarindo|alprazolam|riklona|dumolid|narkotika|narkoba|psikotropika|miras|minuman\s*keras|alkohol|ciu\b|tuak|cap\s*tikus|anggur\s*merah|botol\s*minuman|bong\b|pipet|pirex|\bpil\b|\bobat\b)\b/i.test(txt)){
-      category="Narkotika, Psikotropika & Obat";
-    }else if(/\b(kartu\s*remi|domino|gaple|ceki|dadu|koprok|kupon\s*togel|togel|toto\s*gelap|rekapan\s*togel|tafsir\s*mimpi|mesin\s*judi|dingdong|slot\b|chip\s*judi|bilyar|billiard|sabung\s*ayam|alat\s*perjudian|\bjudi\b)\b/i.test(txt)){
-      category="Alat Perjudian & Permainan";
-    }else if(/\b(sepeda\s*motor|\bmotor\b|\bmobil\b|\btruk\b|pikap|pick\s*up|stnk|bpkb|nopol|plat\s*nomor|yamaha|honda|toyota|suzuki|kawasaki|daihatsu|mitsubishi|vespa|nmax|vario|beat|scoopy|avanza|xenia|innova|pajero|fortuner|brio|sigra|calya|kendaraan|ranmor)\b/i.test(txt)){
-      category="Kendaraan Bermotor";
-    }else if(/\b(handphone|\bhp\b|iphone|samsung|xiaomi|oppo|vivo|realme|infinix|nokia|telepon|imei|sim\s*card|simcard|laptop|komputer|\bpc\b|monitor|televisi|\btv\b|flashdisk|harddisk|ssd|microsd|memory\s*card|cctv|dvr|modem|router|printer|kamera|drone|elektronik|digital)\b/i.test(txt)){
-      category="Perangkat Elektronik & Komunikasi";
-    }else if(/\b(sertifikat|\bshm\b|\bshgb\b|\bsurat\b|\bktp\b|\bkk\b|kartu\s*keluarga|akta|ijazah|paspor|\bsim\b|buku\s*tabungan|rekening|mutasi|kwitansi|kuitansi|\bnota\b|faktur|invoice|struk|bilyet|\bcek\b|giro|dokumen|polis|kontrak|perjanjian|skep|berkas|arsip|bukti\s*transfer)\b/i.test(txt)){
-      category="Dokumen & Surat Berharga";
-    }else if(/\b(uang|rupiah|\brp\b|tunai|dollar|\busd\b|mata\s*uang|emas\b|perak\b|berlian|permata|perhiasan|cincin|kalung|gelang|anting|liontin|logam\s*mulia|antam|kartu\s*atm|kartu\s*kredit|kartu\s*debit|e-money|flazz|brizzi)\b/i.test(txt)){
-      category="Uang Tunai & Logam Mulia";
-    }else if(/\b(baju|kaos|kemeja|celana|jeans|jaket|hoodie|sweater|daster|gamis|kerudung|jilbab|hijab|mukena|sarung|batik|\bkain\b|tekstil|handuk|selendang|pakaian|helm\b|\btas\b|ransel|dompet|koper|sepatu|sandal|topi|ikat\s*pinggang|sabuk|kacamata|jam\s*tangan|arloji)\b/i.test(txt)){
-      category="Pakaian, Tekstil & Aksesoris";
-    }else if(/\b(kunci\s*t|kunci\s*l|kunci\s*inggris|kunci\s*pas|\bkunci\b|obeng|\btang\b|\bpalu\b|martil|linggis|gergaji|chainsaw|senso|\bbor\b|gerinda|mesin|pompa|kompresor|dinamo|ekskavator|excavator|bulldozer|loader|crane|traktor|alat\s*berat|timbangan|gunting|cangkul|sekop|dodos|egrek|tojok|angkong|perkakas)\b/i.test(txt)){
-      category="Perkakas, Mesin & Alat Berat";
-    }else if(/\b(solar|biosolar|pertalite|pertamax|\bbbm\b|bensin|minyak\s*tanah|avtur|\boli\b|pelumas|aspal|\bgas\b|elpiji|lpg|pupuk|urea|phonska|npk|pestisida|herbisida|sianida|merkuri|air\s*raksa|asam\s*sulfat|bahan\s*kimia|semen|\bbesi\b|baja|tembaga|aluminium|seng|\bkayu\b|balok|papan|rotan|pasir|\bbatu\b|kerikil|batubara|nikel|timah|bauksit|tambang|material)\b/i.test(txt)){
-      category="Bahan Bakar, Kimia & Material";
-    }else if(/\b(beras|gabah|padi|gula|minyak\s*goreng|migor|tepung|terigu|daging|telur|susu|garam|bawang|cabai|kedelai|jagung|kopi|kakao|karet|lateks|kelapa\s*sawit|sawit|\btbs\b|tandan\s*buah|berondolan|\bcpo\b|cengkeh|pala|lada|merica|tembakau|rokok|cerutu|makanan|minuman|sembako|pangan|pertanian|perkebunan)\b/i.test(txt)){
-      category="Pangan, Pertanian & Perkebunan";
-    }else if(/\b(kursi|sofa|meja|lemari|bufet|\brak\b|kasur|matras|bantal|guling|sprei|selimut|karpet|tikar|terpal|gorden|kompor|panci|wajan|piring|gelas|sendok|termos|dispenser|kulkas|mesin\s*cuci|kipas\s*angin|setrika|blender|magic\s*com|rice\s*cooker|ember|baskom|gayung|galon|tabung|jerigen|drum|tandon|toren|keranjang|karung|goni|\bsak\b|plastik|kardus|karton|kotak|\bbox\b|peti|botol|kaleng|perabotan|rumah\s*tangga)\b/i.test(txt)){
-      category="Perabotan & Alat Rumah Tangga";
-    }else{
+  let category="";
+  if(NARKOTIKA_KEYWORDS_RE.test(rawN)||NARKOTIKA_KEYWORDS_RE.test(rawJ)){
+    category="Narkotika, Psikotropika & Obat";
+  }else if(fromNama){
+    category=fromNama;
+  }else if(fromJenis){
+    category=fromJenis;
+  }else if(exactMatch){
+    if(exactMatch==="Hewan & Ternak"&&rawN&&!ANIMAL_KEYWORDS_RE.test(rawN)){
       category="Barang Bukti Lainnya";
+    }else{
+      category=exactMatch;
+    }
+  }else{
+    category="Barang Bukti Lainnya";
+  }
+
+  if(category==="Hewan & Ternak"){
+    let checkAnimalText=rawN||(exactMatch===""?rawJ:"");
+    if(!ANIMAL_KEYWORDS_RE.test(checkAnimalText)){
+      category=fromNama||fromJenis||"Barang Bukti Lainnya";
+      if(category==="Hewan & Ternak")category="Barang Bukti Lainnya";
     }
   }
 
-  let isGenericRaw=!rawJ||GENERIC_RAW_JENIS_SET.has(rawJ.toUpperCase());
+  let isGenericRaw=!rawJ||GENERIC_RAW_JENIS_SET.has(rawJ.toUpperCase())||/^hewan\s*&?\s*ternak$/i.test(rawJ);
   let cleanRawJ=rawJ.replace(/^\d+(?:[.,]\d+)?\s*(?:buah|bh|pcs|biji|unit|butir|btr|batang|btg|bilah|pucuk|lembar|lbr|helai|potong|ptg|berkas|bundel|bundle|pasang|psg|set|paket|keping|kotak|box|dus|kardus|bungkus|bks|slop|pak|pack|sachet|klip|botol|btl|kaleng|klg|tabung|tbg|jerigen|jrgn|jergen|galon|karung|krg|sak|zak|roll|gulung|ekor|gram|gr|g|kilogram|kg|kilo|kuintal|kwintal|ton|mililiter|ml|liter|ltr|l|meter|mtr|m|sentimeter|cm|hektare|hektar|ha)\b\s*/i,"").trim()||rawJ;
   let detail="";
   if(!isGenericRaw){
@@ -223,22 +267,54 @@ function classifyBbJenis(row){
   return classifyJenisBarang(row.jenis_barang||row.jenis,row.nama_barang||row.keterangan).jenis;
 }
 
-function loadBbOverrides(){
+function readLocalBbOverrides(){
   if(typeof window==="undefined")return{};
   try{
     let raw=localStorage.getItem(BB_LOCAL_OVERRIDES_KEY);
     if(!raw)return{};
     let parsed=JSON.parse(raw);
-    return parsed&&typeof parsed==="object"?parsed:{};
+    if(!parsed||typeof parsed!=="object")return{};
+    let cleaned={},dirty=!1;
+    for(let[k,ov]of Object.entries(parsed)){
+      if(!ov||typeof ov!=="object"){dirty=!0;continue}
+      let next={...ov},
+          ket=String(next.keterangan||next.nama_barang||"").trim(),
+          jns=String(next.jenis||next.jenis_barang||"").trim(),
+          sat=String(next.satuan||"").trim(),
+          hasAnimal=ANIMAL_KEYWORDS_RE.test(ket)||(ket===""&&ANIMAL_KEYWORDS_RE.test(jns)&&!/^hewan\s*&?\s*ternak$/i.test(jns));
+      if(/^hewan\s*&?\s*ternak$/i.test(jns)&&!hasAnimal){
+        delete next.jenis;
+        delete next.jenis_barang;
+        dirty=!0;
+      }
+      if(/^ekor$/i.test(sat)&&!hasAnimal){
+        delete next.satuan;
+        dirty=!0;
+      }
+      let meaningfulKeys=Object.keys(next).filter(x=>x!=="updatedAt"&&next[x]!==undefined&&next[x]!=="");
+      if(meaningfulKeys.length>0){
+        cleaned[k]=next;
+      }else{
+        dirty=!0;
+      }
+    }
+    if(dirty){
+      try{localStorage.setItem(BB_LOCAL_OVERRIDES_KEY,JSON.stringify(cleaned))}catch{}
+    }
+    return cleaned;
   }catch{
     return{};
   }
 }
 
+function loadBbOverrides(){
+  return readLocalBbOverrides();
+}
+
 function saveBbOverride(key,data){
   if(typeof window==="undefined"||!key)return;
   try{
-    let cur=loadBbOverrides();
+    let cur=readLocalBbOverrides();
     cur[String(key)]={...(cur[String(key)]||{}),...data,updatedAt:Date.now()};
     localStorage.setItem(BB_LOCAL_OVERRIDES_KEY,JSON.stringify(cur));
   }catch{}
@@ -260,7 +336,7 @@ function matchSatuanIndonesia(rawUnit){
   let map={
     "bh":"Buah","buah":"Buah","pcs":"Buah","biji":"Buah",
     "unit":"Unit",
-    "btr":"Butir","butir":"Butir",
+    "btr":"Butir","butir":"Butir","tablet":"Butir","pil":"Butir","kapsul":"Butir",
     "btg":"Batang","batang":"Batang",
     "bilah":"Bilah",
     "pucuk":"Pucuk",
@@ -272,7 +348,7 @@ function matchSatuanIndonesia(rawUnit){
     "paket":"Paket",
     "keping":"Keping",
     "kotak":"Kotak / Box","box":"Kotak / Box","dus":"Kotak / Box","kardus":"Kotak / Box",
-    "bungkus":"Bungkus","bks":"Bungkus","slop":"Bungkus","pak":"Bungkus","pack":"Bungkus","sachet":"Bungkus","klip":"Bungkus",
+    "bungkus":"Bungkus","bks":"Bungkus","slop":"Bungkus","pak":"Bungkus","pack":"Bungkus","sachet":"Bungkus","klip":"Bungkus","poket":"Bungkus",
     "botol":"Botol","btl":"Botol",
     "kaleng":"Kaleng","klg":"Kaleng",
     "tabung":"Tabung","tbg":"Tabung",
@@ -298,34 +374,182 @@ function matchSatuanIndonesia(rawUnit){
   return map[low]||u;
 }
 
-function parseJumlahSatuan(row,overridesMap){
-  if(!row||typeof row!=="object")return{jumlah:"",satuan:""};
-  let key=getRowOverrideKey(row),
-      ov=overridesMap&&key?overridesMap[key]:null;
-  let rawJml=ov?.jumlah!==undefined?ov.jumlah:(row.jumlah_angka!==undefined?row.jumlah_angka:row.jumlah),
-      rawSat=ov?.satuan!==undefined?ov.satuan:(row.satuan||"");
-  let sJml=String(rawJml??"").trim(),
-      sSat=matchSatuanIndonesia(rawSat);
-  if(!sJml||sJml==="-"||sJml==="—"||sJml.toLowerCase()==="null")return{jumlah:"",satuan:sSat};
+function inferUnitFromNamaAndJenis(rawNama,jenisMaster,numStr,rawJmlStr){
+  let txt=String(rawNama||"").toLowerCase(),
+      jMaster=String(jenisMaster||""),
+      isDec=/^-?\d+\.\d+$/.test(String(numStr||""))||String(rawJmlStr||"").includes(",");
+  if(jMaster==="Narkotika, Psikotropika & Obat"||NARKOTIKA_KEYWORDS_RE.test(txt)){
+    if(/\b(kilogram|kg\b|kilo)\b/i.test(txt))return"Kilogram (Kg)";
+    if(/\b(gram|gr\b|berat|brutto|netto)\b/i.test(txt)||isDec)return"Gram (g)";
+    if(/\b(butir|btr|tablet|pil|kapsul)\b/i.test(txt))return"Butir";
+    if(/\b(sachet|paket|bungkus|bks|klip|poket|pak|pack|slop)\b/i.test(txt))return"Bungkus";
+    if(/\b(botol|btl)\b/i.test(txt))return"Botol";
+    if(/\b(batang|btg|linting)\b/i.test(txt))return"Batang";
+    return"";
+  }
+  if(/\b(gram|gr\b)\b/i.test(txt))return"Gram (g)";
+  if(/\b(kilogram|kg\b)\b/i.test(txt))return"Kilogram (Kg)";
+  if(/\b(butir|tablet|kapsul)\b/i.test(txt))return"Butir";
+  if(/\b(sachet|bungkus|klip|poket)\b/i.test(txt))return"Bungkus";
+  if(/\b(bilah)\b/i.test(txt))return"Bilah";
+  if(/\b(pucuk)\b/i.test(txt))return"Pucuk";
+  if(/\b(lembar|lbr)\b/i.test(txt))return"Lembar";
+  if(/\b(berkas|bundel)\b/i.test(txt))return"Berkas / Bundel";
+  if(/\b(botol|btl)\b/i.test(txt))return"Botol";
+  if(/\b(karung|krg)\b/i.test(txt))return"Karung";
+  if(/\b(unit)\b/i.test(txt))return"Unit";
+  return"";
+}
 
-  if(/^-?\d+(?:[.,]\d+)?$/.test(sJml)){
-    return{jumlah:sJml.replace(",","."),satuan:sSat};
+function parseJumlahSatuan(arg1,arg2,arg3,arg4){
+  let rawJml="",rawSat="",rawNama="",jenisMaster="";
+  if(arg1&&typeof arg1==="object"){
+    let row=arg1,
+        overridesMap=arg2,
+        key=getRowOverrideKey(row),
+        ov=overridesMap&&key?overridesMap[key]:null;
+    rawJml=ov?.jumlah!==undefined?ov.jumlah:(row.jumlah_angka!==undefined?row.jumlah_angka:row.jumlah);
+    rawSat=ov?.satuan!==undefined?ov.satuan:(row.satuan||"");
+    let rJenis=ov?.jenis??row.jenis_barang??row.jenis??"",
+        rKet=ov?.keterangan??row.nama_barang??row.keterangan??"";
+    let cls=classifyJenisBarang(rJenis,rKet);
+    jenisMaster=cls.jenis;
+    rawNama=(String(rKet)+" "+String(cls.detail||"")+" "+String(row.jenis_barang||row.jenis||"")).trim();
+  }else{
+    rawJml=arg1;
+    rawSat=arg2;
+    rawNama=String(arg3??"");
+    jenisMaster=String(arg4??"")||(rawNama?classifyJenisBarang("",rawNama).jenis:"");
   }
-  let m=sJml.match(/^(-?\d+(?:[.,]\d+)?)\s+(.+)$/);
-  if(m){
-    let numPart=m[1].replace(",","."),
-        unitPart=matchSatuanIndonesia(m[2]);
-    return{jumlah:numPart,satuan:sSat||unitPart};
+
+  let sJml=String(rawJml??"").trim(),
+      sSat=matchSatuanIndonesia(rawSat),
+      numOut="";
+
+  if(sJml&&sJml!=="-"&&sJml!=="—"&&sJml.toLowerCase()!=="null"){
+    if(/^-?\d+(?:[.,]\d+)?$/.test(sJml)){
+      numOut=sJml.replace(",",".");
+    }else{
+      let m=sJml.match(/^(-?\d+(?:[.,]\d+)?)\s+(.+)$/);
+      if(m){
+        numOut=m[1].replace(",",".");
+        let unitPart=matchSatuanIndonesia(m[2]);
+        if(!sSat)sSat=unitPart;
+      }else{
+        let numExtract=sJml.match(/-?\d+(?:[.,]\d+)?/);
+        if(numExtract){
+          numOut=numExtract[0].replace(",",".");
+          let rest=sJml.replace(numExtract[0],"").replace(/[()]/g,"").trim();
+          if(!sSat&&rest)sSat=matchSatuanIndonesia(rest);
+        }else{
+          numOut=sJml;
+        }
+      }
+    }
   }
-  let numExtract=sJml.match(/-?\d+(?:[.,]\d+)?/);
-  if(numExtract){
-    let rest=sJml.replace(numExtract[0],"").replace(/[()]/g,"").trim();
+
+  if(/^ekor$/i.test(String(sSat||"").trim())){
+    if(jenisMaster!=="Hewan & Ternak"||(rawNama&&!ANIMAL_KEYWORDS_RE.test(rawNama))){
+      sSat="";
+    }
+  }
+
+  if(!sSat){
+    sSat=inferUnitFromNamaAndJenis(rawNama,jenisMaster,numOut,sJml);
+  }
+
+  return{jumlah:numOut,satuan:sSat};
+}
+
+function normalizeSatkerNameForRbac(s){
+  return String(s||"")
+    .toUpperCase()
+    .replace(/\bDIT\s*RESKRIMUM\b/g,"DITKRIMUM")
+    .replace(/\bDIT\s*KRIMUM\b/g,"DITKRIMUM")
+    .replace(/\bDIT\s*RESKRIMSUS\b/g,"DITKRIMSUS")
+    .replace(/\bDIT\s*KRIMSUS\b/g,"DITKRIMSUS")
+    .replace(/\bDIT\s*RESNARKOBA\b/g,"DITNARKOBA")
+    .replace(/\bDIT\s*NARKOBA\b/g,"DITNARKOBA")
+    .replace(/\bDIT\s*RESSIBER\b/g,"DITSIBER")
+    .replace(/\bDIT\s*SIBER\b/g,"DITSIBER")
+    .replace(/\bSAT\s*RESKRIM\b/g,"SATRESKRIM")
+    .replace(/\bSAT\s*RESNARKOBA\b/g,"SATNARKOBA")
+    .replace(/\bSAT\s*NARKOBA\b/g,"SATNARKOBA")
+    .replace(/[^A-Z0-9]+/g," ")
+    .trim();
+}
+
+function getUserInfo(){
+  try{
+    let u=(0,authBB.getUser)();
+    if(!u&&typeof window!=="undefined"){
+      let raw=localStorage.getItem("cas_auth_session")||localStorage.getItem("cas_user")||localStorage.getItem("user");
+      if(raw){
+        let parsed=JSON.parse(raw);
+        u=parsed?.user||parsed;
+      }
+    }
+    if(!u||typeof u!=="object")return null;
+    let roles=(0,authBB.deriveRoles)(u)||{};
+    let roleStr=String(u.role||u.role_name||u.level||roles.role||roles.label||"").trim().toLowerCase();
+    let isSuperadmin=Boolean(
+      roles.isSuperadmin||
+      roles.isSuperAdmin||
+      u.is_superadmin||
+      u.isSuperAdmin||
+      roleStr==="superadmin"||
+      roleStr==="super_admin"||
+      roleStr==="super admin"
+    );
+    let isViewer=Boolean(roles.isViewer||roleStr==="viewer");
     return{
-      jumlah:numExtract[0].replace(",","."),
-      satuan:sSat||(rest?matchSatuanIndonesia(rest):"")
+      ...u,
+      role:roleStr,
+      isSuperadmin,
+      isSuperAdmin:isSuperadmin,
+      isViewer,
+      satker_id:u.satker_id??u.satkerId??u.satker?.id??null,
+      unit_satker_id:u.unit_satker_id??u.unitSatkerId??u.unit_id??u.unitId??null,
+      satker_nama:u.satker_nama??u.satkerNama??u.satker?.nama??u.satker?.deskripsi??"",
+      unit_satker_nama:u.unit_satker_nama??u.unitSatkerNama??u.unit_nama??""
     };
+  }catch{
+    return null;
   }
-  return{jumlah:sJml,satuan:sSat};
+}
+
+function canUserModifyBbItem(item,currentUser){
+  if(!item||typeof item!=="object")return!1;
+  let u=currentUser!==undefined?currentUser:getUserInfo();
+  if(!u||typeof u!=="object")return!1;
+  if(u.isViewer)return!1;
+  let roleStr=String(u.role||u.role_name||"").trim().toLowerCase();
+  if(u.isSuperadmin||u.isSuperAdmin||roleStr==="superadmin"||roleStr==="super_admin")return!0;
+  if(item.can_edit===!1||item.is_read_only===!0)return!1;
+
+  let userSatkerIds=[u.satker_id,u.satkerId,u.unit_satker_id,u.unitSatkerId]
+    .map(v=>v==null||v===""?NaN:Number(v))
+    .filter(n=>Number.isFinite(n)&&n>0);
+  let itemSatkerIds=[item.satker_id,item.satkerId,item.unit_satker_id,item.unitSatkerId,item.lp_satker_id]
+    .map(v=>v==null||v===""?NaN:Number(v))
+    .filter(n=>Number.isFinite(n)&&n>0);
+
+  if(userSatkerIds.length>0&&itemSatkerIds.length>0){
+    return itemSatkerIds.some(id=>userSatkerIds.includes(id));
+  }
+
+  let userNames=[u.satker_nama,u.satkerNama,u.unit_satker_nama,u.unitSatkerNama]
+    .map(normalizeSatkerNameForRbac)
+    .filter(Boolean);
+  let itemNames=[item.satker_nama,item.satkerNama,item.unit_satker_nama,item.unitSatkerNama]
+    .map(normalizeSatkerNameForRbac)
+    .filter(Boolean);
+
+  if(userNames.length>0&&itemNames.length>0){
+    return itemNames.some(inm=>userNames.includes(inm));
+  }
+
+  return!1;
 }
 
 function bbCacheIdentity(){
@@ -506,7 +730,7 @@ function renderSatkerCell(e){
         .replace(/\bDIT\s+NARKOBA\b/gi,"DITNARKOBA")
         .replace(/\bDIT\s+RESSIBER\b/gi,"DITSIBER")
         .replace(/\bDIT\s+SIBER\b/gi,"DITSIBER")
-        .replace(/\b(?:POLRES|RES)\s+METRO\b/gi,"RESTRO")
+        .replace(/\b(?:POLRESTRO|(?:POLRES|RES)\s+METRO(?=\s+(?:JAKARTA|JAKPUS|JAKBAR|JAKTIM|JAKSEL|JAKUT|BEKASI|DEPOK|TANGERANG|BANDARA|SOETTA|SOEKARNO|PELABUHAN|TANJUNG|TJ\b|KEPULAUAN|KEP\b)))\b/gi,"RESTRO")
         .replace(/\bPOLRESTABES\b/gi,"RESTABES")
         .replace(/\bPOLRESTA\b/gi,"RESTA")
         .replace(/\bPOLRES\b/gi,"RES")
@@ -688,17 +912,19 @@ function RekapBarangBuktiInner(){
       [bbPeriodLabel,setBbPeriodLabel]=(0,l.useState)(bbInit.label),
       [bbPeriodError,setBbPeriodError]=(0,l.useState)(""),
       [masterJenisOptions,setMasterJenisOptions]=(0,l.useState)(()=>MASTER_JENIS_BARANG_INDONESIA.map(k=>({label:k,value:k}))),
-      [overridesMap,setOverridesMap]=(0,l.useState)(()=>loadBbOverrides()),
+      [overridesMap,setOverridesMap]=(0,l.useState)(()=>readLocalBbOverrides()),
       [editModalOpen,setEditModalOpen]=(0,l.useState)(!1),
       [editModalMax,setEditModalMax]=(0,l.useState)(!1),
       [editSaving,setEditSaving]=(0,l.useState)(!1),
       [editError,setEditError]=(0,l.useState)(""),
       [editToast,setEditToast]=(0,l.useState)(""),
+      [editToastType,setEditToastType]=(0,l.useState)("success"),
       [editForm,setEditForm]=(0,l.useState)({
         rowKey:"",
         rawId:"",
         lpId:null,
         isDorsRow:!1,
+        targetRow:null,
         no_laporan:"",
         jenis:"Kendaraan Bermotor",
         keterangan:"",
@@ -709,9 +935,16 @@ function RekapBarangBuktiInner(){
         status:"MASUK"
       });
 
-  let satuanDropdownOptions=(0,l.useMemo)(()=>SATUAN_BARANG_INDONESIA.map(s=>({label:s,value:s})),[]);
+  let currentUser=(0,l.useMemo)(()=>getUserInfo(),[]);
+  let[satuanDropdownOptions,setSatuanDropdownOptions]=(0,l.useState)(()=>SATUAN_BARANG_INDONESIA.map(s=>({label:s,value:s})));
 
-  // Fetch scope satker options & master jenis barang with safe guards
+  function showToastMessage(msg,type="success"){
+    setEditToastType(type);
+    setEditToast(msg);
+    setTimeout(()=>setEditToast(""),4500);
+  }
+
+  // Fetch scope satker options & master jenis/satuan barang with safe guards
   (0,l.useEffect)(()=>{
     let mounted=!0;
     o.apiAuth.get("/bdb/kinerja-perkara/meta/scope-options").then(res=>{
@@ -754,6 +987,33 @@ function RekapBarangBuktiInner(){
       o.apiAuth.get("/bdb/barang-bukti/master-jenis").then(res=>{
         let list=res?.data?.data||res?.data||[];
         mergeMasterJenis(Array.isArray(list)?list:[]);
+      }).catch(()=>{});
+    });
+
+    // Fetch Master Satuan Barang (Standar + Input Wilayah) & deduplicate via matchSatuanIndonesia
+    const mergeMasterSatuan=(items)=>{
+      if(!mounted||!Array.isArray(items))return;
+      let merged=[...SATUAN_BARANG_INDONESIA],
+          seen=new Set(SATUAN_BARANG_INDONESIA.map(x=>x.toUpperCase()));
+      for(let it of items){
+        let rawLbl=String(typeof it==="string"?it:(it?.nama_satuan||it?.satuan||it?.label||it?.value||it?.nama||"")).trim();
+        if(!rawLbl)continue;
+        let mapped=matchSatuanIndonesia(rawLbl);
+        if(mapped&&!seen.has(mapped.toUpperCase())){
+          seen.add(mapped.toUpperCase());
+          merged.push(mapped);
+        }
+      }
+      setSatuanDropdownOptions(merged.map(k=>({label:k,value:k})));
+    };
+
+    o.apiAuth.get("/bdb/barang-bukti/master-satuan").then(res=>{
+      let list=res?.data?.data||res?.data||[];
+      mergeMasterSatuan(Array.isArray(list)?list:[]);
+    }).catch(()=>{
+      o.apiAuth.get("/master/satuan-barang").then(res=>{
+        let list=res?.data?.data||res?.data||[];
+        mergeMasterSatuan(Array.isArray(list)?list:[]);
       }).catch(()=>{});
     });
 
@@ -1004,6 +1264,11 @@ function RekapBarangBuktiInner(){
 
   function openEditModal(row){
     if(!row||typeof row!=="object")return;
+    let liveUser=getUserInfo()||currentUser;
+    if(!canUserModifyBbItem(row,liveUser)){
+      showToastMessage("Akses Ditolak (RBAC): Anda hanya dapat mengubah Barang Bukti milik Satker Anda sendiri.","error");
+      return;
+    }
     let key=getRowOverrideKey(row),
         ov=overridesMap?.[key]||{},
         isDors=String(row.sumber||"").toUpperCase()==="DORS"||String(row.row_id||"").startsWith("dors-"),
@@ -1016,6 +1281,7 @@ function RekapBarangBuktiInner(){
       rawId:String(row.row_id??row.id??""),
       lpId:row.lp_id??null,
       isDorsRow:isDors,
+      targetRow:row,
       no_laporan:String(row.no_laporan||"—"),
       jenis:classified.jenis||"Kendaraan Bermotor",
       keterangan:classified.detail==="—"?"":classified.detail,
@@ -1029,10 +1295,45 @@ function RekapBarangBuktiInner(){
     setEditModalOpen(!0);
   }
 
+  async function handleDelete(row){
+    if(!row||typeof row!=="object")return;
+    let liveUser=getUserInfo()||currentUser;
+    if(!canUserModifyBbItem(row,liveUser)){
+      showToastMessage("Akses Ditolak (RBAC): Anda hanya dapat mengubah Barang Bukti milik Satker Anda sendiri.","error");
+      return;
+    }
+    let isDors=String(row.sumber||"").toUpperCase()==="DORS"||String(row.row_id||"").startsWith("dors-");
+    if(isDors){
+      showToastMessage("Data Barang Bukti dari sinkronisasi DORS tidak dapat dihapus.","error");
+      return;
+    }
+    if(typeof window!=="undefined"&&!window.confirm(`Hapus barang bukti "${row.nama_barang||row.keterangan||row.jenis||"ini"}"?`))return;
+    let rawId=String(row.row_id??row.id??"").trim(),
+        realId=rawId.replace(/^manual-/i,"")||rawId;
+    try{
+      await o.apiAuth.delete(`/bdb/barang-bukti/${encodeURIComponent(realId)}`);
+      clearBbSessionCaches();
+      setRows(prev=>(Array.isArray(prev)?prev:[]).filter(r=>r&&getRowOverrideKey(r)!==getRowOverrideKey(row)));
+      showToastMessage("Data barang bukti berhasil dihapus.","success");
+    }catch(err){
+      let status=err?.response?.status,
+          msg=err?.response?.data?.message||(status===403?"Akses Ditolak (RBAC): Anda hanya dapat menghapus Barang Bukti milik Satker Anda sendiri.":"Gagal menghapus barang bukti.");
+      showToastMessage(msg,"error");
+    }
+  }
+
   async function handleSaveEdit(ev){
     if(ev&&typeof ev.preventDefault==="function")ev.preventDefault();
+    let liveUser=getUserInfo()||currentUser;
+    if(editForm.targetRow&&!canUserModifyBbItem(editForm.targetRow,liveUser)){
+      let rbacMsg="Akses Ditolak (RBAC): Anda hanya dapat mengubah Barang Bukti milik Satker Anda sendiri.";
+      setEditError(rbacMsg);
+      showToastMessage(rbacMsg,"error");
+      return;
+    }
     let isDors=Boolean(editForm.isDorsRow),
-        cleanSatuan=String(editForm.satuan||"").trim(),
+        rawSatuanInput=String(editForm.satuan||"").trim(),
+        cleanSatuan=matchSatuanIndonesia(rawSatuanInput),
         cleanJumlah=String(editForm.jumlah??"").trim(),
         cleanJenis=String(editForm.jenis||"").trim(),
         cleanKet=String(editForm.keterangan||"").trim();
@@ -1041,6 +1342,11 @@ function RekapBarangBuktiInner(){
       setEditError("Satuan barang wajib dipilih (contoh: Buah, Unit, Kilogram (Kg), Meter (m)).");
       return;
     }
+    setSatuanDropdownOptions(prev=>{
+      let arr=Array.isArray(prev)?prev:[];
+      if(arr.some(o=>String(o.value||"").toUpperCase()===cleanSatuan.toUpperCase()))return arr;
+      return[...arr,{label:cleanSatuan,value:cleanSatuan}];
+    });
     if(!isDors&&!cleanJenis){
       setEditError("Jenis Barang wajib dipilih dari daftar Master Kategori.");
       return;
@@ -1074,28 +1380,43 @@ function RekapBarangBuktiInner(){
     let targetId=String(editForm.rawId||editForm.rowKey||"").trim();
     try{
       if(isDors){
+        let realId=targetId.replace(/^dors-/i,"")||targetId;
         try{
-          await o.apiAuth.put(`/rekap-barang-bukti/${encodeURIComponent(targetId)}`,payload);
-        }catch{
-          try{
-            await o.apiAuth.patch(`/bdb/barang-bukti/dors/${encodeURIComponent(targetId)}`,payload);
-          }catch{}
+          await o.apiAuth.patch(`/bdb/barang-bukti/dors/${encodeURIComponent(realId)}`,payload);
+        }catch(err1){
+          if(err1?.response?.status===403||err1?.response?.status===401)throw err1;
+          await o.apiAuth.patch(`/bdb/barang-bukti/dors/${encodeURIComponent(targetId)}`,payload);
         }
       }else{
-        let manualNumericId=targetId.replace(/^manual-/i,"");
+        let realId=targetId.replace(/^manual-/i,"")||targetId;
         try{
-          await o.apiAuth.patch(`/bdb/barang-bukti/manual/${encodeURIComponent(manualNumericId)}`,payload);
-        }catch{
-          try{
-            await o.apiAuth.put(`/rekap-barang-bukti/${encodeURIComponent(manualNumericId)}`,payload);
-          }catch{}
+          await o.apiAuth.patch(`/bdb/barang-bukti/${encodeURIComponent(realId)}`,payload);
+        }catch(err1){
+          if(err1?.response?.status===403||err1?.response?.status===401)throw err1;
+          await o.apiAuth.patch(`/bdb/barang-bukti/manual/${encodeURIComponent(realId)}`,payload);
         }
       }
-    }catch{}
+    }catch(err){
+      let status=err?.response?.status;
+      if(status===403||status===401){
+        let msg=err?.response?.data?.message||"Akses Ditolak (403 Forbidden): Anda hanya dapat mengubah Barang Bukti milik Satker Anda sendiri.";
+        setEditSaving(!1);
+        setEditError(msg);
+        showToastMessage(msg,"error");
+        return;
+      }
+      if(err?.response?.data?.message){
+        let msg=Array.isArray(err.response.data.message)?err.response.data.message.join(", "):String(err.response.data.message);
+        setEditSaving(!1);
+        setEditError(msg);
+        showToastMessage(msg,"error");
+        return;
+      }
+    }
 
     // Persist in localStorage overrides & update React state immediately
     let overrideData=isDors
-      ?{satuan:cleanSatuan,jumlah:cleanJumlah}
+      ?{satuan:cleanSatuan,jumlah:cleanJumlah,jenis:cleanJenis,keterangan:cleanKet}
       :{
           jenis:cleanJenis,
           keterangan:cleanKet,
@@ -1107,7 +1428,7 @@ function RekapBarangBuktiInner(){
         };
 
     saveBbOverride(editForm.rowKey,overrideData);
-    let nextOverrides=loadBbOverrides();
+    let nextOverrides=readLocalBbOverrides();
     setOverridesMap(nextOverrides);
     clearBbSessionCaches();
 
@@ -1136,8 +1457,7 @@ function RekapBarangBuktiInner(){
 
     setEditSaving(!1);
     setEditModalOpen(!1);
-    setEditToast(isDors?`Satuan "${cleanSatuan}" berhasil disimpan untuk data DORS.`:`Data barang bukti berhasil diperbarui.`);
-    setTimeout(()=>setEditToast(""),3500);
+    showToastMessage(isDors?`Satuan "${cleanSatuan}" berhasil disimpan untuk data DORS.`:`Data barang bukti berhasil diperbarui.`,"success");
   }
 
   let satkerOptionsMemo=(0,l.useMemo)(()=>[
@@ -1172,7 +1492,7 @@ function RekapBarangBuktiInner(){
         children:"Gabungan data barang bukti hasil sinkronisasi DORS dan entri manual pada detail Laporan Polisi di seluruh Satker dalam cakupan Anda."
       }),
       editToast&&(0,a.jsxs)("div",{
-        role:"status",
+        role:editToastType==="error"?"alert":"status",
         style:{
           display:"flex",
           alignItems:"center",
@@ -1181,9 +1501,9 @@ function RekapBarangBuktiInner(){
           marginBottom:"0.75rem",
           padding:"0.55rem 0.85rem",
           borderRadius:8,
-          background:"#ecfdf5",
-          border:"1px solid #6ee7b7",
-          color:"#065f46",
+          background:editToastType==="error"?"#fef2f2":"#ecfdf5",
+          border:editToastType==="error"?"1px solid #fecaca":"1px solid #6ee7b7",
+          color:editToastType==="error"?"#b91c1c":"#065f46",
           fontSize:"0.78rem",
           fontWeight:600
         },
@@ -1191,14 +1511,14 @@ function RekapBarangBuktiInner(){
           (0,a.jsxs)("span",{
             style:{display:"inline-flex",alignItems:"center",gap:"0.45rem"},
             children:[
-              (0,a.jsx)("i",{className:"pi pi-check-circle",style:{fontSize:"0.9rem",color:"#059669"}}),
+              (0,a.jsx)("i",{className:editToastType==="error"?"pi pi-ban":"pi pi-check-circle",style:{fontSize:"0.9rem",color:editToastType==="error"?"#dc2626":"#059669"}}),
               editToast
             ]
           }),
           (0,a.jsx)("button",{
             type:"button",
             onClick:()=>setEditToast(""),
-            style:{background:"none",border:"none",color:"#047857",cursor:"pointer",fontSize:"1rem",lineHeight:1},
+            style:{background:"none",border:"none",color:editToastType==="error"?"#b91c1c":"#047857",cursor:"pointer",fontSize:"1rem",lineHeight:1},
             children:"×"
           })
         ]
@@ -1659,7 +1979,7 @@ function RekapBarangBuktiInner(){
                           textOverflow:"ellipsis"
                         },
                         children:sat
-                      }):isDors&&(0,a.jsx)("button",{
+                      }):isDors&&canUserModifyBbItem(row,currentUser)&&(0,a.jsx)("button",{
                         type:"button",
                         onClick:()=>openEditModal(row),
                         title:"Klik untuk melengkapi Satuan Barang DORS",
@@ -1750,27 +2070,77 @@ function RekapBarangBuktiInner(){
                 style:{width:"4.5%",maxWidth:"4.5%",textAlign:"center",overflow:"hidden"},
                 body:row=>{
                   if(!row||typeof row!=="object")return null;
-                  let isDors="DORS"===String(row.sumber||"").toUpperCase()||String(row.row_id||"").startsWith("dors-");
-                  return(0,a.jsx)("button",{
-                    type:"button",
-                    onClick:()=>openEditModal(row),
-                    title:isDors?"Lengkapi Satuan Barang Bukti DORS":"Edit Barang Bukti Manual",
-                    className:"att-btn",
-                    style:{
-                      width:"28px",
-                      height:"28px",
-                      minHeight:"28px",
-                      padding:0,
-                      display:"inline-flex",
-                      alignItems:"center",
-                      justifyContent:"center",
-                      borderRadius:6,
-                      border:isDors?"1px solid #93c5fd":"1px solid var(--cas-border, #cbd5e1)",
-                      background:isDors?"#eff6ff":"var(--cas-bg-surface, #fff)",
-                      color:isDors?"#1d4ed8":"var(--cas-text-primary, #0f172a)",
-                      cursor:"pointer"
-                    },
-                    children:(0,a.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.76rem"}})
+                  let canModify=canUserModifyBbItem(row,currentUser);
+                  if(!canModify){
+                    return(0,a.jsx)("span",{
+                      title:"Hanya Satker pemilik LP atau Superadmin yang dapat mengubah data ini",
+                      "aria-label":"Terkunci (Hanya Satker pemilik LP atau Superadmin)",
+                      style:{
+                        width:"28px",
+                        height:"28px",
+                        minHeight:"28px",
+                        display:"inline-flex",
+                        alignItems:"center",
+                        justifyContent:"center",
+                        borderRadius:6,
+                        border:"1px solid var(--cas-border, #e2e8f0)",
+                        background:"var(--cas-bg-subtle, #f1f5f9)",
+                        color:"#94a3b8",
+                        cursor:"not-allowed",
+                        fontSize:"0.78rem",
+                        userSelect:"none"
+                      },
+                      children:"🔒"
+                    });
+                  }
+                  let isDors="DORS"===String(row.sumber||"").toUpperCase()||String(row.row_id||"").startsWith("dors-"),
+                      canDeleteManual=!isDors&&row.can_delete!==!1;
+                  return(0,a.jsxs)("div",{
+                    style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:"0.2rem"},
+                    children:[
+                      (0,a.jsx)("button",{
+                        type:"button",
+                        onClick:()=>openEditModal(row),
+                        title:isDors?"Lengkapi Satuan Barang Bukti DORS":"Edit Barang Bukti Manual",
+                        className:"att-btn",
+                        style:{
+                          width:"26px",
+                          height:"26px",
+                          minHeight:"26px",
+                          padding:0,
+                          display:"inline-flex",
+                          alignItems:"center",
+                          justifyContent:"center",
+                          borderRadius:6,
+                          border:isDors?"1px solid #93c5fd":"1px solid var(--cas-border, #cbd5e1)",
+                          background:isDors?"#eff6ff":"var(--cas-bg-surface, #fff)",
+                          color:isDors?"#1d4ed8":"var(--cas-text-primary, #0f172a)",
+                          cursor:"pointer"
+                        },
+                        children:(0,a.jsx)("i",{className:"pi pi-pencil",style:{fontSize:"0.74rem"}})
+                      }),
+                      canDeleteManual&&(0,a.jsx)("button",{
+                        type:"button",
+                        onClick:()=>handleDelete(row),
+                        title:"Hapus Barang Bukti Manual",
+                        className:"att-btn",
+                        style:{
+                          width:"26px",
+                          height:"26px",
+                          minHeight:"26px",
+                          padding:0,
+                          display:"inline-flex",
+                          alignItems:"center",
+                          justifyContent:"center",
+                          borderRadius:6,
+                          border:"1px solid #fecaca",
+                          background:"#fef2f2",
+                          color:"#dc2626",
+                          cursor:"pointer"
+                        },
+                        children:(0,a.jsx)("i",{className:"pi pi-trash",style:{fontSize:"0.74rem"}})
+                      })
+                    ]
                   });
                 }
               })
@@ -1789,21 +2159,22 @@ function RekapBarangBuktiInner(){
           display:"flex",
           alignItems:"center",
           justifyContent:"center",
-          padding:"1rem"
+          padding:editModalMax?"0":"1rem"
         },
         children:(0,a.jsxs)("div",{
           onClick:ev=>ev.stopPropagation(),
           style:{
             width:"100%",
-            maxWidth:editModalMax?"min(92vw, 68rem)":"34rem",
-            maxHeight:editModalMax?"calc(100vh - 3rem)":"90vh",
+            maxWidth:editModalMax?"100vw":"34rem",
+            height:editModalMax?"100vh":"auto",
+            maxHeight:editModalMax?"100vh":"90vh",
             display:"flex",
             flexDirection:"column",
             background:"var(--cas-bg-surface, #ffffff)",
-            border:"1px solid var(--cas-border-card, #dbe3ee)",
-            borderRadius:12,
+            border:editModalMax?"none":"1px solid var(--cas-border-card, #dbe3ee)",
+            borderRadius:editModalMax?0:12,
             boxShadow:"0 20px 48px rgba(15, 23, 42, 0.28)",
-            overflow:"visible",
+            overflow:"hidden",
             transition:"max-width 0.18s ease, max-height 0.18s ease"
           },
           children:[
@@ -1882,8 +2253,9 @@ function RekapBarangBuktiInner(){
               ]
             }),
             (0,a.jsxs)("form",{
+              className:"p-dialog-content cas-std-modal-body",
               onSubmit:handleSaveEdit,
-              style:{padding:"1rem 1.15rem",display:"flex",flexDirection:"column",gap:"0.75rem",overflowY:"auto",flex:"1 1 auto"},
+              style:{padding:"1rem 1.15rem",display:"flex",flexDirection:"column",gap:"0.75rem",overflowY:"auto",WebkitOverflowScrolling:"touch",flex:"1 1 auto",minHeight:0},
               children:[
                 editForm.isDorsRow&&(0,a.jsxs)("div",{
                   style:{
@@ -2005,7 +2377,7 @@ function RekapBarangBuktiInner(){
                           htmlFor:"bb-edit-satuan",
                           style:{display:"block",fontSize:"0.73rem",fontWeight:700,color:"#0369a1",marginBottom:"0.25rem"},
                           children:[
-                            "Satuan Barang (Standar Indonesia) ",
+                            "Satuan Barang (Standar & Input Wilayah) ",
                             (0,a.jsx)("span",{style:{color:"#ef4444"},children:"*"})
                           ]
                         }),
@@ -2018,8 +2390,10 @@ function RekapBarangBuktiInner(){
                           optionLabel:"label",
                           optionValue:"value",
                           filter:!0,
+                          editable:!0,
                           onChange:ev=>setEditForm(prev=>({...prev,satuan:ev.value||""})),
-                          placeholder:"Pilih Satuan (Buah, Unit, Kg, Meter…)",
+                          onBlur:()=>setEditForm(prev=>({...prev,satuan:matchSatuanIndonesia(prev.satuan)||prev.satuan||""})),
+                          placeholder:"Pilih atau ketik Satuan (Buah, Unit, Kg, Meter…)",
                           style:{width:"100%",border:"1.5px solid #38bdf8"}
                         })
                       ]

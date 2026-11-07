@@ -23,6 +23,7 @@ let JukrahService = class JukrahService {
     audit;
     logger = new common_1.Logger('JukrahService');
     ready = false;
+    primaryAdminHandle = '';
     streamSecret = process.env.JWT_SECRET || process.env.CAS_STREAM_SECRET || '';
     networkUsersCache = new Map();
     networkCountCache = new Map();
@@ -109,19 +110,42 @@ let JukrahService = class JukrahService {
                 user_agent TEXT,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )`);
+        await this.dataSource.query(`
+            CREATE TABLE IF NOT EXISTS bdb_user_notification_state (
+                user_id BIGINT NOT NULL,
+                notif_key TEXT NOT NULL,
+                is_read BOOLEAN NOT NULL DEFAULT FALSE,
+                is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (user_id, notif_key)
+            )`);
+        await this.dataSource.query(`
+            CREATE TABLE IF NOT EXISTS bdb_notification_checkpoint (
+                user_id BIGINT NOT NULL,
+                entity TEXT NOT NULL,
+                last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                PRIMARY KEY (user_id, entity)
+            )`);
         try {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_req_status ON user_connections (requester_id, status)');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_user_conn_addr_status ON user_connections (addressee_id, status)');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_trb_police_lower_email ON trb_police (LOWER(email))');
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
+            const uOne = await this.dataSource.query('SELECT username FROM auth_users WHERE id = 1 LIMIT 1');
+            if (uOne?.[0]?.username) {
+                const rawU = String(uOne[0].username).trim().replace(/^@+/, '').toLowerCase();
+                if (rawU && rawU !== 'user_1') {
+                    this.primaryAdminHandle = rawU;
+                }
+            }
         }
         catch { }
         this.clearNetworkUsersCache();
         this.ready = true;
     }
     extractTwoWordCallsignFromName(rawName, authorId) {
-        if (Number(authorId) === 1)
-            return 'user_1';
+        if (Number(authorId) === 1 && this.primaryAdminHandle)
+            return this.primaryAdminHandle;
         const str = String(rawName || '').trim();
         let beforeComma = str.split(',')[0] || '';
         beforeComma = beforeComma
@@ -168,7 +192,11 @@ let JukrahService = class JukrahService {
             return false;
         return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
     }
+    cosersebotAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFlMjkzYiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJtZXRhbCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48c3RvcCBvZmZzZXQ9IjI1JSIgc3RvcC1jb2xvcj0iI2NiZDVlMSIvPjxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjOTRhM2I4Ii8+PHN0b3Agb2Zmc2V0PSI3OCUiIHN0b3AtY29sb3I9IiNlMmU4ZjAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM0NzU1NjkiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0idmlzb3IiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2JkNWUxIi8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiM5NGEzYjgiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0idXJsKCNiZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNNTcuNSAyNSBMNTkgMTAgTDYxIDEwIEw2Mi41IDI1IFoiIGZpbGw9IiNjYmQ1ZTEiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48ZWxsaXBzZSBjeD0iNjAiIGN5PSIyNSIgcng9IjguNSIgcnk9IjMuNSIgZmlsbD0iIzk0YTNiOCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuNCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iOC41IiByPSI0LjIiIGZpbGw9IiNlMmU4ZjAiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiLz48Y2lyY2xlIGN4PSI1OC44IiBjeT0iNy4zIiByPSIxLjMiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzIgOTggTDMzIDQ2IEEyNyAyMiAwIDAgMSA4NyA0NiBMODggOTggTDkzIDEwNSBRNjAgMTEyIDI3IDEwNSBaIiBmaWxsPSJ1cmwoI21ldGFsKSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00MiAzNSBRNjAgMjcgNzggMzUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y4ZmFmYyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNyIvPjxyZWN0IHg9IjIwIiB5PSI0MiIgd2lkdGg9IjgwIiBoZWlnaHQ9IjI4IiByeD0iMTQiIGZpbGw9InVybCgjdmlzb3IpIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PHJlY3QgeD0iMjUiIHk9IjQ2LjUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxOSIgcng9IjkuNSIgZmlsbD0iIzA5MGQxNiIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxyZWN0IHg9IjQyLjQiIHk9IjUzLjQiIHdpZHRoPSI1LjIiIGhlaWdodD0iNS4yIiByeD0iMC44IiBmaWxsPSIjMDkwZDE2Ii8+PHJlY3QgeD0iNzIuNCIgeT0iNTMuNCIgd2lkdGg9IjUuMiIgaGVpZ2h0PSI1LjIiIHJ4PSIwLjgiIGZpbGw9IiMwOTBkMTYiLz48cGF0aCBkPSJNMzQgNDkuNSBMNTQgNTIuNSBNODYgNDkuNSBMNjYgNTIuNSIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMzUiIHk9Ijc1IiB3aWR0aD0iNTAiIGhlaWdodD0iMTgiIHJ4PSI4IiBmaWxsPSIjZmVmOWMzIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PGxpbmUgeDE9IjM1LjUiIHkxPSI4NCIgeDI9Ijg0LjUiIHkyPSI4NCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI0Ny41IiB5MT0iNzUuNSIgeDI9IjQ3LjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PGxpbmUgeDE9IjYwIiB5MT0iNzUuNSIgeDI9IjYwIiB5Mj0iOTIuNSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI3Mi41IiB5MT0iNzUuNSIgeDI9IjcyLjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PC9zdmc+';
     resolveDefaultAvatar(photoUrl, name, jenisKelamin, socialMedia) {
+        const nmLow = String(name || '').trim().toLowerCase();
+        if (nmLow.includes('coserse') || nmLow.includes('ai_taktis') || nmLow.includes('ai agen taktis') || nmLow.includes('spra bender'))
+            return this.cosersebotAvatar;
         const clean = String(photoUrl || '').trim();
         if (clean.length > 5 && clean !== 'null' && clean !== 'undefined' && !clean.includes('default-avatar'))
             return clean;
@@ -188,7 +216,9 @@ let JukrahService = class JukrahService {
             return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        return u === 'user_1' || u === 'user_1' || c === 'user_1' || c === 'user_1';
+        if (this.primaryAdminHandle && (u === this.primaryAdminHandle || c === this.primaryAdminHandle))
+            return true;
+        return false;
     }
     isSuperadminUser(id, roleBdb, username, callsign) {
         const idNum = Number(id || 0);
@@ -199,7 +229,9 @@ let JukrahService = class JukrahService {
             return true;
         const u = String(username || '').trim().toLowerCase().replace(/^@/, '');
         const c = String(callsign || '').trim().toLowerCase().replace(/^@/, '');
-        const superHandles = ['user_1', 'user_1', 'cosersebot', 'ai_taktis_cas'];
+        const superHandles = ['cosersebot', 'ai_taktis_cas'];
+        if (this.primaryAdminHandle)
+            superHandles.push(this.primaryAdminHandle);
         return superHandles.includes(u) || superHandles.includes(c);
     }
     isVerifiedRole(role, isUserOne) {
@@ -763,8 +795,8 @@ let JukrahService = class JukrahService {
     }
     formatCallsign(rawCallsign, authorId, username, authorName) {
         const idStr = String(authorId || '');
-        if (idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign))
-            return '@user_1';
+        if ((idStr === '1' || this.isSuperUserOne(authorId, username, rawCallsign)) && this.primaryAdminHandle)
+            return '@' + this.primaryAdminHandle;
         const invalidPlaceholders = new Set(['personil', 'null', 'undefined', 'admin', 'user', 'none', '-', 'anak_serse']);
         const normalizeCandidate = (rawVal) => {
             let v = String(rawVal || '').trim().replace(/^@+/, '').toLowerCase();
@@ -777,13 +809,13 @@ let JukrahService = class JukrahService {
             if (!/^[a-z0-9_.]{2,60}$/.test(v))
                 return '';
             const dotParts = v.split('.').filter(Boolean);
-            if (dotParts.length >= 3 || /[a-z]\d+$/i.test(v)) {
+            if (dotParts.length >= 3 || /[a-z]\d{6,}$/i.test(v)) {
                 if (authorName && String(authorName).trim()) {
                     return this.extractTwoWordCallsignFromName(authorName, authorId);
                 }
                 const cleanedParts = dotParts
                     .slice(0, 2)
-                    .map(p => p.replace(/^([a-z]+)\d+$/i, '$1'))
+                    .map(p => p.replace(/^([a-z]+)\d{6,}$/i, '$1'))
                     .filter(Boolean);
                 if (cleanedParts.length > 0) {
                     return cleanedParts.join('.');
@@ -2577,6 +2609,48 @@ let JukrahService = class JukrahService {
         const isAdmin = ctx.isGlobalAdmin;
         const poldaPrefix = ctx.poldaPrefix ? ctx.poldaPrefix.replace(/[^0-9.]/g, '') : '';
         const cat = category === 'dinas' ? 'dinas' : category === 'social' ? 'social' : null;
+        const readKeys = new Set();
+        const deletedKeys = new Set();
+        let checkpointAllMs = 0;
+        let checkpointSocialMs = 0;
+        let checkpointDinasMs = 0;
+        try {
+            const stateRows = await this.dataSource.query(
+                'SELECT notif_key, is_read, is_deleted FROM bdb_user_notification_state WHERE user_id = $1',
+                [uid]
+            );
+            for (const sr of stateRows) {
+                const k = String(sr.notif_key || '').trim();
+                if (!k) continue;
+                if (sr.is_read) readKeys.add(k);
+                if (sr.is_deleted) deletedKeys.add(k);
+            }
+            const cpRows = await this.dataSource.query(
+                'SELECT entity, last_seen_at FROM bdb_notification_checkpoint WHERE user_id = $1',
+                [uid]
+            );
+            for (const cp of cpRows) {
+                const t = cp.last_seen_at ? new Date(cp.last_seen_at).getTime() : 0;
+                if (!Number.isFinite(t) || t <= 0) continue;
+                if (cp.entity === 'all') checkpointAllMs = Math.max(checkpointAllMs, t);
+                if (['social', 'koneksi', 'all'].includes(cp.entity)) checkpointSocialMs = Math.max(checkpointSocialMs, t);
+                if (['dinas', 'pelimpahan', 'jukrah', 'satgas', 'operasi', 'kerma', 'all'].includes(cp.entity)) checkpointDinasMs = Math.max(checkpointDinasMs, t);
+            }
+        }
+        catch { }
+        const recencyCutoffMs = Date.now() - 24 * 3600 * 1000;
+        const isSyntheticRead = (notifKey, createdAt, isDinasItem) => {
+            const k = String(notifKey || '');
+            if (readKeys.has(k))
+                return true;
+            const createdMs = createdAt ? new Date(createdAt).getTime() : 0;
+            const cpMs = Math.max(checkpointAllMs, isDinasItem ? checkpointDinasMs : checkpointSocialMs);
+            if (cpMs > 0 && createdMs > 0 && createdMs <= cpMs)
+                return true;
+            if (createdMs > 0 && createdMs < recencyCutoffMs)
+                return true;
+            return false;
+        };
         const items = [];
         if (!cat || cat === 'social') {
             const rows = await this.dataSource.query(`SELECT n.id, n.sender_id, n.category, n.type, n.post_id, n.title, n.message, n.link, n.is_read, n.created_at,
@@ -2590,12 +2664,19 @@ let JukrahService = class JukrahService {
                    AND (n.post_id IS NULL OR p.author_id = $1 OR n.type = 'mention')
                  ORDER BY n.created_at DESC
                  LIMIT 40`, [uid]);
-            items.push(...rows.map((r) => this.humanizeNotificationItem({
-                ...r,
-                id: Number(r.id),
-                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@rekan',
-                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null)
-            })));
+            items.push(...rows.map((r) => {
+                const nid = Number(r.id);
+                const createdMs = r.created_at ? new Date(r.created_at).getTime() : 0;
+                const cpMs = Math.max(checkpointAllMs, checkpointSocialMs);
+                const isReadRow = Boolean(r.is_read) || readKeys.has(String(nid)) || (cpMs > 0 && createdMs > 0 && createdMs <= cpMs);
+                return this.humanizeNotificationItem({
+                    ...r,
+                    id: nid,
+                    is_read: isReadRow,
+                    sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@rekan',
+                    sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name, null, null)
+                });
+            }));
             try {
                 const recentComments = await this.dataSource.query(`SELECT c.id, c.post_id, c.user_id as sender_id, LEFT(c.content, 110) as comment_snippet, c.created_at,
                             u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
@@ -2608,13 +2689,14 @@ let JukrahService = class JukrahService {
                 for (const rc of recentComments) {
                     const dup = items.some(it => it.type === 'comment' && Number(it.post_id) === Number(rc.post_id) && Number(it.sender_id) === Number(rc.sender_id));
                     if (!dup) {
+                        const cmKey = 'cm_' + rc.id;
                         items.push(this.humanizeNotificationItem({
-                            id: 'cm_' + rc.id,
+                            id: cmKey,
                             category: 'social',
                             type: 'comment',
                             post_id: Number(rc.post_id),
                             comment_snippet: rc.comment_snippet,
-                            is_read: false,
+                            is_read: isSyntheticRead(cmKey, rc.created_at, false),
                             created_at: rc.created_at,
                             sender_id: Number(rc.sender_id),
                             sender_name: rc.sender_name,
@@ -2638,13 +2720,14 @@ let JukrahService = class JukrahService {
                     const rx = recentReactions[rxIdx];
                     const dup = items.some(it => ['reaction', 'like', 'respect', 'insightful'].includes(it.type) && Number(it.post_id) === Number(rx.post_id) && Number(it.sender_id) === Number(rx.sender_id));
                     if (!dup) {
+                        const rxKey = `rx_${rx.post_id}_${rx.sender_id}`;
                         items.push(this.humanizeNotificationItem({
-                            id: `rx_${rx.post_id}_${rx.sender_id}`,
+                            id: rxKey,
                             category: 'social',
                             type: rx.reaction_type || 'like',
                             post_id: Number(rx.post_id),
                             post_snippet: rx.post_snippet,
-                            is_read: rxIdx >= 2,
+                            is_read: isSyntheticRead(rxKey, rx.created_at, false),
                             created_at: rx.created_at,
                             sender_id: Number(rx.sender_id),
                             sender_name: rx.sender_name,
@@ -2679,13 +2762,14 @@ let JukrahService = class JukrahService {
             const connRows = await this.dataSource.query(connSql, connParams);
             items.push(...connRows.map((r) => {
                 const handle = this.formatCallsign(r.other_callsign || r.other_username, r.other_id, r.other_username, r.other_name);
+                const connKey = 'conn_' + r.id;
                 return this.humanizeNotificationItem({
-                    id: 'conn_' + r.id,
+                    id: connKey,
                     category: 'social',
                     type: 'connection',
                     status: r.status,
                     post_id: null,
-                    is_read: r.status !== 'PENDING',
+                    is_read: r.status !== 'PENDING' || isSyntheticRead(connKey, r.created_at, false),
                     created_at: r.created_at,
                     sender_id: Number(r.other_id),
                     sender_name: r.other_name,
@@ -2705,12 +2789,19 @@ let JukrahService = class JukrahService {
                  WHERE n.recipient_id = $1 AND n.category = 'dinas'
                  ORDER BY n.created_at DESC
                  LIMIT 30`, [uid]);
-            items.push(...dinasRows.map((r) => this.humanizeNotificationItem({
-                ...r,
-                id: Number(r.id),
-                sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@bareskrim',
-                sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name || 'Robinopsnal Bareskrim Polri', null, null)
-            })));
+            items.push(...dinasRows.map((r) => {
+                const nid = Number(r.id);
+                const createdMs = r.created_at ? new Date(r.created_at).getTime() : 0;
+                const cpMs = Math.max(checkpointAllMs, checkpointDinasMs);
+                const isReadRow = Boolean(r.is_read) || readKeys.has(String(nid)) || (cpMs > 0 && createdMs > 0 && createdMs <= cpMs);
+                return this.humanizeNotificationItem({
+                    ...r,
+                    id: nid,
+                    is_read: isReadRow,
+                    sender_handle: r.sender_id ? this.formatCallsign(r.sender_callsign || r.sender_username, r.sender_id, r.sender_username, r.sender_name) : '@bareskrim',
+                    sender_photo: this.resolveDefaultAvatar(r.sender_photo, r.sender_name || 'Robinopsnal Bareskrim Polri', null, null)
+                });
+            }));
             try {
                 const jukPosts = await this.dataSource.query(`SELECT p.id, LEFT(p.content, 110) as post_snippet, p.created_at,
                             u.id as sender_id, u.name as sender_name, u.username as sender_callsign, u.username as sender_username, u.photo_url as sender_photo
@@ -2724,13 +2815,14 @@ let JukrahService = class JukrahService {
                     if (!dup) {
                         const jpSenderId = Number(jp.sender_id || 1);
                         const jpHandle = this.formatCallsign(jp.sender_callsign || jp.sender_username, jpSenderId, jp.sender_username, jp.sender_name);
+                        const jukKey = 'juk_' + jp.id;
                         items.push(this.humanizeNotificationItem({
-                            id: 'juk_' + jp.id,
+                            id: jukKey,
                             category: 'dinas',
                             type: 'official_jukrah',
                             post_id: Number(jp.id),
                             post_snippet: jp.post_snippet,
-                            is_read: false,
+                            is_read: isSyntheticRead(jukKey, jp.created_at, true),
                             created_at: jp.created_at,
                             sender_id: jpSenderId,
                             sender_name: jp.sender_name || 'Robinopsnal Bareskrim Polri',
@@ -2756,7 +2848,7 @@ let JukrahService = class JukrahService {
                 post_id: null,
                 title: r.title,
                 message: `Ada ${r.jenis === 'SATGAS' ? 'Satgas Operasi' : 'Operasi Kepolisian'} Baru dari Robinopsnal Bareskrim Polri`,
-                is_read: true,
+                is_read: isSyntheticRead('satgas_' + r.id, r.created_at, true),
                 created_at: r.created_at,
                 sender_name: 'Robinopsnal Bareskrim Polri',
                 sender_handle: '@robinops',
@@ -2775,7 +2867,7 @@ let JukrahService = class JukrahService {
                 post_id: null,
                 title: r.title,
                 message: `Kerja Sama (Kerma) Baru bersama ${r.institusi}`,
-                is_read: true,
+                is_read: isSyntheticRead('kerma_' + r.id, r.created_at, true),
                 created_at: r.created_at,
                 sender_name: 'Divisi Kerma Polri',
                 sender_handle: '@kerma_polri',
@@ -2800,39 +2892,35 @@ let JukrahService = class JukrahService {
                    ORDER BY (p.satker_tujuan_id = $1 OR p.satker_asal_id = $1) DESC, p.created_at DESC LIMIT 6`;
             const lpParams = isAdmin ? [] : [satkerId, poldaPrefix];
             const lpRows = await this.dataSource.query(lpSql, lpParams);
-            items.push(...lpRows.map((r, idx) => this.humanizeNotificationItem({
-                id: 'lp_' + r.id,
-                category: 'dinas',
-                type: 'pelimpahan',
-                post_id: null,
-                lp_id: r.lp_id,
-                no_laporan: r.no_laporan,
-                satker_asal_nama: r.satker_asal_nama || r.lp_satker_nama || 'Satker Asal',
-                satker_tujuan_nama: r.satker_tujuan_nama || r.satker_eksternal_nama || 'Satker Tujuan',
-                is_read: idx >= 2,
-                created_at: r.created_at,
-                sender_name: 'Robinopsnal Bareskrim Polri',
-                sender_handle: '@dors_polri',
-                sender_photo: '/images/default-avatar-polki.png',
-                link: '/cms/laporan-polisi/arsip-pelimpahan'
-            })));
+            items.push(...lpRows.map((r) => {
+                const lpKey = 'lp_' + r.id;
+                return this.humanizeNotificationItem({
+                    id: lpKey,
+                    category: 'dinas',
+                    type: 'pelimpahan',
+                    post_id: null,
+                    lp_id: r.lp_id,
+                    no_laporan: r.no_laporan,
+                    satker_asal_nama: r.satker_asal_nama || r.lp_satker_nama || 'Satker Asal',
+                    satker_tujuan_nama: r.satker_tujuan_nama || r.satker_eksternal_nama || 'Satker Tujuan',
+                    is_read: isSyntheticRead(lpKey, r.created_at, true),
+                    created_at: r.created_at,
+                    sender_name: 'Robinopsnal Bareskrim Polri',
+                    sender_handle: '@dors_polri',
+                    sender_photo: '/images/default-avatar-polki.png',
+                    link: '/cms/laporan-polisi/arsip-pelimpahan'
+                });
+            }));
         }
-        items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        const unreadCounts = await this.dataSource.query(`SELECT category, count(*)::int as c 
-             FROM bdb_social_notifications 
-             WHERE recipient_id = $1 AND is_read = false 
-             GROUP BY category`, [uid]);
-        let unreadDinas = 0;
-        let unreadSocial = 0;
-        unreadCounts.forEach((r) => {
-            if (r.category === 'dinas')
-                unreadDinas = Number(r.c);
-            if (r.category === 'social')
-                unreadSocial = Number(r.c);
-        });
+        const visibleItems = items
+            .filter((it) => !deletedKeys.has(String(it.id)))
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .slice(0, 60);
+        const unreadDinas = visibleItems.filter((it) => it.category === 'dinas' && !it.is_read).length;
+        const unreadSocial = visibleItems.filter((it) => it.category !== 'dinas' && !it.is_read).length;
         return {
             status: 1,
-            data: items.slice(0, 60),
+            data: visibleItems,
             unread_dinas: unreadDinas,
             unread_social: unreadSocial,
             unread_total: unreadDinas + unreadSocial
@@ -2840,20 +2928,70 @@ let JukrahService = class JukrahService {
     }
     async markNotificationRead(user, notifId) {
         await this.ensureTable();
-        const uid = Number(user?.id);
-        if (!isNaN(Number(notifId))) {
-            await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2', [Number(notifId), uid]);
+        const uid = Number(user?.id || 0);
+        const rawKey = String(notifId ?? '').trim();
+        if (!uid || !rawKey || rawKey === 'NaN' || rawKey === 'undefined') {
+            return { status: 1 };
+        }
+        await this.dataSource.query(
+            `INSERT INTO bdb_user_notification_state (user_id, notif_key, is_read, updated_at)
+             VALUES ($1, $2, true, NOW())
+             ON CONFLICT (user_id, notif_key) DO UPDATE SET is_read = true, updated_at = NOW()`,
+            [uid, rawKey]
+        );
+        if (/^\d+$/.test(rawKey)) {
+            await this.dataSource.query(
+                'UPDATE bdb_social_notifications SET is_read = true WHERE id = $1 AND recipient_id = $2',
+                [Number(rawKey), uid]
+            );
+        }
+        return { status: 1 };
+    }
+    async deleteNotification(user, notifId) {
+        await this.ensureTable();
+        const uid = Number(user?.id || 0);
+        const rawKey = String(notifId ?? '').trim();
+        if (!uid || !rawKey || rawKey === 'NaN' || rawKey === 'undefined') {
+            return { status: 1 };
+        }
+        await this.dataSource.query(
+            `INSERT INTO bdb_user_notification_state (user_id, notif_key, is_read, is_deleted, updated_at)
+             VALUES ($1, $2, true, true, NOW())
+             ON CONFLICT (user_id, notif_key) DO UPDATE SET is_read = true, is_deleted = true, updated_at = NOW()`,
+            [uid, rawKey]
+        );
+        if (/^\d+$/.test(rawKey)) {
+            await this.dataSource.query(
+                'DELETE FROM bdb_social_notifications WHERE id = $1 AND recipient_id = $2',
+                [Number(rawKey), uid]
+            );
         }
         return { status: 1 };
     }
     async markAllNotificationsRead(user, category) {
         await this.ensureTable();
-        const uid = Number(user?.id);
+        const uid = Number(user?.id || 0);
+        if (!uid)
+            return { status: 1 };
         if (!category || category === 'all') {
             await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1', [uid]);
         }
         else {
             await this.dataSource.query('UPDATE bdb_social_notifications SET is_read = true WHERE recipient_id = $1 AND category = $2', [uid, category]);
+        }
+        await this.dataSource.query('UPDATE bdb_user_notification_state SET is_read = true, updated_at = NOW() WHERE user_id = $1', [uid]);
+        const entities = (!category || category === 'all')
+            ? ['all', 'social', 'dinas', 'koneksi', 'satgas', 'operasi', 'kerma', 'pelimpahan', 'kasus_atensi', 'jukrah']
+            : category === 'dinas'
+                ? ['dinas', 'pelimpahan', 'jukrah', 'satgas', 'operasi', 'kerma']
+                : ['social', 'koneksi'];
+        for (const ent of entities) {
+            await this.dataSource.query(
+                `INSERT INTO bdb_notification_checkpoint (user_id, entity, last_seen_at)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (user_id, entity) DO UPDATE SET last_seen_at = NOW()`,
+                [uid, ent]
+            );
         }
         return { status: 1 };
     }
@@ -2872,21 +3010,21 @@ let JukrahService = class JukrahService {
             is_ai: true,
             is_official: true,
             is_same_satker: true,
-            name: 'AI Agen Taktis CAS',
-            handle: '@ai_taktis_cas',
-            username: '@ai_taktis_cas',
-            callsign: 'ai_taktis_cas',
+            name: 'Cosersebot',
+            handle: '@cosersebot',
+            username: '@cosersebot',
+            callsign: 'cosersebot',
             pangkat: 'Asisten Cerdas 24/7',
-            jabatan: 'Asisten Taktis Penyidik & Analis',
+            jabatan: 'Asisten Cerdas Coserse & Analis',
             satker_nama: 'Robinopsnal Bareskrim Polri',
             satker: 'Robinopsnal Bareskrim Polri',
             role_bdb: 'ai_agent',
-            photo_url: '/images/default-avatar-polki.png',
+            photo_url: this.cosersebotAvatar,
             online: true,
             is_online: true,
             is_pinned: true,
             channel_type: 'ai_agent',
-            last_message: aiMsgRows[0]?.content || 'Siap Komandan! Tanyakan analisis LP, KUHP Baru (UU 1/2023), DORS, Selra, atau panduan CAS.',
+            last_message: aiMsgRows[0]?.content || 'Siap Komandan! Tanyakan analisis LP, KUHP Baru (UU 1/2023), Portal Integrasi, Selra, atau panduan CAS.',
             last_sender_id: aiMsgRows[0]?.sender_id ? Number(aiMsgRows[0].sender_id) : -1,
             last_is_mine: Boolean(aiMsgRows[0]?.sender_id && Number(aiMsgRows[0].sender_id) === uid),
             last_time: aiMsgRows[0]?.created_at || new Date().toISOString(),
@@ -2995,7 +3133,7 @@ let JukrahService = class JukrahService {
              ORDER BY created_at ASC, id ASC
              LIMIT 200`, [uid, tid]);
         if (tid === -1 && rows.length === 0) {
-            const welcomeText = '⚡ Salam Presisi! Saya AI Agen Taktis CAS Robinopsnal Bareskrim Polri. Silakan tanyakan bantuan terkait Laporan Polisi (LP), analisis Kinerja Perkara (CT/CC/CR), pasal KUHP Baru (UU No. 1 Tahun 2023), rekonsiliasi DORS, Susopsgas, atau kendala teknis aplikasi.';
+            const welcomeText = '⚡ Salam Presisi! Saya Cosersebot (@cosersebot) Robinopsnal Bareskrim Polri. Silakan tanyakan bantuan terkait Laporan Polisi (LP), analisis Kinerja Perkara (CT/CC/CR), pasal KUHP Baru (UU No. 1 Tahun 2023), Portal Integrasi, Susopsgas, atau kendala teknis aplikasi.';
             const ins = await this.dataSource.query(`INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
                  VALUES (-1, $1, 'ai_agent', $2, true, NOW())
                  RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at`, [uid, welcomeText]);
@@ -3008,16 +3146,16 @@ let JukrahService = class JukrahService {
                 partner_id: -1,
                 is_ai: true,
                 is_official: true,
-                name: 'AI Agen Taktis CAS',
-                handle: '@ai_taktis_cas',
-                username: '@ai_taktis_cas',
-                callsign: 'ai_taktis_cas',
+                name: 'Cosersebot',
+                handle: '@cosersebot',
+                username: '@cosersebot',
+                callsign: 'cosersebot',
                 pangkat: 'Asisten Cerdas 24/7',
-                jabatan: 'Asisten Taktis Penyidik & Analis',
+                jabatan: 'Asisten Cerdas Coserse & Analis',
                 satker: 'Robinopsnal Bareskrim Polri',
                 satker_nama: 'Robinopsnal Bareskrim Polri',
                 role_bdb: 'ai_agent',
-                photo_url: '/images/default-avatar-polki.png',
+                photo_url: this.cosersebotAvatar,
                 online: true,
                 is_online: true
             };
@@ -3063,6 +3201,7 @@ let JukrahService = class JukrahService {
                 receiver_id: Number(m.receiver_id),
                 is_mine: isMine,
                 is_me: isMine,
+                sender_photo: Number(m.sender_id) === -1 ? this.cosersebotAvatar : undefined,
                 channel_type: m.channel_type || 'direct',
                 content: m.content,
                 media_url: m.media_url || m.attachment_url || null,
@@ -3150,6 +3289,7 @@ let JukrahService = class JukrahService {
                 receiver_id: uid,
                 is_mine: false,
                 is_me: false,
+                sender_photo: this.cosersebotAvatar,
                 reply_to: null,
                 reactions: {}
             };

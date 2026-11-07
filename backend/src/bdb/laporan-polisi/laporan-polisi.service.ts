@@ -286,6 +286,39 @@ export class LaporanPolisiService {
             where lp.tkp_desa_code is null and nullif(lp.payload_json->>'tkp_id_desa','') ~ '^[0-9]+$'
             on conflict (code) do nothing;
         `);
+        try {
+            await this.dataSource.query(`
+                CREATE TABLE IF NOT EXISTS bdb_ref_satuan_barang (
+                    id SERIAL PRIMARY KEY,
+                    kode TEXT NOT NULL UNIQUE,
+                    nama_satuan TEXT NOT NULL,
+                    kelompok TEXT NOT NULL DEFAULT 'UMUM',
+                    sinonim TEXT DEFAULT '',
+                    sumber TEXT NOT NULL DEFAULT 'STANDAR',
+                    status TEXT NOT NULL DEFAULT 'Aktif',
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                );
+                INSERT INTO bdb_ref_satuan_barang (kode, nama_satuan, kelompok, sinonim, sumber, status, created_at, updated_at)
+                SELECT DISTINCT
+                    regexp_replace(upper(btrim(raw_sat)), '[^A-Z0-9]+', '_', 'g') AS kode,
+                    initcap(lower(btrim(raw_sat))) AS nama_satuan,
+                    'DORS / BARANG BUKTI' AS kelompok,
+                    lower(btrim(raw_sat)) AS sinonim,
+                    'DORS' AS sumber,
+                    'Aktif' AS status,
+                    NOW(), NOW()
+                FROM (
+                    SELECT nullif(btrim(bb.satuan), '') AS raw_sat
+                    FROM bdb_dors_lp_barang_bukti bb
+                    WHERE bb.satuan IS NOT NULL AND length(btrim(bb.satuan)) BETWEEN 2 AND 35
+                      AND btrim(bb.satuan) ~ '^[A-Za-zÀ-ÿ]+([ /][A-Za-zÀ-ÿ]+)*$'
+                ) s
+                WHERE s.raw_sat IS NOT NULL
+                  AND regexp_replace(upper(btrim(s.raw_sat)), '[^A-Z0-9]+', '_', 'g') <> ''
+                ON CONFLICT (kode) DO NOTHING;
+            `);
+        } catch (_e) {}
     }
 
     async linkMasterData() {
@@ -675,6 +708,8 @@ export class LaporanPolisiService {
                          t.target_level = 'polda'
                          and (
                              nullif(t.raw_payload#>>'{polda,nama}','') is null
+                             or (t.target_kp is not null and (s.kode = t.target_kp or s.kode_canonical = t.target_kp))
+                             or regexp_replace(upper(coalesce(s.nama_satker_dors, s.deskripsi)), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                              or regexp_replace(upper(t.raw_payload#>>'{polda,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLDA|[^A-Z0-9])', '', 'g') || '%'
                          )
@@ -683,8 +718,10 @@ export class LaporanPolisiService {
                          t.target_level = 'polres'
                          and (
                              nullif(t.raw_payload#>>'{polres,nama}','') is null
-                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
-                             or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                             or (t.target_kp is not null and (s.kode = t.target_kp or s.kode_canonical = t.target_kp))
+                             or regexp_replace(upper(coalesce(s.nama_satker_dors, s.deskripsi)), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(t.raw_payload#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
                          )
                      )
                      or (
@@ -693,8 +730,8 @@ export class LaporanPolisiService {
                              nullif(t.raw_payload#>>'{polsek,nama}','') is null
                              or (t.target_kp is not null and (s.kode = t.target_kp or s.kode_canonical = t.target_kp))
                              or (s.nama_satker_dors is not null and regexp_replace(upper(s.nama_satker_dors), '[^A-Z0-9]', '', 'g') = regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g'))
-                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
-                             or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEK|POLSEKTA|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '(POLSEKTRO|POLSEKTA|POLSEK|SEKTRO|SEKTA|SEK|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(t.raw_payload#>>'{polsek,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLSEKTRO|POLSEKTA|POLSEK|SEKTRO|SEKTA|SEK|[^A-Z0-9])', '', 'g') || '%'
                          )
                      )
                  )
@@ -1172,9 +1209,11 @@ export class LaporanPolisiService {
                           )
                           and (
                               nullif(r.payload_json#>>'{polres,nama}','') is null
-                              or regexp_replace(upper(coalesce(s.nama_satker_dors, s.deskripsi)), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
-                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
-                              or regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRES|POLRESTA|POLRESTABES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                              or (r.child_kp is not null and (s.kode = r.child_kp or s.kode_canonical = r.child_kp))
+                              or (r.child_dkode is not null and s.dors_kode = r.child_dkode)
+                              or regexp_replace(upper(coalesce(s.nama_satker_dors, s.deskripsi)), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(s.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
+                              or regexp_replace(upper(r.payload_json#>>'{polres,nama}'), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(upper(s.deskripsi), '(POLRESTABES|POLRESTRO|POLRESTA|POLRES|RESTABES|RESTRO|RESTA|RES|METRO|[^A-Z0-9])', '', 'g') || '%'
                           )
                       )
                   )
@@ -1317,10 +1356,7 @@ export class LaporanPolisiService {
         const mapped = Array.isArray(ret) ? ret.length : 0;
         const mabes = await this.mapMabesByUnit();
         const viaAlias = await this.applyAliases();
-        // AUTO fuzzy-name mapping dinonaktifkan sementara:
-        // jangan pernah memilih satker nasional hanya berdasarkan nama + LIMIT 1.
-        // Jika exact code / Mabes / alias gagal, LP dibiarkan unmapped
-        // sampai resolver parent-scoped tersedia.
+        const viaInduk = await this.mapFallbackToSatkerInduk();
         const viaName = 0;
         const deeper = await this.remapDeeper();
         const unmapped = await this.unmappedCount();
@@ -1328,8 +1364,171 @@ export class LaporanPolisiService {
         const ownershipSync = await this.syncPelimpahanOwnershipFromDors();
         const reconciledDups = await this.reconcilePelimpahanDuplicates();
         this.kinerjaPerkara.refreshSnapshot().catch((e) => this.logger.warn('refreshSnapshot post-map error: ' + (e?.message || e)));
-        this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, dups reconciled ${reconciledDups}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
-        return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync, dups_reconciled: reconciledDups }, message: `${mapped + mabes + viaAlias + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, nama ${viaName}).` };
+        this.logger.log(`Map DORS->LP: ${mapped} kode, ${mabes} Mabes, ${viaAlias} alias, ${viaInduk} induk, ${viaName} nama, ${deeper} unit terdalam, ${unmapped} belum, ownership ${ownershipSync.ownership_updated}, dups reconciled ${reconciledDups}, karantina ${ownershipSync.territory_quarantined + ownershipSync.unit_quarantined + ownershipSync.protected_total}, ${Date.now() - started}ms`);
+        return { status: 1, data: { mapped_baru: mapped + mabes + viaAlias + viaInduk + viaName, via_kode: mapped, mabes_via_unit: mabes, via_alias: viaAlias, via_induk: viaInduk, via_nama: viaName, unit_terdalam: deeper, belum_termapping: unmapped, ownership_sync: ownershipSync, dups_reconciled: reconciledDups }, message: `${mapped + mabes + viaAlias + viaInduk + viaName} LP dipetakan (kode ${mapped}, Mabes ${mabes}, alias ${viaAlias}, induk ${viaInduk}, nama ${viaName}).` };
+    }
+
+    async mapFallbackToSatkerInduk(): Promise<number> {
+        try {
+            const retPolres = await this.dataSource.query(`
+                with unmapped as materialized (
+                    select r.id, r.dors_lp_id, r.model_lp, r.no_laporan, r.data_scope, r.payload_json,
+                           nullif(trim(regexp_replace(replace(r.payload_json->'polres'->>'kode_pusiknas', chr(160), ''), '\\s+', '', 'g')), '') as polres_kp,
+                           nullif(trim(regexp_replace(replace(r.payload_json->'polres'->>'kode', chr(160), ''), '\\s+', '', 'g')), '') as polres_dkode,
+                           upper(trim(coalesce(r.payload_json->'polres'->>'nama', ''))) as polres_nama,
+                           nullif(trim(regexp_replace(replace(
+                               case when r.payload_json->'polda'->>'kode' = '060.09' or r.payload_json->'polda'->>'nama' ilike '%lampung%' then '060.01.11'
+                                    else r.payload_json->'polda'->>'kode_pusiknas' end, chr(160), ''), '\\s+', '', 'g')), '') as polda_kp,
+                           nullif(trim(regexp_replace(replace(r.payload_json->'polda'->>'kode', chr(160), ''), '\\s+', '', 'g')), '') as polda_dkode,
+                           upper(trim(coalesce(r.payload_json->'polda'->>'nama', ''))) as polda_nama
+                    from bdb_dors_raw_lp r
+                    where not exists (
+                        select 1 from bdb_laporan_polisi lp
+                        where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
+                    )
+                      and jsonb_typeof(r.payload_json->'polsek') = 'object'
+                      and jsonb_typeof(r.payload_json->'polres') = 'object'
+                      and (
+                          coalesce(r.payload_json->>'dilimpahkan', '0') <> '1'
+                          or not exists (
+                              select 1 from bdb_laporan_polisi lp2
+                              where lp2.deleted_at is null
+                                and lp2.no_laporan is not null
+                                and trim(lp2.no_laporan) = trim(r.no_laporan)
+                          )
+                      )
+                ),
+                cand as (
+                    select u.*, s.id as resolved_satker_id, s.deskripsi as resolved_satker_nama, coalesce(s.kode, u.polres_kp) as resolved_kode,
+                           case
+                               when u.polres_kp is not null and (s.kode = u.polres_kp or s.kode_canonical = u.polres_kp) then 3
+                               when u.polres_dkode is not null and s.dors_kode = u.polres_dkode then 2
+                               else 1
+                           end as signal_rank
+                    from unmapped u
+                    join bdb_satker s
+                      on upper(coalesce(s.tipe_satker,'')) = 'POLRES'
+                     and coalesce(s.is_synthetic,false) = false
+                     and coalesce(s.kinerja_aktif,true) = true
+                     and s.dors_mapping_aktif = true
+                     and (
+                         (u.polres_kp is not null and (s.kode = u.polres_kp or s.kode_canonical = u.polres_kp))
+                         or (u.polres_dkode is not null and s.dors_kode = u.polres_dkode)
+                         or (u.polres_nama <> '' and (upper(trim(s.deskripsi)) = u.polres_nama or upper(trim(coalesce(s.nama_satker_dors,''))) = u.polres_nama))
+                     )
+                    join bdb_satker p
+                      on p.id = s.parent_id
+                     and upper(coalesce(p.tipe_satker,'')) = 'POLDA'
+                     and (
+                         (u.polda_kp is not null and (p.kode = u.polda_kp or p.kode_canonical = u.polda_kp))
+                         or (u.polda_dkode is not null and p.dors_kode = u.polda_dkode)
+                         or (u.polda_nama <> '' and (
+                             regexp_replace(upper(coalesce(p.nama_satker_dors, p.deskripsi)), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(u.polda_nama, '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                             or regexp_replace(upper(p.deskripsi), '[^A-Z0-9]', '', 'g') like '%' || regexp_replace(u.polda_nama, '(POLDA|[^A-Z0-9])', '', 'g') || '%'
+                         ))
+                     )
+                ),
+                ranked as (
+                    select c.*, max(c.signal_rank) over (partition by c.id) as best_rank
+                    from cand c
+                ),
+                best as (
+                    select r.*, count(*) over (partition by r.id) as cnt
+                    from ranked r
+                    where r.signal_rank = r.best_rank
+                )
+                insert into bdb_laporan_polisi
+                    (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
+                     penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
+                select
+                    b.dors_lp_id, b.model_lp, b.id, b.no_laporan,
+                    b.payload_json->>'tgl_laporan', b.payload_json->>'kategori', b.payload_json->>'tempat_kejadian',
+                    coalesce(b.payload_json->>'uraian_singkat_kejadian', b.payload_json->>'uraian_kejadian'),
+                    'Polres', b.resolved_kode, b.resolved_satker_id, b.resolved_satker_nama,
+                    b.payload_json->'unit'->>'unit', b.payload_json->'unit'->>'level',
+                    b.data_scope, b.payload_json, now()
+                from best b
+                where b.cnt = 1
+                on conflict (dors_lp_id, model_lp) do nothing
+                returning id
+            `);
+            const retPolda = await this.dataSource.query(`
+                with unmapped as materialized (
+                    select r.id, r.dors_lp_id, r.model_lp, r.no_laporan, r.data_scope, r.payload_json,
+                           nullif(trim(regexp_replace(replace(
+                               case when r.payload_json->'polda'->>'kode' = '060.09' or r.payload_json->'polda'->>'nama' ilike '%lampung%' then '060.01.11'
+                                    else r.payload_json->'polda'->>'kode_pusiknas' end, chr(160), ''), '\\s+', '', 'g')), '') as polda_kp,
+                           nullif(trim(regexp_replace(replace(r.payload_json->'polda'->>'kode', chr(160), ''), '\\s+', '', 'g')), '') as polda_dkode,
+                           upper(trim(coalesce(r.payload_json->'polda'->>'nama', ''))) as polda_nama
+                    from bdb_dors_raw_lp r
+                    where not exists (
+                        select 1 from bdb_laporan_polisi lp
+                        where lp.dors_lp_id = r.dors_lp_id and lp.model_lp = r.model_lp
+                    )
+                      and jsonb_typeof(r.payload_json->'polda') = 'object'
+                      and coalesce(r.payload_json->'polda'->>'nama', '') not ilike '%mabes%'
+                      and (
+                          coalesce(r.payload_json->>'dilimpahkan', '0') <> '1'
+                          or not exists (
+                              select 1 from bdb_laporan_polisi lp2
+                              where lp2.deleted_at is null
+                                and lp2.no_laporan is not null
+                                and trim(lp2.no_laporan) = trim(r.no_laporan)
+                          )
+                      )
+                ),
+                cand as (
+                    select u.*, s.id as resolved_satker_id, s.deskripsi as resolved_satker_nama, coalesce(s.kode, u.polda_kp) as resolved_kode,
+                           case
+                               when u.polda_kp is not null and (s.kode = u.polda_kp or s.kode_canonical = u.polda_kp) then 3
+                               when u.polda_dkode is not null and s.dors_kode = u.polda_dkode then 2
+                               else 1
+                           end as signal_rank
+                    from unmapped u
+                    join bdb_satker s
+                      on upper(coalesce(s.tipe_satker,'')) = 'POLDA'
+                     and coalesce(s.is_synthetic,false) = false
+                     and coalesce(s.kinerja_aktif,true) = true
+                     and s.dors_mapping_aktif = true
+                     and (
+                         (u.polda_kp is not null and (s.kode = u.polda_kp or s.kode_canonical = u.polda_kp))
+                         or (u.polda_dkode is not null and s.dors_kode = u.polda_dkode)
+                         or (u.polda_nama <> '' and (
+                             upper(trim(s.deskripsi)) = u.polda_nama
+                             or upper(trim(coalesce(s.nama_satker_dors,''))) = u.polda_nama
+                             or regexp_replace(upper(coalesce(s.nama_satker_dors, s.deskripsi)), '[^A-Z0-9]', '', 'g') = regexp_replace(u.polda_nama, '[^A-Z0-9]', '', 'g')
+                         ))
+                     )
+                ),
+                ranked as (
+                    select c.*, max(c.signal_rank) over (partition by c.id) as best_rank
+                    from cand c
+                ),
+                best as (
+                    select r.*, count(*) over (partition by r.id) as cnt
+                    from ranked r
+                    where r.signal_rank = r.best_rank
+                )
+                insert into bdb_laporan_polisi
+                    (dors_lp_id, model_lp, raw_lp_id, no_laporan, tgl_laporan, kategori, tempat_kejadian, uraian_singkat,
+                     penanganan_level, kode_pusiknas, satker_id, satker_nama, unit_nama, unit_level, data_scope, payload_json, synced_at)
+                select
+                    b.dors_lp_id, b.model_lp, b.id, b.no_laporan,
+                    b.payload_json->>'tgl_laporan', b.payload_json->>'kategori', b.payload_json->>'tempat_kejadian',
+                    coalesce(b.payload_json->>'uraian_singkat_kejadian', b.payload_json->>'uraian_kejadian'),
+                    'Polda', b.resolved_kode, b.resolved_satker_id, b.resolved_satker_nama,
+                    b.payload_json->'unit'->>'unit', b.payload_json->'unit'->>'level',
+                    b.data_scope, b.payload_json, now()
+                from best b
+                where b.cnt = 1
+                on conflict (dors_lp_id, model_lp) do nothing
+                returning id
+            `);
+            return (Array.isArray(retPolres) ? retPolres.length : 0) + (Array.isArray(retPolda) ? retPolda.length : 0);
+        } catch (err: any) {
+            this.logger.warn('mapFallbackToSatkerInduk gagal: ' + (err?.message || err));
+            return 0;
+        }
     }
 
     async unmappedCount(): Promise<number> {
@@ -2174,12 +2373,32 @@ export class LaporanPolisiService {
                     end as tgl_status,
                     coalesce(
                         (select string_agg(x.txt, '; ') from (
-                            select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''),'(tanpa kategori)')
+                            select distinct coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'kategori_kejahatan',''), '(tanpa kategori)')
                                 || case when coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) is not null
                                         then ' — ' || coalesce(nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) else '' end as txt
                             from jsonb_array_elements(case when jsonb_typeof(lp.payload_json->'tindak_pidana')='array' then lp.payload_json->'tindak_pidana' else '[]'::jsonb end) tp
+                            where coalesce(nullif(tp->>'nama_kategori_kejahatan',''), nullif(tp->>'kategori_kejahatan',''), nullif(tp->>'pasal_mapping',''), nullif(tp->>'pasal','')) is not null
                         ) x),
-                        nullif(lp.kategori, ''),
+                        (select string_agg(distinct coalesce(nullif(jk2.keterangan,''), nullif(tp2.nama_kategori_kejahatan,''))
+                            || case when nullif(tp2.pasal_mapping,'') is not null then ' — ' || nullif(tp2.pasal_mapping,'') else '' end, '; ')
+                         from bdb_lp_tindak_pidana_dors tp2
+                         left join cm_jenis_kejahatan jk2 on jk2.id = tp2.jenis_kejahatan_id
+                         where tp2.laporan_polisi_id = lp.id
+                           and coalesce(nullif(jk2.keterangan,''), nullif(tp2.nama_kategori_kejahatan,'')) is not null),
+                        (select jk.keterangan
+                            || case when coalesce(nullif(lp.payload_json->'kategori_gk'->>'pasal_mapping',''), nullif(lp.payload_json->'kategori_gk'->>'pasal','')) is not null
+                                    then ' — ' || coalesce(nullif(lp.payload_json->'kategori_gk'->>'pasal_mapping',''), nullif(lp.payload_json->'kategori_gk'->>'pasal','')) else '' end
+                         from cm_jenis_kejahatan jk where jk.id = lp.jenis_kejahatan_id and nullif(jk.keterangan, '') is not null),
+                        case when nullif(lp.payload_json->'kategori_gk'->>'keterangan', '') is not null
+                             and lp.payload_json->'kategori_gk'->>'keterangan' !~* '^(lp_model_[ab]|model_[ab]|lp_[ab]|laporan[_\s-]*polisi|pelanggaran.*|-+)$'
+                             then nullif(lp.payload_json->'kategori_gk'->>'keterangan', '')
+                                  || case when coalesce(nullif(lp.payload_json->'kategori_gk'->>'pasal_mapping',''), nullif(lp.payload_json->'kategori_gk'->>'pasal','')) is not null
+                                          then ' — ' || coalesce(nullif(lp.payload_json->'kategori_gk'->>'pasal_mapping',''), nullif(lp.payload_json->'kategori_gk'->>'pasal','')) else '' end
+                        end,
+                        case when nullif(lp.kategori, '') is not null
+                             and lp.kategori !~* '^(lp_model_[ab]|model_[ab]|lp_[ab]|laporan[_\s-]*polisi|pelanggaran.*|-+)$'
+                             then nullif(lp.kategori, '')
+                        end,
                         '(Belum Terkategori)'
                     ) as dugaan_tindak_pidana
              from bdb_laporan_polisi lp left join bdb_status_master sm on sm.id=lp.status_id ${whereSql}

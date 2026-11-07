@@ -746,7 +746,7 @@ clientExtensionResults:(cred.getClientExtensionResults?cred.getClientExtensionRe
 authenticatorAttachment:cred.authenticatorAttachment
 };
 var devName=(customName||"").trim();
-if(!devName){
+if(!devName&&cred.authenticatorAttachment!=="cross-platform"){
 var ua=navigator.userAgent||"";
 if(/iPhone/i.test(ua))devName="Apple iPhone";
 else if(/iPad/i.test(ua))devName="Apple iPad";
@@ -761,7 +761,8 @@ registrationResponse:regResponse,
 device_fingerprint:(typeof window!=="undefined"&&typeof window.getCasDeviceHwId==="function"?window.getCasDeviceHwId():(localStorage.getItem("cas_device_hw_id")||"dev_default"))
 });
 (0,c.assertOk)(verifyRes);
-e.current?.show({severity:"success",summary:"Gawai Terdaftar",detail:'Perangkat "'+devName+'" berhasil didaftarkan sebagai gawai terpercaya untuk login biometrik.'});
+var finalDevName=verifyRes?.data?.data?.device_name||verifyRes?.data?.device_name||devName||"Gawai Terpercaya (FIDO2)";
+e.current?.show({severity:"success",summary:"Gawai Terdaftar",detail:'Perangkat "'+finalDevName+'" berhasil didaftarkan sebagai gawai terpercaya untuk login biometrik.'});
 await fetchPasskeyDevices();
 await eT();
 }catch(err){
@@ -2999,29 +3000,24 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       })
     ),
     // Pagination Controls
-    (0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",padding:"0.75rem 0.5rem 0",borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:"0.5rem"},children:[
-      (0,t.jsx)("button",{
-        type:"button",
-        disabled:eNetworkPage <= 1,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage - 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
-        style:{background:eNetworkPage <= 1 ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage <= 1 ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage <= 1 ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage <= 1 ? "not-allowed" : "pointer"},
-        children:"◀ Sebelumnya"
-      }),
-      (0,t.jsxs)("span",{style:{fontSize:"0.8rem",color:"#94a3b8",fontWeight:600},children:[
-        "Halaman ",
-        (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:eNetworkPage}),
-        " dari ",
-        (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:eNetworkTotalPages}),
-        " (Total " + (eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi)" : " Personil)")
-      ]}),
-      (0,t.jsx)("button",{
-        type:"button",
-        disabled:eNetworkPage >= eNetworkTotalPages,
-        onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, eNetworkPage + 1, eNetworkConnectedTarget || a?.id || mySelf?.id),
-        style:{background:eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.04)" : "rgba(56,189,248,0.15)",color:eNetworkPage >= eNetworkTotalPages ? "#64748b" : "#38bdf8",border:"1px solid " + (eNetworkPage >= eNetworkTotalPages ? "rgba(255,255,255,0.08)" : "rgba(56,189,248,0.3)"),borderRadius:"8px",padding:"0.4rem 0.9rem",fontSize:"0.8rem",fontWeight:700,cursor:eNetworkPage >= eNetworkTotalPages ? "not-allowed" : "pointer"},
-        children:"Selanjutnya ▶"
-      })
-    ]})
+    (()=>{
+      let totP = Math.max(1, Number(eNetworkTotalPages) || 1);
+      let curP = Math.min(totP, Math.max(1, Number(eNetworkPage) || 1));
+      let pStart = Math.max(1, Math.min(curP - 2, totP - 4));
+      let pNums = Array.from({ length: Math.min(5, totP) }, (_, i) => pStart + i);
+      let targetUid = eNetworkConnectedTarget || a?.id || mySelf?.id;
+      return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{width:"100%",marginTop:"0.5rem"},children:[
+        (0,t.jsx)("span",{className:"cas-paginator-info",children:"Total " + (eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi" : " Personil")}),
+        (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
+          (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, targetUid),title:"Halaman Pertama",children:"«"}),
+          (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, curP - 1, targetUid),title:"Sebelumnya",children:"‹"}),
+          pNums.map(pg => (0,t.jsx)("button",{type:"button",className:"cas-page-btn" + (pg === curP ? " is-active" : ""),"aria-current":pg === curP ? "page" : void 0,onClick:() => pg !== curP && fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, pg, targetUid),children:pg},pg)),
+          (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP >= totP,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, curP + 1, targetUid),title:"Berikutnya",children:"›"}),
+          (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP >= totP,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, totP, targetUid),title:"Halaman Terakhir",children:"»"})
+        ]}),
+        (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Halaman ",curP," / ",totP]})
+      ]});
+    })()
   ]})
 }),
 
@@ -4018,25 +4014,21 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             ]});
           })
         }),
-        totalPostPages > 1 && (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0.65rem 0.5rem",marginTop:"0.5rem",borderTop:"1px solid var(--cas-border, rgba(255,255,255,0.08))",flexWrap:"wrap",gap:"0.5rem"},children:[
-          (0,t.jsx)("button",{
-            type:"button",
-            onClick:() => setPostPage(p => Math.max(1, p - 1)),
-            disabled:curPage <= 1,
-            style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #cbd5e1)",color:"var(--cas-text-primary, #0f172a)",padding:"0.35rem 0.75rem",borderRadius:"6px",fontSize:"0.76rem",fontWeight:700,cursor:curPage<=1?"not-allowed":"pointer",opacity:curPage<=1?0.4:1},
-            children:"← Sebelumnya"
-          }),
-          (0,t.jsxs)("span",{style:{fontSize:"0.76rem",color:"#94a3b8",fontWeight:600},children:[
-            "Halaman ",curPage," dari ",totalPostPages," (",totalPosts," postingan)"
-          ]}),
-          (0,t.jsx)("button",{
-            type:"button",
-            onClick:() => setPostPage(p => Math.min(totalPostPages, p + 1)),
-            disabled:curPage >= totalPostPages,
-            style:{background:"var(--cas-bg-subtle, #f8fafc)",border:"1px solid var(--cas-border, #cbd5e1)",color:"var(--cas-text-primary, #0f172a)",padding:"0.35rem 0.75rem",borderRadius:"6px",fontSize:"0.76rem",fontWeight:700,cursor:curPage>=totalPostPages?"not-allowed":"pointer",opacity:curPage>=totalPostPages?0.4:1},
-            children:"Selanjutnya →"
-          })
-        ]})
+        totalPostPages > 1 && (()=>{
+          let pStart = Math.max(1, Math.min(curPage - 2, totalPostPages - 4));
+          let pNums = Array.from({ length: Math.min(5, totalPostPages) }, (_, i) => pStart + i);
+          return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{marginTop:"0.5rem"},children:[
+            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Total ",totalPosts," postingan"]}),
+            (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(1),title:"Halaman Pertama",children:"«"}),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(p => Math.max(1, p - 1)),title:"Sebelumnya",children:"‹"}),
+              pNums.map(pg => (0,t.jsx)("button",{type:"button",className:"cas-page-btn" + (pg === curPage ? " is-active" : ""),"aria-current":pg === curPage ? "page" : void 0,onClick:() => setPostPage(pg),children:pg},pg)),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage >= totalPostPages,onClick:() => setPostPage(p => Math.min(totalPostPages, p + 1)),title:"Berikutnya",children:"›"}),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage >= totalPostPages,onClick:() => setPostPage(totalPostPages),title:"Halaman Terakhir",children:"»"})
+            ]}),
+            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Halaman ",curPage," / ",totalPostPages]})
+          ]});
+        })()
       ]});
     })()
   )

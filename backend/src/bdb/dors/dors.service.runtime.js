@@ -400,8 +400,9 @@ let DorsService = DorsService_1 = class DorsService {
         d.setDate(d.getDate() - Math.max(0, n));
         return this.ymd(d);
     }
-    async fetchPage(cfg, src, f, t, page) {
-        const url = `${cfg.base_url}/${src.path}?from=${f}&to=${t}&from_hour=00:00:00&to_hour=23:59:59&page=${page}&showby=updated_at&order_by=updated_at`;
+    async fetchPage(cfg, src, f, t, page, showby = 'updated_at') {
+        const sb = ['updated_at', 'tgl_laporan', 'created_at'].includes(String(showby || '')) ? String(showby) : 'updated_at';
+        const url = `${cfg.base_url}/${src.path}?from=${f}&to=${t}&from_hour=00:00:00&to_hour=23:59:59&page=${page}&showby=${encodeURIComponent(sb)}&order_by=${encodeURIComponent(sb)}`;
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), cfg.timeout_ms);
         try {
@@ -416,27 +417,27 @@ let DorsService = DorsService_1 = class DorsService {
             }
             const snippet = rawText ? rawText.replace(/\s+/g, ' ').trim().slice(0, 200) : '(kosong)';
             if (!res.ok)
-                throw new Error(`HTTP ${res.status} halaman ${page}: ${snippet}`);
+                throw new Error(`HTTP ${res.status} halaman ${page} (${sb}): ${snippet}`);
             if (!j)
-                throw new Error(`respons bukan JSON valid (halaman ${page}): ${snippet}`);
+                throw new Error(`respons bukan JSON valid (halaman ${page}, ${sb}): ${snippet}`);
             if (j.status === false)
-                throw new Error(j?.msg ? `ditolak DORS (halaman ${page}): ${j.msg}` : `ditolak DORS (halaman ${page}), tanpa pesan: ${snippet}`);
+                throw new Error(j?.msg ? `ditolak DORS (halaman ${page}, ${sb}): ${j.msg}` : `ditolak DORS (halaman ${page}, ${sb}), tanpa pesan: ${snippet}`);
             return j;
         }
         catch (e) {
             if (e?.name === 'AbortError')
-                throw new Error(`timeout setelah ${cfg.timeout_ms}ms (halaman ${page})`);
+                throw new Error(`timeout setelah ${cfg.timeout_ms}ms (halaman ${page}, ${sb})`);
             throw e;
         }
         finally {
             clearTimeout(timer);
         }
     }
-    async fetchPageWithRetry(cfg, src, f, t, page, retries = 2) {
+    async fetchPageWithRetry(cfg, src, f, t, page, retries = 2, showby = 'updated_at') {
         let lastErr;
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
-                return await this.fetchPage(cfg, src, f, t, page);
+                return await this.fetchPage(cfg, src, f, t, page, showby);
             }
             catch (e) {
                 lastErr = e;
@@ -512,36 +513,62 @@ let DorsService = DorsService_1 = class DorsService {
         }
         this.normReady = true;
     }
-    async normalizeLp(p, model, scope, batch, rawId) {
+    async normalizeLp(pRaw, model, scope, batch, rawId) {
+        let p = pRaw;
+        if (typeof p === 'string') {
+            try {
+                p = JSON.parse(p);
+            }
+            catch {
+                return null;
+            }
+        }
+        if (!p || typeof p !== 'object')
+            return null;
+        const dorsLpId = p.id ?? p.dors_lp_id;
+        if (dorsLpId === undefined || dorsLpId === null)
+            return null;
         const cols = ['raw_id', 'dors_lp_id', 'model_lp', 'data_scope', 'import_batch', 'source_created_at', 'source_updated_at', ...DorsService_1.MAIN_COLS];
-        const vals = [rawId, p.id, model, scope, batch, this.cell(p.created_at), this.cell(p.updated_at), ...DorsService_1.MAIN_COLS.map((c) => this.cell(p[c]))];
+        const vals = [rawId, dorsLpId, model, scope, batch, this.cell(p.created_at), this.cell(p.updated_at), ...DorsService_1.MAIN_COLS.map((c) => this.cell(p[c]))];
         const ph = vals.map((_, i) => `$${i + 1}`).join(',');
         const updSet = cols.filter((c) => c !== 'dors_lp_id' && c !== 'model_lp').map((c) => `"${c}"=excluded."${c}"`).join(', ');
         const ret = await this.dataSource.query(`insert into bdb_dors_lp (${cols.map((c) => `"${c}"`).join(',')}, synced_at)
              values (${ph}, now())
              on conflict (dors_lp_id, model_lp) do update set ${updSet}, synced_at=now()
              returning id`, vals);
-        const lpId = ret[0].id;
+        const lpId = ret[0]?.id;
+        if (!lpId)
+            return null;
         for (const [rel, relCols] of Object.entries(DorsService_1.OBJ_RELS)) {
-            await this.dataSource.query(`delete from ${this.tableOf(rel)} where lp_id=$1`, [lpId]);
-            const o = p[rel];
-            if (!o || typeof o !== 'object' || Array.isArray(o))
-                continue;
-            const c2 = ['lp_id', 'dors_lp_id', 'model_lp', ...relCols.map((c) => this.dbCol(c))];
-            const v2 = [lpId, p.id, model, ...relCols.map((c) => this.cell(o[c]))];
-            await this.dataSource.query(`insert into ${this.tableOf(rel)} (${c2.map((c) => `"${c}"`).join(',')}) values (${v2.map((_, i) => `$${i + 1}`).join(',')})`, v2);
+            try {
+                await this.dataSource.query(`delete from ${this.tableOf(rel)} where lp_id=$1`, [lpId]);
+                const o = p[rel];
+                if (!o || typeof o !== 'object' || Array.isArray(o))
+                    continue;
+                const c2 = ['lp_id', 'dors_lp_id', 'model_lp', ...relCols.map((c) => this.dbCol(c))];
+                const v2 = [lpId, dorsLpId, model, ...relCols.map((c) => this.cell(o[c]))];
+                await this.dataSource.query(`insert into ${this.tableOf(rel)} (${c2.map((c) => `"${c}"`).join(',')}) values (${v2.map((_, i) => `$${i + 1}`).join(',')})`, v2);
+            }
+            catch (relErr) {
+                this.logger.warn(`normalizeLp OBJ_REL ${rel} utk LP ${dorsLpId} gagal: ${relErr?.message || relErr}`);
+            }
         }
         for (const [rel, relCols] of Object.entries(DorsService_1.ARR_RELS)) {
-            await this.dataSource.query(`delete from ${this.tableOf(rel)} where lp_id=$1`, [lpId]);
-            const arr = p[rel];
-            if (!Array.isArray(arr) || !arr.length)
-                continue;
-            const c2 = ['lp_id', 'dors_lp_id', 'model_lp', ...relCols.map((c) => this.dbCol(c))];
-            for (const el of arr) {
-                if (!el || typeof el !== 'object')
+            try {
+                await this.dataSource.query(`delete from ${this.tableOf(rel)} where lp_id=$1`, [lpId]);
+                const arr = p[rel];
+                if (!Array.isArray(arr) || !arr.length)
                     continue;
-                const v2 = [lpId, p.id, model, ...relCols.map((c) => this.cell(el[c]))];
-                await this.dataSource.query(`insert into ${this.tableOf(rel)} (${c2.map((c) => `"${c}"`).join(',')}) values (${v2.map((_, i) => `$${i + 1}`).join(',')})`, v2);
+                const c2 = ['lp_id', 'dors_lp_id', 'model_lp', ...relCols.map((c) => this.dbCol(c))];
+                for (const el of arr) {
+                    if (!el || typeof el !== 'object')
+                        continue;
+                    const v2 = [lpId, dorsLpId, model, ...relCols.map((c) => this.cell(el[c]))];
+                    await this.dataSource.query(`insert into ${this.tableOf(rel)} (${c2.map((c) => `"${c}"`).join(',')}) values (${v2.map((_, i) => `$${i + 1}`).join(',')})`, v2);
+                }
+            }
+            catch (relErr) {
+                this.logger.warn(`normalizeLp ARR_REL ${rel} utk LP ${dorsLpId} gagal: ${relErr?.message || relErr}`);
             }
         }
         return lpId;
@@ -554,17 +581,18 @@ let DorsService = DorsService_1 = class DorsService {
         const CHUNK = 100;
         let inserted = 0;
         for (let i = 0; i < valid.length; i += CHUNK) {
-            const slice = valid.slice(i, i + CHUNK);
-            const ids = slice.map((r) => r.id);
-            const existRows = await this.dataSource.query(`select dors_lp_id from bdb_dors_raw_lp where model_lp=$1 and dors_lp_id = any($2)`, [model, ids]);
-            const existing = new Set(existRows.map((r) => String(r.dors_lp_id)));
-            const fresh = slice.filter((r) => !existing.has(String(r.id)));
-            if (!fresh.length)
+            const rawSlice = valid.slice(i, i + CHUNK);
+            const sliceById = new Map();
+            for (const r of rawSlice) {
+                sliceById.set(String(r.id), r);
+            }
+            const dedupSlice = Array.from(sliceById.values());
+            if (!dedupSlice.length)
                 continue;
             const params = [];
-            const scopeIdx = fresh.length * 4 + 1;
-            const batchIdx = fresh.length * 4 + 2;
-            const valuesSql = fresh
+            const scopeIdx = dedupSlice.length * 4 + 1;
+            const batchIdx = dedupSlice.length * 4 + 2;
+            const valuesSql = dedupSlice
                 .map((r, idx) => {
                 const b = idx * 4;
                 params.push(r.id, model, r.no_laporan ?? null, JSON.stringify(r));
@@ -574,16 +602,24 @@ let DorsService = DorsService_1 = class DorsService {
             params.push(scope, batch);
             const ret = await this.dataSource.query(`insert into bdb_dors_raw_lp (dors_lp_id, model_lp, no_laporan, payload_json, source, data_scope, import_batch, synced_at, created_at, updated_at)
                  values ${valuesSql}
-                 on conflict (dors_lp_id, model_lp) do nothing
+                 on conflict (dors_lp_id, model_lp) do update set
+                     no_laporan = coalesce(excluded.no_laporan, bdb_dors_raw_lp.no_laporan),
+                     payload_json = excluded.payload_json,
+                     updated_at = now(),
+                     synced_at = now()
+                 where bdb_dors_raw_lp.payload_json is distinct from excluded.payload_json
+                    or not exists (select 1 from bdb_dors_lp n where n.dors_lp_id = bdb_dors_raw_lp.dors_lp_id and n.model_lp = bdb_dors_raw_lp.model_lp)
                  returning id, dors_lp_id`, params);
-            const rawIdByDors = new Map((ret || []).map((x) => [String(x.dors_lp_id), x.id]));
-            for (const r of fresh) {
+            for (const retRow of (ret || [])) {
+                const r = sliceById.get(String(retRow.dors_lp_id));
+                if (!r)
+                    continue;
                 try {
-                    await this.normalizeLp(r, model, scope, batch, rawIdByDors.get(String(r.id)) ?? null);
+                    await this.normalizeLp(r, model, scope, batch, retRow.id ?? null);
                     inserted++;
                 }
                 catch (e) {
-                    this.logger.warn(`normalisasi LP ${r.id} (${model}) gagal: ${e?.message || e}`);
+                    this.logger.warn(`normalisasi LP ${retRow.dors_lp_id} (${model}) gagal: ${e?.message || e}`);
                 }
             }
         }
@@ -641,7 +677,7 @@ let DorsService = DorsService_1 = class DorsService {
         try {
             let startPage = state.last_success_page + 1;
             if (state.last_success_page === 0) {
-                const first = await this.fetchPageWithRetry(cfg, src, f, t, 1);
+                const first = await this.fetchPageWithRetry(cfg, src, f, t, 1, 2, 'updated_at');
                 state.pages = Number(first?.last_page) || 1;
                 state.total = typeof first?.total === 'number' ? first.total : null;
                 const rows = first?.data || [];
@@ -657,14 +693,42 @@ let DorsService = DorsService_1 = class DorsService {
                     state.error = 'Sinkronisasi dihentikan manual oleh pengguna.';
                     break;
                 }
-                const j = await this.fetchPageWithRetry(cfg, src, f, t, p);
+                const j = await this.fetchPageWithRetry(cfg, src, f, t, p, 2, 'updated_at');
                 const rows = Array.isArray(j?.data) ? j.data : [];
                 state.upserted += await this.insertNewRows(rows, model, scope, batch);
                 state.fetched += rows.length;
                 state.last_success_page = p;
                 await onPageDone();
             }
-            state.status = 'done';
+            if (!this.stopRequested && !state.tgl_laporan_done) {
+                const firstTgl = await this.fetchPageWithRetry(cfg, src, f, t, 1, 2, 'tgl_laporan');
+                const tglPages = Number(firstTgl?.last_page) || 1;
+                const tglTotal = typeof firstTgl?.total === 'number' ? firstTgl.total : 0;
+                const firstTglRows = Array.isArray(firstTgl?.data) ? firstTgl.data : [];
+                state.upserted += await this.insertNewRows(firstTglRows, model, scope, batch);
+                state.fetched += firstTglRows.length;
+                await onPageDone();
+                if (tglTotal > (state.total || 0) || f < '2026-01-01' || tglPages > 1) {
+                    for (let tp = 2; tp <= tglPages; tp++) {
+                        if (this.stopRequested) {
+                            state.status = 'error';
+                            state.error = 'Sinkronisasi dihentikan manual oleh pengguna.';
+                            break;
+                        }
+                        const jTgl = await this.fetchPageWithRetry(cfg, src, f, t, tp, 2, 'tgl_laporan');
+                        const tglRows = Array.isArray(jTgl?.data) ? jTgl.data : [];
+                        state.upserted += await this.insertNewRows(tglRows, model, scope, batch);
+                        state.fetched += tglRows.length;
+                        await onPageDone();
+                    }
+                }
+                if (!this.stopRequested) {
+                    state.tgl_laporan_done = true;
+                }
+            }
+            if (!this.stopRequested) {
+                state.status = 'done';
+            }
         }
         catch (e) {
             state.status = 'error';

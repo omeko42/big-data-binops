@@ -14,7 +14,7 @@ import { Organisasi } from '../entity/organisasi.entity';
 // Role, dst) -- TIDAK BOLEH diubah nama atau dihapus lewat menu Organisasi Role ini, supaya tak
 // ada yang bisa merename/menghapusnya lalu merusak akses semua user existing dengan role itu.
 // Role CUSTOM di luar 4 ini (ditambahkan lewat menu yang sama) bebas diubah/dihapus.
-const BAKU_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer'];
+const BAKU_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'testing'];
 function isBakuRole(roleName: string | null | undefined): boolean {
     return BAKU_ROLES.includes(String(roleName || '').trim().toLowerCase());
 }

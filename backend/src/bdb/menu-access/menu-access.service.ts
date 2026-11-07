@@ -2,7 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 
-const KNOWN_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer'];
+const KNOWN_ROLES = ['superadmin', 'admin_binops', 'operator', 'viewer', 'sharese', 'testing'];
+const DISALLOWED_LEGACY_ROLES = new Set(['pejabat', 'analis', 'admin']);
 
 /** Pemetaan akses menu per role (override defaultRoles yang ada di katalog frontend). */
 @Injectable()
@@ -32,16 +33,9 @@ export class MenuAccessService {
             this.dataSource.query("select distinct lower(role_bdb) as role from auth_users where role_bdb is not null and role_bdb <> '' order by 1"),
             this.dataSource.query("select lower(role_name) as role from tm_org_role where role_name is not null and role_name <> '' and deleted_at is null")
         ]);
-        const fromUsers = userRows.map((r: any) => r.role).filter(Boolean);
-        const fromOrgRole = orgRoleRows.map((r: any) => r.role).filter(Boolean);
-        // KNOWN_ROLES SELALU tampil (tak nunggu ada user sungguhan dgn role itu dulu) -- kalau
-        // cuma tampil pas sudah ada usernya, superadmin jadi kebingungan mengira role lain
-        // "belum ada"/tak bisa dikonfigurasi, padahal cuma belum ada akun dgn role itu. Role dari
-        // tm_org_role (Organisasi Role, termasuk role custom yg baru ditambahkan lewat menu itu)
-        // JUGA otomatis ikut -- ini skrg sumber kebenaran resmi utk "role apa saja yg ada" di
-        // sistem, bukan cuma role yg kebetulan sudah dipakai user. Role lain yg mungkin nyasar
-        // di auth_users (di luar KNOWN_ROLES/tm_org_role) tetap ikut ditambahkan di belakang.
-        const set = new Set<string>([...KNOWN_ROLES, ...fromOrgRole, ...fromUsers]);
+        const fromUsers = userRows.map((r: any) => r.role).filter((r: string) => r && !DISALLOWED_LEGACY_ROLES.has(r));
+        const fromOrgRole = orgRoleRows.map((r: any) => r.role).filter((r: string) => r && !DISALLOWED_LEGACY_ROLES.has(r));
+        const set = new Set<string>([...fromOrgRole, ...KNOWN_ROLES, ...fromUsers]);
         return Array.from(set);
     }
 

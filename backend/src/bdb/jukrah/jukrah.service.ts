@@ -123,7 +123,10 @@ export class JukrahService {
             await this.dataSource.query('CREATE INDEX IF NOT EXISTS idx_auth_users_status_login ON auth_users (status, last_login_at DESC NULLS LAST, id ASC)');
             const uOne = await this.dataSource.query('SELECT username FROM auth_users WHERE id = 1 LIMIT 1');
             if (uOne?.[0]?.username) {
-                this.primaryAdminHandle = String(uOne[0].username).trim().replace(/^@+/, '').toLowerCase();
+                const rawU = String(uOne[0].username).trim().replace(/^@+/, '').toLowerCase();
+                if (rawU && rawU !== 'user_1') {
+                    this.primaryAdminHandle = rawU;
+                }
             }
         } catch {}
         this.clearNetworkUsersCache();
@@ -173,7 +176,13 @@ export class JukrahService {
         return /\b(siti|sri|dewi|dewie|ayu|putri|dian|fitri|fitria|fitriani|nurul|rina|rini|desi|desy|mega|ratna|wulan|wulandari|indah|intan|novita|novi|lestari|anggraini|maharani|puspita|handayani|kusumawati|rahmawati|susanti|astuti|widyastuti|yuliani|yulia|yuni|wahyuni|fatimah|alfia|amini|tita|maria|theresia|veronica|natalia|debora|chintya|nadia|nabila|annisa|anisa|aulia|amelia|amalia|tiara|citra|maya|lina|linda|nina|dina|vina|vera|sari|wati|ningrum|ningsih|pratiwi|yashinta|prameswari|retno|endang|inggrid|ni\s+putu|ni\s+made|ni\s+luh|ni\s+wayan|ni\s+kadek|ni\s+komang|ni\s+nyoman|ni\s+ketut)\b/i.test(n);
     }
 
+    private readonly cosersebotAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzBmMTcyYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzFlMjkzYiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJtZXRhbCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48c3RvcCBvZmZzZXQ9IjI1JSIgc3RvcC1jb2xvcj0iI2NiZDVlMSIvPjxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjOTRhM2I4Ii8+PHN0b3Agb2Zmc2V0PSI3OCUiIHN0b3AtY29sb3I9IiNlMmU4ZjAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM0NzU1NjkiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0idmlzb3IiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjY2JkNWUxIi8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiM5NGEzYjgiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM2NDc0OGIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0idXJsKCNiZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM0MTU1IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNNTcuNSAyNSBMNTkgMTAgTDYxIDEwIEw2Mi41IDI1IFoiIGZpbGw9IiNjYmQ1ZTEiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48ZWxsaXBzZSBjeD0iNjAiIGN5PSIyNSIgcng9IjguNSIgcnk9IjMuNSIgZmlsbD0iIzk0YTNiOCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuNCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iOC41IiByPSI0LjIiIGZpbGw9IiNlMmU4ZjAiIHN0cm9rZT0iIzBmMTcyYSIgc3Ryb2tlLXdpZHRoPSIyLjQiLz48Y2lyY2xlIGN4PSI1OC44IiBjeT0iNy4zIiByPSIxLjMiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCBkPSJNMzIgOTggTDMzIDQ2IEEyNyAyMiAwIDAgMSA4NyA0NiBMODggOTggTDkzIDEwNSBRNjAgMTEyIDI3IDEwNSBaIiBmaWxsPSJ1cmwoI21ldGFsKSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00MiAzNSBRNjAgMjcgNzggMzUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Y4ZmFmYyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIG9wYWNpdHk9IjAuNyIvPjxyZWN0IHg9IjIwIiB5PSI0MiIgd2lkdGg9IjgwIiBoZWlnaHQ9IjI4IiByeD0iMTQiIGZpbGw9InVybCgjdmlzb3IpIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PHJlY3QgeD0iMjUiIHk9IjQ2LjUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxOSIgcng9IjkuNSIgZmlsbD0iIzA5MGQxNiIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9IjQ1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxjaXJjbGUgY3g9Ijc1IiBjeT0iNTYiIHI9IjguNCIgZmlsbD0iI2ZlZjljMyIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjEuOCIvPjxyZWN0IHg9IjQyLjQiIHk9IjUzLjQiIHdpZHRoPSI1LjIiIGhlaWdodD0iNS4yIiByeD0iMC44IiBmaWxsPSIjMDkwZDE2Ii8+PHJlY3QgeD0iNzIuNCIgeT0iNTMuNCIgd2lkdGg9IjUuMiIgaGVpZ2h0PSI1LjIiIHJ4PSIwLjgiIGZpbGw9IiMwOTBkMTYiLz48cGF0aCBkPSJNMzQgNDkuNSBMNTQgNTIuNSBNODYgNDkuNSBMNjYgNTIuNSIgc3Ryb2tlPSIjMDkwZDE2IiBzdHJva2Utd2lkdGg9IjIuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMzUiIHk9Ijc1IiB3aWR0aD0iNTAiIGhlaWdodD0iMTgiIHJ4PSI4IiBmaWxsPSIjZmVmOWMzIiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi44Ii8+PGxpbmUgeDE9IjM1LjUiIHkxPSI4NCIgeDI9Ijg0LjUiIHkyPSI4NCIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI0Ny41IiB5MT0iNzUuNSIgeDI9IjQ3LjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PGxpbmUgeDE9IjYwIiB5MT0iNzUuNSIgeDI9IjYwIiB5Mj0iOTIuNSIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjIuMiIvPjxsaW5lIHgxPSI3Mi41IiB5MT0iNzUuNSIgeDI9IjcyLjUiIHkyPSI5Mi41IiBzdHJva2U9IiMwZjE3MmEiIHN0cm9rZS13aWR0aD0iMi4yIi8+PC9zdmc+';
+
     private resolveDefaultAvatar(photoUrl: any, name?: any, jenisKelamin?: any, socialMedia?: any): string {
+        const nmLow = String(name || '').trim().toLowerCase();
+        if (nmLow.includes('coserse') || nmLow.includes('ai_taktis') || nmLow.includes('ai agen taktis') || nmLow.includes('spra bender')) {
+            return this.cosersebotAvatar;
+        }
         const clean = String(photoUrl || '').trim();
         if (clean.length > 5 && clean !== 'null' && clean !== 'undefined' && !clean.includes('default-avatar')) return clean;
         return this.isFemalePersonnel(name, jenisKelamin, socialMedia)
@@ -3280,7 +3289,7 @@ export class JukrahService {
             satker_nama: 'Robinopsnal Bareskrim Polri',
             satker: 'Robinopsnal Bareskrim Polri',
             role_bdb: 'ai_agent',
-            photo_url: '/images/default-avatar-polki.png',
+            photo_url: this.cosersebotAvatar,
             online: true,
             is_online: true,
             is_pinned: true,
@@ -3444,7 +3453,7 @@ export class JukrahService {
                 satker: 'Robinopsnal Bareskrim Polri',
                 satker_nama: 'Robinopsnal Bareskrim Polri',
                 role_bdb: 'ai_agent',
-                photo_url: '/images/default-avatar-polki.png',
+                photo_url: this.cosersebotAvatar,
                 online: true,
                 is_online: true
             };
@@ -3481,6 +3490,7 @@ export class JukrahService {
                 receiver_id: Number(m.receiver_id),
                 is_mine: isMine,
                 is_me: isMine,
+                sender_photo: Number(m.sender_id) === -1 ? this.cosersebotAvatar : undefined,
                 channel_type: m.channel_type || 'direct',
                 content: m.content,
                 media_url: m.media_url || m.attachment_url || null,
@@ -3580,6 +3590,7 @@ export class JukrahService {
                 receiver_id: uid,
                 is_mine: false,
                 is_me: false,
+                sender_photo: this.cosersebotAvatar,
                 reply_to: null,
                 reactions: {}
             };

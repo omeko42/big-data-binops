@@ -9,6 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var PihakTerlibatService_1;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PihakTerlibatService = void 0;
 const schedule_1 = require("@nestjs/schedule");
@@ -20,17 +21,14 @@ const audit_service_1 = require("../audit/audit.service");
 const minio_service_1 = require("../kerma/minio.service");
 const lp_monitoring_access_service_1 = require("../common/lp-monitoring-access.service");
 const KETERLIBATAN_MANUAL = ['SAKSI', 'AHLI', 'TERSANGKA'];
+/**
+ * Register Pihak Terlibat: gabungan 3 sumber --
+ *  1) bdb_dors_lp_terlibat -- read-only, disalin dari DORS tiap sync (saksi/terlapor/korban/pelapor).
+ *  2) bdb_lp_pihak_manual -- diisi manual di halaman detail LP: SAKSI, AHLI, TERSANGKA saja, dengan
+ *     field detail personil sama seperti punya DORS.
+ *  3) bdb_dokumen PENETAPAN_TSK -- read-only, sumber resmi tersangka dari alur dokumen LP.
+ */
 let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
-    dataSource;
-    audit;
-    minio;
-    monitoring;
-    logger = new common_1.Logger(PihakTerlibatService_1.name);
-    summaryCache = new Map();
-    rankingCache = new Map();
-    recentGlobalCache = new Map();
-    lpByNikCache = new Map();
-    rankingCacheTtlMs = 2 * 60 * 1000;
     extractCorpTrigramWords(corpTerm) {
         const core = String(corpTerm || '')
             .replace(/^(PT|CV|UD|KOPERASI|KSP|YAYASAN|BANK|BPR|PERUM|FIRMA|PD)[.]?\s+/i, '')
@@ -48,7 +46,6 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             .filter(w => w.length >= 3)
             .slice(0, 2);
     }
-    _pinTableReady = false;
     async ensurePinTable() {
         if (this._pinTableReady)
             return;
@@ -141,6 +138,53 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         this.audit = audit;
         this.minio = minio;
         this.monitoring = monitoring;
+        this.logger = new common_1.Logger(PihakTerlibatService_1.name);
+        this.summaryCache = new Map();
+        this.fastListCache = new Map();
+        this.rankingCache = new Map();
+        this.recentGlobalCache = new Map();
+        this.lpByNikCache = new Map();
+        this.rankingCacheTtlMs = 30 * 60 * 1000;
+        this._pinTableReady = false;
+        this._fastCacheTableReady = false;
+    }
+    async ensureFastCacheTable() {
+        if (this._fastCacheTableReady) return;
+        this._fastCacheTableReady = true;
+        await this.dataSource.query(`
+            CREATE TABLE IF NOT EXISTS bdb_pihak_terlibat_fast_cache (
+                cache_key TEXT PRIMARY KEY,
+                payload JSONB NOT NULL,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `).catch(() => {});
+    }
+    normalizeCacheDates(fromRaw, toRaw) {
+        const f = String(fromRaw || '').trim();
+        const t = String(toRaw || '').trim();
+        if (!f && !t) return { from: '', to: '' };
+        if (f === '2026-01-01' && (!t || t.startsWith('2026-11-') || t === '2026-12-31')) {
+            return { from: '2026-01-01', to: '2026-DEFAULT' };
+        }
+        return { from: f, to: t };
+    }
+    fastListKey(scope, query, page, limit) {
+        const d = this.normalizeCacheDates(query.from, query.to);
+        const effAll = scope.all || query.scope === 'national';
+        return JSON.stringify({
+            scope: effAll ? 'ALL' : Number(scope.satkerId || 0),
+            satker_id: Number(query.satker_id || 0),
+            keterlibatan: String(query.keterlibatan || 'ALL').trim().toUpperCase(),
+            status: String(query.status || 'ALL').trim().toUpperCase(),
+            sumber: String(query.sumber || 'ALL').trim().toUpperCase(),
+            search: String(query.search || '').trim().toLowerCase(),
+            kejahatan: String(query.kejahatan || '').trim().toLowerCase(),
+            area: String(query.area || '').trim().toLowerCase(),
+            from: d.from,
+            to: d.to,
+            page,
+            limit
+        });
     }
     toText(v) {
         if (v === undefined || v === null)
@@ -166,10 +210,13 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const hasSearch = Boolean(this.toText(query?.search));
         const satkerId = Number(query?.satker_id || 0);
         const hasExplicitSatker = Number.isSafeInteger(satkerId) && satkerId > 0;
+        // Jika user memfilter satker spesifik, biarkan filter satker ditangani oleh selected_tree
         if (hasExplicitSatker)
             return '1=1';
+        // Jika query eksplisit nasional atau sedang mencari pihak/NIK tertentu, buka scope pencarian nasional
         if (isNational || hasSearch)
             return '1=1';
+        // Default operator: batasi ke pohon satker wilayah kewenangannya
         if (!scope.satkerId)
             return '1=0';
         const rootId = Number(scope.satkerId);
@@ -209,7 +256,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
     }
     summaryKey(scope, query) {
-        return JSON.stringify({ scope: scope.all ? 'ALL' : Number(scope.satkerId || 0), queryScope: query.scope || '', search: query.search || '', sumber: query.sumber || 'ALL', from: query.from || '', to: query.to || '', kejahatan: query.kejahatan || '', area: query.area || '', satker_id: query.satker_id || null });
+        const d = this.normalizeCacheDates(query.from, query.to);
+        const effAll = scope.all || query.scope === 'national';
+        return JSON.stringify({ scope: effAll ? 'ALL' : Number(scope.satkerId || 0), search: query.search || '', sumber: query.sumber || 'ALL', from: d.from, to: d.to, kejahatan: query.kejahatan || '', area: query.area || '', satker_id: Number(query.satker_id || 0) });
     }
     hasCommonFilter(query) {
         return !!(this.toText(query.search) || this.toText(query.from) || this.toText(query.to) || this.toText(query.kejahatan) || this.toText(query.area) || query.satker_id || (this.toText(query.sumber) && String(query.sumber).toUpperCase() !== 'ALL'));
@@ -251,7 +300,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 where.push(`(lower(coalesce(c.nama,'')) like $${p} or lower(coalesce(c.nik,'')) like $${p} or lower(coalesce(lp.no_laporan,'')) like $${p})`);
             }
         }
-        const sumber = this.toText(query.sumber);
+        const sumberRaw = this.toText(query.sumber);
+        const sumber = sumberRaw && sumberRaw.toUpperCase() === 'TERPUSAT' ? 'DORS' : sumberRaw;
         if (sumber && sumber.toUpperCase() !== 'ALL') {
             params.push(sumber.toUpperCase());
             where.push(`c.sumber=$${params.length}`);
@@ -309,10 +359,17 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         return { params, where };
     }
+    /**
+     * Summary memakai jalur langsung per sumber supaya tabel LP tidak di-join dua kali.
+     * Data DORS dan manual sengaja dibaca terpisah lalu dijumlahkan di aplikasi. Selain
+     * lebih ringan pada jutaan baris, bentuk ini tetap mempertahankan semesta LP aktif
+     * dan scope owner/unit yang sama dengan tabel register.
+     */
     buildDirectSummaryWhere(scope, query, partyAlias, source, includeFacetFilters = false) {
         const params = [];
         const where = ['lp.deleted_at is null', this.scopeClause(scope, params, query)];
-        const selectedSource = (this.toText(query.sumber) || 'ALL').toUpperCase();
+        const rawSource = (this.toText(query.sumber) || 'ALL').toUpperCase();
+        const selectedSource = rawSource === 'TERPUSAT' ? 'DORS' : rawSource;
         if (selectedSource !== 'ALL' && selectedSource !== source) {
             return { params, where: ['1=0'], skip: true };
         }
@@ -874,6 +931,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 WHERE 1=1
                 ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
             `);
+            // Corporate All-Time Ranking
             await queryRunner.query(`
                 WITH lp_has_tsk AS (
                     SELECT DISTINCT d.lp_id
@@ -1043,19 +1101,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         WHEN count_saksi > 0 THEN 'SAKSI'
                         WHEN count_korban > 0 THEN 'KORBAN'
                         ELSE 'PIHAK'
-                    END,
-                    kasta_rank = CASE
-                        WHEN count_dpo > 0 THEN 1
-                        WHEN count_tersangka > 0 THEN 2
-                        WHEN (coalesce(tipe_subjek, '') = 'KORPORASI' AND count_korban > count_terlapor * 2)
-                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 6
-                        WHEN count_terlapor > 0 THEN 3
-                        WHEN count_pelapor > 0 THEN 4
-                        WHEN count_saksi > 0 THEN 5
-                        WHEN count_korban > 0 THEN 6
-                        ELSE 7
-                    END,
-                    last_seen_date = (last_seen AT TIME ZONE 'Asia/Jakarta')::date
+                    END
                 WHERE tahun = 0;
 
                 WITH dir_from_dors AS (
@@ -1085,7 +1131,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     SELECT nik FROM dir_from_tsk_uraian
                 )
                 UPDATE bdb_pihak_terlibat_ranking_snapshot r
-                SET tipe_identitas = 'DIREKTUR KORPORASI'
+                SET tipe_identitas = 'DIREKTUR UTAMA'
                 FROM all_dir_niks d
                 WHERE r.nik = d.nik AND r.tipe_subjek = 'PERORANGAN';
             `);
@@ -1300,7 +1346,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                     jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                    tipe_subjek, tipe_identitas, kasta, kasta_rank, last_seen_date
+                    tipe_subjek, tipe_identitas, kasta
                 )
                 SELECT 
                     0 as tahun, NULL::int as bulan, NULL::bigint as satker_id,
@@ -1318,17 +1364,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         WHEN count_saksi > 0 THEN 'SAKSI'
                         WHEN count_korban > 0 THEN 'KORBAN'
                         ELSE 'PIHAK'
-                    END,
-                    CASE
-                        WHEN count_dpo > 0 THEN 1
-                        WHEN count_tersangka > 0 THEN 2
-                        WHEN count_terlapor > 0 THEN 3
-                        WHEN count_pelapor > 0 THEN 4
-                        WHEN count_saksi > 0 THEN 5
-                        WHEN count_korban > 0 THEN 6
-                        ELSE 7
-                    END,
-                    (last_seen AT TIME ZONE 'Asia/Jakarta')::date
+                    END
                 FROM multi_cat
                 ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO UPDATE SET
                     nama = EXCLUDED.nama,
@@ -1347,9 +1383,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     jumlah_polda_unik = EXCLUDED.jumlah_polda_unik,
                     is_lintas_wilayah = EXCLUDED.is_lintas_wilayah,
                     daftar_satker = EXCLUDED.daftar_satker,
-                    kasta = EXCLUDED.kasta,
-                    kasta_rank = EXCLUDED.kasta_rank,
-                    last_seen_date = EXCLUDED.last_seen_date;
+                    kasta = EXCLUDED.kasta;
             `, [nik]);
             this.rankingCache.clear();
         }
@@ -1450,6 +1484,13 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const cached = this.summaryCache.get(key);
         if (cached && cached.expiresAt > Date.now())
             return { ...cached.data, cached: true };
+        await this.ensureFastCacheTable();
+        const dbSummaryKey = `summary:${key}`;
+        const fastSnap = await this.dataSource.query(`SELECT payload FROM bdb_pihak_terlibat_fast_cache WHERE cache_key = $1 LIMIT 1`, [dbSummaryKey]).catch(() => []);
+        if (fastSnap && fastSnap.length && fastSnap[0].payload) {
+            this.summaryCache.set(key, { expiresAt: Date.now() + 1800000, data: fastSnap[0].payload });
+            return { ...fastSnap[0].payload, cached: true };
+        }
         const isEligibleForSnapshot = !query.search &&
             !query.kejahatan &&
             !query.area &&
@@ -1515,7 +1556,12 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         dpo: activeDpoCount,
                     };
                     const result = { summary, mode: 'snapshot-table-fast', cached: false };
-                    this.summaryCache.set(key, { expiresAt: Date.now() + 300000, data: result });
+                    this.summaryCache.set(key, { expiresAt: Date.now() + 1800000, data: result });
+                    await this.dataSource.query(`
+                        INSERT INTO bdb_pihak_terlibat_fast_cache (cache_key, payload, updated_at)
+                        VALUES ($1, $2::jsonb, now())
+                        ON CONFLICT (cache_key) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()
+                    `, [dbSummaryKey, JSON.stringify(result)]).catch(() => {});
                     return result;
                 }
             }
@@ -1674,24 +1720,39 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         const page = Math.max(1, Number(query.page || 1));
         const limit = Math.max(1, Math.min(Number(query.row || query.limit || 25), 100));
+        const fastKey = this.fastListKey(scope, query, page, limit);
+        const memFast = this.fastListCache.get(fastKey);
+        if (memFast && memFast.expiresAt > Date.now()) {
+            return memFast.data;
+        }
+        await this.ensureFastCacheTable();
+        const dbListKey = `list:${fastKey}`;
+        const snapFast = await this.dataSource.query(`SELECT payload, (updated_at > now() - interval '30 minutes') AS is_fresh FROM bdb_pihak_terlibat_fast_cache WHERE cache_key = $1 LIMIT 1`, [dbListKey]).catch(() => []);
+        if (snapFast && snapFast.length && snapFast[0].payload) {
+            this.fastListCache.set(fastKey, { expiresAt: Date.now() + 1800000, data: snapFast[0].payload });
+            return snapFast[0].payload;
+        }
         const isDefaultGlobal = (scope.all || query.scope === 'national') && !this.hasCommonFilter(query) && (!query.keterlibatan || String(query.keterlibatan).toUpperCase() === 'ALL') && (!query.status || String(query.status).toUpperCase() === 'ALL');
-        if (isDefaultGlobal)
-            return this.recentGlobal(page, limit);
+        if (isDefaultGlobal) {
+            const res = await this.recentGlobal(page, limit);
+            this.fastListCache.set(fastKey, { expiresAt: Date.now() + 1800000, data: res });
+            if (page <= 2) {
+                await this.dataSource.query(`
+                    INSERT INTO bdb_pihak_terlibat_fast_cache (cache_key, payload, updated_at)
+                    VALUES ($1, $2::jsonb, now())
+                    ON CONFLICT (cache_key) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()
+                `, [dbListKey, JSON.stringify(res)]).catch(() => {});
+            }
+            return res;
+        }
         const fetch = page * limit + 1;
         const rows = [];
         const branchTasks = [];
         const dorsWhere = this.buildDirectSummaryWhere(scope, query, 't', 'DORS', true);
         if (!dorsWhere.skip) {
             const hasSearch = Boolean(this.toText(query.search));
-            const hasDate = Boolean(this.toText(query.from) || this.toText(query.to));
             const hasSatker = Number(query.satker_id || 0) > 0 || (!scope.all && Boolean(scope.satkerId));
-            const dorsOrder = hasSearch
-                ? 't.id desc'
-                : hasDate
-                    ? 'parse_tgl_laporan(lp.tgl_laporan) desc nulls last, lp.id desc'
-                    : hasSatker
-                        ? 'lp.id desc'
-                        : 't.id desc';
+            const dorsOrder = hasSatker && !hasSearch ? 'lp.id desc' : 't.id desc';
             branchTasks.push(this.readOnlyQuery(`select 'DORS' as sumber,t.id::text as row_id,lp.id as lp_id,t.nama,t.nik,
                         upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
                         null::text as nomor_dokumen,null::date as tanggal_dokumen,null::date as bap_tanggal,
@@ -1824,7 +1885,16 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const offset = (page - 1) * limit;
         const pageRows = rows.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
-        return { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
+        const finalResult = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'filtered-direct-branch-timeout-12s' } };
+        this.fastListCache.set(fastKey, { expiresAt: Date.now() + 1800000, data: finalResult });
+        if (page <= 2 && !this.toText(query.search)) {
+            await this.dataSource.query(`
+                INSERT INTO bdb_pihak_terlibat_fast_cache (cache_key, payload, updated_at)
+                VALUES ($1, $2::jsonb, now())
+                ON CONFLICT (cache_key) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()
+            `, [dbListKey, JSON.stringify(finalResult)]).catch(() => {});
+        }
+        return finalResult;
     }
     async getLaporanByNik(authUser, rawNik, query = {}) {
         const nik = String(rawNik || '').trim();
@@ -2194,7 +2264,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     for (const pr of (partyRows || [])) {
                         const lid = Number(pr.lp_id);
                         const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
-                        const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                        const jabatan = isDir ? 'DIREKTUR UTAMA' : (pr.pekerjaan || pr.peran || 'PIHAK');
                         const lpArr = byLp.get(lid) || [];
                         if (!lpArr.some(x => (x.nik && pr.nik && x.nik === pr.nik) || x.nama === pr.nama)) {
                             lpArr.push({ nama: pr.nama, nik: pr.nik || '', peran: pr.peran, jabatan });
@@ -2214,8 +2284,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                 existing.peran = pr.peran;
                                 existing.peranRank = rRank;
                             }
-                            if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
-                                existing.jabatan = 'DIREKTUR / PENGURUS';
+                            if (isDir && existing.jabatan !== 'DIREKTUR UTAMA') {
+                                existing.jabatan = 'DIREKTUR UTAMA';
                             }
                             if (!existing.nik && pr.nik)
                                 existing.nik = pr.nik;
@@ -2234,8 +2304,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         total_lp: p.lpSet.size
                     }))
                         .sort((a, b) => {
-                        const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
-                        const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                        const dirA = a.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
+                        const dirB = b.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
                         if (dirA !== dirB)
                             return dirA - dirB;
                         const rk = roleRank(a.peran) - roleRank(b.peran);
@@ -2356,7 +2426,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 const byPerson = new Map();
                 for (const pr of (partyRows || [])) {
                     const isDir = /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI|PIMPINAN|CEO|OWNER|PEMILIK)/.test(pr.pekerjaan || '') || /(DIREKTUR|DIRUT|KOMISARIS|DIREKSI)/.test(pr.nama || '');
-                    const jabatan = isDir ? 'DIREKTUR / PENGURUS' : (pr.pekerjaan || pr.peran || 'PIHAK');
+                    const jabatan = isDir ? 'DIREKTUR UTAMA' : (pr.pekerjaan || pr.peran || 'PIHAK');
                     const pKey = (pr.nik && /^[1-9][0-9]{15}$/.test(pr.nik)) ? `nik:${pr.nik}` : `nm:${pr.nama}`;
                     const rRank = roleRank(pr.peran);
                     const existing = byPerson.get(pKey);
@@ -2371,8 +2441,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             existing.peran = pr.peran;
                             existing.peranRank = rRank;
                         }
-                        if (isDir && existing.jabatan !== 'DIREKTUR / PENGURUS') {
-                            existing.jabatan = 'DIREKTUR / PENGURUS';
+                        if (isDir && existing.jabatan !== 'DIREKTUR UTAMA') {
+                            existing.jabatan = 'DIREKTUR UTAMA';
                         }
                         if (!existing.nik && pr.nik)
                             existing.nik = pr.nik;
@@ -2387,8 +2457,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     total_lp: p.lpSet.size
                 }))
                     .sort((a, b) => {
-                    const dirA = a.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
-                    const dirB = b.jabatan === 'DIREKTUR / PENGURUS' ? 0 : 1;
+                    const dirA = a.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
+                    const dirB = b.jabatan === 'DIREKTUR UTAMA' ? 0 : 1;
                     if (dirA !== dirB)
                         return dirA - dirB;
                     const rk = roleRank(a.peran) - roleRank(b.peran);
@@ -2922,8 +2992,15 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
                         nasional_score: Number(r.nasional_score || 0),
                         tipe_subjek: r.tipe_subjek || (r.nik?.startsWith('KORP:') ? 'KORPORASI' : 'PERORANGAN'),
-                        tipe_identitas: r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK'),
-                        pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                        tipe_identitas: ['DIREKTUR KORPORASI', 'DIREKTUR / PENGURUS'].includes(String(r.tipe_identitas || '').toUpperCase())
+                            ? 'DIREKTUR UTAMA'
+                            : (r.tipe_identitas || (r.nik?.startsWith('KORP:') ? 'BADAN HUKUM' : 'NIK')),
+                        pihak_terkait: Array.isArray(r.pihak_terkait)
+                            ? r.pihak_terkait.map((pt) => ({
+                                ...pt,
+                                jabatan: ['DIREKTUR / PENGURUS', 'DIREKTUR KORPORASI'].includes(String(pt?.jabatan || '').toUpperCase()) ? 'DIREKTUR UTAMA' : pt?.jabatan
+                            }))
+                            : [],
                         is_pinned: Boolean(r.is_pinned),
                         pinned_at: r.pinned_at || null,
                         last_seen: r.last_seen
@@ -2956,6 +3033,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 throw err;
             }
         }
+        // 2. DASHBOARD WIDGET (Max 5, All-Time, National, Kasta Tertinggi Priority)
         if (isDashboard) {
             try {
                 const requestedLimit = Number(query.limit || 5);
@@ -3058,8 +3136,15 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             is_lintas_wilayah: Boolean(r.is_lintas_wilayah),
                             nasional_score: Number(r.nasional_score || 0),
                             tipe_subjek: r.tipe_subjek || (isCorp ? 'KORPORASI' : 'PERORANGAN'),
-                            tipe_identitas: r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK'),
-                            pihak_terkait: Array.isArray(r.pihak_terkait) ? r.pihak_terkait : [],
+                            tipe_identitas: ['DIREKTUR KORPORASI', 'DIREKTUR / PENGURUS'].includes(String(r.tipe_identitas || '').toUpperCase())
+                                ? 'DIREKTUR UTAMA'
+                                : (r.tipe_identitas || (isCorp ? 'BADAN HUKUM' : 'NIK')),
+                            pihak_terkait: Array.isArray(r.pihak_terkait)
+                                ? r.pihak_terkait.map((pt) => ({
+                                    ...pt,
+                                    jabatan: ['DIREKTUR / PENGURUS', 'DIREKTUR KORPORASI'].includes(String(pt?.jabatan || '').toUpperCase()) ? 'DIREKTUR UTAMA' : pt?.jabatan
+                                }))
+                                : [],
                             is_pinned: Boolean(r.is_pinned),
                             pinned_at: r.pinned_at || null,
                             last_seen: r.last_seen
@@ -3079,6 +3164,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 throw err;
             }
         }
+        // 3. Fallback
         const limit = 5;
         const snap = await this.dataSource.query(`
             SELECT nama, nik,
@@ -3116,13 +3202,38 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
     async assertAccess(authUser, lp, scope) {
         const roleBdb = String(authUser?.role_bdb || '').toLowerCase();
         if (!['superadmin', 'admin_binops', 'operator'].includes(roleBdb)) {
-            throw new common_1.ForbiddenException('Tidak berwenang menambahkan pihak terlibat.');
+            throw new common_1.ForbiddenException('Anda tidak memiliki wewenang untuk mengubah Pihak Terlibat milik Satker lain.');
+        }
+        await this.monitoring.assertNotViewer(authUser?.id ? Number(authUser.id) : undefined, authUser);
+        if (scope.all) {
+            return;
         }
         const scopeSatkerId = scope.satkerId == null ? null : Number(scope.satkerId);
-        if (!scope.all && (scopeSatkerId == null || !Number.isFinite(scopeSatkerId))) {
-            throw new common_1.ForbiddenException('Akun belum memiliki scope satker yang valid.');
+        if (scopeSatkerId == null || !Number.isFinite(scopeSatkerId) || scopeSatkerId <= 0) {
+            throw new common_1.ForbiddenException('Anda tidak memiliki wewenang untuk mengubah Pihak Terlibat milik Satker lain.');
         }
-        await this.monitoring.assertCanMutateLp(authUser?.id ? Number(authUser.id) : undefined, Number(lp.id), authUser);
+        const treeRows = await this.dataSource.query(
+            scopeSatkerId === 13
+                ? `with recursive tree as (
+                       select id from bdb_satker where id = 13 or upper(coalesce(nama_singkat,'')) like '%BARESKRIM%' or upper(coalesce(deskripsi,'')) like '%BARESKRIM%'
+                       union
+                       select s.id from bdb_satker s join tree t on s.parent_id = t.id
+                   ) select id::int as id from tree`
+                : `with recursive tree as (
+                       select id from bdb_satker where id = $1
+                       union
+                       select s.id from bdb_satker s join tree t on s.parent_id = t.id
+                   ) select id::int as id from tree`,
+            scopeSatkerId === 13 ? [] : [scopeSatkerId]
+        );
+        const ownSatkerIds = treeRows.map((r) => Number(r.id)).filter((n) => Number.isSafeInteger(n) && n > 0);
+        const effOwnerId = Number(lp.unit_satker_id || lp.satker_id || 0);
+        const lpSatkerId = Number(lp.satker_id || 0);
+        const isOwn = (effOwnerId > 0 && ownSatkerIds.includes(effOwnerId))
+            || (!lp.unit_satker_id && lpSatkerId > 0 && ownSatkerIds.includes(lpSatkerId));
+        if (!isOwn) {
+            throw new common_1.ForbiddenException('Anda tidak memiliki wewenang untuk mengubah Pihak Terlibat milik Satker lain.');
+        }
     }
     async addManual(authUser, lpId, dto, file) {
         const scope = await (0, scope_util_1.resolveScope)(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
@@ -3141,6 +3252,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const bapTanggal = this.toDate(dto?.bap_tanggal);
         const nomorDokumen = this.toText(dto?.nomor_dokumen);
         const tanggalDokumen = this.toDate(dto?.tanggal_dokumen);
+        // Syarat per jenis -- SAKSI & TERSANGKA wajib dokumen pendukung + lampirannya, AHLI bebas.
         if (keterlibatan === 'SAKSI') {
             if (!bapTanggal)
                 throw new common_1.BadRequestException('Tanggal BAP wajib diisi untuk menambahkan Saksi.');
@@ -3172,7 +3284,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             this.toText(dto?.nik),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td)
+                throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp),
@@ -3213,7 +3326,9 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         return { ...row, lampiran_url };
     }
     async listByLp(authUser, lpId) {
-        await this.assertLpAccess(authUser, lpId);
+        const lpRows = await this.dataSource.query('select id from bdb_laporan_polisi where id=$1 and deleted_at is null', [lpId]);
+        if (!lpRows.length)
+            throw new common_1.NotFoundException('LP tidak ditemukan.');
         const rows = await this.dataSource.query(`select id, keterlibatan, nama, nik, jenis_kelamin, tempat_lahir, tgl_lahir, pekerjaan, alamat, no_hp,
                     bap_tanggal, nomor_dokumen, tanggal_dokumen, lampiran_file_name, lampiran_object_key, keterangan, created_at
              from bdb_lp_pihak_manual
@@ -3234,8 +3349,11 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         }
         return { data };
     }
+    /** Gabungan DORS + DOKUMEN + MANUAL untuk satu LP. Sumber dokumen selalu read-only. */
     async listByLpAll(authUser, lpId) {
-        await this.assertLpAccess(authUser, lpId);
+        const lpRows = await this.dataSource.query('select id from bdb_laporan_polisi where id=$1 and deleted_at is null', [lpId]);
+        if (!lpRows.length)
+            throw new common_1.NotFoundException('LP tidak ditemukan.');
         const dorsRows = await this.dataSource.query(`select t.id as row_id, upper(coalesce(t.keterlibatan,'-')) as keterlibatan, t.nama, t.nik, t.jenis_kelamin,
                     t.tempat_lahir, t.tgl_lahir, t.pekerjaan, t.alamat, t.no_hp
              from bdb_dors_lp_terlibat t
@@ -3289,7 +3407,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             (this.toText(dto?.keterlibatan) || 'saksi').toLowerCase(),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td)
+                throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp)
@@ -3344,6 +3463,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     await this.minio.remove(existing.lampiran_object_key);
                 }
                 catch {
+                    /* biarkan, jangan gagalkan update krn file lama tak terhapus */
                 }
             }
         }
@@ -3358,7 +3478,8 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
             this.toText(dto?.nik),
             this.toText(dto?.jenis_kelamin),
             this.toText(dto?.tempat_lahir),
-            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td) throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
+            (() => { const v = this.toText(dto?.tgl_lahir); const td = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()); if (v && /^\d{4}-\d{2}-\d{2}$/.test(v) && v > td)
+                throw new common_1.BadRequestException('Tanggal lahir tidak boleh di masa depan (melebihi hari ini).'); return v; })(),
             this.toText(dto?.pekerjaan),
             this.toText(dto?.alamat),
             this.toText(dto?.no_hp),
@@ -3386,6 +3507,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
         const rows = await this.dataSource.query('select id, lp_id, nama, nik, lampiran_object_key from bdb_lp_pihak_manual where id=$1 and deleted_at is null', [id]);
         if (!rows.length)
             throw new common_1.NotFoundException('Data tidak ditemukan.');
+        await this.assertLpAccess(authUser, Number(rows[0].lp_id));
         await this.dataSource.query('update bdb_lp_pihak_manual set deleted_at = now() where id=$1', [id]);
         await this.audit.log({
             user: authUser,
@@ -3519,93 +3641,10 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                       AND trim(item->>'nik') ~ '^[1-9][0-9]{15}$'
                       AND upper(trim(item->>'nama')) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
                 ),
-                raw_dpo AS (
-                    SELECT 
-                        coalesce(dp.lp_id, -dp.id) as lp_id,
-                        dp.satker_id as satker_id,
-                        case 
-                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
-                            else '060.01.00'
-                        end as wilayah_kode,
-                        upper(trim(dp.nama_dpo)) as nama,
-                        trim(dp.nomor_identitas) as nik,
-                        'DPO'::text as keterlibatan,
-                        coalesce(dp.updated_at, dp.created_at) as seen_at,
-                        CASE 
-                            WHEN dp.satker_id = 13 OR upper(coalesce(dp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%MABES%' THEN 1
-                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLDA%' THEN 2
-                            WHEN upper(coalesce(dp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(dp.satker_nama,'')) LIKE '%POLRESTA%' THEN 3
-                            ELSE 4
-                        END as satker_tier,
-                        coalesce(nullif(trim(dp.satker_nama),''), 'POLRI') as satker_nama,
-                        false as is_md,
-                        null::int as umur
-                    FROM bdb_dpo dp
-                    LEFT JOIN bdb_satker s ON s.id = dp.satker_id
-                    WHERE dp.status_dpo = 'AKTIF'
-                      AND COALESCE(dp.tanggal_dpo, dp.created_at::date) >= '${startDay}'::date
-                      AND COALESCE(dp.tanggal_dpo, dp.created_at::date) <= '${lastDay}'::date
-                      AND dp.nomor_identitas IS NOT NULL AND trim(dp.nomor_identitas) ~ '^[1-9][0-9]{15}$'
-                      AND dp.nama_dpo IS NOT NULL AND length(trim(dp.nama_dpo)) > 2
-                    UNION ALL
-                    SELECT 
-                        d.lp_id,
-                        coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
-                        case 
-                            when s.kode is not null then split_part(s.kode, '.', 1) || '.' || split_part(s.kode, '.', 2) || '.' || split_part(s.kode, '.', 3)
-                            else '060.01.00'
-                        end as wilayah_kode,
-                        upper(trim(item->>'nama')) as nama,
-                        coalesce(nullif(trim(item->>'nik'),''), 'DPO:' || upper(regexp_replace(trim(item->>'nama'), '[^A-Za-z0-9]+', '_', 'g'))) as nik,
-                        'DPO'::text as keterlibatan,
-                        d.created_at as seen_at,
-                        CASE 
-                            WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
-                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLDA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLDA%' THEN 2
-                            WHEN upper(coalesce(lp.satker_nama,'')) LIKE '%POLRES%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%POLRESTA%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%POLRES%' THEN 3
-                            ELSE 4
-                        END as satker_tier,
-                        coalesce(nullif(trim(lp.unit_satker_nama),''), lp.satker_nama, 'POLRI') as satker_nama,
-                        false as is_md,
-                        null::int as umur
-                    FROM bdb_dokumen d
-                    JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_DPO'
-                    JOIN bdb_laporan_polisi lp ON lp.id = d.lp_id AND lp.deleted_at IS NULL
-                    LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
-                    CROSS JOIN LATERAL jsonb_array_elements(
-                        CASE WHEN jsonb_typeof(d.data->'tersangka') = 'array' THEN d.data->'tersangka' ELSE '[]'::jsonb END
-                    ) party(item)
-                    WHERE d.created_at::date >= '${startDay}'::date AND d.created_at::date <= '${lastDay}'::date
-                      AND item->>'nama' IS NOT NULL
-                      AND length(trim(item->>'nama')) > 2
-                      AND NOT EXISTS (
-                          SELECT 1
-                          FROM bdb_dokumen c
-                          JOIN bdb_document_type_master ct ON ct.id = c.document_type_id AND ct.code = 'CABUT_DPO'
-                          WHERE c.lp_id = d.lp_id
-                            AND lower(regexp_replace(trim(coalesce(c.data->>'nomor_dpo','')),'\\s+','','g'))
-                                = lower(regexp_replace(trim(coalesce(nullif(trim(d.nomor_dokumen),''), d.data->>'nomor_dokumen','')),'\\s+','','g'))
-                            AND EXISTS (
-                                SELECT 1
-                                FROM jsonb_array_elements(
-                                    CASE WHEN jsonb_typeof(c.data->'tersangka') = 'array' THEN c.data->'tersangka' ELSE '[]'::jsonb END
-                                ) revoked_person
-                                WHERE (
-                                    nullif(regexp_replace(coalesce(revoked_person->>'nik',''),'\\D','','g'),'') IS NOT NULL
-                                    AND nullif(regexp_replace(coalesce(item->>'nik',''),'\\D','','g'),'') IS NOT NULL
-                                    AND regexp_replace(coalesce(revoked_person->>'nik',''),'\\D','','g')
-                                        = regexp_replace(coalesce(item->>'nik',''),'\\D','','g')
-                                ) OR upper(regexp_replace(coalesce(revoked_person->>'nama',''),'[^A-Za-z0-9]+','','g'))
-                                    = upper(regexp_replace(coalesce(item->>'nama',''),'[^A-Za-z0-9]+','','g'))
-                            )
-                      )
-                ),
                 unioned AS (
                     SELECT * FROM raw_dors
                     UNION ALL
                     SELECT * FROM raw_tsk
-                    UNION ALL
-                    SELECT * FROM raw_dpo
                 ),
                 filtered AS (
                     SELECT * FROM unioned
@@ -3652,7 +3691,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         )::int as nasional_score
                     FROM filtered
                     GROUP BY nik
-                    HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
+                    HAVING count(distinct lp_id) > 1
                 ),
                 multi_cat AS (
                     SELECT p.*, 'ALL' as kategori_filter, 'ALL' as keterlibatan, ${limAll} as max_lim FROM person_agg p
@@ -3727,6 +3766,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 WHERE 1=1
                 ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
             `);
+            // Corporate Ranking for 2026
             await queryRunner.query(`
                 WITH lp_has_tsk AS (
                     SELECT DISTINCT d.lp_id
@@ -3894,19 +3934,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         WHEN count_saksi > 0 THEN 'SAKSI'
                         WHEN count_korban > 0 THEN 'KORBAN'
                         ELSE 'PIHAK'
-                    END,
-                    kasta_rank = CASE
-                        WHEN count_dpo > 0 THEN 1
-                        WHEN count_tersangka > 0 THEN 2
-                        WHEN (coalesce(tipe_subjek, '') = 'KORPORASI' AND count_korban > count_terlapor * 2)
-                             OR (count_korban >= count_terlapor * 4 AND count_korban >= count_pelapor AND count_korban >= count_saksi AND count_korban > 0) THEN 6
-                        WHEN count_terlapor > 0 THEN 3
-                        WHEN count_pelapor > 0 THEN 4
-                        WHEN count_saksi > 0 THEN 5
-                        WHEN count_korban > 0 THEN 6
-                        ELSE 7
-                    END,
-                    last_seen_date = (last_seen AT TIME ZONE 'Asia/Jakarta')::date
+                    END
                 WHERE tahun = 2026 AND ${monthDeleteClause};
             `);
             await queryRunner.commitTransaction();
@@ -3990,6 +4018,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 return res.status(404).send('<h2 style="font-family:sans-serif;text-align:center;margin-top:40px;">Data Arsip DPO Tidak Ditemukan</h2>');
             }
             const d = rows[0];
+            // Check if binary file exists in bdb_dpo_arsip
             const arsipRows = await this.dataSource.query(`
                 SELECT file_name, mime_type, file_data 
                 FROM bdb_dpo_arsip 
@@ -4002,6 +4031,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                 res.setHeader('Content-Disposition', `inline; filename="${a.file_name || 'arsip_dpo.pdf'}"`);
                 return res.send(a.file_data);
             }
+            // Generate authentic police digital archive document
             const tglStr = d.tanggal_dpo ? new Date(d.tanggal_dpo).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
             const tglReg = d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
             const satkerNama = (d.satker_nama || d.satker_deskripsi || d.nama_polda || 'KEPOLISIAN NEGARA REPUBLIK INDONESIA').toUpperCase();
@@ -4148,9 +4178,5 @@ __decorate([
 ], PihakTerlibatService.prototype, "cronRefreshRankingSnapshot", null);
 exports.PihakTerlibatService = PihakTerlibatService = PihakTerlibatService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeorm_1.DataSource,
-        audit_service_1.AuditService,
-        minio_service_1.MinioService,
-        lp_monitoring_access_service_1.LpMonitoringAccessService])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_1.DataSource !== "undefined" && typeorm_1.DataSource) === "function" ? _a : Object, typeof (_b = typeof audit_service_1.AuditService !== "undefined" && audit_service_1.AuditService) === "function" ? _b : Object, typeof (_c = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _c : Object, typeof (_d = typeof lp_monitoring_access_service_1.LpMonitoringAccessService !== "undefined" && lp_monitoring_access_service_1.LpMonitoringAccessService) === "function" ? _d : Object])
 ], PihakTerlibatService);
-//# sourceMappingURL=pihak-terlibat.service.js.map
