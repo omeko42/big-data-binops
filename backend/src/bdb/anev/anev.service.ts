@@ -620,9 +620,9 @@ export class AnevService {
             const u = String(rawUnit || '').trim().toUpperCase();
             if (!u || u === '-' || u === 'NULL' || u === 'SPKT') return fallback;
             if (u.includes('NARKOBA')) return 'SATRESNARKOBA';
-            if (u.includes('PPA') || u.includes('PPO')) return 'SATRESPPAPPO';
+            if (u.includes('PPA') || u.includes('PPO')) return 'SATRESPPADANPPO';
             if (u.includes('SIBER')) return 'SATRESSIBER';
-            if (u.includes('KRIMSUS') || u.includes('EKSUS') || u.includes('TIPIDTER') || u.includes('KORUPSI') || u.includes('TIPIDKOR')) return 'SATRESKRIM (KRIMSUS)';
+            if (u.includes('RESKRIM') || u.includes('KRIMUM') || u.includes('KRIMSUS') || u.includes('EKSUS') || u.includes('TIPIDTER') || u.includes('KORUPSI') || u.includes('TIPIDKOR')) return 'SATRESKRIM';
             if (u === 'RESKRIM' || u === 'SAT RESKRIM' || u === 'SATRESKRIM' || u.includes('KRIMUM')) return 'SATRESKRIM';
             return u;
         };
@@ -959,6 +959,23 @@ export class AnevService {
                                 };
                             } else {
                                 const unitNode = directUnit || satkerMap.get(sid) || { id: sid, deskripsi: activeRoot.deskripsi, parent_id: null, tipe_satker: '' };
+                                const rawUnitDesk = String(unitNode.deskripsi || '').replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, '').trim();
+                                const isDirPolda = this.isPoldaDirektoratName(rawUnitDesk) || (String(unitNode.tipe_satker || '').toUpperCase() === 'FUNGSI' && !this.isPolresSatkerNode(unitNode) && !this.isPolsekSatkerNode(unitNode));
+                                if (isDirPolda) {
+                                    const dirNama = this.normalizeSatkerDisplayName(rawUnitDesk, activeRoot.deskripsi);
+                                    const subChild = chain.length >= 3 ? chain[chain.length - 3] : null;
+                                    let childNama: string | null = null;
+                                    if (subChild && subChild.id !== unitNode.id && /^SUBDIT\b/i.test(String(subChild.deskripsi || '').trim())) {
+                                        childNama = String(subChild.deskripsi || '').trim().toUpperCase();
+                                    } else if (/^SUBDIT\b/i.test(String(unitNamaRaw || '').trim())) {
+                                        childNama = String(unitNamaRaw || '').trim().toUpperCase();
+                                    }
+                                    return {
+                                        bucketKey: `DIR_${dirNama.toUpperCase()}`,
+                                        bucketNama: dirNama,
+                                        childNama
+                                    };
+                                }
                                 const subChild = chain.length >= 3 ? chain[chain.length - 3] : null;
                                 let childNama = '';
                                 if (subChild && subChild.id !== unitNode.id) {
@@ -1310,7 +1327,7 @@ export class AnevService {
     isEksternalSatkerName(nama: any): boolean {
         const u = String(nama || '').toUpperCase().replace(/\s+/g, ' ').trim();
         if (!u) return false;
-        return /\b(TAHTI|DITTAHTI|POLAIR|POLAIRUD|DITPOLAIR|DITPOLAIRUD|KORPOLAIRUD|BAHARKAM|LANTAS|DITLANTAS|KORLANTAS|SATLANTAS|SAMAPTA|DITSAMAPTA|SATSAMAPTA|SABHARA|PAMOBVIT|DITPAMOBVIT|BINMAS|DITBINMAS|SATBINMAS|INTEL|INTELKAM|DITINTELKAM|SATINTELKAM|BRIMOB|SATBRIMOB|KORBRIMOB|PROPAM|BIDPROPAM|DIVPROPAM|SIPROPAM|DOKKES|BIDDOKKES|HUMAS|BIDHUMAS|DIVHUMAS|BIDKUM|DIVKUM|BIDTIK|DIVTIK|ROOPS|BAGOPS|RORENA|BAGREN|ROSDM|BAGSDM|ROLOG|BAGLOG|ITWASDA|ITWASUM|SIWAS|YANMA|SETUM|SIUM|SPKT|SPN|LABFOR|PUSLABFOR|INAFIS|PUSINAFIS|INTERPOL|DIVHUBINTER|DENSUS)\b/i.test(u);
+        return /\b(TAHTI|DITTAHTI|DIT\s*TAHTI|SAT\s*TAHTI|POL\s*AIR|POLAIR|POL\s*AIRUD|POLAIRUD|DIT\s*POLAIR|DIT\s*POLAIRUD|DITPOLAIR|DITPOLAIRUD|KOR\s*POLAIRUD|KORPOLAIRUD|BAHARKAM|LANTAS|DITLANTAS|DIT\s*LANTAS|KORLANTAS|KOR\s*LANTAS|SATLANTAS|SAT\s*LANTAS|SAMAPTA|DITSAMAPTA|DIT\s*SAMAPTA|SATSAMAPTA|SAT\s*SAMAPTA|SABHARA|DIT\s*SABHARA|SAT\s*SABHARA|PAMOBVIT|DITPAMOBVIT|BINMAS|DITBINMAS|SATBINMAS|INTEL|INTELKAM|DITINTELKAM|SATINTELKAM|BRIMOB|SATBRIMOB|KORBRIMOB|PROPAM|BIDPROPAM|DIVPROPAM|SIPROPAM|DOKKES|BIDDOKKES|HUMAS|BIDHUMAS|DIVHUMAS|BIDKUM|DIVKUM|BIDTIK|DIVTIK|ROOPS|BAGOPS|RORENA|BAGREN|ROSDM|BAGSDM|ROLOG|BAGLOG|ITWASDA|ITWASUM|SIWAS|YANMA|SETUM|SIUM|SPKT|SPN|LABFOR|PUSLABFOR|INAFIS|PUSINAFIS|INTERPOL|DIVHUBINTER|DENSUS)\b/i.test(u);
     }
 
     isTerritorialPolresOrPolsekName(nama: any): boolean {
