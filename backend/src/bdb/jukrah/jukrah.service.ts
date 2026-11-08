@@ -1132,7 +1132,8 @@ export class JukrahService {
         const parentIds = posts.filter(p => p.parent_post_id).map(p => p.parent_post_id);
         if (parentIds.length) {
             const parents = await this.dataSource.query(
-                `SELECT p.id, p.author_id, p.content, p.created_at, u.name as raw_name, u.username as callsign, u.username, u.role_bdb,
+                `SELECT p.id, p.author_id, p.content, p.created_at, p.media_urls, p.is_official_jukrah,
+                        u.name as raw_name, u.username as callsign, u.username, u.role_bdb, u.photo_url,
                         s.nama_singkat as satker, s.deskripsi as satker_nama
                  FROM bdb_social_posts p
                  JOIN auth_users u ON u.id = p.author_id
@@ -1147,8 +1148,12 @@ export class JukrahService {
                     id: Number(p.id),
                     content: p.content,
                     author_handle: this.formatCallsign(p.callsign, p.author_id, p.username, p.raw_name),
+                    author_name: p.raw_name,
+                    author_photo: p.photo_url,
                     satker: pSatker,
                     author_satker: pSatker,
+                    media_urls: p.media_urls,
+                    is_official_jukrah: p.is_official_jukrah,
                     created_at: p.created_at
                 }];
             }));
@@ -1501,7 +1506,7 @@ export class JukrahService {
 
         await this.dataSource.query('UPDATE bdb_social_posts SET repost_count = repost_count + 1 WHERE id = $1', [postId]);
 
-        const postText = (content || '').trim() || `🔁 Meneruskan postingan #${postId}`;
+        const postText = (content || '').trim();
         const newPost = await this.dataSource.query(
             `INSERT INTO bdb_social_posts (author_id, audience_type, target_satker_ids, content, media_urls, case_lp_ids, reaction_counts, is_official_jukrah, parent_post_id, status, created_at, updated_at)
              VALUES ($1, 'public', '{}', $2, '[]', '{}', '{"like":0,"respect":0,"insightful":0,"applause":0,"fire":0}', false, $3, 'active', now(), now())

@@ -3741,6 +3741,38 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                   ]});
                 })(),
 
+                // Embedded Quoted Parent Post Card in Profile
+                Boolean(p.parent_post) && (0,t.jsxs)("div",{
+                  id:'profile-quoted-post-' + p.parent_post.id,
+                  style:{
+                    margin:"0.55rem 0 0.75rem",
+                    padding:"0.75rem 0.9rem",
+                    borderRadius:"10px",
+                    border:"1px solid var(--cas-border, rgba(148, 163, 184, 0.2))",
+                    background:"rgba(15, 23, 42, 0.35)",
+                    backdropFilter:"blur(4px)",
+                    cursor:"pointer"
+                  },
+                  onClick:() => {
+                    window.open('/cms/broadcaster?post=' + p.parent_post.id, '_self');
+                  },
+                  children:[
+                    (0,t.jsxs)("div",{
+                      style:{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.35rem"},
+                      children:[
+                        (0,t.jsx)("i",{className:"pi pi-sync",style:{fontSize:"0.78rem",color:"#38bdf8"}}),
+                        (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:p.parent_post.author_handle || 'Anggota Polri'}),
+                        p.parent_post.satker && (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",background:"rgba(255,255,255,0.06)",padding:"1px 6px",borderRadius:"4px"},children:p.parent_post.satker}),
+                        (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:formatPostDate(p.parent_post.created_at)})
+                      ]
+                    }),
+                    Boolean(p.parent_post.content) && (0,t.jsx)("div",{
+                      style:{fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)",lineHeight:"1.5",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden",whiteSpace:"pre-wrap",wordBreak:"break-word"},
+                      children:p.parent_post.content
+                    })
+                  ]
+                }),
+
                 // Instagram-Style Action Footer in Profile (Clean single-row, no subcard, [Heart] [X Suka])
                 (0,t.jsx)("div",{
                   style:{
