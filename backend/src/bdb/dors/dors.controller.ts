@@ -61,8 +61,17 @@ export class DorsController {
      * GET sync/status/:logId (dipoll berkala dari UI).
      */
     @Post('sync')
-    sync(@Req() req: any, @Body() body: { from?: string; to?: string }) {
-        return this.service.manualSyncStart(req.user, body?.from, body?.to);
+    sync(@Req() req: any, @Body() body: { from?: string; to?: string; showby?: 'updated_at' | 'tgl_laporan' }) {
+        return this.service.manualSyncStart(req.user, body?.from, body?.to, body?.showby);
+    }
+
+    /** Tarik LP spesifik secara instan on-demand berdasarkan No LP atau DORS ID */
+    @Post('sync-single')
+    syncSingle(
+        @Req() req: any,
+        @Body() body: { no_laporan?: string; dors_lp_id?: number; model_lp?: string; from?: string; to?: string }
+    ) {
+        return this.service.syncSingleLp(req.user, body);
     }
 
     /** Status live 1 job sync (poll tiap beberapa detik selama status='running'). */

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { DataSource } from 'typeorm';
@@ -451,9 +451,10 @@ export class DorsService implements OnModuleInit {
      * Ambil satu halaman DORS. Melempar bila ditolak / bukan JSON -- pesannya selalu disertai
      * status HTTP + cuplikan mentah respons, supaya kalau gagal lagi penyebabnya langsung
      * kelihatan di Riwayat Penarikan (bukan cuma "respons DORS tidak valid" generik).
+     * Mendukung showby 'updated_at' (default cron) maupun 'tgl_laporan' (backfill data historis).
      */
-    private async fetchPage(cfg: DorsConfig, src: DorsSource, f: string, t: string, page: number): Promise<any> {
-        const url = `${cfg.base_url}/${src.path}?from=${f}&to=${t}&from_hour=00:00:00&to_hour=23:59:59&page=${page}&showby=updated_at&order_by=updated_at`;
+    private async fetchPage(cfg: DorsConfig, src: DorsSource, f: string, t: string, page: number, showby: 'updated_at' | 'tgl_laporan' = 'updated_at'): Promise<any> {
+        const url = `${cfg.base_url}/${src.path}?from=${f}&to=${t}&from_hour=00:00:00&to_hour=23:59:59&page=${page}&showby=${showby}&order_by=${showby}`;
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), cfg.timeout_ms);
         try {
@@ -484,11 +485,11 @@ export class DorsService implements OnModuleInit {
      * menghajarnya ratusan halaman berturut-turut) -- supaya satu hiccup sesaat tidak
      * menggagalkan seluruh sumber.
      */
-    private async fetchPageWithRetry(cfg: DorsConfig, src: DorsSource, f: string, t: string, page: number, retries = 2): Promise<any> {
+    private async fetchPageWithRetry(cfg: DorsConfig, src: DorsSource, f: string, t: string, page: number, retries = 2, showby: 'updated_at' | 'tgl_laporan' = 'updated_at'): Promise<any> {
         let lastErr: any;
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
-                return await this.fetchPage(cfg, src, f, t, page);
+                return await this.fetchPage(cfg, src, f, t, page, showby);
             } catch (e: any) {
                 lastErr = e;
                 if (attempt < retries) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
@@ -775,7 +776,7 @@ export class DorsService implements OnModuleInit {
      * -- bukan selalu dari halaman 1 -- supaya percobaan otomatis berikutnya melanjutkan, bukan mengulang.
      * onPageDone dipanggil TIAP HALAMAN berhasil (bukan cuma di akhir) utk update progress live yg dipoll UI.
      */
-    private async runOneSourceAttempt(cfg: DorsConfig, src: DorsSource, f: string, t: string, scope: string, batch: string, state: any, onPageDone: () => Promise<void>): Promise<void> {
+    private async runOneSourceAttempt(cfg: DorsConfig, src: DorsSource, f: string, t: string, scope: string, batch: string, state: any, onPageDone: () => Promise<void>, showby: 'updated_at' | 'tgl_laporan' = 'updated_at'): Promise<void> {
         const model = state.model;
         state.status = 'running';
         state.error = null;
@@ -783,7 +784,7 @@ export class DorsService implements OnModuleInit {
         try {
             let startPage = state.last_success_page + 1;
             if (state.last_success_page === 0) {
-                const first = await this.fetchPageWithRetry(cfg, src, f, t, 1);
+                const first = await this.fetchPageWithRetry(cfg, src, f, t, 1, 2, showby);
                 state.pages = Number(first?.last_page) || 1;
                 state.total = typeof first?.total === 'number' ? first.total : null;
                 const rows = first?.data || [];
@@ -799,7 +800,7 @@ export class DorsService implements OnModuleInit {
                     state.error = 'Sinkronisasi dihentikan manual oleh pengguna.';
                     break;
                 }
-                const j = await this.fetchPageWithRetry(cfg, src, f, t, p);
+                const j = await this.fetchPageWithRetry(cfg, src, f, t, p, 2, showby);
                 const rows = Array.isArray(j?.data) ? j.data : [];
                 state.upserted += await this.insertNewRows(rows, model, scope, batch);
                 state.fetched += rows.length;
@@ -823,7 +824,7 @@ export class DorsService implements OnModuleInit {
      * 'error'/'pending' dicoba lagi otomatis dari checkpoint halamannya, dgn jeda naik bertahap. Baru
      * benar-benar berhenti & lapor jelas ("macet di periode X halaman Y") setelah percobaan habis.
      */
-    private async runSyncJob(logId: number, cfg: DorsConfig, f: string, t: string, scope: string, batch: string) {
+    private async runSyncJob(logId: number, cfg: DorsConfig, f: string, t: string, scope: string, batch: string, showby: 'updated_at' | 'tgl_laporan' = 'updated_at') {
         const chunks = this.splitIntoChunks(f, t);
         const states: any[] = [
             ...this.sources().flatMap((s) =>
@@ -868,7 +869,8 @@ export class DorsService implements OnModuleInit {
                     if (this.stopRequested) return;
                     const src = this.sources().find((x) => x.key === s.key)!;
                     await this.runOneSourceAttempt(cfg, src, s.chunk_from, s.chunk_to, scope, batch, s, () =>
-                        this.persistProgress(logId, states, { current_source: s.key, current_page: s.last_success_page, current_last_page: s.pages, current_chunk_from: s.chunk_from, current_chunk_to: s.chunk_to, attempt })
+                        this.persistProgress(logId, states, { current_source: s.key, current_page: s.last_success_page, current_last_page: s.pages, current_chunk_from: s.chunk_from, current_chunk_to: s.chunk_to, attempt }),
+                        showby
                     );
                 }));
                 // Jalankan mapping otomatis setelah setiap ronde chunk selesai agar data langsung masuk CAS
@@ -931,7 +933,7 @@ export class DorsService implements OnModuleInit {
     }
 
     /** Bagian CEPAT (validasi + buat baris log + kunci flag syncing) -- dipisah dari eksekusi lambatnya. */
-    private async beginSync(from?: string, to?: string, trigger: 'manual' | 'cron' = 'manual') {
+    private async beginSync(from?: string, to?: string, trigger: 'manual' | 'cron' = 'manual', showby: 'updated_at' | 'tgl_laporan' = 'updated_at') {
         if (this.syncing) {
             return { ok: false as const, status: 0, message: 'Sinkronisasi lain sedang berjalan, coba lagi sebentar.' };
         }
@@ -979,15 +981,15 @@ export class DorsService implements OnModuleInit {
     }
 
     /** Jalankan job penuh (semua percobaan) sampai selesai, lalu tutup log & lepas flag syncing. */
-    private async finishSyncJob(logId: number, cfg: DorsConfig, f: string, t: string, batch: string, started: number) {
+    private async finishSyncJob(logId: number, cfg: DorsConfig, f: string, t: string, batch: string, started: number, showby: 'updated_at' | 'tgl_laporan' = 'updated_at') {
         try {
-            const result = await this.runSyncJob(logId, cfg, f, t, cfg.data_scope, batch);
+            const result = await this.runSyncJob(logId, cfg, f, t, cfg.data_scope, batch, showby);
             const status = result.allDone ? 'success' : result.totalNew > 0 ? 'partial' : 'error';
             await this.syncLogs.terminal(
                 `update bdb_dors_sync_log set status=$2, total_fetched=$3, total_upserted=$4, sources_json=$5::jsonb, error=$6, stopped_reason=$6, finished_at=now(), duration_ms=$7, attempt=$8 where id=$1`,
                 [logId, status, result.totalFetched, result.totalNew, JSON.stringify(result.states), result.stoppedReason, Date.now() - started, result.attempt]
             );
-            this.logger.log(`Sync DORS ${f}..${t}: ${result.totalNew} baru, status=${status}, percobaan=${result.attempt}${result.stoppedReason ? ', ' + result.stoppedReason : ''}`);
+            this.logger.log(`Sync DORS (${showby}) ${f}..${t}: ${result.totalNew} baru, status=${status}, percobaan=${result.attempt}${result.stoppedReason ? ', ' + result.stoppedReason : ''}`);
             this.syncing = false;
             // Setelah sinkron, petakan LP baru ke Laporan Polisi (yang kode_pusiknas cocok satker)
             let mappedBaru = 0;
@@ -1047,10 +1049,10 @@ export class DorsService implements OnModuleInit {
      * Tarik data LP dari semua sumber untuk rentang tanggal, simpan ke DB -- MENUNGGU sampai selesai
      * (dipakai jadwal/cron, yg memang tidak terikat 1 respons HTTP jadi aman menunggu lama).
      */
-    async syncRange(from?: string, to?: string, trigger: 'manual' | 'cron' = 'manual') {
-        const begin = await this.beginSync(from, to, trigger);
+    async syncRange(from?: string, to?: string, trigger: 'manual' | 'cron' = 'manual', showby: 'updated_at' | 'tgl_laporan' = 'updated_at') {
+        const begin = await this.beginSync(from, to, trigger, showby);
         if (!begin.ok) return begin;
-        return this.finishSyncJob(begin.logId, begin.cfg, begin.f, begin.t, begin.batch, begin.started);
+        return this.finishSyncJob(begin.logId, begin.cfg, begin.f, begin.t, begin.batch, begin.started, showby);
     }
 
     /**
@@ -1059,14 +1061,123 @@ export class DorsService implements OnModuleInit {
      * menggantungkan 1 request HTTP berjam-jam (rawan kena timeout browser/proxy). Progress dipoll
      * lewat getSyncJobStatus(). Kalau koneksi klien putus di tengah, proses TETAP lanjut di server.
      */
-    async manualSyncStart(authUser: any, from?: string, to?: string) {
+    async manualSyncStart(authUser: any, from?: string, to?: string, showby: 'updated_at' | 'tgl_laporan' = 'updated_at') {
         this.assertAdmin(authUser);
-        const begin = await this.beginSync(from, to, 'manual');
+        const begin = await this.beginSync(from, to, 'manual', showby);
         if (!begin.ok) return begin;
-        this.finishSyncJob(begin.logId, begin.cfg, begin.f, begin.t, begin.batch, begin.started).catch((e: any) => {
+        this.finishSyncJob(begin.logId, begin.cfg, begin.f, begin.t, begin.batch, begin.started, showby).catch((e: any) => {
             this.logger.error('finishSyncJob (manual) tak tertangani: ' + (e?.message || e));
         });
         return { status: 1, data: { log_id: begin.logId }, message: 'Sinkronisasi dimulai di latar belakang. Progres bisa dipantau langsung di bawah.' };
+    }
+
+    /**
+     * Tarik LP spesifik secara instan on-demand berdasarkan No LP atau DORS ID.
+     * Otomatis mem-parsing bulan dan tahun dari no_laporan untuk mengisolasi query ke DORS.
+     */
+    async syncSingleLp(authUser: any, opts: { no_laporan?: string; dors_lp_id?: number; model_lp?: string; from?: string; to?: string }) {
+        this.assertAdmin(authUser);
+        const cfg = await this.getConfig();
+        if (!cfg.client_id) throw new BadRequestException('Client ID DORS belum dikonfigurasi.');
+        
+        const targetNoLap = String(opts.no_laporan || '').trim();
+        const targetId = opts.dors_lp_id ? Number(opts.dors_lp_id) : undefined;
+        
+        if (!targetNoLap && !targetId) {
+            throw new BadRequestException('Nomor laporan atau ID DORS wajib diisi.');
+        }
+
+        let fromDate = opts.from;
+        let toDate = opts.to;
+        if (!fromDate || !toDate) {
+            const romanMonths: Record<string, string> = {
+                'I': '01', 'II': '02', 'III': '03', 'IV': '04', 'V': '05', 'VI': '06',
+                'VII': '07', 'VIII': '08', 'IX': '09', 'X': '10', 'XI': '11', 'XII': '12'
+            };
+            const m = targetNoLap.match(/\/(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)\/(\d{4})\//i);
+            if (m) {
+                const mo = romanMonths[m[1].toUpperCase()] || '01';
+                const yr = m[2];
+                fromDate = `${yr}-${mo}-01`;
+                const lastDay = new Date(Number(yr), Number(mo), 0).getDate();
+                toDate = `${yr}-${mo}-${String(lastDay).padStart(2, '0')}`;
+            } else {
+                fromDate = this.daysAgo(30);
+                toDate = this.ymd(new Date());
+            }
+        }
+
+        const sources = this.sources().filter((s) => !opts.model_lp || (s.kategori || s.key) === opts.model_lp);
+        let foundRow: any = null;
+        let foundSource: DorsSource | null = null;
+
+        for (const showby of ['tgl_laporan', 'updated_at'] as const) {
+            for (const src of sources) {
+                const srcModel = src.kategori || src.key;
+                try {
+                    const first = await this.fetchPageWithRetry(cfg, src, fromDate, toDate, 1, 2, showby);
+                    const pages = Number(first?.last_page) || 1;
+                    const checkRows = (rows: any[]) => {
+                        return rows.find((r: any) => {
+                            if (targetId && (Number(r.id) === targetId || Number(r.id_laporan) === targetId)) return true;
+                            if (targetNoLap && String(r.no_laporan || '').trim().toLowerCase() === targetNoLap.toLowerCase()) return true;
+                            return false;
+                        });
+                    };
+                    foundRow = checkRows(first?.data || []);
+                    if (foundRow) {
+                        foundSource = src;
+                        break;
+                    }
+                    for (let p = 2; p <= pages; p++) {
+                        const next = await this.fetchPageWithRetry(cfg, src, fromDate, toDate, p, 2, showby);
+                        foundRow = checkRows(next?.data || []);
+                        if (foundRow) {
+                            foundSource = src;
+                            break;
+                        }
+                    }
+                    if (foundRow) break;
+                } catch (e: any) {
+                    this.logger.warn(`Pencarian DORS ${srcModel} (${showby}) gagal: ${e?.message || e}`);
+                }
+            }
+            if (foundRow) break;
+        }
+
+        if (!foundRow || !foundSource) {
+            throw new NotFoundException(`LP "${targetNoLap || targetId}" tidak ditemukan di DORS untuk periode ${fromDate} s/d ${toDate}.`);
+        }
+
+        const foundModel = foundSource.kategori || foundSource.key;
+        const batch = `single-${new Date().toISOString()}`;
+        const upserted = await this.insertNewRows([foundRow], foundModel, cfg.data_scope, batch);
+        
+        let mapRes = null;
+        try {
+            mapRes = await this.laporanPolisi.mapFromDors();
+        } catch (e: any) {
+            this.logger.warn('Auto map LP baru gagal: ' + (e?.message || e));
+        }
+
+        const lpInDb = await this.dataSource.query(
+            'select id, no_laporan, tgl_laporan, satker_nama, unit_satker_nama from bdb_laporan_polisi where dors_lp_id = $1 and model_lp = $2',
+            [foundRow.id, foundModel]
+        );
+
+        return {
+            status: 1,
+            data: {
+                found: true,
+                dors_lp_id: foundRow.id,
+                no_laporan: foundRow.no_laporan,
+                tgl_laporan: foundRow.tgl_laporan,
+                model_lp: foundModel,
+                upserted,
+                laporan_polisi: lpInDb[0] || null
+            },
+            message: `LP "${foundRow.no_laporan}" berhasil ditarik langsung dari DORS dan disinkronkan ke CAS.`
+        };
     }
 
     /** Status live 1 job sync (dipoll dari UI tiap beberapa detik selama status='running'). */

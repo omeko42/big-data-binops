@@ -77,6 +77,7 @@ export class LaporanPolisiService {
     }
 
     private async initializeTables() {
+        await this.ensureParseTglLaporanFunction();
         const check = await this.dataSource.query(
             "select 1 from information_schema.tables where table_schema = 'public' and table_name = 'bdb_laporan_polisi'"
         );
@@ -118,6 +119,35 @@ export class LaporanPolisiService {
         `);
         await this.ensureDefaultStatusTrigger();
         await this.ensureMasterDataLinkColumns();
+    }
+
+    /**
+     * Memastikan fungsi parse_tgl_laporan di Postgres menangani format YYYY-MM-DD (ISO DORS)
+     * maupun DD-MM-YYYY secara akurat, agar filter tahun dan tanggal tidak mengeliminasi LP.
+     */
+    private async ensureParseTglLaporanFunction() {
+        await this.dataSource.query(`
+            create or replace function parse_tgl_laporan(val text)
+            returns date
+            language plpgsql
+            immutable
+            as $$
+            begin
+                if val is null or val = '' then
+                    return null;
+                end if;
+                if val ~ '^\\d{4}-\\d{2}-\\d{2}' then
+                    return to_date(substring(val from 1 for 10), 'YYYY-MM-DD');
+                end if;
+                if val ~ '^\\d{2}-\\d{2}-\\d{4}' then
+                    return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
+                end if;
+                return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
+            exception when others then
+                return null;
+            end;
+            $$;
+        `);
     }
 
     /**
@@ -2555,7 +2585,7 @@ export class LaporanPolisiService {
         }
         if (row) {
             const isOwnScope = Boolean(scope.all || (scope.satkerId && ownerSatkerId === Number(scope.satkerId)));
-            const isSupervisoryEdit = Boolean(access.monitoring && access.canEdit && access.plan);
+            const isSupervisoryEdit = Boolean(access.monitoring && (access as any).canEdit && access.plan);
             row.pid = encodeId(row.id);
             row.can_edit = Boolean(isOwnScope || isSupervisoryEdit);
             row.is_read_only = !row.can_edit;
