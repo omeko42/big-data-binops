@@ -540,6 +540,10 @@ e.s(["default",0,function() {
   var [reportReason, setReportReason] = (0,n.useState)('');
   var [submittingReport, setSubmittingReport] = (0,n.useState)(!1);
 
+  var [repostDialogPost, setRepostDialogPost] = (0,n.useState)(null);
+  var [repostQuoteText, setRepostQuoteText] = (0,n.useState)('');
+  var [reposting, setReposting] = (0,n.useState)(!1);
+
   var [previewUser, setPreviewUser] = (0,n.useState)(null);
   var [profileModalOpen, setProfileModalOpen] = (0,n.useState)(!1);
   var [loadingProfile, setLoadingProfile] = (0,n.useState)(!1);
@@ -1678,12 +1682,32 @@ e.s(["default",0,function() {
     }
   };
 
+  // Submit repost (instant or quoted)
+  var handleExecuteRepost = async (isQuote) => {
+    if (!repostDialogPost) return;
+    setReposting(!0);
+    try {
+      var text = isQuote ? (repostQuoteText || '').trim() : '';
+      await k.apiAuth.post('/bdb/jukrah/post/' + repostDialogPost.id + '/repost', { content: text });
+      var targetId = repostDialogPost.id;
+      setPosts(prev => prev.map(p => p.id === targetId ? { ...p, repost_count: (Number(p.repost_count) || 0) + 1 } : p));
+      toastRef.current?.show({ severity: 'success', summary: 'Berhasil Diteruskan', detail: 'Postingan berhasil diteruskan ke linimasa Sharese.' });
+      setRepostDialogPost(null);
+      setRepostQuoteText('');
+      fetchPosts(1);
+    } catch (err) {
+      toastRef.current?.show({ severity: 'error', summary: 'Gagal', detail: err.response?.data?.message || err.message || 'Gagal meneruskan postingan.' });
+    } finally {
+      setReposting(!1);
+    }
+  };
+
   // Multi-Filter calculation: Category + Visibility + Client Search
   var filteredPosts = (0,n.useMemo)(() => {
     return posts.filter(post => {
       // 1. Content Category Filter
       if (feedCategory === 'repost') {
-        var isRep = Boolean(post.is_repost) || String(post.content || '').startsWith('🔁') || (post.repost_count > 0 && String(post.content || '').includes('Diteruskan'));
+        var isRep = Boolean(post.is_repost) || Boolean(post.parent_post) || Boolean(post.parent_post_id) || String(post.content || '').startsWith('🔁') || (post.repost_count > 0 && String(post.content || '').includes('Diteruskan'));
         if (!isRep) return false;
       } else if (feedCategory === 'saved') {
         if (!post.is_bookmarked) return false;
@@ -2740,6 +2764,48 @@ e.s(["default",0,function() {
                 ]});
               })(),
 
+              // Embedded Quoted Parent Post Card if this is a repost
+              Boolean(post.parent_post) && (0,t.jsxs)("div",{
+                id:'quoted-post-' + post.parent_post.id,
+                style:{
+                  margin:"0.55rem 0 0.75rem",
+                  padding:"0.75rem 0.9rem",
+                  borderRadius:"10px",
+                  border:"1px solid var(--cas-border, rgba(148, 163, 184, 0.2))",
+                  background:"rgba(15, 23, 42, 0.35)",
+                  backdropFilter:"blur(4px)",
+                  cursor:"pointer",
+                  transition:"border-color 0.15s ease, background 0.15s ease"
+                },
+                onClick:() => {
+                  var targetEl = document.getElementById('post-' + post.parent_post.id);
+                  if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.style.boxShadow = '0 0 0 2px #38bdf8';
+                    setTimeout(() => { targetEl.style.boxShadow = 'none'; }, 2000);
+                  } else {
+                    window.open('/cms/broadcaster?post=' + post.parent_post.id, '_self');
+                  }
+                },
+                onMouseEnter:e => { e.currentTarget.style.borderColor = '#38bdf8'; e.currentTarget.style.background = 'rgba(15, 23, 42, 0.55)'; },
+                onMouseLeave:e => { e.currentTarget.style.borderColor = 'var(--cas-border, rgba(148, 163, 184, 0.2))'; e.currentTarget.style.background = 'rgba(15, 23, 42, 0.35)'; },
+                children:[
+                  (0,t.jsxs)("div",{
+                    style:{display:"flex",alignItems:"center",gap:"0.5rem",marginBottom:"0.35rem"},
+                    children:[
+                      (0,t.jsx)("i",{className:"pi pi-sync",style:{fontSize:"0.78rem",color:"#38bdf8"}}),
+                      (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:post.parent_post.author_handle || 'Anggota Polri'}),
+                      post.parent_post.satker && (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",background:"rgba(255,255,255,0.06)",padding:"1px 6px",borderRadius:"4px"},children:post.parent_post.satker}),
+                      (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:formatPostDate(post.parent_post.created_at)})
+                    ]
+                  }),
+                  Boolean(post.parent_post.content) && (0,t.jsx)("div",{
+                    style:{fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)",lineHeight:"1.5",display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden",whiteSpace:"pre-wrap",wordBreak:"break-word"},
+                    children:post.parent_post.content
+                  })
+                ]
+              }),
+
               // Instagram-Style Action Footer (Clean icons, no bulky boxes)
               (0,t.jsx)("div",{
                 style:{
@@ -2836,10 +2902,8 @@ e.s(["default",0,function() {
                         (0,t.jsxs)("button",{
                           type:"button",
                           onClick:() => {
-                            var authorRef = formatCallsign(post.author_callsign, post.author_id, post.author_username);
-                            setContent('🔁 Diteruskan dari ' + authorRef + ':\n\"' + (post.content || '').substring(0, 100) + '...\"');
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                            toastRef.current?.show({ severity: 'info', summary: 'Siap Dibagikan', detail: 'Teks kutipan dimuat ke formulir postingan di atas.' });
+                            setRepostDialogPost(post);
+                            setRepostQuoteText('');
                           },
                           style:{
                             background:"transparent",
@@ -2849,16 +2913,16 @@ e.s(["default",0,function() {
                             display:"inline-flex",
                             alignItems:"center",
                             gap:"0.4rem",
-                            color:'var(--cas-text-secondary, #94a3b8)',
+                            color:post.repost_count > 0 ? '#38bdf8' : 'var(--cas-text-secondary, #94a3b8)',
                             transition:"transform 0.15s ease"
                           },
                           onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.1)',
                           onMouseLeave:e => e.currentTarget.style.transform = 'scale(1)',
-                          title:"Teruskan postingan ini",
+                          title:"Teruskan postingan ini (Repost / Kutip)",
                           children:[
                             (0,t.jsx)(IconRepeat,{size:19}),
                             Boolean(post.repost_count > 0) && (0,t.jsx)("span",{
-                              style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)"},
+                              style:{fontWeight:700,fontSize:"0.84rem",color:"#38bdf8"},
                               children:post.repost_count
                             })
                           ]
@@ -3668,6 +3732,73 @@ e.s(["default",0,function() {
           placeholder:"Jelaskan indikasi pelanggaran (mis. pembocoran operasi rahasia, data sensitif, bahasa tidak pantas)...",
           rows:4,
           style:{width:"100%"}
+        })
+      ]})
+    }),
+
+    // Dialog for Reposting (Instant or Quoted)
+    (0,t.jsx)(u.Dialog,{
+      header:"🔁 Teruskan Postingan (Sharese Repost)",
+      visible:Boolean(repostDialogPost),
+      onHide:() => { if (!reposting) { setRepostDialogPost(null); setRepostQuoteText(''); } },
+      style:{width:"32rem",maxWidth:"95vw"},
+      modal:!0,
+      dismissableMask:!reposting,
+      footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"0.5rem",width:"100%"},children:[
+        (0,t.jsx)(c.Button,{label:"Batal",text:!0,onClick:() => setRepostDialogPost(null),disabled:reposting}),
+        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
+          (0,t.jsx)(c.Button,{
+            label:"🔁 Repost Langsung",
+            severity:"secondary",
+            outlined:!0,
+            onClick:() => handleExecuteRepost(!1),
+            loading:reposting,
+            disabled:reposting,
+            tooltip:"Teruskan langsung tanpa catatan ke linimasa"
+          }),
+          (0,t.jsx)(c.Button,{
+            label:"💬 Kutip Postingan",
+            severity:"info",
+            onClick:() => handleExecuteRepost(!0),
+            loading:reposting,
+            disabled:reposting || !(repostQuoteText || '').trim(),
+            tooltip:"Teruskan dengan catatan/petunjuk Anda"
+          })
+        ]})
+      ]}),
+      children:repostDialogPost && (0,t.jsxs)("div",{style:{display:"grid",gap:"0.85rem",padding:"0.35rem 0"},children:[
+        (0,t.jsx)("div",{
+          style:{fontSize:"0.82rem",color:"var(--cas-text-muted, #94a3b8)"},
+          children:"Pilih untuk meneruskan langsung atau menambahkan kutipan berupa catatan, arahan taktis, atau tanggapan Anda."
+        }),
+        (0,t.jsx)(l.InputTextarea,{
+          value:repostQuoteText,
+          onChange:e => setRepostQuoteText(e.target.value),
+          placeholder:"Tuliskan catatan arahan atau komentar kutipan (wajib jika memilih 'Kutip Postingan')...",
+          rows:3,
+          autoResize:!0,
+          style:{width:"100%",fontSize:"0.88rem"}
+        }),
+        (0,t.jsxs)("div",{
+          style:{
+            padding:"0.75rem 0.9rem",
+            borderRadius:"8px",
+            background:"rgba(15, 23, 42, 0.4)",
+            border:"1px solid var(--cas-border, rgba(148, 163, 184, 0.2))"
+          },
+          children:[
+            (0,t.jsxs)("div",{
+              style:{display:"flex",alignItems:"center",gap:"0.45rem",marginBottom:"0.35rem"},
+              children:[
+                (0,t.jsx)("span",{style:{fontWeight:800,color:"#38bdf8",fontSize:"0.82rem"},children:formatCallsign(repostDialogPost.author_callsign, repostDialogPost.author_id, repostDialogPost.author_username)}),
+                (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)"},children:"• " + formatSatkerName(repostDialogPost.author_satker, isShareseSuperadmin(repostDialogPost.author_id, repostDialogPost.author_role, repostDialogPost.author_username || repostDialogPost.author_callsign), "Polri")})
+              ]
+            }),
+            (0,t.jsx)("div",{
+              style:{fontSize:"0.82rem",color:"var(--cas-text-primary, #cbd5e1)",lineHeight:1.45,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"},
+              children:repostDialogPost.content || '(Postingan media/arahan)'
+            })
+          ]
         })
       ]})
     }),
