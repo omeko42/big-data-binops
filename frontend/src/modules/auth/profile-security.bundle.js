@@ -3869,10 +3869,22 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                           (0,t.jsxs)("button",{
                             type:"button",
                             onClick:() => {
-                              setPostText('🔁 Diteruskan dari ' + pHandle + ':\n\"' + (p.content || '').substring(0, 100) + '...\"');
-                              var composer = document.getElementById("cas-post-composer");
-                              if (composer) { composer.focus(); composer.scrollIntoView({ behavior: 'smooth' }); }
-                              e.current?.show({ severity: 'info', summary: 'Siap Dibagikan', detail: 'Teks kutipan dimuat ke formulir postingan.' });
+                              (0,u.confirmDialog)({
+                                message: 'Teruskan postingan ini ke linimasa Sharese Anda?',
+                                header: '🔁 Teruskan Postingan (Repost)',
+                                icon: 'pi pi-sync',
+                                acceptLabel: 'Ya, Teruskan',
+                                rejectLabel: 'Batal',
+                                accept: async () => {
+                                  try {
+                                    await c.apiAuth.post('/bdb/jukrah/post/' + p.id + '/repost', {});
+                                    setPersonalPosts(prev => prev.map(item => item.id === p.id ? { ...item, repost_count: (Number(item.repost_count) || 0) + 1 } : item));
+                                    e.current?.show({ severity: 'success', summary: 'Berhasil Diteruskan', detail: 'Postingan berhasil diteruskan ke linimasa Sharese.' });
+                                  } catch (err) {
+                                    e.current?.show({ severity: 'error', summary: 'Gagal', detail: err.response?.data?.message || err.message || 'Gagal meneruskan postingan.' });
+                                  }
+                                }
+                              });
                             },
                             style:{
                               background:"transparent",
@@ -3882,7 +3894,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                               display:"inline-flex",
                               alignItems:"center",
                               gap:"0.4rem",
-                              color:'var(--cas-text-secondary, #94a3b8)',
+                              color:p.repost_count > 0 ? '#38bdf8' : 'var(--cas-text-secondary, #94a3b8)',
                               transition:"transform 0.15s ease"
                             },
                             onMouseEnter:e => e.currentTarget.style.transform = 'scale(1.1)',
@@ -3891,7 +3903,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                             children:[
                               (0,t.jsx)(IconRepeat,{size:19}),
                               Boolean(p.repost_count > 0) && (0,t.jsx)("span",{
-                                style:{fontWeight:700,fontSize:"0.84rem",color:"var(--cas-text-primary, #cbd5e1)"},
+                                style:{fontWeight:700,fontSize:"0.84rem",color:"#38bdf8"},
                                 children:p.repost_count
                               })
                             ]
