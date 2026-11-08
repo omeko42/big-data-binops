@@ -136,10 +136,10 @@ export class LaporanPolisiService {
                 if val is null or val = '' then
                     return null;
                 end if;
-                if val ~ '^\\d{4}-\\d{2}-\\d{2}' then
+                if val ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' then
                     return to_date(substring(val from 1 for 10), 'YYYY-MM-DD');
                 end if;
-                if val ~ '^\\d{2}-\\d{2}-\\d{4}' then
+                if val ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then
                     return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
                 end if;
                 return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
