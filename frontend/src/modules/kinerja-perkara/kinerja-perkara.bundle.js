@@ -245,7 +245,7 @@ function kpApplyPeriod(){
 
 
 const KP_CACHE_TTL_MS=24e4;
-const KP_CACHE_PREFIX="bdb-kinerja-v9:";
+const KP_CACHE_PREFIX="bdb-kinerja-v10:";
 
 function kpCacheKey(){
   try{

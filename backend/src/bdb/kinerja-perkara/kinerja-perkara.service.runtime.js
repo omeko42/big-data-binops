@@ -20,7 +20,7 @@ const processed_rate_util_1 = require("./processed-rate.util");
 const anev_service_1 = require("../anev/anev.service");
 const cluster_instance_util_1 = require("../common/cluster-instance.util");
 const id_cipher_util_1 = require("../laporan-polisi/id-cipher.util");
-const DATE_EXPR = "(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end)";
+const DATE_EXPR = "coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)";
 const CP_BREAKDOWN = [
     { key: 'lidik', code: 'PENYELIDIKAN' },
     { key: 'sidik', code: 'PENYIDIKAN' },

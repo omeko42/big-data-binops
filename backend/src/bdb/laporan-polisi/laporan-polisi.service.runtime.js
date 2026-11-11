@@ -61,7 +61,32 @@ let LaporanPolisiService = class LaporanPolisiService {
     static normKode(expr) {
         return `regexp_replace(replace(coalesce((${expr}), ''), chr(160), ''), '\\s+', '', 'g')`;
     }
+    async ensureParseTglLaporanFunction() {
+        await this.dataSource.query(`
+            create or replace function parse_tgl_laporan(val text)
+            returns date
+            language plpgsql
+            immutable
+            as $$
+            begin
+                if val is null or val = '' then
+                    return null;
+                end if;
+                if val ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}' then
+                    return to_date(substring(val from 1 for 10), 'YYYY-MM-DD');
+                end if;
+                if val ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then
+                    return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
+                end if;
+                return to_date(substring(val from 1 for 10), 'DD-MM-YYYY');
+            exception when others then
+                return null;
+            end;
+            $$;
+        `);
+    }
     async ensureTable() {
+        await this.ensureParseTglLaporanFunction().catch(() => {});
         if (!this.ensureTablePromise) {
             this.ensureTablePromise = this.initializeTables().catch((error) => {
                 this.ensureTablePromise = null;

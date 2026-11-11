@@ -574,7 +574,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
                         GREATEST(
                             coalesce(d.synced_at, lp.synced_at),
-                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                            coalesce(parse_tgl_laporan(lp.tgl_laporan)::timestamp with time zone, d.synced_at)
                         ) as seen_at,
                         CASE 
                             WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
@@ -927,7 +927,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         (lht.lp_id IS NOT NULL) as has_tsk_doc,
                         GREATEST(
                             coalesce(d.synced_at, lp.synced_at),
-                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                            coalesce(parse_tgl_laporan(lp.tgl_laporan)::timestamp with time zone, d.synced_at)
                         ) as seen_at,
                         CASE 
                             WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
@@ -1126,7 +1126,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         upper(trim(coalesce(t.keterlibatan, 'PIHAK'))) as keterlibatan,
                         GREATEST(
                             coalesce(d.synced_at, lp.synced_at),
-                            coalesce(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY')::timestamp with time zone else null end, d.synced_at)
+                            coalesce(parse_tgl_laporan(lp.tgl_laporan)::timestamp with time zone, d.synced_at)
                         ) as seen_at,
                         CASE 
                             WHEN lp.satker_id = 13 OR upper(coalesce(lp.satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.unit_satker_nama,'')) LIKE '%BARESKRIM%' OR upper(coalesce(lp.satker_nama,'')) LIKE '%MABES%' THEN 1
@@ -1355,7 +1355,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             WITH t_agg AS (
                 SELECT 
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
-                    (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end) as tanggal,
+                    coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) as tanggal,
                     count(*)::int as semua,
                     count(*) filter (where upper(coalesce(t.keterlibatan,'-'))='KORBAN')::int as korban,
                     count(*) filter (where upper(coalesce(t.keterlibatan,'-'))='SAKSI')::int as saksi,
@@ -1370,7 +1370,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                 LEFT JOIN bdb_status_master sm ON sm.id = lp.status_id
                 WHERE lp.deleted_at IS NULL
                   AND coalesce(lp.dilimpahkan_eksternal, false) = false
-                  AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end) >= '2026-01-01'::date
+                  AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) >= '2026-01-01'::date
                 GROUP BY 1, 2
             )
             INSERT INTO bdb_pihak_terlibat_summary_snapshot 
@@ -1393,7 +1393,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
             WITH tsk_agg AS (
                 SELECT 
                     coalesce(lp.unit_satker_id, lp.satker_id) as satker_id,
-                    (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end) as tanggal,
+                    coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) as tanggal,
                     count(*)::int as tsk_count
                 FROM bdb_dokumen d
                 JOIN bdb_document_type_master dt ON dt.id = d.document_type_id AND dt.code = 'PENETAPAN_TSK'
@@ -3581,8 +3581,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
-                      AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) >= '${startDay}'::date
-                      AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) <= '${lastDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) >= '${startDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) <= '${lastDay}'::date
                       AND t.nik IS NOT NULL AND trim(t.nik) ~ '^[1-9][0-9]{15}$'
                       AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
                       AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
@@ -3817,8 +3817,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     LEFT JOIN lp_has_tsk lht ON lht.lp_id = lp.id
                     WHERE lp.deleted_at IS NULL
-                      AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) >= '${startDay}'::date
-                      AND (case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else coalesce(d.synced_at, lp.synced_at)::date end) <= '${lastDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) >= '${startDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) <= '${lastDay}'::date
                       AND (
                         upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
                         OR upper(coalesce(t.jenis_identitas,'')) = 'BADAN HUKUM'
