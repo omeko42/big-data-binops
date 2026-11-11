@@ -635,6 +635,38 @@ export class JukrahService {
         const firstMedia = media[0] || null;
         const docMedia = media.find((m: any) => m.type === 'document' || (m.mime && m.mime.includes('pdf'))) || null;
 
+        let parentPost: any = null;
+        if (r.parent_post_id) {
+            const parents = await this.dataSource.query(
+                `SELECT p.id, p.author_id, p.content, p.created_at, p.media_urls, p.is_official_jukrah,
+                        u.name as raw_name, u.username as callsign, u.username, u.role_bdb, u.photo_url,
+                        s.nama_singkat as satker, s.deskripsi as satker_nama
+                 FROM bdb_social_posts p
+                 JOIN auth_users u ON u.id = p.author_id
+                 LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                 WHERE p.id = $1`,
+                [r.parent_post_id]
+            );
+            if (parents.length) {
+                const p = parents[0];
+                const isPUserOne = this.isSuperUserOne(p.author_id, p.username, p.callsign);
+                const isPSuper = isPUserOne || this.isSuperadminUser(p.author_id, p.role_bdb, p.username, p.callsign);
+                const pSatker = isPSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker || p.satker_nama || 'Polri');
+                parentPost = {
+                    id: Number(p.id),
+                    content: p.content,
+                    author_handle: this.formatCallsign(p.callsign, p.author_id, p.username, p.raw_name),
+                    author_name: p.raw_name,
+                    author_photo: p.photo_url,
+                    satker: pSatker,
+                    author_satker: pSatker,
+                    media_urls: p.media_urls,
+                    is_official_jukrah: p.is_official_jukrah,
+                    created_at: p.created_at
+                };
+            }
+        }
+
         return {
             id: Number(r.id),
             author_id: Number(r.author_id),
@@ -667,6 +699,8 @@ export class JukrahService {
             is_official_jukrah: Boolean(r.is_official_jukrah),
             is_pinned: Boolean(r.is_pinned),
             is_edited: Boolean(r.is_edited),
+            parent_post_id: r.parent_post_id ? Number(r.parent_post_id) : null,
+            parent_post: parentPost,
             acknowledged_count: Number(r.acknowledged_count || 0),
             comments_count: Number(r.comments_count || 0),
             comments,

@@ -3763,7 +3763,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
                         (0,t.jsx)("i",{className:"pi pi-sync",style:{fontSize:"0.78rem",color:"#38bdf8"}}),
                         (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:p.parent_post.author_handle || 'Anggota Polri'}),
                         p.parent_post.satker && (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",background:"rgba(255,255,255,0.06)",padding:"1px 6px",borderRadius:"4px"},children:p.parent_post.satker}),
-                        (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:formatPostDate(p.parent_post.created_at)})
+                        (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:timeAgo(p.parent_post.created_at)})
                       ]
                     }),
                     Boolean(p.parent_post.content) && (0,t.jsx)("div",{
