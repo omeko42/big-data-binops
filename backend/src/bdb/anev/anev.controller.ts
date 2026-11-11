@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards, UsePipes } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@app_core/auth/auth.guard';
+import { CustomValidationPipe } from '@app_core/helper/service/pipe.helper.service';
 import { AnevService } from './anev.service';
+import { GenerateLampiranDto } from './dto/generate-lampiran.dto';
 
 @UseGuards(AuthGuard)
 @Controller('bdb/anev')
@@ -53,10 +55,11 @@ export class AnevController {
         return res.send('﻿' + lines.join('\n'));
     }
 
-        @Post('lampiran/generate')
-    async generateLampiran(@Body() body: any, @Req() req: any) {
+    @Post('lampiran/generate')
+    @UsePipes(new CustomValidationPipe())
+    async generateLampiran(@Body() body: GenerateLampiranDto, @Req() req: any) {
         const uid = req?.user?.id ? Number(req.user.id) : undefined;
-        return this.service.generateLampiranData(body || {}, uid);
+        return this.service.generateLampiranData((body || {}) as any, uid);
     }
 
     @Post('lampiran/log-print')

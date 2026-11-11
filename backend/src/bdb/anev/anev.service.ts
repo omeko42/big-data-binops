@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { buildLampiranFilterSql } from './lampiran-filter.util';
 
 // tgl_laporan = teks 'DD-MM-YYYY HH:MM:SS'; fallback ke synced_at bila format tak sesuai.
 const DATE_EXPR = "coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)";
@@ -2851,39 +2852,28 @@ export class AnevService {
         };
 
         // 3. Top 5 / Top 10 Jenis Kejahatan
-        let satkerFilterSql = '';
-        if (targetSatkerId && !isApexBareskrim && !bareskrimDir) {
-            satkerFilterSql = "AND (lp.satker_id = " + targetSatkerId + " OR lp.satker_id IN (SELECT id FROM bdb_satker WHERE parent_id = " + targetSatkerId + " OR kode LIKE '" + satkerKode + ".%'))";
-        }
-
-        let crimeFilterSql = '';
-        if (bareskrimDir) {
-            crimeFilterSql = "AND lp.jenis_kejahatan_id IN (SELECT jenis_kejahatan_id FROM bdb_kinerja_crime_group_mapping WHERE kelompok = '" + bareskrimDir.group + "' AND active = true AND decision_status = 'APPROVED')";
-        } else if (activeKelompokHitung && activeKelompokHitung !== 'ALL') {
-            const rawGroups = String(activeKelompokHitung).split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-            if (rawGroups.length > 0) {
-                const groupListSql = rawGroups.map(g => "'" + g + "'").join(',');
-                crimeFilterSql = "AND lp.jenis_kejahatan_id IN (SELECT jenis_kejahatan_id FROM bdb_kinerja_crime_group_mapping WHERE kelompok IN (" + groupListSql + ") AND active = true AND decision_status = 'APPROVED')";
-            } else {
-                crimeFilterSql = "AND lp.jenis_kejahatan_id IN (SELECT jenis_kejahatan_id FROM bdb_kinerja_crime_group_mapping WHERE active = true AND decision_status = 'APPROVED')";
-            }
-        } else {
-            // Default Reserse: persis seperti di Kinerja Perkara (hanya kejahatan reserse murni: KRIMUM, KRIMSUS, NARKOBA)
-            crimeFilterSql = "AND lp.jenis_kejahatan_id IN (SELECT jenis_kejahatan_id FROM bdb_kinerja_crime_group_mapping WHERE active = true AND decision_status = 'APPROVED')";
-        }
-
-        // Eliminasi mutlak perkara laka lantas / Korlantas / Polantas yang bukan tindak pidana Reserse Bareskrim
-        crimeFilterSql += " AND lp.jenis_kejahatan_id NOT IN (SELECT id FROM cm_jenis_kejahatan WHERE coalesce(keterangan, '') ILIKE '%kecelakaan%' OR coalesce(keterangan, '') ILIKE '%lalu lintas%' OR coalesce(keterangan, '') ILIKE '%laka%')";
-
-        if (activeGolonganId) {
-            crimeFilterSql += " AND lp.golongan_kejahatan_id = " + activeGolonganId;
-        }
-        if (activeModelLp) {
-            crimeFilterSql += " AND upper(coalesce(lp.model_lp, '')) = '" + activeModelLp + "'";
-        }
-        if (activeClosureReason) {
-            crimeFilterSql += " AND lp.status_id IN (SELECT id FROM bdb_status_master WHERE upper(coalesce(nama, '')) LIKE '%" + activeClosureReason + "%')";
-        }
+        // BDB-001 (CWE-89): SEMUA nilai dari request (kelompokHitung, golonganId, modelLp,
+        // closureReason, satkerId, kode satker) masuk ke SQL sebagai parameter PostgreSQL.
+        // Tidak ada lagi interpolasi string di blok ini.
+        // Dua varian filter karena penomoran placeholder-nya berbeda:
+        //  - appleSql memakai $1..$4 untuk tanggal (curr + prev) -> parameter filter mulai $5
+        //  - query 2-tanggal (top5, pola waktu, pola lokasi) memakai $1..$2 -> filter mulai $3
+        const lampiranFilterBase = {
+            targetSatkerId,
+            isApexBareskrim,
+            bareskrimDirGroup: bareskrimDir ? bareskrimDir.group : null,
+            satkerKode,
+            kelompokHitung: activeKelompokHitung,
+            golonganId: activeGolonganId,
+            modelLp: activeModelLp,
+            closureReason: activeClosureReason
+        };
+        const lampiranFilterApple = buildLampiranFilterSql(lampiranFilterBase, 5);
+        const lampiranFilter = buildLampiranFilterSql(lampiranFilterBase, 3);
+        const satkerFilterSql = lampiranFilter.sql;
+        const lampiranParams = lampiranFilter.params;
+        const appleFilterSql = lampiranFilterApple.sql;
+        const appleFilterParams = lampiranFilterApple.params;
 
         // 3. Apple-to-Apple Kejahatan (Top 40 Kasus Berimbang per Golongan)
         const appleSql = `
@@ -2901,8 +2891,7 @@ export class AnevService {
               AND coalesce(jk.keterangan, '') NOT ILIKE '%kecelakaan%'
               AND coalesce(jk.keterangan, '') NOT ILIKE '%lalu lintas%'
               AND coalesce(jk.keterangan, '') NOT ILIKE '%laka%'
-              ${satkerFilterSql}
-              ${crimeFilterSql}
+              ${appleFilterSql}
               AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $1::date AND $2::date
             GROUP BY 1, 2
           ),
@@ -2920,8 +2909,7 @@ export class AnevService {
               AND coalesce(jk.keterangan, '') NOT ILIKE '%kecelakaan%'
               AND coalesce(jk.keterangan, '') NOT ILIKE '%lalu lintas%'
               AND coalesce(jk.keterangan, '') NOT ILIKE '%laka%'
-              ${satkerFilterSql}
-              ${crimeFilterSql}
+              ${appleFilterSql}
               AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $3::date AND $4::date
             GROUP BY 1, 2
           ),
@@ -2958,7 +2946,6 @@ export class AnevService {
             WHERE lp.deleted_at IS NULL
               AND coalesce(lp.dilimpahkan_eksternal, false) = false
               ${satkerFilterSql}
-              ${crimeFilterSql}
               AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $1::date AND $2::date`;
 
         const polaLokasiSql = `SELECT 
@@ -2969,7 +2956,6 @@ export class AnevService {
             WHERE lp.deleted_at IS NULL
               AND coalesce(lp.dilimpahkan_eksternal, false) = false
               ${satkerFilterSql}
-              ${crimeFilterSql}
               AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $1::date AND $2::date
             GROUP BY 1
             ORDER BY jml DESC
@@ -2977,12 +2963,12 @@ export class AnevService {
 
         const [topKejahatanRows, appleRows, polaWaktuRows, polaLokasiRows] = await Promise.all([
             this.ds.query(
-                "SELECT coalesce(jk.keterangan, 'Lain-lain') as jenis, count(*)::int as total FROM bdb_laporan_polisi lp LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id WHERE lp.deleted_at IS NULL AND coalesce(lp.dilimpahkan_eksternal, false) = false AND coalesce(jk.keterangan, '') NOT ILIKE '%kecelakaan%' AND coalesce(jk.keterangan, '') NOT ILIKE '%lalu lintas%' AND coalesce(jk.keterangan, '') NOT ILIKE '%laka%' " + satkerFilterSql + " " + crimeFilterSql + " AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $1::date AND $2::date GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
-                [dateStart, dateEnd]
+                "SELECT coalesce(jk.keterangan, 'Lain-lain') as jenis, count(*)::int as total FROM bdb_laporan_polisi lp LEFT JOIN cm_jenis_kejahatan jk ON jk.id = lp.jenis_kejahatan_id WHERE lp.deleted_at IS NULL AND coalesce(lp.dilimpahkan_eksternal, false) = false AND coalesce(jk.keterangan, '') NOT ILIKE '%kecelakaan%' AND coalesce(jk.keterangan, '') NOT ILIKE '%lalu lintas%' AND coalesce(jk.keterangan, '') NOT ILIKE '%laka%' " + satkerFilterSql + " AND parse_tgl_laporan(lp.tgl_laporan) BETWEEN $1::date AND $2::date GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+                [dateStart, dateEnd, ...lampiranParams]
             ),
-            this.ds.query(appleSql, [dateStart, dateEnd, prevStart, prevEnd]),
-            this.ds.query(polaWaktuSql, [dateStart, dateEnd]),
-            this.ds.query(polaLokasiSql, [dateStart, dateEnd])
+            this.ds.query(appleSql, [dateStart, dateEnd, prevStart, prevEnd, ...appleFilterParams]),
+            this.ds.query(polaWaktuSql, [dateStart, dateEnd, ...lampiranParams]),
+            this.ds.query(polaLokasiSql, [dateStart, dateEnd, ...lampiranParams])
         ]);
 
         const top5Kejahatan = topKejahatanRows.map((r, idx) => ({
