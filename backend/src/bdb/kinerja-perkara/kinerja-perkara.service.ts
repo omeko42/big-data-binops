@@ -9,9 +9,9 @@ import { AnevService } from '../anev/anev.service';
 import { isPrimaryClusterInstance } from '../common/cluster-instance.util';
 import { encodeId } from '../laporan-polisi/id-cipher.util';
 
-// tgl_laporan = teks 'DD-MM-YYYY HH:MM:SS'; fallback ke synced_at bila format tak sesuai.
+// tgl_laporan = teks 'DD-MM-YYYY HH:MM:SS' atau 'YYYY-MM-DD HH:MM:SS'; fallback ke synced_at bila format tak sesuai.
 // Sama persis dgn DATE_EXPR di anev.service.ts, supaya konsisten dgn laporan lain.
-const DATE_EXPR = "(case when lp.tgl_laporan ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}' then to_date(substring(lp.tgl_laporan from 1 for 10),'DD-MM-YYYY') else lp.synced_at::date end)";
+const DATE_EXPR = "coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)";
 
 // Rincian status di dalam bucket CP (LP masih diproses) -- "Format Tabel Kinerja" resmi: tiap
 // bucket (Aktual/Tunggakan) dipecah lagi per status penanganan saat ini.
