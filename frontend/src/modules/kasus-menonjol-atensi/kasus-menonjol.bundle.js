@@ -1371,7 +1371,7 @@
         children: [
           jsxs("div", {
             style: { fontSize: "0.78rem", color: "#64748b", fontWeight: 600 },
-            children: ["Menampilkan ", startRec.toLocaleString("id-ID"), "–", endRec.toLocaleString("id-ID"), " dari ", totalRec.toLocaleString("id-ID"), " data"]
+            children: ["Menampilkan ", Math.max(0, Number(startRec) || 0).toLocaleString("id-ID"), " s.d. ", Math.max(0, Number(endRec) || 0).toLocaleString("id-ID"), " dari ", Math.max(0, Number(totalRec) || 0).toLocaleString("id-ID"), " data"]
           }),
           jsxs("div", {
             style: { display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },

@@ -3150,12 +3150,12 @@ e.s(["default",0,function() {
         // Counter
         (0,t.jsxs)("div",{style:{fontSize:"12px",fontWeight:600,color:"#64748b"},children:[
           "Menampilkan ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems > 0 ? (startIndex + 1) : 0}),
-          " - ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:endIndex}),
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:(Math.max(0,Number(totalItems)||0)>0?(Math.max(0,Number(startIndex)||0)+1):0).toLocaleString("id-ID")}),
+          " s.d. ",
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0,Number(endIndex)||0).toLocaleString("id-ID")}),
           " dari ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems}),
-          " postingan"
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0,Number(totalItems)||0).toLocaleString("id-ID")}),
+          " data"
         ]}),
 
         // Pagination buttons

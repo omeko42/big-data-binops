@@ -1243,6 +1243,26 @@ function initCasExpensivePcHpStandards() {
           }
         }
       }
+      var formatIntDots = function(raw) {
+        var digits = String(raw || "").replace(/\./g, "").trim();
+        if (!/^\d+$/.test(digits)) return "0";
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      };
+      var infoNodes = document.querySelectorAll(".p-paginator .p-paginator-current, .cas-unified-paginator .cas-paginator-info, .cas-unified-paginator > span:first-child, .cas-unified-paginator > div:first-child");
+      for (var k = 0; k < infoNodes.length; k++) {
+        var inf = infoNodes[k];
+        if (inf.closest && inf.closest("[data-cas-popover-pager='1']")) continue;
+        var cur = (inf.textContent || "").replace(/\s+/g, " ").trim();
+        if (!cur) continue;
+        var mRange = cur.match(/^Menampilkan\s+(?:halaman\s+)?(NaN|[\d.]+)\s*(?:-|–|s\.d\.)\s*(NaN|[\d.]+)\s+dari\s+(NaN|[\d.]+)(?:\s+(.+))?$/i);
+        if (mRange) {
+          var nextTxt = "Menampilkan " + formatIntDots(mRange[1]) + " s.d. " + formatIntDots(mRange[2]) + " dari " + formatIntDots(mRange[3]) + " data";
+          if (inf.textContent !== nextTxt) inf.textContent = nextTxt;
+        } else if (/NaN/.test(cur)) {
+          var safeTxt = cur.replace(/\bNaN\b/g, "0");
+          if (inf.textContent !== safeTxt) inf.textContent = safeTxt;
+        }
+      }
     };
     setTimeout(normalizeCmsPaginators, 120);
     if (typeof MutationObserver !== "undefined" && document.body) {
@@ -5157,12 +5177,14 @@ function CasKoneksiFullPage({user:curUser,searchStr}){
       ]});
     })}),
     users.length>0&&(0,a.jsxs)("div",{className:"cas-unified-paginator",style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"0.75rem",marginTop:"0.35rem",padding:"0.65rem 1rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
-      (0,a.jsxs)("span",{style:{fontSize:"12px",color:"#64748b",fontWeight:600},children:[
+      (0,a.jsxs)("span",{className:"cas-paginator-info",style:{fontSize:"12px",color:"#64748b",fontWeight:600},children:[
         "Menampilkan ",
-        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:users.length}),
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:(users.length>0?((Math.max(1,Number(page)||1)-1)*24+1):0).toLocaleString("id-ID")}),
+        " s.d. ",
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:(users.length>0?Math.min(Math.max(0,Number(total)||0),(Math.max(1,Number(page)||1)-1)*24+users.length):0).toLocaleString("id-ID")}),
         " dari ",
-        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:total.toLocaleString("id-ID")}),
-        " personil (24 per halaman)"
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0,Number(total)||0).toLocaleString("id-ID")}),
+        " data"
       ]}),
       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
         (0,a.jsx)("button",{type:"button",className:"cas-page-btn",disabled:page<=1,onClick:()=>setPage(p=>Math.max(1,p-1)),children:"← Sebelumnya"}),
@@ -5506,14 +5528,14 @@ function CasNotifikasiFullPage({user:curUser}){
       ]
     }))}),
     filtered.length>0&&(0,a.jsxs)("div",{className:"cas-unified-paginator",style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"0.75rem",padding:"0.65rem 1rem",borderRadius:12,background:"var(--cas-card-bg)",border:"1px solid var(--cas-border)"},children:[
-      (0,a.jsxs)("span",{style:{fontSize:"12px",color:"#64748b",fontWeight:600},children:[
+      (0,a.jsxs)("span",{className:"cas-paginator-info",style:{fontSize:"12px",color:"#64748b",fontWeight:600},children:[
         "Menampilkan ",
-        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:notifStartIdx+1}),
-        " - ",
-        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.min(notifStartIdx+pagedFiltered.length,filtered.length)}),
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:(Math.max(0,Number(filtered.length)||0)>0?(Math.max(0,Number(notifStartIdx)||0)+1):0).toLocaleString("id-ID")}),
+        " s.d. ",
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.min(Math.max(0,Number(notifStartIdx)||0)+(pagedFiltered?.length||0),Math.max(0,Number(filtered.length)||0)).toLocaleString("id-ID")}),
         " dari ",
-        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:filtered.length}),
-        " notifikasi unik"
+        (0,a.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0,Number(filtered.length)||0).toLocaleString("id-ID")}),
+        " data"
       ]}),
       (0,a.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
         (0,a.jsx)("button",{type:"button",className:"cas-page-btn",disabled:safeNotifPage<=1,onClick:()=>setNotifPage(p=>Math.max(1,p-1)),children:"← Sebelumnya"}),

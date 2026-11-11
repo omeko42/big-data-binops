@@ -1852,8 +1852,11 @@ function RekapBarangBuktiInner(){
             first:Math.max(0,(Number(page||1)-1)*Number(rowsPerPage||25)),
             rows:Number(rowsPerPage||25),
             rowsPerPageOptions:[25,50,100],
-            paginatorTemplate:"CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown",
-            currentPageReportTemplate:"Menampilkan {first} s.d. {last} dari {totalRecords} barang bukti",
+            paginatorTemplate:{
+              layout:"CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown",
+              CurrentPageReport:(opt)=>{const tot=Math.max(0,Number(opt?.totalRecords)||0),f=tot>0?Math.max(1,Math.min(tot,Number(opt?.first)||0)):0,l=tot>0?Math.max(f,Math.min(tot,Number(opt?.last)||f)):0;return(0,a.jsx)("span",{className:"p-paginator-current cas-paginator-info",children:`Menampilkan ${f.toLocaleString("id-ID")} s.d. ${l.toLocaleString("id-ID")} dari ${tot.toLocaleString("id-ID")} data`});}
+            },
+            currentPageReportTemplate:"Menampilkan {first} s.d. {last} dari {totalRecords} data",
             totalRecords:Math.max(0,Number(resolvedTotalRecords)||0),
             onPage:function(ev){
               let nextRows=Number(ev?.rows)||rowsPerPage||25,
