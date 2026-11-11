@@ -2618,6 +2618,8 @@ function CasPetaKejahatanView({
   const [tingkatPenanganan, setTingkatPenanganan] = (0, a.useState)({ mabes: true, polda: true, polres: true, polsek: true });
   const [specificSatkerKey, setSpecificSatkerKey] = (0, a.useState)("ALL"); // "ALL" | "INDUK" | polres.kode
   const [satkerTreeQuery, setSatkerTreeQuery] = (0, a.useState)("");
+  const [satkerTreePage, setSatkerTreePage] = (0, a.useState)(1);
+  (0, a.useEffect)(() => { setSatkerTreePage(1); }, [satkerTreeQuery, selectedRegion?.id]);
 
   const MONTH_NAMES_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -7225,7 +7227,7 @@ function CasPetaKejahatanView({
                                   (0, t.jsx)("input", {
                                     type: "text",
                                     value: satkerTreeQuery,
-                                    onChange: ev => setSatkerTreeQuery(ev.target.value),
+                                    onChange: ev => { setSatkerTreeQuery(ev.target.value); setSatkerTreePage(1); },
                                     placeholder: "Cari nama Polda / Polres / Polrestabes / Polsek…",
                                     style: {
                                       width: "100%",
@@ -7239,197 +7241,232 @@ function CasPetaKejahatanView({
                                       boxSizing: "border-box"
                                     }
                                   }),
-                                  (0, t.jsxs)("div", {
-                                    className: "tabular-nums",
-                                    style: { display: "flex", flexDirection: "column", gap: "0.24rem", maxHeight: "10.5rem", overflowY: "auto", paddingRight: "0.15rem" },
-                                    children: [
-                                      // Option 0: Semua Cakupan (Satker + Jajaran di Bawahnya)
-                                      (() => {
-                                        const isAllActive = specificSatkerKey === "ALL" && !selectedPolres && !selectedPolsek;
-                                        const rootTitle = (isScopedUser && !isScopedBareskrim)
-                                          ? ("Semua Cakupan (" + scopeSatkerShort + " + Jajaran di Bawahnya)")
-                                          : (selectedRegion ? ("Semua Cakupan (" + selectedRegion.polda + " + Jajaran)") : "Semua Cakupan (Nasional + Jajaran)");
-                                        return (0, t.jsxs)("div", {
-                                          onClick: () => {
-                                            setSpecificSatkerKey("ALL");
-                                            if (selectedRegion && (isScopedUser || drillLevel >= 1)) {
-                                              handleSelectPoldaAndZoom(selectedRegion);
-                                            } else {
-                                              handleResetNasional();
-                                            }
-                                          },
-                                          style: {
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            gap: "0.4rem",
-                                            padding: "0.34rem 0.5rem",
-                                            borderRadius: 6,
-                                            cursor: "pointer",
-                                            border: "1px solid " + (isAllActive ? "#ef4444" : T.rowCardBorder),
-                                            background: isAllActive ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                            color: isAllActive ? "#f87171" : T.textPrimary,
-                                            fontSize: "0.72rem",
-                                            fontWeight: 800
-                                          },
+                                  (() => {
+                                    const satkerPageSize = 8;
+                                    const qTree = satkerTreeQuery.trim().toLowerCase();
+                                    const filteredPrs = selectedRegion ? polresMapNodes
+                                      .filter(pr => !pr.isInduk)
+                                      .filter(pr => {
+                                        if (!qTree) return true;
+                                        const matchPr = String(pr.nama || "").toLowerCase().includes(qTree) || String(pr.shortName || "").toLowerCase().includes(qTree);
+                                        const isThisSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama);
+                                        const matchChild = isThisSel && polsekMapNodes.some(psk => String(psk.nama || "").toLowerCase().includes(qTree) || String(psk.shortName || "").toLowerCase().includes(qTree));
+                                        return matchPr || matchChild;
+                                      }) : [];
+                                    const flatSatkerItems = [];
+                                    for (let pIdx = 0; pIdx < filteredPrs.length; pIdx++) {
+                                      const pr = filteredPrs[pIdx];
+                                      const isPrSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama) || specificSatkerKey === String(pr.kode);
+                                      flatSatkerItems.push({ kind: "pr", key: pr.kode || ("pr_" + pIdx), pr, isPrSel });
+                                      if (isPrSel && drillLevel === 2) {
+                                        if (polsekLoading) {
+                                          flatSatkerItems.push({ kind: "loading", key: "load_" + (pr.kode || pIdx) });
+                                        } else {
+                                          const filteredPsks = polsekMapNodes.filter(psk => !qTree || String(psk.nama || "").toLowerCase().includes(qTree) || String(psk.shortName || "").toLowerCase().includes(qTree) || String(pr.nama || "").toLowerCase().includes(qTree));
+                                          for (let sIdx = 0; sIdx < filteredPsks.length; sIdx++) {
+                                            const psk = filteredPsks[sIdx];
+                                            flatSatkerItems.push({ kind: "psk", key: psk.kode || ("psk_" + pIdx + "_" + sIdx), psk });
+                                          }
+                                        }
+                                      }
+                                    }
+                                    const satkerTreeTotal = flatSatkerItems.length;
+                                    const satkerTotalPages = Math.max(1, Math.ceil(satkerTreeTotal / satkerPageSize));
+                                    const curSatkerPage = Math.min(satkerTotalPages, Math.max(1, satkerTreePage));
+                                    const pagedSatkerItems = flatSatkerItems.slice((curSatkerPage - 1) * satkerPageSize, curSatkerPage * satkerPageSize);
+                                    const startSatker = satkerTreeTotal === 0 ? 0 : (curSatkerPage - 1) * satkerPageSize + 1;
+                                    const endSatker = Math.min(curSatkerPage * satkerPageSize, satkerTreeTotal);
+                                    return (0, t.jsxs)(a.Fragment, {
+                                      children: [
+                                        (0, t.jsxs)("div", {
+                                          className: "tabular-nums",
+                                          style: { display: "flex", flexDirection: "column", gap: "0.24rem", maxHeight: "10.5rem", overflowY: "auto", paddingRight: "0.15rem" },
                                           children: [
-                                            (0, t.jsx)("span", {
-                                              style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                              children: "🌐 " + rootTitle
-                                            }),
-                                            (0, t.jsx)("span", {
-                                              style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 800, padding: "0.06rem 0.38rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
-                                              children: z(selectedRegion ? selectedRegion.ct : stats.totalCT) + " LP"
-                                            })
-                                          ]
-                                        });
-                                      })(),
-
-                                      // Option 1: Satker Induk (e.g. DITSIBER JATIM / POLDA JATIM)
-                                      selectedRegion && (() => {
-                                        const indukNode = polresMapNodes.find(n => n.isInduk) || polresMapNodes[0];
-                                        const isIndukSel = specificSatkerKey === "INDUK" && !selectedPolres;
-                                        const indukLabel = (isScopedUser && !isScopedBareskrim)
-                                          ? ("Satker Induk: " + scopeSatkerShort)
-                                          : ("Satker Induk: " + selectedRegion.polda);
-                                        return (0, t.jsxs)("div", {
-                                          onClick: () => {
-                                            setSpecificSatkerKey("INDUK");
-                                            handleSelectPoldaAndZoom(selectedRegion);
-                                          },
-                                          style: {
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            gap: "0.4rem",
-                                            padding: "0.32rem 0.5rem",
-                                            borderRadius: 6,
-                                            cursor: "pointer",
-                                            border: "1px solid " + (isIndukSel ? "#ef4444" : T.rowCardBorder),
-                                            background: isIndukSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                            color: isIndukSel ? "#f87171" : T.textPrimary,
-                                            fontSize: "0.72rem",
-                                            fontWeight: 700
-                                          },
-                                          children: [
-                                            (0, t.jsx)("span", {
-                                              style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                              children: "🏛️ " + indukLabel
-                                            }),
-                                            (0, t.jsx)("span", {
-                                              style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 700, color: T.ctText },
-                                              children: z(indukNode ? indukNode.ct : selectedRegion.ct) + " LP"
-                                            })
-                                          ]
-                                        });
-                                      })(),
-
-                                      // Subordinate List: All Polres / Polrestabes / Polresta inside that Polda Wilkum, with nested Satres & Polsek directly under the selected Polres!
-                                      selectedRegion && polresMapNodes
-                                        .filter(pr => !pr.isInduk)
-                                        .filter(pr => {
-                                          if (!satkerTreeQuery.trim()) return true;
-                                          const q = satkerTreeQuery.trim().toLowerCase();
-                                          const matchPr = String(pr.nama || "").toLowerCase().includes(q) || String(pr.shortName || "").toLowerCase().includes(q);
-                                          const isThisSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama);
-                                          const matchChild = isThisSel && polsekMapNodes.some(psk => String(psk.nama || "").toLowerCase().includes(q) || String(psk.shortName || "").toLowerCase().includes(q));
-                                          return matchPr || matchChild;
-                                        })
-                                        .map((pr, pIdx) => {
-                                          const isPrSel = String(selectedPolres?.kode || "") === String(pr.kode) || String(selectedPolres?.nama || "") === String(pr.nama) || specificSatkerKey === String(pr.kode);
-                                          return (0, t.jsxs)(a.Fragment, {
-                                            key: pr.kode || ("pr_" + pIdx),
-                                            children: [
-                                              (0, t.jsxs)("div", {
+                                            (() => {
+                                              const isAllActive = specificSatkerKey === "ALL" && !selectedPolres && !selectedPolsek;
+                                              const rootTitle = (isScopedUser && !isScopedBareskrim)
+                                                ? ("Semua Cakupan (" + scopeSatkerShort + " + Jajaran di Bawahnya)")
+                                                : (selectedRegion ? ("Semua Cakupan (" + selectedRegion.polda + " + Jajaran)") : "Semua Cakupan (Nasional + Jajaran)");
+                                              return (0, t.jsxs)("div", {
                                                 onClick: () => {
-                                                  setSpecificSatkerKey(String(pr.kode));
-                                                  handleSelectPolresAndZoom(pr);
+                                                  setSpecificSatkerKey("ALL");
+                                                  if (selectedRegion && (isScopedUser || drillLevel >= 1)) {
+                                                    handleSelectPoldaAndZoom(selectedRegion);
+                                                  } else {
+                                                    handleResetNasional();
+                                                  }
                                                 },
                                                 style: {
                                                   display: "flex",
                                                   alignItems: "center",
                                                   justifyContent: "space-between",
                                                   gap: "0.4rem",
-                                                  padding: "0.3rem 0.5rem 0.3rem 0.85rem",
+                                                  padding: "0.34rem 0.5rem",
                                                   borderRadius: 6,
                                                   cursor: "pointer",
-                                                  border: "1px solid " + (isPrSel ? "#ef4444" : T.rowCardBorder),
-                                                  background: isPrSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                                  color: isPrSel ? "#f87171" : T.textPrimary,
-                                                  fontSize: "0.71rem",
-                                                  fontWeight: isPrSel ? 800 : 600
+                                                  border: "1px solid " + (isAllActive ? "#ef4444" : T.rowCardBorder),
+                                                  background: isAllActive ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                  color: isAllActive ? "#f87171" : T.textPrimary,
+                                                  fontSize: "0.72rem",
+                                                  fontWeight: 800
                                                 },
                                                 children: [
                                                   (0, t.jsx)("span", {
                                                     style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-                                                    children: (isPrSel ? "▾ " : "▸ ") + "🛡️ " + (pr.shortName || formatFullWilkumSatkerName(pr.nama))
+                                                    children: "🌐 " + rootTitle
+                                                  }),
+                                                  (0, t.jsx)("span", {
+                                                    style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 800, padding: "0.06rem 0.38rem", borderRadius: 6, background: T.ctBg, color: T.ctText, border: "1px solid " + T.ctBorder },
+                                                    children: z(selectedRegion ? selectedRegion.ct : stats.totalCT) + " LP"
+                                                  })
+                                                ]
+                                              });
+                                            })(),
+                                            selectedRegion && (() => {
+                                              const indukNode = polresMapNodes.find(n => n.isInduk) || polresMapNodes[0];
+                                              const isIndukSel = specificSatkerKey === "INDUK" && !selectedPolres;
+                                              const indukLabel = (isScopedUser && !isScopedBareskrim)
+                                                ? ("Satker Induk: " + scopeSatkerShort)
+                                                : ("Satker Induk: " + selectedRegion.polda);
+                                              return (0, t.jsxs)("div", {
+                                                onClick: () => {
+                                                  setSpecificSatkerKey("INDUK");
+                                                  handleSelectPoldaAndZoom(selectedRegion);
+                                                },
+                                                style: {
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "space-between",
+                                                  gap: "0.4rem",
+                                                  padding: "0.32rem 0.5rem",
+                                                  borderRadius: 6,
+                                                  cursor: "pointer",
+                                                  border: "1px solid " + (isIndukSel ? "#ef4444" : T.rowCardBorder),
+                                                  background: isIndukSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                  color: isIndukSel ? "#f87171" : T.textPrimary,
+                                                  fontSize: "0.72rem",
+                                                  fontWeight: 700
+                                                },
+                                                children: [
+                                                  (0, t.jsx)("span", {
+                                                    style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                                    children: "🏛️ " + indukLabel
                                                   }),
                                                   (0, t.jsx)("span", {
                                                     style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 700, color: T.ctText },
-                                                    children: z(pr.ct) + " LP"
+                                                    children: z(indukNode ? indukNode.ct : selectedRegion.ct) + " LP"
                                                   })
                                                 ]
-                                              }),
-                                              isPrSel && drillLevel === 2 && (
-                                                polsekLoading ? (
-                                                  (0, t.jsx)("div", {
-                                                    style: { padding: "0.24rem 0.5rem 0.24rem 1.65rem", fontSize: "0.67rem", color: T.textMuted },
-                                                    children: "⏳ Memuat Satres & Polsek jajaran…"
-                                                  })
-                                                ) : polsekMapNodes.map((psk, sIdx) => {
-                                                  const isPskSel = String(selectedPolsek?.kode || "") === String(psk.kode);
-                                                  const isSat = psk.isSatuanPolres || psk.unitKind === "SATUAN_POLRES";
-                                                  return (0, t.jsxs)("div", {
-                                                    key: psk.kode || ("psk_" + sIdx),
-                                                    onClick: () => handleSelectPolsekAndZoom(psk),
-                                                    style: {
-                                                      display: "flex",
-                                                      alignItems: "center",
-                                                      justifyContent: "space-between",
-                                                      gap: "0.4rem",
-                                                      padding: "0.28rem 0.5rem 0.28rem 1.65rem",
-                                                      borderRadius: 6,
-                                                      cursor: "pointer",
-                                                      border: "1px solid " + (isPskSel ? "#ef4444" : T.rowCardBorder),
-                                                      background: isPskSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
-                                                      color: isPskSel ? "#f87171" : T.textSecondary,
-                                                      fontSize: "0.69rem",
-                                                      fontWeight: isPskSel ? 800 : 600
-                                                    },
+                                              });
+                                            })(),
+                                            pagedSatkerItems.map(item => {
+                                              if (item.kind === "loading") {
+                                                return (0, t.jsx)("div", {
+                                                  style: { padding: "0.24rem 0.5rem 0.24rem 1.65rem", fontSize: "0.67rem", color: T.textMuted },
+                                                  children: "⏳ Memuat Satres & Polsek jajaran…"
+                                                }, item.key);
+                                              }
+                                              if (item.kind === "pr") {
+                                                const pr = item.pr;
+                                                const isPrSel = item.isPrSel;
+                                                return (0, t.jsxs)("div", {
+                                                  onClick: () => {
+                                                    setSpecificSatkerKey(String(pr.kode));
+                                                    handleSelectPolresAndZoom(pr);
+                                                  },
+                                                  style: {
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                    gap: "0.4rem",
+                                                    padding: "0.3rem 0.5rem 0.3rem 0.85rem",
+                                                    borderRadius: 6,
+                                                    cursor: "pointer",
+                                                    border: "1px solid " + (isPrSel ? "#ef4444" : T.rowCardBorder),
+                                                    background: isPrSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                    color: isPrSel ? "#f87171" : T.textPrimary,
+                                                    fontSize: "0.71rem",
+                                                    fontWeight: isPrSel ? 800 : 600
+                                                  },
+                                                  children: [
+                                                    (0, t.jsx)("span", {
+                                                      style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+                                                      children: (isPrSel ? "▾ " : "▸ ") + "🛡️ " + (pr.shortName || formatFullWilkumSatkerName(pr.nama))
+                                                    }),
+                                                    (0, t.jsx)("span", {
+                                                      style: { flexShrink: 0, fontSize: "0.66rem", fontWeight: 700, color: T.ctText },
+                                                      children: z(pr.ct) + " LP"
+                                                    })
+                                                  ]
+                                                }, item.key);
+                                              }
+                                              const psk = item.psk;
+                                              const isPskSel = String(selectedPolsek?.kode || "") === String(psk.kode);
+                                              const isSat = psk.isSatuanPolres || psk.unitKind === "SATUAN_POLRES";
+                                              return (0, t.jsxs)("div", {
+                                                onClick: () => handleSelectPolsekAndZoom(psk),
+                                                style: {
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "space-between",
+                                                  gap: "0.4rem",
+                                                  padding: "0.28rem 0.5rem 0.28rem 1.65rem",
+                                                  borderRadius: 6,
+                                                  cursor: "pointer",
+                                                  border: "1px solid " + (isPskSel ? "#ef4444" : T.rowCardBorder),
+                                                  background: isPskSel ? "rgba(239,68,68,0.16)" : T.rowCardBg,
+                                                  color: isPskSel ? "#f87171" : T.textSecondary,
+                                                  fontSize: "0.69rem",
+                                                  fontWeight: isPskSel ? 800 : 600
+                                                },
+                                                children: [
+                                                  (0, t.jsxs)("span", {
+                                                    style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.28rem" },
                                                     children: [
-                                                      (0, t.jsxs)("span", {
-                                                        style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "0.28rem" },
-                                                        children: [
-                                                          (0, t.jsx)("span", {
-                                                            style: {
-                                                              fontSize: "0.54rem",
-                                                              fontWeight: 800,
-                                                              padding: "0.02rem 0.25rem",
-                                                              borderRadius: 4,
-                                                              background: isSat ? "rgba(37,99,235,0.18)" : "rgba(16,185,129,0.18)",
-                                                              color: isSat ? "#60a5fa" : "#34d399"
-                                                            },
-                                                            children: isSat ? "SATRES" : "POLSEK"
-                                                          }),
-                                                          (0, t.jsx)("span", {
-                                                            style: { overflow: "hidden", textOverflow: "ellipsis" },
-                                                            children: psk.shortName || formatFullWilkumSatkerName(psk.nama)
-                                                          })
-                                                        ]
+                                                      (0, t.jsx)("span", {
+                                                        style: {
+                                                          fontSize: "0.54rem",
+                                                          fontWeight: 800,
+                                                          padding: "0.02rem 0.25rem",
+                                                          borderRadius: 4,
+                                                          background: isSat ? "rgba(37,99,235,0.18)" : "rgba(16,185,129,0.18)",
+                                                          color: isSat ? "#60a5fa" : "#34d399"
+                                                        },
+                                                        children: isSat ? "SATRES" : "POLSEK"
                                                       }),
                                                       (0, t.jsx)("span", {
-                                                        style: { flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: T.ctText },
-                                                        children: z(psk.ct) + " LP"
+                                                        style: { overflow: "hidden", textOverflow: "ellipsis" },
+                                                        children: psk.shortName || formatFullWilkumSatkerName(psk.nama)
                                                       })
                                                     ]
-                                                  });
-                                                })
-                                              )
-                                            ]
-                                          });
+                                                  }),
+                                                  (0, t.jsx)("span", {
+                                                    style: { flexShrink: 0, fontSize: "0.65rem", fontWeight: 700, color: T.ctText },
+                                                    children: z(psk.ct) + " LP"
+                                                  })
+                                                ]
+                                              }, item.key);
+                                            })
+                                          ]
+                                        }),
+                                        selectedRegion && satkerTreeTotal > 0 && (0, t.jsxs)("div", {
+                                          "data-cas-popover-pager": "1",
+                                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.69rem", color: T.textMuted, paddingTop: "0.25rem" },
+                                          children: [
+                                            (0, t.jsxs)("span", { children: ["Menampilkan ", startSatker.toLocaleString("id-ID"), "-", endSatker.toLocaleString("id-ID"), " dari ", satkerTreeTotal.toLocaleString("id-ID"), " satker"] }),
+                                            satkerTreeTotal > satkerPageSize && (0, t.jsxs)("div", {
+                                              style: { display: "flex", gap: "0.25rem" },
+                                              children: [
+                                                (0, t.jsx)("button", { type: "button", disabled: curSatkerPage <= 1, onClick: () => setSatkerTreePage(p => Math.max(1, p - 1)), style: { padding: "0.12rem 0.42rem", borderRadius: 4, border: "1px solid " + T.inputBorder, background: T.cardBg, color: T.textPrimary, cursor: curSatkerPage <= 1 ? "not-allowed" : "pointer", opacity: curSatkerPage <= 1 ? 0.45 : 1 }, children: "<" }),
+                                                (0, t.jsxs)("span", { style: { padding: "0.12rem 0.3rem", fontWeight: 700 }, children: [curSatkerPage.toLocaleString("id-ID"), "/", satkerTotalPages.toLocaleString("id-ID")] }),
+                                                (0, t.jsx)("button", { type: "button", disabled: curSatkerPage >= satkerTotalPages, onClick: () => setSatkerTreePage(p => Math.min(satkerTotalPages, p + 1)), style: { padding: "0.12rem 0.42rem", borderRadius: 4, border: "1px solid " + T.inputBorder, background: T.cardBg, color: T.textPrimary, cursor: curSatkerPage >= satkerTotalPages ? "not-allowed" : "pointer", opacity: curSatkerPage >= satkerTotalPages ? 0.45 : 1 }, children: ">" })
+                                              ]
+                                            })
+                                          ]
                                         })
-                                    ]
-                                  })
+                                      ]
+                                    });
+                                  })()
                                 ]
                               })
                             ]
