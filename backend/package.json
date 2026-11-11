@@ -86,6 +86,7 @@
         "winston": "^3.17.0"
     },
     "devDependencies": {
+        "@electric-sql/pglite": "^0.5.16",
         "@eslint/eslintrc": "^3.2.0",
         "@eslint/js": "^9.18.0",
         "@nestjs/cli": "^11.0.0",
@@ -133,6 +134,12 @@
             "**/*.(t|j)s"
         ],
         "coverageDirectory": "../coverage",
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "moduleNameMapper": {
+            "^@app_core/(.*)$": "<rootDir>/app_core/$1",
+            "^@bareskrim/(.*)$": "<rootDir>/bareskrim/$1",
+            "^@storage/(.*)$": "<rootDir>/../storage/$1",
+            "^src/(.*)$": "<rootDir>/$1"
+        }
     }
 }
