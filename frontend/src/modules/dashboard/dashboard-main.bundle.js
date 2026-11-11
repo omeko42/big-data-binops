@@ -2605,6 +2605,8 @@ function CasPetaKejahatanView({
   const [activeTipidCrime, setActiveTipidCrime] = (0, a.useState)("SEMUA"); // "SEMUA" | "Tipidsiber" | "Tipideksus" | "Tipidkor" | "Tipidter" | "Tipidum" | "Tipid PPA & PPO" | "Tipidnarkoba"
   const [selectedCrimeNames, setSelectedCrimeNames] = (0, a.useState)([]);
   const [crimeSearch, setCrimeSearch] = (0, a.useState)("");
+  const [crimePage, setCrimePage] = (0, a.useState)(1);
+  (0, a.useEffect)(() => { setCrimePage(1); }, [activeKelompokCrime, activeTipidCrime, crimeSearch]);
   const [modelLpFilter, setModelLpFilter] = (0, a.useState)("SEMUA");
   const [statusFilter, setStatusFilter] = (0, a.useState)("SEMUA");
   const [tkpSearch, setTkpSearch] = (0, a.useState)("");
@@ -7702,7 +7704,7 @@ function CasPetaKejahatanView({
                                               }
                                             },
                                             style: { background: "none", border: "none", color: "#ef4444", fontWeight: 700, cursor: "pointer", padding: 0, fontSize: "0.68rem" },
-                                            children: "Pilih Semua (" + filteredJenisKejahatanList.length + ")"
+                                            children: "Pilih Semua (" + filteredJenisKejahatanList.length.toLocaleString("id-ID") + ")"
                                           }),
                                           (0, t.jsx)("span", { style: { color: T.textMuted }, children: "·" }),
                                           (0, t.jsx)("button", {
@@ -7737,11 +7739,34 @@ function CasPetaKejahatanView({
                                       boxSizing: "border-box"
                                     }
                                   }),
-                                  (0, t.jsx)("div", {
-                                    style: { display: "flex", flexDirection: "column", gap: "0.2rem", maxHeight: "8.2rem", overflowY: "auto", paddingRight: "0.15rem" },
-                                    children: filteredJenisKejahatanList.length === 0 ? (
-                                      (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", textAlign: "center" }, children: "Tidak ada jenis kejahatan yang cocok." })
-                                    ) : filteredJenisKejahatanList.map(item => {
+                                  (() => {
+                                    const crimePageSize = 8;
+                                    const crimeTotal = filteredJenisKejahatanList.length;
+                                    const crimeTotalPages = Math.max(1, Math.ceil(crimeTotal / crimePageSize));
+                                    const curCrimePage = Math.min(crimeTotalPages, Math.max(1, crimePage));
+                                    const pagedCrimes = filteredJenisKejahatanList.slice((curCrimePage - 1) * crimePageSize, curCrimePage * crimePageSize);
+                                    return (0, t.jsxs)(t.Fragment, {
+                                      children: [
+                                        (0, t.jsxs)("div", {
+                                          "data-cas-popover-pager": "1",
+                                          style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.69rem", color: T.textSecondary, marginTop: "0.05rem" },
+                                          children: [
+                                            (0, t.jsxs)("span", { children: ["Menampilkan ", (crimeTotal === 0 ? 0 : (curCrimePage - 1) * crimePageSize + 1).toLocaleString("id-ID"), "-", Math.min(curCrimePage * crimePageSize, crimeTotal).toLocaleString("id-ID"), " dari ", crimeTotal.toLocaleString("id-ID"), " jenis kejahatan"] }),
+                                            crimeTotal > crimePageSize && (0, t.jsxs)("div", {
+                                              style: { display: "flex", alignItems: "center", gap: "0.2rem" },
+                                              children: [
+                                                (0, t.jsx)("button", { type: "button", disabled: curCrimePage <= 1, onClick: () => setCrimePage(p => Math.max(1, p - 1)), style: { background: "none", border: "1px solid " + T.btnBorder, borderRadius: 4, padding: "0.05rem 0.35rem", fontSize: "0.68rem", cursor: curCrimePage <= 1 ? "not-allowed" : "pointer", opacity: curCrimePage <= 1 ? 0.45 : 1, color: "inherit" }, children: "‹" }),
+                                                (0, t.jsxs)("span", { style: { fontWeight: 600, fontSize: "0.69rem" }, children: [curCrimePage, "/", crimeTotalPages] }),
+                                                (0, t.jsx)("button", { type: "button", disabled: curCrimePage >= crimeTotalPages, onClick: () => setCrimePage(p => Math.min(crimeTotalPages, p + 1)), style: { background: "none", border: "1px solid " + T.btnBorder, borderRadius: 4, padding: "0.05rem 0.35rem", fontSize: "0.68rem", cursor: curCrimePage >= crimeTotalPages ? "not-allowed" : "pointer", opacity: curCrimePage >= crimeTotalPages ? 0.45 : 1, color: "inherit" }, children: "›" })
+                                              ]
+                                            })
+                                          ]
+                                        }),
+                                        (0, t.jsx)("div", {
+                                          style: { display: "flex", flexDirection: "column", gap: "0.2rem", maxHeight: "8.2rem", overflowY: "auto", paddingRight: "0.15rem" },
+                                          children: crimeTotal === 0 ? (
+                                            (0, t.jsx)("div", { style: { fontSize: "0.72rem", color: T.textMuted, padding: "0.4rem 0", textAlign: "center" }, children: "Tidak ada jenis kejahatan yang cocok." })
+                                          ) : pagedCrimes.map(item => {
                                       const checked = selectedCrimeNames.includes(item.name);
                                       return (0, t.jsxs)("label", {
                                         key: item.name,
@@ -7805,6 +7830,9 @@ function CasPetaKejahatanView({
                                     })
                                   })
                                 ]
+                              });
+                            })()
+                                ]
                               })
                             ]
                           }),
@@ -7818,6 +7846,7 @@ function CasPetaKejahatanView({
                                   setActiveTipidCrime("SEMUA");
                                   setSelectedCrimeNames([]);
                                   setCrimeSearch("");
+                                  setCrimePage(1);
                                   setCrimeFilter("SEMUA");
                                   setGolonganFilter("SEMUA");
                                   setSelectedHotspot(null);
@@ -9785,19 +9814,62 @@ children:[
                 ]
               }),
               // Content row: Truncated without spilling out of card on mobile
-              (0,t.jsx)("div",{
-                style:{
-                  width:"100%",
-                  minWidth:0,
-                  overflow:"hidden",
-                  textOverflow:"ellipsis",
-                  whiteSpace:"nowrap",
-                  color:"var(--cas-text-primary, #e2e8f0)",
-                  fontSize:"0.82rem",
-                  lineHeight:1.4
-                },
-                children:item.content || item.title || "-"
-              })
+              (()=>{
+                let hasRepost = Boolean(item.parent_post_id || item.parent_post);
+                let pPost = item.parent_post || {};
+                let rawPH = String(pPost.author_handle || pPost.author_callsign || pPost.author_username || "").trim();
+                let pHandle = rawPH ? ("@" + rawPH.replace(/^@+/, "")) : "@personil";
+                let pContent = String(pPost.content || pPost.title || "").trim();
+                let ownContent = String(item.content || item.title || "").trim();
+                return (0,t.jsxs)("div",{
+                  style:{
+                    width:"100%",
+                    minWidth:0,
+                    overflow:"hidden",
+                    textOverflow:"ellipsis",
+                    whiteSpace:"nowrap",
+                    color:"var(--cas-text-primary, #e2e8f0)",
+                    fontSize:"0.82rem",
+                    lineHeight:1.4,
+                    display:"flex",
+                    alignItems:"center",
+                    gap:"0.38rem"
+                  },
+                  children:[
+                    hasRepost && (0,t.jsxs)("span",{
+                      style:{
+                        display:"inline-flex",
+                        alignItems:"center",
+                        gap:"0.24rem",
+                        padding:"0.06rem 0.42rem",
+                        borderRadius:"4px",
+                        background:"rgba(56,189,248,0.14)",
+                        border:"1px solid rgba(56,189,248,0.32)",
+                        color:"#38bdf8",
+                        fontSize:"0.68rem",
+                        fontWeight:800,
+                        flexShrink:0,
+                        whiteSpace:"nowrap"
+                      },
+                      children:["🔁 Repost dari ", pHandle]
+                    }),
+                    (0,t.jsx)("span",{
+                      style:{
+                        overflow:"hidden",
+                        textOverflow:"ellipsis",
+                        whiteSpace:"nowrap",
+                        minWidth:0,
+                        flex:"1 1 auto",
+                        color:(!ownContent && hasRepost) ? "var(--cas-text-secondary, #cbd5e1)" : "var(--cas-text-primary, #e2e8f0)",
+                        fontStyle:(!ownContent && hasRepost) ? "italic" : "normal"
+                      },
+                      children: ownContent
+                        ? (hasRepost && pContent ? `${ownContent} — "${pContent}"` : ownContent)
+                        : (hasRepost ? (pContent ? `"${pContent}"` : `Postingan dari ${pHandle}`) : "-")
+                    })
+                  ]
+                });
+              })()
             ]
           });
         })

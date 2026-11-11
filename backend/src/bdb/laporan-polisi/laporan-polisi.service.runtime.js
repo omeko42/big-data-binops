@@ -1991,9 +1991,25 @@ let LaporanPolisiService = class LaporanPolisiService {
             join bdb_dors_satker_map a
               on a.unit_nama is null
                  and exists (select 1 from bdb_satker s_chk where s_chk.id = a.satker_id and s_chk.dors_mapping_aktif = true and (s_chk.tipe_satker in ('MABES','POLDA','POLRES','POLSEK') or lower(trim(a.dors_nama)) = lower(trim(x.dors_nama))))
-                 and ((a.dors_kode_pusiknas is not null and ${LaporanPolisiService_1.normKode('a.dors_kode_pusiknas')} = ${LaporanPolisiService_1.normKode(LaporanPolisiService_1.KP_SQL)})
-                 or (lower(trim(a.dors_nama)) = lower(trim(x.dors_nama))
-                     and (a.dors_parent_nama is null or lower(trim(a.dors_parent_nama)) = lower(trim(coalesce(x.parent_nama,''))))))
+                 and (
+                     (a.dors_kode_pusiknas is not null and ${LaporanPolisiService_1.normKode('a.dors_kode_pusiknas')} = ${LaporanPolisiService_1.normKode(LaporanPolisiService_1.KP_SQL)})
+                     or (
+                         lower(trim(a.dors_nama)) = lower(trim(x.dors_nama))
+                         and (
+                             lower(trim(coalesce(a.dors_parent_nama,''))) = lower(trim(coalesce(x.parent_nama,'')))
+                             or (
+                                 a.dors_parent_nama is null
+                                 and not exists (
+                                     select 1 from bdb_satker s_hom
+                                     where coalesce(s_hom.is_synthetic, false) = false
+                                       and s_hom.dors_mapping_aktif = true
+                                       and upper(trim(s_hom.deskripsi)) = upper(trim(x.dors_nama))
+                                     having count(*) > 1
+                                 )
+                             )
+                         )
+                     )
+                 )
             where not exists (select 1 from bdb_laporan_polisi lp where lp.dors_lp_id=r.dors_lp_id and lp.model_lp=r.model_lp)
             order by r.dors_lp_id, r.model_lp, a.id
             on conflict (dors_lp_id, model_lp) do nothing

@@ -3006,8 +3006,12 @@ isReadOnlyMode && (0,t.jsxs)("div",{
       let pStart = Math.max(1, Math.min(curP - 2, totP - 4));
       let pNums = Array.from({ length: Math.min(5, totP) }, (_, i) => pStart + i);
       let targetUid = eNetworkConnectedTarget || a?.id || mySelf?.id;
+      let netTot = Math.max(0, Number(eNetworkTotal) || 0);
+      let netLim = (typeof calcNetworkGridSpec === "function" ? calcNetworkGridSpec(eNetworkMaximized).limit : 0) || 9;
+      let netFirst = netTot > 0 ? Math.min(netTot, (curP - 1) * netLim + 1) : 0;
+      let netLast = netTot > 0 ? Math.min(netTot, (curP - 1) * netLim + (Array.isArray(eNetworkUsers) && eNetworkUsers.length > 0 ? eNetworkUsers.length : netLim)) : 0;
       return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{width:"100%",marginTop:"0.5rem"},children:[
-        (0,t.jsx)("span",{className:"cas-paginator-info",children:"Total " + (eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi" : " Personil")}),
+        (0,t.jsx)("span",{className:"cas-paginator-info",children:`Menampilkan ${netFirst.toLocaleString("id-ID")} s.d. ${netLast.toLocaleString("id-ID")} dari ${netTot.toLocaleString("id-ID")} data`}),
         (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
           (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, targetUid),title:"Halaman Pertama",children:"«"}),
           (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, curP - 1, targetUid),title:"Sebelumnya",children:"‹"}),
@@ -4062,7 +4066,7 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           let pStart = Math.max(1, Math.min(curPage - 2, totalPostPages - 4));
           let pNums = Array.from({ length: Math.min(5, totalPostPages) }, (_, i) => pStart + i);
           return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{marginTop:"0.5rem"},children:[
-            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Total ",totalPosts," postingan"]}),
+            (0,t.jsx)("span",{className:"cas-paginator-info",children:`Menampilkan ${(Math.max(0,Number(totalPosts)||0)>0?Math.min(Math.max(0,Number(totalPosts)||0),(curPage-1)*pageSize+1):0).toLocaleString("id-ID")} s.d. ${Math.min(Math.max(0,Number(totalPosts)||0),(curPage-1)*pageSize+(pagedPosts?.length||0)).toLocaleString("id-ID")} dari ${Math.max(0,Number(totalPosts)||0).toLocaleString("id-ID")} data`}),
             (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
               (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(1),title:"Halaman Pertama",children:"«"}),
               (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(p => Math.max(1, p - 1)),title:"Sebelumnya",children:"‹"}),
