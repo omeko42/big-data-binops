@@ -1694,7 +1694,7 @@ e.s(["default",0,function() {
       toastRef.current?.show({ severity: 'success', summary: 'Berhasil Diteruskan', detail: 'Postingan berhasil diteruskan ke linimasa Sharese.' });
       setRepostDialogPost(null);
       setRepostQuoteText('');
-      fetchPosts(1);
+      fetchFeed();
     } catch (err) {
       toastRef.current?.show({ severity: 'error', summary: 'Gagal', detail: err.response?.data?.message || err.message || 'Gagal meneruskan postingan.' });
     } finally {
@@ -2778,7 +2778,7 @@ e.s(["default",0,function() {
                   transition:"border-color 0.15s ease, background 0.15s ease"
                 },
                 onClick:() => {
-                  var targetEl = document.getElementById('post-' + post.parent_post.id);
+                  var targetEl = document.getElementById('sharese-post-' + post.parent_post.id);
                   if (targetEl) {
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetEl.style.boxShadow = '0 0 0 2px #38bdf8';
@@ -2796,7 +2796,7 @@ e.s(["default",0,function() {
                       (0,t.jsx)("i",{className:"pi pi-sync",style:{fontSize:"0.78rem",color:"#38bdf8"}}),
                       (0,t.jsx)("span",{style:{fontWeight:700,fontSize:"0.82rem",color:"#38bdf8"},children:post.parent_post.author_handle || 'Anggota Polri'}),
                       post.parent_post.satker && (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #94a3b8)",background:"rgba(255,255,255,0.06)",padding:"1px 6px",borderRadius:"4px"},children:post.parent_post.satker}),
-                      (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:formatPostDate(post.parent_post.created_at)})
+                      (0,t.jsx)("span",{style:{fontSize:"0.72rem",color:"var(--cas-text-muted, #64748b)",marginLeft:"auto"},children:timeAgo(post.parent_post.created_at)})
                     ]
                   }),
                   Boolean(post.parent_post.content) && (0,t.jsx)("div",{
