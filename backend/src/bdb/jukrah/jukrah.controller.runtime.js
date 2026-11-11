@@ -54,6 +54,9 @@ let JukrahController = class JukrahController {
     getFeed(req, q) {
         return this.service.getFeed(req?.user, q || {});
     }
+    getRegionalSatkers(req, q) {
+        return this.service.getRegionalSatkers(req?.user, q || {});
+    }
     createSocialPost(req, body, files) {
         let targetSatkers = [];
         if (body.target_satker_ids) {
@@ -259,6 +262,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, typeof (_b = typeof Record !== "undefined" && Record) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], JukrahController.prototype, "getFeed", null);
+__decorate([
+    (0, common_1.Get)('satkers'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof Record !== "undefined" && Record) === "function" ? _b : Object]),
+    __metadata("design:returntype", void 0)
+], JukrahController.prototype, "getRegionalSatkers", null);
 __decorate([
     (0, common_1.Post)('post'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 5, { limits: { fileSize: 20 * 1024 * 1024 } })),

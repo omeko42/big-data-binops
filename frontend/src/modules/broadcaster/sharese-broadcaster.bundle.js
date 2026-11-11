@@ -512,7 +512,15 @@ e.s(["default",0,function() {
   var [selectedSatkerIds, setSelectedSatkerIds] = (0,n.useState)([]);
   var [satkerModalOpen, setSatkerModalOpen] = (0,n.useState)(!1);
   var [satkerSearchQuery, setSatkerSearchQuery] = (0,n.useState)('');
+  var [satkerSearchDebounced, setSatkerSearchDebounced] = (0,n.useState)('');
+  var [satkerTipeFilter, setSatkerTipeFilter] = (0,n.useState)('ALL');
+  var [satkerPage, setSatkerPage] = (0,n.useState)(1);
+  var [satkerTotal, setSatkerTotal] = (0,n.useState)(0);
+  var [satkerTotalPages, setSatkerTotalPages] = (0,n.useState)(1);
+  var [satkerCacheById, setSatkerCacheById] = (0,n.useState)({});
   var [loadingSatkers, setLoadingSatkers] = (0,n.useState)(!1);
+  var satkerReqSeqRef = (0,n.useRef)(0);
+  var prevSatkerSearchRef = (0,n.useRef)('');
 
   // Active hover/reaction states & comment drawer states
   var [hoverReactionPostId, setHoverReactionPostId] = (0,n.useState)(null);
@@ -1216,31 +1224,65 @@ e.s(["default",0,function() {
     }
   };
 
-  // Fetch available Satkers for regional targeting
-  var loadSatkers = (0,n.useCallback)(async () => {
-    if (availableSatkers.length > 0) return;
+  // Fetch available Satkers for regional targeting (server-side search, filter & pagination)
+  var loadSatkers = (0,n.useCallback)(async (pageArg, searchArg, tipeArg) => {
+    var targetPage = Math.max(1, Number(pageArg) || 1);
+    var targetSearch = String(searchArg ?? '').trim();
+    var targetTipe = String(tipeArg || 'ALL').toUpperCase();
+    var reqSeq = ++satkerReqSeqRef.current;
     setLoadingSatkers(!0);
     try {
-      var res = await k.apiAuth.get('/bdb/jukrah/satkers');
-      var list = res.data?.data || [];
+      var params = { page: targetPage, limit: 10 };
+      if (targetSearch) params.search = targetSearch;
+      if (targetTipe && targetTipe !== 'ALL') params.tipe = targetTipe;
+      var res = await k.apiAuth.get('/bdb/jukrah/satkers', { params });
+      if (reqSeq !== satkerReqSeqRef.current) return;
+      var list = Array.isArray(res.data?.data) ? res.data.data : [];
+      var pg = res.data?.pagination || {};
+      var nextTotal = Number(pg.total ?? list.length) || 0;
+      var nextTotalPages = Math.max(1, Number(pg.totalPages || Math.ceil(nextTotal / 10)) || 1);
       setAvailableSatkers(list);
+      setSatkerTotal(nextTotal);
+      setSatkerTotalPages(nextTotalPages);
+      if (list.length > 0) {
+        setSatkerCacheById(prev => {
+          var next = { ...prev };
+          list.forEach(item => { if (item && item.id != null) next[item.id] = item; });
+          return next;
+        });
+      }
     } catch (err) {
-      console.error('Failed to load satkers:', err);
+      if (reqSeq === satkerReqSeqRef.current) console.error('Failed to load satkers:', err);
     } finally {
-      setLoadingSatkers(!1);
+      if (reqSeq === satkerReqSeqRef.current) setLoadingSatkers(!1);
     }
-  }, [availableSatkers.length]);
+  }, []);
 
   (0,n.useEffect)(() => {
-    if (audienceType === 'regional') {
-      loadSatkers();
+    var timer = setTimeout(() => {
+      var nextQ = String(satkerSearchQuery || '').trim();
+      if (nextQ !== prevSatkerSearchRef.current) {
+        prevSatkerSearchRef.current = nextQ;
+        setSatkerPage(1);
+        setSatkerSearchDebounced(nextQ);
+      }
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [satkerSearchQuery]);
+
+  (0,n.useEffect)(() => {
+    if (audienceType === 'regional' || satkerModalOpen) {
+      loadSatkers(satkerPage, satkerSearchDebounced, satkerTipeFilter);
     }
+  }, [audienceType, satkerPage, satkerSearchDebounced, satkerTipeFilter, loadSatkers]);
+
+  (0,n.useEffect)(() => {
     if (typeof window !== 'undefined' && window.location.search && window.location.search.includes('post=')) {
       if (window.history && window.history.replaceState) {
         window.history.replaceState({}, '', '/cms/broadcaster');
       }
     }
-  }, [audienceType, loadSatkers]);
+  }, []);
 
   var handleOpenUserProfile = (authorId, postContext) => {
     if (!authorId && !postContext) return;
@@ -2232,11 +2274,11 @@ e.s(["default",0,function() {
           (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.4rem",fontSize:"0.78rem",color:"var(--cas-blue-accent, #1d4ed8)",fontWeight:600},children:[
             (0,t.jsx)(IconBuilding,{size:15}),
             "Target Satker Regional:",
-            (0,t.jsx)("span",{style:{fontWeight:800,color:"#fff"},children:selectedSatkerIds.length > 0 ? (selectedSatkerIds.length + " Satker Dipilih") : "Seluruh Jajaran Satker"})
+            (0,t.jsx)("span",{style:{fontWeight:800,color:"var(--cas-text-primary, #0f172a)"},children:selectedSatkerIds.length > 0 ? (selectedSatkerIds.length + " Satker Dipilih") : "Seluruh Jajaran Satker"})
           ]}),
           (0,t.jsxs)("button",{
             type:"button",
-            onClick:() => { loadSatkers(); setSatkerModalOpen(!0); },
+            onClick:() => { setSatkerModalOpen(!0); if (availableSatkers.length === 0) loadSatkers(satkerPage, satkerSearchDebounced, satkerTipeFilter); },
             style:{background:"#2563eb",color:"#fff",border:"none",borderRadius:"6px",padding:"0.3rem 0.75rem",fontSize:"0.75rem",fontWeight:700,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:"0.35rem"},
             children:[
               (0,t.jsx)(IconEdit,{size:13}),
@@ -2246,8 +2288,9 @@ e.s(["default",0,function() {
         ]}),
         selectedSatkerIds.length > 0 && (0,t.jsx)("div",{style:{display:"flex",gap:"0.35rem",flexWrap:"wrap"},children:
           selectedSatkerIds.map(sid => {
-            var stk = availableSatkers.find(s => s.id === sid);
-            var label = stk?.nama_satker || stk?.name || ("Satker #" + sid);
+            var stk = satkerCacheById[sid] || availableSatkers.find(s => Number(s.id) === Number(sid));
+            var baseName = stk?.nama_satker || stk?.name || ("Satker #" + sid);
+            var label = (stk && stk.parent_nama) ? (baseName + " (" + stk.parent_nama + ")") : baseName;
             return (0,t.jsxs)("span",{
               key:sid,
               style:{display:"inline-flex",alignItems:"center",gap:"0.3rem",background:"rgba(59,130,246,0.22)",border:"1px solid rgba(59,130,246,0.4)",borderRadius:"4px",padding:"0.15rem 0.5rem",fontSize:"0.72rem",color:"var(--cas-blue-accent, #1d4ed8)"},
@@ -2256,7 +2299,7 @@ e.s(["default",0,function() {
                 (0,t.jsx)("button",{
                   type:"button",
                   onClick:() => setSelectedSatkerIds(prev => prev.filter(id => id !== sid)),
-                  style:{background:"none",border:"none",color:"#f87171",cursor:"pointer",padding:0,fontSize:"0.75rem",lineHeight:1},
+                  style:{background:"none",border:"none",color:"#dc2626",cursor:"pointer",padding:0,fontSize:"0.75rem",lineHeight:1,fontWeight:700},
                   children:"✕"
                 })
               ]
@@ -3586,17 +3629,17 @@ e.s(["default",0,function() {
     // Modal: Pilih Satker Regional
     (0,t.jsx)(u.Dialog,{
       header:(0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-        (0,t.jsx)(IconBuilding,{size:18,style:{color:"#38bdf8"}}),
+        (0,t.jsx)(IconBuilding,{size:18,style:{color:"#2563eb"}}),
         (0,t.jsx)("span",{style:{fontWeight:800},children:"Pilih Target Satker Regional"})
       ]}),
       visible:satkerModalOpen,
       onHide:() => setSatkerModalOpen(!1),
       maximizable:!0,
-      style:{width:"32rem",maxWidth:"95vw"},
+      style:{width:"46rem",maxWidth:"95vw"},
       modal:!0,
       dismissableMask:!0,
       footer:(0,t.jsxs)("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%"},children:[
-        (0,t.jsxs)("div",{style:{fontSize:"0.75rem",color:"#94a3b8"},children:[
+        (0,t.jsxs)("div",{style:{fontSize:"0.78rem",color:"var(--cas-text-secondary, #475569)",fontWeight:600},children:[
           selectedSatkerIds.length," satker dipilih"
         ]}),
         (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
@@ -3604,19 +3647,20 @@ e.s(["default",0,function() {
         ]})
       ]}),
       children:(0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",gap:"0.75rem",padding:"0.5rem 0"},children:[
-        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem"},children:[
+        (0,t.jsxs)("div",{style:{display:"flex",gap:"0.5rem",flexWrap:"wrap"},children:[
           (0,t.jsx)(i.InputText,{
             value:satkerSearchQuery,
             onChange:e => setSatkerSearchQuery(e.target.value),
-            placeholder:"Cari Polda / Polres / Satker...",
-            style:{flex:1,fontSize:"0.82rem"}
+            placeholder:"Cari Polda / Polres / Polsek / Satreskrim...",
+            style:{flex:1,minWidth:"14rem",fontSize:"0.82rem"}
           }),
           (0,t.jsx)(c.Button,{
-            label:"Pilih Semua",
+            label:"Pilih Halaman",
             outlined:!0,
+            disabled:loadingSatkers || availableSatkers.length === 0,
             onClick:() => {
-              var allIds = availableSatkers.map(s => s.id);
-              setSelectedSatkerIds(allIds);
+              var pageIds = availableSatkers.map(s => s.id);
+              setSelectedSatkerIds(prev => Array.from(new Set([...prev, ...pageIds])));
             },
             style:{fontSize:"0.75rem",padding:"0.35rem 0.65rem"}
           }),
@@ -3628,49 +3672,101 @@ e.s(["default",0,function() {
             style:{fontSize:"0.75rem",padding:"0.35rem 0.65rem"}
           })
         ]}),
-        loadingSatkers ? (
-          (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"#94a3b8",fontSize:"0.85rem"},children:"Memuat daftar Satker..."})
-        ) : (
-          (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{maxHeight:"20rem",overflowY:"auto",display:"grid",gap:"0.4rem",paddingRight:"0.25rem"},children:
-            availableSatkers
-              .filter(s => !satkerSearchQuery.trim() || (s.nama_satker || s.name || '').toLowerCase().includes(satkerSearchQuery.toLowerCase()))
-              .map(stk => {
-                var isChecked = selectedSatkerIds.includes(stk.id);
-                return (0,t.jsxs)("div",{
-                  key:stk.id,
-                  onClick:() => {
-                    if (isChecked) {
-                      setSelectedSatkerIds(selectedSatkerIds.filter(id => id !== stk.id));
-                    } else {
-                      setSelectedSatkerIds([...selectedSatkerIds, stk.id]);
-                    }
-                  },
-                  style:{
-                    display:"flex",
-                    alignItems:"center",
-                    justifyContent:"space-between",
-                    padding:"0.5rem 0.75rem",
-                    borderRadius:"6px",
-                    background:isChecked ? 'rgba(59,130,246,0.14)' : 'var(--cas-bg-subtle, #f8fafc)', border:isChecked ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--cas-border, #e2e8f0)',
-                    cursor:"pointer",
-                    transition:"background 0.15s ease"
-                  },
-                  children:[
-                    (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.5rem"},children:[
-                      (0,t.jsx)("input",{
-                        type:"checkbox",
-                        checked:isChecked,
-                        onChange:() => {},
-                        style:{cursor:"pointer"}
-                      }),
-                      (0,t.jsx)("span",{style:{fontSize:"0.82rem",color:isChecked ? '#2563eb' : 'var(--cas-text-primary, #0f172a)',fontWeight:isChecked ? 700 : 500},children:stk.nama_satker || stk.name})
-                    ]}),
-                    stk.tipe && (0,t.jsx)("span",{style:{fontSize:"0.68rem",background:"rgba(255,255,255,0.08)",padding:"0.1rem 0.4rem",borderRadius:"4px",color:"#94a3b8"},children:stk.tipe.toUpperCase()})
-                  ]
-                });
-              })
+        (0,t.jsx)("div",{style:{display:"flex",gap:"0.35rem",flexWrap:"wrap"},children:
+          [
+            { id: 'ALL', label: 'Semua' },
+            { id: 'POLDA', label: 'Polda' },
+            { id: 'POLRES', label: 'Polres' },
+            { id: 'FUNGSI', label: 'Fungsi / Reskrim' },
+            { id: 'POLSEK', label: 'Polsek' }
+          ].map(chip => {
+            var activeChip = satkerTipeFilter === chip.id;
+            return (0,t.jsx)("button",{
+              type:"button",
+              onClick:() => { setSatkerPage(1); setSatkerTipeFilter(chip.id); },
+              style:{
+                padding:"0.24rem 0.65rem",
+                borderRadius:"999px",
+                fontSize:"0.74rem",
+                fontWeight:700,
+                cursor:"pointer",
+                border:activeChip ? "1px solid #2563eb" : "1px solid var(--cas-border-strong, #cbd5e1)",
+                background:activeChip ? "#2563eb" : "var(--cas-bg-surface, #ffffff)",
+                color:activeChip ? "#ffffff" : "var(--cas-text-secondary, #475569)",
+                transition:"all 0.15s ease"
+              },
+              children:chip.label
+            },chip.id);
           })
-        )
+        }),
+        loadingSatkers ? (
+          (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"var(--cas-text-muted, #64748b)",fontSize:"0.85rem"},children:"Memuat daftar Satker..."})
+        ) : availableSatkers.length === 0 ? (
+          (0,t.jsx)("div",{style:{textAlign:"center",padding:"2rem",color:"var(--cas-text-muted, #64748b)",fontSize:"0.85rem"},children:"Tidak ada satker yang sesuai filter atau pencarian."})
+        ) : (
+          (0,t.jsx)("div",{className:"cas-maximized-adaptive-grid",style:{maxHeight:"22rem",overflowY:"auto",display:"grid",gap:"0.4rem",paddingRight:"0.25rem"},children:
+            availableSatkers.map(stk => {
+              var isChecked = selectedSatkerIds.includes(stk.id);
+              return (0,t.jsxs)("div",{
+                key:stk.id,
+                onClick:() => {
+                  if (isChecked) {
+                    setSelectedSatkerIds(selectedSatkerIds.filter(id => id !== stk.id));
+                  } else {
+                    setSelectedSatkerIds([...selectedSatkerIds, stk.id]);
+                  }
+                },
+                style:{
+                  display:"flex",
+                  alignItems:"center",
+                  justifyContent:"space-between",
+                  gap:"0.5rem",
+                  padding:"0.5rem 0.75rem",
+                  borderRadius:"6px",
+                  background:isChecked ? 'rgba(59,130,246,0.14)' : 'var(--cas-bg-subtle, #f8fafc)',
+                  border:isChecked ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--cas-border, #e2e8f0)',
+                  cursor:"pointer",
+                  transition:"background 0.15s ease"
+                },
+                children:[
+                  (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.55rem",minWidth:0},children:[
+                    (0,t.jsx)("input",{
+                      type:"checkbox",
+                      checked:isChecked,
+                      onChange:() => {},
+                      style:{cursor:"pointer",flexShrink:0}
+                    }),
+                    (0,t.jsxs)("div",{style:{display:"flex",flexDirection:"column",minWidth:0},children:[
+                      (0,t.jsx)("span",{style:{fontSize:"0.82rem",color:isChecked ? '#1d4ed8' : 'var(--cas-text-primary, #0f172a)',fontWeight:isChecked ? 700 : 600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:stk.nama_satker || stk.name}),
+                      stk.parent_nama && (0,t.jsx)("span",{style:{fontSize:"0.7rem",color:"var(--cas-text-muted, #64748b)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"},children:stk.parent_nama})
+                    ]})
+                  ]}),
+                  stk.tipe && (0,t.jsx)("span",{style:{fontSize:"0.68rem",fontWeight:700,background:isChecked ? "rgba(37,99,235,0.12)" : "var(--cas-bg-surface, #e2e8f0)",border:"1px solid var(--cas-border, #cbd5e1)",padding:"0.12rem 0.45rem",borderRadius:"4px",color:isChecked ? "#1d4ed8" : "var(--cas-text-secondary, #475569)",flexShrink:0},children:stk.tipe.toUpperCase()})
+                ]
+              });
+            })
+          })
+        ),
+        (() => {
+          var skPerPage = 10;
+          var skStart = satkerTotal > 0 ? ((satkerPage - 1) * skPerPage) + 1 : 0;
+          var skEnd = satkerTotal > 0 ? Math.min(satkerTotal, ((satkerPage - 1) * skPerPage) + availableSatkers.length) : 0;
+          var skStartPg = Math.max(1, Math.min(satkerPage - 2, Math.max(1, satkerTotalPages - 4)));
+          var skEndPg = Math.min(satkerTotalPages, skStartPg + 4);
+          var skNums = [];
+          for (var pIdx = skStartPg; pIdx <= skEndPg; pIdx++) skNums.push(pIdx);
+          return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{marginTop:"0.25rem"},children:[
+            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Menampilkan ",skStart.toLocaleString("id-ID")," s.d. ",skEnd.toLocaleString("id-ID")," dari ",satkerTotal.toLocaleString("id-ID")," data"]}),
+            (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:satkerPage<=1||loadingSatkers,onClick:()=>setSatkerPage(1),title:"Halaman Pertama",children:"«"}),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:satkerPage<=1||loadingSatkers,onClick:()=>setSatkerPage(p=>Math.max(1,p-1)),title:"Sebelumnya",children:"‹"}),
+              skNums.map(pg=>(0,t.jsx)("button",{type:"button",className:"cas-page-btn"+(pg===satkerPage?" is-active":""),"aria-current":pg===satkerPage?"page":void 0,disabled:loadingSatkers,onClick:()=>setSatkerPage(pg),children:pg},pg)),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:satkerPage>=satkerTotalPages||loadingSatkers,onClick:()=>setSatkerPage(p=>Math.min(satkerTotalPages,p+1)),title:"Berikutnya",children:"›"}),
+              (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:satkerPage>=satkerTotalPages||loadingSatkers,onClick:()=>setSatkerPage(satkerTotalPages),title:"Halaman Terakhir",children:"»"})
+            ]}),
+            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Halaman ",satkerPage.toLocaleString("id-ID")," / ",satkerTotalPages.toLocaleString("id-ID")]})
+          ]});
+        })()
       ]})
     }),
 

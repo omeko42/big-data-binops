@@ -50,6 +50,11 @@ export class JukrahController {
         return this.service.getFeed(req?.user, q || {});
     }
 
+    @Get('satkers')
+    getRegionalSatkers(@Req() req: any, @Query() q: Record<string, any>) {
+        return this.service.getRegionalSatkers(req?.user, q || {});
+    }
+
     @Post('post')
     @UseInterceptors(FilesInterceptor('files', 5, { limits: { fileSize: 20 * 1024 * 1024 } }))
     createSocialPost(@Req() req: any, @Body() body: any, @UploadedFiles() files: any[]) {

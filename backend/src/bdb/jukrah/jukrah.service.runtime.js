@@ -612,6 +612,34 @@ let JukrahService = class JukrahService {
         await this.dataSource.query('UPDATE bdb_social_posts SET view_count = coalesce(view_count, 0) + 1 WHERE id = $1', [postId]);
         const firstMedia = media[0] || null;
         const docMedia = media.find((m) => m.type === 'document' || (m.mime && m.mime.includes('pdf'))) || null;
+        let parentPost = null;
+        if (r.parent_post_id) {
+            const parents = await this.dataSource.query(`SELECT p.id, p.author_id, p.content, p.created_at, p.media_urls, p.is_official_jukrah,
+                        u.name as raw_name, u.username as callsign, u.username, u.role_bdb, u.photo_url,
+                        s.nama_singkat as satker, s.deskripsi as satker_nama
+                 FROM bdb_social_posts p
+                 JOIN auth_users u ON u.id = p.author_id
+                 LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
+                 WHERE p.id = $1`, [r.parent_post_id]);
+            if (parents.length) {
+                const p = parents[0];
+                const isPUserOne = this.isSuperUserOne(p.author_id, p.username, p.callsign);
+                const isPSuper = isPUserOne || this.isSuperadminUser(p.author_id, p.role_bdb, p.username, p.callsign);
+                const pSatker = isPSuper ? 'Robinopsnal Bareskrim Polri' : (p.satker || p.satker_nama || 'Polri');
+                parentPost = {
+                    id: Number(p.id),
+                    content: p.content,
+                    author_handle: this.formatCallsign(p.callsign, p.author_id, p.username, p.raw_name),
+                    author_name: p.raw_name,
+                    author_photo: p.photo_url,
+                    satker: pSatker,
+                    author_satker: pSatker,
+                    media_urls: p.media_urls,
+                    is_official_jukrah: p.is_official_jukrah,
+                    created_at: p.created_at
+                };
+            }
+        }
         return {
             id: Number(r.id),
             author_id: Number(r.author_id),
@@ -644,6 +672,8 @@ let JukrahService = class JukrahService {
             is_official_jukrah: Boolean(r.is_official_jukrah),
             is_pinned: Boolean(r.is_pinned),
             is_edited: Boolean(r.is_edited),
+            parent_post_id: r.parent_post_id ? Number(r.parent_post_id) : null,
+            parent_post: parentPost,
             acknowledged_count: Number(r.acknowledged_count || 0),
             comments_count: Number(r.comments_count || 0),
             comments,
@@ -897,23 +927,165 @@ let JukrahService = class JukrahService {
             throw new common_1.NotFoundException('File media tidak ditemukan.');
         }
     }
+    async resolveEffectiveSatkerId(user, uid) {
+        const direct = Number(user?.scope_satker_id || 0);
+        if (direct > 0)
+            return direct;
+        if (uid <= 0)
+            return 0;
+        try {
+            const uRows = await this.dataSource.query('SELECT scope_satker_id FROM auth_users WHERE id = $1 LIMIT 1', [uid]);
+            return Number(uRows[0]?.scope_satker_id || 0);
+        }
+        catch {
+            return 0;
+        }
+    }
+    async resolveSatkerHierarchyIds(satkerId) {
+        if (!satkerId || satkerId <= 0)
+            return [];
+        try {
+            const ancRows = await this.dataSource.query(`WITH RECURSIVE anc AS (
+                    SELECT id, parent_id, 0 AS depth FROM bdb_satker WHERE id = $1
+                    UNION ALL
+                    SELECT s.id, s.parent_id, anc.depth + 1
+                    FROM bdb_satker s
+                    JOIN anc ON s.id = anc.parent_id
+                    WHERE anc.depth < 10
+                )
+                SELECT DISTINCT id::bigint AS id FROM anc`, [satkerId]);
+            const resolved = ancRows.map((r) => Number(r.id)).filter((n) => !isNaN(n) && n > 0);
+            return resolved.length > 0 ? Array.from(new Set([satkerId, ...resolved])) : [satkerId];
+        }
+        catch {
+            return [satkerId];
+        }
+    }
+    async getRegionalSatkers(user, q = {}) {
+        const uid = Number(user?.id || 0);
+        if (!uid)
+            throw new common_1.ForbiddenException('Sesi tidak valid.');
+        const page = Math.max(1, parseInt(String(q?.page || '1'), 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(String(q?.limit || '10'), 10) || 10));
+        const offset = (page - 1) * limit;
+        const search = String(q?.search || '').trim();
+        const rawTipe = String(q?.tipe || '').trim().toUpperCase();
+        const validTipes = ['MABES', 'POLDA', 'POLRES', 'FUNGSI', 'POLSEK'];
+        const tipe = validTipes.includes(rawTipe) ? rawTipe : '';
+        const userSatkerId = await this.resolveEffectiveSatkerId(user, uid);
+        const userHierarchyIds = await this.resolveSatkerHierarchyIds(userSatkerId);
+        const params = [userSatkerId, userHierarchyIds];
+        const conditions = [
+            `coalesce(s.is_synthetic, false) = false`,
+            `(s.tipe_satker IN ('MABES', 'POLDA', 'POLRES', 'POLSEK') OR s.function_domain = 'INTERNAL_RESERSE' OR EXISTS (SELECT 1 FROM auth_users u WHERE u.scope_satker_id = s.id AND u.deleted_at IS NULL))`
+        ];
+        if (tipe) {
+            params.push(tipe);
+            conditions.push(`s.tipe_satker = $${params.length}`);
+        }
+        let orderPrefixExpr = '1';
+        if (search) {
+            const cleanSearch = search.replace(/\s+/g, ' ');
+            params.push(`%${cleanSearch}%`);
+            const searchIdx = params.length;
+            params.push(`${cleanSearch}%`);
+            const prefixIdx = params.length;
+            conditions.push(`(
+                coalesce(s.deskripsi, '') ILIKE $${searchIdx}
+                OR coalesce(s.nama_singkat, '') ILIKE $${searchIdx}
+                OR coalesce(s.nama_canonical, '') ILIKE $${searchIdx}
+                OR coalesce(s.kode, '') ILIKE $${searchIdx}
+                OR coalesce(p.deskripsi, '') ILIKE $${searchIdx}
+                OR coalesce(gp.deskripsi, '') ILIKE $${searchIdx}
+            )`);
+            orderPrefixExpr = `CASE WHEN coalesce(s.deskripsi, '') ILIKE $${prefixIdx} OR coalesce(s.nama_singkat, '') ILIKE $${prefixIdx} THEN 0 WHEN coalesce(s.deskripsi, '') ILIKE $${searchIdx} THEN 1 ELSE 2 END`;
+        }
+        const whereClause = 'WHERE ' + conditions.join(' AND ');
+        const limitIdx = params.length + 1;
+        const offsetIdx = params.length + 2;
+        const sql = `
+            SELECT
+                s.id,
+                s.deskripsi,
+                s.nama_singkat,
+                s.nama_canonical,
+                s.tipe_satker,
+                s.function_domain,
+                s.kode,
+                p.deskripsi AS parent_nama,
+                gp.deskripsi AS grandparent_nama,
+                COUNT(*) OVER()::int AS total_count
+            FROM bdb_satker s
+            LEFT JOIN bdb_satker p ON p.id = s.parent_id
+            LEFT JOIN bdb_satker gp ON gp.id = p.parent_id
+            ${whereClause}
+            ORDER BY
+                ${orderPrefixExpr} ASC,
+                CASE
+                    WHEN s.id = $1 THEN 0
+                    WHEN s.id = ANY($2::bigint[]) THEN 1
+                    WHEN s.tipe_satker = 'MABES' THEN 2
+                    WHEN s.tipe_satker = 'POLDA' THEN 3
+                    WHEN s.tipe_satker = 'POLRES' THEN 4
+                    WHEN s.tipe_satker = 'FUNGSI' THEN 5
+                    WHEN s.tipe_satker = 'POLSEK' THEN 6
+                    ELSE 7
+                END ASC,
+                coalesce(s.nama_canonical, s.deskripsi) ASC,
+                s.id ASC
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
+        `;
+        const rows = await this.dataSource.query(sql, [...params, limit, offset]);
+        let total = rows.length > 0 ? Number(rows[0].total_count || 0) : 0;
+        if (rows.length === 0 && offset > 0) {
+            const cnt = await this.dataSource.query(`SELECT COUNT(*)::int AS total FROM bdb_satker s LEFT JOIN bdb_satker p ON p.id = s.parent_id LEFT JOIN bdb_satker gp ON gp.id = p.parent_id ${whereClause}`, params);
+            total = Number(cnt[0]?.total || 0);
+        }
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+        const data = rows.map((r) => {
+            const label = String(r.nama_canonical || r.deskripsi || r.nama_singkat || '').trim();
+            const parentChain = [r.parent_nama, r.grandparent_nama]
+                .map((v) => String(v || '').trim())
+                .filter((v, idx, arr) => v && v !== label && arr.indexOf(v) === idx)
+                .join(' • ');
+            return {
+                id: Number(r.id),
+                nama_satker: label,
+                name: String(r.nama_singkat || label).trim(),
+                tipe: String(r.tipe_satker || 'SATKER').toUpperCase(),
+                parent_nama: parentChain || null,
+                kode: r.kode || null
+            };
+        });
+        return {
+            status: 1,
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages
+            }
+        };
+    }
     async getFeed(user, opts) {
         await this.ensureTable();
         const uid = Number(user?.id || 0);
-        const userSatkerId = Number(user?.scope_satker_id || 0);
+        const userSatkerId = await this.resolveEffectiveSatkerId(user, uid);
         const userRole = String(user?.role_bdb || 'sharese').toLowerCase();
         const isVendorMitra = ['vendor_mitra', 'vendor', 'mitra'].includes(userRole);
         const isGlobalAdmin = ['superadmin', 'admin_binops'].includes(userRole);
         const isGlobalReader = isGlobalAdmin || isVendorMitra;
+        const readerHierarchyIds = await this.resolveSatkerHierarchyIds(userSatkerId);
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(200, Math.max(1, Number(opts.limit) || 100));
         const offset = (page - 1) * limit;
-        const params = [uid, userSatkerId];
+        const params = [uid, userSatkerId, readerHierarchyIds];
         const conditions = ["p.status = 'active'"];
         const audienceFilter = `(
             p.author_id = $1
             OR p.audience_type = 'public'
-            OR (p.audience_type = 'regional' AND ($2::int = ANY(p.target_satker_ids) OR p.target_satker_ids = '{}' OR u.scope_satker_id = $2::int OR ${isGlobalReader ? 'true' : 'false'}))
+            OR (p.audience_type = 'regional' AND (p.target_satker_ids && $3::bigint[] OR p.target_satker_ids = '{}' OR u.scope_satker_id = $2::int OR ${isGlobalReader ? 'true' : 'false'}))
             OR (p.audience_type = 'friends' AND (p.author_id = $1 OR u.scope_satker_id = $2::int))
         )`;
         conditions.push(audienceFilter);
@@ -1059,7 +1231,7 @@ let JukrahService = class JukrahService {
         });
         const parentIds = posts.filter(p => p.parent_post_id).map(p => p.parent_post_id);
         if (parentIds.length) {
-            const parents = await this.dataSource.query(`SELECT p.id, p.author_id, p.content, p.created_at, u.name as raw_name, u.username as callsign, u.username, u.role_bdb,
+            const parents = await this.dataSource.query(`SELECT p.id, p.author_id, p.content, p.created_at, p.media_urls, p.is_official_jukrah, u.name as raw_name, u.username as callsign, u.username, u.role_bdb, u.photo_url,
                         s.nama_singkat as satker, s.deskripsi as satker_nama
                  FROM bdb_social_posts p
                  JOIN auth_users u ON u.id = p.author_id
@@ -1073,6 +1245,10 @@ let JukrahService = class JukrahService {
                         id: Number(p.id),
                         content: p.content,
                         author_handle: this.formatCallsign(p.callsign, p.author_id, p.username, p.raw_name),
+                        author_name: p.raw_name,
+                        author_photo: p.photo_url,
+                        media_urls: p.media_urls,
+                        is_official_jukrah: p.is_official_jukrah,
                         satker: pSatker,
                         author_satker: pSatker,
                         created_at: p.created_at
@@ -1378,7 +1554,7 @@ let JukrahService = class JukrahService {
         if (!original.length)
             throw new common_1.NotFoundException('Postingan asal tidak ditemukan.');
         await this.dataSource.query('UPDATE bdb_social_posts SET repost_count = repost_count + 1 WHERE id = $1', [postId]);
-        const postText = (content || '').trim() || `🔁 Meneruskan postingan #${postId}`;
+        const postText = (content || '').trim();
         const newPost = await this.dataSource.query(`INSERT INTO bdb_social_posts (author_id, audience_type, target_satker_ids, content, media_urls, case_lp_ids, reaction_counts, is_official_jukrah, parent_post_id, status, created_at, updated_at)
              VALUES ($1, 'public', '{}', $2, '[]', '{}', '{"like":0,"respect":0,"insightful":0,"applause":0,"fire":0}', false, $3, 'active', now(), now())
              RETURNING id, created_at`, [uid, postText, postId]);
