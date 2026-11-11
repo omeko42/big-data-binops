@@ -6,6 +6,7 @@ import { resolveScope } from '../common/scope.util';
 import { AuditService } from '../audit/audit.service';
 import { MinioService, UploadedFileLike } from '../kerma/minio.service';
 import { LpMonitoringAccessService } from '../common/lp-monitoring-access.service';
+import { applyNikMasking, buildScopeSql } from './recent-global-scope.util';
 
 const KETERLIBATAN_MANUAL = ['SAKSI', 'AHLI', 'TERSANGKA'];
 
@@ -1570,8 +1571,15 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         return result;
     }
 
-    private async recentGlobal(page: number, limit: number) {
-        const cacheKey = `${page}:${limit}`;
+    private async recentGlobal(authUser: any, page: number, limit: number) {
+        // BDB-003 (CWE-639): endpoint WAJIB menerapkan scope satker user.
+        // Sebelumnya endpoint ini mengembalikan data lintas-satker tanpa filter.
+        const scope = await resolveScope(this.dataSource, authUser?.id ? Number(authUser.id) : undefined);
+        const isNationalScope = !!scope.all;
+        const roleBdb = String(authUser?.role_bdb || authUser?.role || '').toLowerCase();
+        const isNationalRole = ['superadmin', 'admin_binops'].includes(roleBdb);
+        const maskNikForUser = !isNationalScope && !isNationalRole;
+        const cacheKey = `${isNationalScope ? 'ALL' : `S${scope.satkerId}`}:${maskNikForUser ? 'M' : 'F'}:${page}:${limit}`;
         const cached = this.recentGlobalCache.get(cacheKey);
         if (cached && cached.expiresAt > Date.now()) {
             return cached.data;
@@ -1579,6 +1587,16 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const offset = (page - 1) * limit;
         const fetch = offset + limit + 1;
         const docScanLimit = Math.max(fetch * 4, 160);
+        // BDB-003: satu params array per query, scope SQL ikut di parameterisasi.
+        const paramsDors: any[] = [];
+        const paramsManual: any[] = [];
+        const paramsDocument: any[] = [];
+        const paramsDpo: any[] = [];
+        const scopeSqlDors = buildScopeSql(scope, 'lp', paramsDors);
+        const scopeSqlManual = buildScopeSql(scope, 'lp', paramsManual);
+        const scopeSqlDocument = buildScopeSql(scope, 'lp', paramsDocument);
+        const scopeSqlDpo = buildScopeSql(scope, 'dpo', paramsDpo);
+
         const dorsPromise = this.dataSource.query(
             `select 'DORS' as sumber, t.id::text as row_id, lp.id as lp_id, t.nama, t.nik,
                     upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
@@ -1590,9 +1608,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              join bdb_laporan_polisi lp on lp.dors_lp_id=d.dors_lp_id and lp.model_lp=d.model_lp and lp.deleted_at is null
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              where t.nama is not null
+                    and ${scopeSqlDors}
              order by t.id desc
              limit $1`,
-            [fetch]
+            [...paramsDors, fetch]
         );
         const manualPromise = this.dataSource.query(
             `select 'MANUAL' as sumber, m.id::text as row_id, m.lp_id, m.nama, m.nik,
@@ -1603,9 +1622,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              join bdb_laporan_polisi lp on lp.id=m.lp_id and lp.deleted_at is null
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              where m.deleted_at is null
+                    and ${scopeSqlManual}
              order by m.id desc
              limit $1`,
-            [fetch]
+            [...paramsManual, fetch]
         );
         const documentPromise = this.dataSource.query(
             `with recent_docs as (
@@ -1613,7 +1633,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                  from bdb_dokumen d
                  join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
                  order by d.created_at desc, d.id desc
-                 limit $2
+                 limit $3
              ),
              recent_parties as (
                  select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
@@ -1637,10 +1657,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     lp.no_laporan,lp.satker_id,lp.satker_nama,lp.unit_nama,lp.unit_satker_nama,jk.keterangan as kejahatan
              from recent_parties x
              join bdb_laporan_polisi lp on lp.id=x.lp_id and lp.deleted_at is null
+                    and ${scopeSqlDocument}
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              order by x.created_at desc,x.dokumen_id desc,x.urutan desc
-             limit $1`,
-            [fetch, docScanLimit]
+             limit $2`,
+            [...paramsDocument, fetch, docScanLimit]
         );
         const dpoPromise = this.dataSource.query(
             `select 'DPO' as sumber,
@@ -1669,12 +1690,18 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              from bdb_dpo d
              left join bdb_laporan_polisi lp on lp.id = d.lp_id and lp.deleted_at is null
              where d.status_dpo = 'AKTIF'
+             and ${scopeSqlDpo}
              order by d.created_at desc, d.id desc
-             limit $1`,
-            [fetch]
+             limit $2`,
+            [...paramsDpo, fetch]
         );
         const [dors, manual, document, dpoRows] = await Promise.all([dorsPromise, manualPromise, documentPromise, dpoPromise]);
-        const merged = [...dors, ...manual, ...document, ...dpoRows].sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        // BDB-003: NIK dimask untuk role non-nasional.
+        const masked = applyNikMasking(
+            [...dors, ...manual, ...document, ...dpoRows],
+            maskNikForUser
+        );
+        const merged = masked.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         const pageRows = merged.slice(offset, offset + limit + 1);
         const hasNext = pageRows.length > limit;
         const result = { data: pageRows.slice(0, limit), meta: { total: null, estimatedTotal: null, page, limit, hasNext, totalPages: null, mode: 'recent-key-tail' } };
@@ -1691,7 +1718,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const page = Math.max(1, Number(query.page || 1));
         const limit = Math.max(1, Math.min(Number(query.row || query.limit || 25), 100));
         const isDefaultGlobal = (scope.all || query.scope === 'national') && !this.hasCommonFilter(query) && (!query.keterlibatan || String(query.keterlibatan).toUpperCase() === 'ALL') && (!query.status || String(query.status).toUpperCase() === 'ALL');
-        if (isDefaultGlobal) return this.recentGlobal(page, limit);
+        if (isDefaultGlobal) return this.recentGlobal(authUser, page, limit);
 
         const fetch = page * limit + 1;
         const rows: any[] = [];

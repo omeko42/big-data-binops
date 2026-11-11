@@ -17,8 +17,14 @@ export class PihakTerlibatController {
     }
 
     @Get('recent-global')
-    recentGlobal(@Query('page') page?: string, @Query('limit') limit?: string) {
-        return this.service.recentGlobal(Math.max(1, Number(page || 1)), Math.max(1, Math.min(Number(limit || 20), 100)));
+    recentGlobal(@Req() req: any, @Query('page') page?: string, @Query('limit') limit?: string) {
+        // BDB-003 (CWE-639): user WAJIB diteruskan supaya service bisa menerapkan
+        // scope satker. Tanpa ini endpoint mengembalikan data lintas-satker.
+        return this.service.recentGlobal(
+            req?.user,
+            Math.max(1, Number(page || 1)),
+            Math.max(1, Math.min(Number(limit || 20), 100))
+        );
     }
 
     @Get('ranking')
