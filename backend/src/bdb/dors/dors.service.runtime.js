@@ -1009,13 +1009,24 @@ let DorsService = DorsService_1 = class DorsService {
         }
         const where = [];
         const params = [];
-        if (from) {
+        if (from && to) {
             params.push(from);
-            where.push(`synced_at >= $${params.length}::timestamp`);
-        }
-        if (to) {
+            const fromIdx = params.length;
             params.push(to);
-            where.push(`synced_at <= ($${params.length}::date + time '23:59:59')`);
+            const toIdx = params.length;
+            where.push(`(
+                (synced_at >= $${fromIdx}::timestamp and synced_at <= ($${toIdx}::date + time '23:59:59'))
+                or
+                (parse_tgl_laporan(payload_json->>'tgl_laporan') >= $${fromIdx}::date and parse_tgl_laporan(payload_json->>'tgl_laporan') <= $${toIdx}::date)
+            )`);
+        }
+        else if (from) {
+            params.push(from);
+            where.push(`(synced_at >= $${params.length}::timestamp or parse_tgl_laporan(payload_json->>'tgl_laporan') >= $${params.length}::date)`);
+        }
+        else if (to) {
+            params.push(to);
+            where.push(`(synced_at <= ($${params.length}::date + time '23:59:59') or parse_tgl_laporan(payload_json->>'tgl_laporan') <= $${params.length}::date)`);
         }
         const whereSql = where.length ? 'where ' + where.join(' and ') : '';
         const perModel = await this.dataSource.query(`select model_lp, count(*)::int as jumlah, max(synced_at) as terakhir_sync
@@ -1074,13 +1085,24 @@ let DorsService = DorsService_1 = class DorsService {
             params.push(`%${opts.search}%`);
             where.push(`no_laporan ilike $${params.length}`);
         }
-        if (opts.from) {
+        if (opts.from && opts.to) {
             params.push(opts.from);
-            where.push(`synced_at >= $${params.length}::timestamp`);
-        }
-        if (opts.to) {
+            const fromIdx = params.length;
             params.push(opts.to);
-            where.push(`synced_at <= ($${params.length}::date + time '23:59:59')`);
+            const toIdx = params.length;
+            where.push(`(
+                (synced_at >= $${fromIdx}::timestamp and synced_at <= ($${toIdx}::date + time '23:59:59'))
+                or
+                (parse_tgl_laporan(payload_json->>'tgl_laporan') >= $${fromIdx}::date and parse_tgl_laporan(payload_json->>'tgl_laporan') <= $${toIdx}::date)
+            )`);
+        }
+        else if (opts.from) {
+            params.push(opts.from);
+            where.push(`(synced_at >= $${params.length}::timestamp or parse_tgl_laporan(payload_json->>'tgl_laporan') >= $${params.length}::date)`);
+        }
+        else if (opts.to) {
+            params.push(opts.to);
+            where.push(`(synced_at <= ($${params.length}::date + time '23:59:59') or parse_tgl_laporan(payload_json->>'tgl_laporan') <= $${params.length}::date)`);
         }
         const hasPolsek = `jsonb_typeof(payload_json->'polsek')='object'`;
         const hasPolres = `jsonb_typeof(payload_json->'polres')='object'`;

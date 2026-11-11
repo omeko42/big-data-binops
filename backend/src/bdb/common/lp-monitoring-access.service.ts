@@ -43,16 +43,16 @@ export class LpMonitoringAccessService {
 
     private satkerDomain(name: string): CrimeDomain | 'KRIMSUS' | 'KRIMUM' | 'RESKRIM' | 'MABES_ALL' | null {
         const n = String(name || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ');
-        if (/\b(TIPIDTER|TINDAK PIDANA TERTENTU)\b/.test(n)) return 'TIPIDTER';
-        if (/\b(TIPIDEKSUS|EKONOMI KHUSUS)\b/.test(n)) return 'TIPIDEKSUS';
-        if (/\b(TIPIDKOR|KORTAS|KORUPSI)\b/.test(n)) return 'TIPIDKOR';
-        if (/\b(TIPIDSIBER|SIBER|CYBER)\b|SATRESSIBER/.test(n)) return 'TIPIDSIBER';
-        if (/\b(TIPIDNARKOBA|NARKOBA|NARKOTIKA)\b|SATRESNARKOBA/.test(n)) return 'TIPIDNARKOBA';
-        if (/PPAPPO|PPA PPO|PPA DAN PPO|\b(PPA|PPO)\b|SATRESPPADANPPO/.test(n)) return 'TIPIDPPAPPO';
-        if (/\b(TIPIDUM|KRIMINAL UMUM|PIDANA UMUM)\b/.test(n)) return 'TIPIDUM';
-        if (/\b(KRIMSUS|KRIM SUS|KRIMINAL KHUSUS)\b/.test(n)) return 'KRIMSUS';
-        if (/\b(KRIMUM|KRIM UM)\b/.test(n)) return 'KRIMUM';
-        if (/\b(RESKRIM|RES KRIM)\b|SATRESKRIM/.test(n)) return 'RESKRIM';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT)(TIPIDTER|TINDAK PIDANA TERTENTU)\b/.test(n)) return 'TIPIDTER';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT)(TIPIDEKSUS|EKONOMI KHUSUS)\b/.test(n)) return 'TIPIDEKSUS';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|KORTAS)(TIPIDKOR|KORTAS|KORUPSI)\b/.test(n)) return 'TIPIDKOR';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|SATRES|DITRES)(TIPIDSIBER|SIBER|CYBER)\b|SATRESSIBER|DITSIBER|DITRESSIBER/.test(n)) return 'TIPIDSIBER';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|SATRES|DITRES)(TIPIDNARKOBA|NARKOBA|NARKOTIKA)\b|SATRESNARKOBA|SATNARKOBA|DITNARKOBA|DITRESNARKOBA/.test(n)) return 'TIPIDNARKOBA';
+        if (/PPAPPO|PPA PPO|PPA DAN PPO|\b(PPA|PPO)\b|SATRESPPADANPPO|DITPPAPPO|DITRESPPAPPO/.test(n)) return 'TIPIDPPAPPO';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT)(TIPIDUM|KRIMINAL UMUM|PIDANA UMUM)\b/.test(n)) return 'TIPIDUM';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|DITRES)(KRIMSUS|KRIM SUS|KRIMINAL KHUSUS)\b|DITKRIMSUS|DITRESKRIMSUS/.test(n)) return 'KRIMSUS';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|DITRES)(KRIMUM|KRIM UM)\b|DITKRIMUM|DITRESKRIMUM/.test(n)) return 'KRIMUM';
+        if (/(?:^|\b|DIT|SUBDIT|SAT|UNIT|SATRES)(RESKRIM|RES KRIM)\b|SATRESKRIM|UNITRESKRIM/.test(n)) return 'RESKRIM';
         if (/\b(BARESKRIM|MABES)\b/.test(n)) return 'MABES_ALL';
         return null;
     }
@@ -321,7 +321,7 @@ export class LpMonitoringAccessService {
                 const isNarkoba = /NARKOBA/.test(String(target.deskripsi || '').toUpperCase());
                 const siblingRows = await this.ds.query(
                     `select id::int from bdb_satker
-                     where parent_id = $1 and ${isNarkoba ? "(deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA')" : (domains.includes('TIPIDPPAPPO') ? "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|PPA|PPO|RENAKTA')" : "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM')")}`,
+                     where parent_id = $1 and ${isNarkoba ? "(deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA|SATNARKOBA')" : (domains.includes('TIPIDPPAPPO') ? "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|UNIT\\s*RESKRIM|UNITRESKRIM|PPA|PPO|RENAKTA')" : "(deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|UNIT\\s*RESKRIM|UNITRESKRIM')")}`,
                     [target.parent_id]
                 );
                 siblingRows.forEach((r: any) => additionalIds.push(Number(r.id)));
@@ -408,7 +408,7 @@ export class LpMonitoringAccessService {
                        coalesce(fn.kode_canonical, p.kode_canonical) as kode_canonical
                 from polres_units p
                 left join sub fn on fn.parent_id = p.id and (
-                    ${isActorNarkoba ? "(fn.deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA')" : "(fn.deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM')"}
+                    ${isActorNarkoba ? "(fn.deskripsi ~* 'SAT\\s*NARKOBA|SATRESNARKOBA|SATNARKOBA')" : "(fn.deskripsi ~* 'SAT\\s*RESKRIM|SATRESKRIM|UNIT\\s*RESKRIM|UNITRESKRIM')"}
                 )
                 order by p.id, fn.id desc
             ),

@@ -2829,9 +2829,15 @@ export class LaporanPolisiService {
             throw new BadRequestException('Satker tujuan sama dengan satker saat ini.');
         }
 
+        if (lp.dilimpahkan_eksternal) {
+            await this.dataSource.query(`delete from bdb_lp_pelimpahan where lp_id=$1 and satker_eksternal_id is not null`, [id]);
+        }
         await this.dataSource.query(
             `update bdb_laporan_polisi
-             set satker_id=$2, satker_nama=$3, unit_satker_id=$4, unit_satker_nama=$5, unit_satker_kode=$6, dilimpahkan_eksternal=false, updated_at=now()
+             set satker_id=$2, satker_nama=$3, unit_satker_id=$4, unit_satker_nama=$5, unit_satker_kode=$6,
+                 dilimpahkan_eksternal=false,
+                 sudah_dilimpahkan=exists(select 1 from bdb_lp_pelimpahan p where p.lp_id=$1),
+                 updated_at=now()
              where id=$1`,
             [id, targetSatkerId, targetSatkerNama, targetUnitId, targetUnitNama, targetUnitKode]
         );
