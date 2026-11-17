@@ -175,7 +175,7 @@ export class CoserseKnowledgeService implements OnModuleInit {
     shouldRetrieveKnowledge(query: string): boolean {
         const q = String(query || '').trim();
         if (!q || q.length < 4) return false;
-        return /\b(pasal|kuhp|kuhap|perkap|perpol|perkabareskrim|uu\s*1\s*\/\s*2023|uu\s*8\s*\/\s*1981|sop|syarat|mindik|spdp|sp2hp|sp2[\s_-]?lid|sp3|p[\s-]?19|p[\s-]?21|tahap\s*(?:1|2|i|ii)|penangkapan|penahanan|penggeledahan|penyitaan|praperadilan|gelar\s+perkara|tersangka|alat\s+bukti|restorative|keadilan\s+restoratif|\brj\b|penipuan|penggelapan|pencurian|pemalsuan|penganiayaan|pembunuhan|penadahan|batas\s+waktu|penyidikan|penyelidikan|sttlp|sprin|wasidik|184|109|110|138|492|486|476|391)\b/i.test(
+        return /\b(pasal|kuhp|kuhap|perkap|perpol|perkabareskrim|perma|uu\s*1\s*\/\s*2023|uu\s*8\s*\/\s*1981|sop|syarat|mindik|spdp|sp2hp|sp2[\s_-]?lid|sp3|p[\s-]?19|p[\s-]?21|tahap\s*(?:1|2|i|ii)|penangkapan|penahanan|penggeledahan|penyitaan|praperadilan|gelar\s+perkara|tersangka|alat\s+bukti|restorative|keadilan\s+restoratif|\brj\b|penipuan|penggelapan|pencurian|pemalsuan|penganiayaan|pembunuhan|penadahan|batas\s+waktu|penyidikan|penyelidikan|sttlp|sprin|wass?idik|lha|ppatk|pemblokiran|rekening|tipiring|korporasi|barang\s+bukti|register\s+bb|tahti|perpol\s*4\s*\/\s*2025|ite|tppu|tipikor|tpks|sppa|pkdrt|tppo|minerba|migas|184|109|110|138|492|486|476|391|3\/2013|2\/2012|1\/2024|10\/2010|8\/2014|4\/2025)\b/i.test(
             q
         );
     }
@@ -192,7 +192,7 @@ export class CoserseKnowledgeService implements OnModuleInit {
         // Extract specific tokens like "492", "spdp", "perpol", "8/2021", "6/2019", "1/2022" for exact boost
         const tokens = Array.from(
             new Set(
-                (cleanQuery.toLowerCase().match(/\b(?:pasal\s*\d+|\d+\/\d{4}|\d{2,3}|spdp|sp2hp|sp2lid|sp2-lid|sp3|p19|p21|p-19|p-21|perkap|perpol|perkabareskrim|kuhp|kuhap|restorative|mindik|praperadilan|penangkapan|penahanan|penggeledahan|penyitaan|gelar|tersangka|penipuan|penggelapan|pencurian|pemalsuan|penganiayaan|pembunuhan)\b/gi) || [])
+                (cleanQuery.toLowerCase().match(/\b(?:pasal\s*\d+|\d+\/\d{4}|\d{2,3}|spdp|sp2hp|sp2lid|sp2-lid|sp3|p19|p21|p-19|p-21|perkap|perpol|perkabareskrim|perma|kuhp|kuhap|restorative|mindik|praperadilan|penangkapan|penahanan|penggeledahan|penyitaan|gelar|tersangka|penipuan|penggelapan|pencurian|pemalsuan|penganiayaan|pembunuhan|lha|ppatk|pemblokiran|rekening|tipiring|korporasi|barang\s+bukti|register\s+bb|tahti|wass?idik|ite|tppu|tipikor|tpks|sppa|pkdrt|tppo|minerba|migas)\b/gi) || [])
                     .map((t) => t.trim())
             )
         ).slice(0, 6);
