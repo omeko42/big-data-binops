@@ -2200,3 +2200,32 @@ html[data-theme="dark"] .cs-review-card select {
   border-color: rgba(148, 163, 184, 0.3) !important;
 }
 
+html[data-theme="dark"] .cs-dock {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, #0f172a 24%) !important;
+}
+
+html[data-theme="dark"] .cs-plus-btn {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html[data-theme="dark"] .cs-plus-btn:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .cs-unlimited-box {
+  background: #16223f !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .cs-unlimited-title {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-unlimited-sub {
+  color: #cbd5e1 !important;
+}
+
