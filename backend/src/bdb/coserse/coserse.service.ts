@@ -2164,20 +2164,88 @@ export class CoserseService implements OnApplicationBootstrap {
         }
         const msg = String(rawMessage || '').trim();
         const hasUpdateVerb = /\b(ubah|update|ganti|set|naikkan|turunkan|proses|ajukan|hentikan|ubah status)\b/i.test(msg);
-        const statusMatch = msg.match(/\b(SP3|SP2[\s_-]?LID|P21|SIDIK|LIDIK|RJ|RESTORATIVE\s+JUSTICE)\b/i);
-        if (!hasUpdateVerb || !statusMatch) {
+        const TARGET_PATTERNS: Array<{
+            regex: RegExp;
+            targetStatusCode: string;
+            docTypeCode: string;
+            docTypeNama: string;
+            isRj?: boolean;
+        }> = [
+            {
+                regex: /\b(SP2[\s_-]*LID(?:IK)?|HENTI\s*LIDIK)\b/i,
+                targetStatusCode: 'SP2_LID',
+                docTypeCode: 'SP2_LIDIK',
+                docTypeNama: 'Surat Perintah Penghentian Penyelidikan (SP2 Lidik)'
+            },
+            {
+                regex: /\b(TAHAP[\s_-]*(?:II|2))\b/i,
+                targetStatusCode: 'TAHAP_II',
+                docTypeCode: 'TAHAP_2',
+                docTypeNama: 'Pelimpahan Tersangka & Barang Bukti (Tahap II)'
+            },
+            {
+                regex: /\b(TAHAP[\s_-]*(?:I|1))\b/i,
+                targetStatusCode: 'TAHAP_I',
+                docTypeCode: 'TAHAP_1',
+                docTypeNama: 'Surat Pengantar Berkas Perkara Tahap I'
+            },
+            {
+                regex: /\b(P[\s-]*19)\b/i,
+                targetStatusCode: 'P19',
+                docTypeCode: 'P19',
+                docTypeNama: 'Pengembalian Berkas untuk Dilengkapi (P-19)'
+            },
+            {
+                regex: /\b(P[\s-]*21)\b/i,
+                targetStatusCode: 'P21',
+                docTypeCode: 'P21',
+                docTypeNama: 'Pemberitahuan Berkas Lengkap (P-21)'
+            },
+            {
+                regex: /\b(SPDP)\b/i,
+                targetStatusCode: 'SPDP',
+                docTypeCode: 'SPDP',
+                docTypeNama: 'Surat Pemberitahuan Dimulainya Penyidikan (SPDP)'
+            },
+            {
+                regex: /\b(PERMA)\b/i,
+                targetStatusCode: 'PERMA',
+                docTypeCode: 'PERMA',
+                docTypeNama: 'Penetapan / Putusan PERMA (Perma)'
+            },
+            {
+                regex: /\b(RESTORATIVE\s+JUSTICE|RJ)\b/i,
+                targetStatusCode: 'SP3',
+                docTypeCode: 'SP3',
+                docTypeNama: 'Surat Perintah Penghentian Penyidikan (SP3 / RJ)',
+                isRj: true
+            },
+            {
+                regex: /\b(SP3)\b/i,
+                targetStatusCode: 'SP3',
+                docTypeCode: 'SP3',
+                docTypeNama: 'Surat Perintah Penghentian Penyidikan (SP3)'
+            },
+            {
+                regex: /\b(PENYIDIKAN|SIDIK)\b/i,
+                targetStatusCode: 'PENYIDIKAN',
+                docTypeCode: 'SP_SIDIK',
+                docTypeNama: 'Surat Perintah Penyidikan (Sprin Sidik)'
+            },
+            {
+                regex: /\b(PENYELIDIKAN|LIDIK)\b/i,
+                targetStatusCode: 'PENYELIDIKAN',
+                docTypeCode: 'SP_LIDIK',
+                docTypeNama: 'Surat Perintah Penyelidikan (Sprin Lidik)'
+            }
+        ];
+
+        const matched = TARGET_PATTERNS.find((entry) => entry.regex.test(msg));
+        if (!hasUpdateVerb || !matched) {
             return null;
         }
 
-        const rawTarget = statusMatch[1].toUpperCase().replace(/[\s-]+/g, '_');
-        const targetStatusCode = rawTarget === 'RESTORATIVE_JUSTICE' ? 'SP3' : rawTarget;
-        const docTypeCode = targetStatusCode === 'SP2_LID' ? 'SP2LID' : targetStatusCode === 'SP3' ? 'SP3' : 'SP2HP';
-        const docTypeNama =
-            targetStatusCode === 'SP3'
-                ? 'Surat Perintah Penghentian Penyidikan (SP3 / RJ)'
-                : targetStatusCode === 'SP2_LID'
-                  ? 'Surat Perintah Penghentian Penyelidikan (SP2-Lid)'
-                  : `Pembaruan Status Perkara (${targetStatusCode})`;
+        const { targetStatusCode, docTypeCode, docTypeNama } = matched;
 
         const rec = records[0];
         const now = new Date();
@@ -2198,7 +2266,7 @@ export class CoserseService implements OnApplicationBootstrap {
             tanggal_dokumen_iso: isoDate,
             tersangka: rec.nama_tercatat || '',
             kejaksaan_tujuan: '',
-            alasan_penghentian: rawTarget.includes('RJ') || rawTarget.includes('RESTORATIVE') ? 'Restorative Justice' : '',
+            alasan_penghentian: matched.isRj ? 'Restorative Justice' : '',
             source_filename: 'coserse-chat-command',
             satker_nama: rec.satker_nama,
             cardStatus: 'PENDING'
