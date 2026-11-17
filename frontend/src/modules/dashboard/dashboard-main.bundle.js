@@ -2134,13 +2134,45 @@ function cleanPolsekKecName(rawName) {
     .trim();
 }
 
+async function loadMetroJayaSubGeoJson(kind) {
+  if (typeof window === "undefined") return null;
+  const cacheKey = kind === "polsek" ? "__casMetroJayaPolsekGeoJson" : "__casMetroJayaPolresGeoJson";
+  if (window[cacheKey] && Array.isArray(window[cacheKey].features)) {
+    return window[cacheKey];
+  }
+  try {
+    const resp = await fetch(kind === "polsek" ? "/maps/metro-jaya-polsek.geojson" : "/maps/metro-jaya-polres.geojson");
+    if (!resp.ok) return null;
+    const gj = await resp.json();
+    if (gj && Array.isArray(gj.features)) {
+      window[cacheKey] = gj;
+      return gj;
+    }
+  } catch (_e) {}
+  return null;
+}
+
 // Resolver Utama Irisan Peta (Polygon GeoJSON) untuk Polda, Polres, dan Polsek
 // Catatan Penting: Khusus Bareskrim Polri / Mabes Polri (drillLevel === 3), TIDAK menggambar poligon wilayah!
 async function fetchCasWilkumGeoJson(drillLevel, selectedRegion, selectedPolres, selectedPolsek) {
   if (drillLevel === 3 || drillLevel === 0) return null;
 
+  const isMetroJaya = selectedRegion?.id === "METRO JAYA" || normCasPoldaKey(selectedRegion?.polda || "") === "METRO JAYA";
+
   // Level Polsek (Kecamatan): Misal "Polsek Batangan" -> "Kecamatan Batangan, Kabupaten Pati, Indonesia"
   if (drillLevel === 2 && selectedPolsek) {
+    if (isMetroJaya) {
+      const pskGj = await loadMetroJayaSubGeoJson("polsek");
+      const pskNorm = String(selectedPolsek.nama || "").toUpperCase().replace(/\s+/g, " ").trim();
+      const matchPsk = pskGj?.features?.find(f => (selectedPolsek.kode && f?.properties?.kode === selectedPolsek.kode) || String(f?.properties?.nama || "").toUpperCase() === pskNorm);
+      if (matchPsk) {
+        return {
+          type: "FeatureCollection",
+          features: [matchPsk],
+          label: "Wilkum " + formatFullWilkumSatkerName(selectedPolsek.nama)
+        };
+      }
+    }
     const kec = cleanPolsekKecName(selectedPolsek.nama || selectedPolsek.shortName);
     if (!kec) return null;
     const kabInfo = cleanPolresAreaName(selectedPolres?.nama || "", selectedRegion?.polda || "");
@@ -2163,6 +2195,33 @@ async function fetchCasWilkumGeoJson(drillLevel, selectedRegion, selectedPolres,
 
   // Level Polres (Kabupaten / Kota / Gabungan Kecamatan Lintas):
   if (drillLevel === 2 && selectedPolres) {
+    if (isMetroJaya) {
+      const normPmjPolres = s => String(s || "")
+        .toUpperCase()
+        .replace(/\b(POLRESTA|POLRES|RESTRO|METRO)\b/g, " ")
+        .replace(/\bJAKSEL\b/g, "JAKARTA SELATAN")
+        .replace(/\bJAKBAR\b/g, "JAKARTA BARAT")
+        .replace(/\bJAKTIM\b/g, "JAKARTA TIMUR")
+        .replace(/\bJAKUT\b/g, "JAKARTA UTARA")
+        .replace(/\bJAKPUS\b/g, "JAKARTA PUSAT")
+        .replace(/\bTANGSEL\b/g, "TANGERANG SELATAN")
+        .replace(/\bSOETTA\b/g, "SOEKARNO HATTA")
+        .replace(/\s+/g, " ")
+        .trim();
+      const pskGj = await loadMetroJayaSubGeoJson("polsek");
+      const prsKey = normPmjPolres(selectedPolres.nama || selectedPolres.shortName);
+      const subFeats = (pskGj?.features || []).filter(f =>
+        (selectedPolres.kode && f?.properties?.polres_kode === selectedPolres.kode) ||
+        (prsKey && normPmjPolres(f?.properties?.polres_nama) === prsKey)
+      );
+      if (subFeats.length > 0) {
+        return {
+          type: "FeatureCollection",
+          features: subFeats,
+          label: "Wilkum " + formatFullWilkumSatkerName(selectedPolres.nama) + " (" + subFeats.length + " Polsek)"
+        };
+      }
+    }
     const rawUp = String(selectedPolres.nama || "").toUpperCase();
     // Jika Direktorat Mapolda (Ditreskrimum, Ditreskrimsus, dll.), gunakan poligon Polda induknya
     if (/\b(DITRES|DIT\s|ROBINOPS|BIDPROPAM|SPKT|BRIMOB|POLAIR)\b/.test(rawUp) && selectedRegion) {
@@ -2204,6 +2263,16 @@ async function fetchCasWilkumGeoJson(drillLevel, selectedRegion, selectedPolres,
 
   // Level Polda (Mengikuti Master Polres di Bawahnya! Contoh: Polda Metro Jaya = DKI + Bekasi + Depok + Tangerang + Tangsel; Polda Papua = Papua + Papua Pegunungan + Papua Selatan)
   if (drillLevel === 1 && selectedRegion) {
+    if (isMetroJaya) {
+      const pmjPrs = await loadMetroJayaSubGeoJson("polres");
+      if (pmjPrs && Array.isArray(pmjPrs.features) && pmjPrs.features.length > 0) {
+        return {
+          type: "FeatureCollection",
+          features: pmjPrs.features,
+          label: "Wilkum Polda Metro Jaya (13 Polres)"
+        };
+      }
+    }
     // Gunakan GeoJSON lokal 36 Wilkum Polda jika tersedia agar instan & 1:1, atau fetch dari Nominatim
     const localAll = await loadCasAllPoldaGeoJson();
     const localFeat = localAll?.features?.find(f => {
@@ -4398,15 +4467,55 @@ function CasPetaKejahatanView({
             ? (mapEngine === "vector" ? 0.30 : (drillLevel === 2 && selectedPolsek ? 0.18 : 0.12))
             : 0.02;
 
+          const isMultiSubLayer = wilkumGeoJson.features.length > 1;
+          const matchSubNode = (feat) => {
+            const p = feat?.properties || {};
+            const pool = drillLevel === 2 ? polsekMapNodes : polresMapNodes;
+            if (!Array.isArray(pool) || !pool.length) return null;
+            const fNama = String(p.nama || "").toUpperCase().replace(/\s+/g, " ").trim();
+            const fShort = String(p.shortName || "").toUpperCase().replace(/\s+/g, " ").trim();
+            return pool.find(n =>
+              (p.kode && n.kode === p.kode) ||
+              String(n.nama || "").toUpperCase().replace(/\s+/g, " ").trim() === fNama ||
+              (fShort && String(n.nama || "").toUpperCase().includes(fShort))
+            ) || null;
+          };
+
           const geoLayer = L.geoJSON(wilkumGeoJson, {
-            style: () => ({
-              color: "#ea4335", // Google Maps signature boundary red
-              weight: drillLevel === 2 ? 3.2 : 2.8,
-              opacity: 0.98,
-              fillColor: activeFillColor,
-              fillOpacity: activeFillOpacity,
-              dashArray: "6, 4" // Garis-garis batas wilayah hukum (Wilkum boundary lines)
-            })
+            style: (feat) => {
+              const node = isMultiSubLayer ? matchSubNode(feat) : null;
+              return {
+                color: "#ea4335",
+                weight: isMultiSubLayer ? 1.8 : (drillLevel === 2 ? 3.2 : 2.8),
+                opacity: 0.98,
+                fillColor: node?.color || activeFillColor,
+                fillOpacity: isMultiSubLayer ? (showThermal ? 0.34 : 0.08) : activeFillOpacity,
+                dashArray: isMultiSubLayer ? "4, 3" : "6, 4"
+              };
+            },
+            onEachFeature: (feat, layer) => {
+              if (!isMultiSubLayer) return;
+              const p = feat?.properties || {};
+              const node = matchSubNode(feat);
+              const title = formatFullWilkumSatkerName(node?.nama || p.nama || "");
+              const ct = node ? z(node.ct) : "0";
+              const cc = node ? z(node.cc) : "0";
+              const cr = node ? Number(node.cr || 0).toFixed(1) : "0.0";
+              layer.bindTooltip(
+                "<div style='font-family:sans-serif;font-size:12px;line-height:1.45'>" +
+                "<strong>🛡️ " + title + "</strong><br/>" +
+                "🔥 CT: <b>" + ct + " LP</b> • ✅ CC: <b>" + cc + "</b> • CR: <b>" + cr + "%</b>" +
+                (node ? "<br/><em>Klik untuk detail wilkum</em>" : "") +
+                "</div>",
+                { sticky: true }
+              );
+              if (node) {
+                layer.on("click", () => {
+                  if (drillLevel === 1) handleSelectPolresAndZoom(node);
+                  else if (drillLevel === 2) handleSelectPolsekAndZoom(node);
+                });
+              }
+            }
           }).addTo(leafletLayerGroupRef.current);
           leafletGeoJsonLayerRef.current = geoLayer;
 
@@ -4886,7 +4995,7 @@ function CasPetaKejahatanView({
           ".cas-map-prov-path { transition: fill 160ms ease, stroke 160ms ease, stroke-width 160ms ease, filter 160ms ease; cursor: pointer; }",
           ".cas-map-prov-path:hover { filter: brightness(1.08); stroke: #2563eb !important; }",
           ".cas-peta-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; align-items: stretch; }",
-          ".cas-peta-grid { display: grid; grid-template-columns: minmax(0, 1.88fr) minmax(320px, 1fr); gap: 0.85rem; align-items: stretch; }",
+          ".cas-peta-grid { display: grid; grid-template-columns: minmax(0, 1.88fr) minmax(320px, 1fr); gap: 0.85rem; align-items: flex-start; }",
           ".cas-peta-scroll-bar { display: flex; align-items: center; gap: 0.38rem; flex-wrap: wrap; max-width: 100%; min-width: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }",
           ".cas-peta-scroll-bar::-webkit-scrollbar { display: none; }",
           ".cas-peta-pop-hdr, .cas-peta-pop-hdr .cas-peta-pop-title { color: #ffffff !important; }",
@@ -5132,16 +5241,18 @@ function CasPetaKejahatanView({
                 ]
               }),
 
-              // Main Map Viewport: Fills 100% of remaining card height (flex: 1 1 auto) with zero white space!
+              // Main Map Viewport: Locked height so right-panel list growth never stretches the map
               isGoogleEmbedMode ? (
                 (0, t.jsxs)("div", {
                   className: "cas-peta-map-box",
                   style: {
                     position: "relative",
                     width: "100%",
-                    flex: "1 1 auto",
-                    minHeight: isFullPage ? "66vh" : "580px",
-                    height: "100%",
+                    flex: "0 0 auto",
+                    flexShrink: 0,
+                    minHeight: isFullPage ? "66vh" : "460px",
+                    height: isFullPage ? "66vh" : "clamp(460px, calc(100vh - 220px), 600px)",
+                    maxHeight: isFullPage ? "78vh" : "600px",
                     borderRadius: 10,
                     overflow: "hidden",
                     border: "1px solid " + T.mapBorder,
@@ -5152,7 +5263,7 @@ function CasPetaKejahatanView({
                       key: gmapsEmbedInfo.q,
                       title: gmapsEmbedInfo.title,
                       src: "https://maps.google.com/maps?q=" + encodeURIComponent(gmapsEmbedInfo.q) + "&hl=id&z=" + gmapsEmbedInfo.z + "&output=embed",
-                      style: { width: "100%", height: "100%", minHeight: isFullPage ? "66vh" : "580px", border: 0, display: "block" },
+                      style: { width: "100%", height: "100%", minHeight: isFullPage ? "66vh" : "460px", border: 0, display: "block" },
                       loading: "lazy",
                       referrerPolicy: "no-referrer-when-downgrade"
                     }),
@@ -5222,21 +5333,24 @@ function CasPetaKejahatanView({
                   style: {
                     position: "relative",
                     width: "100%",
-                    flex: "1 1 auto",
+                    flex: "0 0 auto",
+                    flexShrink: 0,
                     display: "flex",
                     flexDirection: "column",
-                    minHeight: isFullPage ? "66vh" : "580px",
-                    height: "100%"
+                    minHeight: isFullPage ? "66vh" : "460px",
+                    height: isFullPage ? "66vh" : "clamp(460px, calc(100vh - 220px), 600px)",
+                    maxHeight: isFullPage ? "78vh" : "600px"
                   },
                   children: [
                     (0, t.jsx)("div", {
                       ref: leafletContainerRef,
                       className: "cas-peta-map-box",
                       style: {
-                        flex: "1 1 auto",
+                        flex: "0 0 auto",
+                        flexShrink: 0,
                         width: "100%",
                         height: "100%",
-                        minHeight: isFullPage ? "66vh" : "580px",
+                        minHeight: isFullPage ? "66vh" : "460px",
                         borderRadius: 10,
                         overflow: "hidden",
                         border: "1px solid " + T.mapBorder,
