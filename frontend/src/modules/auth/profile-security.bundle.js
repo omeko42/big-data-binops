@@ -3003,11 +3003,15 @@ isReadOnlyMode && (0,t.jsxs)("div",{
     (()=>{
       let totP = Math.max(1, Number(eNetworkTotalPages) || 1);
       let curP = Math.min(totP, Math.max(1, Number(eNetworkPage) || 1));
+      let totCount = Math.max(0, Number(eNetworkTotal) || (Array.isArray(eNetworkUsers) ? eNetworkUsers.length : 0));
+      let perP = Math.max(1, Number(eNetworkGridSpec?.limit) || 24);
+      let firstN = totCount > 0 ? Math.min(totCount, (curP - 1) * perP + 1) : 0;
+      let lastN = totCount > 0 ? Math.min(totCount, (curP - 1) * perP + (Array.isArray(eNetworkUsers) ? eNetworkUsers.length : perP)) : 0;
       let pStart = Math.max(1, Math.min(curP - 2, totP - 4));
       let pNums = Array.from({ length: Math.min(5, totP) }, (_, i) => pStart + i);
       let targetUid = eNetworkConnectedTarget || a?.id || mySelf?.id;
       return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{width:"100%",marginTop:"0.5rem"},children:[
-        (0,t.jsx)("span",{className:"cas-paginator-info",children:"Total " + (eNetworkTotal || 0) + (eNetworkConnectedTarget ? " Koneksi" : " Personil")}),
+        (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Menampilkan ",firstN," s.d. ",lastN," dari ",totCount,eNetworkConnectedTarget ? " koneksi" : " personil"]}),
         (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
           (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, 1, targetUid),title:"Halaman Pertama",children:"«"}),
           (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curP <= 1,onClick:() => fetchNetworkDirectory(eNetworkSearch, eNetworkSatkerFilter, curP - 1, targetUid),title:"Sebelumnya",children:"‹"}),
@@ -4059,10 +4063,13 @@ isReadOnlyMode && (0,t.jsxs)("div",{
           })
         }),
         totalPostPages > 1 && (()=>{
+          let totPostsNum = Math.max(0, Number(totalPosts) || 0);
+          let firstPost = totPostsNum > 0 ? Math.min(totPostsNum, (curPage - 1) * 5 + 1) : 0;
+          let lastPost = totPostsNum > 0 ? Math.min(totPostsNum, curPage * 5) : 0;
           let pStart = Math.max(1, Math.min(curPage - 2, totalPostPages - 4));
           let pNums = Array.from({ length: Math.min(5, totalPostPages) }, (_, i) => pStart + i);
           return (0,t.jsxs)("div",{className:"cas-unified-paginator",style:{marginTop:"0.5rem"},children:[
-            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Total ",totalPosts," postingan"]}),
+            (0,t.jsxs)("span",{className:"cas-paginator-info",children:["Menampilkan ",firstPost," s.d. ",lastPost," dari ",totPostsNum," postingan"]}),
             (0,t.jsxs)("div",{className:"cas-paginator-controls",children:[
               (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(1),title:"Halaman Pertama",children:"«"}),
               (0,t.jsx)("button",{type:"button",className:"cas-page-btn",disabled:curPage <= 1,onClick:() => setPostPage(p => Math.max(1, p - 1)),title:"Sebelumnya",children:"‹"}),

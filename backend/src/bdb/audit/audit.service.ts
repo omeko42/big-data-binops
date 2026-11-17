@@ -10,7 +10,7 @@ export type AuditEntry = {
     entityId?: number | string;
     meta?: any; // detail tambahan (json)
     ip?: string;
-    outcome?: 'SUCCESS' | 'ERROR'; // dipakai halaman Log Audit utk filter cepat error sistem
+    outcome?: 'SUCCESS' | 'ERROR' | 'FLAGGED_SECURITY'; // dipakai halaman Log Audit utk filter cepat error/keamanan sistem
 };
 
 /** Audit log GENERAL — dipakai lintas fitur. Panggil `audit.log({...})` dari service mana pun. */

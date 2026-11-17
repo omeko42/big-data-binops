@@ -23,17 +23,19 @@ export class SyncLogStore {
             // Only two small control-plane connections; LP queries still use the normal pool.
             const shared = this.dataSource.driver?.master;
             if (!shared?.options) throw new Error('PostgreSQL primary pool is unavailable');
-            this.pool = this.poolFactory({
+            const poolOpts = {
                 ...shared.options,
                 password: shared.options.password,
                 max: 2,
                 min: 0,
                 connectionTimeoutMillis: 5000,
                 idleTimeoutMillis: 30000,
-                statement_timeout: 10000,
-                lock_timeout: 3000,
                 application_name: 'bdb-dors-control',
-            });
+            };
+            delete poolOpts.lock_timeout;
+            delete poolOpts.statement_timeout;
+            delete poolOpts.idle_in_transaction_session_timeout;
+            this.pool = this.poolFactory(poolOpts);
             this.pool.on('error', (error) => this.logger.warn('DORS control connection: ' + error.message));
         }
         return this.pool;

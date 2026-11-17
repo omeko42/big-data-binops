@@ -1194,6 +1194,8 @@
       return jsxs("div", {
         className: "p-paginator p-component",
         style: {
+          width: "100%",
+          boxSizing: "border-box",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1205,14 +1207,19 @@
         },
         children: [
           jsxs("div", {
-            style: { fontSize: "0.78rem", color: "#64748b", fontWeight: 600 },
-            children: ["Menampilkan ", startRec.toLocaleString("id-ID"), "–", endRec.toLocaleString("id-ID"), " dari ", totalRec.toLocaleString("id-ID"), " data"]
+            className: "p-paginator-current",
+            style: { fontSize: "12px", color: "#64748b", fontWeight: 600, marginRight: "auto" },
+            children: totalRec > 0
+              ? ["Menampilkan ", Math.max(0, Number(startRec) || 0).toLocaleString("id-ID"), " s.d. ", Math.max(0, Number(endRec) || 0).toLocaleString("id-ID"), " dari ", totalRec.toLocaleString("id-ID"), " data"]
+              : "Menampilkan 0 dari 0 data"
           }),
           jsxs("div", {
+            className: "cas-paginator-controls",
             style: { display: "inline-flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap" },
             children: [
               jsx("button", {
                 type: "button",
+                className: "cas-page-btn",
                 disabled: pCur <= 1,
                 onClick: function() { if (pCur > 1) onChangePage(1); },
                 style: Object.assign({}, btnBase, pCur <= 1 ? { opacity: 0.45, cursor: "not-allowed" } : {}),
@@ -1221,6 +1228,7 @@
               }),
               jsx("button", {
                 type: "button",
+                className: "cas-page-btn",
                 disabled: pCur <= 1,
                 onClick: function() { if (pCur > 1) onChangePage(pCur - 1); },
                 style: Object.assign({}, btnBase, pCur <= 1 ? { opacity: 0.45, cursor: "not-allowed" } : {}),
@@ -1231,12 +1239,14 @@
                 var isAct = num === pCur;
                 return jsx("button", {
                   type: "button",
+                  className: "cas-page-btn" + (isAct ? " is-active" : ""),
+                  "aria-current": isAct ? "page" : void 0,
                   onClick: function() { if (num !== pCur) onChangePage(num); },
                   style: Object.assign({}, btnBase, isAct ? {
                     background: "#dc2626",
-                    borderColor: "#dc2626",
+                    borderColor: "#b91c1c",
                     color: "#ffffff",
-                    fontWeight: 800,
+                    fontWeight: 700,
                     boxShadow: "0 2px 6px rgba(220,38,38,0.28)"
                   } : {}),
                   children: num
@@ -1244,6 +1254,7 @@
               }),
               jsx("button", {
                 type: "button",
+                className: "cas-page-btn",
                 disabled: pCur >= tPages,
                 onClick: function() { if (pCur < tPages) onChangePage(pCur + 1); },
                 style: Object.assign({}, btnBase, pCur >= tPages ? { opacity: 0.45, cursor: "not-allowed" } : {}),
@@ -1252,6 +1263,7 @@
               }),
               jsx("button", {
                 type: "button",
+                className: "cas-page-btn",
                 disabled: pCur >= tPages,
                 onClick: function() { if (pCur < tPages) onChangePage(tPages); },
                 style: Object.assign({}, btnBase, pCur >= tPages ? { opacity: 0.45, cursor: "not-allowed" } : {}),
@@ -1261,15 +1273,15 @@
             ]
           }),
           jsxs("div", {
-            style: { display: "inline-flex", alignItems: "center", gap: "0.45rem" },
+            className: "p-paginator-rpp-options",
+            style: { display: "inline-flex", alignItems: "center", marginLeft: "auto" },
             children: [
-              jsx("span", { style: { fontSize: "0.76rem", color: "#64748b", fontWeight: 600 }, children: "Baris:" }),
               jsxs("select", {
                 value: rpp,
                 onChange: function(ev) { onChangeRows(Number(ev.target.value) || 25); },
                 className: "p-inputtext p-component",
-                style: { height: "34px", padding: "0 0.6rem", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" },
-                children: [10, 25, 50, 100].map(function(opt) {
+                style: { height: "32px", padding: "0 0.6rem", borderRadius: "8px", fontSize: "12px", fontWeight: 600, cursor: "pointer" },
+                children: [25, 50, 100].map(function(opt) {
                   return jsx("option", { value: opt, children: opt }, "rpp-" + opt);
                 })
               })

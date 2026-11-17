@@ -61,9 +61,10 @@ import { NotificationsService } from './notifications/notifications.service';
 import { LoadTestController } from './load-test/load-test.controller';
 import { LoadTestService } from './load-test/load-test.service';
 import { LpMonitoringAccessService } from './common/lp-monitoring-access.service';
+import { CoserseModule } from './coserse/coserse.module';
 
 @Module({
-    imports: [AuthModule, ExternalModule],
+    imports: [AuthModule, ExternalModule, CoserseModule],
     controllers: [DpoController, BdbMasterController, BdbRekapLpController, BdbKermaController, DorsController, SatkerController, SatkerLegacyReconciliationController, LaporanPolisiController, MasterDataGapController, LpPelimpahanController, WorkflowController, SatkerEksternalController, JukrahController, AuditController, MenuAccessController, AnevController, IntegrationClientController, PanduanController, SystemSettingController, PihakTerlibatController, BdbOperasiSatgasController, BdbKasusMenonjolController, BdbKasusAtensiController, KinerjaPerkaraController, BarangBuktiController, NotificationsController, LoadTestController, BdbSnapshotOrchestratorController],
     providers: [DpoService, BdbMasterService, BdbRekapLpService, BdbKermaService, MinioService, DorsService, SatkerService, SatkerLegacyReconciliationService, LaporanPolisiService, MasterDataGapService, LpPelimpahanService, WorkflowService, SatkerEksternalService, JukrahService, AuditService, MenuAccessService, AnevService, IntegrationClientService, PanduanService, SystemSettingService, PihakTerlibatService, BdbOperasiSatgasService, BdbKasusMenonjolService, BdbKasusAtensiService, KinerjaPerkaraService, BarangBuktiService, NotificationsService, LoadTestService, LpMonitoringAccessService, BdbJobQueueService, BdbSnapshotOrchestratorService],
     exports: [BdbJobQueueService, BdbSnapshotOrchestratorService]

@@ -1,31 +1,98 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { ModuleRef } from '@nestjs/core';
+import Redis from 'ioredis';
 import { isPrimaryClusterInstance } from './cluster-instance.util';
 import { BdbJobQueueService } from './job-queue.service';
 
 /**
  * Koordinator Snapshot & Recalculate Index Terjadwal (Per 30 Menit).
  *
- * Mengkoordinasikan seluruh pembaruan tabel index/snapshot agar:
- * 1. Tidak membebani DB master LP saat jam kerja.
- * 2. Menjalankan refresh secara SEKUENSIAL (bergantian):
- *    [1/4] Kinerja Perkara -> [2/4] ANEV LP Rekap -> [3/4] Pihak Terlibat -> [4/4] Barang Bukti.
- * 3. Menggunakan BdbJobQueueService agar antre dan tidak bertabrakan dengan job lain
- *    (misal: bila ada DORS sync yang sedang berjalan, recalculate ini akan mengantri sampai selesai).
+ * Dilengkapi:
+ * 1. Guard DISABLE_CRON=true & isPrimaryClusterInstance()
+ * 2. Redis Distributed Leader Lock (`SET bdb:snapshot:leader <instance_id> NX PX ...`)
+ *    agar pada arsitektur multi-instance (`bdb-api-1` & `bdb-api-2`) tidak pernah berjalan ganda.
  */
 @Injectable()
-export class BdbSnapshotOrchestratorService implements OnModuleInit {
+export class BdbSnapshotOrchestratorService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(BdbSnapshotOrchestratorService.name);
+    private readonly instanceId = `${process.env.HOSTNAME || 'bdb-api'}-${process.env.PORT || 3850}-${process.pid}`;
+    private redisLeader: Redis | null = null;
 
     constructor(
         private readonly jobQueue: BdbJobQueueService,
         private readonly moduleRef: ModuleRef
-    ) {}
+    ) {
+        this.initRedisLeaderClient();
+    }
+
+    private initRedisLeaderClient() {
+        try {
+            const host = process.env.COSERSE_REDIS_HOST || process.env.REDIS_HOST || 'bdb-redis';
+            const port = Number(process.env.COSERSE_REDIS_PORT || process.env.REDIS_PORT || 6379);
+            const client = new Redis({
+                host,
+                port,
+                lazyConnect: true,
+                maxRetriesPerRequest: 1,
+                enableOfflineQueue: false
+            });
+            client.on('error', () => {});
+            client.connect().catch(() => {});
+            this.redisLeader = client;
+        } catch {
+            this.redisLeader = null;
+        }
+    }
 
     async onModuleInit() {
-        if (!isPrimaryClusterInstance()) return;
-        this.logger.log('BdbSnapshotOrchestratorService diinisialisasi pada cluster primer.');
+        if (!isPrimaryClusterInstance()) {
+            this.logger.log(
+                `[SnapshotOrchestrator] Non-primary / DISABLE_CRON aktif pada instance ${this.instanceId}; scheduler dinonaktifkan.`
+            );
+            return;
+        }
+        this.logger.log(`BdbSnapshotOrchestratorService diinisialisasi pada cluster primer (${this.instanceId}).`);
+    }
+
+    async onModuleDestroy() {
+        if (this.redisLeader) {
+            try {
+                await this.redisLeader.quit();
+            } catch {
+                this.redisLeader.disconnect();
+            }
+            this.redisLeader = null;
+        }
+    }
+
+    private async tryAcquireDistributedLeaderLock(ttlMs = 25 * 60 * 1000): Promise<boolean> {
+        if (!this.redisLeader) return true;
+        try {
+            const res = await this.redisLeader.set('bdb:snapshot:leader', this.instanceId, 'PX', ttlMs, 'NX');
+            if (res === 'OK') return true;
+            const currentOwner = await this.redisLeader.get('bdb:snapshot:leader');
+            if (currentOwner === this.instanceId) {
+                await this.redisLeader.pexpire('bdb:snapshot:leader', ttlMs);
+                return true;
+            }
+            this.logger.warn(
+                `[SnapshotOrchestrator] Leader lock bdb:snapshot:leader sedang dipegang oleh ${currentOwner}; instance ${this.instanceId} melewati siklus ini.`
+            );
+            return false;
+        } catch {
+            return true;
+        }
+    }
+
+    private async releaseDistributedLeaderLock(): Promise<void> {
+        if (!this.redisLeader) return;
+        try {
+            const owner = await this.redisLeader.get('bdb:snapshot:leader');
+            if (owner === this.instanceId) {
+                await this.redisLeader.del('bdb:snapshot:leader');
+            }
+        } catch {}
     }
 
     /**
@@ -50,13 +117,29 @@ export class BdbSnapshotOrchestratorService implements OnModuleInit {
      * Menjalankan 4 tahap kalkulasi secara berurutan (sekuensial) melalui antrean jobQueue.
      */
     async triggerSequentialRecalculate(triggerSource = 'Manual', onlyActivePeriod = false) {
+        if (!isPrimaryClusterInstance() && triggerSource.includes('Jadwal Otomatis')) {
+            return;
+        }
         this.logger.log(`[SnapshotOrchestrator] Mendaftarkan siklus recalculate sekuensial (${triggerSource})...`);
 
         // Daftarkan keseluruhan siklus sebagai 1 rantai pekerjaan terurut di antrean
         this.jobQueue.enqueue(`Recalculate Index Siklus (${triggerSource})`, async () => {
+            const acquiredLeader = await this.tryAcquireDistributedLeaderLock();
+            if (!acquiredLeader) {
+                return;
+            }
+            const renewTimer = setInterval(() => {
+                void this.tryAcquireDistributedLeaderLock();
+            }, 60_000);
+            if (typeof (renewTimer as any).unref === 'function') {
+                (renewTimer as any).unref();
+            }
+
             const cycleStart = Date.now();
             this.logger.log(`================================================================`);
-            this.logger.log(`[SnapshotOrchestrator] MEMULAI SIKLUS RECALCULATE INDEX (30 MENIT)`);
+            this.logger.log(
+                `[SnapshotOrchestrator] MEMULAI SIKLUS RECALCULATE INDEX (Leader: ${this.instanceId})`
+            );
             this.logger.log(`================================================================`);
 
             try {
@@ -93,7 +176,7 @@ export class BdbSnapshotOrchestratorService implements OnModuleInit {
 
                 // 3/4: Pihak Terlibat
                 const t3 = Date.now();
-                this.logger.log('[SnapshotOrchestrator] [3/4] Merefresh Snapshot Pihak Terlibat...');
+                this.logger.log('[SnapshotOrchestrator] [3/4] Merefresh Snapshot Pihak Terlibat (Dirty-Partition Atomic Batch)...');
                 try {
                     const { PihakTerlibatService } = await import('../pihak-terlibat/pihak-terlibat.service');
                     const pihakService = this.moduleRef.get(PihakTerlibatService, { strict: false });
@@ -124,6 +207,9 @@ export class BdbSnapshotOrchestratorService implements OnModuleInit {
                 this.logger.log(`================================================================`);
             } catch (err: any) {
                 this.logger.error(`[SnapshotOrchestrator] Siklus recalculate error: ${err?.message || err}`);
+            } finally {
+                clearInterval(renewTimer);
+                await this.releaseDistributedLeaderLock();
             }
         });
     }

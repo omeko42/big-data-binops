@@ -3191,37 +3191,32 @@ e.s(["default",0,function() {
       },
       children:[
         // Counter
-        (0,t.jsxs)("div",{style:{fontSize:"12px",fontWeight:600,color:"#64748b"},children:[
+        (0,t.jsxs)("div",{className:"cas-paginator-info",style:{fontSize:"12px",fontWeight:600},children:[
           "Menampilkan ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems > 0 ? (startIndex + 1) : 0}),
-          " - ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:endIndex}),
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0, Number(totalItems) || 0) > 0 ? (Math.max(0, Number(startIndex) || 0) + 1) : 0}),
+          " s.d. ",
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0, Number(endIndex) || 0)}),
           " dari ",
-          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:totalItems}),
+          (0,t.jsx)("strong",{style:{color:"var(--cas-text-primary, #0f172a)"},children:Math.max(0, Number(totalItems) || 0)}),
           " postingan"
         ]}),
 
         // Pagination buttons
-        (0,t.jsxs)("div",{style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+        (0,t.jsxs)("div",{className:"cas-paginator-controls",style:{display:"flex",alignItems:"center",gap:"0.35rem",flexWrap:"wrap"},children:[
+          (0,t.jsx)("button",{
+            type:"button",
+            className:"cas-page-btn",
+            disabled:validPage <= 1,
+            title:"Halaman Pertama",
+            onClick:() => { setCurrentPage(1); window.scrollTo({ top: 380, behavior: 'smooth' }); },
+            children:"«"
+          }),
           (0,t.jsxs)("button",{
             type:"button",
             className:"cas-page-btn",
             disabled:validPage <= 1,
+            title:"Sebelumnya",
             onClick:() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 380, behavior: 'smooth' }); },
-            style:{
-              background:"#ffffff",
-              border:"1px solid #e2e8f0",
-              borderRadius:"8px",
-              color:validPage <= 1 ? '#94a3b8' : '#334155',
-              cursor:validPage <= 1 ? 'not-allowed' : 'pointer',
-              height:"32px",
-              padding:"0 0.75rem",
-              fontSize:"12px",
-              fontWeight:600,
-              display:"inline-flex",
-              alignItems:"center",
-              gap:"0.25rem"
-            },
             children:[
               (0,t.jsx)(IconChevronLeft,{size:14}),
               "Sebelumnya"
@@ -3238,23 +3233,8 @@ e.s(["default",0,function() {
                 (0,t.jsx)("button",{
                   type:"button",
                   className:"cas-page-btn" + (validPage === pNum ? " is-active" : ""),
+                  "aria-current":validPage === pNum ? "page" : void 0,
                   onClick:() => { setCurrentPage(pNum); window.scrollTo({ top: 380, behavior: 'smooth' }); },
-                  style:{
-                    background:validPage === pNum ? '#1e293b' : '#ffffff',
-                    border:validPage === pNum ? '1px solid #1e293b' : '1px solid #e2e8f0',
-                    borderRadius:"8px",
-                    color:validPage === pNum ? '#ffffff' : '#334155',
-                    cursor:"pointer",
-                    height:"32px",
-                    minWidth:"32px",
-                    padding:"0 0.55rem",
-                    fontSize:"12px",
-                    fontWeight:validPage === pNum ? 700 : 600,
-                    display:"inline-flex",
-                    alignItems:"center",
-                    justifyContent:"center",
-                    textAlign:"center"
-                  },
                   children:pNum
                 })
               ]});
@@ -3264,25 +3244,20 @@ e.s(["default",0,function() {
             type:"button",
             className:"cas-page-btn",
             disabled:validPage >= totalPages,
+            title:"Berikutnya",
             onClick:() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 380, behavior: 'smooth' }); },
-            style:{
-              background:"#ffffff",
-              border:"1px solid #e2e8f0",
-              borderRadius:"8px",
-              color:validPage >= totalPages ? '#94a3b8' : '#334155',
-              cursor:validPage >= totalPages ? 'not-allowed' : 'pointer',
-              height:"32px",
-              padding:"0 0.75rem",
-              fontSize:"12px",
-              fontWeight:600,
-              display:"inline-flex",
-              alignItems:"center",
-              gap:"0.25rem"
-            },
             children:[
               "Berikutnya",
               (0,t.jsx)(IconChevronRight,{size:14})
             ]
+          }),
+          (0,t.jsx)("button",{
+            type:"button",
+            className:"cas-page-btn",
+            disabled:validPage >= totalPages,
+            title:"Halaman Terakhir",
+            onClick:() => { setCurrentPage(totalPages); window.scrollTo({ top: 380, behavior: 'smooth' }); },
+            children:"»"
           })
         ]})
       ]

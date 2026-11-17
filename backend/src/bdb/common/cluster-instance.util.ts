@@ -15,6 +15,9 @@
  * sebelum util ini ada) SALAH untuk mode 1-proses -- tugas jadi tidak pernah jalan sama sekali.
  */
 export function isPrimaryClusterInstance(): boolean {
+    if (String(process.env.DISABLE_CRON || '').toLowerCase() === 'true') {
+        return false;
+    }
     const idx = process.env.NODE_APP_INSTANCE;
     return idx === undefined || idx === '0';
 }

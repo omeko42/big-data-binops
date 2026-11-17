@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { types as pgTypes, defaults as pgDefaults } from 'pg';
 import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.coserse' });
 dotenv.config();
 
 // Kolom `timestamp` (TANPA time zone -- dipakai luas di seluruh skema, mis. created_at/started_at)
@@ -30,8 +31,8 @@ pgDefaults.parseInputDatesAsUTC = true;
     imports: [
         TypeOrmModule.forRoot({
             type: (process.env.DB_TYPE as any) || 'postgres',
-            host: process.env.DB_HOST || 'localhost',
-            port: parseInt(process.env.DB_PORT, 10) || 5432,
+            host: process.env.PGBOUNCER_HOST || process.env.DB_HOST || 'localhost',
+            port: parseInt(process.env.PGBOUNCER_PORT || process.env.DB_PORT, 10) || 5432,
             username: process.env.DB_USERNAME || 'postgres',
             password: process.env.DB_PASSWORD || 'password',
             database: process.env.DB_DATABASE || 'test',
@@ -47,11 +48,12 @@ pgDefaults.parseInputDatesAsUTC = true;
             // connectionTimeoutMillis: WAJIB diisi -- default pg Pool (0 = tunggu tanpa batas) bikin
             // request "menggantung" diam2 kalau pool penuh, bukan gagal cepat dgn pesan jelas.
             extra: {
-                max: 8,
+                max: parseInt(process.env.DB_POOL_MAX || '12', 10) || 12,
                 connectionTimeoutMillis: 5000,
-                idleTimeoutMillis: 30000
+                idleTimeoutMillis: 30000,
+                statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '30000', 10) || 30000
             },
-            poolSize: 8,
+            poolSize: parseInt(process.env.DB_POOL_MAX || '12', 10) || 12,
             entities: ['dist/**/*.entity{.ts,.js}'],
             migrations: ['dist/app_core/migrations/**/*.ts'],
             subscribers: ['dist/subscriber/**/*.ts']
