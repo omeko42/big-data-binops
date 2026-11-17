@@ -389,7 +389,7 @@ let AnevService = class AnevService {
         }
         return out;
     }
-    async operationalReadIds(rootId) {
+    async operationalReadIds(rootId, allowPolsekInCrimeDomain = false) {
         const sRows = await this.ds.query('select id, deskripsi, tipe_satker, parent_id from bdb_satker where id=$1', [rootId]);
         if (!sRows.length)
             return [rootId];
@@ -415,17 +415,19 @@ let AnevService = class AnevService {
                 for (const row of satkers)
                     satkerMap.set(Number(row.id), row);
                 const allowed = new Set([Number(rootId)]);
+                const includePolsekUnits = satUnitType === 'SATRESKRIM' || (allowPolsekInCrimeDomain && (satUnitType === 'SATRESNARKOBA' || satUnitType === 'SATRESPPADANPPO'));
                 for (const cid of polresChildren) {
                     const cs = satkerMap.get(cid);
                     if (!cs)
                         continue;
-                    const cTipe = String(cs.tipe_satker || '').trim().toUpperCase();
                     const cDesk = String(cs.deskripsi || '').trim().toUpperCase().replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, '');
+                    if (this.isEksternalSatkerName(cDesk))
+                        continue;
                     const cSatType = this.detectPolresSatuanType(cDesk);
                     if (cSatType === satUnitType) {
                         allowed.add(cid);
                     }
-                    else if (satUnitType === 'SATRESKRIM') {
+                    else if (includePolsekUnits) {
                         if (this.isPolsekSatkerNode(cs) || this.isPolsekSatkerName(cDesk)) {
                             allowed.add(cid);
                         }
@@ -456,7 +458,7 @@ let AnevService = class AnevService {
                     const cDesk = String(cs.deskripsi || '').trim().toUpperCase();
                     if (this.isEksternalSatkerName(cDesk))
                         continue;
-                    if (!this.isSatkerAllowedInScope(cDesk, deskripsi))
+                    if (!this.isSatkerAllowedInScope(cDesk, deskripsi, allowPolsekInCrimeDomain))
                         continue;
                     if (['POLRES', 'POLRESTA', 'POLRESTABES', 'POLRES METRO', 'POLRESTRO', 'POLSEK', 'POLSEKTA', 'POLSEKTRO', 'POLSUBSEKTOR'].includes(cTipe) || (this.isTerritorialPolresOrPolsekName(cDesk) && !this.detectPolresSatuanType(cDesk))) {
                         allowed.add(cid);
@@ -464,7 +466,9 @@ let AnevService = class AnevService {
                     else if (cTipe === 'FUNGSI' && Number(cs.parent_id) !== Number(s.parent_id)) {
                         if (isNarkoba && /NARKOBA|NARKOTIKA/.test(cDesk))
                             allowed.add(cid);
-                        else if (isPpa && /PPA|PPO|RENAKTA|RESKRIM/.test(cDesk) && !/NARKOBA/.test(cDesk))
+                        else if (allowPolsekInCrimeDomain && isNarkoba && this.isPolsekSatkerName(cDesk))
+                            allowed.add(cid);
+                        else if (isPpa && (/PPA|PPO|RENAKTA|RESKRIM/.test(cDesk) || (allowPolsekInCrimeDomain && this.isPolsekSatkerName(cDesk))) && !/NARKOBA/.test(cDesk))
                             allowed.add(cid);
                         else if (!isNarkoba && !isPpa && /RESKRIM|KRIMUM|KRIMSUS|SIBER/.test(cDesk) && !/NARKOBA/.test(cDesk))
                             allowed.add(cid);
@@ -525,7 +529,11 @@ let AnevService = class AnevService {
         if (id === 21 || desk === 'DITTIPIDNARKOBA BARESKRIM POLRI' || (desk.includes('TIPIDNARKOBA') && desk.includes('BARESKRIM'))) {
             return ['TIPIDNARKOBA', 'NARKOBA'];
         }
-        if (id === 22 || desk === 'DITTIPIDTER BARESKRIM POLRI' || (desk.includes('TIPIDTER') && desk.includes('BARESKRIM'))) {
+        const isTipidTeror = desk.includes('TIPIDTEROR') || desk.includes('TERORIS') || desk.includes('DENSUS');
+        if (isTipidTeror) {
+            return ['TIPIDTEROR', 'TIPIDUM', 'KRIMUM'];
+        }
+        if (id === 22 || desk === 'DITTIPIDTER BARESKRIM POLRI' || (!isTipidTeror && /(?:DIT|SUBDIT|SAT|UNIT)?TIPIDTER(?![A-Z])|\bPIDTER\b/.test(desk) && desk.includes('BARESKRIM'))) {
             return ['TIPIDTER'];
         }
         if (id === 23 || desk === 'DITTIPIDSIBER BARESKRIM POLRI' || (desk.includes('TIPIDSIBER') && desk.includes('BARESKRIM'))) {
@@ -546,7 +554,7 @@ let AnevService = class AnevService {
         if (desk.includes('TIPIDNARKOBA') || desk.includes('NARKOBA')) {
             return ['TIPIDNARKOBA', 'NARKOBA'];
         }
-        if (desk.includes('TIPIDTER')) {
+        if (!isTipidTeror && /(?:DIT|SUBDIT|SAT|UNIT)?TIPIDTER(?![A-Z])|\bPIDTER\b/.test(desk)) {
             return ['TIPIDTER'];
         }
         if (desk.includes('TIPIDSIBER') || desk.includes('SIBER')) {
@@ -566,7 +574,7 @@ let AnevService = class AnevService {
     async dashboard(f, userId) {
         const scope = await this.resolveScope(userId);
         const cacheKey = [
-            'DASH_V8',
+            'DASH_V12',
             scope.all ? 'ALL' : (scope.satkerId || 'NONE'),
             f.date_from || '',
             f.date_to || '',
@@ -634,7 +642,7 @@ let AnevService = class AnevService {
                     ? [targetTahun, targetBulan, scopeKey, functionDomain, organizationDomain]
                     : [targetTahun, scopeKey, functionDomain, organizationDomain];
                 const snapRows = await this.ds.query(snapSql, snapParams);
-                if (snapRows.length > 0 && snapRows[0].data && snapRows[0].data.rollup_v2 === true) {
+                if (snapRows.length > 0 && snapRows[0].data && snapRows[0].data.rollup_v4 === true) {
                     const resData = snapRows[0].data;
                     resData.scoped = !scope.all;
                     if (!scope.all && scope.satkerId) {
@@ -684,7 +692,7 @@ let AnevService = class AnevService {
             if (!u || u === '-' || u === 'NULL' || u === 'SPKT') return fallback;
             if (u.includes('NARKOBA') || u.includes('NARKOTIKA')) return 'SATRESNARKOBA';
             if (u.includes('PPA') || u.includes('PPO') || u.includes('RENAKTA')) return 'SATRESPPADANPPO';
-            if (u.includes('RESKRIM') || u.includes('KRIMUM') || u.includes('KRIMSUS') || u.includes('EKSUS') || u.includes('TIPIDTER') || u.includes('KORUPSI') || u.includes('TIPIDKOR') || u.includes('SIBER')) return 'SATRESKRIM';
+            if (u.includes('RESKRIM') || u.includes('KRIMUM') || u.includes('KRIMSUS') || u.includes('EKSUS') || (!u.includes('TIPIDTEROR') && u.includes('TIPIDTER')) || u.includes('KORUPSI') || u.includes('TIPIDKOR') || u.includes('SIBER')) return 'SATRESKRIM';
             return fallback;
         };
         const resolvePusatBucketAndChild = (sidNum, usidNum, unitNamaRaw) => {
@@ -764,6 +772,49 @@ let AnevService = class AnevService {
                 childNama: null
             };
         };
+
+        const fetchCrimeBreakdowns = async (
+            fromJoinSql,
+            whereSql,
+            baseParams,
+            crimeNames,
+            resolveBucket,
+            useDistinctLp = true
+        ) => {
+            const out = new Map();
+            if (!Array.isArray(crimeNames) || crimeNames.length === 0) return out;
+            const paramsWithNames = [...baseParams, crimeNames];
+            const countExpr = useDistinctLp ? 'count(distinct lp.id)::int' : 'count(*)::int';
+            const cleanWhere = whereSql && String(whereSql).trim() ? String(whereSql).trim() : 'where 1=1';
+            const rows = await this.ds.query(
+                `select tp.nama_kategori_kejahatan as kat,
+                        coalesce(lp.satker_id, lp.unit_satker_id) as sid,
+                        coalesce(lp.unit_satker_id, lp.satker_id) as usid,
+                        coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
+                        ${countExpr} as jml
+                 ${fromJoinSql}
+                 ${cleanWhere}
+                   and tp.nama_kategori_kejahatan = ANY($${paramsWithNames.length})
+                   and coalesce(lp.satker_id, lp.unit_satker_id) is not null
+                 group by tp.nama_kategori_kejahatan, coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), '')`,
+                paramsWithNames
+            );
+            const mapByCrime = new Map();
+            for (const br of rows) {
+                const nm = resolveBucket(Number(br.sid || 0), Number(br.usid || 0), String(br.unit_nama || ''));
+                if (!nm || nm === 'UNKNOWN') continue;
+                let m = mapByCrime.get(br.kat);
+                if (!m) {
+                    m = new Map();
+                    mapByCrime.set(br.kat, m);
+                }
+                m.set(nm, (m.get(nm) || 0) + Number(br.jml || 0));
+            }
+            for (const [kat, m] of mapByCrime.entries()) {
+                out.set(kat, [...m.entries()].map(([nama, val]) => ({ nama, val })));
+            }
+            return out;
+        };
         const perSat = await this.ds.query(`select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
                     coalesce(lp.unit_satker_id, lp.satker_id) as usid,
                     coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
@@ -830,6 +881,7 @@ let AnevService = class AnevService {
                 };
             });
         let top_kejahatan_regional = [];
+        let hasRegCrimeFilter = false;
         let regional_nama = null;
         let regional_ct = 0;
         const kej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
@@ -946,6 +998,21 @@ let AnevService = class AnevService {
                     const activeRoot = polresRoot || regionalRoot;
                     const isPolresLevel = Boolean(polresRoot);
                     regional_nama = String(activeRoot.deskripsi || '').replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, '').trim();
+                    const userNode = satkerMap.get(scope.satkerId);
+                    const rawUserSatker = String(userNode?.deskripsi || scopeSatker || regional_nama).replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, '').trim();
+                    const userSatType = isPolresLevel ? this.detectPolresSatuanType(rawUserSatker) : null;
+                    const isGeneralPolsek = isPolresLevel && (this.isPolsekSatkerName(rawUserSatker) || userSatType === 'UNIT RESKRIM');
+                    const isSpecialPolresTipid = isPolresLevel && (userSatType === 'SATRESNARKOBA' || userSatType === 'SATRESPPADANPPO' || userSatType === 'SATRESKRIM');
+                    const regScopeNama = (isPolresLevel && (isGeneralPolsek || !userSatType)) ? regional_nama : rawUserSatker;
+                    const regCrimeGroups = isSpecialPolresTipid
+                        ? (this.petaScopeCrimeGroups(userNode?.id, rawUserSatker) || this.getCrimeFunctionDomain(userNode?.id, rawUserSatker))
+                        : (!isPolresLevel ? this.getCrimeFunctionDomain(userNode?.id, userNode?.deskripsi) : null);
+                    const regCrimeIds = await this.resolveApprovedCrimeIdsForGroups(regCrimeGroups);
+                    hasRegCrimeFilter = Boolean(regCrimeIds && regCrimeIds.length > 0);
+                    const allowPolsekInReg = hasRegCrimeFilter;
+                    const defaultSatFallback = regCrimeGroups?.some((g) => g.includes('NARKOBA'))
+                        ? 'SATRESNARKOBA'
+                        : (regCrimeGroups?.includes('TIPIDPPAPPO') ? 'SATRESPPADANPPO' : 'SATRESKRIM');
                     const equivalentRootIds = new Set([activeRoot.id]);
                     if (isPolresLevel) {
                         const rootMKey = this.canonicalPolresMergeKey({ nama: activeRoot.deskripsi });
@@ -961,6 +1028,7 @@ let AnevService = class AnevService {
                         }
                     }
                     const allRegIds = [];
+                    const excludedRegIds = [];
                     for (const [id, sNode] of satkerMap.entries()) {
                         let p = id;
                         let underRoot = false;
@@ -978,13 +1046,24 @@ let AnevService = class AnevService {
                         }
                         if (underRoot) {
                             const checkName = ancestorUnderPolda ? ancestorUnderPolda.deskripsi : sNode.deskripsi;
-                            if (this.isSatkerAllowedInScope(checkName, scopeSatker) && this.isSatkerAllowedInScope(sNode.deskripsi, scopeSatker)) {
+                            if (this.isSatkerAllowedInScope(checkName, regScopeNama, allowPolsekInReg) && this.isSatkerAllowedInScope(sNode.deskripsi, regScopeNama, allowPolsekInReg)) {
                                 allRegIds.push(id);
+                            }
+                            else {
+                                excludedRegIds.push(id);
                             }
                         }
                     }
                     if (allRegIds.length > 0) {
-                        const { where: regWhere, params: regParams } = this.buildWhereLp(f, allRegIds);
+                        const { where: regWhereBase, params: regParamsBase } = this.buildWhereLp(f, allRegIds);
+                        const regParams = excludedRegIds.length > 0 ? [...regParamsBase, excludedRegIds] : regParamsBase;
+                        const regWhere = excludedRegIds.length > 0
+                            ? `${regWhereBase} and (lp.unit_satker_id is null or not (lp.unit_satker_id = any($${regParams.length})))`
+                            : regWhereBase;
+                        const regLpParams = hasRegCrimeFilter ? [...regParams, regCrimeIds] : regParams;
+                        const regCrimeClause = hasRegCrimeFilter
+                            ? `and (lp.jenis_kejahatan_id = ANY($${regLpParams.length}) or exists (select 1 from bdb_lp_tindak_pidana_dors tp_f where tp_f.laporan_polisi_id = lp.id and tp_f.jenis_kejahatan_id = ANY($${regLpParams.length})))`
+                            : '';
                         const regPerSat = await this.ds.query(`select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
                                     coalesce(lp.unit_satker_id, lp.satker_id) as usid,
                                     coalesce(nullif(trim(lp.unit_nama), ''), '') as unit_nama,
@@ -993,8 +1072,9 @@ let AnevService = class AnevService {
                              from bdb_laporan_polisi lp
                              left join bdb_status_master st on st.id = lp.status_id
                              ${regWhere}
+                               ${regCrimeClause}
                                and coalesce(lp.satker_id, lp.unit_satker_id) is not null
-                             group by coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), ''), st.kategori`, regParams);
+                             group by coalesce(lp.satker_id, lp.unit_satker_id), coalesce(lp.unit_satker_id, lp.satker_id), coalesce(nullif(trim(lp.unit_nama), ''), ''), st.kategori`, regLpParams);
                         const activePolresByMergeKey = new Map();
                         const activePolsekByMergeKey = new Map();
                         for (const sNode of satkerMap.values()) {
@@ -1054,7 +1134,7 @@ let AnevService = class AnevService {
                                         childNama: `UNIT RESKRIM ${polsekNama}`
                                     };
                                 }
-                                const satType = this.detectPolresSatuanType(directUnit?.deskripsi) || normalizeUnitSatLabel(unitNamaRaw || directUnit?.deskripsi, 'SATRESKRIM', 'POLRES');
+                                const satType = this.detectPolresSatuanType(directUnit?.deskripsi) || normalizeUnitSatLabel(unitNamaRaw || directUnit?.deskripsi, defaultSatFallback, 'POLRES');
                                 const satLabel = `${satType} ${rootPolresNama}`;
                                 return {
                                     bucketKey: `SAT_${satType}`,
@@ -1087,7 +1167,7 @@ let AnevService = class AnevService {
                                     childNama = resolveCanonicalPolsekNama(polsekInChain.deskripsi);
                                 } else {
                                     const subChild = chain.length >= 3 ? chain[chain.length - 3] : null;
-                                    const satType = this.detectPolresSatuanType(subChild?.deskripsi) || normalizeUnitSatLabel(unitNamaRaw || subChild?.deskripsi, 'SATRESKRIM', 'POLRES');
+                                    const satType = this.detectPolresSatuanType(subChild?.deskripsi) || normalizeUnitSatLabel(unitNamaRaw || subChild?.deskripsi, defaultSatFallback, 'POLRES');
                                     childNama = `${satType} ${polresNama}`;
                                 }
                                 return {
@@ -1101,8 +1181,8 @@ let AnevService = class AnevService {
                         for (const r of regPerSat) {
                             const resolved = resolveRegionalUnitAndChild(Number(r.sid || 0), Number(r.usid || 0), String(r.unit_nama || ''));
                             if (!resolved || !resolved.bucketNama || resolved.bucketNama === 'UNKNOWN') continue;
-                            if (!this.isSatkerAllowedInScope(resolved.bucketNama, scopeSatker)) continue;
-                            if (resolved.childNama && !this.isSatkerAllowedInScope(resolved.childNama, scopeSatker)) continue;
+                            if (!this.isSatkerAllowedInScope(resolved.bucketNama, regScopeNama, allowPolsekInReg)) continue;
+                            if (resolved.childNama && !this.isSatkerAllowedInScope(resolved.childNama, regScopeNama, allowPolsekInReg)) continue;
                             let item = unitMap.get(resolved.bucketKey);
                             if (!item) {
                                 item = { nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map() };
@@ -1123,8 +1203,49 @@ let AnevService = class AnevService {
                                 if (r.kat === 'CC') ch.cc += jml;
                             }
                         }
-                        const regTopCT = [...unitMap.values()].filter(x => x.ct > 0).sort((a, b) => b.ct - a.ct).slice(0, 10);
-                        const regTopCC = [...unitMap.values()].filter(x => x.cc > 0).sort((a, b) => b.cc - a.cc).slice(0, 10);
+                        const seedUnit = (sidSeed, usidSeed, namaRawSeed, markDirect = false) => {
+                            const resolved = resolveRegionalUnitAndChild(Number(sidSeed || 0), Number(usidSeed || sidSeed || 0), String(namaRawSeed || ''));
+                            if (!resolved || !resolved.bucketNama || resolved.bucketNama === 'UNKNOWN') return;
+                            if (!this.isSatkerAllowedInScope(resolved.bucketNama, regScopeNama, allowPolsekInReg)) return;
+                            let entry = unitMap.get(resolved.bucketKey);
+                            if (!entry) {
+                                entry = { nama: resolved.bucketNama, ct: 0, cc: 0, childMap: new Map(), isDirectScopeUnit: Boolean(markDirect) };
+                                unitMap.set(resolved.bucketKey, entry);
+                            } else if (markDirect) {
+                                entry.isDirectScopeUnit = true;
+                            }
+                        };
+                        seedUnit(scope.satkerId, scope.satkerId, rawUserSatker, true);
+                        if (isPolresLevel) {
+                            for (const sid of allRegIds) {
+                                const sNode = satkerMap.get(sid);
+                                if (!sNode || /^\[DUPLIKAT NONAKTIF\]/i.test(String(sNode.deskripsi || ''))) continue;
+                                if (!this.isPolsekSatkerNode(sNode) && !this.isPolsekSatkerName(sNode.deskripsi)) continue;
+                                const polsekNama = resolveCanonicalPolsekNama(sNode.deskripsi);
+                                if (!polsekNama || !this.isPolsekSatkerName(polsekNama)) continue;
+                                if (!this.isSatkerAllowedInScope(polsekNama, regScopeNama, allowPolsekInReg)) continue;
+                                const bKey = `POLSEK_${polsekNama.toUpperCase()}`;
+                                if (!unitMap.has(bKey)) {
+                                    unitMap.set(bKey, { nama: polsekNama, ct: 0, cc: 0, childMap: new Map() });
+                                }
+                            }
+                        } else {
+                            for (const sNode of satkerMap.values()) {
+                                if (!sNode || /^\[DUPLIKAT NONAKTIF\]/i.test(String(sNode.deskripsi || ''))) continue;
+                                if (!sNode.parent_id || !equivalentRootIds.has(sNode.parent_id)) continue;
+                                const desc = String(sNode.deskripsi || '').trim();
+                                if (!this.isPolresContainerName(desc) && !this.isPolresSatkerNode(sNode) && !this.isPoldaDirektoratName(desc)) continue;
+                                seedUnit(sNode.id, sNode.id, desc, sNode.id === scope.satkerId);
+                            }
+                        }
+                        const regTopCT = [...unitMap.values()]
+                            .filter(x => x.ct > 0 || x.isDirectScopeUnit || (isPolresLevel && this.isPolsekSatkerName(x.nama)) || (!isPolresLevel && this.isPolresContainerName(x.nama)))
+                            .sort((a, b) => (b.ct - a.ct) || (b.cc - a.cc) || a.nama.localeCompare(b.nama))
+                            .slice(0, 10);
+                        const regTopCC = [...unitMap.values()]
+                            .filter(x => x.cc > 0 || x.ct > 0 || x.isDirectScopeUnit || (isPolresLevel && this.isPolsekSatkerName(x.nama)) || (!isPolresLevel && this.isPolresContainerName(x.nama)))
+                            .sort((a, b) => (b.cc - a.cc) || (b.ct - a.ct) || a.nama.localeCompare(b.nama))
+                            .slice(0, 10);
                         if (regTopCT.length > 0) {
                             top_satker_ct = regTopCT.map(x => {
                                 const allChildren = [...x.childMap.values()].filter(c => c.ct > 0).sort((a, b) => b.ct - a.ct);
@@ -1149,48 +1270,123 @@ let AnevService = class AnevService {
                                 };
                             });
                         }
-                        const userNode = satkerMap.get(scope.satkerId);
-                        const poldaFuncDomain = this.getCrimeFunctionDomain(userNode?.id, userNode?.deskripsi);
-                        if (poldaFuncDomain) {
-                            const fParams = [...regParams, poldaFuncDomain];
-                            const funcKej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
-                                    select tp.nama_kategori_kejahatan as kat
+                        const resolveRegAllowedBucket = (sid, usid, unitNama) => {
+                            const resolved = resolveRegionalUnitAndChild(sid, usid, unitNama);
+                            if (!resolved || !resolved.bucketNama || resolved.bucketNama === 'UNKNOWN') return null;
+                            if (!this.isSatkerAllowedInScope(resolved.bucketNama, regScopeNama, allowPolsekInReg)) return null;
+                            return resolved.bucketNama;
+                        };
+                        const resolveWilkumBucket = (sid, usid, unitNama) => {
+                            const resolved = resolveRegionalUnitAndChild(sid, usid, unitNama);
+                            return (resolved?.bucketNama && resolved.bucketNama !== 'UNKNOWN') ? resolved.bucketNama : null;
+                        };
+                        if (hasRegCrimeFilter) {
+                            const fParams = [...regParams, regCrimeIds];
+                            const funcKej = await this.ds.query(`select kat as nama, count(distinct lid)::int as jml from (
+                                    select lp.id as lid, tp.nama_kategori_kejahatan as kat
                                     from bdb_lp_tindak_pidana_dors tp
-                                    join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
                                     join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
                                     ${regWhere}
-                                      and m.kelompok = ANY($${fParams.length})
+                                      and tp.jenis_kejahatan_id = ANY($${fParams.length})
                                       and nullif(tp.nama_kategori_kejahatan, '') is not null
                                       and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
                                       and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
                                       and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
                                       and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
                                  ) x group by kat order by jml desc limit 10`, fParams);
-                            top_kejahatan_regional = funcKej.map((k) => ({ nama: k.nama, jml: Number(k.jml) }));
+                            const funcNames = funcKej.map((k) => k.nama).filter(Boolean);
+                            const funcBdMap = await fetchCrimeBreakdowns(
+                                'from bdb_lp_tindak_pidana_dors tp join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id',
+                                `${regWhere} and tp.jenis_kejahatan_id = ANY($${fParams.length})`,
+                                fParams,
+                                funcNames,
+                                resolveRegAllowedBucket,
+                                true
+                            );
+                            const tipidTotal = regional_ct > 0 ? regional_ct : funcKej.reduce((acc, k) => acc + Number(k.jml || 0), 0);
+                            top_kejahatan_regional = funcKej.map((k) => {
+                                const j = Number(k.jml || 0);
+                                const pctTot = tipidTotal > 0 ? Math.max(tipidTotal, j) : j;
+                                const bdItems = funcBdMap.get(k.nama) || [];
+                                return {
+                                    nama: k.nama,
+                                    jml: j,
+                                    bd_real: true,
+                                    ...(pctTot > 0 ? { pct_total: pctTot } : {}),
+                                    satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, j) : []
+                                };
+                            });
                             if (top_kejahatan_regional.length < 10) {
-                                const existingNames = top_kejahatan_regional.map(x => x.nama);
-                                const remLimit = 10 - top_kejahatan_regional.length;
-                                const remParams = [...regParams, existingNames, remLimit];
-                                const remKej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
-                                        select tp.nama_kategori_kejahatan as kat
-                                        from bdb_lp_tindak_pidana_dors tp
-                                        join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
-                                        ${regWhere}
-                                          and nullif(tp.nama_kategori_kejahatan, '') is not null
-                                          and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
-                                          and tp.nama_kategori_kejahatan != ALL($${remParams.length - 1})
-                                          and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
-                                          and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
-                                          and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
-                                     ) x group by kat order by jml desc limit $${remParams.length}`, remParams);
-                                for (const r of remKej) {
-                                    top_kejahatan_regional.push({ nama: r.nama, jml: Number(r.jml) });
+                                const wilkumRegIds = [];
+                                for (const [id] of satkerMap.entries()) {
+                                    let p = id;
+                                    let underRoot = false;
+                                    const vis = new Set();
+                                    while (p && !vis.has(p)) {
+                                        vis.add(p);
+                                        if (equivalentRootIds.has(p)) {
+                                            underRoot = true;
+                                            break;
+                                        }
+                                        const pNode = satkerMap.get(p);
+                                        p = pNode ? pNode.parent_id : null;
+                                    }
+                                    if (underRoot) wilkumRegIds.push(id);
+                                }
+                                if (wilkumRegIds.length > 0) {
+                                    const { where: wWhere, params: wParamsBase } = this.buildWhereLp(f, wilkumRegIds);
+                                    const wCtRows = await this.ds.query(`SELECT count(*)::int AS jml FROM bdb_laporan_polisi lp ${wWhere}`, wParamsBase);
+                                    const wilkumCt = Number(wCtRows[0]?.jml || 0);
+                                    const existingNamesLower = top_kejahatan_regional.map((x) => String(x.nama || '').trim().toLowerCase()).filter(Boolean);
+                                    const wCrimeIdx = wParamsBase.length + 1;
+                                    const wParamsFinal = existingNamesLower.length > 0
+                                        ? [...wParamsBase, regCrimeIds, existingNamesLower]
+                                        : [...wParamsBase, regCrimeIds];
+                                    const excludeNamesSql = existingNamesLower.length > 0
+                                        ? `and lower(trim(tp.nama_kategori_kejahatan)) != ALL($${wParamsFinal.length})`
+                                        : '';
+                                    const remSlots = 10 - top_kejahatan_regional.length;
+                                    const fillRows = await this.ds.query(`select kat as nama, count(distinct lid)::int as jml from (
+                                            select lp.id as lid, tp.nama_kategori_kejahatan as kat
+                                            from bdb_lp_tindak_pidana_dors tp
+                                            join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
+                                            ${wWhere}
+                                              and (tp.jenis_kejahatan_id is null or not (tp.jenis_kejahatan_id = ANY($${wCrimeIdx})))
+                                              ${excludeNamesSql}
+                                              and nullif(tp.nama_kategori_kejahatan, '') is not null
+                                              and tp.nama_kategori_kejahatan not in ('(Tanpa kategori)', '-')
+                                              and tp.nama_kategori_kejahatan not ilike '%lalu lintas%'
+                                              and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
+                                              and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
+                                         ) x group by kat order by jml desc limit ${remSlots}`, wParamsFinal);
+                                    const fillNames = fillRows.map((x) => x.nama).filter(Boolean);
+                                    const fillBdMap = await fetchCrimeBreakdowns(
+                                        'from bdb_lp_tindak_pidana_dors tp join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id',
+                                        wWhere,
+                                        wParamsBase,
+                                        fillNames,
+                                        resolveWilkumBucket,
+                                        true
+                                    );
+                                    for (const wk of fillRows) {
+                                        const cTot = Number(wk.jml || 0);
+                                        const bdItems = fillBdMap.get(wk.nama) || [];
+                                        const pctTot = wilkumCt > 0 ? Math.max(wilkumCt, cTot) : cTot;
+                                        top_kejahatan_regional.push({
+                                            nama: wk.nama,
+                                            jml: cTot,
+                                            outside_tipid: true,
+                                            bd_real: true,
+                                            ...(pctTot > 0 ? { pct_total: pctTot } : {}),
+                                            satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, cTot) : []
+                                        });
+                                    }
                                 }
                             }
                         }
                         else {
-                            const regKej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
-                                    select tp.nama_kategori_kejahatan as kat
+                            const regKej = await this.ds.query(`select kat as nama, count(distinct lid)::int as jml from (
+                                    select lp.id as lid, tp.nama_kategori_kejahatan as kat
                                     from bdb_lp_tindak_pidana_dors tp
                                     join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
                                     ${regWhere}
@@ -1200,7 +1396,25 @@ let AnevService = class AnevService {
                                       and tp.nama_kategori_kejahatan not ilike '%kecelakaan%'
                                       and tp.nama_kategori_kejahatan not ilike '%laka lantas%'
                                  ) x group by kat order by jml desc limit 10`, regParams);
-                            top_kejahatan_regional = regKej.map((k) => ({ nama: k.nama, jml: Number(k.jml) }));
+                            const regNames = regKej.map((k) => k.nama).filter(Boolean);
+                            const regBdMap = await fetchCrimeBreakdowns(
+                                'from bdb_lp_tindak_pidana_dors tp join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id',
+                                regWhere,
+                                regParams,
+                                regNames,
+                                resolveRegAllowedBucket,
+                                true
+                            );
+                            top_kejahatan_regional = regKej.map((k) => {
+                                const j = Number(k.jml || 0);
+                                const bdItems = regBdMap.get(k.nama) || [];
+                                return {
+                                    nama: k.nama,
+                                    jml: j,
+                                    bd_real: true,
+                                    satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, j) : []
+                                };
+                            });
                         }
                     }
                 }
@@ -1236,14 +1450,36 @@ let AnevService = class AnevService {
                             bWhere.push(`extract(month from ${DATE_EXPR})=$${bParams.length}`);
                         }
                         this.appendTaxonomyFilter(f, bParams, bWhere);
-                        const natKej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
-                                select tp.nama_kategori_kejahatan as kat
+                        const resolvePusatBucketNama = (sid, usid, unitNama) =>
+                            resolvePusatBucketAndChild(sid, usid, unitNama)?.bucketNama || null;
+
+                        const natKej = await this.ds.query(`select kat as nama, count(distinct lid)::int as jml from (
+                                select lp.id as lid, tp.nama_kategori_kejahatan as kat
                                 from bdb_lp_tindak_pidana_dors tp
                                 join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
                                 join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
                                 where ${bWhere.join(' and ')}
                              ) x group by kat order by jml desc limit 10`, bParams);
-                        top_kejahatan_regional = natKej.map((k) => ({ nama: k.nama, jml: Number(k.jml) }));
+                        const natBdMap = await fetchCrimeBreakdowns(
+                            `from bdb_lp_tindak_pidana_dors tp
+                             join bdb_kinerja_crime_group_mapping m on m.jenis_kejahatan_id = tp.jenis_kejahatan_id and m.active = true and m.decision_status = 'APPROVED'
+                             join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id`,
+                            `where ${bWhere.join(' and ')}`,
+                            bParams,
+                            natKej.map((k) => k.nama).filter(Boolean),
+                            resolvePusatBucketNama,
+                            true
+                        );
+                        top_kejahatan_regional = natKej.map((k) => {
+                            const j = Number(k.jml || 0);
+                            const bdItems = natBdMap.get(k.nama) || [];
+                            return {
+                                nama: k.nama,
+                                jml: j,
+                                bd_real: true,
+                                satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, j) : []
+                            };
+                        });
                         if (top_kejahatan_regional.length < 10) {
                             const existingNames = top_kejahatan_regional.map(x => x.nama);
                             const remLimit = 10 - top_kejahatan_regional.length;
@@ -1278,15 +1514,32 @@ let AnevService = class AnevService {
                                 natFallbackWhere.push(`extract(month from ${DATE_EXPR})=$${natFallbackParams.length}`);
                             }
                             this.appendTaxonomyFilter(f, natFallbackParams, natFallbackWhere);
+                            const natFbBaseParams = [...natFallbackParams];
                             natFallbackParams.push(remLimit);
-                            const natFallbackKej = await this.ds.query(`select kat as nama, count(*)::int as jml from (
-                                    select tp.nama_kategori_kejahatan as kat
+                            const natFallbackKej = await this.ds.query(`select kat as nama, count(distinct lid)::int as jml from (
+                                    select lp.id as lid, tp.nama_kategori_kejahatan as kat
                                     from bdb_lp_tindak_pidana_dors tp
                                     join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id
                                     where ${natFallbackWhere.join(' and ')}
                                  ) x group by kat order by jml desc limit $${natFallbackParams.length}`, natFallbackParams);
+                            const natFbBdMap = await fetchCrimeBreakdowns(
+                                'from bdb_lp_tindak_pidana_dors tp join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id',
+                                `where ${natFallbackWhere.join(' and ')}`,
+                                natFbBaseParams,
+                                natFallbackKej.map((r) => r.nama).filter(Boolean),
+                                resolvePusatBucketNama,
+                                true
+                            );
                             for (const r of natFallbackKej) {
-                                top_kejahatan_regional.push({ nama: r.nama, jml: Number(r.jml) });
+                                const j = Number(r.jml || 0);
+                                const bdItems = natFbBdMap.get(r.nama) || [];
+                                top_kejahatan_regional.push({
+                                    nama: r.nama,
+                                    jml: j,
+                                    outside_tipid: true,
+                                    bd_real: true,
+                                    satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, j) : []
+                                });
                             }
                         }
                         const bPerSat = await this.ds.query(`select coalesce(lp.satker_id, lp.unit_satker_id) as sid,
@@ -1360,6 +1613,31 @@ let AnevService = class AnevService {
                 console.error('Gagal hitung ranking regional dashboard: ' + String(err));
             }
         }
+        const useRegionalKej = !scope.all && (hasRegCrimeFilter || top_kejahatan_regional.length > 0);
+        let top_kejahatan_list = [];
+        if (useRegionalKej) {
+            top_kejahatan_list = top_kejahatan_regional;
+        } else {
+            const kejNames = kej.map((k) => k.nama).filter(Boolean);
+            const kejBdMap = await fetchCrimeBreakdowns(
+                'from bdb_lp_tindak_pidana_dors tp join bdb_laporan_polisi lp on lp.id = tp.laporan_polisi_id',
+                where || 'where 1=1',
+                params,
+                kejNames,
+                (sid, usid, uNm) => resolvePusatBucketAndChild(sid, usid, uNm)?.bucketNama || null,
+                false
+            );
+            top_kejahatan_list = kej.map((k) => {
+                const j = Number(k.jml || 0);
+                const bdItems = kejBdMap.get(k.nama) || [];
+                return {
+                    nama: k.nama,
+                    jml: j,
+                    bd_real: true,
+                    satker_breakdown: bdItems.length > 0 ? this.formatBreakdownWithTop9Rule(bdItems, j) : []
+                };
+            });
+        }
         const isBareskrimDirektorat = !scope.all && !!((scope.satkerId && [18, 19, 20, 21, 22, 23, 20675].includes(Number(scope.satkerId))) ||
             (scopeSatker && scopeSatker.toUpperCase().includes('BARESKRIM') && !scopeSatker.toUpperCase().includes('POLDA')));
         const finalResult = {
@@ -1368,7 +1646,7 @@ let AnevService = class AnevService {
                 ct, cc,
                 pct: ct ? Math.round((cc / ct) * 1000) / 10 : 0,
                 ct_today, cc_today, per_status,
-                top_kejahatan: (!scope.all && top_kejahatan_regional.length > 0) ? top_kejahatan_regional : kej.map((k) => ({ nama: k.nama, jml: k.jml })),
+                top_kejahatan: top_kejahatan_list,
                 top_kejahatan_regional,
                 regional_nama,
                 regional_ct,
@@ -1377,6 +1655,8 @@ let AnevService = class AnevService {
                 label_satker_ct: isBareskrimDirektorat ? '10 Satker · CT Tertinggi' : (!scope.all ? '10 Satker Regional · CT Tertinggi' : '10 Satker · CT Tertinggi'),
                 label_satker_cc: isBareskrimDirektorat ? '10 Satker · CC Tertinggi' : (!scope.all ? '10 Satker Regional · CC Tertinggi' : '10 Satker · CC Tertinggi'),
                 rollup_v2: true,
+                rollup_v3: true,
+                rollup_v4: true,
                 top_satker_ct, top_satker_cc, polda, integrasi,
                 scoped: !scope.all, scope_ada_data: arr.length > 0, scope_satker: scopeSatker
             }
@@ -1396,6 +1676,26 @@ let AnevService = class AnevService {
         }
         return finalResult;
     }
+    async resolveApprovedCrimeIdsForGroups(crimeGroups) {
+        if (!Array.isArray(crimeGroups) || crimeGroups.length === 0) return null;
+        try {
+            const cRows = await this.ds.query(`
+                SELECT DISTINCT m.jenis_kejahatan_id AS crime_id
+                FROM bdb_kinerja_crime_group_mapping m
+                JOIN bdb_kinerja_crime_group_mapping_version v ON v.id = m.version_id
+                WHERE v.status = 'APPROVED' AND v.active = true
+                  AND v.approved_by IS NOT NULL AND v.approved_at IS NOT NULL
+                  AND m.active = true AND m.decision_status = 'APPROVED'
+                  AND m.approved_by IS NOT NULL AND m.approved_at IS NOT NULL
+                  AND m.kelompok = ANY($1)
+            `, [crimeGroups]);
+            if (cRows.length > 0) {
+                return cRows.map(r => Number(r.crime_id)).filter(Number.isFinite);
+            }
+        } catch (_e) {}
+        return null;
+    }
+
     petaScopeCrimeGroups(satkerId, deskripsi) {
         const id = Number(satkerId || 0);
         const s = String(deskripsi || '').toUpperCase();
@@ -1410,12 +1710,16 @@ let AnevService = class AnevService {
             return ['TIPIDKOR'];
         if (id === 19 || s.includes('TIPIDEKSUS') || s.includes('EKSUS'))
             return ['TIPIDEKSUS'];
-        if (id === 22 || s.includes('TIPIDTER'))
+        if (s.includes('TIPIDTEROR') || s.includes('TERORIS') || s.includes('DENSUS'))
+            return ['TIPIDTEROR', 'TIPIDUM', 'KRIMUM'];
+        if (id === 22 || /(?:DIT|SUBDIT|SAT|UNIT)?TIPIDTER(?![A-Z])|\bPIDTER\b/.test(s))
             return ['TIPIDTER'];
         if (s.includes('KRIMSUS'))
             return ['KRIMSUS', 'TIPIDEKSUS', 'TIPIDKOR', 'TIPIDTER', 'TIPIDSIBER'];
         if (id === 18 || s.includes('TIPIDUM') || s.includes('KRIMUM') || s.includes('KRIDUM'))
             return ['KRIMUM', 'TIPIDUM', 'TIPIDPPAPPO'];
+        if (!this.isPolsekSatkerName(s) && this.detectPolresSatuanType(s) === 'SATRESKRIM')
+            return ['KRIMUM', 'TIPIDUM', 'TIPIDPPAPPO', 'KRIMSUS', 'TIPIDEKSUS', 'TIPIDKOR', 'TIPIDTER', 'TIPIDSIBER'];
         return null;
     }
 
@@ -1470,7 +1774,7 @@ let AnevService = class AnevService {
         return /\b(DIT|DIREKTORAT|SUBDIT)\b/.test(u) || Boolean(this.detectDirektoratRumpun(u));
     }
 
-    isSatkerAllowedInScope(candidateNama, scopeSatkerNama) {
+    isSatkerAllowedInScope(candidateNama, scopeSatkerNama, allowPolsekInCrimeDomain = false) {
         const cand = String(candidateNama || '').trim();
         if (!cand) return false;
         if (this.isEksternalSatkerName(cand)) return false;
@@ -1488,17 +1792,17 @@ let AnevService = class AnevService {
         if (scopeSatType) {
             const candSatType = this.detectPolresSatuanType(cand);
             if (scopeSatType === 'SATRESNARKOBA') {
-                if (this.isPolsekSatkerName(cand)) return false;
+                if (this.isPolsekSatkerName(cand)) return Boolean(allowPolsekInCrimeDomain);
                 if (candSatType && candSatType !== 'SATRESNARKOBA') return false;
                 return true;
             }
             if (scopeSatType === 'SATRESPPADANPPO') {
-                if (this.isPolsekSatkerName(cand)) return false;
+                if (this.isPolsekSatkerName(cand)) return Boolean(allowPolsekInCrimeDomain);
                 if (candSatType && candSatType !== 'SATRESPPADANPPO') return false;
                 return true;
             }
             if (scopeSatType === 'SATRESKRIM') {
-                if (candSatType === 'SATRESNARKOBA') return false;
+                if (candSatType === 'SATRESNARKOBA' || candSatType === 'SATRESPPADANPPO') return false;
                 return true;
             }
             if (scopeSatType === 'UNIT RESKRIM') {
@@ -1511,8 +1815,9 @@ let AnevService = class AnevService {
             const satType = this.detectPolresSatuanType(cand);
             if (satType === 'SATRESNARKOBA') return scopeRumpun === 'NARKOBA';
             if (satType === 'SATRESPPADANPPO') return scopeRumpun === 'PPA' || scopeRumpun === 'KRIMUM';
-            if (satType === 'SATRESKRIM' || satType === 'UNIT RESKRIM') return scopeRumpun !== 'NARKOBA';
-            if (this.isPolsekSatkerName(cand)) return scopeRumpun !== 'NARKOBA';
+            if (satType === 'SATRESKRIM') return scopeRumpun !== 'NARKOBA';
+            if (satType === 'UNIT RESKRIM') return Boolean(allowPolsekInCrimeDomain) || scopeRumpun !== 'NARKOBA';
+            if (this.isPolsekSatkerName(cand)) return Boolean(allowPolsekInCrimeDomain) || scopeRumpun !== 'NARKOBA';
             if (this.isPolresContainerName(cand)) return true;
             const candRumpun = this.detectDirektoratRumpun(cand);
             if (candRumpun) return candRumpun === scopeRumpun;
@@ -1625,13 +1930,29 @@ let AnevService = class AnevService {
 
     sanitizeDashboardDataForScope(resData, scopeSatkerNama, isScopedRegional) {
         if (!resData || typeof resData !== 'object') return resData;
-        const scopeStr = String(scopeSatkerNama || resData.scope_satker || resData.regional_nama || '').trim();
+        const rawReg = String(resData.regional_nama || '').replace(/^\[DUPLIKAT NONAKTIF\]\s*/i, '').trim();
+        const scopeSatType = this.detectPolresSatuanType(scopeSatkerNama);
+        const keepSatkerScope = scopeSatType === 'SATRESNARKOBA' || scopeSatType === 'SATRESPPADANPPO' || scopeSatType === 'SATRESKRIM';
+        const usePolresRegional = Boolean(
+            isScopedRegional &&
+            !keepSatkerScope &&
+            rawReg &&
+            !this.isPolsekSatkerName(rawReg) &&
+            this.isPolresContainerName(rawReg)
+        );
+        const scopeStr = String((usePolresRegional ? rawReg : (scopeSatkerNama || resData.scope_satker || resData.regional_nama)) || '').trim();
+        const allowPolsekInScope = Boolean(
+            scopeSatType === 'SATRESNARKOBA' ||
+            scopeSatType === 'SATRESPPADANPPO' ||
+            scopeSatType === 'SATRESKRIM' ||
+            (this.isPoldaDirektoratName(scopeStr) && Boolean(this.detectDirektoratRumpun(scopeStr)))
+        );
 
         const filterSatkerList = (list, metric) => {
             if (!Array.isArray(list)) return [];
             const mergedTopMap = new Map();
             for (const rawX of list) {
-                if (!rawX || !this.isSatkerAllowedInScope(rawX.nama, scopeStr)) continue;
+                if (!rawX || !this.isSatkerAllowedInScope(rawX.nama, scopeStr, allowPolsekInScope)) continue;
                 const parentNama = this.normalizeSatkerDisplayName(rawX.nama);
                 const pKey = parentNama.toUpperCase();
                 let entry = mergedTopMap.get(pKey);
@@ -1667,7 +1988,7 @@ let AnevService = class AnevService {
                             cNama = `UNIT RESKRIM ${cleanParentPolsek}`;
                         }
                         if (cNama.toUpperCase() === parentNama.toUpperCase()) continue;
-                        if (!this.isSatkerAllowedInScope(cNama, scopeStr)) continue;
+                        if (!this.isSatkerAllowedInScope(cNama, scopeStr, allowPolsekInScope)) continue;
                         const cVal = Number(c[metric] ?? c.value ?? c.ct ?? 0);
                         if (cVal <= 0) continue;
                         const cKey = cNama.toUpperCase();
@@ -1754,9 +2075,12 @@ let AnevService = class AnevService {
         const buildRegionalPoolBreakdown = (crimeTotal) => {
             const cTot = Number(crimeTotal || 0);
             if (cTot <= 0 || !poolSource.length) return [];
-            const activePool = poolSource
-                .filter((s) => s && s.nama && this.isSatkerAllowedInScope(s.nama, scopeStr) && (!isScopedRegional || !/^POLDA\b/i.test(String(s.nama).trim())))
-                .slice(0, Math.min(poolSource.length, Math.max(1, cTot)));
+            const nonZeroPool = poolSource
+                .filter((s) => s && s.nama && Number(s.ct ?? s.jml ?? s.value ?? 0) > 0 && this.isSatkerAllowedInScope(s.nama, scopeStr, allowPolsekInScope) && (!isScopedRegional || !/^POLDA\b/i.test(String(s.nama).trim())));
+            const activePool = (nonZeroPool.length > 0
+                ? nonZeroPool
+                : poolSource.filter((s) => s && s.nama && this.isSatkerAllowedInScope(s.nama, scopeStr, allowPolsekInScope) && (!isScopedRegional || !/^POLDA\b/i.test(String(s.nama).trim())))
+            ).slice(0, Math.min(poolSource.length, Math.max(1, cTot)));
             if (!activePool.length) return [];
             const totalW = activePool.reduce((acc, s) => acc + Math.max(1, Number(s.ct ?? s.jml ?? s.value ?? 1)), 0) || 1;
             let allocated = 0;
@@ -1775,6 +2099,7 @@ let AnevService = class AnevService {
             return this.formatBreakdownWithTop9Rule(items, cTot);
         };
 
+        const isRealBreakdownPayload = Boolean(resData.rollup_v4 === true);
         const sanitizeCrimeList = (crimes) => {
             if (!Array.isArray(crimes)) return [];
             return crimes.map(c => {
@@ -1783,15 +2108,15 @@ let AnevService = class AnevService {
                 const rawBd = Array.isArray(c.satker_breakdown)
                     ? c.satker_breakdown
                     : (resData.top_crimes_breakdown && Array.isArray(resData.top_crimes_breakdown[c.nama]) ? resData.top_crimes_breakdown[c.nama] : null);
-                if (Array.isArray(rawBd) && rawBd.length > 0) {
+                if (Array.isArray(rawBd)) {
                     const mergedBdMap = new Map();
                     for (const x of rawBd) {
                         if (!x || x.is_others) continue;
                         const rawNm = String(x.satker_nama || x.nama || x.nama_singkat || x.satker || x.polda || '').trim();
                         if (!rawNm || /^lainnya/i.test(rawNm)) continue;
                         const nm = this.normalizeSatkerDisplayName(rawNm);
-                        if (isScopedRegional && /^POLDA\b/i.test(nm)) continue;
-                        if (!this.isSatkerAllowedInScope(nm, scopeStr)) continue;
+                        if (!c.outside_tipid && isScopedRegional && /^POLDA\b/i.test(nm)) continue;
+                        if (!c.outside_tipid && !this.isSatkerAllowedInScope(nm, scopeStr, allowPolsekInScope)) continue;
                         const val = Number(x.total ?? x.jml ?? x.ct ?? x.value ?? 0);
                         if (val <= 0) continue;
                         const k = nm.toUpperCase();
@@ -1806,8 +2131,14 @@ let AnevService = class AnevService {
                             satker_breakdown: this.formatBreakdownWithTop9Rule(filteredItems, cTot)
                         };
                     }
+                    if (c.bd_real || isRealBreakdownPayload) {
+                        return {
+                            ...c,
+                            satker_breakdown: []
+                        };
+                    }
                 }
-                if (isScopedRegional) {
+                if (isScopedRegional && !(c.bd_real || isRealBreakdownPayload)) {
                     return {
                         ...c,
                         satker_breakdown: buildRegionalPoolBreakdown(cTot)
@@ -2021,41 +2352,28 @@ let AnevService = class AnevService {
             if (cs) stack.push(...cs);
         }
 
+        const crimeGroups = this.petaScopeCrimeGroups(rootId, satkerNama);
+        let allowedCrimeIds = await this.resolveApprovedCrimeIdsForGroups(crimeGroups);
+
+        const hasCrimeDomainFilter = Boolean(allowedCrimeIds && allowedCrimeIds.length > 0);
+        const satUnitType = this.detectPolresSatuanType(satkerNama);
         let allowedSatkerIds = descIds;
         let isPoldaDirektorat = false;
         if (isBareskrim) {
             allowedSatkerIds = null;
         } else if (this.isPoldaDirektoratName(satkerNama)) {
             isPoldaDirektorat = true;
-            allowedSatkerIds = await this.operationalReadIds(rootId);
+            allowedSatkerIds = await this.operationalReadIds(rootId, hasCrimeDomainFilter);
+        } else if (satUnitType && satUnitType !== 'UNIT RESKRIM') {
+            allowedSatkerIds = await this.operationalReadIds(rootId, hasCrimeDomainFilter);
         } else {
             const hasDirect = await this.ds.query(
                 'SELECT 1 FROM bdb_peta_kejahatan_agg WHERE satker_id = ANY($1) LIMIT 1',
                 [descIds]
             );
             if (!hasDirect.length) {
-                allowedSatkerIds = await this.operationalReadIds(rootId);
+                allowedSatkerIds = await this.operationalReadIds(rootId, hasCrimeDomainFilter);
             }
-        }
-
-        let allowedCrimeIds = null;
-        const crimeGroups = this.petaScopeCrimeGroups(rootId, satkerNama);
-        if (crimeGroups && crimeGroups.length > 0) {
-            try {
-                const cRows = await this.ds.query(`
-                    SELECT DISTINCT m.jenis_kejahatan_id AS crime_id
-                    FROM bdb_kinerja_crime_group_mapping m
-                    JOIN bdb_kinerja_crime_group_mapping_version v ON v.id = m.version_id
-                    WHERE v.status = 'APPROVED' AND v.active = true
-                      AND v.approved_by IS NOT NULL AND v.approved_at IS NOT NULL
-                      AND m.active = true AND m.decision_status = 'APPROVED'
-                      AND m.approved_by IS NOT NULL AND m.approved_at IS NOT NULL
-                      AND m.kelompok = ANY($1)
-                `, [crimeGroups]);
-                if (cRows.length > 0) {
-                    allowedCrimeIds = cRows.map(r => Number(r.crime_id)).filter(Number.isFinite);
-                }
-            } catch (_e) {}
         }
 
         return {
@@ -2177,7 +2495,8 @@ let AnevService = class AnevService {
                 else if (part === 'PIDUM' || part === 'UMUM') targetGroups.add('TIPIDUM');
                 else if (part === 'EKSUS') targetGroups.add('TIPIDEKSUS');
                 else if (part === 'KORUPSI' || part === 'TIPIKOR') targetGroups.add('TIPIDKOR');
-                else if (part === 'TERTENTU') targetGroups.add('TIPIDTER');
+                else if (part === 'TERTENTU' || part === 'TIPIDTER') targetGroups.add('TIPIDTER');
+                else if (part === 'TEROR' || part === 'TERORISME' || part === 'TIPIDTEROR') { targetGroups.add('TIPIDTEROR'); targetGroups.add('TIPIDUM'); targetGroups.add('KRIMUM'); }
                 else if (part === 'SIBER') targetGroups.add('TIPIDSIBER');
                 else if (part === 'NARKOBA') { targetGroups.add('TIPIDNARKOBA'); targetGroups.add('NARKOBA'); }
                 else targetGroups.add(part);
@@ -3266,11 +3585,12 @@ let AnevService = class AnevService {
                     }
                 }
             }
+            const allowPolsekDomain = Boolean(scopeCtx.allowedCrimeIds && scopeCtx.allowedCrimeIds.length > 0);
             const rawChildren = (targetNode?.children || [])
                 .map(mapNode)
                 .filter((c) => {
                     if (kelompok === 'INTERNAL_RESERSE' && this.isEksternalSatkerName(c.nama)) return false;
-                    if (!scope.all && scopeCtx.satkerNama && !this.isSatkerAllowedInScope(c.nama, scopeCtx.satkerNama)) return false;
+                    if (!scope.all && scopeCtx.satkerNama && !this.isSatkerAllowedInScope(c.nama, scopeCtx.satkerNama, allowPolsekDomain)) return false;
                     return true;
                 })
                 .sort((a, b) => b.ct - a.ct);
@@ -3294,8 +3614,8 @@ let AnevService = class AnevService {
                     ...treeFilter,
                     satker_ids: [...targetIds]
                 });
-                childHotspots = (hRes.hotspots || []).filter((h) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
-                childTopRawan = (hRes.top_rawan_locations || []).filter((h) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
+                childHotspots = (hRes.hotspots || []).filter((h) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama, allowPolsekDomain) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
+                childTopRawan = (hRes.top_rawan_locations || []).filter((h) => !scope.all && scopeCtx.satkerNama ? this.isSatkerAllowedInScope(h.satker_nama, scopeCtx.satkerNama, allowPolsekDomain) : (kelompok !== 'INTERNAL_RESERSE' || !this.isEksternalSatkerName(h.satker_nama)));
             }
             const outChild = {
                 status: 1,

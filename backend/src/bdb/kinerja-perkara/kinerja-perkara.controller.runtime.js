@@ -18,8 +18,8 @@ const common_1 = require("@nestjs/common");
 const express_1 = require("express");
 const path = require("path");
 const worker_threads_1 = require("worker_threads");
-const auth_guard_1 = require("@app_core/auth/auth.guard");
-const current_user_interceptor_1 = require("@app_core/helper/interceptor/current-user.interceptor");
+const auth_guard_1 = require("../../app_core/auth/auth.guard");
+const current_user_interceptor_1 = require("../../app_core/helper/interceptor/current-user.interceptor");
 const kinerja_perkara_service_1 = require("./kinerja-perkara.service");
 const MODE_LABEL = { both: 'Keduanya (CT saat mulai, CC saat selesai)', mulai: 'Tanggal Mulai Penanganan (LP)', selesai: 'Tanggal Selesai (CC)' };
 const idNumberFormat = new Intl.NumberFormat('id-ID');
@@ -117,9 +117,11 @@ let KinerjaPerkaraController = class KinerjaPerkaraController {
         const normalized = String(value).trim().toLowerCase();
         if (normalized === 'national')
             return 'national';
-        if (normalized === 'scoped' || normalized === 'regional')
+        if (normalized === 'regional')
+            return 'regional';
+        if (normalized === 'scoped')
             return 'scoped';
-        throw new common_1.BadRequestException('visibility harus bernilai national atau scoped.');
+        throw new common_1.BadRequestException('visibility harus bernilai national, regional, atau scoped.');
     }
     scopeSatkerId(value) {
         if (value === undefined || value === '')

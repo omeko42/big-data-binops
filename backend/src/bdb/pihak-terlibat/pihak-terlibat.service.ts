@@ -1,7 +1,9 @@
 import { Cron } from '@nestjs/schedule';
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
 import { isPrimaryClusterInstance } from '../common/cluster-instance.util';
 import { DataSource } from 'typeorm';
+import { Pool } from 'pg';
+import Redis from 'ioredis';
 import { resolveScope } from '../common/scope.util';
 import { AuditService } from '../audit/audit.service';
 import { MinioService, UploadedFileLike } from '../kerma/minio.service';
@@ -18,13 +20,16 @@ const KETERLIBATAN_MANUAL = ['SAKSI', 'AHLI', 'TERSANGKA'];
  *  3) bdb_dokumen PENETAPAN_TSK -- read-only, sumber resmi tersangka dari alur dokumen LP.
  */
 @Injectable()
-export class PihakTerlibatService implements OnApplicationBootstrap {
+export class PihakTerlibatService implements OnApplicationBootstrap, OnModuleDestroy {
     private readonly logger = new Logger(PihakTerlibatService.name);
     private readonly summaryCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly rankingCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly recentGlobalCache = new Map<string, { expiresAt: number; data: any }>();
     private readonly lpByNikCache = new Map<string, { expiresAt: number; data: any }>();
-    private readonly rankingCacheTtlMs = 2 * 60 * 1000;
+    private readonly rankingCacheTtlMs = 45 * 1000;
+    private bgPool: Pool | null = null;
+    private redisCache: Redis | null = null;
+    private _dirtyTablesReady = false;
 
     private extractCorpTrigramWords(corpTerm: string): string[] {
         const core = String(corpTerm || '')
@@ -101,22 +106,23 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         if (!isPrimaryClusterInstance()) return;
         try {
             await this.ensurePinTable();
-            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta text;`);
-            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS pihak_terkait jsonb DEFAULT '[]'::jsonb;`);
-            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta_rank smallint;`);
-            await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS last_seen_date date;`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_main ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, tipe_subjek, nasional_score DESC);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_kasta ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dokumen_doctype_lpid_created ON bdb_dokumen (document_type_id, lp_id, created_at DESC, id DESC);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dokumen_lpid_doctype ON bdb_dokumen (lp_id, document_type_id);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_created_id ON bdb_dpo (status_dpo, created_at DESC, id DESC);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_satker_created ON bdb_dpo (status_dpo, satker_id, created_at DESC);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_dpo_status_lpid_nama ON bdb_dpo (status_dpo, lp_id, upper(trim(coalesce(nama_dpo, ''))));`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_bdb_pihak_pins_active_time ON bdb_pihak_terlibat_pins (pin_active, pin_time DESC) WHERE pin_active = true;`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_lookup_nik ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, nik);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_dash_fast ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta_rank ASC, last_seen_date DESC NULLS LAST, total_lp DESC, satker_tier ASC, last_seen DESC) WHERE (total_lp > 1 OR count_dpo > 0);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_master_fast ON bdb_pihak_terlibat_ranking_snapshot (tahun, coalesce(bulan, 0), kategori_filter, kasta_rank ASC, total_lp DESC, satker_tier ASC, last_seen DESC) WHERE (total_lp > 1 OR count_dpo > 0);`);
-            await this.dataSource.query(`CREATE INDEX IF NOT EXISTS idx_pihak_ranking_snap_pin_key ON bdb_pihak_terlibat_ranking_snapshot (coalesce(nullif(nik, ''), nama));`);
+            await this.ensureDirtyPartitionTables();
+            const cols = await this.dataSource.query(
+                `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'bdb_pihak_terlibat_ranking_snapshot'`
+            );
+            const colSet = new Set((cols || []).map((c: any) => String(c.column_name)));
+            if (!colSet.has('kasta')) {
+                await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta text;`);
+            }
+            if (!colSet.has('pihak_terkait')) {
+                await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS pihak_terkait jsonb DEFAULT '[]'::jsonb;`);
+            }
+            if (!colSet.has('kasta_rank')) {
+                await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS kasta_rank smallint;`);
+            }
+            if (!colSet.has('last_seen_date')) {
+                await this.dataSource.query(`ALTER TABLE bdb_pihak_terlibat_ranking_snapshot ADD COLUMN IF NOT EXISTS last_seen_date date;`);
+            }
             const checkRes = await this.dataSource.query(
                 `SELECT count(*)::int as c FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND bulan IS NULL;`
             );
@@ -132,13 +138,141 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         }
     }
 
+    async onModuleDestroy() {
+        if (this.bgPool) {
+            try { await this.bgPool.end(); } catch {}
+            this.bgPool = null;
+        }
+        if (this.redisCache) {
+            try { await this.redisCache.quit(); } catch { this.redisCache.disconnect(); }
+            this.redisCache = null;
+        }
+    }
 
     constructor(
         private readonly dataSource: DataSource,
         private readonly audit: AuditService,
         private readonly minio: MinioService,
         private readonly monitoring: LpMonitoringAccessService
-    ) {}
+    ) {
+        this.initBackgroundPoolAndRedis();
+    }
+
+    private initBackgroundPoolAndRedis() {
+        try {
+            this.bgPool = new Pool({
+                host: process.env.DB_BG_HOST || process.env.DB_DIRECT_HOST || process.env.DB_HOST || '10.200.210.236',
+                port: parseInt(process.env.DB_BG_PORT || process.env.DB_DIRECT_PORT || '5432', 10) || 5432,
+                user: process.env.DB_USERNAME || 'bdb_app',
+                password: process.env.DB_PASSWORD || '',
+                database: process.env.DB_DATABASE || 'big_data_binops',
+                max: 2,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 10000
+            });
+            this.bgPool.on('error', () => {});
+        } catch {
+            this.bgPool = null;
+        }
+        try {
+            const host = process.env.COSERSE_REDIS_HOST || process.env.REDIS_HOST || 'bdb-redis';
+            const port = Number(process.env.COSERSE_REDIS_PORT || process.env.REDIS_PORT || 6379);
+            const client = new Redis({
+                host,
+                port,
+                lazyConnect: true,
+                maxRetriesPerRequest: 1,
+                enableOfflineQueue: false
+            });
+            client.on('error', () => {});
+            client.connect().catch(() => {});
+            this.redisCache = client;
+        } catch {
+            this.redisCache = null;
+        }
+    }
+
+    async ensureDirtyPartitionTables() {
+        if (this._dirtyTablesReady) return;
+        const q = (sql: string, params?: any[]) =>
+            this.bgPool ? this.bgPool.query(sql, params) : this.dataSource.query(sql, params);
+        try {
+            await q(`
+                CREATE TABLE IF NOT EXISTS bdb_snapshot_partition_state (
+                    partition_key VARCHAR(40) PRIMARY KEY,
+                    tahun INTEGER NOT NULL,
+                    bulan INTEGER,
+                    is_dirty BOOLEAN NOT NULL DEFAULT true,
+                    last_dirty_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    last_refreshed_at TIMESTAMPTZ,
+                    active_batch_id VARCHAR(80),
+                    dirty_reason TEXT
+                )
+            `);
+            await q(`
+                CREATE TABLE IF NOT EXISTS bdb_snapshot_active_batch (
+                    snapshot_name VARCHAR(64) PRIMARY KEY,
+                    active_batch_id VARCHAR(80) NOT NULL,
+                    switched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    partitions_switched JSONB DEFAULT '[]'::jsonb,
+                    meta_json JSONB DEFAULT '{}'::jsonb
+                )
+            `);
+            await q(`
+                CREATE TABLE IF NOT EXISTS bdb_pihak_terlibat_ranking_snapshot_staging (
+                    LIKE bdb_pihak_terlibat_ranking_snapshot INCLUDING DEFAULTS
+                )
+            `);
+            await q(`
+                ALTER TABLE bdb_pihak_terlibat_ranking_snapshot_staging
+                ADD COLUMN IF NOT EXISTS batch_id VARCHAR(80) NOT NULL DEFAULT 'init'
+            `);
+            await q(`
+                CREATE INDEX IF NOT EXISTS idx_pihak_ranking_staging_batch_part
+                ON bdb_pihak_terlibat_ranking_snapshot_staging (batch_id, tahun, COALESCE(bulan, 0))
+            `);
+
+            const curMonth = new Date().getMonth() + 1;
+            for (let m = 1; m <= 12; m++) {
+                const pKey = `2026-${String(m).padStart(2, '0')}`;
+                const initDirty = m === curMonth;
+                await q(
+                    `INSERT INTO bdb_snapshot_partition_state (partition_key, tahun, bulan, is_dirty, last_refreshed_at, dirty_reason)
+                     VALUES ($1, 2026, $2, $3, CASE WHEN $3 THEN NULL ELSE NOW() END, $4)
+                     ON CONFLICT (partition_key) DO NOTHING`,
+                    [pKey, m, initDirty, initDirty ? 'active_month_init' : 'historical_clean']
+                );
+            }
+            await q(
+                `INSERT INTO bdb_snapshot_partition_state (partition_key, tahun, bulan, is_dirty, last_refreshed_at, dirty_reason)
+                 VALUES ('2026-ALL', 2026, NULL, false, NOW(), 'seeded'),
+                        ('ALL-TIME', 0, NULL, false, NOW(), 'seeded')
+                 ON CONFLICT (partition_key) DO NOTHING`
+            );
+            this._dirtyTablesReady = true;
+        } catch (err: any) {
+            this.logger.warn('ensureDirtyPartitionTables warning: ' + (err?.message || err));
+        }
+    }
+
+    async markPartitionDirty(tahun: number, bulan: number | null, reason = 'data_mutation') {
+        await this.ensureDirtyPartitionTables();
+        const pKey =
+            tahun === 0
+                ? 'ALL-TIME'
+                : bulan === null
+                  ? `${tahun}-ALL`
+                  : `${tahun}-${String(bulan).padStart(2, '0')}`;
+        const q = (sql: string, params?: any[]) =>
+            this.bgPool ? this.bgPool.query(sql, params) : this.dataSource.query(sql, params);
+        await q(
+            `INSERT INTO bdb_snapshot_partition_state (partition_key, tahun, bulan, is_dirty, last_dirty_at, dirty_reason)
+             VALUES ($1, $2, $3, true, NOW(), $4)
+             ON CONFLICT (partition_key) DO UPDATE
+               SET is_dirty = true, last_dirty_at = NOW(), dirty_reason = EXCLUDED.dirty_reason`,
+            [pKey, tahun, bulan, reason]
+        );
+    }
 
     private toText(v: any): string | null {
         if (v === undefined || v === null) return null;
@@ -772,6 +906,21 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     SELECT * FROM unioned
                     WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM filtered
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -811,7 +960,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM filtered
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
                 ),
@@ -961,6 +1110,22 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
                     FROM raw_corp_base
                 ),
+                corp_per_lp AS (
+                    SELECT DISTINCT ON (synth_nik, lp_id) *
+                    FROM raw_corp
+                    ORDER BY synth_nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        has_tsk_doc DESC NULLS LAST,
+                        seen_at DESC NULLS LAST
+                ),
                 corp_agg AS (
                     SELECT 
                         synth_nik as nik,
@@ -971,7 +1136,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                 THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
                             ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
                         END)::int as count_tersangka,
-                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERLAPOR' and not coalesce(has_tsk_doc, false) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)
+                        END)::int as count_terlapor,
                         count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
                         count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
@@ -1004,7 +1173,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM raw_corp
+                    FROM corp_per_lp
                     GROUP BY synth_nik
                     HAVING count(distinct lp_id) > 1
                 ),
@@ -1266,6 +1435,21 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     UNION ALL SELECT * FROM raw_manual
                     UNION ALL SELECT * FROM raw_dpo
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM unioned
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -1285,7 +1469,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         string_agg(distinct satker_nama, ', ') as daftar_satker,
                         max(seen_at) as last_seen,
                         (count(distinct lp_id) * 50)::int as nasional_score
-                    FROM unioned
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
                 ),
@@ -1419,17 +1603,210 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         this.logger.log('bdb_pihak_terlibat_summary_snapshot selesai diperbarui.');
     }
 
-    async refreshSnapshot() {
-        this.logger.log('Memperbarui bdb_pihak_terlibat_ranking_snapshot (All-Time + 13 Partisi 2026)...');
-        try { await this.refreshSummarySnapshot(); } catch (e) { this.logger.error('refreshSummarySnapshot error: ' + e?.message); }
-        await this.refreshAllTimeSnapshot();
-        await this.refreshRankingSnapshot(null);
-        for (let m = 1; m <= 12; m++) {
-            await this.refreshRankingSnapshot(m);
+    async refreshSnapshot(options?: { forceFullReconcile?: boolean }) {
+        await this.ensureDirtyPartitionTables();
+        const q = (sql: string, params?: any[]) =>
+            this.bgPool ? this.bgPool.query(sql, params) : this.dataSource.query(sql, params);
+
+        const now = new Date();
+        const wibHour = (now.getUTCHours() + 7) % 24;
+        const isDiniHariWindow = wibHour >= 1 && wibHour < 4;
+        const isFullReconcile = Boolean(options?.forceFullReconcile || isDiniHariWindow);
+
+        // Auto-detect partitions whose source LPs changed since last_refreshed_at
+        try {
+            await q(`
+                UPDATE bdb_snapshot_partition_state p
+                SET is_dirty = true,
+                    last_dirty_at = NOW(),
+                    dirty_reason = 'dors_or_lp_delta'
+                WHERE p.tahun = 2026
+                  AND p.bulan IS NOT NULL
+                  AND p.is_dirty = false
+                  AND EXISTS (
+                      SELECT 1
+                      FROM bdb_laporan_polisi lp
+                      WHERE lp.deleted_at IS NULL
+                        AND COALESCE(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)
+                            >= make_date(p.tahun, p.bulan, 1)
+                        AND COALESCE(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date)
+                            < (make_date(p.tahun, p.bulan, 1) + INTERVAL '1 month')::date
+                        AND lp.synced_at > COALESCE(p.last_refreshed_at, '2026-01-01'::timestamptz)
+                      LIMIT 1
+                  )
+            `);
+        } catch (err: any) {
+            this.logger.warn('[DirtyPartition] Delta detection warning: ' + (err?.message || err));
         }
-        this.summaryCache.clear();
-        this.rankingCache.clear();
-        this.logger.log('bdb_pihak_terlibat snapshot selesai diperbarui (All-Time + 13 Partisi 2026).');
+
+        if (isFullReconcile) {
+            this.logger.log('[DirtyPartition] Window dini hari (01:00-04:00 WIB) / forceFullReconcile aktif -> menandai seluruh partisi dirty.');
+            await q(`UPDATE bdb_snapshot_partition_state SET is_dirty = true, dirty_reason = 'full_reconcile_window'`);
+        }
+
+        const dirtyRes = await q(
+            `SELECT partition_key, tahun, bulan
+             FROM bdb_snapshot_partition_state
+             WHERE is_dirty = true AND tahun = 2026 AND bulan IS NOT NULL
+             ORDER BY bulan ASC`
+        );
+        const dirtyRows: Array<{ partition_key: string; tahun: number; bulan: number | null }> =
+            (dirtyRes as any)?.rows || (Array.isArray(dirtyRes) ? dirtyRes : []);
+
+        if (dirtyRows.length === 0 && !isFullReconcile) {
+            this.logger.log('[DirtyPartition] Tidak ada partisi (tahun, bulan) berstatus dirty pada jam kerja; lewati kalkulasi ulang.');
+            return {
+                status: 1,
+                batch_id: null,
+                dirty_partitions_processed: [],
+                skipped_clean: true
+            };
+        }
+
+        const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        this.logger.log(
+            `[DirtyPartition] Memulai kalkulasi batch ${batchId} untuk ${dirtyRows.length} partisi dirty: [${dirtyRows.map((d) => d.partition_key).join(', ')}]...`
+        );
+
+        try {
+            if (isFullReconcile) {
+                try {
+                    await this.refreshSummarySnapshot();
+                } catch (e: any) {
+                    this.logger.error('refreshSummarySnapshot error: ' + e?.message);
+                }
+                await this.refreshAllTimeSnapshot();
+                await this.refreshRankingSnapshot(null, batchId);
+            }
+
+            // Calculate each dirty partition one-by-one into staging table (per-month commit, never locking live table)
+            for (const part of dirtyRows) {
+                if (part.bulan !== null) {
+                    await this.refreshRankingSnapshot(Number(part.bulan), batchId);
+                }
+            }
+
+            // Atomic Batch Switch (<10ms): swap all staged partitions of batchId into live table in 1 short transaction
+            const switchStart = Date.now();
+            const qr = this.dataSource.createQueryRunner();
+            await qr.connect();
+            await qr.startTransaction();
+            try {
+                await qr.query(`SET LOCAL statement_timeout = '30000ms'`);
+                const switchedKeys: string[] = [];
+
+                if (isFullReconcile) {
+                    await qr.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND bulan IS NULL`);
+                    await qr.query(
+                        `INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                            tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                            satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                            tipe_subjek, tipe_identitas, kasta
+                        )
+                        SELECT
+                            tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                            satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                            tipe_subjek, tipe_identitas, kasta
+                        FROM bdb_pihak_terlibat_ranking_snapshot_staging
+                        WHERE batch_id = $1 AND tahun = 2026 AND bulan IS NULL
+                        ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING`,
+                        [batchId]
+                    );
+                    switchedKeys.push('2026-ALL', 'ALL-TIME');
+                }
+
+                for (const part of dirtyRows) {
+                    if (part.bulan === null) continue;
+                    const m = Number(part.bulan);
+                    await qr.query(
+                        `DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND bulan = $1`,
+                        [m]
+                    );
+                    await qr.query(
+                        `INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                            tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                            satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                            tipe_subjek, tipe_identitas, kasta
+                        )
+                        SELECT
+                            tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
+                            satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
+                            count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
+                            jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
+                            tipe_subjek, tipe_identitas, kasta
+                        FROM bdb_pihak_terlibat_ranking_snapshot_staging
+                        WHERE batch_id = $1 AND tahun = 2026 AND bulan = $2
+                        ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING`,
+                        [batchId, m]
+                    );
+                    switchedKeys.push(part.partition_key);
+                }
+
+                if (switchedKeys.length > 0) {
+                    await qr.query(
+                        `UPDATE bdb_snapshot_partition_state
+                         SET is_dirty = false,
+                             last_refreshed_at = NOW(),
+                             active_batch_id = $1,
+                             dirty_reason = 'synced_clean'
+                         WHERE partition_key = ANY($2::text[])`,
+                        [batchId, switchedKeys]
+                    );
+                }
+
+                await qr.query(
+                    `INSERT INTO bdb_snapshot_active_batch (snapshot_name, active_batch_id, switched_at, partitions_switched, meta_json)
+                     VALUES ('pihak_terlibat_ranking', $1, NOW(), $2::jsonb, $3::jsonb)
+                     ON CONFLICT (snapshot_name) DO UPDATE
+                       SET active_batch_id = EXCLUDED.active_batch_id,
+                           switched_at = NOW(),
+                           partitions_switched = EXCLUDED.partitions_switched,
+                           meta_json = EXCLUDED.meta_json`,
+                    [
+                        batchId,
+                        JSON.stringify(switchedKeys),
+                        JSON.stringify({ switch_ms: Date.now() - switchStart, full_reconcile: isFullReconcile })
+                    ]
+                );
+
+                await qr.query(
+                    `DELETE FROM bdb_pihak_terlibat_ranking_snapshot_staging WHERE batch_id = $1`,
+                    [batchId]
+                );
+                await qr.commitTransaction();
+                this.logger.log(
+                    `[DirtyPartition] Atomic switch active_batch_id=${batchId} selesai dalam ${Date.now() - switchStart}ms untuk partisi: [${switchedKeys.join(', ')}].`
+                );
+            } catch (switchErr: any) {
+                await qr.rollbackTransaction();
+                throw switchErr;
+            } finally {
+                await qr.release();
+            }
+
+            this.summaryCache.clear();
+            this.rankingCache.clear();
+            return {
+                status: 1,
+                batch_id: batchId,
+                dirty_partitions_processed: dirtyRows.map((d) => d.partition_key),
+                skipped_clean: false
+            };
+        } catch (batchErr: any) {
+            this.logger.error(
+                `[DirtyPartition] Batch ${batchId} gagal pada tahap staging (${batchErr?.message || batchErr}); mempertahankan active_batch_id sebelumnya agar data tidak belang.`
+            );
+            try {
+                await q(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot_staging WHERE batch_id = $1`, [batchId]);
+            } catch {}
+            throw batchErr;
+        }
     }
 
     private async globalSummary(authUser: any, query: any) {
@@ -1597,6 +1974,9 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
         const scopeSqlDocument = buildScopeSql(scope, 'lp', paramsDocument);
         const scopeSqlDpo = buildScopeSql(scope, 'dpo', paramsDpo);
 
+        paramsDors.push(fetch);
+        const pDorsLimit = `$${paramsDors.length}::int`;
+
         const dorsPromise = this.dataSource.query(
             `select 'DORS' as sumber, t.id::text as row_id, lp.id as lp_id, t.nama, t.nik,
                     upper(coalesce(t.keterlibatan,'-')) as keterlibatan,
@@ -1610,9 +1990,13 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              where t.nama is not null
                     and ${scopeSqlDors}
              order by t.id desc
-             limit $1`,
-            [...paramsDors, fetch]
+             limit ${pDorsLimit}`,
+            paramsDors
         );
+
+        paramsManual.push(fetch);
+        const pManualLimit = `$${paramsManual.length}::int`;
+
         const manualPromise = this.dataSource.query(
             `select 'MANUAL' as sumber, m.id::text as row_id, m.lp_id, m.nama, m.nik,
                     upper(m.keterlibatan) as keterlibatan, m.nomor_dokumen, m.tanggal_dokumen, m.bap_tanggal,
@@ -1624,16 +2008,22 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              where m.deleted_at is null
                     and ${scopeSqlManual}
              order by m.id desc
-             limit $1`,
-            [...paramsManual, fetch]
+             limit ${pManualLimit}`,
+            paramsManual
         );
+
+        paramsDocument.push(fetch);
+        const pDocLimit = `$${paramsDocument.length}::int`;
+        paramsDocument.push(docScanLimit);
+        const pDocScanLimit = `$${paramsDocument.length}::int`;
+
         const documentPromise = this.dataSource.query(
             `with recent_docs as (
                  select d.id, d.lp_id, d.nomor_dokumen, d.tanggal_dokumen, d.data, d.created_at, dt.code
                  from bdb_dokumen d
                  join bdb_document_type_master dt on dt.id = d.document_type_id and dt.code in ('PENETAPAN_TSK', 'PENETAPAN_DPO')
                  order by d.created_at desc, d.id desc
-                 limit $3
+                 limit ${pDocScanLimit}
              ),
              recent_parties as (
                  select d.lp_id, d.id as dokumen_id, ordinality::int as urutan,
@@ -1660,9 +2050,13 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     and ${scopeSqlDocument}
              left join cm_jenis_kejahatan jk on jk.id=lp.jenis_kejahatan_id
              order by x.created_at desc,x.dokumen_id desc,x.urutan desc
-             limit $2`,
-            [...paramsDocument, fetch, docScanLimit]
+             limit ${pDocLimit}`,
+            paramsDocument
         );
+
+        paramsDpo.push(fetch);
+        const pDpoLimit = `$${paramsDpo.length}::int`;
+
         const dpoPromise = this.dataSource.query(
             `select 'DPO' as sumber,
                     d.id as id,
@@ -1692,8 +2086,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
              where d.status_dpo = 'AKTIF'
              and ${scopeSqlDpo}
              order by d.created_at desc, d.id desc
-             limit $2`,
-            [...paramsDpo, fetch]
+             limit ${pDpoLimit}`,
+            paramsDpo
         );
         const [dors, manual, document, dpoRows] = await Promise.all([dorsPromise, manualPromise, documentPromise, dpoPromise]);
         // BDB-003: NIK dimask untuk role non-nasional.
@@ -3543,17 +3937,14 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
     async cronRefreshRankingSnapshot() {
         if (!isPrimaryClusterInstance()) return;
         const now = new Date();
-        const curMonth = now.getMonth() + 1;
-        await this.refreshRankingSnapshot(curMonth);
-        if (now.getHours() === 2 && now.getMinutes() === 0) {
-            await this.refreshAllTimeSnapshot();
-        }
-        if (now.getHours() % 2 === 0 && now.getMinutes() === 0) {
-            await this.refreshRankingSnapshot(null);
+        const wibHour = (now.getUTCHours() + 7) % 24;
+        // Full reconcile only in off-peak 01:00-04:00 WIB; during working hours refreshSnapshot() only processes dirty partitions
+        if (wibHour === 2 && now.getMinutes() === 0) {
+            await this.refreshSnapshot({ forceFullReconcile: true });
         }
     }
 
-    async refreshRankingSnapshot(targetMonth?: number | null) {
+    async refreshRankingSnapshot(targetMonth?: number | null, stagingBatchId?: string) {
         const isYear = (targetMonth === null || targetMonth === undefined);
         const curMonth = !isYear ? targetMonth : null;
         const mm = isYear ? null : String(curMonth).padStart(2, '0');
@@ -3564,15 +3955,31 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
 
         const limAll = isYear ? 100 : 50;
         const limRole = isYear ? 100 : 25;
+        const targetTable = stagingBatchId
+            ? 'bdb_pihak_terlibat_ranking_snapshot_staging'
+            : 'bdb_pihak_terlibat_ranking_snapshot';
+        const batchColInsert = stagingBatchId ? ', batch_id' : '';
+        const batchValSelect = stagingBatchId ? `, '${stagingBatchId.replace(/'/g, "''")}' as batch_id` : '';
+        const onConflictClause = stagingBatchId
+            ? ''
+            : 'ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING';
+        const batchWhereClause = stagingBatchId
+            ? `AND batch_id = '${stagingBatchId.replace(/'/g, "''")}'`
+            : '';
 
-        this.logger.log(`Refreshing Ranking Snapshot for ${isYear ? 'Year 2026' : 'Month ' + curMonth} (${startDay} to ${lastDay}) in transaction...`);
+        this.logger.log(
+            `Refreshing Ranking Snapshot (${stagingBatchId ? 'staging ' + stagingBatchId : 'live'}) for ${isYear ? 'Year 2026' : 'Month ' + curMonth} (${startDay} to ${lastDay})...`
+        );
 
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
 
         try {
-            await queryRunner.query(`DELETE FROM bdb_pihak_terlibat_ranking_snapshot WHERE tahun = 2026 AND ${monthDeleteClause};`);
+            await queryRunner.query(`SET LOCAL statement_timeout = '300000ms'`);
+            await queryRunner.query(
+                `DELETE FROM ${targetTable} WHERE tahun = 2026 AND ${monthDeleteClause} ${batchWhereClause};`
+            );
 
             await queryRunner.query(`
                 WITH raw_dors AS (
@@ -3608,8 +4015,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     JOIN bdb_dors_lp_terlibat t ON t.lp_id = d.id
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     WHERE lp.deleted_at IS NULL
-                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) >= '${startDay}'::date
-                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) <= '${lastDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) >= '${startDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) <= '${lastDay}'::date
                       AND t.nik IS NOT NULL AND trim(t.nik) ~ '^[1-9][0-9]{15}$'
                       AND t.nama IS NOT NULL AND length(trim(t.nama)) > 2
                       AND upper(trim(t.nama)) NOT IN ('TIDAK DIKETAHUI','LIDIK','NIHIL','-','--','BELUM DIKETAHUI','NKRI','INDONESIA','NEGARA KESATUAN REPUBLIK INDONESIA')
@@ -3676,6 +4083,21 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     SELECT * FROM unioned
                     WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM filtered
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -3715,7 +4137,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM filtered
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1
                 ),
@@ -3769,12 +4191,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         ) as rn
                     FROM multi_cat
                 )
-                INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                INSERT INTO ${targetTable} (
                     tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                     jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                    tipe_subjek, tipe_identitas
+                    tipe_subjek, tipe_identitas${batchColInsert}
                 )
                 SELECT 
                     2026 as tahun,
@@ -3787,10 +4209,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                     jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     'PERORANGAN' as tipe_subjek,
-                    'NIK' as tipe_identitas
+                    'NIK' as tipe_identitas${batchValSelect}
                 FROM ranked
                 WHERE 1=1
-                ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
+                ${onConflictClause};
             `);
 
             // Corporate Ranking for 2026
@@ -3844,8 +4266,8 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     LEFT JOIN bdb_satker s ON s.id = coalesce(lp.unit_satker_id, lp.satker_id)
                     LEFT JOIN lp_has_tsk lht ON lht.lp_id = lp.id
                     WHERE lp.deleted_at IS NULL
-                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) >= '${startDay}'::date
-                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), coalesce(d.synced_at, lp.synced_at)::date) <= '${lastDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) >= '${startDay}'::date
+                      AND coalesce(parse_tgl_laporan(lp.tgl_laporan), lp.synced_at::date) <= '${lastDay}'::date
                       AND (
                         upper(trim(t.nama)) ~ '^(PT[ .]|CV[ .]|UD[ .]|YAYASAN |KOPERASI |BANK |PERUM |PERUSAHAAN |KOP[ .]|KONSORSIUM )'
                         OR upper(coalesce(t.jenis_identitas,'')) = 'BADAN HUKUM'
@@ -3864,6 +4286,22 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
                     FROM raw_corp_base
                 ),
+                corp_per_lp AS (
+                    SELECT DISTINCT ON (synth_nik, lp_id) *
+                    FROM raw_corp
+                    ORDER BY synth_nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        has_tsk_doc DESC NULLS LAST,
+                        seen_at DESC NULLS LAST
+                ),
                 corp_agg AS (
                     SELECT 
                         synth_nik as nik,
@@ -3874,7 +4312,11 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                                 THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
                             ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
                         END)::int as count_tersangka,
-                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERLAPOR' and not coalesce(has_tsk_doc, false) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)
+                        END)::int as count_terlapor,
                         count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
                         count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
@@ -3907,7 +4349,7 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM raw_corp
+                    FROM corp_per_lp
                     GROUP BY synth_nik
                     HAVING count(distinct lp_id) > 1
                 ),
@@ -3926,12 +4368,12 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     UNION ALL
                     SELECT c.*, 'DPO' as kategori_filter, 'DPO' as keterlibatan FROM corp_agg c WHERE count_dpo > 0
                 )
-                INSERT INTO bdb_pihak_terlibat_ranking_snapshot (
+                INSERT INTO ${targetTable} (
                     tahun, bulan, satker_id, keterlibatan, kategori_filter, nama, nik, total_lp,
                     satker_tier, satker_nama_tertinggi, last_seen, refreshed_at,
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                     jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
-                    tipe_subjek, tipe_identitas
+                    tipe_subjek, tipe_identitas${batchColInsert}
                 )
                 SELECT 
                     2026 as tahun,
@@ -3944,10 +4386,10 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                     count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor,
                     jumlah_satker_unik, jumlah_polda_unik, is_lintas_wilayah, daftar_satker, nasional_score,
                     'KORPORASI' as tipe_subjek,
-                    'BADAN HUKUM' as tipe_identitas
-                FROM multi_corp ON CONFLICT (tahun, COALESCE(bulan, 0), kategori_filter, nik) DO NOTHING;
+                    'BADAN HUKUM' as tipe_identitas${batchValSelect}
+                FROM multi_corp ${onConflictClause};
 
-                UPDATE bdb_pihak_terlibat_ranking_snapshot
+                UPDATE ${targetTable}
                 SET
                     total_lp = GREATEST(total_lp, count_dpo, count_tersangka, count_terlapor, count_saksi, count_korban, count_pelapor),
                     kasta = CASE
@@ -3962,15 +4404,16 @@ export class PihakTerlibatService implements OnApplicationBootstrap {
                         WHEN count_korban > 0 THEN 'KORBAN'
                         ELSE 'PIHAK'
                     END
-                WHERE tahun = 2026 AND ${monthDeleteClause};
+                WHERE tahun = 2026 AND ${monthDeleteClause} ${batchWhereClause};
             `);
 
             await queryRunner.commitTransaction();
             this.rankingCache.clear();
-            this.logger.log(`Ranking Snapshot Refresh for ${isYear ? 'Year 2026' : 'Month ' + curMonth} completed.`);
+            this.logger.log(`Ranking Snapshot Refresh (${stagingBatchId ? 'staging ' + stagingBatchId : 'live'}) for ${isYear ? 'Year 2026' : 'Month ' + curMonth} completed.`);
         } catch (e: any) {
             await queryRunner.rollbackTransaction();
             this.logger.error('Error refreshing ranking snapshot: ' + e?.message);
+            if (stagingBatchId) throw e;
         } finally {
             await queryRunner.release();
         }

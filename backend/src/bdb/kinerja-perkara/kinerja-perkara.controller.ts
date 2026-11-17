@@ -122,13 +122,14 @@ export class KinerjaPerkaraController {
         return req?.user?.id ? Number(req.user.id) : undefined;
     }
 
-    /** GET tanpa parameter tetap scoped. Nilai asing ditolak agar kesalahan kontrak FE tidak diam-diam melebar. */
+    /** GET tanpa parameter tetap scoped; 'regional' dipakai Dashboard Ringkasan untuk lingkup Polres induk. */
     private visibility(value: string | undefined): KinerjaReadVisibility {
         if (value === undefined || value === '') return 'scoped';
         const normalized = String(value).trim().toLowerCase();
         if (normalized === 'national') return 'national';
-        if (normalized === 'scoped' || normalized === 'regional') return 'scoped';
-        throw new BadRequestException('visibility harus bernilai national atau scoped.');
+        if (normalized === 'regional') return 'regional';
+        if (normalized === 'scoped') return 'scoped';
+        throw new BadRequestException('visibility harus bernilai national, regional, atau scoped.');
     }
 
     private scopeSatkerId(value: string | undefined): number | undefined {

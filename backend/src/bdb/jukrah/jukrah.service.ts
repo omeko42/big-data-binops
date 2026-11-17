@@ -1765,7 +1765,6 @@ export class JukrahService {
         const uid = ctx.uid;
         const isSuperadmin = ctx.isGlobalAdmin;
         const userSatkerId = ctx.satkerId;
-        const userPoldaPrefix = ctx.poldaPrefix ? ctx.poldaPrefix.replace(/[^0-9.]/g, '') : '';
         const page = Math.max(1, Number(opts.page) || 1);
         const limit = Math.min(100, Math.max(1, Number(opts.limit) || 30));
         const offset = (page - 1) * limit;
@@ -1780,74 +1779,7 @@ export class JukrahService {
             connectedTo = Number(opts.target_user_id) || uid;
         }
 
-        if (uid > 0) {
-            try {
-                const incCheck = await this.dataSource.query(
-                    `SELECT COUNT(*)::int as c FROM user_connections WHERE addressee_id = $1 AND status = 'PENDING'`,
-                    [uid]
-                );
-                const currentIncoming = Number(incCheck[0]?.c || 0);
-                if (uid === 1 && currentIncoming < 42) {
-                    const needed = 42 - currentIncoming;
-                    const seedCandidates = await this.dataSource.query(
-                        `SELECT u.id FROM auth_users u
-                         WHERE u.id <> 1 AND u.id <> 123
-                           AND (u.status = 'AKTIF' OR u.status = 'active')
-                           AND u.username IS NOT NULL AND u.username <> ''
-                           AND NOT EXISTS (
-                               SELECT 1 FROM user_connections uc
-                               WHERE (uc.requester_id = u.id AND uc.addressee_id = 1)
-                                  OR (uc.requester_id = 1 AND uc.addressee_id = u.id)
-                           )
-                         ORDER BY u.last_login_at DESC NULLS LAST, u.id ASC
-                         LIMIT $1`,
-                        [needed]
-                    );
-                    for (let i = 0; i < seedCandidates.length; i++) {
-                        const peerId = Number(seedCandidates[i].id);
-                        if (peerId > 0) {
-                            await this.dataSource.query(
-                                `INSERT INTO user_connections (requester_id, addressee_id, status, created_at, updated_at)
-                                 VALUES ($1, 1, 'PENDING', NOW() - ($2 || ' minutes')::interval, NOW() - ($2 || ' minutes')::interval)
-                                 ON CONFLICT (requester_id, addressee_id) DO NOTHING`,
-                                [peerId, String((i + 1) * 9)]
-                            );
-                        }
-                    }
-                    this.clearNetworkUsersCache();
-                } else if (uid > 1 && currentIncoming < 3 && (userSatkerId > 0 || userPoldaPrefix)) {
-                    const seedCandidates = await this.dataSource.query(
-                        `SELECT u.id FROM auth_users u
-                         LEFT JOIN bdb_satker s ON s.id = u.scope_satker_id
-                         WHERE u.id <> $1 AND u.id <> 1
-                           AND (u.status = 'AKTIF' OR u.status = 'active')
-                           AND u.username IS NOT NULL AND u.username <> ''
-                           AND ($2::bigint = 0 OR u.scope_satker_id = $2 OR ($3 <> '' AND s.kode LIKE $3 || '%'))
-                           AND NOT EXISTS (
-                               SELECT 1 FROM user_connections uc
-                               WHERE (uc.requester_id = u.id AND uc.addressee_id = $1)
-                                  OR (uc.requester_id = $1 AND uc.addressee_id = u.id)
-                           )
-                         ORDER BY (u.scope_satker_id = $2) DESC, u.last_login_at DESC NULLS LAST, u.id ASC
-                         LIMIT 6`,
-                        [uid, userSatkerId, userPoldaPrefix]
-                    );
-                    for (let i = 0; i < seedCandidates.length; i++) {
-                        const peerId = Number(seedCandidates[i].id);
-                        if (peerId > 0) {
-                            await this.dataSource.query(
-                                `INSERT INTO user_connections (requester_id, addressee_id, status, created_at, updated_at)
-                                 VALUES ($1, $2, 'PENDING', NOW() - ($3 || ' minutes')::interval, NOW() - ($3 || ' minutes')::interval)
-                                 ON CONFLICT (requester_id, addressee_id) DO NOTHING`,
-                                [peerId, uid, String((i + 1) * 17)]
-                            );
-                        }
-                    }
-                    this.clearNetworkUsersCache();
-                }
-            } catch {}
-        }
-
+        // Incoming connection requests are strictly manual user actions (no auto-seeding).
         const now = Date.now();
         const filterKey = `${connectedTo || 0}|${filterMode}|${satkerId}|${search.toLowerCase()}|${isSuperadmin ? 'all' : userSatkerId}`;
         const pageCacheKey = `${uid}|${isSuperadmin ? 1 : 0}|${userSatkerId}|${filterKey}|${page}|${limit}`;

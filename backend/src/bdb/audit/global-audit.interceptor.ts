@@ -24,7 +24,8 @@ const SKIP_PATH_PARTS = [
     '/soft-delete', // laporan-polisi.service.ts sudah audit.log('SOFT_DELETE')
     '/bdb/panduan', // panduan.service.ts sudah audit.log lengkap per aksi
     '/bdb/system-setting', // system-setting.service.ts sudah audit.log per perubahan
-    '/bdb/pihak-terlibat' // pihak-terlibat.service.ts sudah audit.log per perubahan
+    '/bdb/pihak-terlibat', // pihak-terlibat.service.ts sudah audit.log per perubahan
+    '/bdb/coserse' // coserse.service.ts sudah audit.log COSERSE_PROFILING & FLAGGED_SECURITY per aksi
 ];
 
 const SENSITIVE_KEYS = ['password', 'secret', 'token', 'otp', 'captcha', 'pin', 'totp'];

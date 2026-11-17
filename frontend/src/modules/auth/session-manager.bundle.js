@@ -400,6 +400,14 @@ if (typeof window !== "undefined" && !window.__bdbOfflineEngineReady) {
       sessionStorage.clear();
       localStorage.removeItem("bdb_current_user_id");
       localStorage.removeItem("bdb_last_preload_13");
+      try {
+        const rm = [];
+        for (let idx = 0; idx < localStorage.length; idx++) {
+          const k = localStorage.key(idx);
+          if (k && /^(cas_.*cache|bdb_.*cache|.*_cache_v\d|.*_ranking_cache)/i.test(k)) rm.push(k);
+        }
+        rm.forEach((k) => { try { localStorage.removeItem(k); } catch (_e) {} });
+      } catch (_e) {}
       if (_idb) {
         try { _idb.close(); } catch(e){}
         _idb = null;

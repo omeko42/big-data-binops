@@ -815,6 +815,21 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     SELECT * FROM unioned
                     WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM filtered
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -854,7 +869,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM filtered
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
                 ),
@@ -1003,6 +1018,22 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
                     FROM raw_corp_base
                 ),
+                corp_per_lp AS (
+                    SELECT DISTINCT ON (synth_nik, lp_id) *
+                    FROM raw_corp
+                    ORDER BY synth_nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        has_tsk_doc DESC NULLS LAST,
+                        seen_at DESC NULLS LAST
+                ),
                 corp_agg AS (
                     SELECT 
                         synth_nik as nik,
@@ -1013,7 +1044,11 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                 THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
                             ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
                         END)::int as count_tersangka,
-                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERLAPOR' and not coalesce(has_tsk_doc, false) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)
+                        END)::int as count_terlapor,
                         count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
                         count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
@@ -1046,7 +1081,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM raw_corp
+                    FROM corp_per_lp
                     GROUP BY synth_nik
                     HAVING count(distinct lp_id) > 1
                 ),
@@ -1309,6 +1344,21 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     UNION ALL SELECT * FROM raw_manual
                     UNION ALL SELECT * FROM raw_dpo
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM unioned
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -1328,7 +1378,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         string_agg(distinct satker_nama, ', ') as daftar_satker,
                         max(seen_at) as last_seen,
                         (count(distinct lp_id) * 50)::int as nasional_score
-                    FROM unioned
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1 OR count(distinct case when keterlibatan = 'DPO' then lp_id end) > 0
                 ),
@@ -3650,6 +3700,21 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                     SELECT * FROM unioned
                     WHERE is_md = false AND (umur IS NULL OR (umur >= 0 AND umur <= 75))
                 ),
+                per_lp AS (
+                    SELECT DISTINCT ON (nik, lp_id) *
+                    FROM filtered
+                    ORDER BY nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        seen_at DESC NULLS LAST
+                ),
                 person_agg AS (
                     SELECT 
                         nik,
@@ -3689,7 +3754,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM filtered
+                    FROM per_lp
                     GROUP BY nik
                     HAVING count(distinct lp_id) > 1
                 ),
@@ -3837,6 +3902,22 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                         keterlibatan, has_tsk_doc, seen_at, satker_tier, satker_nama
                     FROM raw_corp_base
                 ),
+                corp_per_lp AS (
+                    SELECT DISTINCT ON (synth_nik, lp_id) *
+                    FROM raw_corp
+                    ORDER BY synth_nik, lp_id,
+                        CASE keterlibatan
+                            WHEN 'DPO' THEN 1
+                            WHEN 'TERSANGKA' THEN 2
+                            WHEN 'TERLAPOR' THEN 3
+                            WHEN 'PELAPOR' THEN 4
+                            WHEN 'SAKSI' THEN 5
+                            WHEN 'KORBAN' THEN 6
+                            ELSE 7
+                        END ASC,
+                        has_tsk_doc DESC NULLS LAST,
+                        seen_at DESC NULLS LAST
+                ),
                 corp_agg AS (
                     SELECT 
                         synth_nik as nik,
@@ -3847,7 +3928,11 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                                 THEN count(distinct case when keterlibatan = 'TERSANGKA' or (keterlibatan = 'TERLAPOR' and has_tsk_doc = true) then lp_id end)
                             ELSE count(distinct case when keterlibatan = 'TERSANGKA' then lp_id end)
                         END)::int as count_tersangka,
-                        count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)::int as count_terlapor,
+                        (CASE 
+                            WHEN count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end) >= count(distinct case when keterlibatan = 'KORBAN' then lp_id end)
+                                THEN count(distinct case when keterlibatan = 'TERLAPOR' and not coalesce(has_tsk_doc, false) then lp_id end)
+                            ELSE count(distinct case when keterlibatan = 'TERLAPOR' then lp_id end)
+                        END)::int as count_terlapor,
                         count(distinct case when keterlibatan = 'SAKSI' then lp_id end)::int as count_saksi,
                         count(distinct case when keterlibatan = 'KORBAN' then lp_id end)::int as count_korban,
                         count(distinct case when keterlibatan = 'PELAPOR' then lp_id end)::int as count_pelapor,
@@ -3880,7 +3965,7 @@ let PihakTerlibatService = PihakTerlibatService_1 = class PihakTerlibatService {
                             + (case when min(satker_tier) = 1 then 5000 when min(satker_tier) = 2 then 2000 when min(satker_tier) = 3 then 500 else 0 end)
                             + (count(distinct lp_id) * 50)
                         )::int as nasional_score
-                    FROM raw_corp
+                    FROM corp_per_lp
                     GROUP BY synth_nik
                     HAVING count(distinct lp_id) > 1
                 ),

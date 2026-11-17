@@ -84,7 +84,7 @@ type Metrics = {
 };
 type TreeNode = Node & Metrics & { nomor: string; children: TreeNode[] };
 type LiteNode = Node & Metrics & { has_children: boolean };
-export type KinerjaReadVisibility = 'scoped' | 'national';
+export type KinerjaReadVisibility = 'scoped' | 'regional' | 'national';
 export type KinerjaModelFilter = 'lp_model_a' | 'lp_model_b';
 export type KinerjaClosureReasonFilter = 'RJ' | 'NON_RJ';
 export type KinerjaBucketMode = 'age' | 'difficulty';
@@ -266,6 +266,7 @@ export const kinerjaDirectFunctionGroup = (nameIn: unknown): KinerjaOfficialGrou
     if (!compact.startsWith('DIT') && !compact.startsWith('SAT') && !compact.startsWith('KORTAS')) return null;
     if (compact.includes('NARKOBA') || compact.includes('NARKOTIKA')) return 'TIPIDNARKOBA';
     if (compact.includes('SIBER') || compact.includes('CYBER')) return 'TIPIDSIBER';
+    if (compact.includes('TIPIDTEROR') || compact.includes('TERORIS') || compact.includes('DENSUS')) return 'TIPIDUM';
     if (compact.includes('TIPIDTER')) return 'TIPIDTER';
     if (compact.includes('TIPIDEKSUS') || compact.includes('EKSUS')) return 'TIPIDEKSUS';
     if (compact.includes('TIPIDKOR') || compact.includes('KORTAS') || compact.includes('KORUPSI')) return 'TIPIDKOR';
@@ -586,6 +587,7 @@ export const kinerjaScopeFunctionGroup = (nameIn: unknown): KinerjaOfficialGroup
     const compact = compactSatkerName(nameIn);
     if (compact.includes('NARKOBA') || compact.includes('NARKOTIKA')) return 'TIPIDNARKOBA';
     if (compact.includes('SIBER') || compact.includes('CYBER')) return 'TIPIDSIBER';
+    if (compact.includes('TIPIDTEROR') || compact.includes('TERORIS') || compact.includes('DENSUS')) return 'TIPIDUM';
     if (compact.includes('TIPIDTER')) return 'TIPIDTER';
     if (compact.includes('TIPIDEKSUS') || compact.includes('EKSUS')) return 'TIPIDEKSUS';
     if (compact.includes('TIPIDKOR') || compact.includes('KORTAS') || compact.includes('KORUPSI')) return 'TIPIDKOR';
@@ -623,7 +625,8 @@ export const isMabesSatkerOrDirectorate = (s?: SatkerRow | null): boolean => {
 export const buildKinerjaRegionalScopePlan = (
     satkers: SatkerRow[],
     scopeSatkerId: number,
-    requestedScopeSatkerId?: number
+    requestedScopeSatkerId?: number,
+    visibility: KinerjaReadVisibility = 'scoped'
 ): KinerjaRegionalScopePlan | null => {
     const byId = new Map(satkers.map((s) => [Number(s.id), s]));
     const scopeNode = byId.get(Number(scopeSatkerId));
@@ -656,8 +659,11 @@ export const buildKinerjaRegionalScopePlan = (
     }
 
     const scopeType = normalizedSatkerWords(scopeNode.tipe_satker);
+    const isRegionalPolresComparison = visibility === 'regional' && !isMabesFunction && scopeType !== 'POLDA' && nearestPolres != null;
     if (isMabesFunction) {
         root = byId.get(13) || scopeNode;
+    } else if (isRegionalPolresComparison) {
+        root = nearestPolres;
     } else if (scopeType === 'POLDA') root = scopeNode;
     else if (isPolresSatkerType(scopeType)) root = scopeNode;
     else if (scopeType === 'POLSEK') root = scopeNode;
@@ -665,7 +671,9 @@ export const buildKinerjaRegionalScopePlan = (
     else root = nearestPolsek || nearestPolres || nearestPolda || scopeNode;
 
     const accountRootId = Number(root.id);
-    const functionGroup = (Number(scopeNode.id) === 1 || Number(scopeNode.id) === 13 || nearestPolsek != null) ? null : kinerjaScopeFunctionGroup(scopeNode.deskripsi);
+    const accountScopeGroup = kinerjaScopeFunctionGroup(scopeNode.deskripsi);
+    const isSpecialPolresTipidGroup = isRegionalPolresComparison && (accountScopeGroup === 'TIPIDNARKOBA' || accountScopeGroup === 'TIPIDPPAPPO');
+    const functionGroup = (Number(scopeNode.id) === 1 || Number(scopeNode.id) === 13 || nearestPolsek != null || (isRegionalPolresComparison && !isSpecialPolresTipidGroup)) ? null : accountScopeGroup;
     const isDescendantOf = (satker: SatkerRow, ancestorId: number): boolean => {
         let current: SatkerRow | undefined = satker;
         const guard = new Set<number>();
@@ -713,7 +721,30 @@ export const buildKinerjaRegionalScopePlan = (
         if (CHILD_TO_PARENT_GROUP[accGroup] === sGroup) return true;
         if (sGroup === 'KRIMUM') {
             const compact = compactSatkerName(satker.deskripsi);
+            const isPolresScopedHierarchy = !isMabesFunction && scopeType !== 'POLDA' && nearestPolres != null && nearestPolsek == null;
+            if (accGroup === 'TIPIDNARKOBA' || (accGroup === 'TIPIDPPAPPO' && isPolresScopedHierarchy)) {
+                return compact.startsWith('UNITRESKRIM') || normalizedSatkerWords(satker.tipe_satker) === 'POLSEK';
+            }
             if (compact.startsWith('SATRESKRIM') || compact.startsWith('UNITRESKRIM') || compact.includes('RESKRIM')) return true;
+        }
+        return false;
+    };
+
+    const isExcludedSiblingUnitForRegional = (satker: SatkerRow): boolean => {
+        if (isMabesFunction || scopeType === 'POLDA' || nearestPolres == null || nearestPolsek != null) return false;
+        let cur: SatkerRow | undefined = satker;
+        const seen = new Set<number>();
+        while (cur && !seen.has(Number(cur.id)) && Number(cur.id) !== rootId) {
+            seen.add(Number(cur.id));
+            const compact = compactSatkerName(cur.deskripsi);
+            if (accountScopeGroup === 'KRIMUM') {
+                if (compact.includes('NARKOBA') || compact.includes('NARKOTIKA') || compact.includes('PPAPPO') || compact.includes('PPADANPPO') || compact.includes('RESPPA')) return true;
+            } else if (accountScopeGroup === 'TIPIDNARKOBA') {
+                if (compact.includes('SATRESKRIM') || compact.includes('PPAPPO') || compact.includes('PPADANPPO') || compact.includes('RESPPA')) return true;
+            } else if (accountScopeGroup === 'TIPIDPPAPPO') {
+                if (compact.includes('SATRESKRIM') || compact.includes('NARKOBA') || compact.includes('NARKOTIKA')) return true;
+            }
+            cur = cur.parent_id == null ? undefined : byId.get(Number(cur.parent_id));
         }
         return false;
     };
@@ -721,6 +752,7 @@ export const buildKinerjaRegionalScopePlan = (
     const allowedIds = satkers
         .filter(isInRoot)
         .filter((satker) => {
+            if (isExcludedSiblingUnitForRegional(satker)) return false;
             if (!functionGroup) return true;
             if (normalizedSatkerWords(satker.tipe_satker) !== 'FUNGSI') return true;
             return isFunctionCompatibleWithAccount(satker, functionGroup);
@@ -1580,16 +1612,16 @@ export class KinerjaPerkaraService implements OnModuleInit {
         let scopeVisibleIds: Set<number> | null = null;
         let scopeRootId: number | null = null;
         const accountPlan = !scope.all && scope.satkerId
-            ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId)
+            ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, undefined, visibility)
             : null;
         const regionalPlan = nationalRead
             ? null
             : scope.all
                 ? scopeSatkerId
-                    ? buildKinerjaRegionalScopePlan(satkers, scopeSatkerId, scopeSatkerId)
+                    ? buildKinerjaRegionalScopePlan(satkers, scopeSatkerId, scopeSatkerId, visibility)
                     : null
                 : scope.satkerId
-                    ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, scopeSatkerId)
+                    ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, scopeSatkerId, visibility)
                     : null;
         // Akun fungsi regional otomatis memakai kelompok kejahatannya sendiri jika pengguna
         // belum memilih kelompok secara eksplisit.
@@ -2257,7 +2289,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
         if (isStandardRekap) {
             const scope = await resolveScope(this.ds, userId);
             const hasAccountFunctionGroup = !scope.all && scope.satkerId
-                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId, scopeSatkerId, visibility)?.functionGroup)
                 : false;
             const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun: number | null = null;
@@ -2488,7 +2520,7 @@ export class KinerjaPerkaraService implements OnModuleInit {
         if (isStandardSummary) {
             const scope = await resolveScope(this.ds, userId);
             const hasAccountFunctionGroup = !scope.all && scope.satkerId
-                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId)?.functionGroup)
+                ? Boolean(buildKinerjaRegionalScopePlan(await this.getSatkerTree(), scope.satkerId, scopeSatkerId, visibility)?.functionGroup)
                 : false;
             const isNational = (visibility === 'national' || (scope.all && !scopeSatkerId) || (!scope.satkerId && !scopeSatkerId)) && !hasAccountFunctionGroup;
             let targetTahun: number | null = null;
@@ -2861,16 +2893,16 @@ export class KinerjaPerkaraService implements OnModuleInit {
         const nationalRead = visibility === 'national';
         let allowed: number[] | null = null;
         const accountPlan = !scope.all && scope.satkerId
-            ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId)
+            ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, undefined, visibility)
             : null;
         const regionalPlan = nationalRead
             ? null
             : scope.all
                 ? scopeSatkerId
-                    ? buildKinerjaRegionalScopePlan(satkers, scopeSatkerId, scopeSatkerId)
+                    ? buildKinerjaRegionalScopePlan(satkers, scopeSatkerId, scopeSatkerId, visibility)
                     : null
                 : scope.satkerId
-                    ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, scopeSatkerId)
+                    ? buildKinerjaRegionalScopePlan(satkers, scope.satkerId, scopeSatkerId, visibility)
                     : null;
 
         const effectiveKelompokHitung: KinerjaCountingGroup[] = kelompokHitung.length
