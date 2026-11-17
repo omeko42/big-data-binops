@@ -2016,3 +2016,187 @@ html[data-theme="dark"] .cs-batch-badge-skip {
   color: #94a3b8;
 }
 
+/* ============================================================================
+ * DARK MODE CONTRAST POLISH: SETTINGS MODAL, SIDEBAR, PILLS, INPUT, & CARDS
+ * ============================================================================ */
+html[data-theme="dark"] .cs-modal,
+html[data-theme="dark"] .cs-settings-main,
+html[data-theme="dark"] .cs-modal-head,
+html[data-theme="dark"] .cs-modal-body {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+html[data-theme="dark"] .cs-settings-nav {
+  background: #0b1324 !important;
+  border-right-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+html[data-theme="dark"] .cs-settings-nav-label {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .cs-set-nav-item {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+}
+
+html[data-theme="dark"] .cs-set-nav-item:hover {
+  background: rgba(30, 41, 59, 0.85) !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-set-nav-item.active {
+  background: #1e293b !important;
+  color: #ffffff !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+html[data-theme="dark"] .cs-set-section,
+html[data-theme="dark"] .cs-set-card,
+html[data-theme="dark"] .cs-modal-quota-list {
+  background: #16223f !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.24) !important;
+}
+
+html[data-theme="dark"] .cs-set-row {
+  border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+html[data-theme="dark"] .cs-modal-title,
+html[data-theme="dark"] .cs-set-title,
+html[data-theme="dark"] .cs-set-row-title,
+html[data-theme="dark"] .cs-set-section h4,
+html[data-theme="dark"] .cs-set-section strong {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-modal-sub,
+html[data-theme="dark"] .cs-set-row-desc,
+html[data-theme="dark"] .cs-guide-disclaimer,
+html[data-theme="dark"] .cs-set-section p,
+html[data-theme="dark"] .cs-set-section li {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .cs-disclaimer-box {
+  background: rgba(30, 41, 59, 0.78) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html[data-theme="dark"] .cs-seg-ctrl,
+html[data-theme="dark"] .cs-seg-group {
+  background: #0b1324 !important;
+  border: 1px solid rgba(148, 163, 184, 0.26) !important;
+}
+
+html[data-theme="dark"] .cs-seg-btn {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+}
+
+html[data-theme="dark"] .cs-seg-btn.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+html[data-theme="dark"] .cs-modal input,
+html[data-theme="dark"] .cs-modal select,
+html[data-theme="dark"] .cs-modal textarea {
+  background: #0b1324 !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+html[data-theme="dark"] .cs-modal-close {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+}
+
+html[data-theme="dark"] .cs-modal-close:hover {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .cs-session-item,
+html[data-theme="dark"] .cs-session-title,
+html[data-theme="dark"] .cs-sess-title {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .cs-session-item:hover {
+  background: #17253e !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-session-item.active,
+html[data-theme="dark"] .cs-session-item.active .cs-session-title,
+html[data-theme="dark"] .cs-session-item.active .cs-sess-title {
+  background: #1e293b !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .cs-pill,
+html[data-theme="dark"] .cs-new-chat-btn,
+html[data-theme="dark"] .cs-settings-btn {
+  background: #16223f !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(148, 163, 184, 0.26) !important;
+}
+
+html[data-theme="dark"] .cs-pill:hover,
+html[data-theme="dark"] .cs-new-chat-btn:hover,
+html[data-theme="dark"] .cs-settings-btn:hover {
+  background: #1e293b !important;
+  color: #ffffff !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+html[data-theme="dark"] .cs-capsule textarea,
+html[data-theme="dark"] .cs-input {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-capsule textarea::placeholder,
+html[data-theme="dark"] .cs-input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="dark"] .cs-dock-disclaimer,
+html[data-theme="dark"] .cs-disclaimer {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .cs-confirm-modal,
+html[data-theme="dark"] .cs-confirm-card {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+html[data-theme="dark"] .cs-confirm-title {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .cs-confirm-msg {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .cs-review-card th,
+html[data-theme="dark"] .cs-review-card td,
+html[data-theme="dark"] .cs-review-card label {
+  color: #cbd5e1 !important;
+  border-color: rgba(148, 163, 184, 0.22) !important;
+}
+
+html[data-theme="dark"] .cs-review-card input,
+html[data-theme="dark"] .cs-review-card select {
+  background: #0b1324 !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
