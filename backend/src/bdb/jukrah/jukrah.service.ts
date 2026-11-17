@@ -1,7 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional, UnauthorizedException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MinioService } from '../kerma/minio.service';
 import { AuditService } from '../audit/audit.service';
+import { CoserseLlmService } from '../coserse/coserse-llm.service';
+import { CoserseQuotaService } from '../coserse/coserse-quota.service';
 import * as crypto from 'crypto';
 
 export interface PostComposerDto {
@@ -27,7 +29,9 @@ export class JukrahService {
     constructor(
         private readonly dataSource: DataSource,
         private readonly minio: MinioService,
-        private readonly audit: AuditService
+        private readonly audit: AuditService,
+        @Optional() private readonly coserseLlm?: CoserseLlmService,
+        @Optional() private readonly coserseQuota?: CoserseQuotaService
     ) {}
 
     clearNetworkUsersCache() {
@@ -3645,28 +3649,148 @@ export class JukrahService {
         };
     }
 
-    private buildAiTacticalReply(content: string, user: any): string {
+    private detectCoserseWorkspaceHandover(content: string): { isComplex: boolean; summary: string } {
         const q = (content || '').toLowerCase();
-        const callsign = this.formatCallsign(user?.callsign || user?.username, user?.id, user?.username, user?.name);
-        if (q.includes('kuhp') || q.includes('pasal') || q.includes('uu 1') || q.includes('pidana')) {
-            return `⚖️ **[Analisis Regulasi & KUHP Baru — UU No. 1 Tahun 2023]**\nSiap ${callsign}! Terkait penerapan KUHP Baru:\n1. Pastikan pemetaan unsur delik pada Laporan Polisi (LP) telah mencantumkan padanan pasal transisi KUHP Lama ke **UU No. 1 Tahun 2023**.\n2. Gunakan fitur **Smart Import PDF** atau **Audit Kesesuaian Pasal** pada menu *Laporan → Rekap* untuk memvalidasi kelengkapan Mindik.`;
+        const hasNik = /\b\d{16}\b/.test(q);
+        const hasPhone = /(?:\+62|62|0)8\d{7,11}/.test(q.replace(/[\s-]/g, ''));
+        const complexKeywords = [
+            'profiling',
+            'telusur',
+            'jaringan',
+            'upload',
+            'unggah',
+            'dokumen mindik',
+            'spdp',
+            'tahap 1',
+            'tahap 2',
+            'tahap i',
+            'tahap ii',
+            'lp nyasar',
+            'barang bukti',
+            'pihak terlibat',
+            'validasi berkas',
+            'ekspor resume'
+        ];
+        const matched = hasNik || hasPhone || complexKeywords.some((kw) => q.includes(kw));
+        return {
+            isComplex: matched,
+            summary: (content || '').trim().slice(0, 140)
+        };
+    }
+
+    private async hasCoserseWorkspaceAccess(user: any): Promise<boolean> {
+        const role = String(user?.role_bdb || user?.role?.role_name || '').toLowerCase().trim();
+        if (role === 'superadmin') return true;
+        if (!role || ['viewer', 'vendor_mitra', 'vendor', 'mitra', 'sharese'].includes(role)) return false;
+        try {
+            const rows: any[] = await this.dataSource.query(
+                `SELECT is_enabled, allowed_roles
+                 FROM bdb_menu_access
+                 WHERE menu_key IN ('dashboard_coserse', 'coserse', '/cms/dashboard/coserse')
+                    OR path = '/cms/dashboard/coserse'
+                 LIMIT 1`
+            );
+            const row = rows?.[0];
+            if (!row) return false;
+            if (row.is_enabled === false) return false;
+            const allowed = Array.isArray(row.allowed_roles)
+                ? row.allowed_roles.map((r: any) => String(r || '').toLowerCase().trim())
+                : [];
+            return allowed.includes(role);
+        } catch {
+            return false;
         }
-        if (q.includes('ct') || q.includes('cc') || q.includes('cr') || q.includes('kinerja') || q.includes('selra') || q.includes('p21') || q.includes('sp3') || q.includes('rj')) {
-            return `📊 **[Kinerja Perkara & Penyelesaian Perkara (Selra)]**\nSiap ${callsign}! Terkait **CT/CC/CR & Selra**:\n• **CT (Crime Total)**: Jumlah seluruh Laporan Polisi yang masuk pada periode berjalan.\n• **CC (Crime Cleared)**: Jumlah perkara yang selesai (**P-21, SP3, RJ/Diversi, atau Limpah**).\n• **CR (Clearance Rate)**: Persentase penyelesaian perkara \`(CC / CT) × 100%\`.\nBuka menu **Laporan → Kinerja Perkara** untuk melihat rekapitulasi per Satker dan mengunduh Excel/PDF.`;
+    }
+
+    private async buildAiTacticalReplyAsync(
+        content: string,
+        user: any
+    ): Promise<{ text: string; handover: { task_ref: string; task_prompt: string; target_url: string; summary: string } | null }> {
+        const cleanMsg = String(content || '').trim();
+        const q = cleanMsg.toLowerCase();
+        const uid = Number(user?.id || 0);
+        const role = String(user?.role_bdb || user?.role?.role_name || 'operator').toLowerCase().trim();
+        const username = String(user?.username || 'personel').trim();
+        const displayName = String(user?.name || username).trim();
+        const callsign = this.formatCallsign(user?.callsign || username, uid, username, displayName);
+        const canAccessCoserse = await this.hasCoserseWorkspaceAccess(user);
+        const handoverCheck = this.detectCoserseWorkspaceHandover(cleanMsg);
+        const isLpOrWorkTask =
+            handoverCheck.isComplex ||
+            /\b(cek\s+lp|analisis\s+lp|cari\s+lp|periksa\s+lp|upload|unggah|mindik|spdp|sp3|rj|nik|no\s*hp|coserse)\b/i.test(cleanMsg);
+
+        // Enforce programming guard for non-superadmin in Obrolan Cepat as well
+        const isProgrammingReq = /\b(coding|ngoding|programming|pemrograman|source\s*code|script|skrip|query\s+sql|\bsql\b|select\s+.+\s+from|debug(?:ging)?|python|javascript|typescript|node\.?js|php|bash|powershell)\b/i.test(cleanMsg);
+        if (role !== 'superadmin' && isProgrammingReq) {
+            return {
+                text: `Maaf ${callsign}, fitur bantuan pemrograman/coding dan query SQL hanya tersedia untuk role Superadmin. Silakan gunakan Obrolan Cepat untuk koordinasi atau analisis perkara CAS.`,
+                handover: null
+            };
         }
-        if (q.includes('dors') || q.includes('sync') || q.includes('integrasi') || q.includes('mapping')) {
-            return `🔄 **[Panduan Taktis Portal Integrasi DORS]**\nSiap ${callsign}! Untuk sinkronisasi data DORS:\n1. Buka **Portal Integrasi → Masuk → Tarik Data** untuk mengambil antrean sinkronisasi LP terbaru.\n2. Tinjau di **Staging** & **Cek Duplikat** sebelum melakukan *Import ke Database* utama.`;
+
+        let aiReplyText = '';
+        if (this.coserseLlm && this.coserseQuota) {
+            let lease: any = null;
+            try {
+                lease = await this.coserseQuota.acquireAiWorkerLease({
+                    defaultEndpoint: this.coserseLlm.getEndpointUrl()
+                });
+                const satkerIdRaw = user?.scope_satker_id ?? user?.satker_id ?? null;
+                const satkerId = satkerIdRaw && Number(satkerIdRaw) > 0 ? Number(satkerIdRaw) : null;
+                const llmRes = await this.coserseLlm.generateNarrative({
+                    actor: {
+                        userId: uid || 0,
+                        username,
+                        displayName,
+                        role,
+                        satkerId,
+                        scopeMode: role === 'superadmin' || role === 'admin_binops' ? 'NATIONAL' : 'SATKER_SUBTREE'
+                    },
+                    userMessage: `[Konteks: Obrolan Cepat Sharese CAS — jawab ringkas, hangat, dan langsung ke inti]\n${cleanMsg}`,
+                    slidingTurns: [],
+                    endpointOverride: lease.worker.endpoint,
+                    tier: 'low'
+                });
+                if (llmRes?.reply && llmRes.provider !== 'deterministic_fallback') {
+                    aiReplyText = llmRes.reply.trim();
+                }
+            } catch (err: any) {
+                this.logger.warn(`[Cosersebot-Sharese] Fallback ringan karena antrean/LLM: ${err?.message || err}`);
+            } finally {
+                if (lease && typeof lease.release === 'function') {
+                    try { await lease.release(); } catch {}
+                }
+            }
         }
-        if (q.includes('anev') || q.includes('lampiran') || q.includes('periodik')) {
-            return `📑 **[Lampiran Anev Periodik]**\nSiap ${callsign}! Menu **Laporan → Lamp. Anev Periodik** menyediakan kanvas naskah dinas & tabel analitik otomatis (Bareskrim & Kewilayahan) yang siap dicetak ke dokumen Word/PDF sesuai format standar Robinopsnal Bareskrim Polri.`;
+
+        // Natural fallback if AI queue is busy/offline (no robotic "telah dicatat" template)
+        if (!aiReplyText) {
+            if (/^(halo|hai|hi|pagi|siang|sore|malam|tes|test|assalamualaikum)\b/i.test(q)) {
+                aiReplyText = `Siap ${callsign}, ada yang bisa saya bantu cek terkait perkara, data LP, atau regulasi penyidikan hari ini?`;
+            } else if (q.includes('kuhp') || q.includes('pasal') || q.includes('uu 1') || q.includes('pidana')) {
+                aiReplyText = `Siap ${callsign}, terkait rujukan pasal KUHP Baru (UU No. 1 Tahun 2023) atau KUHAP, silakan sebutkan nomor pasal atau jenis deliknya agar saya bantu rincikan unsurnya.`;
+            } else if (q.includes('ct') || q.includes('cc') || q.includes('cr') || q.includes('kinerja') || q.includes('selra') || q.includes('p21') || q.includes('sp3') || q.includes('rj')) {
+                aiReplyText = `Siap ${callsign}, untuk metrik CT/CC/CR dan status Selra (P-21, SP3, SP2-Lid, Perma), Anda dapat memantau rekap per Satker melalui menu Laporan → Kinerja Perkara.`;
+            } else {
+                aiReplyText = `Siap ${callsign}, antrean AI sedang padat sesaat. Silakan ulangi pertanyaan singkat Anda atau lanjutkan telaah mendalam di Ruang Kerja Coserse 1.0.`;
+            }
         }
-        if (q.includes('susopsgas') || q.includes('susjol') || q.includes('atensi') || q.includes('menonjol') || q.includes('satgas')) {
-            return `🚨 **[Pemantauan Susopsgas]**\nSiap ${callsign}! Menu **Susopsgas** menggabungkan pemantauan **Susjol (Kasus Menonjol)**, **Susatensi (Kasus Atensi Pimpinan)**, serta **Operasi & Satgas Kepolisian** dalam satu komando.`;
+
+        let handoverObj: { task_ref: string; task_prompt: string; target_url: string; summary: string } | null = null;
+        if (canAccessCoserse && isLpOrWorkTask) {
+            const taskRef = `obrolan-${Date.now().toString(36)}`;
+            const encodedPrompt = encodeURIComponent(cleanMsg);
+            const targetUrl = `/cms/dashboard/coserse?task_ref=${encodeURIComponent(taskRef)}&task_prompt=${encodedPrompt}`;
+            aiReplyText = `${aiReplyText}\n\n[[COSERSE_HANDOVER|task_ref=${taskRef}|task_prompt=${encodedPrompt}]]`;
+            handoverObj = {
+                task_ref: taskRef,
+                task_prompt: cleanMsg,
+                target_url: targetUrl,
+                summary: handoverCheck.summary
+            };
         }
-        if (q.includes('lp') || q.includes('laporan polisi') || q.includes('limpah')) {
-            return `📄 **[Pengelolaan Laporan Polisi (LP)]**\nSiap ${callsign}! Gunakan **Laporan → Laporan Polisi → Daftar LP** untuk pencarian, filter satker/kejahatan, dan rincian perkembangan penyidikan. Untuk perkara yang dilimpahkan, buka **Arsip Pelimpahan** (\`/cms/laporan-polisi/arsip-pelimpahan\`).`;
-        }
-        return `🛡️ **[Cosersebot (@cosersebot) — Robinopsnal Bareskrim Polri]**\nSiap ${callsign}! Pesan Anda: *"${content.slice(0, 90)}"* telah dicatat oleh asisten cerdas Cosersebot.\n\nSaya siap membantu analisis data **LP & Selra (CT/CC/CR)**, **Pasal KUHP Baru (UU 1/2023)**, **Portal Integrasi**, **Lampiran Anev Periodik**, maupun **Susopsgas**.`;
+
+        return { text: aiReplyText, handover: handoverObj };
     }
 
     async sendSocialMessage(user: any, body: any) {
@@ -3706,12 +3830,12 @@ export class JukrahService {
 
         let aiReplyMsg: any = null;
         if (receiverId === -1) {
-            const replyText = this.buildAiTacticalReply(content, user);
+            const tacticalReply = await this.buildAiTacticalReplyAsync(content, user);
             const aiIns = await this.dataSource.query(
                 `INSERT INTO bdb_social_messages (sender_id, receiver_id, channel_type, content, is_read, created_at)
                  VALUES (-1, $1, 'ai_agent', $2, true, NOW() + interval '1 millisecond')
                  RETURNING id, sender_id, receiver_id, channel_type, content, media_url, attachment_url, attachment_name, reply_to_json, reactions_json, is_read, created_at`,
-                [uid, replyText]
+                [uid, tacticalReply.text]
             );
             aiReplyMsg = {
                 ...aiIns[0],
@@ -3722,7 +3846,8 @@ export class JukrahService {
                 is_me: false,
                 sender_photo: this.cosersebotAvatar,
                 reply_to: null,
-                reactions: {}
+                reactions: {},
+                handover: tacticalReply.handover
             };
         } else if (receiverId > 0 && receiverId !== uid) {
             const actorName = user?.name || user?.username || 'Rekan Personil';

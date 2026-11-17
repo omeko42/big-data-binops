@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sharese Obrolan (@cosersebot) — Sandbox Handover</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Inter", "Segoe UI", system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 780px; margin: 24px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 30px rgba(15,23,42,.06); display: flex; flex-direction: column; height: calc(100vh - 48px); }
+    .top { padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; background: #f8fafc; }
+    .top-title { font-weight: 700; font-size: 14px; }
+    .top-sub { font-size: 11.5px; color: #64748b; }
+    .back-link { font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600; }
+    .msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+    .b { max-width: 78%; padding: 10px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.5; }
+    .me { align-self: flex-end; background: #2563eb; color: #fff; border-bottom-right-radius: 4px; }
+    .bot { align-self: flex-start; background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a; border-bottom-left-radius: 4px; }
+    .ho-card { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #ffffff; border: 1px solid #cbd5e1; display: flex; flex-direction: column; gap: 6px; }
+    .ho-head { font-size: 11px; font-weight: 800; letter-spacing: .03em; color: #1e40af; text-transform: uppercase; }
+    .ho-sum { font-size: 12.5px; color: #334155; }
+    .ho-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: #0f172a; color: #fff; font-size: 12px; font-weight: 700; text-decoration: none; }
+    .bar { padding: 12px 14px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; background: #fff; }
+    .bar input { flex: 1; border: 1px solid #cbd5e1; border-radius: 999px; padding: 10px 16px; font-size: 13.5px; outline: none; }
+    .bar button { border: none; border-radius: 999px; padding: 0 18px; min-height: 40px; background: #2563eb; color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="top-title">Obrolan Cepat: @cosersebot</div>
+        <div class="top-sub">Asisten tanya-jawab cepat (tugas kompleks otomatis dialihkan ke Workspace Coserse 1.0)</div>
+      </div>
+      <a class="back-link" href="/cms/dashboard/coserse">Buka Workspace Coserse 1.0</a>
+    </div>
+    <div class="msgs" id="msgs">
+      <div class="b bot">Siap @om.eko_42! Silakan ajukan pertanyaan singkat, atau kirim tugas profiling NIK / analisis berkas untuk menguji Smart Handover ke Workspace Coserse 1.0.</div>
+    </div>
+    <div class="bar">
+      <input id="q" type="text" value="Tolong telusuri seluruh jaringan NIK 3171012345670001 dan berkas perkara terkaitnya" />
+      <button id="send" type="button">Kirim</button>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var msgs = document.getElementById('msgs');
+      var q = document.getElementById('q');
+      var btn = document.getElementById('send');
+      function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      async function send() {
+        var text = String(q.value || '').trim();
+        if (!text) return;
+        q.value = '';
+        msgs.innerHTML += '<div class="b me">' + esc(text) + '</div>';
+        var r = await fetch('/api/bdb/jukrah/messages/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ receiver_id: -1, content: text })
+        });
+        var d = await r.json();
+        var ai = d && d.ai_reply ? d.ai_reply : {};
+        var clean = String(ai.content || '').replace(/\[\[COSERSE_HANDOVER\|[^\]]+\]\]/g, '').trim();
+        var hoHtml = '';
+        if (ai.handover && ai.handover.target_url) {
+          hoHtml =
+            '<div class="ho-card">' +
+            '  <div class="ho-head">BUKA RUANG KERJA ANALITIK COSERSE</div>' +
+            '  <div class="ho-sum">Melanjutkan tugas: &ldquo;' + esc(ai.handover.summary || text) + '&rdquo;</div>' +
+            '  <a class="ho-btn" href="' + esc(ai.handover.target_url) + '">Lanjutkan ke Coserse 1.0 &rarr;</a>' +
+            '</div>';
+        }
+        msgs.innerHTML += '<div class="b bot">' + esc(clean).replace(/\n/g,'<br/>') + hoHtml + '</div>';
+        msgs.scrollTop = msgs.scrollHeight;
+      }
+      btn.addEventListener('click', send);
+      q.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+    })();
+  </script>
+</body>
+</html>
