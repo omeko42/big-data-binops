@@ -140,37 +140,141 @@ export class CoserseLlmService {
         return [
             `Pengguna Aktif: ${handle} (${actor.displayName}, Role: ${actor.role}, Scope: ${actor.scopeMode}${actor.satkerId ? `, Satker ID: ${actor.satkerId}` : ''}).`,
             progCapability,
-            `Sapa ${handle} secara kolegial, gunakan hanya fakta di <untrusted_case_evidence>, jangan mengarang data, dan JANGAN menambahkan footer/kalimat disclaimer di akhir jawaban.`
+            `Sapa ${handle} secara kolegial, gunakan hanya fakta di <untrusted_case_evidence>, jangan mengarang data, dan JANGAN menambahkan footer/kalimat disclaimer di akhir jawaban.`,
+            `LARANGAN KLAIM UPDATE DB: DILARANG KERAS mengatakan "telah diperbarui", "berhasil diubah", "sudah diupdate", atau mengklaim status LP di database sudah berubah jika tidak ada bukti hasil commit sukses di <cas_evidence>. Jika user meminta update status LP tanpa bukti commit sukses, wajib arahkan ke kartu konfirmasi (reviewCard) Human-in-the-Loop terlebih dahulu sebelum status berubah.`
         ].join('\n');
     }
 
     /**
      * Wraps Tahap 1 Cross-Entity Profiling output in strict <untrusted_case_evidence> XML isolation tags.
      */
-    buildEvidenceXmlBlock(profile: Pick<CrossEntityProfileResponse, 'query' | 'scope' | 'summary' | 'records'>): string {
-        const compactRecords = profile.records.slice(0, 15).map((r) => ({
-            no_laporan: r.no_laporan,
-            tgl_laporan: r.tgl_laporan,
-            status_perkara: r.status_perkara,
-            satker_nama: r.satker_nama,
-            kategori_kejahatan: r.kategori_kejahatan,
-            peran_entitas: r.peran_entitas,
-            sumber_tabel: r.sumber_tabel,
-            detail_konteks: r.detail_konteks,
-            nama_tercatat: r.nama_tercatat,
-            nik: r.nik,
-            no_hp: r.no_hp
-        }));
-
-        const payload = {
-            query: profile.query,
-            scope: profile.scope,
-            summary: profile.summary,
-            records: compactRecords
+    buildEvidenceXmlBlock(
+        profile: Pick<
+            CrossEntityProfileResponse,
+            'query' | 'scope' | 'summary' | 'records' | 'discovery_groups' | 'active_group'
+        >
+    ): string {
+        const toCompactRow = (r: CrossEntityMatchRecord): Record<string, any> => {
+            const item: Record<string, any> = {
+                sumber: r.sumber_tabel,
+                no_lp: r.no_laporan,
+                tgl: r.tgl_laporan,
+                status: r.status_perkara,
+                satker: r.satker_nama,
+                peran: r.peran_entitas
+            };
+            if (r.nama_tercatat) item.nama = String(r.nama_tercatat).slice(0, 50);
+            if (r.nik) item.nik = r.nik;
+            if (r.no_hp) item.hp = r.no_hp;
+            if (r.detail_konteks && r.detail_konteks !== '-') {
+                item.detail = r.detail_konteks.slice(0, 65);
+            }
+            return item;
         };
 
-        const sanitizedJson = this.sanitizeEvidenceText(JSON.stringify(payload, null, 2));
+        const groups = Array.isArray(profile.discovery_groups) ? profile.discovery_groups : [];
+        const hasMultipleGroups = groups.length >= 2 && !profile.active_group;
+
+        const kelompokTemuan = groups.slice(0, 6).map((g) => ({
+            group_id: g.group_id,
+            label: g.label,
+            source_table: g.source_table,
+            total_count: g.total_count,
+            ...(g.breakdown && Object.keys(g.breakdown).length ? { breakdown: g.breakdown } : {}),
+            ...(hasMultipleGroups
+                ? { sample_rows: (g.records || []).slice(0, 2).map(toCompactRow) }
+                : {})
+        }));
+
+        let compactRecords: Array<Record<string, any>> = [];
+        if (!hasMultipleGroups) {
+            const terlibatRecs = profile.records.filter((r) => r.sumber_tabel === 'bdb_dors_lp_terlibat');
+            const otherRecs = profile.records.filter((r) => r.sumber_tabel !== 'bdb_dors_lp_terlibat');
+            const prioritized = [...terlibatRecs.slice(0, 5), ...otherRecs.slice(0, 3)];
+            if (prioritized.length < 6) {
+                const used = new Set(prioritized);
+                for (const r of profile.records) {
+                    if (!used.has(r)) {
+                        prioritized.push(r);
+                        if (prioritized.length >= 6) break;
+                    }
+                }
+            }
+            compactRecords = prioritized.slice(0, 6).map(toCompactRow);
+        }
+
+        const satkers = Array.isArray(profile.summary?.satkers_involved) ? profile.summary.satkers_involved : [];
+        const totalTerlibat = Number(profile.summary?.total_terlibat_matches || 0);
+        const totalBb = Number(profile.summary?.total_barang_bukti_matches || 0);
+        const totalRiil = Number(profile.summary?.total_records || totalTerlibat + totalBb);
+
+        const payload: Record<string, any> = {
+            query: profile.query?.raw || profile.query,
+            scope: profile.scope?.mode || 'NATIONAL',
+            FOKUS_GRUP_AKTIF: profile.active_group || null,
+            TOTAL_RIIL_DI_DATABASE: totalRiil,
+            TOTAL_PIHAK_TERLIBAT_RIIL: totalTerlibat,
+            TOTAL_BARANG_BUKTI_RIIL: totalBb,
+            RINCIAN_PERAN_RIIL: profile.summary?.roles_breakdown || {},
+            SATKER_SAMPEL: satkers.slice(0, 8),
+            KELOMPOK_TEMUAN_DATABASE: kelompokTemuan,
+            CATATAN: `Gunakan angka total_count di KELOMPOK_TEMUAN_DATABASE / TOTAL_RIIL_DI_DATABASE (JANGAN menghitung dari panjang sample_rows).`,
+            SAMPEL_TERBARU: compactRecords
+        };
+
+        const sanitizedJson = this.sanitizeEvidenceText(JSON.stringify(payload));
         return `<untrusted_case_evidence>\n${sanitizedJson}\n</untrusted_case_evidence>`;
+    }
+
+    private buildUserTurnPromptContent(params: {
+        handle: string;
+        userMessage: string;
+        profilingContext?: CrossEntityProfileResponse | null;
+        knowledgeChunks?: Array<{ doc_title: string; section_title: string; pasal_ref: string | null; content: string }> | null;
+    }): { userTurnContent: string; hasEvidence: boolean } {
+        const evidenceXml = params.profilingContext ? this.buildEvidenceXmlBlock(params.profilingContext) : '';
+        const casKnowledgeXml = this.buildCasEvidenceXmlBlock(params.knowledgeChunks);
+        const groups = Array.isArray(params.profilingContext?.discovery_groups)
+            ? params.profilingContext!.discovery_groups!
+            : [];
+        const hasMultiGroups = groups.length >= 2 && !params.profilingContext?.active_group;
+
+        const hasUpdateIntent =
+            /\b(ubah|update|ganti|set|naikkan|turunkan|proses|ajukan|hentikan)\b/i.test(params.userMessage) &&
+            /\b(status|tahap|spdp|p19|p21|sp3|sp2|lidik|sidik|perma|rj|restorative)\b/i.test(params.userMessage);
+
+        const parts: string[] = [`Permintaan ${params.handle}: ${params.userMessage}`];
+        const rawStyle = String((params as any).responseStyle || 'ringkas').toLowerCase().trim();
+        const isDetailMode = rawStyle === 'detail' || rawStyle === 'detailed';
+        parts.push(
+            '',
+            isDetailMode
+                ? '[MODE_JAWABAN: LENGKAP_DAN_DETAIL — Uraikan secara komprehensif: ringkasan eksekutif, tabel lengkap seluruh temuan, detail modus/uraian perkara, dasar hukum/pasal terkait, relasi entitas, serta saran tindak lanjut penyidik.]'
+                : '[MODE_JAWABAN: RINGKAS_DAN_PADAT — Jawab langsung ke inti dalam 3–5 poin singkat atau 1 tabel ringkas tanpa basa-basi/paragraf panjang.]'
+        );
+        if (hasUpdateIntent) {
+            parts.push(
+                '',
+                `PERINGATAN KERAS ANTI-HALUSINASI: Permintaan pengguna ini adalah usulan perubahan status LP. Database BELUM diubah dan TIDAK ada bukti commit sukses di <cas_evidence>. DILARANG KERAS mengatakan status LP "telah diperbarui", "sudah berubah", atau "berhasil diubah". Wajib nyatakan bahwa status di database BELUM berubah dan arahkan operator untuk meninjau lalu mengklik [Setujui & Simpan] pada Kartu Konfirmasi Draf (reviewCard).`
+            );
+        }
+        if (evidenceXml) {
+            parts.push(
+                '',
+                hasMultiGroups
+                    ? `Jawab langsung pertanyaan pengguna secara ringkas, jelas, dan faktual berdasarkan <untrusted_case_evidence> tanpa kalimat pembuka template. WAJIB rangkum seluruh kelompok temuan pada KELOMPOK_TEMUAN_DATABASE (Data A, Data B, Data C, dst.) beserta angka total_count riil masing-masing dan sampel tabel Markdown ringkasnya, lalu tanyakan balik kepada pengguna konteks mana yang ingin difokuskan (mis. pilih Data A/B/C, filter peran, urutkan terbaru/terlama, atau ekspor PDF/Word/PPT/Excel):`
+                    : `Jawab langsung pertanyaan pengguna secara ringkas, jelas, dan faktual berdasarkan data bukti berikut (tanpa kalimat pembuka template). WAJIB kutip angka TOTAL_RIIL_DI_DATABASE dan seluruh angka di RINCIAN_PERAN_RIIL secara persis (JANGAN menghitung dari panjang array sample_rows/SAMPEL_TERBARU), lalu tampilkan tabel Markdown SAMPEL_TERBARU:`,
+                evidenceXml
+            );
+        }
+        if (casKnowledgeXml) {
+            parts.push(
+                '',
+                `Gunakan referensi pasal/SOP resmi dalam <cas_evidence> berikut sebagai dasar hukum jawaban Anda:`,
+                casKnowledgeXml
+            );
+        }
+        return { userTurnContent: parts.join('\n'), hasEvidence: Boolean(evidenceXml) };
     }
 
     buildCasEvidenceXmlBlock(
@@ -201,6 +305,37 @@ export class CoserseLlmService {
         text = text.replace(tailPattern, '').trim();
 
         return text;
+    }
+
+    guardUncommittedStatusClaim(rawReply: string, userMessage: string, hasReviewCard: boolean): string {
+        const msg = String(userMessage || '');
+        const hasUpdateIntent =
+            /\b(ubah|update|ganti|set|naikkan|turunkan|proses|ajukan|hentikan)\b/i.test(msg) &&
+            /\b(status|tahap|spdp|p19|p21|sp3|sp2|lidik|sidik|perma|rj|restorative)\b/i.test(msg);
+        if (!hasUpdateIntent) return rawReply;
+
+        const falseSuccessPattern =
+            /\b(?:telah|sudah|berhasil)\s+(?:diperbarui|diubah|dirubah|berubah|dinaikkan|disimpan)(?:\s+(?:menjadi|ke))?\b|\b(?:berhasil|telah|sudah)\s+(?:memperbarui|mengubah|menaikkan|menyimpan)\s+(?:status|tahap|lp)\b/i;
+        if (!falseSuccessPattern.test(rawReply)) {
+            return rawReply;
+        }
+        const cleaned = rawReply
+            .replace(
+                /(?:status(?:\s+lp)?[^\n]{0,120}?)\b(?:telah|sudah|berhasil)\s+(?:diperbarui|diubah|dirubah|berubah|dinaikkan|disimpan)(?:\s+(?:menjadi|ke)\s+[^\n]+)?/gi,
+                'usulan pembaruan status LP **belum tersimpan di database** (menunggu konfirmasi Human-in-the-Loop)'
+            )
+            .replace(
+                /\b(?:telah|sudah|berhasil)\s+(?:diperbarui|diubah|dirubah|berubah|dinaikkan|disimpan)(?:\s+(?:menjadi|ke)\s+[^\n]+)?/gi,
+                '**belum tersimpan di database** (menunggu konfirmasi Human-in-the-Loop)'
+            )
+            .replace(
+                /\b(?:berhasil|telah|sudah)\s+(?:memperbarui|mengubah|menaikkan|menyimpan)\s+(?:status|tahap|lp)\b/gi,
+                'menyiapkan usulan pembaruan status (belum tersimpan di database)'
+            );
+        const note = hasReviewCard
+            ? '\n\n> **Catatan Sistem (Human-in-the-Loop):** Status LP di database **BELUM berubah**. Silakan periksa **Kartu Konfirmasi Draf (`reviewCard`)** di bawah ini lalu klik **[Setujui & Simpan]** untuk menyimpan perubahan secara resmi.'
+            : '\n\n> **Catatan Sistem (Human-in-the-Loop):** Status LP di database **BELUM berubah**. Silakan unggah dokumen Mindik pendukung (`.docx`/`.pdf`/gambar) agar **Kartu Konfirmasi Draf** terbentuk untuk persetujuan.';
+        return cleaned.includes('BELUM berubah') ? cleaned : `${cleaned}${note}`;
     }
 
     private resolveNumPredict(tier?: string): number {
@@ -263,13 +398,14 @@ export class CoserseLlmService {
         knowledgeChunks?: Array<{ doc_title: string; section_title: string; pasal_ref: string | null; content: string }> | null;
         endpointOverride?: string;
         tier?: string;
+        responseStyle?: string;
     }): Promise<CoserseLlmGenerationResult> {
         const provider = this.getRuntimeProvider();
         const endpoint = params.endpointOverride
             ? this.assertLoopbackUrl(params.endpointOverride)
             : this.getEndpointUrl();
         const model = this.getModelName();
-        const timeoutMs = Number(process.env.COSERSE_LLM_TIMEOUT_MS || 150_000);
+        const timeoutMs = Number(process.env.COSERSE_LLM_TIMEOUT_MS || 240_000);
         const numCtx = Number(process.env.COSERSE_NUM_CTX || 4096);
         const temperature = Number(process.env.COSERSE_TEMPERATURE ?? 0.1);
         const numThread = Number(process.env.COSERSE_NUM_THREAD || 6);
@@ -277,33 +413,19 @@ export class CoserseLlmService {
         const handle = this.normalizeHandle(params.actor.username);
 
         const systemPrompt = this.buildSystemPrompt(params.actor);
-        const evidenceXml = params.profilingContext
-            ? this.buildEvidenceXmlBlock(params.profilingContext)
-            : '';
-        const casKnowledgeXml = this.buildCasEvidenceXmlBlock(params.knowledgeChunks);
-
-        const parts: string[] = [`Permintaan ${handle}: ${params.userMessage}`];
-        if (evidenceXml) {
-            parts.push(
-                '',
-                `Rangkum temuan di bawah ini menjadi narasi intelijen perkara yang luwes, akurat, dan terstruktur untuk ${handle}:`,
-                evidenceXml
-            );
-        }
-        if (casKnowledgeXml) {
-            parts.push(
-                '',
-                `Gunakan referensi pasal/SOP resmi dalam <cas_evidence> berikut sebagai dasar hukum jawaban Anda:`,
-                casKnowledgeXml
-            );
-        }
-        const userTurnContent = parts.join('\n');
+        const { userTurnContent, hasEvidence: evidenceXml } = this.buildUserTurnPromptContent({
+            handle,
+            userMessage: params.userMessage,
+            profilingContext: params.profilingContext,
+            knowledgeChunks: params.knowledgeChunks,
+            responseStyle: params.responseStyle
+        });
 
         const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
             { role: 'system', content: systemPrompt },
-            ...params.slidingTurns.slice(-6).map((t) => ({
+            ...params.slidingTurns.slice(-4).map((t) => ({
                 role: t.role,
-                content: t.content
+                content: String(t.content || '').slice(0, 600)
             })),
             { role: 'user', content: userTurnContent }
         ];
@@ -324,7 +446,12 @@ export class CoserseLlmService {
                     { timeout: timeoutMs }
                 );
                 const rawReply = String(resp.data?.choices?.[0]?.message?.content || '').trim();
-                const reply = this.ensureMandatoryDisclaimer(rawReply, params.actor.username);
+                const guardedStreamReply = this.guardUncommittedStatusClaim(
+                rawReply,
+                params.userMessage,
+                Boolean(params.profilingContext?.records?.length)
+            );
+            const reply = this.ensureMandatoryDisclaimer(guardedStreamReply, params.actor.username);
                 const promptTokens = Number(
                     resp.data?.usage?.prompt_tokens || this.estimateMessagesTokens(messages)
                 );
@@ -346,25 +473,40 @@ export class CoserseLlmService {
             }
 
             // Default: Ollama /api/chat (Modelfile: coserse:1.0)
+            const safeMessages = (Array.isArray(messages) ? messages : [])
+                .filter((m) => m && m.role && String(m.content || '').trim().length > 0)
+                .map((m) => ({
+                    role: ['system', 'user', 'assistant'].includes(String(m.role)) ? m.role : 'user',
+                    content: String(m.content)
+                }));
+            if (safeMessages.length === 0) {
+                safeMessages.push({ role: 'user', content: String(params.userMessage || 'Halo') });
+            }
+            const safeOptions: Record<string, number> = {};
+            if (Number.isFinite(temperature)) safeOptions.temperature = temperature;
+            if (Number.isFinite(numCtx) && numCtx > 0) safeOptions.num_ctx = Math.trunc(numCtx);
+            if (Number.isFinite(numThread) && numThread > 0) safeOptions.num_thread = Math.trunc(numThread);
+            if (Number.isFinite(numPredict) && numPredict > 0) safeOptions.num_predict = Math.trunc(numPredict);
+
             const resp = await axios.post(
                 endpoint,
                 {
-                    model,
-                    messages,
+                    model: model || 'coserse:1.0',
+                    messages: safeMessages,
                     stream: false,
                     keep_alive: -1,
-                    options: {
-                        temperature,
-                        num_ctx: numCtx,
-                        num_thread: numThread,
-                        num_predict: numPredict
-                    }
+                    options: safeOptions
                 },
                 { timeout: timeoutMs }
             );
 
             const rawReply = String(resp.data?.message?.content || '').trim();
-            const reply = this.ensureMandatoryDisclaimer(rawReply, params.actor.username);
+            const guardedStreamReply = this.guardUncommittedStatusClaim(
+                rawReply,
+                params.userMessage,
+                Boolean(params.profilingContext?.records?.length)
+            );
+            const reply = this.ensureMandatoryDisclaimer(guardedStreamReply, params.actor.username);
             const promptTokens = Number(
                 resp.data?.prompt_eval_count || this.estimateMessagesTokens(messages)
             );
@@ -385,18 +527,47 @@ export class CoserseLlmService {
             };
         } catch (err: any) {
             const errCode = err?.code || err?.cause?.code || '';
-            const errMsg = err?.response?.data?.error || err?.message || 'Koneksi engine lokal gagal';
+            let errMsg = err?.response?.data?.error || err?.message || 'Koneksi engine lokal gagal';
+            if (err?.response?.data && typeof err.response.data.on === 'function') {
+                try {
+                    const chunks: Buffer[] = [];
+                    for await (const c of err.response.data) {
+                        chunks.push(Buffer.from(c));
+                    }
+                    const rawBody = Buffer.concat(chunks).toString('utf8').trim();
+                    if (rawBody) {
+                        try {
+                            const j = JSON.parse(rawBody);
+                            errMsg = j?.error || rawBody.slice(0, 300);
+                        } catch {
+                            errMsg = rawBody.slice(0, 300);
+                        }
+                    }
+                } catch {}
+            }
+            this.logger.error(
+                `[CoserseLlm] Stream error endpoint=${endpoint} status=${err?.response?.status || '-'} code=${errCode} msg=${errMsg}`
+            );
+            const isTimeoutError =
+                errCode === 'ECONNABORTED' ||
+                errCode === 'ETIMEDOUT' ||
+                String(errMsg).toLowerCase().includes('timeout');
+            const isContextOverflowError =
+                err?.response?.status === 400 && /context size|num_ctx|tokens/i.test(String(errMsg));
             const isConnectionError =
                 errCode === 'ECONNREFUSED' ||
-                errCode === 'ETIMEDOUT' ||
                 errCode === 'ECONNRESET' ||
                 errCode === 'ENOTFOUND' ||
-                String(errMsg).includes('ECONNREFUSED') ||
-                String(errMsg).includes('timeout');
+                isTimeoutError ||
+                isContextOverflowError ||
+                String(errMsg).includes('ECONNREFUSED');
 
-            if (isConnectionError && this.isOfflineFallbackEnabled()) {
+            if (
+                isConnectionError &&
+                (this.isOfflineFallbackEnabled() || ((isTimeoutError || isContextOverflowError) && Boolean(params.profilingContext)))
+            ) {
                 this.logger.warn(
-                    `Engine lokal ${endpoint} belum aktif (${errCode || errMsg}); menjalankan fallback deterministik sandbox.`
+                    `Engine lokal ${endpoint} belum aktif/timeout (${errCode || errMsg}); menjalankan fallback deterministik sandbox.`
                 );
                 const fallbackText = this.buildDeterministicHumanNarrative(
                     params.actor,
@@ -416,7 +587,7 @@ export class CoserseLlmService {
                     completionTokens,
                     totalTokens: promptTokens + completionTokens,
                     xmlEvidenceIsolated: Boolean(evidenceXml),
-                    offlineNotice: `Engine lokal ${endpoint} sedang tidak aktif (${errCode || errMsg}). Ringkasan disusun langsung dari data terindeks BDB tanpa inferensi Qwen 2.5.`
+                    offlineNotice: `Engine lokal ${endpoint} tidak merespons (${errCode || errMsg}). Ringkasan disusun langsung dari data terindeks database CAS.`
                 };
             }
 
@@ -427,7 +598,7 @@ export class CoserseLlmService {
             throw new ServiceUnavailableException({
                 status: 0,
                 code: 'COSERSE_LOCAL_ENGINE_UNREACHABLE',
-                message: `Siap ${handle}, engine AI lokal Coserse 1.0 di ${endpoint} belum merespons (${errCode || errMsg}). Pastikan Ollama / Llama.cpp lokal aktif dengan model "${model}" (jalankan backend/coserse_runtime/setup_coserse_local.ps1).`,
+                message: `Siap ${handle}, engine AI lokal Coserse 1.0 di ${endpoint} belum merespons (${errCode || errMsg}${errMsg && errMsg !== errCode ? `: ${errMsg}` : ''}). Pastikan Ollama / Llama.cpp lokal aktif dengan model "${model}" (jalankan backend/coserse_runtime/setup_coserse_local.ps1).`,
                 endpoint,
                 model
             });
@@ -442,6 +613,7 @@ export class CoserseLlmService {
         knowledgeChunks?: Array<{ doc_title: string; section_title: string; pasal_ref: string | null; content: string }> | null;
         endpointOverride?: string;
         tier?: string;
+        responseStyle?: string;
         onToken?: (delta: string) => void;
     }): Promise<CoserseLlmGenerationResult> {
         const provider = this.getRuntimeProvider();
@@ -449,7 +621,7 @@ export class CoserseLlmService {
             ? this.assertLoopbackUrl(params.endpointOverride)
             : this.getEndpointUrl();
         const model = this.getModelName();
-        const timeoutMs = Number(process.env.COSERSE_LLM_TIMEOUT_MS || 150_000);
+        const timeoutMs = Number(process.env.COSERSE_LLM_TIMEOUT_MS || 240_000);
         const numCtx = Number(process.env.COSERSE_NUM_CTX || 4096);
         const temperature = Number(process.env.COSERSE_TEMPERATURE ?? 0.1);
         const numThread = Number(process.env.COSERSE_NUM_THREAD || 6);
@@ -457,31 +629,17 @@ export class CoserseLlmService {
         const handle = this.normalizeHandle(params.actor.username);
 
         const systemPrompt = this.buildSystemPrompt(params.actor);
-        const evidenceXml = params.profilingContext
-            ? this.buildEvidenceXmlBlock(params.profilingContext)
-            : '';
-        const casKnowledgeXml = this.buildCasEvidenceXmlBlock(params.knowledgeChunks);
+        const { userTurnContent, hasEvidence: evidenceXml } = this.buildUserTurnPromptContent({
+            handle,
+            userMessage: params.userMessage,
+            profilingContext: params.profilingContext,
+            knowledgeChunks: params.knowledgeChunks,
+            responseStyle: params.responseStyle
+        });
 
-        const parts: string[] = [`Permintaan ${handle}: ${params.userMessage}`];
-        if (evidenceXml) {
-            parts.push(
-                '',
-                `Rangkum temuan di bawah ini menjadi narasi intelijen perkara yang luwes, akurat, dan terstruktur untuk ${handle}:`,
-                evidenceXml
-            );
-        }
-        if (casKnowledgeXml) {
-            parts.push(
-                '',
-                `Gunakan referensi pasal/SOP resmi dalam <cas_evidence> berikut sebagai dasar hukum jawaban Anda:`,
-                casKnowledgeXml
-            );
-        }
-        const userTurnContent = parts.join('\n');
-
-        const recentTurns = (params.slidingTurns || []).slice(-6).map((t) => ({
+        const recentTurns = (params.slidingTurns || []).slice(-4).map((t) => ({
             role: t.role,
-            content: String(t.content || '').slice(0, 1800)
+            content: String(t.content || '').slice(0, 600)
         }));
 
         const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
@@ -501,19 +659,29 @@ export class CoserseLlmService {
         }
 
         try {
+            const safeMessagesStream = (Array.isArray(messages) ? messages : [])
+                .filter((m) => m && m.role && String(m.content || '').trim().length > 0)
+                .map((m) => ({
+                    role: ['system', 'user', 'assistant'].includes(String(m.role)) ? m.role : 'user',
+                    content: String(m.content)
+                }));
+            if (safeMessagesStream.length === 0) {
+                safeMessagesStream.push({ role: 'user', content: String(params.userMessage || 'Halo') });
+            }
+            const safeOptionsStream: Record<string, number> = {};
+            if (Number.isFinite(temperature)) safeOptionsStream.temperature = temperature;
+            if (Number.isFinite(numCtx) && numCtx > 0) safeOptionsStream.num_ctx = Math.trunc(numCtx);
+            if (Number.isFinite(numThread) && numThread > 0) safeOptionsStream.num_thread = Math.trunc(numThread);
+            if (Number.isFinite(numPredict) && numPredict > 0) safeOptionsStream.num_predict = Math.trunc(numPredict);
+
             const resp = await axios.post(
                 endpoint,
                 {
-                    model,
-                    messages,
+                    model: model || 'coserse:1.0',
+                    messages: safeMessagesStream,
                     stream: true,
                     keep_alive: -1,
-                    options: {
-                        temperature,
-                        num_ctx: numCtx,
-                        num_thread: numThread,
-                        num_predict: numPredict
-                    }
+                    options: safeOptionsStream
                 },
                 {
                     timeout: timeoutMs,
@@ -597,7 +765,12 @@ export class CoserseLlmService {
                 evalCount = Number(resp.data?.eval_count || 0);
             }
 
-            const reply = this.ensureMandatoryDisclaimer(rawReply, params.actor.username);
+            const guardedStreamReply = this.guardUncommittedStatusClaim(
+                rawReply,
+                params.userMessage,
+                Boolean(params.profilingContext?.records?.length)
+            );
+            const reply = this.ensureMandatoryDisclaimer(guardedStreamReply, params.actor.username);
             const promptTokens = promptEvalCount || this.estimateMessagesTokens(messages);
             const completionTokens = evalCount || this.estimateTokens(reply);
 
@@ -614,18 +787,47 @@ export class CoserseLlmService {
             };
         } catch (err: any) {
             const errCode = err?.code || err?.cause?.code || '';
-            const errMsg = err?.response?.data?.error || err?.message || 'Koneksi engine lokal gagal';
+            let errMsg = err?.response?.data?.error || err?.message || 'Koneksi engine lokal gagal';
+            if (err?.response?.data && typeof err.response.data.on === 'function') {
+                try {
+                    const chunks: Buffer[] = [];
+                    for await (const c of err.response.data) {
+                        chunks.push(Buffer.from(c));
+                    }
+                    const rawBody = Buffer.concat(chunks).toString('utf8').trim();
+                    if (rawBody) {
+                        try {
+                            const j = JSON.parse(rawBody);
+                            errMsg = j?.error || rawBody.slice(0, 300);
+                        } catch {
+                            errMsg = rawBody.slice(0, 300);
+                        }
+                    }
+                } catch {}
+            }
+            this.logger.error(
+                `[CoserseLlm] Stream error endpoint=${endpoint} status=${err?.response?.status || '-'} code=${errCode} msg=${errMsg}`
+            );
+            const isTimeoutError =
+                errCode === 'ECONNABORTED' ||
+                errCode === 'ETIMEDOUT' ||
+                String(errMsg).toLowerCase().includes('timeout');
+            const isContextOverflowError =
+                err?.response?.status === 400 && /context size|num_ctx|tokens/i.test(String(errMsg));
             const isConnectionError =
                 errCode === 'ECONNREFUSED' ||
-                errCode === 'ETIMEDOUT' ||
                 errCode === 'ECONNRESET' ||
                 errCode === 'ENOTFOUND' ||
-                String(errMsg).includes('ECONNREFUSED') ||
-                String(errMsg).includes('timeout');
+                isTimeoutError ||
+                isContextOverflowError ||
+                String(errMsg).includes('ECONNREFUSED');
 
-            if (isConnectionError && this.isOfflineFallbackEnabled()) {
+            if (
+                isConnectionError &&
+                (this.isOfflineFallbackEnabled() || ((isTimeoutError || isContextOverflowError) && Boolean(params.profilingContext)))
+            ) {
                 this.logger.warn(
-                    `Engine lokal ${endpoint} belum aktif (${errCode || errMsg}); menjalankan fallback deterministik sandbox.`
+                    `Engine lokal ${endpoint} belum aktif/timeout (${errCode || errMsg}); menjalankan fallback deterministik sandbox.`
                 );
                 const fallbackText = this.buildDeterministicHumanNarrative(
                     params.actor,
@@ -648,7 +850,7 @@ export class CoserseLlmService {
                     completionTokens,
                     totalTokens: promptTokens + completionTokens,
                     xmlEvidenceIsolated: Boolean(evidenceXml),
-                    offlineNotice: `Engine lokal ${endpoint} sedang tidak aktif (${errCode || errMsg}). Ringkasan disusun langsung dari data terindeks BDB tanpa inferensi Qwen 2.5.`
+                    offlineNotice: `Engine lokal ${endpoint} tidak merespons (${errCode || errMsg}). Ringkasan disusun langsung dari data terindeks database CAS.`
                 };
             }
 
@@ -659,7 +861,7 @@ export class CoserseLlmService {
             throw new ServiceUnavailableException({
                 status: 0,
                 code: 'COSERSE_LOCAL_ENGINE_UNREACHABLE',
-                message: `Siap ${handle}, engine AI lokal Coserse 1.0 di ${endpoint} belum merespons (${errCode || errMsg}). Pastikan Ollama / Llama.cpp lokal aktif dengan model "${model}" (jalankan backend/coserse_runtime/setup_coserse_local.ps1).`,
+                message: `Siap ${handle}, engine AI lokal Coserse 1.0 di ${endpoint} belum merespons (${errCode || errMsg}${errMsg && errMsg !== errCode ? `: ${errMsg}` : ''}). Pastikan Ollama / Llama.cpp lokal aktif dengan model "${model}" (jalankan backend/coserse_runtime/setup_coserse_local.ps1).`,
                 endpoint,
                 model
             });
@@ -685,34 +887,70 @@ export class CoserseLlmService {
 
         const summary: CrossEntityProfileSummary = profiling.summary;
         const records: CrossEntityMatchRecord[] = profiling.records || [];
+        const groups = Array.isArray(profiling.discovery_groups) ? profiling.discovery_groups : [];
         const label =
             profiling.query.niks[0] ||
             profiling.query.phones[0]?.local08 ||
             profiling.query.names[0] ||
             profiling.query.raw;
 
-        if (!records.length) {
-            return `Siap ${handle}, saya sudah menelusuri register Pihak Terlibat dan Barang Bukti untuk **${label}** sesuai cakupan akses Anda (${profiling.scope.mode}), dan sejauh ini **belum ditemukan catatan keterlibatan LP** yang cocok.`;
+        if (!records.length && !groups.length) {
+            return `Siap ${handle}, saya sudah menelusuri lintas tabel CAS untuk **${label}** sesuai cakupan akses Anda (${profiling.scope.mode}), dan sejauh ini **belum ditemukan catatan data** yang cocok.`;
+        }
+
+        const lines: string[] = [];
+        if (groups.length >= 2 && !profiling.active_group) {
+            lines.push(
+                `Siap ${handle}, ditemukan **${groups.length} kelompok data** di database CAS untuk kata kunci **${label}** (${profiling.scope.mode}):`,
+                ''
+            );
+            for (const g of groups) {
+                const bdText =
+                    g.breakdown && Object.keys(g.breakdown).length
+                        ? ' — ' +
+                          Object.entries(g.breakdown)
+                              .map(([k, v]) => `${k}: ${Number(v).toLocaleString('id-ID')}`)
+                              .join(', ')
+                        : '';
+                lines.push(
+                    `### ${g.group_id}: ${g.label} (**${Number(g.total_count || 0).toLocaleString('id-ID')}** temuan di \`${g.source_table}\`${bdText})`
+                );
+                if (g.records && g.records.length > 0) {
+                    lines.push('| Nomor LP / Ref | Tanggal | Satker | Subjek / Nama | Peran | Status |');
+                    lines.push('|---|---|---|---|---|---|');
+                    for (const r of g.records.slice(0, 4)) {
+                        lines.push(
+                            `| ${String(r.no_laporan || '-').replace(/\|/g, '/')} | ${r.tgl_laporan || '-'} | ${String(r.satker_nama || '-').replace(/\|/g, '/')} | ${String(r.nama_tercatat || r.detail_konteks || '-').slice(0, 50).replace(/\|/g, '/')} | ${r.peran_entitas} | ${r.status_perkara} |`
+                        );
+                    }
+                    lines.push('');
+                }
+            }
+            lines.push(
+                `Mau difokuskan ke kelompok mana (${groups.map((g) => `**${g.group_id}**`).join(' / ')}), difilter peran (mis. **Tersangka**/**Terlapor**), diurutkan (**terbaru**/**terlama**), atau langsung diekspor ke **PDF / Word / PPT / Excel**?`
+            );
+            return lines.join('\n');
         }
 
         const topRoles = Object.entries(summary.roles_breakdown)
-            .map(([role, count]) => `${role} (${count}x)`)
+            .map(([role, count]) => `${role}: ${Number(count).toLocaleString('id-ID')}`)
             .join(', ');
-        const lines: string[] = [
-            `Siap ${handle}, berikut rangkuman intelijen penelusuran lintas perkara untuk **${label}**:`,
-            `Subjek terdeteksi terhubung pada **${summary.total_lp} Laporan Polisi** (${summary.total_terlibat_matches} catatan di Pihak Terlibat dan ${summary.total_barang_bukti_matches} di Barang Bukti), dengan komposisi peran: ${topRoles || 'TERLIBAT'}.`,
-            ``,
-            `**Rincian LP Terkait:**`
-        ];
+        lines.push(
+            `Siap ${handle}, hasil penelusuran untuk **${label}**${profiling.active_group ? ` (Fokus: **${profiling.active_group}**)` : ''}:`,
+            `- **Total Riil Database**: **${Number(summary.total_records || records.length).toLocaleString('id-ID')}** temuan (${topRoles || 'TERCATAT'}).`,
+            '',
+            `| No | Nomor LP / Ref | Tanggal | Satker | Nama / Subjek | Peran | Status |`,
+            `|---|---|---|---|---|---|---|`
+        );
 
-        records.slice(0, 8).forEach((r, idx) => {
+        records.slice(0, 12).forEach((r, idx) => {
             lines.push(
-                `${idx + 1}. **${r.no_laporan}** (Tanggal ${r.tgl_laporan}) — Satker **${r.satker_nama}**, Kategori *${r.kategori_kejahatan}*, Status **${r.status_perkara}**. Tercatat sebagai **${r.peran_entitas}** pada \`${r.sumber_tabel}\` (${r.detail_konteks}).`
+                `| ${idx + 1} | ${String(r.no_laporan || '-').replace(/\|/g, '/')} | ${r.tgl_laporan || '-'} | ${String(r.satker_nama || '-').replace(/\|/g, '/')} | ${String(r.nama_tercatat || r.detail_konteks || '-').slice(0, 60).replace(/\|/g, '/')} | ${r.peran_entitas} | ${r.status_perkara} |`
             );
         });
 
-        if (records.length > 8) {
-            lines.push(`...dan ${records.length - 8} catatan LP tambahan lainnya dalam jangkauan Anda.`);
+        if (summary.total_records > 12) {
+            lines.push(``, `Menampilkan 12 dari **${Number(summary.total_records).toLocaleString('id-ID')}** temuan. Anda dapat memilih fokus kelompok, filter peran/satker, urutkan terbaru/terlama, atau ekspor ke **PDF / Word / PPT / Excel**.`);
         }
 
         return lines.join('\n');

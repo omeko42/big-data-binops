@@ -241,6 +241,13 @@ export class AuthController {
         return res.sendSuccess(await this.authService.updateProfilePin(authUser, dto));
     }
 
+    @Post('profile/security/password')
+    @UseGuards(AuthGuard)
+    @UseInterceptors(CurrentUserInterceptor)
+    async changePasswordWithMfa(@CurrentUser() authUser, @Body() dto: any, @Res() res) {
+        return res.sendSuccess(await this.authService.changePasswordWithMfa(authUser, dto));
+    }
+
     @Post('forgot-password/request')
     async forgotPasswordRequest(@Body() dto: ForgotPasswordRequestDto, @Res() res) {
         return res.sendSuccess(await this.authService.forgotPasswordRequest(dto));

@@ -113,7 +113,7 @@ export class AuthService {
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 120 * 1000);
         const otpId = this.encryptSecurityPayload({
             action: 'login',
             user_id: Number(user.id),
@@ -129,6 +129,9 @@ export class AuthService {
             otp_id: otpId,
             requires_otp: true,
             expired_at: expiredAt.toISOString(),
+            expires_at: expiredAt.toISOString(),
+            resend_available_at: expiredAt.toISOString(),
+            cooldown_seconds: 120,
             otp_email: emailPolri
         };
     }
@@ -212,7 +215,7 @@ export class AuthService {
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 120 * 1000);
         const otpId = this.encryptSecurityPayload({
             action,
             user_id: Number(user.id),
@@ -230,6 +233,9 @@ export class AuthService {
             otp_id: otpId,
             requires_otp: true,
             expired_at: expiredAt.toISOString(),
+            expires_at: expiredAt.toISOString(),
+            resend_available_at: expiredAt.toISOString(),
+            cooldown_seconds: 120,
             sent_to: email,
             sent_to_masked: mask(email),
             email_polri_masked: mask(user.email_polri),
@@ -541,7 +547,7 @@ export class AuthService {
         }
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 120 * 1000);
         const payload = {
             new_user: {
                 ...dto,
@@ -1078,7 +1084,7 @@ export class AuthService {
     async sendOtp(dto: sendOtpEmailDto) {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 120 * 1000);
         const payload = {
             otp: hashedOtp,
             expired_at: expiredAt.toISOString()
@@ -1269,7 +1275,7 @@ export class AuthService {
 
     async requestProfileSecurityOtp(authUser: User, dto: any) {
         const action = String(dto?.action || '').trim();
-        const allowedActions = ['set_primary_email', 'disable_totp', 'enable_totp', 'enable_pin', 'change_pin', 'disable_pin', 'enable_email_otp', 'disable_email_otp', 'self_deactivate'];
+        const allowedActions = ['set_primary_email', 'disable_totp', 'enable_totp', 'enable_pin', 'change_pin', 'disable_pin', 'enable_email_otp', 'disable_email_otp', 'self_deactivate', 'change_password'];
         if (!allowedActions.includes(action)) {
             throw new BadRequestException({
                 errors: { action: ['Aksi keamanan tidak valid'] }
@@ -1552,7 +1558,7 @@ export class AuthService {
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
+        const expiredAt = new Date(Date.now() + 120 * 1000);
         const payload = {
             action: 'forgot_password',
             email,
@@ -1735,6 +1741,87 @@ export class AuthService {
         }
         await this.usersService.logOwnPasswordChange(authUser, sessionRevoked);
         return { message: 'Password berhasil diubah' };
+    }
+
+    /**
+     * Ubah password tanpa password lama (wajib lolos minimal 1 verifikasi MFA sekunder).
+     * Password baru HANYA ditulis ke DB setelah verifikasi sekunder sukses.
+     */
+    async changePasswordWithMfa(authUser: User, dto: any) {
+        const newPassword = String(dto?.new_password || dto?.newPassword || '').trim();
+        const confirmPassword = String(dto?.confirm_password || dto?.confirmPassword || newPassword).trim();
+        const method = String(dto?.method || '').trim().toLowerCase();
+
+        if (newPassword.length < 8) {
+            throw new BadRequestException({ errors: { new_password: ['Password baru minimal 8 karakter.'] } });
+        }
+        if (newPassword !== confirmPassword) {
+            throw new BadRequestException({ errors: { confirm_password: ['Konfirmasi password baru tidak cocok.'] } });
+        }
+        if (!['otp_email', 'totp_authenticator', 'pin', 'passkey_webauthn'].includes(method)) {
+            throw new BadRequestException({ errors: { method: ['Metode verifikasi sekunder tidak valid.'] } });
+        }
+
+        const userRepo = this.dataSource.getRepository(User);
+        const user = await userRepo
+            .createQueryBuilder('user')
+            .addSelect(['user.password', 'user.totp_secret', 'user.pin_hash'])
+            .where('user.id = :id', { id: Number(authUser.id) })
+            .getOne();
+        if (!user) throw new NotFoundException('Pengguna tidak ditemukan.');
+
+        if (method === 'otp_email') {
+            const otpId = String(dto?.otp_id || '').trim();
+            const otpToken = String(dto?.otp_token || '').trim();
+            if (!otpId || !otpToken) {
+                throw new BadRequestException({ errors: { otp_token: ['Kode OTP Email wajib diisi.'] } });
+            }
+            const payload = this.decryptSecurityPayload(otpId);
+            if (!payload || payload.action !== 'change_password' || Number(payload.user_id) !== Number(user.id)) {
+                throw new BadRequestException({ errors: { otp_token: ['Sesi OTP tidak valid untuk ubah password.'] } });
+            }
+            if (!payload.expired_at || Date.now() > new Date(payload.expired_at).getTime()) {
+                throw new BadRequestException({ errors: { otp_token: ['Kode OTP sudah kedaluwarsa. Silakan kirim ulang OTP.'] } });
+            }
+            const okOtp = await bcrypt.compare(otpToken, String(payload.otp || ''));
+            if (!okOtp) {
+                throw new BadRequestException({ errors: { otp_token: ['Kode OTP Email salah.'] } });
+            }
+        } else if (method === 'totp_authenticator') {
+            const totpToken = String(dto?.totp_token || '').trim();
+            if (!user.totp_secret) {
+                throw new BadRequestException({ errors: { totp_token: ['Authenticator App (TOTP) belum aktif pada akun ini.'] } });
+            }
+            const okTotp = authenticator.verify({ token: totpToken, secret: user.totp_secret });
+            if (!okTotp) {
+                throw new BadRequestException({ errors: { totp_token: ['Kode Authenticator (TOTP) salah atau kedaluwarsa.'] } });
+            }
+        } else if (method === 'pin') {
+            const pin = String(dto?.pin || '').trim();
+            if (!(user as any).pin_hash) {
+                throw new BadRequestException({ errors: { pin: ['PIN Keamanan belum aktif pada akun ini.'] } });
+            }
+            const okPin = await bcrypt.compare(pin, String((user as any).pin_hash));
+            if (!okPin) {
+                throw new BadRequestException({ errors: { pin: ['PIN Keamanan 6 digit salah.'] } });
+            }
+        } else if (method === 'passkey_webauthn') {
+            if (!dto?.credential) {
+                throw new BadRequestException({ errors: { passkey: ['Verifikasi Passkey / Windows Hello diperlukan.'] } });
+            }
+            await this.passkeyLoginVerify({ username: user.username, credential: dto.credential }, {});
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await userRepo.update(Number(user.id), { password: hashedPassword } as any);
+        await this.audit.log({
+            user: authUser,
+            action: 'CHANGE_PASSWORD_MFA',
+            entity: 'user',
+            entityId: Number(user.id),
+            meta: { method, without_old_password: true }
+        });
+        return { message: 'Password berhasil diubah melalui verifikasi ' + method };
     }
 
     // ==========================================

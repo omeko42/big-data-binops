@@ -257,6 +257,26 @@
         return s;
     }
 
+    function stabilizeStreamingMarkdown(text, isFinal) {
+        var s = String(text || '');
+        if (isFinal || !s) return s;
+        var fenceMatches = s.match(/```/g);
+        if (fenceMatches && fenceMatches.length % 2 === 1) {
+            s += '\n```';
+            return s;
+        }
+        var boldMatches = s.match(/\*\*/g);
+        if (boldMatches && boldMatches.length % 2 === 1) {
+            s += '**';
+        }
+        var lastLine = s.split(/\r?\n/).pop() || '';
+        var inlineTicks = lastLine.match(/`/g);
+        if (inlineTicks && inlineTicks.length % 2 === 1) {
+            s += '`';
+        }
+        return s;
+    }
+
     function formatSimpleMarkdown(text) {
         var raw = String(text || '');
         if (!raw.trim()) return '';
@@ -278,6 +298,24 @@
             );
             return '@@CS_CODE_BLOCK_' + idx + '@@';
         });
+
+        var isTableSep = function (ln) {
+            var t = String(ln || '').trim();
+            return /^\|[\s|:-]*-{2,}[\s|:-]*$/.test(t) && t.indexOf('|') !== -1;
+        };
+        var isTableRow = function (ln) {
+            var t = String(ln || '').trim();
+            if (!t || t.charAt(0) !== '|') return false;
+            return t.split('|').length >= 3;
+        };
+        var parseTableCells = function (ln) {
+            var t = String(ln || '').trim();
+            if (t.charAt(0) === '|') t = t.slice(1);
+            if (t.slice(-1) === '|') t = t.slice(0, -1);
+            return t.split('|').map(function (c) {
+                return formatInlineMarkdown(escapeHtml(c.trim()));
+            });
+        };
 
         var lines = withTokens.split(/\r?\n/);
         var out = [];
@@ -314,29 +352,17 @@
             }
 
             if (
-                trimmed.charAt(0) === '|' &&
-                trimmed.slice(-1) === '|' &&
+                isTableRow(trimmed) &&
                 i + 1 < lines.length &&
-                /^\s*\|[\s:-]+\|\s*$/.test(lines[i + 1])
+                isTableSep(lines[i + 1])
             ) {
-                var headerCells = trimmed
-                    .slice(1, -1)
-                    .split('|')
-                    .map(function (c) {
-                        return formatInlineMarkdown(escapeHtml(c.trim()));
-                    });
+                var headerCells = parseTableCells(trimmed);
                 i += 2;
                 var bodyRows = [];
                 while (i < lines.length) {
                     var rTrim = lines[i].trim();
-                    if (!(rTrim.charAt(0) === '|' && rTrim.slice(-1) === '|')) break;
-                    var rCells = rTrim
-                        .slice(1, -1)
-                        .split('|')
-                        .map(function (c) {
-                            return formatInlineMarkdown(escapeHtml(c.trim()));
-                        });
-                    bodyRows.push(rCells);
+                    if (!isTableRow(rTrim) || isTableSep(rTrim)) break;
+                    bodyRows.push(parseTableCells(rTrim));
                     i++;
                 }
                 var tblHtml =
@@ -406,10 +432,9 @@
                 !/^>\s?/.test(lines[i].trim()) &&
                 !/^---+$/.test(lines[i].trim()) &&
                 !(
-                    lines[i].trim().charAt(0) === '|' &&
-                    lines[i].trim().slice(-1) === '|' &&
+                    isTableRow(lines[i]) &&
                     i + 1 < lines.length &&
-                    /^\s*\|[\s:-]+\|\s*$/.test(lines[i + 1])
+                    isTableSep(lines[i + 1])
                 )
             ) {
                 var lnEsc = formatInlineMarkdown(escapeHtml(lines[i]));
@@ -588,7 +613,6 @@
             selectedTier: initialTier,
             quota: null,
             health: null,
-            busy: false,
             desktopSidebarOpen: true,
             mobileDrawerOpen: false,
             popoverOpen: false,
@@ -602,11 +626,48 @@
             pendingConfirmAction: null,
             prefs: initialPrefs,
             pendingAttachment: null,
-            streamAbortCtrl: null,
-            loadingStartAt: 0,
-            loadingElapsedSec: 0,
+            activeJobs: {},
             loadingTimer: null
         };
+
+        function getActiveJob(sessionId) {
+            var sid = sessionId || state.activeSessionId;
+            return (sid && state.activeJobs && state.activeJobs[sid]) || null;
+        }
+
+        function isSessionBusy(sessionId) {
+            var job = getActiveJob(sessionId);
+            return Boolean(job && (job.busy || job.streaming));
+        }
+
+        function beginSessionJob(sessionId, opts) {
+            if (!sessionId) return null;
+            var o = opts || {};
+            var job = {
+                sessionId: sessionId,
+                busy: o.busy !== false,
+                streaming: Boolean(o.streaming),
+                queueStatusText: o.queueStatusText || null,
+                startedAt: Date.now(),
+                elapsedSec: 0,
+                abortController: o.abortController || null,
+                streamRafId: 0,
+                lastStreamRenderAt: 0,
+                pendingStreamMsg: null
+            };
+            state.activeJobs[sessionId] = job;
+            ensureLoadingTimerRunning();
+            return job;
+        }
+
+        function endSessionJob(sessionId) {
+            var job = state.activeJobs[sessionId];
+            if (job && job.streamRafId && typeof cancelAnimationFrame === 'function') {
+                try { cancelAnimationFrame(job.streamRafId); } catch (_e) {}
+            }
+            delete state.activeJobs[sessionId];
+            maybeStopLoadingTimer();
+        }
 
         function persistSessions() {
             try {
@@ -941,7 +1002,7 @@
                 sendBtn.title = 'Mode Lihat (Read-Only)';
                 return;
             }
-            if (state.busy || state.streaming) {
+            if (isSessionBusy(state.activeSessionId)) {
                 sendBtn.disabled = false;
                 sendBtn.classList.add('is-stop', 'ready');
                 sendBtn.innerHTML = ICONS.stopSquare;
@@ -956,40 +1017,54 @@
             sendBtn.classList.toggle('ready', hasPayload);
         }
 
-        function startLoadingTimer() {
-            stopLoadingTimer();
-            state.loadingStartAt = Date.now();
-            state.loadingElapsedSec = 0;
+        function formatTypingLabelText(job) {
+            if (!job) return 'Coserse sedang menganalisis...';
+            var baseTxt = job.queueStatusText || 'Coserse sedang menganalisis...';
+            return job.elapsedSec > 0 ? baseTxt + ' (' + job.elapsedSec + ' dtk)' : baseTxt;
+        }
+
+        function ensureLoadingTimerRunning() {
+            if (state.loadingTimer) return;
             state.loadingTimer = setInterval(function () {
-                if (!state.busy && !state.streaming) {
-                    stopLoadingTimer();
+                var jobKeys = Object.keys(state.activeJobs || {});
+                if (!jobKeys.length) {
+                    maybeStopLoadingTimer();
                     return;
                 }
-                state.loadingElapsedSec = Math.max(0, Math.floor((Date.now() - state.loadingStartAt) / 1000));
-                var lbl = threadEl ? threadEl.querySelector('.cs-typing-label') : null;
-                if (lbl) {
-                    var baseTxt = state.queueStatusText || 'Coserse sedang menganalisis...';
-                    lbl.textContent =
-                        state.loadingElapsedSec > 0
-                            ? baseTxt + ' (' + state.loadingElapsedSec + ' dtk)'
-                            : baseTxt;
+                var now = Date.now();
+                for (var i = 0; i < jobKeys.length; i++) {
+                    var j = state.activeJobs[jobKeys[i]];
+                    if (j && (j.busy || j.streaming) && j.startedAt) {
+                        j.elapsedSec = Math.max(0, Math.floor((now - j.startedAt) / 1000));
+                    }
+                }
+                var activeJob = getActiveJob(state.activeSessionId);
+                if (activeJob && activeJob.busy && threadEl) {
+                    var lbl = threadEl.querySelector('.cs-typing-label');
+                    if (lbl) {
+                        lbl.textContent = formatTypingLabelText(activeJob);
+                    }
                 }
             }, 1000);
         }
 
-        function stopLoadingTimer() {
+        function maybeStopLoadingTimer() {
+            var jobKeys = Object.keys(state.activeJobs || {});
+            if (jobKeys.length > 0) return;
             if (state.loadingTimer) {
                 clearInterval(state.loadingTimer);
                 state.loadingTimer = null;
             }
         }
 
-        function stopActiveStream() {
-            if (state.streamAbortCtrl) {
+        function stopActiveStream(sessionId) {
+            var sid = sessionId || state.activeSessionId;
+            var job = getActiveJob(sid);
+            if (job && job.abortController) {
                 try {
-                    state.streamAbortCtrl.abort();
+                    job.abortController.abort();
                 } catch (_e) {}
-                state.streamAbortCtrl = null;
+                job.abortController = null;
             }
         }
 
@@ -1042,6 +1117,9 @@
         }
 
         async function deleteSessionById(delId) {
+            if (isSessionBusy(delId)) {
+                stopActiveStream(delId);
+            }
             try {
                 await fetch(apiBase + '/session?session_id=' + encodeURIComponent(delId), {
                     method: 'DELETE',
@@ -1077,19 +1155,24 @@
             var isActive = s.id === state.activeSessionId;
             var isEditing = state.editingSessionId === s.id;
             var isMenuOpen = state.openMenuSessionId === s.id;
+            var isRunning = isSessionBusy(s.id);
+            var runningDot = isRunning
+                ? '<span class="cs-session-running-dot" title="Coserse sedang memproses..." aria-label="Sedang memproses"></span>'
+                : '';
             var titleCell = isEditing
                 ? '<input type="text" class="cs-rename-input" data-rename-input="' +
                   escapeHtml(s.id) +
                   '" value="' +
                   escapeHtml(s.title) +
                   '" />'
-                : '<span class="cs-session-title">' + escapeHtml(s.title) + '</span>';
+                : runningDot + '<span class="cs-session-title">' + escapeHtml(s.title) + '</span>';
 
             return (
                 '<div class="cs-session-item' +
                 (isActive ? ' active' : '') +
                 (s.pinned ? ' pinned' : '') +
                 (isMenuOpen ? ' menu-open' : '') +
+                (isRunning ? ' is-running' : '') +
                 '" data-session-id="' +
                 escapeHtml(s.id) +
                 '">' +
@@ -1583,8 +1666,96 @@
             );
         }
 
-        function updateStreamBubbleInPlace(msg, isFinal) {
+        function renderExportFileCardHtml(msg) {
+            var card = msg && (msg.exportFileCard || msg.export_file_card);
+            if (isTestingReadOnly || !msg || msg.streaming || !card || !card.download_url) {
+                return '';
+            }
+            var fmtLabel = String(card.format_label || card.format || 'PDF').toUpperCase();
+            var fmtLower = String(card.format || 'pdf').toLowerCase();
+            var rawUrl = String(card.download_url || '');
+            var altFormats = [
+                { id: 'pdf', label: 'PDF' },
+                { id: 'docx', label: 'Word (.docx)' },
+                { id: 'pptx', label: 'PPT (.pptx)' },
+                { id: 'xlsx', label: 'Excel (.xlsx)' }
+            ];
+            var buildFormatUrl = function (targetFmt) {
+                if (rawUrl.indexOf('format=') !== -1) {
+                    return rawUrl.replace(/format=[a-z0-9]+/i, 'format=' + encodeURIComponent(targetFmt));
+                }
+                return rawUrl + (rawUrl.indexOf('?') === -1 ? '?' : '&') + 'format=' + encodeURIComponent(targetFmt);
+            };
+            var buildFormatName = function (targetFmt) {
+                return String(card.filename || 'CAS_Coserse_Export.' + fmtLower).replace(/\.[a-z0-9]+$/i, '.' + targetFmt);
+            };
+            var switchButtonsHtml = altFormats
+                .filter(function (f) { return f.id !== fmtLower; })
+                .map(function (f) {
+                    return (
+                        '<button type="button" class="cs-export-alt-btn" data-export-download="1" data-export-url="' +
+                        escapeHtml(buildFormatUrl(f.id)) +
+                        '" data-export-filename="' +
+                        escapeHtml(buildFormatName(f.id)) +
+                        '">' +
+                        escapeHtml(f.label) +
+                        '</button>'
+                    );
+                })
+                .join('');
+
+            return (
+                '<div class="cs-export-card" data-msg-id="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-export-card-head">' +
+                '    <span class="cs-export-badge">' + escapeHtml(fmtLabel) + '</span>' +
+                '    <div class="cs-export-info">' +
+                '      <div class="cs-export-title">' + escapeHtml(card.filename || 'Laporan_Coserse.' + fmtLower) + '</div>' +
+                '      <div class="cs-export-meta">' +
+                escapeHtml(card.group_label || 'Semua Kelompok Data') +
+                ' &bull; ' + escapeHtml(String(card.total_records || 0)) + ' data' +
+                (card.size_text ? ' &bull; ' + escapeHtml(card.size_text) : '') +
+                '      </div>' +
+                '    </div>' +
+                '  </div>' +
+                '  <div class="cs-export-card-actions">' +
+                '    <button type="button" class="cs-export-download-btn" data-export-download="1" data-export-url="' +
+                escapeHtml(rawUrl) +
+                '" data-export-filename="' +
+                escapeHtml(card.filename || 'Laporan_Coserse.' + fmtLower) +
+                '">⬇️ Download File ' + escapeHtml(card.format_label || fmtLabel) + '</button>' +
+                (switchButtonsHtml ? '<span class="cs-export-alt-group">' + switchButtonsHtml + '</span>' : '') +
+                '  </div>' +
+                '</div>'
+            );
+        }
+
+        function renderFollowUpChipsHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !Array.isArray(msg.followUpActions) || !msg.followUpActions.length) {
+                return '';
+            }
+            return (
+                '<div class="cs-followup-chips">' +
+                msg.followUpActions
+                    .map(function (act) {
+                        var label = String(act && act.label ? act.label : '').trim();
+                        var prompt = String(act && act.prompt ? act.prompt : label).trim();
+                        if (!label || !prompt) return '';
+                        return (
+                            '<button type="button" class="cs-followup-chip" data-followup-prompt="' +
+                            escapeHtml(prompt) +
+                            '">' +
+                            escapeHtml(label) +
+                            '</button>'
+                        );
+                    })
+                    .join('') +
+                '</div>'
+            );
+        }
+
+        function applyStreamDomUpdate(msg, isFinal, sessionId) {
             if (!threadEl || !msg) return false;
+            if (sessionId && sessionId !== state.activeSessionId) return false;
             var msgEl = threadEl.querySelector('.cs-msg-loading') || threadEl.querySelector('[data-bot-msg-id="' + msg.id + '"]');
             if (!msgEl) return false;
 
@@ -1606,16 +1777,20 @@
             var textEl = msgEl.querySelector('.cs-bot-text');
             if (textEl) {
                 var cleanText = stripTrailingDisclaimer(msg.text);
-                var cursorHtml = !isFinal ? '<span class="cs-stream-cursor" aria-hidden="true"></span>' : '';
-                textEl.innerHTML = formatSimpleMarkdown(cleanText) + cursorHtml;
+                var renderedMd = isFinal ? cleanText : stabilizeStreamingMarkdown(cleanText, false);
+                textEl.innerHTML = formatSimpleMarkdown(renderedMd);
             }
 
             var actionsEl = msgEl.querySelector('.cs-msg-actions');
-            if (isFinal && (msg.reviewCard || msg.batchReviewCard)) {
+            if (isFinal) {
                 var contentParent = msgEl.querySelector('.cs-bot-content');
                 if (contentParent && actionsEl) {
-                    contentParent.querySelectorAll('.cs-review-card, .cs-batch-card').forEach(function (el) { el.remove(); });
-                    var cardHtml = (msg.reviewCard ? renderReviewCardHtml(msg) : '') + (msg.batchReviewCard ? renderBatchReviewCardHtml(msg) : '');
+                    contentParent.querySelectorAll('.cs-review-card, .cs-batch-card, .cs-export-card, .cs-followup-chips').forEach(function (el) { el.remove(); });
+                    var cardHtml =
+                        (msg.reviewCard ? renderReviewCardHtml(msg) : '') +
+                        (msg.batchReviewCard ? renderBatchReviewCardHtml(msg) : '') +
+                        renderExportFileCardHtml(msg) +
+                        renderFollowUpChipsHtml(msg);
                     if (cardHtml) actionsEl.insertAdjacentHTML('beforebegin', cardHtml);
                 }
             }
@@ -1642,13 +1817,53 @@
             return true;
         }
 
+        function updateStreamBubbleInPlace(msg, isFinal, sessionId) {
+            if (!threadEl || !msg) return false;
+            var targetSid = sessionId || state.activeSessionId;
+            if (targetSid !== state.activeSessionId) return false;
+            var job = getActiveJob(targetSid);
+            if (isFinal) {
+                if (job && job.streamRafId && typeof cancelAnimationFrame === 'function') {
+                    cancelAnimationFrame(job.streamRafId);
+                    job.streamRafId = 0;
+                }
+                if (job) job.pendingStreamMsg = null;
+                return applyStreamDomUpdate(msg, true, targetSid);
+            }
+            if (!threadEl.querySelector('.cs-msg-loading') && !threadEl.querySelector('[data-bot-msg-id="' + msg.id + '"]')) {
+                return false;
+            }
+            if (!job) return applyStreamDomUpdate(msg, false, targetSid);
+            job.pendingStreamMsg = msg;
+            if (job.streamRafId) return true;
+            var rafFn = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : function (cb) { return setTimeout(cb, 40); };
+            job.streamRafId = rafFn(function () {
+                var now = Date.now();
+                if (job.lastStreamRenderAt && now - job.lastStreamRenderAt < 40 && job.pendingStreamMsg) {
+                    job.streamRafId = rafFn(function () {
+                        job.streamRafId = 0;
+                        job.lastStreamRenderAt = Date.now();
+                        if (job.pendingStreamMsg) applyStreamDomUpdate(job.pendingStreamMsg, false, targetSid);
+                    });
+                    return;
+                }
+                job.streamRafId = 0;
+                job.lastStreamRenderAt = now;
+                if (job.pendingStreamMsg) applyStreamDomUpdate(job.pendingStreamMsg, false, targetSid);
+            });
+            return true;
+        }
+
         function renderMessages() {
             var active = getActiveSession();
             if (!active) return;
+            var activeJob = getActiveJob(active.id);
+            var activeBusy = Boolean(activeJob && activeJob.busy);
+            var activeStreaming = Boolean(activeJob && activeJob.streaming);
             renderSidebar();
 
             var msgs = active.messages || [];
-            var isEmpty = msgs.length === 0;
+            var isEmpty = msgs.length === 0 && !activeBusy;
             emptyStateEl.style.display = isEmpty ? 'flex' : 'none';
             threadEl.style.display = isEmpty ? 'none' : 'flex';
 
@@ -1683,8 +1898,8 @@
                                 );
                             }
                             var cleanText = stripTrailingDisclaimer(msg.text);
-                            var isLastBot = msgIdx === lastBotIdx && !state.busy && !state.streaming;
-                            var streamCursorHtml = msg.streaming ? '<span class="cs-stream-cursor" aria-hidden="true"></span>' : '';
+                            var isLastBot = msgIdx === lastBotIdx && !activeBusy && !activeStreaming;
+                            var renderedBody = msg.streaming ? stabilizeStreamingMarkdown(cleanText, false) : cleanText;
                             return (
                                 '<div class="cs-msg cs-msg-bot' +
                                 (msg.streaming ? ' is-streaming' : '') +
@@ -1696,11 +1911,12 @@
                                 '</div>' +
                                 '  <div class="cs-bot-content">' +
                                 '    <div class="cs-bot-text">' +
-                                formatSimpleMarkdown(cleanText) +
-                                streamCursorHtml +
+                                formatSimpleMarkdown(renderedBody) +
                                 '</div>' +
                                 (msg.reviewCard ? renderReviewCardHtml(msg) : '') +
                 (msg.batchReviewCard ? renderBatchReviewCardHtml(msg) : '') +
+                                renderExportFileCardHtml(msg) +
+                                renderFollowUpChipsHtml(msg) +
                                 '    <div class="cs-msg-actions"' +
                                 (msg.streaming ? ' style="display:none"' : '') +
                                 '>' +
@@ -1711,7 +1927,7 @@
                             );
                         })
                         .join('') +
-                    (state.busy
+                    (activeBusy
                         ? '<div class="cs-msg cs-msg-bot cs-msg-loading" aria-live="polite">' +
                           '  <div class="cs-bot-monogram" title="Coserse 1.0">' +
                           ICONS.spark +
@@ -1720,10 +1936,7 @@
                           '    <div class="cs-typing-wrap">' +
                           '      <span class="cs-typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>' +
                           '      <span class="cs-typing-label">' +
-                          escapeHtml(
-                              (state.queueStatusText || 'Coserse sedang menganalisis...') +
-                                  (state.loadingElapsedSec > 0 ? ' (' + state.loadingElapsedSec + ' dtk)' : '')
-                          ) +
+                          escapeHtml(formatTypingLabelText(activeJob)) +
                           '</span>' +
                           '    </div>' +
                           '  </div>' +
@@ -1731,6 +1944,7 @@
                         : '');
                 threadScrollEl.scrollTop = threadScrollEl.scrollHeight;
             }
+            syncSendButtonState();
             updateScrollBottomVisibility();
             persistSessions();
         }
@@ -1768,7 +1982,7 @@
         }
 
         async function loadSessionMessagesFromServer(sessionId) {
-            if (!sessionId) return;
+            if (!sessionId || isSessionBusy(sessionId)) return;
             try {
                 var r = await fetch(apiBase + '/sessions/' + encodeURIComponent(sessionId) + '/messages', {
                     headers: getHeaders(false)
@@ -1790,7 +2004,9 @@
                         role: m.role === 'assistant' ? 'assistant' : 'user',
                         text: m.content || '',
                         createdAt: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
-                        feedback: meta.feedback || null
+                        feedback: meta.feedback || null,
+                        exportFileCard: meta.exportFileCard || null,
+                        followUpActions: Array.isArray(meta.followUpActions) ? meta.followUpActions : null
                     };
                 });
                 target.messagesLoaded = true;
@@ -1962,13 +2178,13 @@
                 });
             }
 
+            var uploadSid = active.id;
             var fd = new FormData();
             fd.append('file', file, file.name);
-            fd.append('session_id', state.activeSessionId);
+            fd.append('session_id', uploadSid);
             if (hintText) fd.append('hint', hintText);
 
-            state.busy = true;
-            sendBtn.disabled = true;
+            beginSessionJob(uploadSid, { busy: true, streaming: false, queueStatusText: 'Coserse sedang membaca dokumen...' });
             try {
                 var res = await fetch(apiBase + '/document/parse', {
                     method: 'POST',
@@ -2008,8 +2224,7 @@
                     text: 'Terjadi gangguan jaringan saat memproses dokumen: ' + (err.message || err)
                 });
             } finally {
-                state.busy = false;
-                sendBtn.disabled = false;
+                endSessionJob(uploadSid);
                 renderMessages();
                 refreshQuota();
             }
@@ -2052,7 +2267,7 @@
                 showBanner('Mode Read-Only (Role Testing): tidak dapat mengirim pesan atau mengubah data.', 'warn');
                 return;
             }
-            if (state.busy || state.streaming) return;
+            if (isSessionBusy(state.activeSessionId)) return;
             var text = String(overrideText != null ? overrideText : inputEl.value || '').trim();
             var pending = state.pendingAttachment;
 
@@ -2067,6 +2282,7 @@
             if (!text) return;
             var active = getActiveSession();
             if (!active) return;
+            var jobSid = active.id;
 
             if (active.title === 'Obrolan Baru') {
                 active.title = text.slice(0, 28) + (text.length > 28 ? '...' : '');
@@ -2074,21 +2290,28 @@
             active.updatedAt = Date.now();
             active.messages.push({ id: 'u-' + Date.now(), role: 'user', text: text });
             if (overrideText == null) inputEl.value = '';
-            state.busy = true;
-            state.streaming = true;
-            startLoadingTimer();
-            syncSendButtonState();
-            renderMessages();
 
             var reqStartedAt = Date.now();
             var abortCtrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-            state.streamAbortCtrl = abortCtrl;
+            var job = beginSessionJob(jobSid, { busy: true, streaming: true, abortController: abortCtrl });
+            syncSendButtonState();
+            renderMessages();
+
+            // Render ulang hanya jika sesi job ini sedang dibuka; selain itu cukup refresh sidebar.
+            function rerenderIfVisible() {
+                if (state.activeSessionId === jobSid) {
+                    renderMessages();
+                } else {
+                    renderSidebar();
+                    persistSessions();
+                }
+            }
 
             var streamMsg = null;
             var didInlineFinalize = false;
             function ensureStreamMessage() {
                 if (!streamMsg) {
-                    state.busy = false;
+                    job.busy = false;
                     streamMsg = {
                         id: 'b-' + Date.now(),
                         role: 'assistant',
@@ -2108,9 +2331,10 @@
                     signal: abortCtrl ? abortCtrl.signal : undefined,
                     body: JSON.stringify({
                         message: text,
-                        session_id: state.activeSessionId,
+                        session_id: jobSid,
                         model: state.selectedModel.id,
-                        tier: state.selectedTier.id
+                        tier: state.selectedTier.id,
+                        response_style: state.prefs && state.prefs.responseStyle === 'detailed' ? 'detail' : 'ringkas'
                     })
                 });
 
@@ -2126,11 +2350,13 @@
                         state.quota = data.quota;
                         renderPopoverContent();
                     }
-                    state.busy = false;
+                    job.busy = false;
                     active.messages.push({
                         id: 'b-' + Date.now(),
                         role: 'assistant',
                         createdAt: Date.now(),
+                        exportFileCard: !isTestingReadOnly && data ? data.exportFileCard || data.export_file_card || null : null,
+                        followUpActions: !isTestingReadOnly && data && Array.isArray(data.followUpActions) ? data.followUpActions : null,
                         text: !res.ok
                             ? (data && data.message) || 'Gagal memproses permintaan (' + res.status + ').'
                             : (data && data.reply) || 'Gagal membaca respons layanan Coserse.'
@@ -2141,10 +2367,13 @@
                     var sseBuffer = '';
 
                     function updateTypingLabelInPlace(txt) {
+                        job.queueStatusText = txt;
+                        if (state.activeSessionId !== jobSid) {
+                            return;
+                        }
                         var lbl = threadEl ? threadEl.querySelector('.cs-typing-label') : null;
                         if (lbl) {
-                            lbl.textContent =
-                                state.loadingElapsedSec > 0 ? txt + ' (' + state.loadingElapsedSec + ' dtk)' : txt;
+                            lbl.textContent = formatTypingLabelText(job);
                         }
                     }
 
@@ -2172,21 +2401,20 @@
 
                         if (eventName === 'queue') {
                             if (payload && payload.message) {
-                                state.queueStatusText = payload.message;
                                 updateTypingLabelInPlace(payload.message);
                             }
                         } else if (eventName === 'status') {
                             if (payload && payload.phase === 'analyzing') {
-                                state.queueStatusText = 'Coserse sedang menganalisis...';
-                                updateTypingLabelInPlace(state.queueStatusText);
+                                updateTypingLabelInPlace('Coserse sedang menganalisis...');
                             }
                         } else if (eventName === 'token') {
                             var delta = payload && typeof payload.token === 'string' ? payload.token : '';
                             if (delta) {
-                                state.queueStatusText = null;
+                                job.queueStatusText = null;
                                 var targetMsg = ensureStreamMessage();
                                 targetMsg.text += delta;
-                                if (!updateStreamBubbleInPlace(targetMsg, false)) {
+                                // Sesi lain sedang dibuka: data tetap terakumulasi di sesi job, tanpa menyentuh DOM thread.
+                                if (state.activeSessionId === jobSid && !updateStreamBubbleInPlace(targetMsg, false, jobSid)) {
                                     renderMessages();
                                 }
                             }
@@ -2201,6 +2429,11 @@
                                 var cardTarget = ensureStreamMessage();
                                 cardTarget.reviewCard = payload;
                                 cardTarget.cardStatus = payload.cardStatus || 'PENDING';
+                            }
+                        } else if (eventName === 'export_file_card') {
+                            if (!isTestingReadOnly && payload && payload.download_url) {
+                                var expTarget = ensureStreamMessage();
+                                expTarget.exportFileCard = payload;
                             }
                         } else if (eventName === 'done') {
                             if (payload && payload.quota) {
@@ -2229,12 +2462,21 @@
                                 finalMsg.batchReviewCard = payload.batch_review_card;
                                 finalMsg.cardStatus = 'PENDING';
                             }
-                            state.busy = false;
-                            state.streaming = false;
-                            didInlineFinalize = updateStreamBubbleInPlace(finalMsg, true);
+                            if (!isTestingReadOnly && payload && (payload.exportFileCard || payload.export_file_card)) {
+                                finalMsg.exportFileCard = payload.exportFileCard || payload.export_file_card;
+                            }
+                            if (!isTestingReadOnly && payload && Array.isArray(payload.followUpActions)) {
+                                finalMsg.followUpActions = payload.followUpActions;
+                            }
+                            job.busy = false;
+                            job.streaming = false;
+                            didInlineFinalize = state.activeSessionId === jobSid && updateStreamBubbleInPlace(finalMsg, true, jobSid);
+                            endSessionJob(jobSid);
                             if (!didInlineFinalize) {
-                                renderMessages();
+                                rerenderIfVisible();
                             } else {
+                                renderSidebar();
+                                syncSendButtonState();
                                 persistSessions();
                             }
                         } else if (eventName === 'error') {
@@ -2242,12 +2484,15 @@
                             errTarget.streaming = false;
                             var errText = (payload && payload.message) || 'Terjadi gangguan saat streaming jawaban Coserse.';
                             errTarget.text = errTarget.text ? errTarget.text + '\n\n' + errText : errText;
-                            state.busy = false;
-                            state.streaming = false;
-                            didInlineFinalize = updateStreamBubbleInPlace(errTarget, true);
+                            job.busy = false;
+                            job.streaming = false;
+                            didInlineFinalize = state.activeSessionId === jobSid && updateStreamBubbleInPlace(errTarget, true, jobSid);
+                            endSessionJob(jobSid);
                             if (!didInlineFinalize) {
-                                renderMessages();
+                                rerenderIfVisible();
                             } else {
+                                renderSidebar();
+                                syncSendButtonState();
                                 persistSessions();
                             }
                         }
@@ -2271,7 +2516,7 @@
                     }
                 }
             } catch (err) {
-                state.busy = false;
+                job.busy = false;
                 var isAborted = err && (err.name === 'AbortError' || String(err.message || '').toLowerCase().indexOf('abort') !== -1);
                 if (isAborted) {
                     if (streamMsg && streamMsg.text) {
@@ -2299,17 +2544,14 @@
                 }
             } finally {
                 if (streamMsg) streamMsg.streaming = false;
-                state.streamAbortCtrl = null;
-                stopLoadingTimer();
-                state.busy = false;
-                state.streaming = false;
-                state.queueStatusText = null;
-                syncSendButtonState();
+                endSessionJob(jobSid);
                 if (!didInlineFinalize) {
-                    renderMessages();
+                    rerenderIfVisible();
                 } else {
+                    renderSidebar();
                     persistSessions();
                 }
+                syncSendButtonState();
                 refreshQuota();
             }
         }
@@ -2989,6 +3231,50 @@
                 }
                 return;
             }
+            var expBtn = e.target.closest('[data-export-download]');
+            if (expBtn) {
+                if (isTestingReadOnly) {
+                    showBanner('Mode Lihat (Read-Only): Role Testing tidak diizinkan mengunduh file ekspor.', 'warn');
+                    return;
+                }
+                var dlUrl = expBtn.getAttribute('data-export-url');
+                var dlName = expBtn.getAttribute('data-export-filename') || 'Coserse_Export.pdf';
+                if (!dlUrl) return;
+                var origText = expBtn.innerHTML;
+                expBtn.disabled = true;
+                expBtn.textContent = 'Mengunduh...';
+                try {
+                    var dlRes = await fetch(dlUrl, { method: 'GET', headers: getHeaders(false) });
+                    if (!dlRes.ok) {
+                        var dlErr = null;
+                        try { dlErr = await dlRes.json(); } catch (_ee) {}
+                        throw new Error((dlErr && dlErr.message) || 'Gagal mengunduh file (' + dlRes.status + ').');
+                    }
+                    var dlBlob = await dlRes.blob();
+                    var objUrl = URL.createObjectURL(dlBlob);
+                    var aEl = document.createElement('a');
+                    aEl.href = objUrl;
+                    aEl.download = dlName;
+                    document.body.appendChild(aEl);
+                    aEl.click();
+                    document.body.removeChild(aEl);
+                    setTimeout(function () { URL.revokeObjectURL(objUrl); }, 5000);
+                    showBanner('File berhasil diunduh: ' + dlName, 'ok');
+                } catch (errExp) {
+                    showBanner('Gagal unduh file: ' + (errExp.message || errExp), 'error');
+                } finally {
+                    expBtn.disabled = false;
+                    expBtn.innerHTML = origText;
+                }
+                return;
+            }
+            var followChip = e.target.closest('[data-followup-prompt]');
+            if (followChip) {
+                if (isTestingReadOnly || isSessionBusy(state.activeSessionId)) return;
+                var fp = followChip.getAttribute('data-followup-prompt');
+                if (fp) sendChatMessage(fp);
+                return;
+            }
             var codeCopyBtn = e.target.closest('[data-code-copy]');
             if (codeCopyBtn) {
                 var codeBlock = codeCopyBtn.closest('.cs-code-block');
@@ -3029,7 +3315,7 @@
                 if (!targetMsg) return;
 
                 if (msgAction === 'regenerate') {
-                    if (isTestingReadOnly || state.busy || state.streaming) return;
+                    if (isTestingReadOnly || isSessionBusy(state.activeSessionId)) return;
                     var msgsArr = activeSess.messages || [];
                     var lastUserText = '';
                     for (var ui = msgsArr.length - 1; ui >= 0; ui--) {
@@ -3287,12 +3573,12 @@
             var enterSends = state.prefs.sendOnEnter !== false;
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || (enterSends && !e.shiftKey))) {
                 e.preventDefault();
-                if (state.busy || state.streaming) return;
+                if (isSessionBusy(state.activeSessionId)) return;
                 sendChatMessage();
             }
         });
         sendBtn.addEventListener('click', function () {
-            if (state.busy || state.streaming) {
+            if (isSessionBusy(state.activeSessionId)) {
                 stopActiveStream();
                 return;
             }

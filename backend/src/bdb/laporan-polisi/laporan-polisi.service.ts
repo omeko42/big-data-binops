@@ -557,6 +557,10 @@ export class LaporanPolisiService {
                     or lp.unit_satker_nama ilike '%RESKRIM%' 
                     or lp.unit_satker_nama ilike '%KRIM%'
                   )
+                  and not coalesce(lp.sudah_dilimpahkan, false)
+                  and not coalesce(lp.dilimpahkan_eksternal, false)
+                  and not exists (select 1 from bdb_lp_pelimpahan ph where ph.lp_id = lp.id)
+                  and not exists (select 1 from bdb_dokumen dk where dk.lp_id = lp.id)
             ),
             resolved_details as (
                 select ts.lp_id, ts.resolved_unit_id, s.deskripsi as resolved_nama, s.kode as resolved_kode
@@ -583,6 +587,10 @@ export class LaporanPolisiService {
             where coalesce(penanganan_level, '') <> 'Polsek'
               and upper(regexp_replace(coalesce(unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA')
               and (unit_satker_nama ilike '%RESKRIM%' or unit_satker_nama ilike '%KRIM%')
+              and not coalesce(sudah_dilimpahkan, false)
+              and not coalesce(dilimpahkan_eksternal, false)
+              and not exists (select 1 from bdb_lp_pelimpahan ph where ph.lp_id = bdb_laporan_polisi.id)
+              and not exists (select 1 from bdb_dokumen dk where dk.lp_id = bdb_laporan_polisi.id)
             returning id
         `);
         updated += Array.isArray(retUnlinkReskrim?.[0]) ? retUnlinkReskrim[0].length : 0;
@@ -609,6 +617,10 @@ export class LaporanPolisiService {
                 from bdb_laporan_polisi lp
                 where (lp.kategori = 'pelanggaran' or lp.no_laporan ilike '%/GAR/%')
                   and (lp.unit_satker_id is null or lp.unit_satker_nama ilike '%RESKRIM%' or lp.unit_satker_nama ilike '%KRIM%')
+                  and not coalesce(lp.sudah_dilimpahkan, false)
+                  and not coalesce(lp.dilimpahkan_eksternal, false)
+                  and not exists (select 1 from bdb_lp_pelimpahan ph where ph.lp_id = lp.id)
+                  and not exists (select 1 from bdb_dokumen dk where dk.lp_id = lp.id)
             ),
             resolved_details as (
                 select tg.lp_id, tg.resolved_unit_id, s.deskripsi as resolved_nama, s.kode as resolved_kode
@@ -684,6 +696,11 @@ export class LaporanPolisiService {
                       select 1
                       from bdb_lp_pelimpahan ph
                       where ph.lp_id = u.id
+                  )
+                  and not exists (
+                      select 1
+                      from bdb_dokumen dk
+                      where dk.lp_id = u.id
                   )
             ),
             target as materialized (
@@ -1023,6 +1040,11 @@ export class LaporanPolisiService {
                       from bdb_lp_pelimpahan ph
                       where ph.lp_id = lp.id
                   )
+                  and not exists (
+                      select 1
+                      from bdb_dokumen dk
+                      where dk.lp_id = lp.id
+                  )
                 for update of lp
             ),
             inserted_history as (
@@ -1075,6 +1097,44 @@ export class LaporanPolisiService {
                 update bdb_kinerja_perkara_snapshot sn set satker_id=u.unit_satker_id
                 from updated u where sn.lp_id=u.id and sn.satker_id is distinct from u.unit_satker_id
                 returning sn.lp_id
+            ),
+            protected_anomaly_audit as (
+                insert into bdb_audit_log (user_id,user_nama,action,entity,entity_id,meta,outcome)
+                select
+                    null,
+                    'SYSTEM DORS',
+                    'DORS_OWNERSHIP_PROTECTED_ANOMALY',
+                    'laporan_polisi',
+                    u.id::text,
+                    jsonb_build_object(
+                        'reason','Ownership LP dilindungi karena sudah memiliki dokumen/pelimpahan CAS; pemindahan dari DORS diblokir',
+                        'current_satker_id',u.satker_id,
+                        'current_satker_nama',u.satker_nama,
+                        'current_unit_satker_id',u.unit_satker_id,
+                        'current_unit_satker_nama',u.unit_satker_nama,
+                        'dors_target_level',u.raw_payload->'unit'->>'level',
+                        'dors_target_unit',u.raw_payload->'unit'->>'unit',
+                        'has_dokumen',exists(select 1 from bdb_dokumen dk where dk.lp_id = u.id),
+                        'has_pelimpahan',exists(select 1 from bdb_lp_pelimpahan ph where ph.lp_id = u.id),
+                        'source_raw_id',u.raw_lp_id,
+                        'source_updated_at',u.raw_payload->>'updated_at'
+                    ),
+                    'blocked'
+                from universe u
+                where u.deleted_at is null
+                  and (
+                      exists (select 1 from bdb_dokumen dk where dk.lp_id = u.id)
+                      or exists (select 1 from bdb_lp_pelimpahan ph where ph.lp_id = u.id)
+                  )
+                  and not exists (
+                      select 1
+                      from bdb_audit_log al
+                      where al.entity = 'laporan_polisi'
+                        and al.entity_id = u.id::text
+                        and al.action = 'DORS_OWNERSHIP_PROTECTED_ANOMALY'
+                        and al.created_at >= now() - interval '24 hours'
+                  )
+                returning entity_id::bigint as lp_id
             )
             select
                 (select count(*)::int from universe) as transition_total,

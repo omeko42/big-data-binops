@@ -63,12 +63,36 @@ export interface CrossEntityMatchRecord {
     satker_nama: string;
     kategori_kejahatan: string;
     peran_entitas: string;
-    sumber_tabel: 'bdb_dors_lp_terlibat' | 'bdb_dors_lp_barang_bukti';
+    sumber_tabel: string;
     detail_konteks: string;
     nama_tercatat: string | null;
     nik: string | null;
     no_hp: string | null;
     alamat: string | null;
+}
+
+export interface CoserseDiscoveryGroup {
+    group_id: string;
+    group_key: string;
+    label: string;
+    source_table: string;
+    total_count: number;
+    breakdown?: Record<string, number>;
+    records: CrossEntityMatchRecord[];
+}
+
+export interface CoserseExportFileCard {
+    export_id: string;
+    filename: string;
+    format: 'pdf' | 'docx' | 'pptx' | 'xlsx';
+    format_label: 'PDF' | 'Word' | 'PPT' | 'Excel';
+    mime_type: string;
+    size_bytes: number;
+    size_text: string;
+    total_records: number;
+    group_label: string;
+    download_url: string;
+    created_at: string;
 }
 
 export interface CrossEntityProfileSummary {
@@ -98,6 +122,8 @@ export interface CrossEntityProfileResponse {
     };
     summary: CrossEntityProfileSummary;
     records: CrossEntityMatchRecord[];
+    discovery_groups?: CoserseDiscoveryGroup[];
+    active_group?: string | null;
     narrative_summary: string;
     performance: {
         elapsed_ms: number;
@@ -216,6 +242,11 @@ export interface CoserseChatResponse {
         total_records: number;
         records_preview: CrossEntityMatchRecord[];
     };
+    review_card?: Record<string, any> | null;
+    batch_review_card?: Record<string, any> | null;
+    followUpActions?: Array<{ id: string; label: string; prompt: string }>;
+    exportFileCard?: CoserseExportFileCard | null;
+    export_file_card?: CoserseExportFileCard | null;
     quota: CoserseQuotaSnapshot;
     quota_warning?: string | null;
     disclaimer: string;

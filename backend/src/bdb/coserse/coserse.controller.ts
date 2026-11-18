@@ -6,6 +6,7 @@ import {
     Get,
     Optional,
     Param,
+    Patch,
     Post,
     Query,
     Req,
@@ -154,6 +155,36 @@ export class CoserseController {
             throw new BadRequestException('CoserseDocParserService belum terpasang.');
         }
         return this.docParser.commitBatchUpdateLp(req?.user, body || {}, this.extractIp(req));
+    }
+
+    @Get('instructions')
+    listInstructions(@Req() req: any) {
+        return this.service.listInstructions(req?.user);
+    }
+
+    @Post('instructions')
+    createInstruction(@Req() req: any, @Body() body: any) {
+        return this.service.createInstruction(req?.user, body || {});
+    }
+
+    @Patch('instructions/:id')
+    updateInstruction(@Req() req: any, @Param('id') id: string, @Body() body: any) {
+        return this.service.updateInstruction(req?.user, Number(id), body || {});
+    }
+
+    @Delete('instructions/:id')
+    deleteInstruction(@Req() req: any, @Param('id') id: string) {
+        return this.service.deleteInstruction(req?.user, Number(id));
+    }
+
+    @Get('export')
+    exportGet(@Req() req: any, @Query() query: any, @Res() res: any) {
+        return this.service.exportSessionSearchResults(req?.user, query || {}, res, this.extractIp(req));
+    }
+
+    @Post('export')
+    exportPost(@Req() req: any, @Body() body: any, @Res() res: any) {
+        return this.service.exportSessionSearchResults(req?.user, body || {}, res, this.extractIp(req));
     }
 
     private extractIp(req: any): string {

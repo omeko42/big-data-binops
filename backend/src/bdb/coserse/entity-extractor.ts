@@ -21,8 +21,68 @@ const NIK_REGEX = /\b\d{16}\b/g;
 const PHONE_REGEX = /(?:\+?62|0)[\s.-]*8\d(?:[\s.-]*\d){6,11}/g;
 const PLATE_REGEX = /\b[A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3}\b/gi;
 
-const FILLER_PREFIX_REGEX = /^(?:tolong|mohon|izin|siap|coba|harap|cari(?:kan)?|cek|periksa|telusuri|profiling|profil|analisis|keterlibatan|riwayat|jejak|data|lp|laporan|siapa|identitas|atas\s+nama|dengan|pemilik|pengguna)\b[\s:,-]*/i;
-const FILLER_PHRASE_REGEX = /\b(?:tolong|mohon|carikan|keterlibatan|riwayat|jejak|profiling|profil|terlibat|di\s+lp|laporan\s+polisi|nomor\s+hp|no\s*hp|no\s*telp|telepon|handphone|whatsapp|wa|nik|ktp|atas\s+nama|a\/n|yang\s+bernama|dengan\s+nama|bernama)\b/gi;
+const LP_NUMBER_REGEX = /\bLP\s*\/\s*[AB]\s*\/[^\s,;)]+/gi;
+const DATE_TOKEN_REGEX = /\b\d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b/g;
+
+const INDONESIAN_STOPWORDS = new Set<string>([
+    // Conversational & pronouns
+    'bro', 'pak', 'bu', 'min', 'bang', 'mas', 'mbak', 'om', 'kak', 'bos', 'komandan', 'ndoro',
+    'izin', 'mohon', 'tolong', 'harap', 'coba', 'bantu', 'siap', 'halo', 'hai', 'hi', 'hey',
+    'saya', 'aku', 'kamu', 'anda', 'dia', 'mereka', 'kami', 'kita', 'ini', 'itu', 'tersebut',
+    'tsb', 'nya', 'dong', 'deh', 'ya', 'yah', 'yuk', 'nih', 'tuh', 'kan', 'lah', 'kah',
+    // Question words & quantifiers
+    'apa', 'apakah', 'adakah', 'ada', 'siapa', 'siapakah', 'dimana', 'kemana', 'darimana',
+    'mana', 'kapan', 'bagaimana', 'mengapa', 'kenapa', 'berapa', 'berapakah', 'jumlah',
+    'jumlahnya', 'total', 'totalnya', 'semua', 'seluruh', 'banyak', 'banyaknya', 'daftar',
+    'list', 'rekap', 'rekapitulasi', 'ringkasan', 'statistik',
+    // Prepositions, conjunctions & auxiliaries
+    'di', 'ke', 'dari', 'dalam', 'pada', 'untuk', 'buat', 'dengan', 'dgn', 'tanpa', 'oleh',
+    'karena', 'sebab', 'jika', 'kalau', 'bila', 'apabila', 'atau', 'dan', 'serta', 'tetapi',
+    'tapi', 'namun', 'melainkan', 'sedangkan', 'sementara', 'sejak', 'sampai', 'hingga',
+    'antara', 'sebagai', 'jadi', 'menjadi', 'adalah', 'ialah', 'yaitu', 'yakni', 'yang',
+    'yg', 'pun', 'per', 'tiap', 'setiap', 'bisa', 'dapat', 'boleh', 'harus', 'wajib',
+    'perlu', 'sudah', 'telah', 'belum', 'sedang', 'akan', 'lagi', 'masih', 'pernah',
+    'tidak', 'tak', 'bukan', 'jangan',
+    // Verbs & search/update cues
+    'cari', 'carikan', 'mencari', 'pencarian', 'cek', 'mengecek', 'pengecekan', 'periksa',
+    'memeriksa', 'lihat', 'melihat', 'tampilkan', 'menampilkan', 'tunjuk', 'tunjukkan',
+    'buka', 'bukakan', 'lacak', 'melacak', 'telusuri', 'menelusuri', 'penelusuran',
+    'analisis', 'analisa', 'profiling', 'profil', 'memuat', 'berisi', 'mengandung',
+    'terkait', 'berkaitan', 'tentang', 'soal', 'mengenai', 'menyangkut', 'hubungan',
+    'terhubung', 'punya', 'memiliki', 'milik', 'pemilik', 'pengguna', 'bernama', 'namanya',
+    'atas', 'nama', 'an', 'alias', 'panggilan', 'inisial', 'ubah', 'update', 'ganti',
+    'set', 'naikkan', 'turunkan', 'proses', 'ajukan', 'hentikan', 'simpan', 'catat',
+    'input', 'masukkan',
+    // Legal, police & system terms
+    'kejahatan', 'pidana', 'tindak', 'perkara', 'kasus', 'masalah', 'pelanggaran', 'delik',
+    'pasal', 'uu', 'undang', 'kuhp', 'kuhap', 'perma', 'perkap', 'perpol', 'sop', 'mindik',
+    'terlibat', 'keterlibatan', 'riwayat', 'jejak', 'catatan', 'rekam', 'peran', 'status',
+    'statusnya', 'tersangka', 'tsk', 'terlapor', 'saksi', 'korban', 'pelapor', 'pihak',
+    'pelaku', 'dpo', 'buron', 'buronan', 'narapidana', 'tahanan', 'subjek', 'target',
+    'entitas', 'identitas', 'orang', 'oknum', 'anggota', 'personel', 'penyidik', 'penyelidik',
+    'masyarakat', 'warga', 'sipil', 'saudara', 'sdr', 'sdri', 'bapak', 'bpk', 'ibu', 'anak',
+    'pria', 'wanita', 'laki', 'perempuan', 'database', 'db', 'databse', 'basisdata', 'sistem',
+    'aplikasi', 'cas', 'dors', 'bdb', 'coserse', 'sharese', 'data', 'datanya', 'info',
+    'informasi', 'informasinya', 'berkas', 'dokumen', 'surat', 'bukti', 'barang', 'bb',
+    'lp', 'lpa', 'lpb', 'laporan', 'polisi', 'polri', 'mabes', 'bareskrim', 'polda', 'polres',
+    'polresta', 'polrestabes', 'polsek', 'polsekta', 'satker', 'subdit', 'unit', 'direktorat',
+    'dittipidum', 'dittipideksus', 'dittipidnarkoba', 'dittipidkor', 'dittipidsiber',
+    'dittipidter', 'dittipidppa', 'ditreskrimum', 'ditreskrimsus', 'ditresnarkoba',
+    'satreskrim', 'satnarkoba', 'spkt', 'wilayah', 'daerah', 'nasional', 'indonesia',
+    'tahun', 'bulan', 'hari', 'tanggal', 'tgl', 'waktu', 'jam', 'tempat', 'lokasi', 'tkp',
+    'alamat', 'nomor', 'no', 'nik', 'ktp', 'hp', 'handphone', 'telepon', 'telp', 'wa',
+    'whatsapp', 'plat', 'nopol', 'kendaraan', 'mobil', 'motor', 'tahap', 'ii', 'i', 'spdp', 'p19', 'p21', 'sp3', 'sp2', 'lid', 'lidik', 'sidik', 'henti',
+    'penyelidikan', 'penyidikan', 'rj', 'restorative', 'justice',
+    'saja', 'aja', 'khusus', 'hanya', 'sebaran', 'distribusi', 'berikutnya',
+    'selanjutnya', 'halaman', 'lanjut', 'lanjutan', 'more', 'next', 'page', 'filter',
+    // Export, sorting & contextual follow-up cues
+    'ekspor', 'export', 'unduh', 'download', 'cetak', 'print', 'buatkan', 'bikin', 'bikinkan',
+    'jadikan', 'konversi', 'file', 'filenya', 'format', 'pdf', 'word', 'docx', 'doc', 'ppt',
+    'pptx', 'powerpoint', 'presentasi', 'slide', 'excel', 'xlsx', 'xls', 'spreadsheet',
+    'tabel', 'tabelnya', 'urutkan', 'urut', 'urutan', 'sorting', 'sort', 'terbaru', 'terlama',
+    'terbanyak', 'tadi', 'barusan', 'sebelumnya', 'grup', 'kelompok', 'fokus', 'fokuskan',
+    'pilih', 'pilihkan', 'konteks'
+]);
 
 export function detectPromptInjection(rawText: string): SecurityAlertInfo {
     const text = String(rawText || '');
@@ -97,19 +157,22 @@ function dedupeStrings(items: string[]): string[] {
 }
 
 function extractCleanCandidateName(textWithoutStructured: string): string | null {
-    let candidate = textWithoutStructured
-        .replace(FILLER_PHRASE_REGEX, ' ')
-        .replace(/[^\p{L}\p{N}\s.'-]/gu, ' ')
+    const cleaned = String(textWithoutStructured || '')
+        .replace(LP_NUMBER_REGEX, ' ')
+        .replace(DATE_TOKEN_REGEX, ' ')
+        .replace(/\b(?:data|grup|kelompok)\s+[a-z]\b/gi, ' ')
+        .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
-    // Strip repeated leading filler words
-    let prev = '';
-    while (candidate && candidate !== prev) {
-        prev = candidate;
-        candidate = candidate.replace(FILLER_PREFIX_REGEX, '').trim();
-    }
+    if (!cleaned) return null;
 
+    const tokens = cleaned
+        .split(/\s+/)
+        .map((t) => t.replace(/^-+|-+$/g, '').trim())
+        .filter((t) => t.length >= 2 && !/^\d+$/.test(t) && !INDONESIAN_STOPWORDS.has(t.toLowerCase()));
+
+    const candidate = tokens.join(' ').trim();
     if (candidate.length < 3) return null;
     if (/^\d+$/.test(candidate)) return null;
     return candidate;
@@ -180,6 +243,9 @@ export function extractEntities(input: ProfilePersonRequestDto): CoserseParsedEn
         remaining = remaining.replace(match, ' ');
     }
     const phones = Array.from(phoneMap.values());
+
+    // Strip LP numbers & date tokens before license plate & name extraction
+    remaining = remaining.replace(LP_NUMBER_REGEX, ' ').replace(DATE_TOKEN_REGEX, ' ');
 
     // 3. Extract License Plates if present in free text
     const plates = dedupeStrings(
