@@ -1199,6 +1199,38 @@
             );
         }
 
+        function renderActionConfirmCardHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !msg.confirmationPrompt) return '';
+            var cp = msg.confirmationPrompt;
+            if (cp.status === 'EXECUTED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Konfirmasi Disetujui &amp; Dieksekusi</div></div>';
+            }
+            if (cp.status === 'CANCELLED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Aksi Dibatalkan (Tidak ada perubahan di database)</div></div>';
+            }
+            var opts = Array.isArray(cp.options) ? cp.options : [];
+            var grpName = 'cs-cf-' + escapeHtml(msg.id);
+            return (
+                '<div class="cs-confirm-card" data-confirm-card="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-confirm-title">' + escapeHtml(cp.title || 'Konfirmasi Eksekusi Aksi (Request Review)') + '</div>' +
+                opts.map(function (opt, idx) {
+                    var isRec = idx === 0 || opt.recommended;
+                    return (
+                        '<label class="cs-confirm-opt' + (isRec ? ' is-recommended' : '') + '">' +
+                        '  <input type="radio" name="' + grpName + '" value="' + escapeHtml(opt.value || opt.label) + '"' + (idx === 0 ? ' checked' : '') + ' />' +
+                        '  <span><strong>' + (isRec ? '[Rekomendasi #1] ' : '[Alternatif #' + (idx + 1) + '] ') + '</strong>' + escapeHtml(opt.label || opt.value) + '</span>' +
+                        '</label>'
+                    );
+                }).join('') +
+                '  <input type="text" class="cs-confirm-custom-input" data-confirm-custom="' + escapeHtml(msg.id) + '" placeholder="Atau masukkan alasan / nilai sendiri di sini (opsional)..." />' +
+                '  <div class="cs-confirm-actions">' +
+                '    <button type="button" class="cs-confirm-btn-cancel" data-confirm-cancel="' + escapeHtml(msg.id) + '">Batal</button>' +
+                '    <button type="button" class="cs-confirm-btn-exec" data-confirm-exec="' + escapeHtml(msg.id) + '">Setujui &amp; Eksekusi</button>' +
+                '  </div>' +
+                '</div>'
+            );
+        }
+
         function renderSidebar() {
             var compact = isCompactViewport();
             if (compact) {
@@ -1555,6 +1587,38 @@
             );
         }
 
+        function renderActionConfirmCardHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !msg.confirmationPrompt) return '';
+            var cp = msg.confirmationPrompt;
+            if (cp.status === 'EXECUTED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Konfirmasi Disetujui &amp; Dieksekusi</div></div>';
+            }
+            if (cp.status === 'CANCELLED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Aksi Dibatalkan (Tidak ada perubahan di database)</div></div>';
+            }
+            var opts = Array.isArray(cp.options) ? cp.options : [];
+            var grpName = 'cs-cf-' + escapeHtml(msg.id);
+            return (
+                '<div class="cs-confirm-card" data-confirm-card="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-confirm-title">' + escapeHtml(cp.title || 'Konfirmasi Eksekusi Aksi (Request Review)') + '</div>' +
+                opts.map(function (opt, idx) {
+                    var isRec = idx === 0 || opt.recommended;
+                    return (
+                        '<label class="cs-confirm-opt' + (isRec ? ' is-recommended' : '') + '">' +
+                        '  <input type="radio" name="' + grpName + '" value="' + escapeHtml(opt.value || opt.label) + '"' + (idx === 0 ? ' checked' : '') + ' />' +
+                        '  <span><strong>' + (isRec ? '[Rekomendasi #1] ' : '[Alternatif #' + (idx + 1) + '] ') + '</strong>' + escapeHtml(opt.label || opt.value) + '</span>' +
+                        '</label>'
+                    );
+                }).join('') +
+                '  <input type="text" class="cs-confirm-custom-input" data-confirm-custom="' + escapeHtml(msg.id) + '" placeholder="Atau masukkan alasan / nilai sendiri di sini (opsional)..." />' +
+                '  <div class="cs-confirm-actions">' +
+                '    <button type="button" class="cs-confirm-btn-cancel" data-confirm-cancel="' + escapeHtml(msg.id) + '">Batal</button>' +
+                '    <button type="button" class="cs-confirm-btn-exec" data-confirm-exec="' + escapeHtml(msg.id) + '">Setujui &amp; Eksekusi</button>' +
+                '  </div>' +
+                '</div>'
+            );
+        }
+
         function buildBotActionsHtml(msg, isLastBot) {
             var timeLabel = formatRelativeTimeId(msg.createdAt);
             var durBadge = msg.durationSec
@@ -1666,6 +1730,38 @@
             );
         }
 
+        function renderActionConfirmCardHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !msg.confirmationPrompt) return '';
+            var cp = msg.confirmationPrompt;
+            if (cp.status === 'EXECUTED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Konfirmasi Disetujui &amp; Dieksekusi</div></div>';
+            }
+            if (cp.status === 'CANCELLED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Aksi Dibatalkan (Tidak ada perubahan di database)</div></div>';
+            }
+            var opts = Array.isArray(cp.options) ? cp.options : [];
+            var grpName = 'cs-cf-' + escapeHtml(msg.id);
+            return (
+                '<div class="cs-confirm-card" data-confirm-card="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-confirm-title">' + escapeHtml(cp.title || 'Konfirmasi Eksekusi Aksi (Request Review)') + '</div>' +
+                opts.map(function (opt, idx) {
+                    var isRec = idx === 0 || opt.recommended;
+                    return (
+                        '<label class="cs-confirm-opt' + (isRec ? ' is-recommended' : '') + '">' +
+                        '  <input type="radio" name="' + grpName + '" value="' + escapeHtml(opt.value || opt.label) + '"' + (idx === 0 ? ' checked' : '') + ' />' +
+                        '  <span><strong>' + (isRec ? '[Rekomendasi #1] ' : '[Alternatif #' + (idx + 1) + '] ') + '</strong>' + escapeHtml(opt.label || opt.value) + '</span>' +
+                        '</label>'
+                    );
+                }).join('') +
+                '  <input type="text" class="cs-confirm-custom-input" data-confirm-custom="' + escapeHtml(msg.id) + '" placeholder="Atau masukkan alasan / nilai sendiri di sini (opsional)..." />' +
+                '  <div class="cs-confirm-actions">' +
+                '    <button type="button" class="cs-confirm-btn-cancel" data-confirm-cancel="' + escapeHtml(msg.id) + '">Batal</button>' +
+                '    <button type="button" class="cs-confirm-btn-exec" data-confirm-exec="' + escapeHtml(msg.id) + '">Setujui &amp; Eksekusi</button>' +
+                '  </div>' +
+                '</div>'
+            );
+        }
+
         function renderExportFileCardHtml(msg) {
             var card = msg && (msg.exportFileCard || msg.export_file_card);
             if (isTestingReadOnly || !msg || msg.streaming || !card || !card.download_url) {
@@ -1729,6 +1825,38 @@
             );
         }
 
+        function renderActionConfirmCardHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !msg.confirmationPrompt) return '';
+            var cp = msg.confirmationPrompt;
+            if (cp.status === 'EXECUTED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Konfirmasi Disetujui &amp; Dieksekusi</div></div>';
+            }
+            if (cp.status === 'CANCELLED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Aksi Dibatalkan (Tidak ada perubahan di database)</div></div>';
+            }
+            var opts = Array.isArray(cp.options) ? cp.options : [];
+            var grpName = 'cs-cf-' + escapeHtml(msg.id);
+            return (
+                '<div class="cs-confirm-card" data-confirm-card="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-confirm-title">' + escapeHtml(cp.title || 'Konfirmasi Eksekusi Aksi (Request Review)') + '</div>' +
+                opts.map(function (opt, idx) {
+                    var isRec = idx === 0 || opt.recommended;
+                    return (
+                        '<label class="cs-confirm-opt' + (isRec ? ' is-recommended' : '') + '">' +
+                        '  <input type="radio" name="' + grpName + '" value="' + escapeHtml(opt.value || opt.label) + '"' + (idx === 0 ? ' checked' : '') + ' />' +
+                        '  <span><strong>' + (isRec ? '[Rekomendasi #1] ' : '[Alternatif #' + (idx + 1) + '] ') + '</strong>' + escapeHtml(opt.label || opt.value) + '</span>' +
+                        '</label>'
+                    );
+                }).join('') +
+                '  <input type="text" class="cs-confirm-custom-input" data-confirm-custom="' + escapeHtml(msg.id) + '" placeholder="Atau masukkan alasan / nilai sendiri di sini (opsional)..." />' +
+                '  <div class="cs-confirm-actions">' +
+                '    <button type="button" class="cs-confirm-btn-cancel" data-confirm-cancel="' + escapeHtml(msg.id) + '">Batal</button>' +
+                '    <button type="button" class="cs-confirm-btn-exec" data-confirm-exec="' + escapeHtml(msg.id) + '">Setujui &amp; Eksekusi</button>' +
+                '  </div>' +
+                '</div>'
+            );
+        }
+
         function renderFollowUpChipsHtml(msg) {
             if (isTestingReadOnly || !msg || msg.streaming || !Array.isArray(msg.followUpActions) || !msg.followUpActions.length) {
                 return '';
@@ -1749,6 +1877,38 @@
                         );
                     })
                     .join('') +
+                '</div>'
+            );
+        }
+
+        function renderActionConfirmCardHtml(msg) {
+            if (isTestingReadOnly || !msg || msg.streaming || !msg.confirmationPrompt) return '';
+            var cp = msg.confirmationPrompt;
+            if (cp.status === 'EXECUTED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Konfirmasi Disetujui &amp; Dieksekusi</div></div>';
+            }
+            if (cp.status === 'CANCELLED') {
+                return '<div class="cs-confirm-card"><div class="cs-confirm-title">Aksi Dibatalkan (Tidak ada perubahan di database)</div></div>';
+            }
+            var opts = Array.isArray(cp.options) ? cp.options : [];
+            var grpName = 'cs-cf-' + escapeHtml(msg.id);
+            return (
+                '<div class="cs-confirm-card" data-confirm-card="' + escapeHtml(msg.id) + '">' +
+                '  <div class="cs-confirm-title">' + escapeHtml(cp.title || 'Konfirmasi Eksekusi Aksi (Request Review)') + '</div>' +
+                opts.map(function (opt, idx) {
+                    var isRec = idx === 0 || opt.recommended;
+                    return (
+                        '<label class="cs-confirm-opt' + (isRec ? ' is-recommended' : '') + '">' +
+                        '  <input type="radio" name="' + grpName + '" value="' + escapeHtml(opt.value || opt.label) + '"' + (idx === 0 ? ' checked' : '') + ' />' +
+                        '  <span><strong>' + (isRec ? '[Rekomendasi #1] ' : '[Alternatif #' + (idx + 1) + '] ') + '</strong>' + escapeHtml(opt.label || opt.value) + '</span>' +
+                        '</label>'
+                    );
+                }).join('') +
+                '  <input type="text" class="cs-confirm-custom-input" data-confirm-custom="' + escapeHtml(msg.id) + '" placeholder="Atau masukkan alasan / nilai sendiri di sini (opsional)..." />' +
+                '  <div class="cs-confirm-actions">' +
+                '    <button type="button" class="cs-confirm-btn-cancel" data-confirm-cancel="' + escapeHtml(msg.id) + '">Batal</button>' +
+                '    <button type="button" class="cs-confirm-btn-exec" data-confirm-exec="' + escapeHtml(msg.id) + '">Setujui &amp; Eksekusi</button>' +
+                '  </div>' +
                 '</div>'
             );
         }
@@ -1916,6 +2076,7 @@
                                 (msg.reviewCard ? renderReviewCardHtml(msg) : '') +
                 (msg.batchReviewCard ? renderBatchReviewCardHtml(msg) : '') +
                                 renderExportFileCardHtml(msg) +
+                                renderActionConfirmCardHtml(msg) +
                                 renderFollowUpChipsHtml(msg) +
                                 '    <div class="cs-msg-actions"' +
                                 (msg.streaming ? ' style="display:none"' : '') +
@@ -2334,7 +2495,8 @@
                         session_id: jobSid,
                         model: state.selectedModel.id,
                         tier: state.selectedTier.id,
-                        response_style: state.prefs && state.prefs.responseStyle === 'detailed' ? 'detail' : 'ringkas'
+                        response_style: state.prefs && state.prefs.responseStyle === 'detailed' ? 'detail' : 'ringkas',
+                        execution_mode: (state.prefs && state.prefs.executionMode) || 'request_review'
                     })
                 });
 
@@ -2614,6 +2776,7 @@
 
             if (tabKey === 'general') {
                 var isTactical = state.prefs.responseStyle !== 'detailed';
+                var execMode = state.prefs.executionMode || 'request_review';
                 var sendEnterOn = state.prefs.sendOnEnter !== false;
                 var quickPromptsOn = state.prefs.showQuickPrompts !== false;
                 settingsBody.innerHTML =
@@ -2628,6 +2791,18 @@
                     '      <div class="cs-seg-ctrl" role="group" aria-label="Cara Coserse menjawab">' +
                     '        <button type="button" class="cs-seg-btn' + (isTactical ? ' active' : '') + '" data-pref-style="tactical">Ringkas &amp; Padat</button>' +
                     '        <button type="button" class="cs-seg-btn' + (!isTactical ? ' active' : '') + '" data-pref-style="detailed">Lengkap &amp; Detail</button>' +
+                    '      </div>' +
+                    '    </div>' +
+                    '    <div class="cs-set-row">' +
+                    '      <div class="cs-set-row-info">' +
+                    '        <div class="cs-set-row-title">Mode Eksekusi &amp; Izin Aksi</div>' +
+                    '        <div class="cs-set-row-desc">Request Review selalu menampilkan kartu konfirmasi interaktif (Rekomendasi #1, Alternatif, &amp; Input Bebas) sebelum eksekusi sensitif ke database.</div>' +
+                    '      </div>' +
+                    '      <div class="cs-seg-ctrl" role="group" aria-label="Mode Eksekusi Coserse">' +
+                    '        <button type="button" class="cs-seg-btn' + (execMode === 'request_review' ? ' active' : '') + '" data-pref-exec-mode="request_review">Request Review</button>' +
+                    '        <button type="button" class="cs-seg-btn' + (execMode === 'default' ? ' active' : '') + '" data-pref-exec-mode="default">Default</button>' +
+                    '        <button type="button" class="cs-seg-btn' + (execMode === 'auto' ? ' active' : '') + '" data-pref-exec-mode="auto">Auto</button>' +
+                    '        <button type="button" class="cs-seg-btn' + (execMode === 'turbo' ? ' active' : '') + '" data-pref-exec-mode="turbo">Turbo</button>' +
                     '      </div>' +
                     '    </div>' +
                     '  </div>' +
@@ -2655,6 +2830,13 @@
                 settingsBody.querySelectorAll('[data-pref-style]').forEach(function (btn) {
                     btn.addEventListener('click', function () {
                         state.prefs.responseStyle = btn.getAttribute('data-pref-style') || 'tactical';
+                        savePrefs(state.prefs);
+                        renderSettingsBody();
+                    });
+                });
+                settingsBody.querySelectorAll('[data-pref-exec-mode]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        state.prefs.executionMode = btn.getAttribute('data-pref-exec-mode') || 'request_review';
                         savePrefs(state.prefs);
                         renderSettingsBody();
                     });
@@ -3273,6 +3455,34 @@
                 if (isTestingReadOnly || isSessionBusy(state.activeSessionId)) return;
                 var fp = followChip.getAttribute('data-followup-prompt');
                 if (fp) sendChatMessage(fp);
+                return;
+            }
+            var cfCancel = e.target.closest('[data-confirm-cancel]');
+            if (cfCancel) {
+                var cMid = cfCancel.getAttribute('data-confirm-cancel');
+                var cSess = getActiveSession();
+                var cMsg = cSess && cSess.messages.find(function (m) { return m.id === cMid; });
+                if (cMsg && cMsg.confirmationPrompt) {
+                    cMsg.confirmationPrompt.status = 'CANCELLED';
+                    renderMessages();
+                }
+                return;
+            }
+            var cfExec = e.target.closest('[data-confirm-exec]');
+            if (cfExec) {
+                if (isTestingReadOnly || isSessionBusy(state.activeSessionId)) return;
+                var eMid = cfExec.getAttribute('data-confirm-exec');
+                var eCard = cfExec.closest('[data-confirm-card]');
+                var selRadio = eCard ? eCard.querySelector('input[type="radio"]:checked') : null;
+                var customInp = eCard ? eCard.querySelector('[data-confirm-custom]') : null;
+                var chosen = (customInp && customInp.value.trim()) || (selRadio && selRadio.value) || 'Setujui rekomendasi #1';
+                var eSess = getActiveSession();
+                var eMsg = eSess && eSess.messages.find(function (m) { return m.id === eMid; });
+                if (eMsg && eMsg.confirmationPrompt) {
+                    eMsg.confirmationPrompt.status = 'EXECUTED';
+                    renderMessages();
+                }
+                sendChatMessage('Setujui & eksekusi pilihan berikut: ' + chosen);
                 return;
             }
             var codeCopyBtn = e.target.closest('[data-code-copy]');

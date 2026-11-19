@@ -35,6 +35,7 @@ import {
     normalizeExportFormat
 } from './coserse-export.util';
 import { detectPromptInjection, extractEntities } from './entity-extractor';
+import { MinioService } from '../kerma/minio.service';
 
 export const COSERSE_DISCLAIMER =
     'Coserse dapat melakukan kesalahan. Hanya untuk internal dan tolong periksa ulang hasil pekerjaan.';
@@ -82,8 +83,76 @@ export class CoserseService implements OnApplicationBootstrap {
         @Optional() private readonly quotaService?: CoserseQuotaService,
         @Optional() private readonly llmService?: CoserseLlmService,
         @Optional() private readonly docParser?: CoserseDocParserService,
-        @Optional() private readonly knowledgeService?: CoserseKnowledgeService
+        @Optional() private readonly knowledgeService?: CoserseKnowledgeService,
+        @Optional() private readonly minio?: MinioService
     ) {}
+
+    /**
+     * Melampirkan URL foto pihak (jika tersedia di DB) ke setiap record hasil profiling.
+     * Sumber foto: (1) bdb_lp_pihak_manual.lampiran_object_key bertipe image/* pada LP + nama yang sama,
+     * (2) bdb_dpo.foto_dpo_url yang NIK-nya sama persis. Hanya object key berekstensi gambar yang dipakai,
+     * lalu ditandatangani via MinIO presigned URL (relatif /bdb-attachments/...).
+     */
+    private async attachPartyPhotos(records: CrossEntityMatchRecord[]): Promise<void> {
+        if (!Array.isArray(records) || records.length === 0) return;
+        const IMG_RE = /\.(jpe?g|png|webp|gif)$/i;
+        const SAFE_KEY_RE = /^[A-Za-z0-9][A-Za-z0-9/_.\-]{2,300}$/;
+        const toPhotoUrl = async (raw: any): Promise<string | null> => {
+            const key = String(raw || '').trim();
+            if (!key || key.includes('..') || !IMG_RE.test(key.split('?')[0])) return null;
+            if (/^https:\/\//i.test(key)) return key;
+            if (!SAFE_KEY_RE.test(key) || !this.minio) return null;
+            try {
+                return await this.minio.presignedUrl(key, 3600);
+            } catch {
+                return null;
+            }
+        };
+        try {
+            const sample = records.slice(0, 40);
+            const lpIds = Array.from(new Set(sample.map((r) => Number(r.lp_id)).filter((n) => n > 0)));
+            const niks = Array.from(new Set(sample.map((r) => String(r.nik || '').trim()).filter((n) => /^\d{16}$/.test(n))));
+            const manualMap = new Map<string, string>();
+            if (lpIds.length) {
+                const mRows = await this.dataSource.query(
+                    `SELECT lp_id, upper(btrim(nama)) AS nama_up, lampiran_object_key
+                       FROM bdb_lp_pihak_manual
+                      WHERE deleted_at IS NULL AND lp_id = ANY($1::bigint[])
+                        AND lampiran_object_key IS NOT NULL AND lampiran_content_type ILIKE 'image/%'
+                      ORDER BY id DESC LIMIT 200`,
+                    [lpIds]
+                );
+                for (const m of mRows || []) {
+                    const k = `${m.lp_id}|${m.nama_up}`;
+                    if (!manualMap.has(k)) manualMap.set(k, m.lampiran_object_key);
+                }
+            }
+            const dpoMap = new Map<string, string>();
+            if (niks.length) {
+                const dRows = await this.dataSource.query(
+                    `SELECT btrim(nomor_identitas) AS nik, foto_dpo_url
+                       FROM bdb_dpo
+                      WHERE btrim(nomor_identitas) = ANY($1::text[])
+                        AND foto_dpo_url IS NOT NULL AND btrim(foto_dpo_url) <> ''
+                      ORDER BY id DESC LIMIT 100`,
+                    [niks]
+                );
+                for (const d of dRows || []) {
+                    if (!dpoMap.has(d.nik)) dpoMap.set(d.nik, d.foto_dpo_url);
+                }
+            }
+            if (!manualMap.size && !dpoMap.size) return;
+            for (const r of sample) {
+                const nameKey = `${r.lp_id}|${String(r.nama_tercatat || '').trim().toUpperCase()}`;
+                const raw = manualMap.get(nameKey) || (r.nik ? dpoMap.get(String(r.nik).trim()) : undefined);
+                if (!raw) continue;
+                const url = await toPhotoUrl(raw);
+                if (url) (r as any).foto_url = url;
+            }
+        } catch (err: any) {
+            this.logger.warn(`attachPartyPhotos gagal: ${err?.message || err}`);
+        }
+    }
 
     async onApplicationBootstrap(): Promise<void> {
         await this.ensureChatPersistenceTables();
@@ -534,18 +603,11 @@ export class CoserseService implements OnApplicationBootstrap {
             const primary = this.buildCrossEntitySql(parsed, sqlOpts, false);
             rows = await this.dataSource.query(primary.sql, primary.params);
 
-            const hasMultiTokens = parsed.names.some(
-                (n) =>
-                    n
-                        .trim()
-                        .split(/\s+/)
-                        .filter((t) => t.replace(/[^A-Za-z0-9.'-]/g, '').length >= 3).length >= 2
-            );
-            if (rows.length === 0 && hasMultiTokens) {
-                const fallback = this.buildCrossEntitySql(parsed, sqlOpts, true);
-                rows = await this.dataSource.query(fallback.sql, fallback.params);
-                usedOrFallback = true;
-            }
+            // STRICT NAME MATCH: nama multi-kata WAJIB cocok seluruh token (AND).
+            // Fallback OR (cukup 1 kata cocok, mis. "SHOLEH") DINONAKTIFKAN karena menarik ribuan
+            // orang lain tanpa benang merah (kasus 7.624 data / 132 dtk). Jika tidak ada kecocokan penuh,
+            // kembalikan 0 data secara jujur; relasi orang lain hanya boleh tampil via NIK/HP/LP yang sama.
+            usedOrFallback = false;
         } catch (err: any) {
             await this.audit.log({
                 userId: actor.userId ?? undefined,
@@ -575,7 +637,7 @@ export class CoserseService implements OnApplicationBootstrap {
             }),
             skipDiscovery
                 ? Promise.resolve({ groups: [] as CoserseDiscoveryGroup[], bbRealCount: 0, extraRecords: [] as CrossEntityMatchRecord[] })
-                : this.discoverExtraTableGroups(parsed, { ...sqlOpts, forceAndMode: primaryRecords.length > 0 && !usedOrFallback }, primaryRecords)
+                : this.discoverExtraTableGroups(parsed, { ...sqlOpts, forceAndMode: true }, primaryRecords)
         ]);
         const queryMs = Date.now() - queryStartedAt;
 
@@ -596,6 +658,7 @@ export class CoserseService implements OnApplicationBootstrap {
         const summary = assembled.summary;
         const discoveryGroups = assembled.discoveryGroups;
         const activeGroup = assembled.activeGroup;
+        await this.attachPartyPhotos(records);
         const matchTier = usedOrFallback ? 'PARTIAL_OR' : 'EXACT_ALL_TOKENS';
         const matchTierLabel = usedOrFallback
             ? 'Kemiripan Sebagian (Partial Match)'
@@ -1048,7 +1111,8 @@ export class CoserseService implements OnApplicationBootstrap {
                 knowledgeChunks,
                 endpointOverride: lease.worker.endpoint,
                 tier: input?.tier,
-                responseStyle: (input as any)?.response_style || (input as any)?.responseStyle
+                responseStyle: (input as any)?.response_style || (input as any)?.responseStyle,
+                executionMode: (input as any)?.execution_mode || (input as any)?.executionMode || 'request_review'
             });
         } finally {
             await lease.release();
@@ -1485,6 +1549,7 @@ export class CoserseService implements OnApplicationBootstrap {
                     endpointOverride: lease.worker.endpoint,
                     tier: input?.tier,
                     responseStyle: (input as any)?.response_style || (input as any)?.responseStyle,
+                    executionMode: (input as any)?.execution_mode || (input as any)?.executionMode || 'request_review',
                     onToken: (delta: string) => {
                         firstTokenSent = true;
                         sendEvent('token', { token: delta });

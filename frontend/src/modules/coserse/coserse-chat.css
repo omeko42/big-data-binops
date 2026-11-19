@@ -205,6 +205,59 @@ html[data-theme="dark"],
     @media (prefers-reduced-motion: reduce) {
       .cs-session-running-dot { animation: none; }
     }
+    /* Interactive Confirmation Card (Request Review Mode) */
+    .cs-confirm-card {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, .35);
+      background: rgba(15, 23, 42, .04);
+      display: grid;
+      gap: 8px;
+    }
+    html[data-theme="dark"] .cs-confirm-card { background: rgba(30, 41, 59, .65); border-color: rgba(56, 189, 248, .4); }
+    .cs-confirm-title { font-size: 13px; font-weight: 700; }
+    .cs-confirm-opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, .28);
+      cursor: pointer;
+      font-size: 12.5px;
+    }
+    .cs-confirm-opt.is-recommended { border-color: rgba(22, 163, 74, .5); background: rgba(22, 163, 74, .06); }
+    .cs-confirm-custom-input {
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, .35);
+      background: transparent;
+      color: inherit;
+      font-size: 12.5px;
+    }
+    .cs-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+    .cs-confirm-btn-exec {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      background: #16a34a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .cs-confirm-btn-cancel {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, .4);
+      background: transparent;
+      color: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
     .cs-session-actions {
       display: inline-flex;
       align-items: center;

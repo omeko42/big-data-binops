@@ -246,8 +246,18 @@ export class CoserseLlmService {
         const parts: string[] = [`Permintaan ${params.handle}: ${params.userMessage}`];
         const rawStyle = String((params as any).responseStyle || 'ringkas').toLowerCase().trim();
         const isDetailMode = rawStyle === 'detail' || rawStyle === 'detailed';
+        const rawExecMode = String((params as any).executionMode || 'request_review').toLowerCase().trim();
+        const execModeLabel =
+            rawExecMode === 'turbo'
+                ? 'TURBO'
+                : rawExecMode === 'auto'
+                ? 'AUTO'
+                : rawExecMode === 'default'
+                ? 'DEFAULT'
+                : 'REQUEST_REVIEW';
         parts.push(
             '',
+            `[MODE_EKSEKUSI: ${execModeLabel} — DILARANG KERAS mengarang data dummy/fiktif (seperti POLRES DUMMY, LP/B/001/DUMMY, atau nama/nomor LP karangan) apabila pengguna baru bertanya kemampuan atau belum menyebutkan Nomor LP nyata. Jika butuh Nomor LP/dokumen, minta langsung ke pengguna secara ringkas.]`,
             isDetailMode
                 ? '[MODE_JAWABAN: LENGKAP_DAN_DETAIL — Uraikan secara komprehensif: ringkasan eksekutif, tabel lengkap seluruh temuan, detail modus/uraian perkara, dasar hukum/pasal terkait, relasi entitas, serta saran tindak lanjut penyidik.]'
                 : '[MODE_JAWABAN: RINGKAS_DAN_PADAT — Jawab langsung ke inti dalam 3–5 poin singkat atau 1 tabel ringkas tanpa basa-basi/paragraf panjang.]'
@@ -296,7 +306,11 @@ export class CoserseLlmService {
 
         // Ensure @username is naturally present if an LLM slipped into generic reply
         if (text && !text.toLowerCase().includes(handle.toLowerCase())) {
-            text = `Siap ${handle}, ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+            if (/^\s*\|/.test(text) || /^#{1,4}\s/.test(text) || /^[-*•]\s/.test(text)) {
+                text = `Siap ${handle},\n\n${text}`;
+            } else {
+                text = `Siap ${handle}, ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+            }
         }
 
         // Strip any disclaimer lines baked into Modelfile output (UI already renders 1 static disclaimer below composer)
@@ -304,7 +318,101 @@ export class CoserseLlmService {
         const tailPattern = new RegExp(`(?:\\n|>|\\s|_|-)*${escapedDisclaimer}(?:\\s|_)*$`, 'gi');
         text = text.replace(tailPattern, '').trim();
 
-        return text;
+        return this.repairInlineMarkdownTables(text);
+    }
+
+    /**
+     * Memperbaiki tabel Markdown yang "menyatu dalam 1 baris" (mis. `| No | Nama | |---|---| | 1 | A |`)
+     * menjadi baris-baris terpisah, serta menyisipkan baris kosong sebelum tabel yang menempel pada paragraf.
+     */
+    repairInlineMarkdownTables(input: string): string {
+        const SEP_CELL = /^\s*:?-{3,}:?\s*$/;
+        const SEP_LINE = /^\s*\|(?:\s*:?-{1,}:?\s*\|)+\s*$/;
+        const rawLines = String(input || '').split(/\r?\n/);
+        const lines: string[] = [];
+        for (const rl of rawLines) {
+            if (/^\s*\|/.test(rl) || (/\|\s*:?-{3,}:?\s*\|/.test(rl) && (rl.match(/\|/g) || []).length >= 6)) {
+                lines.push(rl.replace(/<br\s*\/?>/gi, '; '));
+            } else if (/<br\s*\/?>/i.test(rl)) {
+                for (const part of rl.replace(/<br\s*\/?>/gi, '\n').split('\n')) {
+                    lines.push(part);
+                }
+            } else {
+                lines.push(rl);
+            }
+        }
+        const out: string[] = [];
+        for (let idx = 0; idx < lines.length; idx++) {
+            const line = lines[idx];
+            const firstPipe = line.indexOf('|');
+            const looksMerged = firstPipe >= 0 && /\|\s*:?-{3,}:?\s*\|/.test(line) && (line.match(/\|/g) || []).length >= 6;
+            if (!looksMerged) {
+                // Jika kalimat pembuka menempel di baris header tabel ("Siap @user, | No | ... |")
+                // sementara baris berikutnya adalah separator tabel ("|---|---|"), pisahkan dengan \n\n.
+                if (firstPipe > 0 && idx + 1 < lines.length && SEP_LINE.test(lines[idx + 1])) {
+                    const pref = line.slice(0, firstPipe).trim();
+                    const tblHdr = line.slice(firstPipe).trim();
+                    if (pref) out.push(pref, '');
+                    out.push(tblHdr);
+                    continue;
+                }
+                if (
+                    /^\s*\|/.test(line) &&
+                    idx + 1 < lines.length &&
+                    SEP_LINE.test(lines[idx + 1]) &&
+                    out.length > 0 &&
+                    out[out.length - 1].trim() &&
+                    !out[out.length - 1].trim().startsWith('|')
+                ) {
+                    out.push('');
+                }
+                out.push(line);
+                continue;
+            }
+            const prefix = line.slice(0, firstPipe).trim();
+            const cells = line.slice(firstPipe).trim().replace(/^\|/, '').replace(/\|$/, '').split('|');
+            const sepStart = cells.findIndex((c) => SEP_CELL.test(c));
+            if (sepStart <= 0) {
+                out.push(line);
+                continue;
+            }
+            let sepLen = 0;
+            while (sepStart + sepLen < cells.length && SEP_CELL.test(cells[sepStart + sepLen])) sepLen++;
+            let header = cells.slice(0, sepStart);
+            if (header.length === sepLen + 1 && !header[header.length - 1].trim()) header = header.slice(0, -1);
+            if (header.length !== sepLen) {
+                out.push(line);
+                continue;
+            }
+            const n = sepLen;
+            const rest = cells.slice(sepStart + n);
+            const rows: string[][] = [];
+            let ok = true;
+            if (rest.length % (n + 1) === 0) {
+                // Pola gabungan: setiap baris diawali sel pemisah kosong ("| |" atau "||").
+                for (let i = 0; i < rest.length; i += n + 1) {
+                    if (rest[i].trim()) {
+                        ok = false;
+                        break;
+                    }
+                    rows.push(rest.slice(i + 1, i + 1 + n));
+                }
+            } else if (rest.length % n === 0) {
+                for (let i = 0; i < rest.length; i += n) rows.push(rest.slice(i, i + n));
+            } else {
+                ok = false;
+            }
+            if (!ok) {
+                out.push(line);
+                continue;
+            }
+            if (prefix) out.push(prefix, '');
+            else if (out.length && out[out.length - 1].trim() && !out[out.length - 1].trim().startsWith('|')) out.push('');
+            out.push(`| ${header.map((c) => c.trim()).join(' | ')} |`);
+            out.push(`|${cells.slice(sepStart, sepStart + n).map((c) => c.trim()).join('|')}|`);
+            for (const r of rows) out.push(`| ${r.map((c) => c.trim()).join(' | ')} |`);
+        }
+        return out.join('\n');
     }
 
     guardUncommittedStatusClaim(rawReply: string, userMessage: string, hasReviewCard: boolean): string {
@@ -399,6 +507,7 @@ export class CoserseLlmService {
         endpointOverride?: string;
         tier?: string;
         responseStyle?: string;
+        executionMode?: string;
     }): Promise<CoserseLlmGenerationResult> {
         const provider = this.getRuntimeProvider();
         const endpoint = params.endpointOverride
@@ -418,8 +527,9 @@ export class CoserseLlmService {
             userMessage: params.userMessage,
             profilingContext: params.profilingContext,
             knowledgeChunks: params.knowledgeChunks,
-            responseStyle: params.responseStyle
-        });
+            responseStyle: params.responseStyle,
+            executionMode: params.executionMode
+        } as any);
 
         const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
             { role: 'system', content: systemPrompt },
@@ -614,6 +724,7 @@ export class CoserseLlmService {
         endpointOverride?: string;
         tier?: string;
         responseStyle?: string;
+        executionMode?: string;
         onToken?: (delta: string) => void;
     }): Promise<CoserseLlmGenerationResult> {
         const provider = this.getRuntimeProvider();
@@ -634,8 +745,9 @@ export class CoserseLlmService {
             userMessage: params.userMessage,
             profilingContext: params.profilingContext,
             knowledgeChunks: params.knowledgeChunks,
-            responseStyle: params.responseStyle
-        });
+            responseStyle: params.responseStyle,
+            executionMode: params.executionMode
+        } as any);
 
         const recentTurns = (params.slidingTurns || []).slice(-4).map((t) => ({
             role: t.role,
