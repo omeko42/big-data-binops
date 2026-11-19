@@ -625,7 +625,7 @@
             showArchived: false,
             pendingConfirmAction: null,
             prefs: initialPrefs,
-            pendingAttachment: null,
+            pendingAttachments: [],
             activeJobs: {},
             loadingTimer: null
         };
@@ -1012,7 +1012,7 @@
             sendBtn.classList.remove('is-stop');
             sendBtn.innerHTML = ICONS.arrowUp;
             sendBtn.title = 'Kirim pesan';
-            var hasPayload = Boolean(String(inputEl.value || '').trim() || state.pendingAttachment);
+            var hasPayload = Boolean(String(inputEl.value || '').trim() || (state.pendingAttachments && state.pendingAttachments.length > 0));
             sendBtn.disabled = false;
             sendBtn.classList.toggle('ready', hasPayload);
         }
@@ -2399,36 +2399,53 @@
             }
         }
 
-        function setPendingAttachment(file) {
-            if (!file) {
-                state.pendingAttachment = null;
+        function renderPendingAttachments() {
+            var list = state.pendingAttachments || [];
+            if (!list.length) {
                 attachPreview.style.display = 'none';
                 attachPreview.innerHTML = '';
                 autoResizeInput();
+                syncSendButtonState();
                 return;
             }
-            state.pendingAttachment = file;
-            var reader = new FileReader();
-            reader.onload = function () {
-                attachPreview.style.display = 'flex';
-                attachPreview.innerHTML =
-                    (file.type.indexOf('image/') === 0
-                        ? '<img src="' + reader.result + '" class="cs-paste-thumb" alt="Paste"/>'
-                        : '<span class="cs-att-ico">' + ICONS.fileText + '</span>') +
-                    '<div class="cs-attach-info"><strong>' +
-                    escapeHtml(file.name) +
-                    '</strong> &bull; ' +
-                    (file.size / 1024).toFixed(1) +
-                    ' KB (siap diproses di RAM sandbox)</div>' +
-                    '<button type="button" class="cs-clear-att" id="cs-clear-att" title="Hapus lampiran">' +
-                    ICONS.close +
-                    '</button>';
-                attachPreview.querySelector('#cs-clear-att').addEventListener('click', function () {
-                    setPendingAttachment(null);
+            attachPreview.style.display = 'flex';
+            attachPreview.innerHTML =
+                '<div class="cs-attach-chips">' +
+                list.map(function (f, idx) {
+                    var isImg = f.type && f.type.indexOf('image/') === 0;
+                    var ico = isImg ? ICONS.image || ICONS.fileText : ICONS.fileText;
+                    return (
+                        '<div class="cs-attach-chip">' +
+                        '  <span class="cs-att-ico">' + ico + '</span>' +
+                        '  <span class="cs-att-chip-name" title="' + escapeHtml(f.name) + '">' + escapeHtml(f.name) + '</span>' +
+                        '  <span class="cs-att-chip-size">' + (f.size / 1024).toFixed(1) + ' KB</span>' +
+                        '  <button type="button" class="cs-clear-att" data-remove-att-idx="' + idx + '" title="Hapus lampiran">' + ICONS.close + '</button>' +
+                        '</div>'
+                    );
+                }).join('') +
+                '</div>';
+            attachPreview.querySelectorAll('[data-remove-att-idx]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var idx = Number(btn.getAttribute('data-remove-att-idx'));
+                    state.pendingAttachments.splice(idx, 1);
+                    renderPendingAttachments();
                 });
-                autoResizeInput();
-            };
-            reader.readAsDataURL(file);
+            });
+            autoResizeInput();
+            syncSendButtonState();
+        }
+
+        function setPendingAttachment(fileOrFiles) {
+            if (!fileOrFiles) {
+                state.pendingAttachments = [];
+                renderPendingAttachments();
+                return;
+            }
+            var arr = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles.length !== undefined ? Array.from(fileOrFiles) : [fileOrFiles]);
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i]) state.pendingAttachments.push(arr[i]);
+            }
+            renderPendingAttachments();
         }
 
         async function sendChatMessage(overrideText) {
@@ -2438,13 +2455,15 @@
             }
             if (isSessionBusy(state.activeSessionId)) return;
             var text = String(overrideText != null ? overrideText : inputEl.value || '').trim();
-            var pending = state.pendingAttachment;
+            var pendingList = (state.pendingAttachments || []).slice();
 
-            if (pending) {
+            if (pendingList.length > 0) {
                 if (overrideText == null) inputEl.value = '';
-                autoResizeInput();
-                setPendingAttachment(null);
-                await uploadFileToRamSandbox(pending, text);
+                state.pendingAttachments = [];
+                renderPendingAttachments();
+                for (var fi = 0; fi < pendingList.length; fi++) {
+                    await uploadFileToRamSandbox(pendingList[fi], text);
+                }
                 return;
             }
 
@@ -3721,9 +3740,10 @@
                 fileInput.value = '';
                 return;
             }
-            if (fileInput.files && fileInput.files[0]) {
-                uploadFileToRamSandbox(fileInput.files[0]);
+            if (fileInput.files && fileInput.files.length > 0) {
+                setPendingAttachment(fileInput.files);
                 fileInput.value = '';
+                inputEl.focus();
             }
         });
 
@@ -3740,7 +3760,10 @@
             dropOverlay.classList.remove('active');
             if (isTestingReadOnly) return;
             var files = e.dataTransfer && e.dataTransfer.files;
-            if (files && files[0]) uploadFileToRamSandbox(files[0]);
+            if (files && files.length > 0) {
+                setPendingAttachment(files);
+                inputEl.focus();
+            }
         });
 
         container.addEventListener('paste', function (e) {

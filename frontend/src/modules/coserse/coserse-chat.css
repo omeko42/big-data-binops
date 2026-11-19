@@ -310,6 +310,31 @@ html[data-theme="dark"],
     }
     .cs-batch-card .cs-btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, .16); }
     html[data-theme="dark"] .cs-batch-card .cs-btn-danger { color: #f87171; }
+    /* Multi-file Attachment Chips */
+    .cs-attach-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: 100%;
+    }
+    .cs-attach-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(56, 189, 248, .35);
+      background: rgba(56, 189, 248, .08);
+      font-size: 12px;
+      max-width: 260px;
+    }
+    .cs-att-chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .cs-att-chip-size { font-size: 11px; color: #64748b; flex-shrink: 0; }
     .cs-session-actions {
       display: inline-flex;
       align-items: center;
