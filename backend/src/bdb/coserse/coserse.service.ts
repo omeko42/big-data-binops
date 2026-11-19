@@ -937,11 +937,23 @@ export class CoserseService implements OnApplicationBootstrap {
         if (this.docParser) {
             const batchCard = await this.docParser.proposeBatchFromText(authUser, rawMessage);
             if (batchCard) {
-                const replyText = [
-                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis.`,
-                    `Hasil pencocokan database: **${batchCard.ready_count} LP Siap Diupdate · ${batchCard.skip_count} LP Dilewati (Tidak Ditemukan)**.`,
-                    `Silakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
-                ].join('\n\n');
+                const notFoundCnt = Number((batchCard as any).not_found_count ?? batchCard.items.filter((i: any) => !i.matched).length);
+                const missingReasonCnt = Number((batchCard as any).missing_reason_count ?? batchCard.items.filter((i: any) => i.matched && i.selected === false).length);
+                const replyLines = [
+                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis:`,
+                    `- **Siap Diupdate:** ${batchCard.ready_count} LP`,
+                    `- **Dilewati (Tidak Ditemukan di DB):** ${notFoundCnt} LP`,
+                    `- **Bermasalah / Kurang Syarat (SP2_LID/SP3 tanpa alasan penghentian):** ${missingReasonCnt} LP`
+                ];
+                if (missingReasonCnt > 0) {
+                    replyLines.push(
+                        `\n> **Konfirmasi Aturan SP2_LID / SP3:** Untuk ${missingReasonCnt} LP SP2_LID/SP3 tanpa alasan penghentian (secara default ditandai **Dilewati / unchecked**), apakah ingin **tetap dilewati [Rekomendasi]** atau tetap diterapkan (centang manual pada tabel di bawah)?`
+                    );
+                }
+                replyLines.push(
+                    `\nSilakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
+                );
+                const replyText = replyLines.join('\n');
                 const persisted = await this.persistChatExchangeToDb({
                     sessionId,
                     userId: actor.userId,
@@ -971,6 +983,20 @@ export class CoserseService implements OnApplicationBootstrap {
                 session_id: sessionId,
                 mode: 'COSERSE_INSTRUCTION',
                 reply: savedInstrEarly,
+                profiling: null,
+                review_card: null,
+                quota: null
+            } as any;
+        }
+
+        const lpUpdateGuardEarly = this.tryHandleLpUpdateWithoutNumberGuard(handle, rawMessage);
+        if (lpUpdateGuardEarly) {
+            return {
+                status: 1,
+                session_id: sessionId,
+                mode: 'LP_UPDATE_NEED_NUMBER',
+                reply: lpUpdateGuardEarly,
+                addressed_to: handle,
                 profiling: null,
                 review_card: null,
                 quota: null
@@ -1347,11 +1373,23 @@ export class CoserseService implements OnApplicationBootstrap {
         if (this.docParser) {
             const batchCard = await this.docParser.proposeBatchFromText(authUser, rawMessage);
             if (batchCard) {
-                const replyText = [
-                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis.`,
-                    `Hasil pencocokan database: **${batchCard.ready_count} LP Siap Diupdate · ${batchCard.skip_count} LP Dilewati (Tidak Ditemukan)**.`,
-                    `Silakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
-                ].join('\n\n');
+                const notFoundCnt = Number((batchCard as any).not_found_count ?? batchCard.items.filter((i: any) => !i.matched).length);
+                const missingReasonCnt = Number((batchCard as any).missing_reason_count ?? batchCard.items.filter((i: any) => i.matched && i.selected === false).length);
+                const replyLines = [
+                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis:`,
+                    `- **Siap Diupdate:** ${batchCard.ready_count} LP`,
+                    `- **Dilewati (Tidak Ditemukan di DB):** ${notFoundCnt} LP`,
+                    `- **Bermasalah / Kurang Syarat (SP2_LID/SP3 tanpa alasan penghentian):** ${missingReasonCnt} LP`
+                ];
+                if (missingReasonCnt > 0) {
+                    replyLines.push(
+                        `\n> **Konfirmasi Aturan SP2_LID / SP3:** Untuk ${missingReasonCnt} LP SP2_LID/SP3 tanpa alasan penghentian (secara default ditandai **Dilewati / unchecked**), apakah ingin **tetap dilewati [Rekomendasi]** atau tetap diterapkan (centang manual pada tabel di bawah)?`
+                    );
+                }
+                replyLines.push(
+                    `\nSilakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
+                );
+                const replyText = replyLines.join('\n');
                 const messageId = `b-${Date.now()}`;
                 const persisted = await this.persistChatExchangeToDb({
                     sessionId,
@@ -1408,6 +1446,23 @@ export class CoserseService implements OnApplicationBootstrap {
                 sendEvent('token', { token: savedInstrReply });
                 sendEvent('done', { session_id: sessionId, mode: 'COSERSE_INSTRUCTION', reply: savedInstrReply });
                 res.end();
+                return;
+            }
+
+            const lpUpdateGuardReply = this.tryHandleLpUpdateWithoutNumberGuard(handle, rawMessage);
+            if (lpUpdateGuardReply) {
+                clearInterval(heartbeatTimer);
+                sendEvent('token', { token: lpUpdateGuardReply });
+                sendEvent('done', {
+                    status: 1,
+                    session_id: sessionId,
+                    mode: 'LP_UPDATE_NEED_NUMBER',
+                    reply: lpUpdateGuardReply,
+                    addressed_to: handle
+                });
+                if (!res.writableEnded) {
+                    res.end();
+                }
                 return;
             }
 
@@ -4494,6 +4549,33 @@ export class CoserseService implements OnApplicationBootstrap {
         } catch {
             return '';
         }
+    }
+
+    /**
+     * Guard wajib sebelum memanggil tool DB / LLM untuk permintaan atau pertanyaan update status LP
+     * yang TIDAK menyebutkan Nomor LP spesifik. Mencegah halusinasi nomor LP dummy (POLDA A / POLRES DUMMY)
+     * maupun pemanggilan tool DB yang tidak perlu.
+     */
+    private tryHandleLpUpdateWithoutNumberGuard(handle: string, rawMessage: string): string | null {
+        const text = String(rawMessage || '').trim();
+        if (!text) return null;
+        if (/\bLP\s*\/?\s*[AB]\s*\//i.test(text) || /\bLP\/\d+/i.test(text)) return null;
+        const mentionsUpdateAction = /\b(update|ubah|ganti|naikkan|turunkan|perbarui|rubah|set)\b/i.test(text);
+        const mentionsLpOrStatus = /\b(status\s+lp|status\s+perkara|lp|laporan\s+polisi)\b/i.test(text);
+        if (!mentionsUpdateAction || !mentionsLpOrStatus) return null;
+        const isCapabilityQuestion =
+            /\b(bisa|dapat|mampu|gimana|bagaimana|cara|apakah|boleh|gak|ga|nggak|tidak)\b/i.test(text) ||
+            text.endsWith('?');
+        if (isCapabilityQuestion) {
+            return (
+                `Bisa ${handle}! Saya bisa membantu memperbarui status Laporan Polisi (Lidik, Sidik, SPDP, Tahap I, P-19, P-21, Tahap II, hingga SP3/RJ).\n\n` +
+                `Silakan sebutkan **Nomor LP** dan **status targetnya** (atau unggah dokumen mindik \`.docx\`/\`.pdf\`/gambar). Sebelum tersimpan ke database, sistem akan menampilkan kartu konfirmasi interaktif untuk Anda setujui terlebih dahulu.`
+            );
+        }
+        return (
+            `Siap ${handle}, untuk memproses pembaruan status, saya belum melihat **Nomor LP** yang dimaksud.\n\n` +
+            `Mohon sebutkan **Nomor LP lengkap** beserta **status targetnya** (atau unggah dokumen mindik \`.docx\`/\`.pdf\`/gambar) agar saya dapat menyiapkan kartu konfirmasi sebelum disimpan ke database.`
+        );
     }
 
     async tryHandleSuperadminInstructionCommand(actor: { role?: string; userId?: number | null }, rawMessage: string): Promise<string | null> {

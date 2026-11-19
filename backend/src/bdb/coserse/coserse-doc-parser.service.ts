@@ -341,13 +341,23 @@ export class CoserseDocParserService {
                     outcome: 'SUCCESS'
                 });
 
-                const batchSummaryMsg = [
+                const notFoundCount = batchCard.items.filter((i) => i.action !== 'UPDATE').length;
+                const missingReasonCount = batchCard.items.filter((i) => i.action === 'UPDATE' && i.selected === false).length;
+                const summaryLines = [
                     `Siap ${handle}, berkas tabel **${params.originalName}** (${batchCard.total_rows} baris) berhasil dianalisis di RAM sandbox.`,
-                    `Hasil validasi database: **${batchCard.ready_count} LP Siap Diupdate · ${batchCard.skip_count} LP Dilewati (Tidak Ditemukan)**.`,
-                    `Silakan periksa daftar pada **Batch Review Card** di bawah, centang/sesuaikan baris yang diinginkan, lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]**.`,
+                    `**Ringkasan Validasi Database:**\n- **${batchCard.ready_count} LP Siap Diupdate**\n- **${notFoundCount} LP Dilewati** (tidak ditemukan di database)\n- **${missingReasonCount} LP Bermasalah / Kurang Syarat** (SP2_LID / SP3 tanpa alasan penghentian — otomatis tidak dicentang)`
+                ];
+                if (missingReasonCount > 0) {
+                    summaryLines.push(
+                        `Untuk **SP2_LID / SP3 tanpa alasan penghentian** (${missingReasonCount} LP), apakah ingin **dilewati [Rekomendasi]** (biarkan tidak dicentang) atau **tetap diterapkan** (centang barisnya di kartu bawah)?`
+                    );
+                }
+                summaryLines.push(
+                    `Silakan periksa daftar pada **Batch Review Card** di bawah, sesuaikan centang bila perlu, lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]**.`,
                     '',
                     COSERSE_MANDATORY_DISCLAIMER
-                ].join('\n\n');
+                );
+                const batchSummaryMsg = summaryLines.join('\n\n');
 
                 return {
                     status: 1,
@@ -1400,7 +1410,7 @@ export class CoserseDocParserService {
                     alasan: row.alasan,
                     matched: false,
                     action: 'SKIP',
-                    skip_reason: 'Dilewati (LP tidak ditemukan)',
+                    skip_reason: 'Tidak ditemukan di DB',
                     lp_id: null,
                     no_laporan_db: null,
                     satker_nama: null,
@@ -1409,6 +1419,9 @@ export class CoserseDocParserService {
                     selected: false
                 };
             }
+            const missingStopReason =
+                (row.statusBaru === 'SP2_LID' || row.statusBaru === 'SP3') &&
+                !String(row.alasan || '').trim();
             return {
                 row_index: idx + 1,
                 raw_nomor_lp: row.rawNomorLp,
@@ -1422,26 +1435,30 @@ export class CoserseDocParserService {
                 alasan: row.alasan,
                 matched: true,
                 action: 'UPDATE',
-                skip_reason: null,
+                skip_reason: missingStopReason ? `${row.statusBaru} tanpa alasan penghentian` : null,
                 lp_id: Number(found.id),
                 no_laporan_db: String(found.no_laporan || row.cleanLp),
                 satker_nama: String(found.satker_nama || 'POLRI'),
                 status_lama: String(found.current_status_code || found.status || 'BARU'),
                 tgl_laporan_db: found.tgl_laporan ? String(found.tgl_laporan) : null,
-                selected: true
+                selected: !missingStopReason
             };
         });
 
-        const readyCount = items.filter((i) => i.action === 'UPDATE').length;
+        const readyCount = items.filter((i) => i.action === 'UPDATE' && i.selected !== false).length;
+        const notFoundCount = items.filter((i) => !i.matched).length;
+        const missingReasonCount = items.filter((i) => i.matched && i.selected === false).length;
         const skipCount = items.length - readyCount;
         return {
             batch_id: `batch-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
             source: sourceLabel,
             total_rows: items.length,
             ready_count: readyCount,
+            not_found_count: notFoundCount,
+            missing_reason_count: missingReasonCount,
             skip_count: skipCount,
             items
-        };
+        } as any;
     }
 
     async commitBatchUpdateLp(

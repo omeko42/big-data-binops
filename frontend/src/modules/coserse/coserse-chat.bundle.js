@@ -1674,31 +1674,35 @@
             var items = Array.isArray(card.items) ? card.items : [];
             var statusState = msg.cardStatus || 'PENDING';
             var isDone = statusState === 'APPROVED' || statusState === 'CANCELLED';
-            var readyCount = items.filter(function (i) { return i.action === 'UPDATE'; }).length;
-            var skipCount = items.length - readyCount;
-            var selectedCount = items.filter(function (i) { return i.action === 'UPDATE' && i.selected !== false; }).length;
+            var readyCount = items.filter(function (i) { return i.action === 'UPDATE' && i.selected !== false; }).length;
+            var notFoundCount = items.filter(function (i) { return i.action !== 'UPDATE'; }).length;
+            var missingReasonCount = items.filter(function (i) { return i.action === 'UPDATE' && i.selected === false; }).length;
+            var selectedCount = readyCount;
             var pillCls = statusState === 'APPROVED' ? 'pill-ok' : statusState === 'CANCELLED' ? 'pill-cancel' : 'pill-wait';
             var badgeText = statusState === 'APPROVED' ? 'Tersimpan Resmi' : statusState === 'CANCELLED' ? 'Dibatalkan' : 'Menunggu Persetujuan';
 
             var rowsHtml = items.map(function (it, idx) {
                 var isUpdate = it.action === 'UPDATE';
-                var checked = isUpdate && it.selected !== false ? ' checked' : '';
+                var isChecked = isUpdate && it.selected !== false;
+                var checked = isChecked ? ' checked' : '';
                 var dis = !isUpdate || isDone || isTestingReadOnly ? ' disabled' : '';
                 var statusCell = isUpdate
                     ? '<span class="cs-batch-st-old">' + escapeHtml(it.status_lama || 'BARU') + '</span> &rarr; <span class="cs-batch-st-new">' + escapeHtml(it.status_baru) + '</span>' +
                       (it.alasan ? '<div class="cs-batch-alasan">' + escapeHtml(it.alasan) + '</div>' : '')
                     : '<span class="cs-batch-st-new">' + escapeHtml(it.status_baru) + '</span>';
-                var badgeCell = isUpdate
+                var badgeCell = isChecked
                     ? '<span class="cs-batch-badge-ok">Siap Update</span>'
-                    : '<span class="cs-batch-badge-skip" title="' + escapeHtml(it.skip_reason || 'Tidak ditemukan') + '">Dilewati</span>';
+                    : isUpdate
+                    ? '<span class="cs-batch-badge-warn">Dilewati</span><div class="cs-batch-skip-reason">' + escapeHtml(it.skip_reason || 'Kurang syarat') + '</div>'
+                    : '<span class="cs-batch-badge-skip">Dilewati</span><div class="cs-batch-skip-reason">' + escapeHtml(it.skip_reason || 'Tidak ditemukan di DB') + '</div>';
                 return (
-                    '<tr class="' + (isUpdate ? 'is-ready' : 'is-skip') + '">' +
+                    '<tr class="' + (isChecked ? 'is-ready' : 'is-skip') + '">' +
                     '  <td class="cs-batch-col-chk"><input type="checkbox" data-batch-msg-id="' + escapeHtml(msg.id) + '" data-batch-row-idx="' + idx + '"' + checked + dis + ' /></td>' +
                     '  <td>' + (idx + 1) + '</td>' +
                     '  <td class="cs-batch-col-lp"><strong>' + escapeHtml(it.no_laporan_db || it.nomor_lp) + '</strong>' +
                     (it.satker_nama ? '<div class="cs-batch-satker">' + escapeHtml(it.satker_nama) + '</div>' : '') + '</td>' +
                     '  <td>' + statusCell + '</td>' +
-                    '  <td>' + escapeHtml(it.tanggal_selra || '—') + '</td>' +
+                    '  <td class="cs-batch-col-date">' + escapeHtml(it.tanggal_selra || '—') + '</td>' +
                     '  <td>' + badgeCell + '</td>' +
                     '</tr>'
                 );
@@ -1714,11 +1718,15 @@
                   (isTestingReadOnly ? ' disabled' : '') + '>Batal</button>' +
                   '</div>';
 
+            var summaryParts = [readyCount + ' LP Siap Diupdate'];
+            if (notFoundCount > 0) summaryParts.push(notFoundCount + ' Tidak Ditemukan di DB');
+            if (missingReasonCount > 0) summaryParts.push(missingReasonCount + ' Kurang Syarat (SP2_LID/SP3)');
+
             return (
                 '<div class="cs-review-card cs-batch-card" data-msg-id="' + escapeHtml(msg.id) + '">' +
                 '  <div class="cs-card-head">' +
                 '    <div><strong>Batch Update Status LP</strong><div class="cs-batch-summary">' +
-                readyCount + ' LP Siap Diupdate &middot; ' + skipCount + ' LP Dilewati (Tidak Ditemukan)</div></div>' +
+                summaryParts.join(' &middot; ') + '</div></div>' +
                 '    <span class="cs-card-pill ' + pillCls + '">' + badgeText + '</span>' +
                 '  </div>' +
                 '  <div class="cs-batch-table-wrap">' +
