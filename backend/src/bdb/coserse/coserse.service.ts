@@ -416,6 +416,91 @@ export class CoserseService implements OnApplicationBootstrap {
     /**
      * Cross-Entity Profiling across bdb_dors_lp_terlibat & bdb_dors_lp_barang_bukti joined to bdb_laporan_polisi.
      */
+    private readonly pendingBatchBySession = new Map<string, any>();
+
+    private getSystemMiniRagChunks(): Array<{ doc_title: string; section_title: string; pasal_ref: string | null; content: string }> {
+        return [
+            {
+                doc_title: 'SOP Status Dokumen LP CAS (Read-Only)',
+                section_title: 'Alur Resmi CT & CC',
+                pasal_ref: 'laporan-polisi.service.js',
+                content:
+                    'CT (Berjalan): LIDIK -> SIDIK -> SPDP -> TAHAP_I -> P19 -> P21. CC (Selesai): TAHAP_II, SP3 (wajib Alasan Penghentian sah), SP2_LID (wajib Alasan Penghentian sah), PERMA (wajib Kategori Perma: Tipiring / LHA PPATK). Dilarang memundurkan status dari CC ke CT.'
+            },
+            {
+                doc_title: 'Panduan Gaya Bahasa Coserse (Read-Only)',
+                section_title: 'Humanis & Konfirmasi Chat',
+                pasal_ref: null,
+                content:
+                    'Sampaikan hasil baca file secara natural dan humanis tanpa tabel teknis kaku. Tunggu konfirmasi/koreksi user di chat sebelum eksekusi ke database. Aturan Mini RAG hanya dapat diubah oleh Superadmin.'
+            }
+        ];
+    }
+
+    private formatHumanisticBatchSummary(handle: string, batchCard: any): string {
+        const items: any[] = Array.isArray(batchCard?.items) ? batchCard.items : [];
+        const readyItems = items.filter((i) => i.action === 'UPDATE' && i.selected !== false);
+        const skippedItems = items.filter((i) => i.action !== 'UPDATE' || i.selected === false);
+        const byStatus = new Map<string, number>();
+        for (const it of readyItems) {
+            const st = String(it.status_baru || 'LAINNYA');
+            byStatus.set(st, (byStatus.get(st) || 0) + 1);
+        }
+        const breakdown = Array.from(byStatus.entries())
+            .map(([st, cnt]) => `${st} (${cnt})`)
+            .join(', ');
+        const lines: string[] = [
+            `Siap ${handle}, setelah saya cek filenya (${items.length} baris), ada **${readyItems.length} LP siap diupdate**${breakdown ? ` (rincian: ${breakdown})` : ''}.`
+        ];
+        if (skippedItems.length > 0) {
+            const skipList = skippedItems
+                .slice(0, 12)
+                .map((it) => `**${it.no_laporan_db || it.nomor_lp}** (${it.skip_reason || 'tidak ketemu di DB'})`)
+                .join(', ');
+            lines.push(
+                `Selain itu ada **${skippedItems.length} LP yang saya lewatkan**, yaitu ${skipList}${skippedItems.length > 12 ? ', dan lainnya' : ''}.`
+            );
+        }
+        lines.push('Mau langsung saya proses sekarang, atau ada LP yang statusnya mau disesuaikan dulu?');
+        return lines.join('\n\n');
+    }
+
+    private async tryHandlePendingBatchConfirmation(
+        authUser: any,
+        handle: string,
+        sessionId: string,
+        rawMessage: string
+    ): Promise<string | null> {
+        const pending = this.pendingBatchBySession.get(sessionId);
+        if (!pending) return null;
+        const msg = String(rawMessage || '').trim();
+        if (/\b(batal|tidak|cancel|jangan|tunda)\b/i.test(msg)) {
+            this.pendingBatchBySession.delete(sessionId);
+            return `Baik ${handle}, pembaruan massal (${pending.ready_count} LP) saya batalkan. Tidak ada data yang diubah di database.`;
+        }
+        if (!/\b(oke|ok|ya|iya|lanjut|jalan|proses|terapkan|eksekusi|setuju|simpan|ganti)\b/i.test(msg)) {
+            return null;
+        }
+        const statusOverrideMatch = msg.match(/\bganti\s+(?:jadi|ke)\s+(LIDIK|SIDIK|SPDP|TAHAP_I|TAHAP_II|P19|P21|SP3|SP2_LID|PERMA)\b/i);
+        if (statusOverrideMatch) {
+            const newSt = statusOverrideMatch[1].toUpperCase();
+            for (const it of pending.items || []) {
+                const lpNo = String(it.no_laporan_db || it.nomor_lp || '').toUpperCase();
+                if (lpNo && msg.toUpperCase().includes(lpNo)) {
+                    it.status_baru = newSt;
+                    it.selected = true;
+                }
+            }
+        }
+        const res = await this.docParser!.commitBatchUpdateLp(authUser, {
+            batch_id: pending.batch_id,
+            operator_confirmed: true,
+            items: pending.items
+        });
+        this.pendingBatchBySession.delete(sessionId);
+        return `Siap ${handle}, proses selesai: **${res.updated_count} LP berhasil diperbarui**${res.skipped_count ? `, ${res.skipped_count} LP dilewati` : ''}.`;
+    }
+
     async profilePersonInvolvement(
         authUser: any,
         input: ProfilePersonRequestDto,
@@ -935,25 +1020,30 @@ export class CoserseService implements OnApplicationBootstrap {
         }
 
         if (this.docParser) {
+            const pendingReply = await this.tryHandlePendingBatchConfirmation(authUser, handle, sessionId, rawMessage);
+            if (pendingReply) {
+                const persisted = await this.persistChatExchangeToDb({
+                    sessionId,
+                    userId: actor.userId,
+                    userMessage: rawMessage,
+                    assistantMessage: pendingReply,
+                    assistantMessageId: `b-${Date.now()}`,
+                    modelId: 'coserse-batch-commit',
+                    tierId: input?.tier
+                });
+                return {
+                    status: 1,
+                    title: persisted.title,
+                    reply: pendingReply,
+                    addressed_to: handle,
+                    session_id: sessionId,
+                    disclaimer: COSERSE_DISCLAIMER
+                } as any;
+            }
             const batchCard = await this.docParser.proposeBatchFromText(authUser, rawMessage);
             if (batchCard) {
-                const notFoundCnt = Number((batchCard as any).not_found_count ?? batchCard.items.filter((i: any) => !i.matched).length);
-                const missingReasonCnt = Number((batchCard as any).missing_reason_count ?? batchCard.items.filter((i: any) => i.matched && i.selected === false).length);
-                const replyLines = [
-                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis:`,
-                    `- **Siap Diupdate:** ${batchCard.ready_count} LP`,
-                    `- **Dilewati (Tidak Ditemukan di DB):** ${notFoundCnt} LP`,
-                    `- **Bermasalah / Kurang Syarat (SP2_LID/SP3 tanpa alasan penghentian):** ${missingReasonCnt} LP`
-                ];
-                if (missingReasonCnt > 0) {
-                    replyLines.push(
-                        `\n> **Konfirmasi Aturan SP2_LID / SP3:** Untuk ${missingReasonCnt} LP SP2_LID/SP3 tanpa alasan penghentian (secara default ditandai **Dilewati / unchecked**), apakah ingin **tetap dilewati [Rekomendasi]** atau tetap diterapkan (centang manual pada tabel di bawah)?`
-                    );
-                }
-                replyLines.push(
-                    `\nSilakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
-                );
-                const replyText = replyLines.join('\n');
+                this.pendingBatchBySession.set(sessionId, batchCard);
+                const replyText = this.formatHumanisticBatchSummary(handle, batchCard);
                 const persisted = await this.persistChatExchangeToDb({
                     sessionId,
                     userId: actor.userId,
@@ -970,7 +1060,6 @@ export class CoserseService implements OnApplicationBootstrap {
                     reply: replyText,
                     addressed_to: handle,
                     session_id: sessionId,
-                    batch_review_card: batchCard,
                     disclaimer: COSERSE_DISCLAIMER
                 } as any;
             }
@@ -996,6 +1085,20 @@ export class CoserseService implements OnApplicationBootstrap {
                 session_id: sessionId,
                 mode: 'LP_UPDATE_NEED_NUMBER',
                 reply: lpUpdateGuardEarly,
+                addressed_to: handle,
+                profiling: null,
+                review_card: null,
+                quota: null
+            } as any;
+        }
+
+        const batchChatReplyEarly = await this.tryHandlePendingBatchChatCommand(actor, authUser, handle, rawMessage, clientIp);
+        if (batchChatReplyEarly) {
+            return {
+                status: 1,
+                session_id: sessionId,
+                mode: 'BATCH_CHAT_CONFIRMATION',
+                reply: batchChatReplyEarly,
                 addressed_to: handle,
                 profiling: null,
                 review_card: null,
@@ -1371,25 +1474,35 @@ export class CoserseService implements OnApplicationBootstrap {
         }
 
         if (this.docParser) {
+            const pendingReply = await this.tryHandlePendingBatchConfirmation(authUser, handle, sessionId, rawMessage);
+            if (pendingReply) {
+                const messageId = `b-${Date.now()}`;
+                const persisted = await this.persistChatExchangeToDb({
+                    sessionId,
+                    userId: actor.userId,
+                    userMessage: rawMessage,
+                    assistantMessage: pendingReply,
+                    assistantMessageId: messageId,
+                    modelId: 'coserse-batch-commit',
+                    tierId: input?.tier,
+                    meta: { stream: true }
+                });
+                sendEvent('done', {
+                    status: 1,
+                    message_id: messageId,
+                    title: persisted.title,
+                    reply: pendingReply,
+                    addressed_to: handle,
+                    session_id: sessionId,
+                    disclaimer: COSERSE_DISCLAIMER
+                });
+                res.end();
+                return;
+            }
             const batchCard = await this.docParser.proposeBatchFromText(authUser, rawMessage);
             if (batchCard) {
-                const notFoundCnt = Number((batchCard as any).not_found_count ?? batchCard.items.filter((i: any) => !i.matched).length);
-                const missingReasonCnt = Number((batchCard as any).missing_reason_count ?? batchCard.items.filter((i: any) => i.matched && i.selected === false).length);
-                const replyLines = [
-                    `Siap ${handle}, data tabel (${batchCard.total_rows} baris) berhasil dianalisis:`,
-                    `- **Siap Diupdate:** ${batchCard.ready_count} LP`,
-                    `- **Dilewati (Tidak Ditemukan di DB):** ${notFoundCnt} LP`,
-                    `- **Bermasalah / Kurang Syarat (SP2_LID/SP3 tanpa alasan penghentian):** ${missingReasonCnt} LP`
-                ];
-                if (missingReasonCnt > 0) {
-                    replyLines.push(
-                        `\n> **Konfirmasi Aturan SP2_LID / SP3:** Untuk ${missingReasonCnt} LP SP2_LID/SP3 tanpa alasan penghentian (secara default ditandai **Dilewati / unchecked**), apakah ingin **tetap dilewati [Rekomendasi]** atau tetap diterapkan (centang manual pada tabel di bawah)?`
-                    );
-                }
-                replyLines.push(
-                    `\nSilakan tinjau baris pada **Batch Review Card** di bawah ini lalu klik **[Terapkan Update Massal (${batchCard.ready_count} LP)]** untuk menyimpan perubahan.`
-                );
-                const replyText = replyLines.join('\n');
+                this.pendingBatchBySession.set(sessionId, batchCard);
+                const replyText = this.formatHumanisticBatchSummary(handle, batchCard);
                 const messageId = `b-${Date.now()}`;
                 const persisted = await this.persistChatExchangeToDb({
                     sessionId,
@@ -1458,6 +1571,23 @@ export class CoserseService implements OnApplicationBootstrap {
                     session_id: sessionId,
                     mode: 'LP_UPDATE_NEED_NUMBER',
                     reply: lpUpdateGuardReply,
+                    addressed_to: handle
+                });
+                if (!res.writableEnded) {
+                    res.end();
+                }
+                return;
+            }
+
+            const batchChatReply = await this.tryHandlePendingBatchChatCommand(actor, authUser, handle, rawMessage, clientIp);
+            if (batchChatReply) {
+                clearInterval(heartbeatTimer);
+                sendEvent('token', { token: batchChatReply });
+                sendEvent('done', {
+                    status: 1,
+                    session_id: sessionId,
+                    mode: 'BATCH_CHAT_CONFIRMATION',
+                    reply: batchChatReply,
                     addressed_to: handle
                 });
                 if (!res.writableEnded) {
@@ -4549,6 +4679,74 @@ export class CoserseService implements OnApplicationBootstrap {
         } catch {
             return '';
         }
+    }
+
+    private async tryHandlePendingBatchChatCommand(
+        actor: ResolvedActor,
+        authUser: any,
+        handle: string,
+        rawMessage: string,
+        clientIp?: string
+    ): Promise<string | null> {
+        if (!this.docParser || !actor.userId) return null;
+        const pending = this.docParser.getPendingBatchForUser(actor.userId);
+        if (!pending) return null;
+
+        const text = String(rawMessage || '').trim();
+        if (!text) return null;
+
+        if (/\b(batal|cancel|tidak\s*jadi|ga\s*jadi|gak\s*jadi)\b/i.test(text)) {
+            this.docParser.clearPendingBatchForUser(actor.userId);
+            return `Siap ${handle}, rencana update massal (**${pending.items.length} baris**) sudah saya batalkan. Tidak ada perubahan yang disimpan ke database.`;
+        }
+
+        const isConfirm = /\b(oke|ok|jalan|lanjut|proses|eksekusi|terapkan|gas|setuju|ya)\b/i.test(text);
+        if (!isConfirm) return null;
+
+        // Parse inline correction: "LP/... ganti jadi P21"
+        const corrMatch = text.match(/(LP\s*\/\s*[AB]\s*\/[^\s,;)]+)\s+(?:ganti|ubah|set)\s+(?:jadi|ke)\s+([A-Za-z0-9_\-\s]+)/i);
+        if (corrMatch) {
+            const targetLpCompact = corrMatch[1].replace(/\s+/g, '').toUpperCase();
+            const rawSt = corrMatch[2].toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const mapSt: Record<string, string> = {
+                TAHAP2: 'TAHAP_II', TAHAPII: 'TAHAP_II', TAHAP1: 'TAHAP_I', TAHAPI: 'TAHAP_I',
+                P21: 'P21', P19: 'P19', SPDP: 'SPDP', SIDIK: 'SIDIK', LIDIK: 'LIDIK',
+                SP3: 'SP3', SP2LID: 'SP2_LID', PERMA: 'PERMA'
+            };
+            const mapped = mapSt[rawSt];
+            if (mapped) {
+                for (const it of pending.items) {
+                    const key = String(it.no_laporan_db || it.nomor_lp || '').replace(/\s+/g, '').toUpperCase();
+                    if (key === targetLpCompact && it.lp_id) {
+                        it.status_baru = mapped;
+                        it.selected = true;
+                        it.skip_reason = null;
+                    }
+                }
+            }
+        }
+
+        const toCommit = pending.items
+            .filter((i) => i.action === 'UPDATE' && i.selected !== false && i.lp_id)
+            .map((i) => ({
+                lp_id: Number(i.lp_id),
+                nomor_lp: String(i.no_laporan_db || i.nomor_lp),
+                status_baru: i.status_baru,
+                tanggal_selra: i.tanggal_selra,
+                alasan: i.alasan
+            }));
+
+        if (toCommit.length === 0) {
+            return `Siap ${handle}, tidak ada LP yang memenuhi syarat untuk dieksekusi pada batch ini.`;
+        }
+
+        const res = await this.docParser.commitBatchUpdateLp(
+            authUser,
+            { batch_id: pending.batch_id, operator_confirmed: true, items: toCommit },
+            clientIp
+        );
+        this.docParser.clearPendingBatchForUser(actor.userId);
+        return res?.assistant_message || `Siap ${handle}, **${toCommit.length} LP** berhasil diperbarui ke database.`;
     }
 
     /**
