@@ -1765,7 +1765,7 @@ export class AuthService {
         const userRepo = this.dataSource.getRepository(User);
         const user = await userRepo
             .createQueryBuilder('user')
-            .addSelect(['user.password', 'user.totp_secret', 'user.pin_hash'])
+            .addSelect(['user.password', 'user.totp_secret', 'user.security_pin_hash'])
             .where('user.id = :id', { id: Number(authUser.id) })
             .getOne();
         if (!user) throw new NotFoundException('Pengguna tidak ditemukan.');
@@ -1798,10 +1798,10 @@ export class AuthService {
             }
         } else if (method === 'pin') {
             const pin = String(dto?.pin || '').trim();
-            if (!(user as any).pin_hash) {
+            if (!(user as any).security_pin_hash) {
                 throw new BadRequestException({ errors: { pin: ['PIN Keamanan belum aktif pada akun ini.'] } });
             }
-            const okPin = await bcrypt.compare(pin, String((user as any).pin_hash));
+            const okPin = await bcrypt.compare(pin, String((user as any).security_pin_hash));
             if (!okPin) {
                 throw new BadRequestException({ errors: { pin: ['PIN Keamanan 6 digit salah.'] } });
             }
@@ -1814,6 +1814,7 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await userRepo.update(Number(user.id), { password: hashedPassword } as any);
+        await this.dataSource.query('UPDATE auth_users SET must_change_password = false WHERE id = $1', [Number(user.id)]).catch(() => {});
         await this.audit.log({
             user: authUser,
             action: 'CHANGE_PASSWORD_MFA',

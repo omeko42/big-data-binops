@@ -2488,7 +2488,8 @@ export class UserService {
         await this.mailService.sendEmail(recipient, 'Kredensial Login BDB - Password Baru', 'Password baru akun BDB Anda telah dibuat.', html);
 
         await this.userRepository.update(id, { password: await bcrypt.hash(password, 10) } as any);
-        await this.audit.log({ user: authUser, action: 'RESET_PASSWORD_EMAIL', entity: 'user', entityId: id, meta: { target_email: recipient } });
+        await this.dataSource.query('UPDATE auth_users SET must_change_password = true WHERE id = $1', [id]).catch(() => {});
+        await this.audit.log({ user: authUser, action: 'RESET_PASSWORD_EMAIL', entity: 'user', entityId: id, meta: { target_email: recipient, must_change_password: true } });
         return { email: recipient };
     }
 
