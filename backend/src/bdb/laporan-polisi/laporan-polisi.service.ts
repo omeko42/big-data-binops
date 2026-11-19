@@ -551,6 +551,7 @@ export class LaporanPolisiService {
                     ) as resolved_unit_id
                 from bdb_laporan_polisi lp
                 where coalesce(lp.penanganan_level, '') <> 'Polsek'
+                  and coalesce(lp.model_lp, '') <> 'lp_model_b'
                   and upper(regexp_replace(coalesce(lp.unit_nama,''),'[^A-Za-z0-9]','','g')) in ('SATSAMAPTA','SATSABHARA','SAMAPTA','SABHARA')
                   and (
                     lp.unit_satker_id is null 
