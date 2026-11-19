@@ -1160,26 +1160,33 @@ export class CoserseDocParserService {
         });
     }
 
-    private normalizeBatchLpNumber(raw: string): { cleanLp: string; originalLp: string; isRj: boolean; alasan: string | null } {
+    private normalizeBatchLpNumber(raw: string): { cleanLp: string; originalLp: string; isRj: boolean; isNonLp: boolean; alasan: string | null } {
         const originalLp = String(raw || '').trim();
         const isRj = /\(\s*RJ\s*\)|RESTORATIVE\s+JUSTICE/i.test(originalLp);
-        let clean = originalLp
+        const flat = originalLp
+            .replace(/\r?\n+/g, ' ')
             .replace(/\(\s*RJ\s*\)/gi, ' ')
-            .replace(/\bTANGGAL\b.*$/i, ' ')
+            .replace(/\b(?:TANGGAL|TGL|SUBDIT|UNIT)\b.*$/i, ' ')
             .replace(/^["']+|["']+$/g, '')
+            .replace(/\bLP\s*\.\s*([AB])\s*\//gi, 'LP/$1/')
+            .replace(/\bLP([AB])\s*\//gi, 'LP/$1/')
             .replace(/\s*\/\s*/g, '/')
+            .replace(/\/{2,}/g, '/')
             .replace(/\s+/g, ' ')
             .trim();
+        const isNonLp = /^(?:R\/)?LI\//i.test(flat) || /\b(?:R\/)?LI\/[0-9A-Z./-]+/i.test(flat);
+        let clean = flat;
         // Extract core LP/[AB]/... token if surrounded by extra text
         const m = clean.match(/LP\/[AB]\/[A-Z0-9./-]+(?:\s+[A-Z0-9./-]+)*/i);
         if (m) {
-            clean = m[0].replace(/\s*\/\s*/g, '/').trim();
+            clean = m[0].replace(/\s*\/\s*/g, '/').replace(/\/{2,}/g, '/').trim();
         }
         return {
             cleanLp: clean,
             originalLp,
             isRj,
-            alasan: isRj ? 'Restorative Justice' : null
+            isNonLp,
+            alasan: isRj ? 'Penyelesaian luar proses peradilan / Restorative Justice' : null
         };
     }
 
@@ -1214,13 +1221,16 @@ export class CoserseDocParserService {
     private mapBatchStatusCode(rawStatus: string): { code: string; label: string; isCC: boolean } | null {
         const up = String(rawStatus || '').toUpperCase().replace(/\s+/g, ' ').trim();
         if (!up) return null;
-        if (/\bSP3\b|HENTI\s*SIDIK/.test(up)) return { code: 'SP3', label: 'Henti Sidik / SP3', isCC: true };
-        if (/P[\s-]*21\b/.test(up)) return { code: 'P21', label: 'P21', isCC: false };
+        if (/\bLIMPAH\b/.test(up)) return { code: 'LIMPAH', label: 'Limpah (Perlu Konfirmasi)', isCC: false };
+        if (/SP[\s.-]*3\s*LIDIK|HENTI\s*LIDIK|SP\.?\s*HENTI\s*LIDIK|SP2[\s_.-]*LID|H\.?\s*LIDIK|SPP\.?\s*LIDIK/.test(up)) {
+            return { code: 'SP2_LID', label: 'Henti Lidik / SP2Lid', isCC: true };
+        }
+        if (/\bSP[\s.-]*3\b|HENTI\s*SIDIK/.test(up)) return { code: 'SP3', label: 'Henti Sidik / SP3', isCC: true };
+        if (/P[\s.-]*21\b/.test(up)) return { code: 'P21', label: 'P21', isCC: false };
         if (/\bPERMA\b/.test(up)) return { code: 'PERMA', label: 'Perma', isCC: true };
-        if (/HENTI\s*LIDIK|SP2[\s_-]*LID/.test(up)) return { code: 'SP2_LID', label: 'Henti Lidik / SP2Lid', isCC: true };
-        if (/TAHAP[\s_-]*(II|2)\b/.test(up)) return { code: 'TAHAP_II', label: 'Tahap II', isCC: true };
-        if (/TAHAP[\s_-]*(I|1)\b/.test(up)) return { code: 'TAHAP_I', label: 'Tahap I', isCC: false };
-        if (/P[\s-]*19\b/.test(up)) return { code: 'P19', label: 'P19', isCC: false };
+        if (/(?:TAHAP|HAP)[\s_.-]*(II|2)\b/.test(up)) return { code: 'TAHAP_II', label: 'Tahap II', isCC: true };
+        if (/TAHAP[\s_.-]*(I|1)\b/.test(up)) return { code: 'TAHAP_I', label: 'Tahap I', isCC: false };
+        if (/P[\s.-]*19\b/.test(up)) return { code: 'P19', label: 'P19', isCC: false };
         if (/\bSPDP\b/.test(up)) return { code: 'SPDP', label: 'Kirim SPDP', isCC: false };
         if (/\bSIDIK\b|PENYIDIKAN/.test(up)) return { code: 'PENYIDIKAN', label: 'Sidik', isCC: false };
         if (/\bLIDIK\b|PENYELIDIKAN/.test(up)) return { code: 'PENYELIDIKAN', label: 'Lidik', isCC: false };
@@ -1460,7 +1470,12 @@ export class CoserseDocParserService {
                 row.statusBaru === 'PERMA' &&
                 !/(tipiring|lha\s*ppatk|ppatk)/i.test(`${row.alasan || ''} ${row.rawStatus || ''} ${row.subdit || ''} ${row.unit || ''}`);
             const isCcRegression = ccStatuses.has(statusLama) && ctStatuses.has(row.statusBaru);
+            const isLimpah = row.statusBaru === 'LIMPAH';
+            const isSp3WithLidikHint = row.statusBaru === 'SP3' && /\b(LIDIK|H\.?\s*LIDIK|SPP\.?\s*LIDIK)\b/i.test(`${row.rawStatus || ''} ${row.alasan || ''}`);
             const skipReasons: string[] = [];
+            if ((row as any).isNonLp) skipReasons.push('Bukan LP (Laporan Informasi / LI)');
+            if (isLimpah) skipReasons.push('Status LIMPAH perlu konfirmasi manual via chat');
+            if (isSp3WithLidikHint) skipReasons.push('Tertulis SP3 namun keterangan mengandung LIDIK (verifikasi SP3 vs SP2_LID)');
             if (missingStopReason) skipReasons.push(`${row.statusBaru} tanpa alasan penghentian`);
             if (missingPermaKategori) skipReasons.push('PERMA tanpa kategori (Tipiring / LHA PPATK)');
             if (isCcRegression) skipReasons.push(`Status mundur dari CC (${statusLama} -> ${row.statusBaru})`);
