@@ -809,11 +809,15 @@ setDisableTarget(target);setDisableCode("");setDisableError("");setDisableModal(
 }
 async function handleSaveNewPassword(){
 setPwError("");
-if(!eOldPw){setPwError("Silakan masukkan password lama / saat ini.");return;}
 let pw=eNewPw||"";
 let reqsOk=pw.length>=8&&/[A-Z]/.test(pw)&&/[a-z]/.test(pw)&&/[0-9]/.test(pw)&&/[^A-Za-z0-9]/.test(pw);
 if(!reqsOk){setPwError("Password baru wajib memenuhi seluruh 5 kriteria keamanan di bawah.");return;}
 if(pw!==eConfirmPw){setPwError("Konfirmasi password baru belum sesuai.");return;}
+if(!eOldPw){
+  // Alur 2-tahap tanpa password lama: wajib verifikasi sekunder (OTP Email 120 dtk / TOTP / PIN / Passkey)
+  openSecurityModal("change_password");
+  return;
+}
 setSavingPw(!0);
 try{
 let res=await c.apiAuth.post("/Authentication/reset-password",{oldPassword:eOldPw,newPassword:pw});
@@ -835,7 +839,7 @@ en(action);er("");el("");es("");ec("");ev("");setExistingPassword("");setOtpStep
 }
 async function sendSecurityOtp(targetChoice){
 let choice=targetChoice||eEmailChoice||"dinas";
-if(!eExistingPassword){ev("Silakan masukkan password akun Anda terlebih dahulu.");return;}
+if("change_password"!==et&&!eExistingPassword){ev("Silakan masukkan password akun Anda terlebih dahulu.");return;}
 if(["enable_pin","change_pin"].includes(et)){
 if(!eo||eo.length<6){ev("PIN minimal 6 digit angka.");return;}
 if(eo!==eu){ev("Konfirmasi PIN belum sama.");return;}
@@ -844,10 +848,13 @@ if(eOtpAttempts>=3){e.current?.show({severity:"error",summary:"Batas Percobaan",
 if(eOtpCooldown>0){e.current?.show({severity:"warn",summary:"Harap Menunggu",detail:`Tunggu ${eOtpCooldown} detik sebelum meminta kode OTP kembali.`});return;}
 eh(!0);ev("");
 try{
-let res=await c.apiAuth.post("/Authentication/profile/security/otp",{action:et,target_email:choice,password:eExistingPassword});
+let otpPayload={action:et,target_email:choice};
+if("change_password"!==et)otpPayload.password=eExistingPassword;
+let res=await c.apiAuth.post("/Authentication/profile/security/otp",otpPayload);
 (0,c.assertOk)(res);
 let d=res.data?.data||res.data;
-setOtpAttempts(prev=>prev+1);setOtpCooldown(60);
+let cdSec=Number(d?.cooldown_seconds||120);
+setOtpAttempts(prev=>prev+1);setOtpCooldown(cdSec);
 er(d?.otp_id||"");setEmailChoice(choice);
 let sentTarget=d?.sent_to||("sekunder"===choice?a.email:(a.email_polri||a.email));
 setOtpSentTo(sentTarget);
@@ -861,7 +868,7 @@ return;
 }
 function ez(t,targetEmail){return openSecurityModal(t);}
 async function ez_legacy(t){
-let n="disable_email_otp"===t?"Nonaktifkan OTP email saat login? Kode verifikasi akan dikirim ke email Anda.":"enable_email_otp"===t?"Aktifkan OTP email saat login? Kode verifikasi akan dikirim ke email Anda.":"disable_pin"===t?"Nonaktifkan PIN keamanan? Kode verifikasi akan dikirim ke email Anda.":"change_pin"===t?"Ubah PIN keamanan? Kode verifikasi akan dikirim ke email Anda.":"Aktifkan PIN keamanan? Kode verifikasi akan dikirim ke email Anda.";if(await (0,d.confirmAction)(n)){eh(!0);try{let e=await c.apiAuth.post("/Authentication/profile/security/otp",{action:t});(0,c.assertOk)(e),er(e.data?.data?.otp_id||""),en(t),el(""),es(""),ec(""),ev(""),ee(!0)}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal mengirim kode verifikasi."})}finally{eh(!1)}}}async function eM(){if(ei.length<6)return void ev("Masukkan 6 digit kode dari email.");if("disable_totp"===et){ef(!0),ev("");try{let payload={enabled:!1,otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/totp",payload));e.current?.show({severity:"success",summary:"Berhasil",detail:"Google Authenticator (TOTP) berhasil dinonaktifkan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP email salah atau kedaluwarsa.")}finally{ef(!1)}return}if("enable_email_otp"===et||"disable_email_otp"===et){let t="enable_email_otp"===et;ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei,password:eExistingPassword,apply_global:!0};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/email-otp",n));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);e.current?.show({severity:"success",summary:"Berhasil",detail:t?"OTP Email Login berhasil diaktifkan.":"OTP Email Login dinonaktifkan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Gagal memperbarui pengaturan OTP.")}finally{ef(!1)}return}
+let n="disable_email_otp"===t?"Nonaktifkan OTP email saat login? Kode verifikasi akan dikirim ke email Anda.":"enable_email_otp"===t?"Aktifkan OTP email saat login? Kode verifikasi akan dikirim ke email Anda.":"disable_pin"===t?"Nonaktifkan PIN keamanan? Kode verifikasi akan dikirim ke email Anda.":"change_pin"===t?"Ubah PIN keamanan? Kode verifikasi akan dikirim ke email Anda.":"Aktifkan PIN keamanan? Kode verifikasi akan dikirim ke email Anda.";if(await (0,d.confirmAction)(n)){eh(!0);try{let e=await c.apiAuth.post("/Authentication/profile/security/otp",{action:t});(0,c.assertOk)(e),er(e.data?.data?.otp_id||""),en(t),el(""),es(""),ec(""),ev(""),ee(!0)}catch(t){e.current?.show({severity:"error",summary:"Gagal",detail:t.response?.data?.message||"Gagal mengirim kode verifikasi."})}finally{eh(!1)}}}async function eM(){if(ei.length<6)return void ev("Masukkan 6 digit kode dari email.");if("change_password"===et){ef(!0),ev("");try{let payload={new_password:eNewPw,confirm_password:eConfirmPw,method:"otp_email",otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.post("/Authentication/profile/security/password",payload));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);setOldPw("");setNewPw("");setConfirmPw("");setPwError("");e.current?.show({severity:"success",summary:"Berhasil",detail:"Password baru berhasil disimpan melalui verifikasi OTP Email."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP email salah atau kedaluwarsa.")}finally{ef(!1)}return}if("disable_totp"===et){ef(!0),ev("");try{let payload={enabled:!1,otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/totp",payload));e.current?.show({severity:"success",summary:"Berhasil",detail:"Google Authenticator (TOTP) berhasil dinonaktifkan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP email salah atau kedaluwarsa.")}finally{ef(!1)}return}if("enable_email_otp"===et||"disable_email_otp"===et){let t="enable_email_otp"===et;ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei,password:eExistingPassword,apply_global:!0};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/email-otp",n));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);e.current?.show({severity:"success",summary:"Berhasil",detail:t?"OTP Email Login berhasil diaktifkan.":"OTP Email Login dinonaktifkan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Gagal memperbarui pengaturan OTP.")}finally{ef(!1)}return}
 if("enable_pin"===et||"change_pin"===et){if(eo.length<6)return void ev("PIN minimal 6 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sesuai.");ef(!0),ev("");try{let payload={enabled:!0,action:et,otp_id:ea,otp_token:ei,pin:eo,pin_confirmation:eu,password:eExistingPassword};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",payload));setOtpCooldown(0);setOtpAttempts(0);setOtpVerifyFails(0);e.current?.show({severity:"success",summary:"Berhasil",detail:"PIN keamanan berhasil disimpan."});ee(!1);await eT()}catch(t){let err=t.response?.data?.errors;ev(err&&Object.values(err)[0]?.[0]||t.response?.data?.message||"Kode OTP salah atau kedaluwarsa.")}finally{ef(!1)}return}
 if("enable_email_otp_legacy"===et){let t="enable_email_otp"===et;ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/email-otp",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`OTP email saat login berhasil ${t?"diaktifkan":"dinonaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}return}let t="disable_pin"!==et;if(t){if(!/^\d{6,8}$/.test(eo))return void ev("PIN wajib 6-8 digit angka.");if(eo!==eu)return void ev("Konfirmasi PIN belum sama.")}ef(!0),ev("");try{let n={enabled:t,action:et,otp_id:ea,otp_token:ei};t&&(n.pin=eo,n.pin_confirmation=eu),(0,c.assertOk)(await c.apiAuth.patch("/Authentication/profile/security/pin",n)),e.current?.show({severity:"success",summary:"Tersimpan",detail:`PIN keamanan berhasil ${"disable_pin"===et?"dinonaktifkan":"change_pin"===et?"diubah":"diaktifkan"}.`}),ee(!1),await eT()}catch(t){let e=t.response?.data?.errors;ev(e&&Object.values(e)[0]?.[0]||t.response?.data?.message||"Kode salah atau kedaluwarsa.")}finally{ef(!1)}}(0,n.useEffect)(()=>{let timer;if(eOtpCooldown>0){timer=setInterval(()=>setOtpCooldown(c=>Math.max(0,c-1)),1000)}return()=>{if(timer)clearInterval(timer)}},[eOtpCooldown]);
 (0,n.useEffect)(() => {
@@ -2575,9 +2582,9 @@ isReadOnlyMode && (0,t.jsxs)("div",{
             ]}),
             (0,t.jsxs)("div",{style:{display:"grid",gridTemplateColumns:"repeat(3, minmax(0, 1fr))",gap:"0.7rem"},children:[
               (0,t.jsxs)("div",{style:{display:"grid",gap:"0.3rem"},children:[
-                (0,t.jsx)("label",{htmlFor:"profile-old-password-input",style:{fontSize:"0.76rem",fontWeight:700,color:"var(--cas-text-primary, #f1f5f9)"},children:"Password Saat Ini *"}),
+                (0,t.jsx)("label",{htmlFor:"profile-old-password-input",style:{fontSize:"0.76rem",fontWeight:700,color:"var(--cas-text-primary, #f1f5f9)"},children:"Password Saat Ini (Opsional jika pakai MFA)"}),
                 (0,t.jsxs)("div",{style:{position:"relative",display:"flex",alignItems:"center"},children:[
-                  (0,t.jsx)(i.InputText,{id:"profile-old-password-input",name:"oldPassword",autoComplete:"current-password",type:eShowOldPw?"text":"password",value:eOldPw,onChange:ev=>{setOldPw(ev.target.value);setPwError("");},placeholder:"Masukkan password lama",style:{width:"100%",fontSize:"0.84rem",paddingRight:"2.4rem"}}),
+                  (0,t.jsx)(i.InputText,{id:"profile-old-password-input",name:"oldPassword",autoComplete:"current-password",type:eShowOldPw?"text":"password",value:eOldPw,onChange:ev=>{setOldPw(ev.target.value);setPwError("");},placeholder:"Kosongkan untuk verifikasi OTP / MFA",style:{width:"100%",fontSize:"0.84rem",paddingRight:"2.4rem"}}),
                   (0,t.jsx)("button",{type:"button",onClick:()=>setShowOldPw(v=>!v),"aria-label":"Tampilkan atau sembunyikan password lama",style:{position:"absolute",right:"0.55rem",top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",display:"flex",padding:0},children:eShowOldPw?(0,t.jsx)(D.EyeOff,{size:16}):(0,t.jsx)(T.Eye,{size:16})})
                 ]})
               ]}),
